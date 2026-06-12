@@ -70,25 +70,7 @@ img { max-width: 100%; display: block; }
 .admin-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
 .admin-btn.danger { border-color: rgba(184,64,64,.4); color: rgba(255,140,140,.8); }
 .admin-btn.danger:hover { background: rgba(184,64,64,.2); }
-#admin-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: var(--text);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  color: rgba(255,255,255,.6);
-  font-size: 1.1rem;
-  z-index: 500;
-  box-shadow: 0 4px 16px rgba(0,0,0,.25);
-  transition: all .2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-#admin-toggle:hover { background: var(--gold); color: #fff; }
+#admin-toggle { display: none; }
 /* modal senha admin */
 #admin-senha-overlay {
   display: none;
@@ -918,7 +900,7 @@ footer {
     <button class="admin-btn danger" onclick="hideAdminBar()">Fechar</button>
   </div>
 </div>
-<button id="admin-toggle" onclick="document.getElementById('admin-senha-overlay').classList.add('open');document.getElementById('admin-senha-input').focus()" title="Admin">⚙</button>
+
 
 <!-- ─── NAVEGAÇÃO ─── -->
 <nav>
@@ -1411,6 +1393,7 @@ footer {
       Entrar com Google
     </button>
     <p class="modal-footer">Após o login, aguarde aprovação da administração.</p>
+    <button onclick="closeLogin();document.getElementById('admin-senha-overlay').classList.add('open');setTimeout(()=>document.getElementById('admin-senha-input').focus(),50)" style="background:none;border:none;display:block;margin:12px auto 0;color:rgba(80,30,50,.2);font-size:.85rem;transition:color .2s" onmouseover="this.style.color='rgba(80,30,50,.45)'" onmouseout="this.style.color='rgba(80,30,50,.2)'">⚙</button>
   </div>
 </div>
 
@@ -1480,6 +1463,9 @@ function toggleNavItem(id) {
 function hideAdminBar() {
   document.getElementById('admin-bar').classList.add('hidden');
 }
+// ── ADMIN VIA URL ──
+// (desativado)
+
 function checkAdminSenha() {
   const input = document.getElementById('admin-senha-input');
   const erro = document.getElementById('admin-senha-erro');
