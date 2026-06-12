@@ -191,8 +191,7 @@ nav {
 
 /* ─── SHARED LAYOUT ─── */
 .section-wrap { max-width: 1100px; margin: 0 auto; padding: 52px 24px; }
-.section-wrap.narrow { max-width: 780px; }
-.eyebrow {
+.section-wrap.narrow { max-width: 780px; }.eyebrow {
   font-family: 'Cinzel', serif;
   font-size: .62rem;
   letter-spacing: .22em;
@@ -246,29 +245,43 @@ nav {
 }
 .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
 
+/* ─── FUNDO FIXO ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: #fff5f7;
+  z-index: -3;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 220px;
+  background-image: url('assets/montanhas.png');
+  background-size: cover;
+  background-position: top center;
+  opacity: .35;
+  z-index: -2;
+  pointer-events: none;
+}
+.bg-bubbles {
+  position: fixed;
+  inset: 0;
+  background-image: url('assets/bolhas.png');
+  background-size: 85%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: .07;
+  z-index: -1;
+  pointer-events: none;
+}
 /* ─── HERO ─── */
 .hero {
-  background: linear-gradient(160deg, #fff5f7 0%, #fde8ef 50%, #fff0f5 100%);
-  padding: 72px 24px 56px;
+  background: transparent;
+  padding: 72px 24px 80px;
   text-align: center;
   position: relative;
-  overflow: hidden;
-}
-.hero::before {
-  content: '✦';
-  position: absolute;
-  top: 28px; left: 8%;
-  font-size: 1.1rem;
-  color: rgba(196,57,107,.15);
-  animation: flicker 3s ease-in-out infinite alternate;
-}
-.hero::after {
-  content: '✦';
-  position: absolute;
-  top: 48px; right: 10%;
-  font-size: .8rem;
-  color: rgba(196,57,107,.1);
-  animation: flicker 4.5s ease-in-out infinite alternate-reverse;
 }
 @keyframes flicker {
   0% { opacity: .4; transform: scale(1); }
@@ -876,6 +889,9 @@ footer {
 </head>
 <body>
 
+<!-- ─── FUNDO FIXO ─── -->
+<div class="bg-bubbles"></div>
+
 <!-- ─── MODAL SENHA ADMIN ─── -->
 <div id="admin-senha-overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="max-width:300px">
@@ -905,7 +921,7 @@ footer {
 <!-- ─── NAVEGAÇÃO ─── -->
 <nav>
   <div class="nav-inner">
-    <div class="nav-logo">Bolhas <span>de Luz</span></div>
+    <div class="nav-logo"><img src="assets/logo-hori.png" alt="Bolhas de Luz" style="height:32px;width:auto;display:block"></div>
     <div class="nav-links" id="nav-links">
       <button class="nav-btn active" onclick="showPage('inicio', this)">Início</button>
       <span class="nav-item" id="nav-sessoes">
