@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório — Bolhas de Luz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c4396b;--gold-light:#e8688a;--gold-dim:rgba(196,57,107,.08);
+  --bg:#fff5f7;--surface:#ffffff;--border:rgba(196,57,107,.15);
+  --text:#2a1a22;--text-dim:rgba(80,30,50,.5);
+  --red:#b84040;--red-dim:rgba(184,64,64,.08);
+  --green:#2a7a60;--green-light:#3a9a78;--green-dim:#e8f4f0;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;min-height:100vh;}
+.header{background:linear-gradient(135deg,#c0405a,#d4607a 60%,#e07a90);padding:18px 20px 14px;box-shadow:0 2px 20px rgba(180,60,90,.25);}
+.header h1{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:#fff;}
+.header p{font-family:'DM Sans',sans-serif;font-size:.72rem;color:rgba(255,255,255,.7);margin-top:2px;}
+.header-meta{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:4px;}
+.content{padding:20px 16px 40px;max-width:600px;margin:0 auto;}
+.section-title{font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin:20px 0 10px;}
+/* Saldo destaque */
+.saldo-hero{background:linear-gradient(135deg,#c0405a,#d4607a);border-radius:14px;padding:18px 20px;margin-bottom:4px;box-shadow:0 4px 20px rgba(196,57,107,.25);}
+.saldo-hero-row{display:flex;gap:10px;margin-top:8px;}
+.saldo-mini{flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;}
+.saldo-mini-lbl{font-family:'DM Sans',sans-serif;font-size:.62rem;color:rgba(255,255,255,.6);margin-bottom:2px;}
+.saldo-mini-val{font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:#fff;}
+.pct-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:#fff;line-height:1;}
+.pct-sub{font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;}
+.prog-bar{background:rgba(255,255,255,.2);border-radius:4px;height:3px;overflow:hidden;margin-top:10px;}
+.prog-fill{height:100%;border-radius:4px;background:rgba(255,255,255,.85);}
+.mae-note{font-family:'Crimson Pro',serif;font-style:italic;font-size:.75rem;color:var(--text-dim);text-align:right;margin-top:6px;}
+/* Cards de mês */
+.mes-card{background:var(--surface);border-radius:10px;padding:11px 14px;margin-bottom:8px;box-shadow:0 2px 10px rgba(180,60,90,.06);}
+.mes-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.mes-label{font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--text);}
+.mes-saldo{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;}
+.mes-grid{display:flex;gap:7px;margin-bottom:7px;}
+.mes-box{flex:1;border-radius:6px;padding:5px 8px;text-align:center;}
+.mes-box-lbl{font-family:'DM Sans',sans-serif;font-size:.6rem;}
+.mes-box-val{font-family:'Crimson Pro',serif;font-size:.85rem;font-weight:600;}
+.mes-barra{background:rgba(196,57,107,.06);border-radius:3px;height:3px;overflow:hidden;margin-bottom:5px;}
+.mes-faltam{font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--text-dim);}
+/* Resumo contas */
+.conta-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+.conta-row:last-child{border-bottom:none;}
+.conta-nome{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);flex:1;}
+.conta-info{text-align:right;}
+.conta-media{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--red);}
+.conta-sub{font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--text-dim);}
+.card-wrap{background:var(--surface);border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(180,60,90,.07);margin-bottom:16px;}
+.card-hdr{background:linear-gradient(135deg,#fde8ed,#fce8ef);padding:10px 16px;}
+.card-hdr-txt{font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+/* Pendentes */
+.pend-row{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);}
+.pend-row:last-child{border-bottom:none;}
+.pend-conta{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);}
+.pend-meta{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim);margin-top:2px;}
+.pend-val{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--red);}
+/* Spinner */
+.spinner{width:24px;height:24px;border:2px solid rgba(196,57,107,.15);border-top-color:#c4396b;border-radius:50%;animation:spin .8s linear infinite;margin:40px auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.fade{animation:fadeIn .4s ease both;}
+.empty{text-align:center;padding:30px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;}
+.update-time{font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--text-dim);text-align:right;margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Bolhas de Luz — Relatório</h1>
+  <p>Prestação de contas · Atualizado automaticamente</p>
+  <div class="header-meta" id="update-time"></div>
+</div>
+<div class="content">
+  <div id="root"><div class="spinner"></div></div>
+</div>
+<script>
+var MEMBROS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+var MESES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function fmt(v){ return 'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtS(v){ return 'R$'+Number(v).toFixed(0); }
+function fmtMes(m){ var p=m.split('-'); return MESES_FULL[parseInt(p[1])-1]+'/'+p[0].slice(2); }
+
+function kvGet(chave){ return fetch('/api/dados?chave='+chave).then(function(r){return r.json();}).catch(function(){return null;}); }
+
+function render(lancamentos, gastos_ag) {
+  var agora = new Date();
+  var mesAtual = agora.getFullYear()+'-'+String(agora.getMonth()+1).padStart(2,'0');
+  var anoAtual = agora.getFullYear().toString();
+  document.getElementById('update-time').textContent = 'Última atualização: '+agora.toLocaleString('pt-BR');
+
+  // ── Dados por mês ──────────────────────────────────────────
+  var meses = {};
+  lancamentos.forEach(function(l){
+    var ref = (l.tipo==='entrada'&&l.competencia) ? l.competencia : (l.data?l.data.slice(0,7):null);
+    if (!ref || ref > mesAtual) return;
+    if (!meses[ref]) meses[ref]={e:0,g:0,pagantes:{},pendentes:0};
+    if (l.tipo==='entrada'){ meses[ref].e+=l.valor; if(l.membro&&l.subTipo!=='extra') meses[ref].pagantes[l.membro]=true; }
+    if (l.tipo==='gasto'&&l.status!=='pendente') meses[ref].g+=l.valor;
+    if (l.status==='pendente') meses[ref].pendentes+=l.valor;
+  });
+
+  var mesesKeys = Object.keys(meses).sort().reverse();
+
+  // ── Totais anuais ─────────────────────────────────────────
+  var totalEAno=0, totalGAno=0;
+  var mesesAnoData = {};
+  mesesKeys.filter(function(m){return m.startsWith(anoAtual);}).forEach(function(m){
+    totalEAno+=meses[m].e; totalGAno+=meses[m].g;
+    mesesAnoData[m]=meses[m];
+  });
+  var saldoAno = totalEAno-totalGAno;
+  var pctCobAno = totalGAno>0?Math.round(totalEAno/totalGAno*100):(totalEAno>0?100:0);
+  var mesesAnoKeys = Object.keys(mesesAnoData);
+  var somaPctPag = mesesAnoKeys.reduce(function(s,m){return s+Object.keys(mesesAnoData[m].pagantes).length/MEMBROS.length*100;},0);
+  var pctPagAno = mesesAnoKeys.length>0?Math.round(somaPctPag/mesesAnoKeys.length):0;
+
+  // ── Gastos por conta ─────────────────────────────────────
+  var contas = {};
+  lancamentos.filter(function(l){return l.tipo==='gasto'&&l.status!=='pendente';}).forEach(function(l){
+    if(!contas[l.conta]) contas[l.conta]={total:0,meses:{}};
+    contas[l.conta].total+=l.valor;
+    if(l.data) contas[l.conta].meses[l.data.slice(0,7)]=true;
+  });
+
+  // ── Pendentes ────────────────────────────────────────────
+  var pendentes = lancamentos.filter(function(l){return l.status==='pendente';});
+
+  // ── HTML ──────────────────────────────────────────────────
+  var html = '';
+  html += '<div class="update-time">'+new Date().toLocaleString('pt-BR')+'</div>';
+
+  // Card saldo anual
+  html += '<p class="section-title">Visão Anual — '+anoAtual+'</p>';
+  html += '<div class="saldo-hero fade">';
+  html += '<div style="display:flex;gap:10px;">';
+  html += '<div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">';
+  html += '<div class="pct-sub">👥 Média Pagantes</div><div class="pct-val">'+pctPagAno+'%</div>';
+  html += '<div class="pct-sub">~'+Math.round(pctPagAno/100*MEMBROS.length)+'/'+MEMBROS.length+' membros/mês</div></div>';
+  html += '<div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">';
+  html += '<div class="pct-sub">💰 Cobertura</div><div class="pct-val">'+pctCobAno+'%</div>';
+  html += '<div class="pct-sub">'+fmt(totalEAno)+' / '+fmt(totalGAno)+'</div></div>';
+  html += '</div>';
+  html += '<div class="prog-bar" style="margin-top:10px;"><div class="prog-fill" style="width:'+Math.min(pctCobAno,100)+'%;"></div></div>';
+  html += '<div style="display:flex;gap:10px;margin-top:10px;">';
+  html += '<div class="saldo-mini"><div class="saldo-mini-lbl">↑ Entradas</div><div class="saldo-mini-val">'+fmt(totalEAno)+'</div></div>';
+  html += '<div class="saldo-mini"><div class="saldo-mini-lbl">↓ Gastos</div><div class="saldo-mini-val">'+fmt(totalGAno)+'</div></div>';
+  html += '</div>';
+  if (saldoAno<0) html += '<div style="margin-top:8px;display:flex;justify-content:space-between;"><span style="font-size:.68rem;color:rgba(255,255,255,.45);">coberto pela mãe de santo 🕯️</span><span style="font-family:\'Crimson Pro\',serif;font-size:.88rem;color:rgba(255,255,255,.6);">'+fmt(saldoAno)+'</span></div>';
+  html += '</div>';
+
+  // Extrato mensal
+  html += '<p class="section-title">Extrato Mensal</p>';
+  if (!mesesKeys.length) { html += '<div class="empty">Nenhum dado disponível</div>'; }
+  else {
+    mesesKeys.forEach(function(mes){
+      var d=meses[mes], saldo=d.e-d.g;
+      var pctC=d.g>0?Math.round(d.e/d.g*100):(d.e>0?100:0);
+      var nP=Object.keys(d.pagantes).length;
+      var pctP=Math.round(nP/MEMBROS.length*100);
+      html += '<div class="mes-card fade">';
+      html += '<div class="mes-header"><span class="mes-label">'+fmtMes(mes)+'</span>';
+      html += '<span class="mes-saldo" style="color:'+(saldo>=0?'var(--green)':'var(--red)')+'">'+fmt(saldo)+(saldo<0?' 🕯️':'')+'</span></div>';
+      html += '<div class="mes-grid">';
+      html += '<div class="mes-box" style="background:var(--green-dim);"><div class="mes-box-lbl" style="color:var(--green);">↑ Entradas</div><div class="mes-box-val" style="color:var(--green);">'+fmt(d.e)+'</div></div>';
+      html += '<div class="mes-box" style="background:var(--red-dim);"><div class="mes-box-lbl" style="color:var(--red);">↓ Gastos</div><div class="mes-box-val" style="color:var(--red);">'+fmt(d.g)+'</div></div>';
+      html += '<div class="mes-box" style="background:rgba(196,57,107,.05);text-align:center;"><div class="mes-box-lbl" style="color:var(--text-dim);">👥 Pag.</div><div class="mes-box-val" style="color:'+(nP===MEMBROS.length?'var(--green)':'var(--gold)')+'">'+pctP+'%</div><div style="font-size:.6rem;color:var(--text-dim);">'+nP+'/'+MEMBROS.length+'</div></div>';
+      html += '<div class="mes-box" style="background:rgba(196,57,107,.05);text-align:center;"><div class="mes-box-lbl" style="color:var(--text-dim);">💰 Cob.</div><div class="mes-box-val" style="color:'+(pctC>=100?'var(--green)':'var(--gold)')+'">'+pctC+'%</div></div>';
+      html += '</div>';
+      html += '<div class="mes-barra"><div style="height:100%;border-radius:3px;width:'+Math.min(pctC,100)+'%;background:'+(pctC>=100?'var(--green)':'var(--gold)')+'"></div></div>';
+      html += '</div>';
+    });
+  }
+
+  // Gastos por conta
+  html += '<p class="section-title">Gastos por Conta — Média Mensal</p>';
+  html += '<div class="card-wrap fade"><div class="card-hdr"><div class="card-hdr-txt">Contas</div></div>';
+  var contasOrdenadas = Object.keys(contas).sort(function(a,b){return contas[b].total-contas[a].total;});
+  if (!contasOrdenadas.length) { html += '<div class="empty">Nenhum gasto</div>'; }
+  else {
+    contasOrdenadas.forEach(function(c){
+      var g=contas[c], nM=Math.max(Object.keys(g.meses).length,1), media=g.total/nM;
+      html += '<div class="conta-row"><span class="conta-nome">'+c+'<br><span style="font-size:.68rem;color:var(--text-dim);">'+nM+' mês'+(nM>1?'es':'')+' · total '+fmt(g.total)+'</span></span>';
+      html += '<div class="conta-info"><div class="conta-media">'+fmt(media)+'</div><div class="conta-sub">/mês</div></div></div>';
+    });
+  }
+  html += '</div>';
+
+  // Pendentes
+  if (pendentes.length) {
+    html += '<p class="section-title">Pendentes em Aberto</p>';
+    html += '<div class="card-wrap fade"><div class="card-hdr"><div class="card-hdr-txt">A Pagar</div></div>';
+    pendentes.forEach(function(l){
+      html += '<div class="pend-row"><div><div class="pend-conta">'+l.conta+'</div>';
+      if(l.vencimento) html += '<div class="pend-meta">Vence: '+l.vencimento.split('-').reverse().join('/')+'</div>';
+      if(l.obs) html += '<div class="pend-meta">'+l.obs+'</div>';
+      html += '</div><div class="pend-val">'+fmt(l.valor)+'</div></div>';
+    });
+    html += '</div>';
+  }
+
+  document.getElementById('root').innerHTML = html;
+}
+
+// Carrega dados do KV
+kvGet('lancamentos').then(function(dados){
+  render(Array.isArray(dados)?dados:[], []);
+});
+
+// Auto-refresh a cada 5 minutos
+setInterval(function(){
+  kvGet('lancamentos').then(function(dados){ render(Array.isArray(dados)?dados:[], []); });
+}, 300000);
+</script>
+</body>
+</html>
