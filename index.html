@@ -191,6 +191,82 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   .help-grid{grid-template-columns:1fr}
   .blog-grid{grid-template-columns:1fr}
 }
+
+/* ── HAMBURGUER + DRAWER ── */
+#menu-toggle{
+  position:fixed;top:16px;right:16px;z-index:400;
+  background:rgba(253,246,238,.92);border:1px solid var(--border);border-radius:10px;
+  width:42px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 2px 12px rgba(196,90,30,.12);backdrop-filter:blur(6px);transition:all .2s;
+}
+#menu-toggle:hover{background:#fff;box-shadow:0 4px 16px rgba(196,57,107,.15)}
+#menu-toggle span{display:block;width:18px;height:1.5px;background:var(--terra);border-radius:2px;transition:all .3s}
+#menu-toggle.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
+#menu-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+#menu-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.45);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{
+  position:fixed;top:0;left:0;bottom:0;z-index:360;
+  width:min(300px,85vw);background:var(--creme);
+  border-right:1px solid var(--border);box-shadow:4px 0 32px rgba(46,26,14,.15);
+  transform:translateX(-100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
+  overflow-y:auto;display:flex;flex-direction:column;
+}
+#drawer.open{transform:translateX(0)}
+.drawer-header{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--terra);letter-spacing:.1em}
+.drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
+.drawer-close:hover{color:var(--rosa)}
+.drawer-section{padding:18px 20px 4px}
+.drawer-section-label{
+  font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px;
+}
+.drawer-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.drawer-link{
+  display:flex;align-items:center;gap:12px;padding:11px 4px;
+  border-bottom:1px solid rgba(196,90,30,.07);
+  font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);
+  background:none;border-left:none;border-right:none;border-top:none;
+  width:100%;text-align:left;transition:color .2s;
+}
+.drawer-link:hover{color:var(--rosa)}
+.drawer-link:last-child{border-bottom:none}
+.drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
+.drawer-dot.mem{background:rgba(196,57,107,.28)}
+.drawer-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;text-align:center}.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
+.drawer-submenu-toggle:hover{color:var(--rosa)}
+.drawer-submenu-toggle .dsm-arrow{font-size:.7rem;transition:transform .25s;color:var(--text-dim)}
+.drawer-submenu-toggle.open .dsm-arrow{transform:rotate(90deg)}
+.drawer-submenu{max-height:0;overflow:hidden;transition:max-height .3s ease;padding-left:18px}
+.drawer-submenu.open{max-height:600px}
+#page-admin{display:none}
+#page-admin.active{display:block}
+.admin-panel{max-width:680px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
+.admin-panel h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--text);margin-bottom:6px}
+.admin-panel .sub{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
+.admin-section-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;backdrop-filter:blur(4px)}
+.admin-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:rgba(196,90,30,.04)}
+.admin-section-title{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--terra)}
+.admin-item-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(196,90,30,.06)}
+.admin-item-row:last-child{border-bottom:none}
+.admin-item-label{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.04em;color:var(--text);flex:1;min-width:80px}
+.admin-item-url{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+.toggle-pill{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);transition:all .2s;white-space:nowrap}
+.toggle-pill.on{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
+.toggle-pill.on-green{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
+.admin-del{background:none;border:none;color:rgba(184,64,64,.35);font-size:1rem;padding:2px 6px;transition:color .2s}
+.admin-del:hover{color:#b84040}
+.admin-add-form{padding:14px 16px;background:rgba(196,90,30,.03);border-top:1px solid var(--border)}
+.admin-add-form input,.admin-add-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+.admin-add-form input:focus,.admin-add-form select:focus{border-color:var(--rosa)}
+.admin-row-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-add{background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;font-weight:700;padding:9px 18px;transition:all .2s}
+.btn-add:hover{background:var(--rosa-l)}
+.btn-save-menu{width:100%;background:var(--terra);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;font-weight:700;padding:13px;margin-top:8px;transition:all .2s}
+.btn-save-menu:hover{background:#a04020}
+.save-status{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;text-align:center;margin-top:10px;color:var(--text-dim);min-height:20px}
 </style>
 </head>
 <body>
@@ -200,6 +276,24 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 <div class="bg-bolhas-img"></div>
 <canvas id="jardim"></canvas>
 <div id="bolhas-container"></div>
+
+<!-- HAMBURGUER -->
+<button id="menu-toggle" onclick="toggleDrawer()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- DRAWER LATERAL -->
+<div id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-logo">Bolhas de Luz</span>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div id="drawer-body"></div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
 
 <!-- ADMIN SENHA -->
 <div id="admin-senha-overlay" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
@@ -254,71 +348,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 
   <div class="widgets-wrap">
     <div class="widgets-label">Nossa casa digital</div>
-    <div class="widgets-grid">
-
-      <a class="widget" href="https://pontoscantados.pages.dev" target="_blank" rel="noopener">
-        <div class="widget-name">Pontos Cantados</div>
-        <div class="widget-desc">Catálogo com player de áudio e letras</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" id="widget-sessoes" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">
-        <div class="widget-name">Calendário</div>
-        <div class="widget-desc">Sessões e eventos da casa</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" href="https://floraselojas.pages.dev" target="_blank" rel="noopener">
-        <div class="widget-name">Guia de Lojas</div>
-        <div class="widget-desc">Artigos religiosos recomendados</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" id="widget-historia" href="#" onclick="showPage('historia');return false">
-        <div class="widget-name">Nossa História</div>
-        <div class="widget-desc">A fundação do Bolhas de Luz</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" id="widget-textos" href="#" onclick="showPage('textos');return false">
-        <div class="widget-name">Textos da Casa</div>
-        <div class="widget-desc">Fundamentos e reflexões</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" id="widget-apoie" href="#" onclick="showPage('apoie');return false">
-        <div class="widget-name">Apoie o Terreiro</div>
-        <div class="widget-desc">Como nos ajudar</div>
-        <span class="widget-tag tag-pub">público</span>
-      </a>
-
-      <a class="widget" href="#" onclick="openLogin();return false">
-        <div class="widget-name">Tesouraria</div>
-        <div class="widget-desc">Finanças e obrigações da casa</div>
-        <span class="widget-tag tag-mem">membros</span>
-      </a>
-
-      <a class="widget" href="#" onclick="openLogin();return false">
-        <div class="widget-name">Filhas da Casa</div>
-        <div class="widget-desc">Perfis e guias espirituais</div>
-        <span class="widget-tag tag-mem">membros</span>
-      </a>
-
-      <a class="widget" id="widget-regimento" href="#" onclick="openLogin();return false">
-        <div class="widget-name">Regimento Interno</div>
-        <div class="widget-desc">Normas e condutas da casa</div>
-        <span class="widget-tag tag-mem">membros</span>
-      </a>
-
-      <div class="widget widget-interna">
-        <div>
-          <div class="widget-name">Área das Filhas</div>
-          <div class="widget-desc">Acesse ferramentas internas do terreiro</div>
-        </div>
-        <button class="btn-rosa" onclick="openLogin()">Entrar</button>
-      </div>
-
-    </div>
+    <div class="widgets-grid" id="widgets-grid-dynamic"></div>
   </div>
 </div>
 
@@ -478,21 +508,253 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   </div>
 </div>
 
+<!-- PÁGINA ADMIN -->
+<div id="page-admin" class="page">
+  <div class="admin-panel">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <h2>Painel de Administração</h2>
+    <p class="sub">Gerencie o menu e os cards da homepage. Alterações são salvas no Cloudflare KV.</p>
+    <div id="admin-sections-container"></div>
+    <div class="admin-section-block">
+      <div class="admin-section-header">
+        <span class="admin-section-title">Nova Seção do Menu</span>
+      </div>
+      <div class="admin-add-form">
+        <input type="text" id="new-section-label" placeholder="Nome da seção (ex: Especial)">
+        <button class="btn-add" onclick="addSection()">+ Adicionar Seção</button>
+      </div>
+    </div>
+    <button class="btn-save-menu" onclick="saveMenu()">✦ Salvar todas as alterações</button>
+    <div class="save-status" id="save-status"></div>
+  </div>
+</div>
+
 <footer>
   <div class="footer-logo">Terreiro Bolhas de Luz</div>
   <div class="footer-sub">Porto Alegre, RS · Umbanda & Quimbanda</div>
 </footer>
 
 <script>
-function showPage(name){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const p=document.getElementById('page-'+name);
-  if(p)p.classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
+// ── CONFIG ──
+const API = '/api/menu';
+let menuData = null;
+
+// ── CARREGAR MENU DO KV ──
+async function loadMenu() {
+  try {
+    const res = await fetch(API);
+    menuData = await res.json();
+  } catch(e) {
+    menuData = getDefaultMenu();
+  }
+  renderDrawer();
+  renderCards();
+}
+
+function getDefaultMenu() {
+  return {
+    sections: [
+      { id: 'publico', label: 'Público', items: [
+        { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
+        { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true },
+        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
+        { id: 'textos',   label: 'Textos da Casa',    type: 'internal', page: 'textos',   showCard: true, showMenu: true },
+        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
+        { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true },
+        { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
+      ]},
+      { id: 'corrente', label: 'Corrente', items: [
+        { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: '/tesouraria', showCard: true, showMenu: true },
+        { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
+        { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
+      ]}
+    ]
+  };
+}
+
+// ── RENDERIZAR DRAWER ──
+function renderDrawer() {
+  const body = document.getElementById('drawer-body');
+  if (!menuData) return;
+  body.innerHTML = menuData.sections.map(sec => {
+    const visibleItems = sec.items.filter(i => i.showMenu !== false);
+    if (!visibleItems.length) return '';
+    return `
+      <div class="drawer-section">
+        <button class="drawer-submenu-toggle" onclick="toggleSubmenu(this)">
+          <span style="display:flex;align-items:center;gap:10px">
+            <span class="drawer-dot${sec.id==='corrente'?' mem':''}"></span>
+            ${sec.label}
+          </span>
+          <span class="dsm-arrow">›</span>
+        </button>
+        <div class="drawer-submenu">
+          ${visibleItems.map(item => renderDrawerItem(item)).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function renderDrawerItem(item) {
+  const dot = `<span class="drawer-dot${item.type==='members'?' mem':''}"></span>`;
+  if (item.type === 'internal') {
+    return `<button class="drawer-link" onclick="showPage('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
+  }
+  if (item.type === 'members') {
+    return `<button class="drawer-link" onclick="openLogin();closeDrawer()">${dot}${item.label}</button>`;
+  }
+  return `<a class="drawer-link" href="${item.url}" target="_blank" rel="noopener" onclick="closeDrawer()">${dot}${item.label}</a>`;
+}
+
+function toggleSubmenu(btn) {
+  const sub = btn.nextElementSibling;
+  const isOpen = sub.classList.contains('open');
+  document.querySelectorAll('.drawer-submenu.open').forEach(s => s.classList.remove('open'));
+  document.querySelectorAll('.drawer-submenu-toggle.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) { sub.classList.add('open'); btn.classList.add('open'); }
+}
+
+// ── RENDERIZAR CARDS ──
+function renderCards() {
+  const grid = document.getElementById('widgets-grid-dynamic');
+  if (!grid || !menuData) return;
+  let html = '';
+  menuData.sections.forEach(sec => {
+    sec.items.forEach(item => {
+      if (!item.showCard) return;
+      const isMem = item.type === 'members';
+      const tag = isMem
+        ? `<span class="widget-tag tag-mem">membros</span>`
+        : `<span class="widget-tag tag-pub">público</span>`;
+      let onclick = '';
+      if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
+      else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
+      else onclick = `href="${item.url}" target="_blank" rel="noopener"`;
+      html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
+    });
+  });
+  html += `<div class="widget widget-interna"><div><div class="widget-name">Área das Filhas</div><div class="widget-desc">Acesse ferramentas internas do terreiro</div></div><button class="btn-rosa" onclick="openLogin()">Entrar</button></div>`;
+  grid.innerHTML = html;
+}
+
+// ── PAINEL ADMIN ──
+function renderAdminPanel() {
+  const container = document.getElementById('admin-sections-container');
+  if (!container || !menuData) return;
+  container.innerHTML = menuData.sections.map((sec, si) => `
+    <div class="admin-section-block">
+      <div class="admin-section-header">
+        <span class="admin-section-title">${sec.label}</span>
+        <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
+      </div>
+      ${sec.items.map((item, ii) => `
+        <div class="admin-item-row">
+          <span class="admin-item-label">${item.label}</span>
+          <span class="admin-item-url">${item.url||item.page||''}</span>
+          <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})" title="Visível no menu">
+            ${item.showMenu!==false?'✓':''} Menu
+          </button>
+          <button class="toggle-pill ${item.showCard?'on-green':''}" onclick="toggleItemCard(${si},${ii})" title="Visível como card">
+            ${item.showCard?'✓':''} Card
+          </button>
+          <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+        </div>`).join('')}
+      <div class="admin-add-form">
+        <div class="admin-row-inputs">
+          <input type="text" id="label-${si}" placeholder="Nome do item">
+          <select id="type-${si}">
+            <option value="external">Link externo</option>
+            <option value="internal">Página interna</option>
+            <option value="members">Área de membros</option>
+            <option value="blank">Página em branco</option>
+          </select>
+        </div>
+        <input type="text" id="url-${si}" placeholder="URL ou nome da página">
+        <input type="text" id="desc-${si}" placeholder="Descrição curta (opcional)">
+        <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
+      </div>
+    </div>`).join('');
+}
+
+function toggleItemMenu(si, ii) {
+  menuData.sections[si].items[ii].showMenu = !menuData.sections[si].items[ii].showMenu;
+  renderAdminPanel(); renderDrawer();
+}
+function toggleItemCard(si, ii) {
+  menuData.sections[si].items[ii].showCard = !menuData.sections[si].items[ii].showCard;
+  renderAdminPanel(); renderCards();
+}
+function deleteItem(si, ii) {
+  if (!confirm('Remover este item?')) return;
+  menuData.sections[si].items.splice(ii, 1);
+  renderAdminPanel(); renderDrawer(); renderCards();
+}
+function deleteSection(si) {
+  if (!confirm('Remover esta seção e todos os seus itens?')) return;
+  menuData.sections.splice(si, 1);
+  renderAdminPanel(); renderDrawer(); renderCards();
+}
+function addItem(si) {
+  const label = document.getElementById(`label-${si}`).value.trim();
+  const type  = document.getElementById(`type-${si}`).value;
+  const url   = document.getElementById(`url-${si}`).value.trim();
+  const desc  = document.getElementById(`desc-${si}`).value.trim();
+  if (!label) return alert('Digite o nome do item.');
+  const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const item = { id, label, type, showCard: true, showMenu: true, desc };
+  if (type === 'internal' || type === 'blank') item.page = url || id;
+  else item.url = url;
+  menuData.sections[si].items.push(item);
+  renderAdminPanel(); renderDrawer(); renderCards();
+}
+function addSection() {
+  const label = document.getElementById('new-section-label').value.trim();
+  if (!label) return alert('Digite o nome da seção.');
+  const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  menuData.sections.push({ id, label, items: [] });
+  document.getElementById('new-section-label').value = '';
+  renderAdminPanel();
+}
+async function saveMenu() {
+  const status = document.getElementById('save-status');
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify(menuData)
+    });
+    const data = await res.json();
+    status.textContent = data.ok ? '✦ Salvo com sucesso!' : '✕ Erro ao salvar.';
+  } catch(e) {
+    status.textContent = '✕ Erro de conexão.';
+  }
+  setTimeout(() => status.textContent = '', 3000);
+}
+
+// ── NAVEGAÇÃO ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById('page-' + name);
+  if (p) p.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (name === 'admin') renderAdminPanel();
+}
+function toggleDrawer() {
+  const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
+  const open=d.classList.contains('open');
+  d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
+  document.body.style.overflow=open?'':'hidden';
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('menu-toggle').classList.remove('open');
+  document.body.style.overflow='';
 }
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
 function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogin();document.getElementById('admin-senha-overlay').classList.remove('open')}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogin();closeDrawer();document.getElementById('admin-senha-overlay').classList.remove('open')}});
 function toggleFaq(btn){
   const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
   document.querySelectorAll('.faq-body.open').forEach(b=>b.classList.remove('open'));
@@ -502,15 +764,11 @@ function toggleFaq(btn){
 function filterBlog(cat){
   document.querySelectorAll('.blog-card').forEach(c=>{c.style.display=(cat==='todos'||c.dataset.cat===cat)?'':'none'});
 }
-function toggleWidget(id){
-  const el=document.getElementById('widget-'+id);
-  if(el)el.style.display=el.style.display==='none'?'':'none';
-}
 function checkAdminSenha(){
   const input=document.getElementById('admin-senha-input'),erro=document.getElementById('admin-senha-erro');
   if(input.value==='admin'){
     document.getElementById('admin-senha-overlay').classList.remove('open');
-    document.getElementById('admin-bar').classList.remove('hidden');
+    showPage('admin');
     input.value='';erro.style.display='none';
   } else {erro.style.display='block';input.value='';input.focus()}
 }
@@ -549,6 +807,9 @@ function bolha(x,y,r,op,dur,delay){
 }
 (function spawn(){const vw=window.innerWidth,vh=window.innerHeight;for(let i=0;i<18;i++){const r=10+Math.random()*22;bolha(Math.random()*vw,vh+r*2,r,.12+Math.random()*.15,24+Math.random()*20,Math.random()*40)}})();
 setInterval(()=>{const r=10+Math.random()*22;bolha(Math.random()*window.innerWidth,window.innerHeight+r*2,r,.12+Math.random()*.15,24+Math.random()*20,0)},900);
+
+// inicializar
+loadMenu();
 </script>
 </body>
 </html>
