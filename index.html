@@ -266,7 +266,12 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .btn-add:hover{background:var(--rosa-l)}
 .btn-save-menu{width:100%;background:var(--terra);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;font-weight:700;padding:13px;margin-top:8px;transition:all .2s}
 .btn-save-menu:hover{background:#a04020}
-.save-status{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;text-align:center;margin-top:10px;color:var(--text-dim);min-height:20px}
+.admin-edit-btn{background:none;border:none;color:rgba(196,90,30,.45);font-size:.9rem;padding:2px 6px;transition:color .2s;cursor:pointer}
+.admin-edit-btn:hover{color:var(--terra)}
+.admin-edit-form{padding:12px 16px;background:rgba(196,57,107,.04);border-bottom:1px solid var(--border)}
+.admin-edit-form input,.admin-edit-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+.admin-edit-form input:focus,.admin-edit-form select:focus{border-color:var(--rosa)}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
@@ -648,7 +653,7 @@ function renderAdminPanel() {
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
       ${sec.items.map((item, ii) => `
-        <div class="admin-item-row">
+        <div class="admin-item-row" id="row-${si}-${ii}">
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
           <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})" title="Visível no menu">
@@ -657,7 +662,24 @@ function renderAdminPanel() {
           <button class="toggle-pill ${item.showCard?'on-green':''}" onclick="toggleItemCard(${si},${ii})" title="Visível como card">
             ${item.showCard?'✓':''} Card
           </button>
+          <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})" title="Editar">✎</button>
           <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+        </div>
+        <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
+          <div class="admin-row-inputs">
+            <input type="text" id="edit-label-${si}-${ii}" value="${item.label}" placeholder="Nome">
+            <select id="edit-type-${si}-${ii}" onchange="updateEditUrlLabel(${si},${ii})">
+              <option value="external" ${item.type==='external'?'selected':''}>Link externo</option>
+              <option value="internal" ${item.type==='internal'?'selected':''}>Página interna</option>
+              <option value="members" ${item.type==='members'?'selected':''}>Área de membros</option>
+            </select>
+          </div>
+          <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug da página">
+          <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta (opcional)">
+          <div style="display:flex;gap:8px">
+            <button class="btn-add" onclick="saveEditItem(${si},${ii})">✓ Salvar</button>
+            <button class="btn-add" style="background:var(--text-dim)" onclick="toggleEditRow(${si},${ii})">Cancelar</button>
+          </div>
         </div>`).join('')}
       <div class="admin-add-form">
         <div class="admin-row-inputs">
@@ -675,6 +697,22 @@ function renderAdminPanel() {
       </div>
     </div>`).join('');
 }
+
+function toggleEditRow(si, ii) {
+  const form = document.getElementById(`edit-${si}-${ii}`);
+  form.classList.toggle('hidden');
+}
+function saveEditItem(si, ii) {
+  const item = menuData.sections[si].items[ii];
+  item.label = document.getElementById(`edit-label-${si}-${ii}`).value.trim() || item.label;
+  item.type  = document.getElementById(`edit-type-${si}-${ii}`).value;
+  item.desc  = document.getElementById(`edit-desc-${si}-${ii}`).value.trim();
+  const urlVal = document.getElementById(`edit-url-${si}-${ii}`).value.trim();
+  if (item.type === 'internal') { item.page = urlVal; delete item.url; }
+  else { item.url = urlVal; delete item.page; }
+  renderAdminPanel(); renderDrawer(); renderCards();
+}
+
 
 function toggleItemMenu(si, ii) {
   menuData.sections[si].items[ii].showMenu = !menuData.sections[si].items[ii].showMenu;
