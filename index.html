@@ -4,1480 +4,551 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bolhas de Luz — Terreiro de Umbanda e Quimbanda</title>
-<meta name="description" content="Terreiro Bolhas de Luz — Umbanda e Quimbanda em Porto Alegre, RS. Fé, axé e comunidade.">
+<meta name="description" content="Terreiro Bolhas de Luz — Umbanda e Quimbanda em Porto Alegre, RS.">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
-/* ─── RESET & BASE ─── */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --gold: #c4396b;
-  --gold-light: #e8688a;
-  --gold-dim: rgba(196,57,107,.08);
-  --bg: #fff5f7;
-  --surface: #ffffff;
-  --border: rgba(196,57,107,.15);
-  --text: #2a1a22;
-  --text-dim: rgba(80,30,50,.5);
-  --red: #b84040;
-  --red-dim: rgba(184,64,64,.08);
-  --green: #2a7a60;
-  --green-dim: rgba(42,122,96,.08);
-  --green-border: rgba(42,122,96,.25);
-  --amber: #8c5a00;
-  --amber-dim: rgba(139,90,0,.08);
-  --amber-border: rgba(139,90,0,.25);
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fdf6ee;--surface:rgba(255,255,255,.72);
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
 }
-html { scroll-behavior: smooth; }
-body {
-  font-family: 'DM Sans', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-a { text-decoration: none; color: inherit; }
-button { cursor: pointer; font-family: inherit; }
-img { max-width: 100%; display: block; }
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
 
-/* ─── ADMIN TOOLBAR ─── */
-#admin-bar {
-  background: linear-gradient(135deg, #2a1a22, #3a2030);
-  color: rgba(255,255,255,.7);
-  font-family: 'Cinzel', serif;
-  font-size: .62rem;
-  letter-spacing: .1em;
-  padding: 8px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-#admin-bar.hidden { display: none; }
-.admin-label { opacity: .5; }
-.admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.admin-btn {
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 16px;
-  color: rgba(255,255,255,.75);
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .08em;
-  padding: 4px 12px;
-  transition: all .2s;
-}
-.admin-btn:hover { background: rgba(255,255,255,.2); color: #fff; }
-.admin-btn.danger { border-color: rgba(184,64,64,.4); color: rgba(255,140,140,.8); }
-.admin-btn.danger:hover { background: rgba(184,64,64,.2); }
-#admin-toggle { display: none; }
-/* modal senha admin */
-#admin-senha-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(40,10,20,.6);
-  backdrop-filter: blur(4px);
-  z-index: 600;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-#admin-senha-overlay.open { display: flex; }
+/* fundo fixo */
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(220,100,40,.16) 0%,rgba(196,57,107,.07) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,90,30,.09) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 85%,rgba(230,140,40,.08) 0%,transparent 45%),
+    var(--creme);}
+.bg-entardecer{position:fixed;bottom:0;left:0;right:0;height:260px;z-index:-2;
+  background:linear-gradient(to top,rgba(210,90,40,.2) 0%,rgba(220,100,60,.12) 25%,rgba(196,57,107,.06) 55%,transparent 100%);
+  pointer-events:none;}
+.bg-mountains{position:fixed;bottom:0;left:0;right:0;z-index:-1;height:160px;
+  background:url('assets/montanhas.png') bottom center/cover no-repeat;opacity:.2;pointer-events:none;}
+.bg-bolhas-img{position:fixed;inset:0;z-index:0;
+  background:url('assets/bolhas.png') center/90% no-repeat;opacity:.04;pointer-events:none;}
+canvas#jardim{position:fixed;bottom:0;left:0;width:100%;z-index:1;height:140px;pointer-events:none}
+#bolhas-container{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
 
-/* ─── NAV ─── */
-nav {
-  background: linear-gradient(135deg, #c0405a, #d4607a 60%, #e07a90);
-  box-shadow: 0 2px 20px rgba(180,60,90,.25);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  padding: 0 20px;
-}
-.nav-inner {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 58px;
-}
-.nav-logo {
-  font-family: 'Cinzel', serif;
-  font-size: .95rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: .1em;
-  flex-shrink: 0;
-  margin-right: 8px;
-}
-.nav-logo span { opacity: .65; font-weight: 400; }
-.nav-links {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-  flex-wrap: wrap;
-  overflow: hidden;
-}
-.nav-item {
-  position: relative;
-}
-.nav-btn {
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.28);
-  border-radius: 20px;
-  color: rgba(255,255,255,.85);
-  font-family: 'DM Sans', sans-serif;
-  font-size: .72rem;
-  padding: 5px 13px;
-  transition: all .2s;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.nav-btn:hover { background: rgba(255,255,255,.28); }
-.nav-btn.active { background: rgba(255,255,255,.9); color: #c4396b; }
-.nav-btn .chevron {
-  font-size: .6rem;
-  transition: transform .2s;
-  display: inline-block;
-}
-.nav-item.open .chevron { transform: rotate(180deg); }
-.nav-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(196,57,107,.15);
-  min-width: 180px;
-  padding: 8px 0;
-  z-index: 200;
-}
-.nav-item.open .nav-dropdown { display: block; }
-.nav-dropdown a {
-  display: block;
-  padding: 9px 16px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: .8rem;
-  color: var(--text);
-  transition: background .15s;
-}
-.nav-dropdown a:hover { background: var(--gold-dim); color: var(--gold); }
-.nav-dropdown a.hidden-item { opacity: .4; }
-.nav-login {
-  background: rgba(255,255,255,.9);
-  border: none;
-  border-radius: 20px;
-  color: #c4396b;
-  font-family: 'Cinzel', serif;
-  font-size: .7rem;
-  font-weight: 600;
-  padding: 6px 16px;
-  letter-spacing: .06em;
-  transition: all .2s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.nav-login:hover { background: #fff; box-shadow: 0 2px 10px rgba(196,57,107,.2); }
+@keyframes subir-bolha{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  10%{opacity:1}
+  30%{transform:translateY(-30vh) translateX(10px)}
+  60%{transform:translateY(-60vh) translateX(-8px)}
+  90%{opacity:.6}
+  100%{transform:translateY(-108vh) translateX(4px);opacity:0}}
+.bolha-el{position:absolute;animation:subir-bolha ease-in-out infinite}
 
-/* ─── PAGE SYSTEM ─── */
-.page { display: none; }
-.page.active { display: block; }
-#page-inicio { display: block; }
+/* admin */
+#admin-bar{background:linear-gradient(135deg,#2a1a22,#3a2030);color:rgba(255,255,255,.7);
+  font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.1em;
+  padding:8px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  position:relative;z-index:20;}
+#admin-bar.hidden{display:none}
+.admin-label{opacity:.5}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+.admin-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:16px;
+  color:rgba(255,255,255,.75);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:4px 12px;transition:all .2s;}
+.admin-btn:hover{background:rgba(255,255,255,.2);color:#fff}
+.admin-btn.danger{border-color:rgba(184,64,64,.4);color:rgba(255,140,140,.8)}
 
-/* ─── SHARED LAYOUT ─── */
-.section-wrap { max-width: 1100px; margin: 0 auto; padding: 52px 24px; }
-.section-wrap.narrow { max-width: 780px; }.eyebrow {
-  font-family: 'Cinzel', serif;
-  font-size: .62rem;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 10px;
-}
-.section-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 8px;
-}
-.section-sub {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 1rem;
-  color: var(--text-dim);
-  font-style: italic;
-  margin-bottom: 36px;
-  line-height: 1.6;
-}
-.divider { height: 1px; background: var(--border); max-width: 1100px; margin: 0 auto; }
+/* header */
+header{position:relative;z-index:10;padding:40px 24px 8px;text-align:center;}
+.header-logo{margin:0 auto 16px;max-height:48px;width:auto;}
+.header-logo-text{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:700;color:var(--terra);letter-spacing:.12em;margin-bottom:6px;}
+.header-eyebrow{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(196,90,30,.6);margin-bottom:24px;}
+.ornamento{display:block;margin:0 auto 18px;opacity:.5}
+.header-title{font-family:'Playfair Display',serif;font-size:clamp(1.7rem,5vw,2.5rem);font-weight:600;color:var(--text);line-height:1.2;margin-bottom:6px;}
+.header-title em{color:var(--rosa);font-style:italic}
+.header-divider{width:40px;height:1px;background:linear-gradient(90deg,transparent,rgba(196,90,30,.4),transparent);margin:16px auto;}
+.header-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;line-height:1.75;max-width:420px;margin:0 auto 32px;}
+.header-cta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:52px;}
+.btn-rosa{background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;font-weight:700;padding:11px 24px;transition:all .2s;}
+.btn-rosa:hover{background:var(--rosa-l);transform:translateY(-1px)}
+.btn-ghost{background:none;border:1px solid rgba(196,57,107,.2);border-radius:6px;color:rgba(196,57,107,.65);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;padding:11px 20px;transition:all .2s;}
+.btn-ghost:hover{border-color:var(--rosa);color:var(--rosa)}
 
-/* ─── BUTTONS ─── */
-.btn-primary {
-  background: var(--gold);
-  border: none;
-  border-radius: 8px;
-  color: #fff;
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  letter-spacing: .08em;
-  font-weight: 700;
-  padding: 11px 28px;
-  transition: all .2s;
-  display: inline-block;
-}
-.btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
-.btn-outline {
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text-dim);
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  letter-spacing: .08em;
-  padding: 11px 24px;
-  transition: all .2s;
-  display: inline-block;
-}
-.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+/* widgets */
+.widgets-wrap{position:relative;z-index:10;max-width:700px;margin:0 auto;padding:0 16px 240px;}
+.widgets-label{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(196,90,30,.55);
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.widgets-label::before,.widgets-label::after{content:'';flex:1;height:1px;background:rgba(196,90,30,.12)}
+.widgets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;}
+.widget{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 16px;
+  transition:transform .22s,box-shadow .22s;display:block;backdrop-filter:blur(4px);}
+.widget:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(180,60,90,.1)}
+.widget-name{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;letter-spacing:.05em;color:var(--text);margin-bottom:6px;}
+.widget-desc{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);font-style:italic;line-height:1.45;}
+.widget-tag{display:inline-block;margin-top:10px;font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.05em;padding:2px 9px;border-radius:20px;}
+.tag-pub{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green)}
+.tag-mem{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);color:var(--rosa)}
+.widget-interna{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
+  border-color:rgba(196,57,107,.2);border-top:2px solid var(--rosa);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.widget-interna .widget-name{font-size:.78rem;margin-bottom:4px}
 
-/* ─── FUNDO FIXO ─── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: #fff5f7;
-  z-index: -3;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: 220px;
-  background-image: url('assets/montanhas.png');
-  background-size: cover;
-  background-position: top center;
-  opacity: .35;
-  z-index: -2;
-  pointer-events: none;
-}
-.bg-bubbles {
-  position: fixed;
-  inset: 0;
-  background-image: url('assets/bolhas.png');
-  background-size: 85%;
-  background-position: center center;
-  background-repeat: no-repeat;
-  opacity: .07;
-  z-index: -1;
-  pointer-events: none;
-}
-/* ─── HERO ─── */
-.hero {
-  background: transparent;
-  padding: 72px 24px 80px;
-  text-align: center;
-  position: relative;
-}
-@keyframes flicker {
-  0% { opacity: .4; transform: scale(1); }
-  100% { opacity: 1; transform: scale(1.08); }
-}
-.hero-eyebrow {
-  font-family: 'Cinzel', serif;
-  font-size: .63rem;
-  letter-spacing: .22em;
-  color: var(--gold);
-  text-transform: uppercase;
-  margin-bottom: 18px;
-}
-.hero-title {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(2rem, 5vw, 3.2rem);
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.15;
-  margin-bottom: 18px;
-}
-.hero-title em { color: var(--gold); font-style: normal; }
-.hero-sub {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 1.15rem;
-  color: var(--text-dim);
-  max-width: 500px;
-  margin: 0 auto 36px;
-  line-height: 1.7;
-}
-.hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+/* páginas internas */
+.page{display:none}.page.active{display:block}
+#page-inicio{display:block}
+.section-wrap{max-width:1000px;margin:0 auto;padding:52px 24px 200px}
+.section-wrap.narrow{max-width:720px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:36px;line-height:1.6}
+.btn-outline{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;padding:11px 24px;transition:all .2s;display:inline-block}
+.btn-outline:hover{border-color:var(--rosa);color:var(--rosa)}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:28px;transition:color .2s;}
+.back-btn:hover{color:var(--rosa)}
 
-/* ─── APPS GRID ─── */
-.apps-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
-  gap: 14px;
-}
-.app-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 18px;
-  transition: transform .22s, box-shadow .22s;
-  display: block;
-}
-.app-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(180,60,90,.13);
-}
-.app-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.2rem;
-  margin-bottom: 12px;
-}
-.icon-pink { background: linear-gradient(135deg, #fde8ed, #fce8ef); }
-.icon-green { background: linear-gradient(135deg, #e8f4f0, #d4ede6); }
-.icon-amber { background: linear-gradient(135deg, #fffbe8, #fff5d0); }
-.app-name {
-  font-family: 'Cinzel', serif;
-  font-size: .72rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: .05em;
-  margin-bottom: 5px;
-}
-.app-desc {
-  font-family: 'DM Sans', sans-serif;
-  font-size: .75rem;
-  color: var(--text-dim);
-  line-height: 1.45;
-}
-.tag {
-  display: inline-block;
-  border-radius: 20px;
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .04em;
-  padding: 2px 9px;
-  margin-top: 10px;
-}
-.tag-rose { background: var(--gold-dim); border: 1px solid rgba(196,57,107,.2); color: var(--gold); }
-.tag-green { background: var(--green-dim); border: 1px solid var(--green-border); color: var(--green); }
-.tag-amber { background: var(--amber-dim); border: 1px solid var(--amber-border); color: var(--amber); }
+/* timeline */
+.timeline{position:relative}
+.timeline-item{display:grid;grid-template-columns:110px 1fr;gap:32px;margin-bottom:52px;position:relative}
+.timeline-item::before{content:'';position:absolute;left:109px;top:28px;bottom:-52px;width:1px;background:var(--border)}
+.timeline-item:last-child::before{display:none}
+.timeline-date{text-align:right;padding-top:4px}
+.timeline-date-label{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:4px}
+.timeline-dot{width:10px;height:10px;background:var(--rosa);border-radius:50%;margin-left:auto;margin-top:2px;box-shadow:0 0 0 3px rgba(196,57,107,.15);position:relative;z-index:1}
+.timeline-content h3{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:10px}
+.timeline-content p{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.75}
 
-/* ─── BANNER ÁREA INTERNA ─── */
-.interna-banner {
-  background: linear-gradient(135deg, #c0405a, #d4607a);
-  border-radius: 12px;
-  padding: 32px 28px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-.interna-banner h3 {
-  font-family: 'Cinzel', serif;
-  font-size: 1rem;
-  letter-spacing: .08em;
-  color: #fff;
-  margin-bottom: 6px;
-}
-.interna-banner p {
-  font-family: 'Crimson Pro', serif;
-  font-size: .95rem;
-  color: rgba(255,255,255,.8);
-  font-style: italic;
-}
-.btn-white {
-  background: #fff;
-  border: none;
-  border-radius: 8px;
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 11px;
-  letter-spacing: .08em;
-  font-weight: 700;
-  padding: 11px 24px;
-  transition: all .2s;
-}
-.btn-white:hover { box-shadow: 0 4px 16px rgba(0,0,0,.15); transform: translateY(-1px); }
+/* eventos */
+.events-list{display:flex;flex-direction:column}
+.event-item{display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--border)}
+.event-item:last-child{border-bottom:none}
+.event-date{flex-shrink:0;width:56px;text-align:center}
+.event-month{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);display:block}
+.event-day{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:var(--text);line-height:1}
+.event-name{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.05em;color:var(--text)}
 
-/* ─── TIMELINE (FUNDAÇÃO) ─── */
-.timeline { position: relative; padding-left: 0; }
-.timeline-item {
-  display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 32px;
-  margin-bottom: 56px;
-  position: relative;
-}
-.timeline-item::before {
-  content: '';
-  position: absolute;
-  left: 109px;
-  top: 28px;
-  bottom: -56px;
-  width: 1px;
-  background: var(--border);
-}
-.timeline-item:last-child::before { display: none; }
-.timeline-date {
-  text-align: right;
-  padding-top: 4px;
-}
-.timeline-date-label {
-  font-family: 'DM Sans', sans-serif;
-  font-size: .72rem;
-  color: var(--text-dim);
-  margin-bottom: 4px;
-}
-.timeline-dot {
-  width: 10px; height: 10px;
-  background: var(--gold);
-  border-radius: 50%;
-  margin-left: auto;
-  margin-top: 2px;
-  box-shadow: 0 0 0 3px rgba(196,57,107,.15);
-  position: relative;
-  z-index: 1;
-}
-.timeline-content { padding-top: 0; }
-.timeline-content h3 {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 10px;
-}
-.timeline-content p {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 1rem;
-  color: var(--text);
-  line-height: 1.75;
-}
-@media (max-width: 600px) {
-  .timeline-item { grid-template-columns: 1fr; gap: 8px; }
-  .timeline-item::before { display: none; }
-  .timeline-date { text-align: left; display: flex; align-items: center; gap: 10px; }
-  .timeline-dot { margin-left: 0; }
-}
+/* faq */
+.faq-list{display:flex;flex-direction:column}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-item:first-child{border-top:1px solid var(--border)}
+.faq-btn{width:100%;background:none;border:none;text-align:left;padding:20px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.faq-question{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.05em;font-weight:600;color:var(--text)}
+.faq-chevron{font-size:1.1rem;color:var(--rosa);transition:transform .25s;flex-shrink:0}
+.faq-chevron.open{transform:rotate(180deg)}
+.faq-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.faq-body.open{max-height:800px}
+.faq-content{padding:0 0 20px}
+.faq-content p{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.75;margin-bottom:12px}
+.faq-content p:last-child{margin-bottom:0}
+.faq-content p.accent{color:var(--rosa);font-style:italic}
+.help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:4px}
+.help-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 14px}
+.help-title{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.06em;color:var(--text);margin-bottom:6px}
+.help-text{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);line-height:1.5}
+.pix-box{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:10px 12px;margin-top:10px}
+.pix-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px}
+.pix-key{font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)}
+.badge-wip{display:inline-block;background:var(--amber-dim);border:1px solid var(--amber-border);color:var(--amber);border-radius:20px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:3px 12px;margin-top:12px}
 
-/* ─── EVENTOS ─── */
-.events-list { display: flex; flex-direction: column; gap: 0; }
-.event-item {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border);
-}
-.event-item:last-child { border-bottom: none; }
-.event-date {
-  flex-shrink: 0;
-  width: 56px;
-  text-align: center;
-}
-.event-month {
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--gold);
-  display: block;
-}
-.event-day {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1;
-}
-.event-info { flex: 1; }
-.event-name {
-  font-family: 'Cinzel', serif;
-  font-size: .78rem;
-  font-weight: 600;
-  letter-spacing: .05em;
-  color: var(--text);
-}
-.event-type {
-  font-family: 'DM Sans', sans-serif;
-  font-size: .72rem;
-  color: var(--text-dim);
-  margin-top: 2px;
-}
+/* blog */
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+.blog-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 18px;display:flex;flex-direction:column;gap:8px;transition:transform .22s,box-shadow .22s}
+.blog-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(180,60,90,.1)}
+.blog-cat{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+.blog-cat.fundamentos{color:var(--rosa)}
+.blog-cat.reflexoes{color:var(--green)}
+.blog-title{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);line-height:1.3}
+.blog-placeholder{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:auto}
+.blog-note{background:var(--rosa-dim);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:28px;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic}
 
-/* ─── FAQ / APOIE ─── */
-.faq-list { display: flex; flex-direction: column; }
-.faq-item { border-bottom: 1px solid var(--border); }
-.faq-item:first-child { border-top: 1px solid var(--border); }
-.faq-btn {
-  width: 100%;
-  background: none;
-  border: none;
-  text-align: left;
-  padding: 20px 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.faq-question {
-  font-family: 'Cinzel', serif;
-  font-size: .78rem;
-  letter-spacing: .05em;
-  font-weight: 600;
-  color: var(--text);
-}
-.faq-chevron {
-  font-size: 1.1rem;
-  color: var(--gold);
-  transition: transform .25s;
-  flex-shrink: 0;
-  line-height: 1;
-}
-.faq-chevron.open { transform: rotate(180deg); }
-.faq-body { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
-.faq-body.open { max-height: 800px; }
-.faq-content { padding: 0 0 20px; }
-.faq-content p {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: 1rem;
-  color: var(--text);
-  line-height: 1.75;
-  margin-bottom: 12px;
-}
-.faq-content p:last-child { margin-bottom: 0; }
-.faq-content p.accent { color: var(--gold); font-style: italic; }
-.help-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-  gap: 12px;
-  margin-top: 4px;
-}
-.help-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 14px;
-}
-.help-icon { font-size: 1.3rem; margin-bottom: 8px; }
-.help-title {
-  font-family: 'Cinzel', serif;
-  font-size: .68rem;
-  font-weight: 700;
-  letter-spacing: .06em;
-  color: var(--text);
-  margin-bottom: 6px;
-}
-.help-text {
-  font-family: 'Crimson Pro', Georgia, serif;
-  font-size: .9rem;
-  color: var(--text-dim);
-  line-height: 1.5;
-}
-.pix-box {
-  background: var(--gold-dim);
-  border: 1px solid rgba(196,57,107,.2);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin-top: 10px;
-}
-.pix-label {
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 2px;
-}
-.pix-key {
-  font-family: 'Crimson Pro', serif;
-  font-size: .95rem;
-  font-weight: 600;
-  color: var(--text);
-}
-.badge-wip {
-  display: inline-block;
-  background: var(--amber-dim);
-  border: 1px solid var(--amber-border);
-  color: var(--amber);
-  border-radius: 20px;
-  font-family: 'Cinzel', serif;
-  font-size: .62rem;
-  letter-spacing: .06em;
-  padding: 3px 12px;
-  margin-top: 12px;
-}
+/* modal */
+.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:36px 32px;width:100%;max-width:360px;position:relative}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1}
+.modal-close:hover{color:var(--rosa)}
+.modal-footer{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:16px}
+.form-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px}
+.form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;padding:10px 12px;width:100%;outline:none;margin-bottom:16px;transition:border-color .2s}
+.form-input:focus{border-color:var(--rosa)}
 
-/* ─── BLOG / TEXTOS ─── */
-.blog-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 16px;
-}
-.blog-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  transition: transform .22s, box-shadow .22s;
-}
-.blog-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(180,60,90,.1);
-}
-.blog-cat {
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .1em;
-  text-transform: uppercase;
-}
-.blog-cat.fundamentos { color: var(--gold); }
-.blog-cat.reflexoes { color: var(--green); }
-.blog-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.3;
-}
-.blog-placeholder {
-  font-family: 'Crimson Pro', serif;
-  font-size: .85rem;
-  color: var(--text-dim);
-  font-style: italic;
-  margin-top: auto;
-}
-.blog-note {
-  background: var(--gold-dim);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin-bottom: 28px;
-  font-family: 'Crimson Pro', serif;
-  font-size: .95rem;
-  color: var(--text-dim);
-  font-style: italic;
-}
+/* footer */
+footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3a2030);padding:32px 24px;text-align:center}
+.footer-logo{font-family:'Cinzel',serif;font-size:.85rem;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.12em;margin-bottom:6px}
+.footer-sub{font-family:'Crimson Pro',serif;font-size:.85rem;color:rgba(255,255,255,.25);font-style:italic}
 
-/* ─── MODAL LOGIN ─── */
-.overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(40,10,20,.55);
-  backdrop-filter: blur(4px);
-  z-index: 300;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-.overlay.open { display: flex; }
-.modal {
-  background: #fff;
-  border: 1px solid var(--border);
-  border-top: 3px solid var(--gold);
-  border-radius: 12px;
-  box-shadow: 0 8px 40px rgba(196,57,107,.15);
-  padding: 36px 32px;
-  width: 100%;
-  max-width: 360px;
-  position: relative;
-}
-.modal-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 4px;
-}
-.modal-sub {
-  font-family: 'Crimson Pro', serif;
-  font-size: .9rem;
-  color: var(--text-dim);
-  font-style: italic;
-  margin-bottom: 24px;
-}
-.form-label {
-  font-family: 'Cinzel', serif;
-  font-size: .62rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  display: block;
-  margin-bottom: 6px;
-}
-.form-input {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  color: var(--text);
-  font-family: 'Crimson Pro', serif;
-  font-size: 16px;
-  padding: 10px 12px;
-  width: 100%;
-  outline: none;
-  margin-bottom: 16px;
-  transition: border-color .2s;
-}
-.form-input:focus { border-color: var(--gold); }
-.modal-close {
-  position: absolute;
-  top: 14px; right: 16px;
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  color: var(--text-dim);
-  line-height: 1;
-}
-.modal-close:hover { color: var(--gold); }
-.modal-footer {
-  font-family: 'DM Sans', sans-serif;
-  font-size: .72rem;
-  color: var(--text-dim);
-  text-align: center;
-  margin-top: 16px;
-}
-
-/* ─── FOOTER ─── */
-footer {
-  background: linear-gradient(135deg, #2a1a22, #3a2030);
-  padding: 36px 24px;
-  text-align: center;
-}
-.footer-logo {
-  font-family: 'Cinzel', serif;
-  font-size: .85rem;
-  font-weight: 600;
-  color: rgba(255,255,255,.65);
-  letter-spacing: .12em;
-  margin-bottom: 6px;
-}
-.footer-sub {
-  font-family: 'Crimson Pro', serif;
-  font-size: .85rem;
-  color: rgba(255,255,255,.3);
-  font-style: italic;
-  margin-bottom: 14px;
-}
-.footer-links {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-.footer-links a {
-  font-family: 'Cinzel', serif;
-  font-size: .6rem;
-  letter-spacing: .08em;
-  color: rgba(255,255,255,.3);
-  text-transform: uppercase;
-  transition: color .2s;
-}
-.footer-links a:hover { color: rgba(255,255,255,.65); }
-
-/* ─── HAMBURGUER MOBILE ─── */
-.nav-hamburger {
-  display: none;
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.28);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1.2rem;
-  width: 36px;
-  height: 36px;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-.nav-drawer {
-  display: none;
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  background: linear-gradient(160deg, #c0405a, #d4607a);
-  z-index: 200;
-  padding: 16px 20px 24px;
-  box-shadow: 0 8px 32px rgba(180,60,90,.3);
-  transform: translateY(-100%);
-  transition: transform .3s ease;
-}
-.nav-drawer.open {
-  display: block;
-  transform: translateY(0);
-}
-.nav-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.nav-drawer-logo {
-  font-family: 'Cinzel', serif;
-  font-size: .9rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: .1em;
-}
-.nav-drawer-close {
-  background: rgba(255,255,255,.15);
-  border: 1px solid rgba(255,255,255,.28);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1.1rem;
-  width: 32px; height: 32px;
-  display: flex; align-items: center; justify-content: center;
-}
-.nav-drawer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.nav-drawer-links button {
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 8px;
-  color: rgba(255,255,255,.9);
-  font-family: 'DM Sans', sans-serif;
-  font-size: .9rem;
-  padding: 12px 16px;
-  text-align: left;
-  transition: background .2s;
-}
-.nav-drawer-links button:hover,
-.nav-drawer-links button.active { background: rgba(255,255,255,.25); }
-.nav-drawer-divider {
-  height: 1px;
-  background: rgba(255,255,255,.15);
-  margin: 8px 0;
-}
-.nav-drawer-login {
-  background: rgba(255,255,255,.9) !important;
-  color: #c4396b !important;
-  font-family: 'Cinzel', serif !important;
-  font-weight: 600 !important;
-  letter-spacing: .06em !important;
-  text-align: center !important;
-}
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 700px) {
-  .nav-links { display: none; }
-  .nav-login { display: none; }
-  .nav-hamburger { display: flex; }
-  .hero { padding: 52px 16px 40px; }
-  .section-wrap { padding: 36px 16px; }
-  .timeline-item { grid-template-columns: 1fr; gap: 6px; }
-  .timeline-item::before { display: none; }
-  .timeline-date { display: flex; align-items: center; gap: 10px; text-align: left; }
-  .timeline-dot { margin-left: 0; }
-  .apps-grid { grid-template-columns: 1fr 1fr; }
-  .help-grid { grid-template-columns: 1fr; }
-  .blog-grid { grid-template-columns: 1fr; }
-  .interna-banner { flex-direction: column; text-align: center; }
+@media(max-width:500px){
+  .widgets-grid{grid-template-columns:1fr 1fr}
+  .timeline-item{grid-template-columns:1fr;gap:6px}
+  .timeline-item::before{display:none}
+  .timeline-date{display:flex;align-items:center;gap:10px;text-align:left}
+  .timeline-dot{margin-left:0}
+  .help-grid{grid-template-columns:1fr}
+  .blog-grid{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 
-<!-- ─── FUNDO FIXO ─── -->
-<div class="bg-bubbles"></div>
+<div class="bg-entardecer"></div>
+<div class="bg-mountains"></div>
+<div class="bg-bolhas-img"></div>
+<canvas id="jardim"></canvas>
+<div id="bolhas-container"></div>
 
-<!-- ─── MODAL SENHA ADMIN ─── -->
-<div id="admin-senha-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+<!-- ADMIN SENHA -->
+<div id="admin-senha-overlay" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal" style="max-width:300px">
     <button class="modal-close" onclick="document.getElementById('admin-senha-overlay').classList.remove('open')">×</button>
     <div class="modal-title" style="font-size:1.1rem">Admin</div>
     <div class="modal-sub">Digite a senha para continuar</div>
     <label class="form-label">Senha</label>
     <input type="password" class="form-input" id="admin-senha-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminSenha()">
-    <div id="admin-senha-erro" style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--red);margin-bottom:12px;display:none">Senha incorreta.</div>
-    <button class="btn-primary" style="width:100%;text-align:center" onclick="checkAdminSenha()">Entrar</button>
+    <div id="admin-senha-erro" style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:#b84040;margin-bottom:12px;display:none">Senha incorreta.</div>
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="checkAdminSenha()">Entrar</button>
   </div>
 </div>
 
-<!-- ─── ADMIN BAR (oculto por padrão) ─── -->
+<!-- ADMIN BAR -->
 <div id="admin-bar" class="hidden">
   <span class="admin-label">✦ Modo Admin</span>
   <div class="admin-actions">
-    <button class="admin-btn" onclick="toggleNavItem('sessoes')">Sessões</button>
-    <button class="admin-btn" onclick="toggleNavItem('textos')">Textos</button>
-    <button class="admin-btn" onclick="toggleNavItem('apoie')">Apoie</button>
-    <button class="admin-btn" onclick="toggleNavItem('historia')">Fundação</button>
-    <button class="admin-btn danger" onclick="hideAdminBar()">Fechar</button>
+    <button class="admin-btn" onclick="toggleWidget('sessoes')">Sessões</button>
+    <button class="admin-btn" onclick="toggleWidget('historia')">História</button>
+    <button class="admin-btn" onclick="toggleWidget('textos')">Textos</button>
+    <button class="admin-btn" onclick="toggleWidget('apoie')">Apoie</button>
+    <button class="admin-btn" onclick="toggleWidget('regimento')">Regimento</button>
+    <button class="admin-btn danger" onclick="document.getElementById('admin-bar').classList.add('hidden')">Fechar</button>
   </div>
 </div>
 
-
-<!-- ─── NAVEGAÇÃO ─── -->
-<nav>
-  <div class="nav-inner">
-    <div class="nav-logo"><img src="assets/logo-hori.png" alt="Bolhas de Luz" style="height:32px;width:auto;display:block"></div>
-    <div class="nav-links" id="nav-links">
-      <button class="nav-btn active" onclick="showPage('inicio', this)">Início</button>
-      <span class="nav-item" id="nav-sessoes">
-        <button class="nav-btn" onclick="showPage('sessoes', this)">Sessões</button>
-      </span>
-      <span class="nav-item" id="nav-historia">
-        <button class="nav-btn" onclick="showPage('historia', this)">Nossa História</button>
-      </span>
-      <span class="nav-item" id="nav-textos">
-        <button class="nav-btn" onclick="showPage('textos', this)">Textos</button>
-      </span>
-      <span class="nav-item" id="nav-apoie">
-        <button class="nav-btn" onclick="showPage('apoie', this)">Apoie</button>
-      </span>
-    </div>
-    <button class="nav-login" onclick="openLogin()">Área Interna</button>
-    <button class="nav-hamburger" onclick="openDrawer()" aria-label="Menu">☰</button>
-  </div>
-</nav>
-
-<!-- ─── DRAWER MOBILE ─── -->
-<div id="nav-drawer" class="nav-drawer">
-  <div class="nav-drawer-header">
-    <span class="nav-drawer-logo">Bolhas de Luz</span>
-    <button class="nav-drawer-close" onclick="closeDrawer()">×</button>
-  </div>
-  <div class="nav-drawer-links">
-    <button onclick="showPage('inicio',null);closeDrawer()">Início</button>
-    <span id="drawer-sessoes"><button onclick="showPage('sessoes',null);closeDrawer()">Sessões</button></span>
-    <span id="drawer-historia"><button onclick="showPage('historia',null);closeDrawer()">Nossa História</button></span>
-    <span id="drawer-textos"><button onclick="showPage('textos',null);closeDrawer()">Textos</button></span>
-    <span id="drawer-apoie"><button onclick="showPage('apoie',null);closeDrawer()">Apoie o Terreiro</button></span>
-    <div class="nav-drawer-divider"></div>
-    <button class="nav-drawer-login" onclick="openLogin();closeDrawer()">Área Interna →</button>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════
-     PÁGINA: INÍCIO
-════════════════════════════════════════════ -->
+<!-- PÁGINA INÍCIO -->
 <div id="page-inicio" class="page active">
-
-  <section class="hero">
-    <div class="hero-eyebrow">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
-    <h1 class="hero-title">Um espaço de <em>fé,</em><br>axé e comunidade</h1>
-    <p class="hero-sub">Umbanda e Quimbanda vividas com amor, respeito e tradição. Bem-vinde à nossa casa digital.</p>
-    <div class="hero-cta">
-      <button class="btn-primary" onclick="showPage('historia', null)">Nossa história</button>
-      <button class="btn-outline" onclick="openLogin()">Sou filha da casa</button>
+  <header>
+    <img src="assets/logo-hori.png" alt="Bolhas de Luz" class="header-logo" onerror="this.style.display='none';document.querySelector('.header-logo-text').style.display='block'">
+    <div class="header-logo-text" style="display:none">Bolhas de Luz</div>
+    <div class="header-eyebrow">Terreiro de Umbanda e Quimbanda · Porto Alegre, RS</div>
+    <svg class="ornamento" width="48" height="48" viewBox="0 0 52 52" fill="none">
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".6" transform="rotate(0 26 26)"/>
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".5" transform="rotate(60 26 26)"/>
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".5" transform="rotate(120 26 26)"/>
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".6" transform="rotate(180 26 26)"/>
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".5" transform="rotate(240 26 26)"/>
+      <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".5" transform="rotate(300 26 26)"/>
+      <circle cx="26" cy="26" r="6" fill="#c4396b" opacity=".85"/>
+      <circle cx="26" cy="26" r="2.5" fill="#fdf6ee" opacity=".9"/>
+    </svg>
+    <h1 class="header-title">Um espaço de <em>fé,</em><br>axé e comunidade</h1>
+    <div class="header-divider"></div>
+    <p class="header-sub">Umbanda e Quimbanda vividas com amor, respeito e tradição. Bem-vinde à nossa casa.</p>
+    <div class="header-cta">
+      <button class="btn-rosa" onclick="showPage('historia')">Nossa história</button>
+      <button class="btn-ghost" onclick="openLogin()">Sou filha da casa</button>
     </div>
-  </section>
+  </header>
 
-  <div class="section-wrap">
-    <div class="eyebrow">Ferramentas</div>
-    <div class="section-title">Nossos apps</div>
-    <p class="section-sub">Apps públicos estão disponíveis para qualquer visitante. Apps para membros requerem login.</p>
-    <div class="apps-grid">
-      <a class="app-card" href="https://pontoscantados.pages.dev" target="_blank" rel="noopener">
-        <div class="app-icon icon-pink">🎵</div>
-        <div class="app-name">Pontos Cantados</div>
-        <div class="app-desc">Catálogo de pontos com player de áudio e letras</div>
-        <span class="tag tag-rose">público</span>
-      </a>
-      <a class="app-card" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">
-        <div class="app-icon icon-pink">📅</div>
-        <div class="app-name">Calendário</div>
-        <div class="app-desc">Sessões, giras e eventos do terreiro</div>
-        <span class="tag tag-rose">público</span>
-      </a>
-      <a class="app-card" href="https://lojas.pages.dev" target="_blank" rel="noopener">
-        <div class="app-icon icon-amber">🛒</div>
-        <div class="app-name">Guia de Lojas</div>
-        <div class="app-desc">Lojas recomendadas para artigos religiosos</div>
-        <span class="tag tag-rose">público</span>
-      </a>
-      <a class="app-card" href="#" onclick="openLogin();return false">
-        <div class="app-icon icon-amber">💰</div>
-        <div class="app-name">Tesouraria</div>
-        <div class="app-desc">Gestão financeira e obrigações da casa</div>
-        <span class="tag tag-amber">membros</span>
-      </a>
-      <a class="app-card" href="#" onclick="openLogin();return false">
-        <div class="app-icon icon-green">🌿</div>
-        <div class="app-name">Filhas da Casa</div>
-        <div class="app-desc">Perfis espirituais e guias de cada membro</div>
-        <span class="tag tag-green">membros</span>
-      </a>
-    </div>
-  </div>
+  <div class="widgets-wrap">
+    <div class="widgets-label">Nossa casa digital</div>
+    <div class="widgets-grid">
 
-  <div class="divider"></div>
+      <a class="widget" href="https://pontoscantados.pages.dev" target="_blank" rel="noopener">
+        <div class="widget-name">Pontos Cantados</div>
+        <div class="widget-desc">Catálogo com player de áudio e letras</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
 
-  <div class="section-wrap">
-    <div class="interna-banner">
-      <div>
-        <h3>Área das Filhas da Casa</h3>
-        <p>Acesse seus perfis, finanças e ferramentas internas do terreiro</p>
+      <a class="widget" id="widget-sessoes" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">
+        <div class="widget-name">Calendário</div>
+        <div class="widget-desc">Sessões e eventos da casa</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
+
+      <a class="widget" href="https://floraselojas.pages.dev" target="_blank" rel="noopener">
+        <div class="widget-name">Guia de Lojas</div>
+        <div class="widget-desc">Artigos religiosos recomendados</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
+
+      <a class="widget" id="widget-historia" href="#" onclick="showPage('historia');return false">
+        <div class="widget-name">Nossa História</div>
+        <div class="widget-desc">A fundação do Bolhas de Luz</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
+
+      <a class="widget" id="widget-textos" href="#" onclick="showPage('textos');return false">
+        <div class="widget-name">Textos da Casa</div>
+        <div class="widget-desc">Fundamentos e reflexões</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
+
+      <a class="widget" id="widget-apoie" href="#" onclick="showPage('apoie');return false">
+        <div class="widget-name">Apoie o Terreiro</div>
+        <div class="widget-desc">Como nos ajudar</div>
+        <span class="widget-tag tag-pub">público</span>
+      </a>
+
+      <a class="widget" href="#" onclick="openLogin();return false">
+        <div class="widget-name">Tesouraria</div>
+        <div class="widget-desc">Finanças e obrigações da casa</div>
+        <span class="widget-tag tag-mem">membros</span>
+      </a>
+
+      <a class="widget" href="#" onclick="openLogin();return false">
+        <div class="widget-name">Filhas da Casa</div>
+        <div class="widget-desc">Perfis e guias espirituais</div>
+        <span class="widget-tag tag-mem">membros</span>
+      </a>
+
+      <a class="widget" id="widget-regimento" href="#" onclick="openLogin();return false">
+        <div class="widget-name">Regimento Interno</div>
+        <div class="widget-desc">Normas e condutas da casa</div>
+        <span class="widget-tag tag-mem">membros</span>
+      </a>
+
+      <div class="widget widget-interna">
+        <div>
+          <div class="widget-name">Área das Filhas</div>
+          <div class="widget-desc">Acesse ferramentas internas do terreiro</div>
+        </div>
+        <button class="btn-rosa" onclick="openLogin()">Entrar</button>
       </div>
-      <button class="btn-white" onclick="openLogin()">Entrar →</button>
+
     </div>
   </div>
+</div>
 
-</div><!-- /page-inicio -->
-
-<!-- ════════════════════════════════════════════
-     PÁGINA: NOSSA HISTÓRIA
-════════════════════════════════════════════ -->
+<!-- PÁGINA HISTÓRIA -->
 <div id="page-historia" class="page">
   <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Fundação</div>
     <div class="section-title">Nossa história</div>
     <p class="section-sub">Da previsão de Exu Tranca Ruas até a conquista da sede própria — cada passo foi guiado pela espiritualidade.</p>
-
     <div class="timeline">
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">Final de 2020</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>O Anúncio e a Previsão</h3>
-          <p>Exu Tranca Ruas previu a caminhada que estava por vir, anunciando a chegada dos axés, dos filhos e da futura casa.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">Final de 2020</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Anúncio e a Previsão</h3><p>Exu Tranca Ruas previu a caminhada que estava por vir, anunciando a chegada dos axés, dos filhos e da futura casa.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">Fevereiro de 2021</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>O Encontro Inicial</h3>
-          <p>O destino se apressou e trouxe o encontro de Vanessa com Anna, passando assim a acompanhá-la nas terreiras, e se deu o início real a esta jornada espiritual.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">Fevereiro de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Encontro Inicial</h3><p>O destino se apressou e trouxe o encontro de Vanessa com Anna, passando assim a acompanhá-la nas terreiras, e se deu o início real a esta jornada espiritual.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">Maio de 2021</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>A Manifestação de Vô Chico</h3>
-          <p>A espiritualidade se manifestou decisivamente com o nascimento de Vô Chico através da médium Vanessa, marcando a necessidade de movimento de Anna para a iniciação de sua filha.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">Maio de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>A Manifestação de Vô Chico</h3><p>A espiritualidade se manifestou decisivamente com o nascimento de Vô Chico através da médium Vanessa, marcando a necessidade de movimento de Anna para a iniciação de sua filha.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">Outubro de 2021</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>Abertura das Portas</h3>
-          <p>Com a benção de Mãe Betânia, o Bolhas de Luz abriu suas portas oficialmente em um quarto improvisado, unindo Anna como Mãe da casa e Vanessa como sua primeira filha.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">Outubro de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>Abertura das Portas</h3><p>Com a benção de Mãe Betânia, o Bolhas de Luz abriu suas portas oficialmente em um quarto improvisado, unindo Anna como Mãe da casa e Vanessa como sua primeira filha.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">2021 — 2022</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>Sessões de Visita</h3>
-          <p>Começamos ali, nos adaptando: tocando nas ruas e nas praças, indo em sessões de amigos, e assim foram os primeiros três anos de trabalhos, onde a casa deu seus primeiros passos, foi estruturando seu calendário, suas obrigações, seus fundamentos.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">2021 — 2022</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>Sessões de Visita</h3><p>Começamos ali, nos adaptando: tocando nas ruas e nas praças, indo em sessões de amigos, e assim foram os primeiros três anos de trabalhos, onde a casa deu seus primeiros passos, foi estruturando seu calendário, suas obrigações, seus fundamentos.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">2022 — 2023</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>O Período no "Empilhadeiro"</h3>
-          <p>Anos voltados ao desenvolvimento e manutenção reservada, adaptando-se ao espaço reduzido do apartamento, enquanto buscávamos a "casa de chão". Sessões com tambor eram nas ruas, torcendo para não vir chuva. A maior parte das sessões eram em quarto apertado, e mesmo assim, a casa foi crescendo até não caber mais em si.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">2022 — 2023</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Período no "Empilhadeiro"</h3><p>Anos voltados ao desenvolvimento e manutenção reservada, adaptando-se ao espaço reduzido do apartamento, enquanto buscávamos a "casa de chão". Sessões com tambor eram nas ruas, torcendo para não vir chuva. A maior parte das sessões eram em quarto apertado, e mesmo assim, a casa foi crescendo até não caber mais em si.</p></div>
       </div>
-
       <div class="timeline-item">
-        <div class="timeline-date">
-          <div class="timeline-date-label">Março de 2024</div>
-          <div class="timeline-dot"></div>
-        </div>
-        <div class="timeline-content">
-          <h3>A Conquista da Sede Própria</h3>
-          <p>Os guias autorizaram a busca por uma sede física. O terreiro finalmente estabeleceu seu salão e chão na Rua Ary Tarrago, 2155, garantindo liberdade para os trabalhos e assentamentos.</p>
-        </div>
+        <div class="timeline-date"><div class="timeline-date-label">Março de 2024</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>A Conquista da Sede Própria</h3><p>Os guias autorizaram a busca por uma sede física. O terreiro finalmente estabeleceu seu salão e chão na Rua Ary Tarrago, 2155, garantindo liberdade para os trabalhos e assentamentos.</p></div>
       </div>
-
     </div>
   </div>
-</div><!-- /page-historia -->
+</div>
 
-<!-- ════════════════════════════════════════════
-     PÁGINA: SESSÕES
-════════════════════════════════════════════ -->
+<!-- PÁGINA SESSÕES -->
 <div id="page-sessoes" class="page">
   <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Calendário 2026</div>
     <div class="section-title">Sessões & Eventos</div>
-    <p class="section-sub">Calendário anual de giras, sessões e festas da casa. Todos os eventos são em Porto Alegre, RS, salvo indicação.</p>
-
+    <p class="section-sub">Calendário anual de giras, sessões e festas da casa.</p>
     <div class="events-list">
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Jun</span><span class="event-day">20</span></div>
-        <div class="event-info"><div class="event-name">Festa dos Abóros</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Jul</span><span class="event-day">03</span></div>
-        <div class="event-info"><div class="event-name">Quimbanda</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Jul</span><span class="event-day">18</span></div>
-        <div class="event-info"><div class="event-name">Cruzamento de Pedreira</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Jul</span><span class="event-day">31</span></div>
-        <div class="event-info"><div class="event-name">Desenvolvimento</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Ago</span><span class="event-day">15</span></div>
-        <div class="event-info"><div class="event-name">Pretos Velhos — Almas</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Ago</span><span class="event-day">17</span></div>
-        <div class="event-info"><div class="event-name">Cruzeiro</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Ago</span><span class="event-day">22</span></div>
-        <div class="event-info"><div class="event-name">Corte dos Exus</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Ago</span><span class="event-day">29</span></div>
-        <div class="event-info"><div class="event-name">Elebó de Exus</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Set</span><span class="event-day">18</span></div>
-        <div class="event-info"><div class="event-name">Ciganos do Oriente</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Out</span><span class="event-day">02</span></div>
-        <div class="event-info"><div class="event-name">Desenvolvimento</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Out</span><span class="event-day">17</span></div>
-        <div class="event-info"><div class="event-name">Quitanda das Crianças</div></div>
-      </div>
-      <div class="event-item">
-        <div class="event-date"><span class="event-month">Nov</span><span class="event-day">01</span></div>
-        <div class="event-info"><div class="event-name">Firmeza de Calunga</div></div>
-      </div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Jun</span><span class="event-day">20</span></div><div class="event-info"><div class="event-name">Festa dos Abóros</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">03</span></div><div class="event-info"><div class="event-name">Quimbanda</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">18</span></div><div class="event-info"><div class="event-name">Cruzamento de Pedreira</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">31</span></div><div class="event-info"><div class="event-name">Desenvolvimento</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">15</span></div><div class="event-info"><div class="event-name">Pretos Velhos — Almas</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">17</span></div><div class="event-info"><div class="event-name">Cruzeiro</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">22</span></div><div class="event-info"><div class="event-name">Corte dos Exus</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">29</span></div><div class="event-info"><div class="event-name">Elebó de Exus</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Set</span><span class="event-day">18</span></div><div class="event-info"><div class="event-name">Ciganos do Oriente</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Out</span><span class="event-day">02</span></div><div class="event-info"><div class="event-name">Desenvolvimento</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Out</span><span class="event-day">17</span></div><div class="event-info"><div class="event-name">Quitanda das Crianças</div></div></div>
+      <div class="event-item"><div class="event-date"><span class="event-month">Nov</span><span class="event-day">01</span></div><div class="event-info"><div class="event-name">Firmeza de Calunga</div></div></div>
     </div>
-
-    <div style="margin-top: 36px;">
-      <a class="btn-outline" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">Ver calendário completo →</a>
-    </div>
+    <div style="margin-top:36px"><a class="btn-outline" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">Ver calendário completo →</a></div>
   </div>
-</div><!-- /page-sessoes -->
+</div>
 
-<!-- ════════════════════════════════════════════
-     PÁGINA: TEXTOS / BLOG
-════════════════════════════════════════════ -->
+<!-- PÁGINA TEXTOS -->
 <div id="page-textos" class="page">
   <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Arquivos de Informações</div>
     <div class="section-title">Textos da Casa</div>
     <p class="section-sub">Fundamentos, reflexões e ensinamentos escritos pela corrente do Bolhas de Luz.</p>
-
-    <div class="blog-note">
-      ✦ Os textos completos estão sendo migrados para cá. Em breve você poderá lê-los diretamente nesta página.
+    <div class="blog-note">✦ Os textos completos estão sendo migrados. Em breve disponíveis aqui.</div>
+    <div style="margin-bottom:20px">
+      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('todos')">Todos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('fundamentos')">Fundamentos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer;background:var(--green-dim);border-color:var(--green-border);color:var(--green)" onclick="filterBlog('reflexoes')">Reflexões</span>
     </div>
-
-    <div style="margin-bottom: 20px;">
-      <span class="tag tag-rose" style="margin-right: 6px; cursor: pointer" onclick="filterBlog('todos')">Todos</span>
-      <span class="tag tag-rose" style="margin-right: 6px; cursor: pointer" onclick="filterBlog('fundamentos')">Fundamentos</span>
-      <span class="tag tag-green" style="cursor: pointer" onclick="filterBlog('reflexoes')">Reflexões</span>
-    </div>
-
     <div class="blog-grid">
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">O Que é Estar na Corrente</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">Macumba se Aprende na Macumba</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">Medo Não — Respeito Sim</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">A Função de Vocês é Sentir</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">Sonhos Solitários São Projeções</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Cuidar de Quem Cuida de Vocês</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">Eles Viveram Entre Nós</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">O Início da Caminhada</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">A Umbanda é Tradição Oral — E Tem Raízes Mais Antigas do que Contam</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="fundamentos">
-        <span class="blog-cat fundamentos">Fundamentos</span>
-        <div class="blog-title">Passe em Roupa de Ausente</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
-      <div class="blog-card" data-cat="reflexoes">
-        <span class="blog-cat reflexoes">Reflexões</span>
-        <div class="blog-title">A História da Benção para Abrir Casa</div>
-        <div class="blog-placeholder">Conteúdo em breve</div>
-      </div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Que é Estar na Corrente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Macumba se Aprende na Macumba</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Medo Não — Respeito Sim</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Função de Vocês é Sentir</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Sonhos Solitários São Projeções</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Cuidar de Quem Cuida de Vocês</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Eles Viveram Entre Nós</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Início da Caminhada</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Umbanda é Tradição Oral — E Tem Raízes Mais Antigas do que Contam</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Passe em Roupa de Ausente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">A História da Benção para Abrir Casa</div><div class="blog-placeholder">Conteúdo em breve</div></div>
     </div>
   </div>
-</div><!-- /page-textos -->
+</div>
 
-<!-- ════════════════════════════════════════════
-     PÁGINA: APOIE O TERREIRO
-════════════════════════════════════════════ -->
+<!-- PÁGINA APOIE -->
 <div id="page-apoie" class="page">
   <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Apoie a Terreira</div>
     <div class="section-title">Como posso ajudar?</div>
     <p class="section-sub">Algumas dúvidas sobre a dinâmica financeira e como nos apoiar.</p>
-
     <div class="faq-list">
-
       <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)">
-          <span class="faq-question">Não há cobrança de atendimentos</span>
-          <span class="faq-chevron">›</span>
-        </button>
-        <div class="faq-body">
-          <div class="faq-content">
-            <p>Nenhum atendimento de gira, ou oriundo dela, é cobrado. Nem obrigação, reforço, cruzamentos, axés ou limpezas.</p>
-            <p>O seu gasto será com o material utilizado e, se houver, o deslocamento da corrente. A exceção são axés muito específicos pedidos por vontade própria, sem orientação ou necessidade da espiritualidade.</p>
-            <p class="accent">A casa não realiza trabalhos de dano.</p>
-          </div>
-        </div>
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Não há cobrança de atendimentos</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content">
+          <p>Nenhum atendimento de gira, ou oriundo dela, é cobrado. Nem obrigação, reforço, cruzamentos, axés ou limpezas.</p>
+          <p>O seu gasto será com o material utilizado e, se houver, o deslocamento da corrente. A exceção são axés muito específicos pedidos por vontade própria, sem orientação ou necessidade da espiritualidade.</p>
+          <p class="accent">A casa não realiza trabalhos de dano.</p>
+        </div></div>
       </div>
-
       <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)">
-          <span class="faq-question">Quais são as arrecadações?</span>
-          <span class="faq-chevron">›</span>
-        </button>
-        <div class="faq-body">
-          <div class="faq-content">
-            <p>A casa vive de doações — tanto de filhos quanto de visitantes — e das mensalidades dos membros da corrente, destinadas à manutenção da casa.</p>
-            <p>Os valores arrecadados não cobrem todas as contas hoje, então contamos com doações espontâneas. Eventualmente realizamos rifas, vendas de camisetas e similares.</p>
-            <p>Temos também o nosso <a href="#" onclick="showPage('inicio',null);return false" style="color:var(--green);text-decoration:underline;text-underline-offset:3px">portal da transparência</a> das contas da casa.</p>
-          </div>
-        </div>
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Quais são as arrecadações?</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content">
+          <p>A casa vive de doações — tanto de filhos quanto de visitantes — e das mensalidades dos membros da corrente, destinadas à manutenção da casa.</p>
+          <p>Os valores arrecadados não cobrem todas as contas hoje, então contamos com doações espontâneas. Eventualmente realizamos rifas, vendas de camisetas e similares.</p>
+        </div></div>
       </div>
-
       <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)">
-          <span class="faq-question">Como ajudar?</span>
-          <span class="faq-chevron open">›</span>
-        </button>
-        <div class="faq-body open">
-          <div class="faq-content">
-            <div class="help-grid">
-              <div class="help-card">
-                <div class="help-icon">🕯️</div>
-                <div class="help-title">Velas</div>
-                <div class="help-text">Doações de velas são sempre bem-vindas em suas diversas cores. Na dúvida, branco nunca erra. Temos uma listinha de guias e cores para quem quiser ser específica.</div>
-              </div>
-              <div class="help-card">
-                <div class="help-icon">🌿</div>
-                <div class="help-title">Alimentos</div>
-                <div class="help-text">Nas sessões, oferecemos oferendas que são divididas com os presentes.</div>
-              </div>
-              <div class="help-card">
-                <div class="help-icon">👕</div>
-                <div class="help-title">Produtos</div>
-                <div class="help-text">Visite nossa lojinha! Camisetas, ecobags e itens sazonais, além de velas, incensos e outros.</div>
-              </div>
-              <div class="help-card">
-                <div class="help-icon">💸</div>
-                <div class="help-title">PIX</div>
-                <div class="help-text">Doações financeiras são revertidas às contas da casa e manutenções estruturais.</div>
-                <div class="pix-box">
-                  <div class="pix-label">Chave PIX</div>
-                  <div class="pix-key">bolhasdeluz@gmail.com</div>
-                </div>
-              </div>
-            </div>
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Como ajudar?</span><span class="faq-chevron open">›</span></button>
+        <div class="faq-body open"><div class="faq-content">
+          <div class="help-grid">
+            <div class="help-card"><div class="help-title">Velas</div><div class="help-text">Doações de velas são sempre bem-vindas. Na dúvida, branco nunca erra. Temos uma listinha de guias e cores.</div></div>
+            <div class="help-card"><div class="help-title">Alimentos</div><div class="help-text">Nas sessões, oferecemos oferendas que são divididas com os presentes.</div></div>
+            <div class="help-card"><div class="help-title">Produtos</div><div class="help-text">Visite nossa lojinha! Camisetas, ecobags, velas, incensos e outros.</div></div>
+            <div class="help-card"><div class="help-title">PIX</div><div class="help-text">Doações financeiras revertidas às contas e manutenções da casa.</div><div class="pix-box"><div class="pix-label">Chave PIX</div><div class="pix-key">bolhasdeluz@gmail.com</div></div></div>
           </div>
-        </div>
+        </div></div>
       </div>
-
       <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)">
-          <span class="faq-question">Doações mensais</span>
-          <span class="faq-chevron">›</span>
-        </button>
-        <div class="faq-body">
-          <div class="faq-content">
-            <span class="badge-wip">✦ Em construção</span>
-          </div>
-        </div>
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Doações mensais</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content"><span class="badge-wip">✦ Em construção</span></div></div>
       </div>
-
     </div>
   </div>
-</div><!-- /page-apoie -->
+</div>
 
-<!-- ─── MODAL LOGIN ─── -->
+<!-- MODAL LOGIN -->
 <div id="login-overlay" class="overlay" onclick="if(event.target===this)closeLogin()">
   <div class="modal">
     <button class="modal-close" onclick="closeLogin()">×</button>
     <div class="modal-title">Área Interna</div>
     <div class="modal-sub">Exclusiva para filhas da casa</div>
-    <button class="btn-primary" style="width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;font-size:12px" onclick="alert('Login com Google em breve! 🌸')">
+    <button class="btn-rosa" style="width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;font-size:12px" onclick="alert('Login com Google em breve! 🌸')">
       <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.7 13.4 17.9 9.5 24 9.5z"/><path fill="#4A90D9" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.8 28.5A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5L2.4 13.5A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.3-6.3z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.2-7.7 2.2-6.1 0-11.3-4-13.2-9.4l-7.8 6C6.8 42.5 14.7 48 24 48z"/></svg>
       Entrar com Google
     </button>
     <p class="modal-footer">Após o login, aguarde aprovação da administração.</p>
-    <button onclick="closeLogin();document.getElementById('admin-senha-overlay').classList.add('open');setTimeout(()=>document.getElementById('admin-senha-input').focus(),50)" style="background:none;border:none;display:block;margin:12px auto 0;color:rgba(80,30,50,.2);font-size:.85rem;transition:color .2s" onmouseover="this.style.color='rgba(80,30,50,.45)'" onmouseout="this.style.color='rgba(80,30,50,.2)'">⚙</button>
+    <button onclick="closeLogin();document.getElementById('admin-senha-overlay').classList.add('open');setTimeout(()=>document.getElementById('admin-senha-input').focus(),50)" style="background:none;border:none;display:block;margin:12px auto 0;color:rgba(80,30,50,.18);font-size:.85rem;transition:color .2s" onmouseover="this.style.color='rgba(80,30,50,.4)'" onmouseout="this.style.color='rgba(80,30,50,.18)'">⚙</button>
   </div>
 </div>
 
-<!-- ─── FOOTER ─── -->
 <footer>
   <div class="footer-logo">Terreiro Bolhas de Luz</div>
   <div class="footer-sub">Porto Alegre, RS · Umbanda & Quimbanda</div>
-  <div class="footer-links">
-    <a href="#" onclick="showPage('historia',null);return false">Nossa História</a>
-    <a href="#" onclick="showPage('sessoes',null);return false">Sessões</a>
-    <a href="#" onclick="showPage('apoie',null);return false">Apoie</a>
-    <a href="mailto:bolhasdeluz@gmail.com">bolhasdeluz@gmail.com</a>
-  </div>
 </footer>
 
 <script>
-// ── NAVEGAÇÃO ──
-function showPage(name, btn) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const page = document.getElementById('page-' + name);
-  if (page) page.classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const p=document.getElementById('page-'+name);
+  if(p)p.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-
-// ── LOGIN ──
-function openLogin() { document.getElementById('login-overlay').classList.add('open'); }
-function closeLogin() { document.getElementById('login-overlay').classList.remove('open'); }
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    closeLogin();
-    document.getElementById('admin-senha-overlay').classList.remove('open');
-    closeDrawer();
-  }
-});
-
-// ── FAQ ──
-function toggleFaq(btn) {
-  const chevron = btn.querySelector('.faq-chevron');
-  const body = btn.closest('.faq-item').querySelector('.faq-body');
-  const isOpen = body.classList.contains('open');
-  document.querySelectorAll('.faq-body.open').forEach(b => b.classList.remove('open'));
-  document.querySelectorAll('.faq-chevron.open').forEach(c => c.classList.remove('open'));
-  if (!isOpen) { body.classList.add('open'); chevron.classList.add('open'); }
+function openLogin(){document.getElementById('login-overlay').classList.add('open')}
+function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogin();document.getElementById('admin-senha-overlay').classList.remove('open')}});
+function toggleFaq(btn){
+  const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
+  document.querySelectorAll('.faq-body.open').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('.faq-chevron.open').forEach(c=>c.classList.remove('open'));
+  if(!open){body.classList.add('open');ch.classList.add('open')}
 }
-
-// ── BLOG FILTER ──
-function filterBlog(cat) {
-  document.querySelectorAll('.blog-card').forEach(card => {
-    card.style.display = (cat === 'todos' || card.dataset.cat === cat) ? '' : 'none';
-  });
+function filterBlog(cat){
+  document.querySelectorAll('.blog-card').forEach(c=>{c.style.display=(cat==='todos'||c.dataset.cat===cat)?'':'none'});
 }
-
-// ── DRAWER MOBILE ──
-function openDrawer() { document.getElementById('nav-drawer').classList.add('open'); }
-function closeDrawer() { document.getElementById('nav-drawer').classList.remove('open'); }
-
-// ── ADMIN ──
-function toggleNavItem(id) {
-  const nav = document.getElementById('nav-' + id);
-  const drawer = document.getElementById('drawer-' + id);
-  const hidden = nav && nav.style.display === 'none';
-  if (nav) nav.style.display = hidden ? '' : 'none';
-  if (drawer) drawer.style.display = hidden ? '' : 'none';
+function toggleWidget(id){
+  const el=document.getElementById('widget-'+id);
+  if(el)el.style.display=el.style.display==='none'?'':'none';
 }
-function hideAdminBar() {
-  document.getElementById('admin-bar').classList.add('hidden');
-}
-// ── ADMIN VIA URL ──
-// (desativado)
-
-function checkAdminSenha() {
-  const input = document.getElementById('admin-senha-input');
-  const erro = document.getElementById('admin-senha-erro');
-  if (input.value === 'admin') {
+function checkAdminSenha(){
+  const input=document.getElementById('admin-senha-input'),erro=document.getElementById('admin-senha-erro');
+  if(input.value==='admin'){
     document.getElementById('admin-senha-overlay').classList.remove('open');
     document.getElementById('admin-bar').classList.remove('hidden');
-    input.value = '';
-    erro.style.display = 'none';
-  } else {
-    erro.style.display = 'block';
-    input.value = '';
-    input.focus();
-  }
+    input.value='';erro.style.display='none';
+  } else {erro.style.display='block';input.value='';input.focus()}
 }
+
+// jardim fixo
+const canvas=document.getElementById('jardim'),ctx=canvas.getContext('2d');
+const cf=['#c4396b','#d4607a','#e8a020','#2a7a60','#e07a90','#c4396b','#d4607a'];
+function resizeCanvas(){canvas.width=window.innerWidth;canvas.height=140;desenharJardim()}
+function marg(x,y,r,cor,op){
+  ctx.save();ctx.globalAlpha=op;ctx.translate(x,y);
+  for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,px=Math.cos(a)*r*.55,py=Math.sin(a)*r*.55;ctx.save();ctx.translate(px,py);ctx.rotate(a);ctx.beginPath();ctx.ellipse(0,0,r*.28,r*.16,0,0,Math.PI*2);ctx.fillStyle=cor;ctx.fill();ctx.restore()}
+  ctx.beginPath();ctx.arc(0,0,r*.28,0,Math.PI*2);ctx.fillStyle='#f5d2a0';ctx.fill();ctx.restore();
+}
+function caule(x,yb,h,incl){ctx.save();ctx.globalAlpha=.12;ctx.strokeStyle='#2a7a60';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,yb);ctx.quadraticCurveTo(x+incl*.5,yb-h*.5,x+incl,yb-h);ctx.stroke();ctx.restore()}
+function desenharJardim(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const w=canvas.width,fl=[];
+  for(let i=0;i<65;i++){const x=(i/65)*w+Math.sin(i*2.3)*28,yb=100+Math.sin(i*1.7)*18+Math.cos(i*0.9)*12,r=5+Math.abs(Math.sin(i*3.1))*3+2;fl.push({x,yb,r,cor:cf[i%cf.length],op:.15+Math.abs(Math.sin(i*1.4))*.15,incl:Math.sin(i*2.1)*8,h:r*3.5+8})}
+  for(let i=0;i<32;i++){const x=(i/32)*w+Math.cos(i*3.1)*20+10,yb=112+Math.cos(i*2.1)*14+Math.sin(i*1.3)*8,r=7+Math.abs(Math.cos(i*2.3))*4+3;fl.push({x,yb,r,cor:cf[(i+2)%cf.length],op:.18+Math.abs(Math.cos(i*1.9))*.13,incl:Math.cos(i*1.8)*10,h:r*3+6})}
+  fl.forEach(f=>caule(f.x,f.yb,f.h,f.incl));
+  fl.forEach(f=>marg(f.x+f.incl,f.yb-f.h,f.r,f.cor,f.op));
+}
+resizeCanvas();
+window.addEventListener('resize',resizeCanvas);
+
+// bolhas
+const ns='http://www.w3.org/2000/svg',bc=document.getElementById('bolhas-container');
+function bolha(x,y,r,op,dur,delay){
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width',r*2);svg.setAttribute('height',r*2);svg.setAttribute('viewBox',`0 0 ${r*2} ${r*2}`);
+  svg.classList.add('bolha-el');svg.style.cssText=`left:${x}px;top:${y}px;opacity:${op};animation-duration:${dur}s;animation-delay:-${delay}s`;
+  const a=document.createElementNS(ns,'circle');a.setAttribute('cx',r);a.setAttribute('cy',r);a.setAttribute('r',r-.8);a.setAttribute('fill','none');a.setAttribute('stroke','rgba(196,57,107,.28)');a.setAttribute('stroke-width','1');svg.appendChild(a);
+  const rf=document.createElementNS(ns,'circle');rf.setAttribute('cx',r*.65);rf.setAttribute('cy',r*.62);rf.setAttribute('r',r*.22);rf.setAttribute('fill','rgba(255,255,255,.18)');svg.appendChild(rf);
+  const br=document.createElementNS(ns,'circle');br.setAttribute('cx',r*.72);br.setAttribute('cy',r*.55);br.setAttribute('r',r*.09);br.setAttribute('fill','rgba(255,255,255,.45)');svg.appendChild(br);
+  bc.appendChild(svg);setTimeout(()=>svg.remove(),(dur+delay)*1000);
+}
+(function spawn(){const vw=window.innerWidth,vh=window.innerHeight;for(let i=0;i<18;i++){const r=10+Math.random()*22;bolha(Math.random()*vw,vh+r*2,r,.12+Math.random()*.15,24+Math.random()*20,Math.random()*40)}})();
+setInterval(()=>{const r=10+Math.random()*22;bolha(Math.random()*window.innerWidth,window.innerHeight+r*2,r,.12+Math.random()*.15,24+Math.random()*20,0)},900);
 </script>
 </body>
 </html>
