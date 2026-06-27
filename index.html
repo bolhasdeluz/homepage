@@ -937,7 +937,18 @@ body.logada{padding-top:28px}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Nome</label><input type="text" class="form-input" id="cp-nome" placeholder="Nome completo"></div>
-      <div><label class="form-label">Cargo / Função</label><input type="text" class="form-input" id="cp-cargo" placeholder="ex: Cambona"></div>
+      <div><label class="form-label">Cargo / Função</label>
+        <select class="form-input" id="cp-cargo" style="font-family:'Crimson Pro',serif;font-size:15px">
+          <option value="">— Selecionar —</option>
+          <option value="Mãe da Casa">Mãe da Casa</option>
+          <option value="Cacique">Cacique</option>
+          <option value="Tamoio">Tamoio</option>
+          <option value="Naurú">Naurú</option>
+          <option value="Cambona">Cambona</option>
+          <option value="Tamboreiro">Tamboreiro</option>
+          <option value="Curumim">Curumim</option>
+        </select>
+      </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
     </div>
 
@@ -1435,7 +1446,10 @@ function fecharCriarPerfil() {
 
 function preencherFormPerfil(p) {
   if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
-  if (p.cargo) document.getElementById('cp-cargo').value = p.cargo;
+  if (p.cargo) {
+    const sel = document.getElementById('cp-cargo');
+    if (sel) sel.value = p.cargo;
+  }
   if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
@@ -1454,7 +1468,7 @@ async function salvarPerfilAdmin() {
   const payload = {
     email: email.toLowerCase(),
     nome:  document.getElementById('cp-nome').value.trim(),
-    cargo: document.getElementById('cp-cargo').value.trim(),
+    cargo: document.getElementById('cp-cargo').value,
     emoji: document.getElementById('cp-emoji').value.trim(),
     foto: '',
     historia: {}, guias: {}, cruzamentos: {},
@@ -2204,4 +2218,3 @@ window.salvarPerfil = async function() {
 </script>
 </body>
 </html>
-l
