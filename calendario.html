@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendário de Sessões — Bolhas de Luz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff5f7;
+    --surface: #ffffff;
+    --surface2: #fff5f8;
+    --border: rgba(196,57,107,0.15);
+    --gold: #c4396b;
+    --gold-light: #e8688a;
+    --gold-dim: rgba(196,57,107,0.08);
+    --text: #2a1a22;
+    --text-dim: rgba(80,30,50,0.5);
+    --red: #b84040;
+    --red-dim: rgba(184,64,64,0.08);
+
+    --interna:    #4a6fa5;
+    --atendimento:#6a9e6a;
+    --visita:     #9e6a9e;
+    --familia:    #c9963c;
+    --reuniao:    #6a8fa5;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',system-ui,sans-serif; font-size:15px; min-height:100vh; }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #c0405a, #d4607a 60%, #e07a90);
+    box-shadow: 0 2px 20px rgba(180,60,90,0.25);
+    padding: 22px 24px 20px;
+    text-align: center;
+    position: relative;
+  }
+  .header-ornament { font-size:13px; color:rgba(255,255,255,0.45); letter-spacing:10px; margin-bottom:6px; }
+  h1 {
+    font-family:'Playfair Display',serif;
+    font-size: clamp(18px,4vw,28px);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #ffffff;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .header-sub {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-top: 5px;
+    font-family: 'Cinzel', serif;
+  }
+
+  /* CONTROLS */
+  .controls {
+    max-width: 960px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+    display: flex;
+    gap: 7px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filter-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .filter-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .filter-btn.active { background: var(--gold); border-color: var(--gold); color: #ffffff; }
+  .filter-btn .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .dot-interna    { background:var(--interna); }
+  .dot-atendimento{ background:var(--atendimento); }
+  .dot-visita     { background:var(--visita); }
+  .dot-familia    { background:var(--familia); }
+  .dot-reuniao    { background:var(--reuniao); }
+  .filter-count {
+    background: rgba(0,0,0,0.07);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 8px;
+    line-height: 1.5;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+  }
+  .filter-btn.active .filter-count { background: rgba(255,255,255,0.25); }
+
+  .spacer { flex:1; }
+
+  /* SEARCH */
+  .search-wrap { position:relative; }
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 32px 8px 12px;
+    border-radius: 20px;
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    width: 190px;
+    outline: none;
+    transition: all 0.2s;
+  }
+  .search-input::placeholder { color: var(--text-dim); font-style:italic; }
+  .search-input:focus { border-color: var(--gold); width: 230px; box-shadow: 0 0 0 3px rgba(196,57,107,0.07); }
+  .search-clear { position:absolute; right:10px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:12px; display:none; line-height:1; padding:0; }
+  .search-clear.visible { display:block; }
+
+  /* TOGGLES */
+  .toggle-passadas {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 13px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .toggle-passadas:hover { border-color: var(--gold); color: var(--gold); }
+  .toggle-passadas.active { background: rgba(80,30,50,0.09); border-color: rgba(80,30,50,0.25); color: rgba(80,30,50,0.65); }
+
+  .btn-import {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 7px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-import:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-add {
+    background: var(--gold);
+    border: none;
+    color: #ffffff;
+    padding: 8px 20px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .btn-add:hover { background: var(--gold-light); }
+
+  /* MAIN LAYOUT */
+  .main { max-width: 720px; margin: 22px auto 60px; padding: 0 20px; }
+
+  /* LIST */
+  .sessoes-list { display:flex; flex-direction:column; gap:10px; }
+  .mes-header {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--gold);
+    text-transform: uppercase;
+    padding: 18px 4px 8px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+  }
+  .mes-header:first-child { padding-top: 4px; }
+
+  .sessao-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--gold);
+    transition: transform 0.22s, box-shadow 0.22s, border-color 0.2s;
+    animation: fadeIn 0.25s ease both;
+    box-shadow: 0 2px 16px rgba(180,60,90,0.07);
+  }
+  .sessao-item.passada { opacity:0.55; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .sessao-item:hover { transform:translateY(-2px); box-shadow:0 6px 24px rgba(180,60,90,0.13); border-color:rgba(196,57,107,0.3); }
+  .sessao-item.tipo-interna    { border-left-color:var(--interna); }
+  .sessao-item.tipo-atendimento{ border-left-color:var(--atendimento); }
+  .sessao-item.tipo-visita     { border-left-color:var(--visita); }
+  .sessao-item.tipo-familia    { border-left-color:var(--familia); }
+  .sessao-item.tipo-reuniao    { border-left-color:var(--reuniao); }
+
+  .si-header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .si-date { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
+  .si-day-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    min-width: 32px;
+  }
+  .si-day-info { display:flex; flex-direction:column; gap:2px; }
+  .si-dow  { font-family:'Cinzel',serif; font-size:9px; letter-spacing:0.12em; color:var(--gold); text-transform:uppercase; }
+  .si-time { font-family:'DM Sans',sans-serif; font-size:11px; color:var(--text-dim); font-weight:500; }
+  .si-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #5a1830;
+    line-height: 1.25;
+  }
+  .si-tipo {
+    font-size: 9px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    opacity: 0.75;
+  }
+  .si-tipo.tipo-interna     { color:var(--interna); }
+  .si-tipo.tipo-atendimento { color:var(--atendimento); }
+  .si-tipo.tipo-visita      { color:var(--visita); }
+  .si-tipo.tipo-familia     { color:var(--familia); }
+  .si-tipo.tipo-reuniao     { color:var(--reuniao); }
+  .si-desc { font-size:14px; color:var(--text-dim); margin-top:6px; font-family:'Crimson Pro',serif; font-style:italic; line-height:1.55; }
+  .si-resp { font-size:12px; color:var(--text-dim); margin-top:5px; font-family:'DM Sans',sans-serif; }
+  .si-actions { display:flex; gap:4px; flex-shrink:0; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--gold);
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    transition: all 0.18s;
+  }
+  .icon-btn:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .icon-btn.del:hover { border-color:var(--red); color:var(--red); background:var(--red-dim); }
+
+  .tambor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .tambor-confirmado  { background:rgba(106,158,106,0.12); border:1px solid rgba(106,158,106,0.3); color:#5a9a5a; }
+  .tambor-arrecadacao { background:var(--gold-dim); border:1px solid rgba(196,57,107,0.25); color:var(--gold); }
+  .tambor-nao         { background:var(--red-dim); border:1px solid rgba(184,64,64,0.25); color:var(--red); }
+
+  .empty { text-align:center; padding:40px 20px; color:var(--text-dim); font-size:14px; font-family:'Crimson Pro',serif; font-style:italic; }
+
+  /* ── MODAL BASE ──────────────────────────────── */
+  .overlay { display:none; position:fixed; inset:0; background:rgba(40,10,20,0.55); z-index:100; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+  .overlay.open { display:flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--gold);
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(196,57,107,0.15);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 26px 22px;
+    position: relative;
+  }
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: #5a1830;
+    margin-bottom: 20px;
+    letter-spacing: 0.02em;
+  }
+  .form-row { margin-bottom:14px; }
+  label {
+    display: block;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  input[type=text],input[type=date],input[type=time],input[type=password],textarea,select {
+    width:100%; background:transparent; border:1px solid rgba(196,57,107,0.2); color:var(--text);
+    padding:10px 12px; border-radius:6px; font-family:'Crimson Pro',serif; font-size:16px;
+    outline:none; transition:border-color 0.2s;
+  }
+  input:focus,textarea:focus,select:focus { border-color:var(--gold); }
+  input[type=date]::-webkit-calendar-picker-indicator,
+  input[type=time]::-webkit-calendar-picker-indicator {
+    filter: invert(0.3) sepia(1) saturate(3) hue-rotate(290deg);
+    cursor:pointer; opacity:0.7;
+  }
+  textarea { resize:vertical; min-height:80px; line-height:1.6; }
+  select option { background:#ffffff; color:var(--text); }
+  .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+  .btn-cancel {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 9px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--red); color: var(--red); }
+  .btn-save {
+    background: var(--gold);
+    border: none;
+    color: #ffffff;
+    padding: 9px 22px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    transition: all 0.2s;
+  }
+  .btn-save:hover { background: var(--gold-light); }
+  .btn-close-modal {
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: 1px solid var(--border); color: var(--text-dim);
+    width: 28px; height: 28px; border-radius: 5px; cursor: pointer;
+    font-size: 12px; display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .btn-close-modal:hover { border-color: var(--red); color: var(--red); }
+  .senha-err { color: var(--red); font-size: 12px; margin-top: 5px; display: none; font-family: 'DM Sans', sans-serif; }
+
+  /* ── MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ──────── */
+  .confirm-overlay { display:none; position:fixed; inset:0; background:rgba(40,10,20,0.55); z-index:150; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+  .confirm-overlay.open { display:flex; }
+  .confirm-modal {
+    background: var(--surface);
+    border: 1px solid rgba(184,64,64,0.25);
+    border-top: 3px solid var(--red);
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(184,64,64,0.15);
+    width: 100%; max-width: 380px;
+    padding: 26px 22px;
+  }
+  .confirm-modal h3 { font-family:'Playfair Display',serif; font-size:17px; font-weight:600; color:#5a1830; margin-bottom:8px; }
+  .confirm-modal p { font-size:14px; color:var(--text-dim); line-height:1.55; margin-bottom:16px; font-family:'DM Sans',sans-serif; }
+  .confirm-modal .sessao-nome { font-weight:600; color:var(--text); font-style:italic; font-family:'Crimson Pro',serif; }
+  .confirm-senha-row { margin-bottom:14px; }
+  .confirm-footer { display:flex; justify-content:flex-end; gap:8px; }
+  .btn-del-confirm {
+    background: var(--red); border: none; color: #ffffff;
+    padding: 9px 18px; border-radius: 8px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; font-weight: 700; transition: all 0.2s;
+  }
+  .btn-del-confirm:hover { background: #c43030; }
+
+  /* ── IMPORT MODAL ──────────────────────────── */
+  .import-overlay { display:none; position:fixed; inset:0; background:rgba(40,10,20,0.55); z-index:200; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+  .import-overlay.open { display:flex; }
+  .import-modal {
+    background: var(--surface);
+    border: 1px solid var(--border); border-top: 3px solid var(--gold);
+    border-radius: 12px; box-shadow: 0 8px 40px rgba(196,57,107,0.15);
+    width: 100%; max-width: 560px; max-height: 85vh;
+    display: flex; flex-direction: column; padding: 24px 22px; position: relative;
+  }
+  .import-modal h2 { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; color:#5a1830; margin-bottom:6px; }
+  .import-sub  { font-size:13px; color:var(--text-dim); margin-bottom:14px; font-family:'DM Sans',sans-serif; }
+  .import-list { overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:5px; margin-bottom:14px; }
+  .import-item {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 13px;
+    display: flex; align-items: center; gap:10px; font-size:13px;
+  }
+  .import-item input[type=checkbox] { accent-color:var(--gold); width:15px; height:15px; flex-shrink:0; cursor:pointer; }
+  .import-item-info { flex:1; min-width:0; }
+  .import-item-name { color:var(--text); font-family:'Cinzel',serif; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .import-item-date { color:var(--text-dim); font-size:11px; margin-top:1px; font-family:'DM Sans',sans-serif; }
+  .import-item-tipo { margin-top:3px; }
+  .import-tipo-tag { font-family:'Cinzel',serif; font-size:8px; letter-spacing:0.08em; padding:2px 7px; border-radius:10px; border:1px solid; display:inline-block; }
+  .import-tipo-Interna     { color:var(--interna);    border-color:var(--interna);    background:rgba(74,111,165,0.07); }
+  .import-tipo-Atendimento { color:var(--atendimento);border-color:var(--atendimento);background:rgba(106,158,106,0.07); }
+  .import-tipo-Visita      { color:var(--visita);     border-color:var(--visita);     background:rgba(158,106,158,0.07); }
+  .import-tipo-Familia     { color:var(--familia);    border-color:var(--familia);    background:rgba(201,150,60,0.07); }
+  .import-tipo-Reuniao     { color:var(--reuniao);    border-color:var(--reuniao);    background:rgba(106,143,165,0.07); }
+  .import-footer { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .import-senha  { flex:1; min-width:140px; background:transparent; border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:6px; font-family:'Crimson Pro',serif; font-size:15px; outline:none; }
+  .import-senha:focus { border-color:var(--gold); }
+  .import-count { font-family:'Cinzel',serif; font-size:9px; color:var(--text-dim); letter-spacing:0.08em; }
+  .btn-sel-all {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    padding: 6px 12px; border-radius: 20px; cursor: pointer;
+    font-family: 'Cinzel', serif; font-size: 9px; letter-spacing: 0.08em;
+    text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-sel-all:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── TOAST ──────────────────────────────────── */
+  .toast {
+    position: fixed; bottom: 22px; right: 22px;
+    background: var(--surface); border: 1px solid var(--gold); color: #5a1830;
+    box-shadow: 0 4px 20px rgba(196,57,107,0.15); padding: 10px 18px;
+    border-radius: 7px; font-family: 'Cinzel', serif; font-size: 10px;
+    letter-spacing: 0.08em; z-index: 300; opacity: 0;
+    transform: translateY(8px); transition: all 0.25s; pointer-events: none;
+  }
+  .toast.show { opacity:1; transform:translateY(0); }
+
+  .loading { text-align:center; padding:50px; color:var(--text-dim); font-family:'DM Sans',sans-serif; }
+  .spinner { width:22px; height:22px; border:2px solid rgba(196,57,107,0.15); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-ornament">✦ ✦ ✦</div>
+  <h1>Calendário de Sessões</h1>
+  <div class="header-sub">Terreiro de Umbanda e Quimbanda Bolhas de Luz</div>
+</header>
+
+<div class="controls">
+  <button class="filter-btn active" id="fTodos"       onclick="setFiltro('')">Todos <span class="filter-count" id="cnt-todos"></span></button>
+  <button class="filter-btn"        id="fInterna"     onclick="setFiltro('Interna')"><span class="dot dot-interna"></span>Internas <span class="filter-count" id="cnt-Interna"></span></button>
+  <button class="filter-btn"        id="fAtendimento" onclick="setFiltro('Atendimento')"><span class="dot dot-atendimento"></span>Atendimento <span class="filter-count" id="cnt-Atendimento"></span></button>
+  <button class="filter-btn"        id="fVisita"      onclick="setFiltro('Visita')"><span class="dot dot-visita"></span>Visita <span class="filter-count" id="cnt-Visita"></span></button>
+  <button class="filter-btn"        id="fFamilia"     onclick="setFiltro('Familia')"><span class="dot dot-familia"></span>Família <span class="filter-count" id="cnt-Familia"></span></button>
+  <button class="filter-btn"        id="fReuniao"     onclick="setFiltro('Reuniao')"><span class="dot dot-reuniao"></span>Reunião <span class="filter-count" id="cnt-Reuniao"></span></button>
+  <div class="spacer"></div>
+
+  <!-- BUSCA -->
+  <div class="search-wrap">
+    <input class="search-input" id="searchInput" type="text" placeholder="Buscar sessão…"
+           oninput="onSearch(this.value)">
+    <button class="search-clear" id="searchClear" onclick="limparBusca()" title="Limpar">✕</button>
+  </div>
+
+  <!-- PASSADAS -->
+  <button class="toggle-passadas" id="btnPassadas" onclick="togglePassadas()">📜 Passadas</button>
+
+  <input type="file" id="icsInput" accept=".ics" style="display:none" onchange="importarICS(this)">
+  <button class="btn-import" onclick="document.getElementById('icsInput').click()">⬆ Importar .ics</button>
+  <button class="btn-add"    onclick="openModal()">+ Nova Sessão</button>
+</div>
+
+<div class="main">
+  <div class="sessoes-list" id="sidebarList">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ── MODAL NOVA/EDITAR ──────────────────────── -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Nova Sessão</h2>
+    <input type="hidden" id="editId">
+
+    <div class="form-row">
+      <label>Nome da Sessão *</label>
+      <input type="text" id="fNome" placeholder="ex: Gira de Pretos Velhos…">
+    </div>
+    <div class="row-2">
+      <div class="form-row">
+        <label>Data *</label>
+        <input type="date" id="fData">
+      </div>
+      <div class="form-row">
+        <label>Hora</label>
+        <input type="time" id="fHora">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Tipo de Sessão *</label>
+      <select id="fTipo">
+        <option value="">— Selecionar —</option>
+        <option value="Interna">Sessão Interna</option>
+        <option value="Atendimento">Sessão com Atendimento</option>
+        <option value="Visita">Sessão de Visita</option>
+        <option value="Familia">Sessão da Família</option>
+        <option value="Reuniao">Reunião</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Descrição / Observações</label>
+      <textarea id="fDesc" placeholder="Detalhes, avisos, o que levar…"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Responsável</label>
+      <input type="text" id="fResp" placeholder="Quem organiza essa sessão…">
+    </div>
+    <div class="form-row">
+      <label>Tambor</label>
+      <select id="fTambor">
+        <option value="">— Sem informação —</option>
+        <option value="confirmado">✅ Confirmado</option>
+        <option value="arrecadacao">🪘 Depende de arrecadação extra</option>
+        <option value="nao">❌ Não vai ter</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Senha</label>
+      <input type="password" id="fSenha" placeholder="Digite a senha do terreiro">
+      <div class="senha-err" id="senhaErr">Senha incorreta, tente novamente.</div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save"   onclick="salvar()">Salvar Sessão</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODAL CONFIRMAÇÃO DE EXCLUSÃO ─────────── -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-modal">
+    <h3>Excluir sessão</h3>
+    <p>Tem certeza que deseja excluir <span class="sessao-nome" id="confirmNome"></span>? Esta ação não pode ser desfeita.</p>
+    <div class="confirm-senha-row">
+      <label>Senha do terreiro</label>
+      <input type="password" id="confirmSenha" placeholder="Digite a senha para confirmar">
+      <div class="senha-err" id="confirmSenhaErr">Senha incorreta, tente novamente.</div>
+    </div>
+    <div class="confirm-footer">
+      <button class="btn-cancel"     onclick="fecharConfirm()">Cancelar</button>
+      <button class="btn-del-confirm" onclick="confirmarDelete()">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── IMPORT MODAL ───────────────────────────── -->
+<div class="import-overlay" id="importOverlay">
+  <div class="import-modal">
+    <button class="btn-close-modal" onclick="fecharImport()">✕</button>
+    <h2>Importar do Google Calendar</h2>
+    <div class="import-sub" id="importSub">Carregando eventos…</div>
+    <div class="import-list" id="importList"></div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+      <button class="btn-sel-all" onclick="selecionarTodos(true)">Selecionar todos</button>
+      <button class="btn-sel-all" onclick="selecionarTodos(false)">Desmarcar todos</button>
+      <span class="import-count" id="importCount"></span>
+    </div>
+    <div class="import-footer">
+      <input type="password" class="import-senha" id="importSenha" placeholder="Senha do terreiro">
+      <button class="btn-cancel" onclick="fecharImport()">Cancelar</button>
+      <button class="btn-save"   onclick="confirmarImport()">Importar selecionados</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const API = '/api/sessoes';
+  let sessoes = [];
+  let filtroTipo   = '';
+  let buscaTexto   = '';
+  let mostrarPassadas = false;
+  let deletarId    = null;
+
+  const hoje = new Date();
+  const todayStr = fmtDate(hoje);
+
+  const MESES     = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const DIAS_SEMANA = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const TIPO_LABEL  = { Interna:'Sessão Interna', Atendimento:'Sessão com Atendimento', Visita:'Sessão de Visita', Familia:'Sessão da Família', Reuniao:'Reunião' };
+  const TAMBOR_LABEL= { confirmado:'✅ Tambor confirmado', arrecadacao:'🪘 Depende de arrecadação', nao:'❌ Sem tambor' };
+
+  // ── Detecção automática de tipo por palavras-chave ──────────────
+  const TIPO_KEYWORDS = {
+    Interna:     ['interna','gira interna','trabalho interno','trabalho de corrente'],
+    Atendimento: ['atendimento','consulta','passes','desenvolvimento','atende'],
+    Visita:      ['visita','visitantes','aberta','pública','publica'],
+    Familia:     ['família','familia','filhos da casa','filhos'],
+    Reuniao:     ['reunião','reuniao','reuniões','reunioes','encontro','planejamento','administrativo'],
+  };
+
+  function detectarTipo(nome) {
+    const n = nome.toLowerCase();
+    for (const [tipo, kws] of Object.entries(TIPO_KEYWORDS)) {
+      if (kws.some(kw => n.includes(kw))) return tipo;
+    }
+    return '';
+  }
+
+  // ── LOAD ────────────────────────────────────────────────────────
+  async function load() {
+    try {
+      const res = await fetch(API);
+      sessoes = await res.json();
+      renderLista();
+    } catch {
+      document.getElementById('sidebarList').innerHTML = '<div class="empty">Erro ao carregar.</div>';
+    }
+  }
+
+  // ── FILTRO ──────────────────────────────────────────────────────
+  window.setFiltro = (tipo) => {
+    filtroTipo = tipo;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    const map = {'':'fTodos','Interna':'fInterna','Atendimento':'fAtendimento','Visita':'fVisita','Familia':'fFamilia','Reuniao':'fReuniao'};
+    document.getElementById(map[tipo]).classList.add('active');
+    renderLista();
+  };
+
+  // ── BUSCA ───────────────────────────────────────────────────────
+  window.onSearch = (val) => {
+    buscaTexto = val.toLowerCase().trim();
+    document.getElementById('searchClear').classList.toggle('visible', buscaTexto.length > 0);
+    renderLista();
+  };
+  window.limparBusca = () => {
+    document.getElementById('searchInput').value = '';
+    onSearch('');
+  };
+
+  // ── TOGGLE PASSADAS ─────────────────────────────────────────────
+  window.togglePassadas = () => {
+    mostrarPassadas = !mostrarPassadas;
+    document.getElementById('btnPassadas').classList.toggle('active', mostrarPassadas);
+    renderLista();
+  };
+
+  // ── RENDER ──────────────────────────────────────────────────────
+  function renderLista() {
+    // Aplica filtros
+    let lista = sessoes.filter(s => {
+      if (filtroTipo && s.tipo !== filtroTipo) return false;
+      if (!mostrarPassadas && s.data < todayStr) return false;
+      if (buscaTexto) {
+        const haystack = [s.nome, s.descricao, s.responsavel].join(' ').toLowerCase();
+        if (!haystack.includes(buscaTexto)) return false;
+      }
+      return true;
+    });
+
+    // Atualiza contadores
+    atualizarContadores();
+
+    const el = document.getElementById('sidebarList');
+    if (lista.length === 0) {
+      const msg = buscaTexto
+        ? `Nenhuma sessão encontrada para "<strong>${esc(buscaTexto)}</strong>".`
+        : mostrarPassadas
+          ? 'Nenhuma sessão cadastrada.'
+          : 'Nenhuma sessão futura. Clique em <em>📜 Passadas</em> para ver o histórico.';
+      el.innerHTML = `<div class="empty">${msg}</div>`;
+      return;
+    }
+
+    // Agrupa por mês
+    const grupos = {};
+    lista.sort((a,b) => mostrarPassadas ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data))
+         .forEach(s => {
+           const key = s.data.slice(0,7);
+           if (!grupos[key]) grupos[key] = [];
+           grupos[key].push(s);
+         });
+
+    let html = '';
+    Object.keys(grupos).sort((a,b) => mostrarPassadas ? b.localeCompare(a) : a.localeCompare(b))
+      .forEach(mesKey => {
+        const [y, m] = mesKey.split('-');
+        html += `<div class="mes-header">${MESES[parseInt(m)-1]} ${y}</div>`;
+        grupos[mesKey].forEach(s => {
+          const [sy, sm, sd] = s.data.split('-');
+          const dataObj = new Date(parseInt(sy), parseInt(sm)-1, parseInt(sd));
+          const dow = DIAS_SEMANA[dataObj.getDay()];
+          const tipoClass = 'tipo-' + (s.tipo||'').toLowerCase();
+          const passada = s.data < todayStr ? 'passada' : '';
+          html += `
+          <div class="sessao-item ${tipoClass} ${passada}">
+            <div class="si-header">
+              <div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0">
+                <div class="si-date">
+                  <div class="si-day-num">${sd}</div>
+                  <div class="si-day-info">
+                    <div class="si-dow">${dow}</div>
+                    <div class="si-time">${s.hora||''}</div>
+                  </div>
+                </div>
+                <div style="flex:1;min-width:0">
+                  <div class="si-name">${highlight(esc(s.nome))}</div>
+                  <div class="si-tipo ${tipoClass}">${TIPO_LABEL[s.tipo]||s.tipo||''}</div>
+                  ${s.tambor ? `<div class="tambor-badge tambor-${s.tambor}">${TAMBOR_LABEL[s.tambor]||''}</div>` : ''}
+                </div>
+              </div>
+              <div class="si-actions">
+                <button class="icon-btn" onclick="gerarICS('${s.id}')" title="Adicionar à agenda">📅</button>
+                <button class="icon-btn" onclick="openEdit('${s.id}')"  title="Editar">✎</button>
+                <button class="icon-btn del" onclick="abrirConfirmDelete('${s.id}')" title="Excluir">✕</button>
+              </div>
+            </div>
+            ${s.descricao  ? `<div class="si-desc">${highlight(esc(s.descricao))}</div>` : ''}
+            ${s.responsavel? `<div class="si-resp">Resp.: ${esc(s.responsavel)}</div>` : ''}
+          </div>`;
+        });
+      });
+
+    el.innerHTML = html;
+  }
+
+  // Destaca termo buscado
+  function highlight(text) {
+    if (!buscaTexto) return text;
+    const re = new RegExp(`(${buscaTexto.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return text.replace(re, '<mark style="background:rgba(196,57,107,0.15);border-radius:2px;padding:0 1px">$1</mark>');
+  }
+
+  // Contadores nos botões
+  function atualizarContadores() {
+    const tipos = ['','Interna','Atendimento','Visita','Familia','Reuniao'];
+    const idMap  = {'':'cnt-todos','Interna':'cnt-Interna','Atendimento':'cnt-Atendimento','Visita':'cnt-Visita','Familia':'cnt-Familia','Reuniao':'cnt-Reuniao'};
+    tipos.forEach(t => {
+      const n = sessoes.filter(s => (!t || s.tipo===t) && s.data >= todayStr).length;
+      const el = document.getElementById(idMap[t]);
+      if (el) el.textContent = n || '';
+    });
+  }
+
+  // ── MODAL NOVA/EDITAR ───────────────────────────────────────────
+  window.openModal = () => {
+    document.getElementById('modalTitle').textContent = 'Nova Sessão';
+    document.getElementById('editId').value = '';
+    document.getElementById('fNome').value  = '';
+    document.getElementById('fData').value  = todayStr;
+    document.getElementById('fHora').value  = '20:30';
+    document.getElementById('fTipo').value  = filtroTipo || '';
+    document.getElementById('fDesc').value  = '';
+    document.getElementById('fResp').value  = '';
+    document.getElementById('fTambor').value= '';
+    document.getElementById('fSenha').value = '';
+    document.getElementById('senhaErr').style.display = 'none';
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => document.getElementById('fNome').focus(), 80);
+  };
+
+  window.openEdit = (id) => {
+    const s = sessoes.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('modalTitle').textContent = 'Editar Sessão';
+    document.getElementById('editId').value = id;
+    document.getElementById('fNome').value  = s.nome||'';
+    document.getElementById('fData').value  = s.data||'';
+    document.getElementById('fHora').value  = s.hora||'';
+    document.getElementById('fTipo').value  = s.tipo||'';
+    document.getElementById('fDesc').value  = s.descricao||'';
+    document.getElementById('fResp').value  = s.responsavel||'';
+    document.getElementById('fTambor').value= s.tambor||'';
+    document.getElementById('fSenha').value = '';
+    document.getElementById('senhaErr').style.display = 'none';
+    document.getElementById('overlay').classList.add('open');
+  };
+
+  window.closeModal = () => document.getElementById('overlay').classList.remove('open');
+
+  window.salvar = async () => {
+    const nome = document.getElementById('fNome').value.trim();
+    const data = document.getElementById('fData').value;
+    const tipo = document.getElementById('fTipo').value;
+    if (!nome || !data || !tipo) { alert('Preencha nome, data e tipo.'); return; }
+
+    const payload = {
+      nome, data,
+      hora:       document.getElementById('fHora').value,
+      tipo,
+      descricao:  document.getElementById('fDesc').value.trim(),
+      responsavel:document.getElementById('fResp').value.trim(),
+      tambor:     document.getElementById('fTambor').value,
+      senha:      document.getElementById('fSenha').value,
+    };
+
+    const editId = document.getElementById('editId').value;
+    if (editId) payload.id = editId;
+
+    const res = await fetch(API, {
+      method: editId ? 'PUT' : 'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+
+    if (res.status === 403) {
+      document.getElementById('senhaErr').style.display = 'block';
+      return;
+    }
+
+    if (editId) {
+      const idx = sessoes.findIndex(x => x.id === editId);
+      if (idx >= 0) sessoes[idx] = json;
+    } else {
+      sessoes.push(json);
+      sessoes.sort((a,b) => a.data.localeCompare(b.data));
+    }
+
+    closeModal();
+    renderLista();
+    toast(editId ? 'Sessão atualizada!' : 'Sessão adicionada!');
+  };
+
+  // ── MODAL DE EXCLUSÃO ───────────────────────────────────────────
+  window.abrirConfirmDelete = (id) => {
+    const s = sessoes.find(x => x.id === id);
+    if (!s) return;
+    deletarId = id;
+    document.getElementById('confirmNome').textContent = `"${s.nome}"`;
+    document.getElementById('confirmSenha').value = '';
+    document.getElementById('confirmSenhaErr').style.display = 'none';
+    document.getElementById('confirmOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('confirmSenha').focus(), 80);
+  };
+
+  window.fecharConfirm = () => {
+    document.getElementById('confirmOverlay').classList.remove('open');
+    deletarId = null;
+  };
+
+  window.confirmarDelete = async () => {
+    if (!deletarId) return;
+    const senha = document.getElementById('confirmSenha').value;
+    if (!senha) { document.getElementById('confirmSenha').focus(); return; }
+
+    const res = await fetch(API, {
+      method:'DELETE',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id: deletarId, senha })
+    });
+
+    if (res.status === 403) {
+      document.getElementById('confirmSenhaErr').style.display = 'block';
+      return;
+    }
+
+    sessoes = sessoes.filter(x => x.id !== deletarId);
+    fecharConfirm();
+    renderLista();
+    toast('Sessão excluída');
+  };
+
+  // ── IMPORTAR ICS ────────────────────────────────────────────────
+  let importEventos = [];
+
+  window.importarICS = (input) => {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      importEventos = parseICS(e.target.result);
+      mostrarImport();
+    };
+    reader.readAsText(file);
+  };
+
+  function parseICS(text) {
+    const eventos = [];
+    const blocks = text.split('BEGIN:VEVENT');
+    const _hoje = new Date();
+    _hoje.setHours(0,0,0,0);
+
+    for (let i = 1; i < blocks.length; i++) {
+      const block = blocks[i];
+      const get = (key) => {
+        const match = block.match(new RegExp(key + '[^:]*:([^\r\n]+)'));
+        return match ? match[1].trim() : '';
+      };
+
+      const summary = get('SUMMARY') || 'Sem título';
+      const desc    = get('DESCRIPTION');
+      const dtstart = get('DTSTART');
+      const rrule   = get('RRULE');
+
+      if (!dtstart) continue;
+
+      const datas = expandirDatas(dtstart, rrule, _hoje);
+      datas.forEach(data => {
+        const hora = extrairHora(dtstart);
+        const tipoDetectado = detectarTipo(summary);
+        eventos.push({ nome:summary, data, hora, descricao:desc, tipo:tipoDetectado, tambor:'' });
+      });
+    }
+
+    eventos.sort((a,b) => a.data.localeCompare(b.data));
+    return eventos;
+  }
+
+  function extrairHora(dtstart) {
+    const t = dtstart.replace(/.*:/, '');
+    if (t.length >= 15) {
+      const h = t.slice(9,11), m = t.slice(11,13);
+      if (h && m && !isNaN(h) && !isNaN(m)) return `${h}:${m}`;
+    }
+    return '';
+  }
+
+  function expandirDatas(dtstart, rrule, _hoje) {
+    const dataBase = parseDTSTART(dtstart);
+    if (!dataBase) return [];
+    const datas = [];
+    const limite = new Date(_hoje);
+    limite.setMonth(limite.getMonth() + 18);
+
+    if (!rrule) {
+      if (dataBase >= _hoje) datas.push(fmtDate(dataBase));
+      return datas;
+    }
+
+    const freq     = (rrule.match(/FREQ=([^;]+)/) || [])[1];
+    const untilStr = (rrule.match(/UNTIL=([^;]+)/) || [])[1];
+    const until    = untilStr ? parseDTSTART(untilStr) : limite;
+    const interval = parseInt((rrule.match(/INTERVAL=(\d+)/) || [,1])[1]);
+    const cur = new Date(dataBase);
+
+    for (let iter = 0; iter < 200; iter++) {
+      if (cur > limite || (until && cur > until)) break;
+      if (cur >= _hoje) datas.push(fmtDate(cur));
+      if      (freq === 'YEARLY')  cur.setFullYear(cur.getFullYear() + interval);
+      else if (freq === 'MONTHLY') cur.setMonth(cur.getMonth() + interval);
+      else if (freq === 'WEEKLY')  cur.setDate(cur.getDate() + 7 * interval);
+      else if (freq === 'DAILY')   cur.setDate(cur.getDate() + interval);
+      else break;
+    }
+    return datas;
+  }
+
+  function parseDTSTART(s) {
+    const raw = s.replace(/.*:/, '').replace(/Z$/, '');
+    if (raw.length < 8) return null;
+    return new Date(parseInt(raw.slice(0,4)), parseInt(raw.slice(4,6))-1, parseInt(raw.slice(6,8)));
+  }
+
+  function mostrarImport() {
+    document.getElementById('importOverlay').classList.add('open');
+    document.getElementById('importSub').textContent =
+      `${importEventos.length} eventos futuros encontrados. Selecione os que deseja importar:`;
+    atualizarListaImport();
+  }
+
+  function atualizarListaImport() {
+    const list = document.getElementById('importList');
+    if (importEventos.length === 0) {
+      list.innerHTML = '<div class="empty">Nenhum evento futuro encontrado no arquivo.</div>';
+      return;
+    }
+    list.innerHTML = importEventos.map((ev, i) => {
+      const [y,m,d] = ev.data.split('-');
+      const tipoTag = ev.tipo
+        ? `<span class="import-tipo-tag import-tipo-${ev.tipo}">${TIPO_LABEL[ev.tipo]||ev.tipo}</span>`
+        : `<span style="font-family:Cinzel,serif;font-size:8px;color:rgba(80,30,50,0.4);letter-spacing:0.06em">Tipo não detectado</span>`;
+      return `<div class="import-item">
+        <input type="checkbox" id="imp${i}" checked onchange="atualizarContador()">
+        <div class="import-item-info">
+          <div class="import-item-name">${esc(ev.nome)}</div>
+          <div class="import-item-date">${d}/${m}/${y}${ev.hora ? ' · ' + ev.hora : ''}</div>
+          <div class="import-item-tipo">${tipoTag}</div>
+        </div>
+      </div>`;
+    }).join('');
+    atualizarContadorImport();
+  }
+
+  function atualizarContadorImport() {
+    const total = importEventos.length;
+    const sel   = document.querySelectorAll('#importList input:checked').length;
+    document.getElementById('importCount').textContent = `${sel} de ${total} selecionados`;
+  }
+  window.atualizarContador = atualizarContadorImport; // alias do HTML
+
+  window.selecionarTodos = (val) => {
+    document.querySelectorAll('#importList input[type=checkbox]').forEach(c => c.checked = val);
+    atualizarContadorImport();
+  };
+
+  window.fecharImport = () => {
+    document.getElementById('importOverlay').classList.remove('open');
+    document.getElementById('importSenha').value = '';
+  };
+
+  window.confirmarImport = async () => {
+    const senha = document.getElementById('importSenha').value;
+    if (!senha) { alert('Digite a senha do terreiro.'); return; }
+    const checkboxes = document.querySelectorAll('#importList input[type=checkbox]');
+    const selecionados = importEventos.filter((_,i) => checkboxes[i]?.checked);
+    if (selecionados.length === 0) { alert('Selecione ao menos um evento.'); return; }
+
+    const btn = document.querySelector('.import-overlay .btn-save');
+    btn.textContent = 'Importando…';
+    btn.disabled = true;
+
+    let ok = 0, err = 0;
+    for (const ev of selecionados) {
+      try {
+        const res = await fetch(API, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ ...ev, senha })
+        });
+        if (res.status === 403) { alert('Senha incorreta.'); btn.textContent='Importar selecionados'; btn.disabled=false; return; }
+        if (res.ok) { const j = await res.json(); sessoes.push(j); ok++; }
+        else err++;
+      } catch { err++; }
+    }
+
+    sessoes.sort((a,b) => a.data.localeCompare(b.data));
+    fecharImport();
+    renderLista();
+    btn.textContent = 'Importar selecionados';
+    btn.disabled = false;
+    toast(`${ok} sessão(ões) importada(s)!${err ? ' ' + err + ' erro(s).' : ''}`);
+  };
+
+  // ── GERAR ICS ───────────────────────────────────────────────────
+  function gerarICS(id) {
+    const s = sessoes.find(x => x.id === id);
+    if (!s) return;
+
+    const isAndroid = /android/i.test(navigator.userAgent);
+    const [y,m,d]   = s.data.split('-');
+    const hora       = s.hora || '20:30';
+    const [h, min]   = hora.split(':');
+    const pad = n => String(n).padStart(2,'0');
+    const dtstart = `${y}${pad(m)}${pad(d)}T${pad(h)}${pad(min)}00`;
+    const dtend   = `${y}${pad(m)}${pad(d)}T${pad(parseInt(h)+2)}${pad(min)}00`;
+    const details = [
+      s.tipo        ? 'Tipo: ' + (TIPO_LABEL[s.tipo]||s.tipo)  : '',
+      s.responsavel ? 'Responsável: ' + s.responsavel           : '',
+      s.descricao   || ''
+    ].filter(Boolean).join(' | ');
+
+    if (isAndroid) {
+      window.open('https://calendar.google.com/calendar/render?action=TEMPLATE'
+        + '&text='     + encodeURIComponent(s.nome)
+        + '&dates='    + dtstart + '/' + dtend
+        + '&details='  + encodeURIComponent(details)
+        + '&location=' + encodeURIComponent('Terreiro Bolhas de Luz'), '_blank');
+      return;
+    }
+
+    const TAMBOR_L = { confirmado:'Tambor: Confirmado', arrecadacao:'Tambor: Depende de arrecadacao', nao:'Tambor: Nao vai ter' };
+    const desc = [
+      s.tipo        ? 'Tipo: ' + (TIPO_LABEL[s.tipo]||s.tipo) : '',
+      s.tambor      ? (TAMBOR_L[s.tambor]||'')                 : '',
+      s.responsavel ? 'Responsavel: ' + s.responsavel          : '',
+      s.descricao   || ''
+    ].filter(Boolean).join('\\n');
+
+    const CRLF = '\r\n';
+    const ics = [
+      'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bolhas de Luz//Calendario//PT',
+      'BEGIN:VEVENT',
+      'DTSTART;TZID=America/Sao_Paulo:' + dtstart,
+      'DTEND;TZID=America/Sao_Paulo:'   + dtend,
+      'SUMMARY:'     + s.nome,
+      'DESCRIPTION:' + desc,
+      'LOCATION:Terreiro Bolhas de Luz',
+      'UID:'         + s.id + '@bolhasdeluz',
+      'END:VEVENT','END:VCALENDAR'
+    ].join(CRLF);
+
+    const blob = new Blob([ics], { type:'text/calendar;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = s.nome.replace(/[^a-z0-9]/gi,'-') + '.ics'; a.click();
+    URL.revokeObjectURL(url);
+  }
+  window.gerarICS = gerarICS;
+
+  // ── UTILS ───────────────────────────────────────────────────────
+  function fmtDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // ── FECHAR MODAIS COM ESC ────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('confirmOverlay').classList.contains('open')) { fecharConfirm(); return; }
+    if (document.getElementById('importOverlay').classList.contains('open'))  { fecharImport();  return; }
+    if (document.getElementById('overlay').classList.contains('open'))        { closeModal();    return; }
+  });
+
+  // Fechar clicando no fundo
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('overlay')) closeModal();
+  });
+  document.getElementById('confirmOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirmOverlay')) fecharConfirm();
+  });
+  document.getElementById('importOverlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('importOverlay')) fecharImport();
+  });
+
+  // Enter confirma exclusão
+  document.getElementById('confirmSenha').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmarDelete();
+  });
+
+  load();
+</script>
+</body>
+</html>
