@@ -311,22 +311,26 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .mf-tab.active{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 
 #boas-vindas{
-  display:none;position:relative;z-index:10;
-  background:rgba(255,255,255,.7);
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:200;
+  background:rgba(253,246,238,.96);
   border-bottom:1px solid var(--border);
-  backdrop-filter:blur(6px);
-  padding:10px 20px;
-  text-align:center;
+  backdrop-filter:blur(8px);
+  padding:8px 60px;
+  box-shadow:0 2px 12px rgba(196,90,30,.08);
 }
 #boas-vindas-inner{
-  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
   max-width:700px;margin:0 auto;
 }
-#bv-emoji{font-size:1.3rem}
-#bv-nome{font-family:'Cinzel',serif;font-size:.75rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
-#bv-cargo{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic}
-#bv-sep{color:var(--border);font-size:.8rem}
-#bv-tempo{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--rosa);font-style:italic}
+#bv-emoji{font-size:1rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.76rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#bv-cargo{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic}
+#bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.7rem}
+#bv-tempo{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic}
+body.logada{padding-top:36px}
 
 .perfil-header{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;backdrop-filter:blur(4px)}
 .perfil-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--rosa)}
@@ -959,9 +963,18 @@ function renderCards() {
         return;
       }
 
-      const tag = isMem
-        ? `<span class="widget-tag tag-mem">membros</span>`
-        : `<span class="widget-tag tag-pub">público</span>`;
+      // widget especial: filhas → admin vê painel, filha vê próprio perfil
+      if (item.id === 'filhas') {
+        const user = window._getCurrentUser?.();
+        if (!user) {
+          html += `<a class="widget" href="#" onclick="openLogin();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-mem">membros</span></a>`;
+        } else if (user.email === 'bolhasdeluz@gmail.com') {
+          html += `<a class="widget" href="#" onclick="showPage('admin');return false"><div class="widget-name">Painel Admin</div><div class="widget-desc">Gestão da casa</div><span class="widget-tag tag-mem">admin</span></a>`;
+        } else {
+          html += `<a class="widget" href="#" onclick="window.showSuaHistoria();return false"><div class="widget-name">Minha Ficha</div><div class="widget-desc">Sua história espiritual</div><span class="widget-tag tag-mem">membros</span></a>`;
+        }
+        return;
+      }
       let onclick = '';
       if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
       else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
@@ -1419,6 +1432,7 @@ onAuthStateChanged(auth, async (user) => {
     avatarWrap.style.display = 'none';
     document.getElementById('drawer-user-section').style.display = 'none';
     document.getElementById('boas-vindas').style.display = 'none';
+    document.body.classList.remove('logada');
     perfilData = {};
     atualizarWidgetHistoria(false);
   }
@@ -1444,6 +1458,7 @@ function atualizarBoasVindas() {
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
 
   banner.style.display = 'block';
+  document.body.classList.add('logada');
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
 
