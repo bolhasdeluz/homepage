@@ -1782,6 +1782,35 @@ function bolha(x,y,r,op,dur,delay){
 (function spawn(){const vw=window.innerWidth,vh=window.innerHeight;for(let i=0;i<18;i++){const r=10+Math.random()*22;bolha(Math.random()*vw,vh+r*2,r,.12+Math.random()*.15,24+Math.random()*20,Math.random()*40)}})();
 setInterval(()=>{const r=10+Math.random()*22;bolha(Math.random()*window.innerWidth,window.innerHeight+r*2,r,.12+Math.random()*.15,24+Math.random()*20,0)},900);
 
+// ── DEBUG CONSOLE ──
+function toggleDebug(){
+  document.getElementById('debug-panel').classList.toggle('open');
+}
+(function interceptConsole(){
+  const panel = () => document.getElementById('debug-panel');
+  const _log = console.log.bind(console);
+  const _warn = console.warn.bind(console);
+  const _error = console.error.bind(console);
+  function addLog(type, args){
+    const p = panel(); if(!p) return;
+    const colors = {log:'#0f0', warn:'#ff0', error:'#f55'};
+    const line = document.createElement('div');
+    line.style.cssText = `color:${colors[type]};margin:2px 0;border-bottom:1px solid rgba(255,255,255,.1);padding-bottom:2px;word-break:break-all`;
+    const time = new Date().toLocaleTimeString('pt-BR');
+    line.textContent = `[${time}][${type.toUpperCase()}] ` + Array.from(args).map(a => {
+      try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch(e) { return String(a); }
+    }).join(' ');
+    p.appendChild(line);
+    p.scrollTop = p.scrollHeight;
+  }
+  console.log = function(){ _log(...arguments); addLog('log', arguments); };
+  console.warn = function(){ _warn(...arguments); addLog('warn', arguments); };
+  console.error = function(){ _error(...arguments); addLog('error', arguments); };
+  // captura erros globais
+  window.addEventListener('error', e => addLog('error', [e.message + ' (' + e.filename + ':' + e.lineno + ')']));
+  window.addEventListener('unhandledrejection', e => addLog('error', ['Promise rejeitada:', e.reason]));
+})();
+
 // inicializar
 loadMenu();
 </script>
