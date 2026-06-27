@@ -1774,7 +1774,7 @@ loadMenu();
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -1954,13 +1954,17 @@ onAuthStateChanged(auth, async (user) => {
   const avatarWrap = document.getElementById('user-avatar-wrap');
   const avatar     = document.getElementById('user-avatar');
 
-  // se veio de um redirect de login e não está no index, volta pro index
+  // se voltou de um redirect de login, garante que está no index
   const loginOrigin = sessionStorage.getItem('loginOrigin');
   if (user && loginOrigin) {
     sessionStorage.removeItem('loginOrigin');
-    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
-      window.location.href = '/';
-      return;
+    const originUrl = new URL(loginOrigin);
+    // se a origem era o index e estamos em outro lugar, volta
+    if (originUrl.pathname === '/' || originUrl.pathname === '/index.html') {
+      if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+        window.location.href = originUrl.href;
+        return;
+      }
     }
   }
 
@@ -2115,16 +2119,12 @@ window.salvarSuaHistoria = async function() {
 };
 
 // captura resultado do redirect ao voltar do Google
-getRedirectResult(auth).catch(e => console.warn('redirect:', e));
+getRedirectResult(auth).catch(e => console.warn('redirect result:', e));
 
-window.loginGoogle = async function() {
-  try {
-    // garante que o redirect volta para o index
-    sessionStorage.setItem('loginOrigin', '/');
-    await signInWithRedirect(auth, provider);
-  } catch(e) {
-    console.error('Erro login:', e.code, e.message);
-  }
+window.loginGoogle = function() {
+  // salva origem antes de redirecionar
+  sessionStorage.setItem('loginOrigin', window.location.href);
+  signInWithRedirect(auth, provider);
 };
 
 window.logoutGoogle = async function() {
