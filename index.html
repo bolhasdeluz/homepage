@@ -392,6 +392,16 @@ body.logada{padding-top:28px}
 #user-avatar-wrap{position:fixed;top:16px;left:16px;z-index:400;display:none;align-items:center;gap:8px}
 #user-logout-btn{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.08em;color:var(--text-dim);background:rgba(253,246,238,.9);border:1px solid var(--border);border-radius:16px;padding:4px 10px;cursor:pointer}
 #user-logout-btn:hover{color:var(--rosa);border-color:rgba(196,57,107,.3)}
+
+/* simulação de visão */
+#sim-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#2a7a60,#3a9a78);padding:10px 20px;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 -4px 18px rgba(42,122,96,.3)}
+#sim-bar.active{display:flex}
+.sim-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.85);white-space:nowrap}
+.sim-select{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.04em;padding:6px 10px;outline:none;cursor:pointer;flex:1;min-width:160px}
+.sim-select option{background:#2a7a60;color:#fff}
+.sim-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:20px;font-family:'Crimson Pro',serif;font-size:.82rem;color:#fff;font-style:italic;padding:4px 12px;flex:1;text-align:center}
+.sim-exit{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.sim-exit:hover{background:rgba(255,255,255,.35)}
 </style>
 </head>
 <body>
@@ -423,6 +433,18 @@ body.logada{padding-top:28px}
     </button>
   </div>
   <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
+
+<!-- BARRA DE SIMULAÇÃO -->
+<div id="sim-bar">
+  <span class="sim-label">👁 Simulando como:</span>
+  <select class="sim-select" id="sim-select" onchange="mudarSimulacao(this.value)">
+    <option value="publico">Visitante (não logada)</option>
+    <option value="filha">Filha da casa (logada)</option>
+    <optgroup label="Filha específica" id="sim-filhas-group"></optgroup>
+  </select>
+  <div class="sim-badge" id="sim-badge">Visitante pública</div>
+  <button class="sim-exit" onclick="sairSimulacao()">✕ Sair da simulação</button>
 </div>
 
 <!-- ADMIN SENHA -->
@@ -1022,6 +1044,9 @@ body.logada{padding-top:28px}
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <h2>Painel de Administração</h2>
     <p class="sub">Gerencie o menu e os cards da homepage. Alterações são salvas no Cloudflare KV.</p>
+    <button onclick="iniciarSimulacao()" style="background:var(--green);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;font-weight:700;padding:10px 20px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:8px">
+      👁 Simular visão de outra pessoa
+    </button>
     <div id="admin-sections-container"></div>
 
     <div class="admin-section-block" style="margin-bottom:20px">
@@ -1325,7 +1350,67 @@ function saveEditItem(si, ii) {
   renderAdminPanel(); renderDrawer(); renderCards();
 }
 
-// ── ADMIN FILHAS ──
+// ── SIMULAÇÃO DE VISÃO ──
+let _modoSimulacao = null; // null = admin real, 'publico', 'filha', ou email específico
+
+async function iniciarSimulacao() {
+  // popula select com perfis do KV
+  const group = document.getElementById('sim-filhas-group');
+  group.innerHTML = '';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
+    const perfis = await res.json();
+    perfis.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.email;
+      opt.textContent = (p.nome || p.email.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
+      group.appendChild(opt);
+    });
+  } catch(e) {}
+  document.getElementById('sim-bar').classList.add('active');
+  document.getElementById('sim-select').value = 'publico';
+  mudarSimulacao('publico');
+}
+
+function mudarSimulacao(valor) {
+  _modoSimulacao = valor;
+  const badge = document.getElementById('sim-badge');
+  if (valor === 'publico') {
+    badge.textContent = 'Visitante pública (não logada)';
+    window._simUsuario = null;
+  } else if (valor === 'filha') {
+    badge.textContent = 'Filha da casa (logada, sem perfil específico)';
+    window._simUsuario = { email: 'filha@simulacao.com', displayName: 'Filha da Casa', photoURL: null };
+  } else {
+    // email específico — busca perfil
+    fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
+      .then(r => r.json())
+      .then(p => {
+        badge.textContent = (p.nome || valor.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
+        window._simUsuario = { email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p };
+        renderCards();
+        atualizarBoasVindas();
+      });
+    return;
+  }
+  renderCards();
+  atualizarBoasVindas();
+}
+
+function sairSimulacao() {
+  _modoSimulacao = null;
+  window._simUsuario = null;
+  document.getElementById('sim-bar').classList.remove('active');
+  renderCards();
+  atualizarBoasVindas();
+}
+
+// override de _getCurrentUser para modo simulação
+window._getCurrentUser = () => {
+  if (_modoSimulacao !== null) return window._simUsuario || null;
+  return currentUser;
+};
+
 const camposLabels = {
   data_entrada:'Data de Entrada', guia_chefe:'Guia Chefe', apronte:'Apronte',
   coroacao:'Coroação', cacicamento:'Cacicamento', madrinha:'Madrinha',
@@ -1896,19 +1981,23 @@ onAuthStateChanged(auth, async (user) => {
 // ── BOAS-VINDAS ──
 function atualizarBoasVindas() {
   const banner = document.getElementById('boas-vindas');
-  if (!currentUser) { banner.style.display = 'none'; return; }
+  // no modo simulação usa _simUsuario, senão usa currentUser
+  const user = (window._modoSimulacao !== undefined && window._modoSimulacao !== null)
+    ? window._simUsuario
+    : currentUser;
+  if (!user) { banner.style.display = 'none'; document.body.classList.remove('logada'); return; }
 
-  const nomeCompleto = perfilData.nome || currentUser.displayName || '';
+  const perfil = user._perfil || perfilData || {};
+  const nomeCompleto = perfil.nome || user.displayName || '';
   const primeiroNome = nomeCompleto.split(' ')[0];
-  const cargo = perfilData.cargo || '';
-  const emoji = perfilData.emoji || '✦';
-  const tempo = calcTempo(perfilData.historia?.data_entrada);
+  const cargo = perfil.cargo || '';
+  const emoji = perfil.emoji || '✦';
+  const tempo = calcTempo(perfil.historia?.data_entrada);
 
   document.getElementById('bv-emoji').textContent = emoji;
   document.getElementById('bv-nome').textContent  = primeiroNome;
   document.getElementById('bv-cargo').textContent = cargo;
   document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
-
   document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
 
