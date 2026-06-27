@@ -264,10 +264,15 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .admin-section-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;backdrop-filter:blur(4px)}
 .admin-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:rgba(196,90,30,.04)}
 .admin-section-title{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--terra)}
-.admin-item-row{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid rgba(196,90,30,.06)}
+.admin-item-row{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
 .admin-item-row:last-child{border-bottom:none}
-.admin-item-label{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.04em;color:var(--text);flex:1;min-width:80px}
-.admin-item-url{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px}
+.admin-item-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.04em;color:var(--text);min-width:80px;flex:1}
+.admin-item-url{font-family:'Crimson Pro',serif;font-size:.75rem;color:var(--text-dim);font-style:italic;width:100%;order:10;padding-left:20px;margin-top:-4px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-item-actions{display:flex;gap:4px;flex-wrap:wrap;width:100%;order:11;padding-left:20px}
+@media(max-width:600px){
+  .admin-item-url{font-size:.7rem}
+  .toggle-pill{font-size:.5rem;padding:3px 7px}
+}
 .toggle-pill{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);transition:all .2s;white-space:nowrap}
 .toggle-pill.on{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 .toggle-pill.on-green{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
@@ -755,6 +760,41 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
+<!-- MODAL APOIE -->
+<div id="modal-apoie-overlay" onclick="if(event.target===this)this.classList.remove('open')" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;margin:auto;padding:28px 24px;position:relative">
+    <button onclick="document.getElementById('modal-apoie-overlay').classList.remove('open')" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+
+    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px">Apoie o Terreiro</div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.6">Cada contribuição sustenta nossa casa, nossas sessões e nossa corrente. Obrigada pelo axé! 🌸</p>
+
+    <!-- PIX -->
+    <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:10px;padding:16px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Doação via PIX</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Qualquer valor é bem-vindo e será revertido às contas e manutenção da casa.</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+        <div style="flex:1">
+          <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">Chave PIX</div>
+          <div id="pix-key-text" style="font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--text)">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix()" id="btn-copiar-pix" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+
+    <!-- DOAÇÕES DE ALIMENTOS -->
+    <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:10px;padding:16px 18px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${['🍿 Pipoca','🌽 Canjica branca','🌾 Canjica amarela','🫘 Feijão','🌿 Lentilha','🫙 Óleo','🕯️ Velas brancas','🌸 Flores'].map(item => `
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${item}</div>
+        `).join('')}
+      </div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:10px">Na dúvida sobre velas: branco nunca erra! 🕯️</p>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL FICHA PESSOAL -->
 <div id="modal-ficha-pessoal-overlay" onclick="if(event.target===this)fecharFichaPessoal()">
   <div id="modal-ficha-pessoal">
@@ -1074,15 +1114,17 @@ function renderAdminPanel() {
           ondragover="dragOver(event)"
           ondrop="dragDrop(event,${si},${ii})"
           ondragend="dragEnd(event)">
-          <span style="color:var(--text-dim);font-size:.8rem;cursor:grab;padding:0 4px">⠿</span>
+          <span style="color:var(--text-dim);font-size:.8rem;cursor:grab;padding:0 4px;flex-shrink:0">⠿</span>
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
-          <button class="toggle-pill ${item.showWhen!=='logado'?'on':''}" onclick="toggleVisibility(${si},${ii},'publico')" title="Público">👁 Público</button>
-          <button class="toggle-pill ${item.showWhen!=='publico'?'on':''}" onclick="toggleVisibility(${si},${ii},'logado')" title="Logado">🔒 Logado</button>
-          <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
-          <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
-          <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
-          <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+          <div class="admin-item-actions">
+            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='publico'?'on':''}" onclick="toggleVisibility(${si},${ii},'publico')">👁 Público</button>
+            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='logado'?'on':''}" onclick="toggleVisibility(${si},${ii},'logado')">🔒 Logado</button>
+            <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
+            <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
+            <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
+            <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+          </div>
         </div>
         <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
           <div class="admin-row-inputs">
@@ -1432,8 +1474,30 @@ function closeDrawer() {
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
 function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogin();closeDrawer();document.getElementById('admin-senha-overlay').classList.remove('open')}});
-function toggleFaq(btn){
-  const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
+function copiarPix() {
+  navigator.clipboard.writeText('bolhasdeluz@gmail.com').then(() => {
+    const btn = document.getElementById('btn-copiar-pix');
+    btn.textContent = '✓ Copiado!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.style.background = 'var(--rosa)'; }, 2000);
+  }).catch(() => {
+    // fallback para iOS
+    const el = document.createElement('textarea');
+    el.value = 'bolhasdeluz@gmail.com';
+    document.body.appendChild(el);
+    el.select(); document.execCommand('copy');
+    document.body.removeChild(el);
+    const btn = document.getElementById('btn-copiar-pix');
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
+window.abrirApoie = function() {
+  document.getElementById('modal-apoie-overlay').classList.add('open');
+  document.getElementById('modal-apoie-overlay').style.display = 'flex';
+};
+
+function toggleFaq(btn){  const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
   document.querySelectorAll('.faq-body.open').forEach(b=>b.classList.remove('open'));
   document.querySelectorAll('.faq-chevron.open').forEach(c=>c.classList.remove('open'));
   if(!open){body.classList.add('open');ch.classList.add('open')}
