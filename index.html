@@ -310,7 +310,24 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .mf-tab{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;transition:all .2s}
 .mf-tab.active{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 
-/* ── PERFIL ── */
+#boas-vindas{
+  display:none;position:relative;z-index:10;
+  background:rgba(255,255,255,.7);
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(6px);
+  padding:10px 20px;
+  text-align:center;
+}
+#boas-vindas-inner{
+  display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+  max-width:700px;margin:0 auto;
+}
+#bv-emoji{font-size:1.3rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.75rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#bv-cargo{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic}
+#bv-sep{color:var(--border);font-size:.8rem}
+#bv-tempo{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--rosa);font-style:italic}
+
 .perfil-header{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;backdrop-filter:blur(4px)}
 .perfil-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--rosa)}
 .perfil-foto img{width:100%;height:100%;border-radius:50%;object-fit:cover}
@@ -650,7 +667,18 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
       Entrar com Google
     </button>
     <p class="modal-footer">Após o login, aguarde aprovação da administração.</p>
-    <button onclick="closeLogin();document.getElementById('admin-senha-overlay').classList.add('open');setTimeout(()=>document.getElementById('admin-senha-input').focus(),50)" style="background:none;border:none;display:block;margin:12px auto 0;color:rgba(80,30,50,.18);font-size:.85rem;transition:color .2s" onmouseover="this.style.color='rgba(80,30,50,.4)'" onmouseout="this.style.color='rgba(80,30,50,.18)'">⚙</button>
+  </div>
+</div>
+
+<!-- BOAS-VINDAS -->
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <span id="bv-emoji"></span>
+    <span id="bv-nome"></span>
+    <span id="bv-sep">·</span>
+    <span id="bv-cargo"></span>
+    <span id="bv-sep2">·</span>
+    <span id="bv-tempo"></span>
   </div>
 </div>
 
@@ -717,6 +745,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Nome</label><input type="text" class="form-input" id="cp-nome" placeholder="Nome completo"></div>
       <div><label class="form-label">Cargo / Função</label><input type="text" class="form-input" id="cp-cargo" placeholder="ex: Cambona"></div>
+      <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">História</div>
@@ -1137,6 +1166,7 @@ function fecharCriarPerfil() {
 function preencherFormPerfil(p) {
   if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
   if (p.cargo) document.getElementById('cp-cargo').value = p.cargo;
+  if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
     keys.forEach(k => {
@@ -1155,6 +1185,7 @@ async function salvarPerfilAdmin() {
     email: email.toLowerCase(),
     nome:  document.getElementById('cp-nome').value.trim(),
     cargo: document.getElementById('cp-cargo').value.trim(),
+    emoji: document.getElementById('cp-emoji').value.trim(),
     foto: '',
     historia: {}, guias: {}, cruzamentos: {},
     notas: '',
@@ -1366,14 +1397,41 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
+    // admin vai direto pro painel
+    if (user.email === 'bolhasdeluz@gmail.com') {
+      showPage('admin');
+    }
   } else {
     avatar.style.display = 'none';
     avatarWrap.style.display = 'none';
     document.getElementById('drawer-user-section').style.display = 'none';
+    document.getElementById('boas-vindas').style.display = 'none';
     perfilData = {};
     atualizarWidgetHistoria(false);
   }
 });
+
+// ── BOAS-VINDAS ──
+function atualizarBoasVindas() {
+  const banner = document.getElementById('boas-vindas');
+  if (!currentUser) { banner.style.display = 'none'; return; }
+
+  const nome  = perfilData.nome  || currentUser.displayName || '';
+  const cargo = perfilData.cargo || '';
+  const emoji = perfilData.emoji || '✦';
+  const tempo = calcTempo(perfilData.historia?.data_entrada);
+
+  document.getElementById('bv-emoji').textContent = emoji;
+  document.getElementById('bv-nome').textContent  = nome;
+  document.getElementById('bv-cargo').textContent = cargo;
+  document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+
+  // esconde separadores se não tiver cargo ou tempo
+  document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+
+  banner.style.display = 'block';
+}
 
 // ── SUA HISTÓRIA ──
 function atualizarWidgetHistoria(logada) {
@@ -1507,6 +1565,7 @@ async function carregarPerfil(email) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
   }
   renderPerfil();
+  atualizarBoasVindas();
 }
 
 // ── CAMPOS ──
