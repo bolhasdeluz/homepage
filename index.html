@@ -1359,7 +1359,7 @@ loadMenu();
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -1542,14 +1542,15 @@ window.salvarSuaHistoria = async function() {
 
 window.loginGoogle = async function() {
   try {
-    await signInWithRedirect(auth, provider);
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithPopup(auth, provider);
   } catch(e) {
-    console.error('Erro login:', e);
+    if (e.code !== 'auth/popup-closed-by-user') {
+      console.error('Erro login:', e.code, e.message);
+      alert('Erro ao fazer login: ' + e.message);
+    }
   }
 };
-
-// captura resultado ao voltar do redirect
-getRedirectResult(auth).catch(e => console.error('Redirect error:', e));
 
 window.logoutGoogle = async function() {
   await signOut(auth);
