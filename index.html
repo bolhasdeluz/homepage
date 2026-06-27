@@ -272,6 +272,32 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .admin-edit-form input,.admin-edit-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
 .admin-edit-form input:focus,.admin-edit-form select:focus{border-color:var(--rosa)}
 .hidden{display:none!important}
+/* ── PERFIL ── */
+.perfil-header{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;backdrop-filter:blur(4px)}
+.perfil-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--rosa)}
+.perfil-foto img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.perfil-nome{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:2px}
+.perfil-email{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase}
+.perfil-tempo{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--rosa);font-style:italic;margin-top:4px}
+.perfil-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 20px;margin-bottom:16px;backdrop-filter:blur(4px)}
+.perfil-section-title{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--rosa);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.perfil-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
+@media(max-width:480px){.perfil-grid{grid-template-columns:1fr}}
+.perfil-field label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:4px}
+.perfil-field .valor{font-family:'Crimson Pro',serif;font-size:.98rem;color:var(--text);line-height:1.4}
+.perfil-field input{width:100%;background:rgba(253,246,238,.8);border:1px solid rgba(196,57,107,.2);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s}
+.perfil-field input:focus{border-color:var(--rosa)}
+.perfil-field input[type=date]{font-size:13px}
+.perfil-textarea{width:100%;background:rgba(253,246,238,.8);border:1px solid rgba(196,57,107,.2);border-radius:6px;padding:9px 11px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);resize:vertical;outline:none;line-height:1.6;transition:border-color .2s}
+.perfil-textarea:focus{border-color:var(--rosa)}
+.perfil-aviso{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:11px 15px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--rosa);margin-bottom:16px;display:none}
+.perfil-msg-ok{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;color:var(--green);margin-top:10px;display:none}
+
+/* estado de login no header */
+#user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);cursor:pointer;display:none}
+#user-avatar-wrap{position:fixed;top:16px;left:16px;z-index:400;display:none;align-items:center;gap:8px}
+#user-logout-btn{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.08em;color:var(--text-dim);background:rgba(253,246,238,.9);border:1px solid var(--border);border-radius:16px;padding:4px 10px;cursor:pointer}
+#user-logout-btn:hover{color:var(--rosa);border-color:rgba(196,57,107,.3)}
 </style>
 </head>
 <body>
@@ -297,6 +323,11 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
   <div id="drawer-body"></div>
+  <div id="drawer-user-section" style="display:none;padding:12px 20px;border-top:1px solid var(--border)">
+    <button class="drawer-link" onclick="showPage('perfil');closeDrawer()" style="color:var(--rosa)">
+      <span class="drawer-dot mem"></span>Meu Perfil
+    </button>
+  </div>
   <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
 </div>
 
@@ -504,7 +535,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
     <button class="modal-close" onclick="closeLogin()">×</button>
     <div class="modal-title">Área Interna</div>
     <div class="modal-sub">Exclusiva para filhas da casa</div>
-    <button class="btn-rosa" style="width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;font-size:12px" onclick="alert('Login com Google em breve! 🌸')">
+    <button class="btn-rosa" style="width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;font-size:12px" onclick="loginGoogle()">
       <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.7 13.4 17.9 9.5 24 9.5z"/><path fill="#4A90D9" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.8 28.5A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5L2.4 13.5A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.3-6.3z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.2-7.7 2.2-6.1 0-11.3-4-13.2-9.4l-7.8 6C6.8 42.5 14.7 48 24 48z"/></svg>
       Entrar com Google
     </button>
@@ -513,7 +544,56 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   </div>
 </div>
 
-<!-- PÁGINA ADMIN -->
+<!-- AVATAR USUÁRIO LOGADO -->
+<div id="user-avatar-wrap">
+  <img id="user-avatar" src="" alt="Perfil" onclick="showPage('perfil')">
+  <button id="user-logout-btn" onclick="logoutGoogle()">Sair</button>
+</div>
+
+<!-- PÁGINA PERFIL -->
+<div id="page-perfil" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+
+    <div id="perfil-header" class="perfil-header">
+      <div class="perfil-foto" id="perfil-foto-wrap">👤</div>
+      <div>
+        <div class="perfil-nome" id="perfil-nome-display">Carregando...</div>
+        <div class="perfil-email" id="perfil-email-display"></div>
+        <div class="perfil-tempo" id="perfil-tempo-display"></div>
+      </div>
+    </div>
+
+    <div class="perfil-section">
+      <div class="perfil-section-title">História</div>
+      <div class="perfil-grid" id="perfil-grid-historia"></div>
+    </div>
+
+    <div class="perfil-section">
+      <div class="perfil-section-title">Guias e Guardiões</div>
+      <div class="perfil-grid" id="perfil-grid-guias"></div>
+    </div>
+
+    <div class="perfil-section">
+      <div class="perfil-section-title">Cruzamentos e Axés</div>
+      <div class="perfil-grid" id="perfil-grid-cruzamentos"></div>
+    </div>
+
+    <div class="perfil-section">
+      <div class="perfil-section-title">Sugerir correção</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:10px">Identificou algum erro? Descreva abaixo.</p>
+      <textarea class="perfil-textarea" id="perfil-notas" rows="4" placeholder="Ex: Meu caboclo está errado, o nome correto é..."></textarea>
+    </div>
+
+    <div class="perfil-aviso" id="perfil-aviso">Você tem alterações pendentes.</div>
+    <div id="perfil-btn-wrap" style="display:none;text-align:right;margin-top:8px">
+      <button class="btn-rosa" id="perfil-btn-enviar" onclick="salvarPerfil()">Enviar solicitação</button>
+      <div class="perfil-msg-ok" id="perfil-msg-ok">✦ Enviado com sucesso!</div>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
 <div id="page-admin" class="page">
   <div class="admin-panel">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
@@ -848,6 +928,257 @@ setInterval(()=>{const r=10+Math.random()*22;bolha(Math.random()*window.innerWid
 
 // inicializar
 loadMenu();
+</script>
+<!-- FIREBASE SDK -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+let perfilData  = {};
+let perfilAlteracoes = {};
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  const avatarWrap = document.getElementById('user-avatar-wrap');
+  const avatar     = document.getElementById('user-avatar');
+
+  if (user) {
+    // mostra avatar
+    avatar.src = user.photoURL || '';
+    avatar.style.display = 'block';
+    avatarWrap.style.display = 'flex';
+    // mostra perfil no drawer
+    document.getElementById('drawer-user-section').style.display = 'block';
+    // atualiza modal login
+    document.getElementById('login-overlay').classList.remove('open');
+    // carrega perfil
+    await carregarPerfil(user.email);
+  } else {
+    avatar.style.display = 'none';
+    avatarWrap.style.display = 'none';
+    document.getElementById('drawer-user-section').style.display = 'none';
+    perfilData = {};
+  }
+});
+
+// ── LOGIN GOOGLE ──
+window.loginGoogle = async function() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    console.error('Erro login:', e);
+  }
+};
+
+window.logoutGoogle = async function() {
+  await signOut(auth);
+  showPage('inicio');
+};
+
+// ── CARREGAR PERFIL ──
+async function carregarPerfil(email) {
+  try {
+    const res = await fetch(`/api/perfil?email=${encodeURIComponent(email)}`);
+    perfilData = await res.json();
+  } catch(e) {
+    perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
+  }
+  renderPerfil();
+}
+
+// ── CAMPOS ──
+const camposHistoria = [
+  { label:'Data de Entrada',   key:'data_entrada',   tipo:'data'  },
+  { label:'Guia Chefe',        key:'guia_chefe',     tipo:'texto' },
+  { label:'Apronte',           key:'apronte',        tipo:'data'  },
+  { label:'Coroação',          key:'coroacao',       tipo:'data'  },
+  { label:'Cacicamento',       key:'cacicamento',    tipo:'data'  },
+  { label:'Madrinha',          key:'madrinha',       tipo:'texto' },
+  { label:'Afilhada',          key:'afilhada_1',     tipo:'texto' },
+  { label:'Afilhada',          key:'afilhada_2',     tipo:'texto' },
+];
+const camposGuias = [
+  { label:'Caboclo',            key:'caboclo',        tipo:'texto' },
+  { label:'Chegada do Caboclo', key:'caboclo_data',   tipo:'data'  },
+  { label:'Exu',                key:'exu',            tipo:'texto' },
+  { label:'Chegada do Exu',     key:'exu_data',       tipo:'data'  },
+  { label:'Pomba Gira',         key:'pomba_gira',     tipo:'texto' },
+  { label:'Chegada da P. Gira', key:'pomba_gira_data',tipo:'data'  },
+  { label:'Preto Velho',        key:'preto_velho',    tipo:'texto' },
+  { label:'Chegada de P. Velho',key:'preto_velho_data',tipo:'data' },
+  { label:'Cigana',             key:'cigana',         tipo:'texto' },
+  { label:'Chegada da Cigana',  key:'cigana_data',    tipo:'data'  },
+  { label:'Cosme',              key:'cosme',          tipo:'texto' },
+  { label:'Chegada do Cosme',   key:'cosme_data',     tipo:'data'  },
+];
+const camposCruz = [
+  { label:'Cruzamento de Conga',    key:'cruz_conga',    tipo:'data' },
+  { label:'Cruzamento de Mata',     key:'cruz_mata',     tipo:'data' },
+  { label:'Cruzamento de Praia',    key:'cruz_praia',    tipo:'data' },
+  { label:'Cruzamento de Rio',      key:'cruz_rio',      tipo:'data' },
+  { label:'Cruzamento de Pedreira', key:'cruz_pedreira', tipo:'data' },
+  { label:'1º Corte',               key:'corte_1',       tipo:'data' },
+];
+
+function fmtData(v) {
+  if (!v) return '';
+  const d = new Date(v + 'T12:00:00');
+  return isNaN(d.getTime()) ? v : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function calcTempo(dataStr) {
+  if (!dataStr) return null;
+  const inicio = new Date(dataStr + 'T12:00:00');
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - inicio.getFullYear();
+  let meses = hoje.getMonth() - inicio.getMonth();
+  if (meses < 0) { anos--; meses += 12; }
+  const p = [];
+  if (anos > 0)  p.push(anos  + (anos  === 1 ? ' ano'  : ' anos'));
+  if (meses > 0) p.push(meses + (meses === 1 ? ' mês'  : ' meses'));
+  return p.length ? p.join(' e ') : 'Recém chegada';
+}
+
+// ── RENDERIZAR PERFIL ──
+function renderPerfil() {
+  if (!currentUser) return;
+  perfilAlteracoes = {};
+
+  // header
+  document.getElementById('perfil-nome-display').textContent = currentUser.displayName || perfilData.nome || '';
+  document.getElementById('perfil-email-display').textContent = currentUser.email || '';
+  const fotoWrap = document.getElementById('perfil-foto-wrap');
+  if (currentUser.photoURL) {
+    fotoWrap.innerHTML = `<img src="${currentUser.photoURL}" alt="foto">`;
+  }
+  const tempo = calcTempo(perfilData.historia?.data_entrada);
+  const tempoEl = document.getElementById('perfil-tempo-display');
+  if (tempo) tempoEl.textContent = '✦ ' + tempo + ' de casa';
+
+  // notas
+  document.getElementById('perfil-notas').value = perfilData.notas || '';
+  document.getElementById('perfil-notas').addEventListener('input', () => {
+    perfilAlteracoes.notas = document.getElementById('perfil-notas').value;
+    atualizarBotaoPerfil();
+  });
+
+  renderCamposPerfil(camposHistoria,  'perfil-grid-historia',      perfilData.historia     || {});
+  renderCamposPerfil(camposGuias,     'perfil-grid-guias',         perfilData.guias        || {});
+  renderCamposPerfil(camposCruz,      'perfil-grid-cruzamentos',   perfilData.cruzamentos  || {});
+}
+
+function renderCamposPerfil(campos, gridId, dados) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  campos.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.className = 'perfil-field';
+    const lbl = document.createElement('label');
+    lbl.textContent = c.label;
+    wrap.appendChild(lbl);
+
+    const valor = dados[c.key];
+    if (valor) {
+      const p = document.createElement('div');
+      p.className = 'valor';
+      p.textContent = c.tipo === 'data' ? fmtData(valor) : valor;
+      wrap.appendChild(p);
+    } else {
+      const inp = document.createElement('input');
+      inp.type = c.tipo === 'data' ? 'date' : 'text';
+      inp.placeholder = c.tipo === 'data' ? '' : 'Preencher...';
+      inp.addEventListener('input', () => {
+        if (!perfilAlteracoes._campos) perfilAlteracoes._campos = {};
+        if (inp.value) perfilAlteracoes._campos[c.key] = { label: c.label, valor: inp.value };
+        else delete perfilAlteracoes._campos[c.key];
+        atualizarBotaoPerfil();
+      });
+      wrap.appendChild(inp);
+    }
+    grid.appendChild(wrap);
+  });
+}
+
+function atualizarBotaoPerfil() {
+  const tem = Object.keys(perfilAlteracoes).length > 0;
+  document.getElementById('perfil-btn-wrap').style.display = tem ? 'block' : 'none';
+}
+
+// ── SALVAR PERFIL ──
+window.salvarPerfil = async function() {
+  if (!currentUser) return;
+  const btn = document.getElementById('perfil-btn-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
+  // monta texto da solicitação
+  let linhas = '';
+  if (perfilAlteracoes._campos) {
+    linhas = Object.values(perfilAlteracoes._campos)
+      .map(c => `${c.label}: ${c.valor}`).join('\n');
+  }
+  const notas = perfilAlteracoes.notas || '';
+
+  // salva no KV via Worker
+  try {
+    const payload = {
+      email: currentUser.email,
+      nome: currentUser.displayName || '',
+      foto: currentUser.photoURL || '',
+      notas: document.getElementById('perfil-notas').value,
+      historia: { ...perfilData.historia },
+      guias: { ...perfilData.guias },
+      cruzamentos: { ...perfilData.cruzamentos },
+      solicitacao: linhas || notas,
+      criadoEm: perfilData.criadoEm || Date.now()
+    };
+
+    // aplica campos novos ao payload
+    if (perfilAlteracoes._campos) {
+      Object.entries(perfilAlteracoes._campos).forEach(([k, v]) => {
+        // descobre qual grupo
+        if (camposHistoria.find(c => c.key === k)) payload.historia[k] = v.valor;
+        else if (camposGuias.find(c => c.key === k)) payload.guias[k] = v.valor;
+        else if (camposCruz.find(c => c.key === k)) payload.cruzamentos[k] = v.valor;
+      });
+    }
+
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('perfil-msg-ok').style.display = 'block';
+      document.getElementById('perfil-aviso').style.display = 'block';
+      perfilData = payload;
+      setTimeout(() => {
+        document.getElementById('perfil-msg-ok').style.display = 'none';
+        btn.style.display = 'none';
+      }, 3000);
+    }
+  } catch(e) {
+    alert('Erro ao salvar. Tente novamente.');
+  }
+  btn.disabled = false; btn.textContent = 'Enviar solicitação';
+};
 </script>
 </body>
 </html>
