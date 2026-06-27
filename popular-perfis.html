@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Popular Perfis — BDL Admin</title>
+<style>
+body{font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px;background:#fff5f7;color:#2e1a0e}
+h1{font-size:1.3rem;margin-bottom:8px}
+p{font-size:.9rem;color:#8a6070;margin-bottom:24px}
+button{background:#c4396b;color:#fff;border:none;border-radius:8px;padding:12px 28px;font-size:14px;cursor:pointer;margin-bottom:20px}
+button:hover{background:#e8688a}
+button:disabled{opacity:.5;cursor:default}
+#log{background:#fff;border:1px solid rgba(196,57,107,.15);border-radius:8px;padding:16px;font-family:monospace;font-size:13px;line-height:1.8;min-height:100px;white-space:pre-wrap}
+.ok{color:#2a7a60}.err{color:#b84040}.info{color:#8c5a00}
+</style>
+</head>
+<body>
+<h1>Popular Perfis no KV</h1>
+<p>Este script envia os dados de todas as filhas para o Cloudflare KV via <code>/api/perfil</code>.<br>Execute uma vez depois do deploy.</p>
+<button onclick="popular()" id="btn">▶ Executar agora</button>
+<div id="log">Aguardando...</div>
+
+<script>
+function fmtData(br) {
+  if (!br) return '';
+  const [d, m, y] = br.split('/');
+  if (!d || !m || !y) return '';
+  const yy = y.length === 2 ? '20' + y : y;
+  return `${yy}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
+
+const perfis = [
+  {
+    email: 'annagomes.bdl@gmail.com',
+    nome: 'Anna', cargo: 'Mãe da Casa', emoji: '🔥',
+    historia: {
+      data_entrada: fmtData('26/08/2017'), guia_chefe: 'Xango das Sete Montanhas',
+      apronte: fmtData('26/03/2021'), coroacao: fmtData('15/11/2018'),
+      cacicamento: fmtData('16/10/2021'), madrinha: 'Betania'
+    },
+    guias: {
+      caboclo: 'Xango das Sete Montanhas', caboclo_data: fmtData('15/11/2017'),
+      exu: 'Tranca Ruas do Cruzeiro das Almas', exu_data: fmtData('26/08/2017'),
+      pomba_gira: 'Maria Mulambo da Lixeira', pomba_gira_data: fmtData('27/11/2017'),
+      preto_velho: 'Pai Benedito das Almas', preto_velho_data: fmtData('16/03/2018'),
+      cigana: 'Madalena', cigana_data: fmtData('14/10/2017'),
+      cosme: 'Laurinha', cosme_data: fmtData('26/01/2018')
+    },
+    cruzamentos: {
+      cruz_conga: fmtData('06/10/2017'), cruz_mata: fmtData('18/11/2017'),
+      cruz_praia: fmtData('18/02/2018'), cruz_rio: fmtData('10/12/2017'),
+      corte_1: fmtData('05/04/2018'), cruz_pedreira: fmtData('16/10/2021')
+    }
+  },
+  {
+    email: 'anna.p.gomes@hotmail.com',
+    nome: 'Anna', cargo: 'Mãe da Casa', emoji: '🔥',
+    historia: { data_entrada: fmtData('26/08/2017'), guia_chefe: 'Xango das Sete Montanhas',
+      apronte: fmtData('26/03/2021'), coroacao: fmtData('15/11/2018'),
+      cacicamento: fmtData('16/10/2021'), madrinha: 'Betania' },
+    guias: {
+      caboclo: 'Xango das Sete Montanhas', caboclo_data: fmtData('15/11/2017'),
+      exu: 'Tranca Ruas do Cruzeiro das Almas', exu_data: fmtData('26/08/2017'),
+      pomba_gira: 'Maria Mulambo da Lixeira', pomba_gira_data: fmtData('27/11/2017'),
+      preto_velho: 'Pai Benedito das Almas', preto_velho_data: fmtData('16/03/2018'),
+      cigana: 'Madalena', cigana_data: fmtData('14/10/2017'),
+      cosme: 'Laurinha', cosme_data: fmtData('26/01/2018')
+    },
+    cruzamentos: {
+      cruz_conga: fmtData('06/10/2017'), cruz_mata: fmtData('18/11/2017'),
+      cruz_praia: fmtData('18/02/2018'), cruz_rio: fmtData('10/12/2017'),
+      corte_1: fmtData('05/04/2018'), cruz_pedreira: fmtData('16/10/2021')
+    }
+  },
+  {
+    email: 'anelisebona@gmail.com',
+    nome: 'Anne', cargo: 'Curumim', emoji: '🌱',
+    historia: { data_entrada: fmtData('12/08/2025') },
+    guias: { preto_velho: 'Vôzinho', preto_velho_data: fmtData('08/05/2026') },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026') }
+  },
+  {
+    email: 'fernandezrbrenda@gmail.com',
+    nome: 'Brenda', cargo: 'Curumim', emoji: '🌊',
+    historia: { data_entrada: fmtData('13/01/2024'), guia_chefe: 'Mãe Iansã',
+      madrinha: 'Thali - Pai Pena Branca' },
+    guias: {
+      caboclo: 'Mãe Iansã', caboclo_data: fmtData('16/11/2025'),
+      exu: 'Tiriri', exu_data: fmtData('16/08/2025'),
+      pomba_gira: 'Menina', pomba_gira_data: fmtData('10/10/2025'),
+      preto_velho: 'Vovó Catarina', preto_velho_data: fmtData('15/11/2024')
+    },
+    cruzamentos: {
+      cruz_conga: fmtData('29/03/2025'), cruz_mata: fmtData('16/11/2025'),
+      cruz_praia: fmtData('25/04/2026'), cruz_rio: fmtData('16/11/2025')
+    }
+  },
+  {
+    email: 'gabrielasilvadealmeida12@gmail.com',
+    nome: 'Gabi', cargo: 'Curumim', emoji: '🌸',
+    historia: { data_entrada: fmtData('13/02/2026') },
+    guias: { pomba_gira: 'Maria Mulambo das Sete Catacumbas' },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026'), cruz_praia: fmtData('25/04/2026') }
+  },
+  {
+    email: 'jaquebonaprojovem@gmail.com',
+    nome: 'Jaque', cargo: 'Tamoio', emoji: '💛',
+    historia: { data_entrada: fmtData('14/06/2023'), guia_chefe: 'Mãe Oxum',
+      coroacao: fmtData('15/11/2025'), madrinha: 'Vanessa - Vô Chico' },
+    guias: {
+      caboclo: 'Mãe Oxum',
+      exu: 'Do Lodo',
+      pomba_gira: 'Maria Padilha das Almas',
+      preto_velho: 'Vó Catarina de Angola',
+      cigana: 'Soraia',
+      cosme: 'Mariazinha'
+    },
+    cruzamentos: { cruz_conga: fmtData('09/03/2024') }
+  },
+  {
+    email: 'julianasilveirabueno@gmail.com',
+    nome: 'Juliana', cargo: 'Curumim', emoji: '⚡',
+    historia: { data_entrada: fmtData('25/10/2025'), guia_chefe: 'Pai Ogum Xoroquê' },
+    guias: {
+      caboclo: 'Pai Ogum Xoroquê', caboclo_data: fmtData('07/03/2026'),
+      exu: 'Malandro Miguel Camisa Preta', exu_data: fmtData('20/02/2026'),
+      pomba_gira: 'Maria Navalha do Cais', pomba_gira_data: fmtData('22/05/2026'),
+      preto_velho: 'Vó Maria Redonda', preto_velho_data: fmtData('13/03/2026'),
+      cigana: 'Esmeralda', cigana_data: fmtData('27/03/2026'),
+      cosme: 'Luzia', cosme_data: fmtData('13/03/2026')
+    },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026'), cruz_praia: fmtData('25/04/2026') }
+  },
+  {
+    email: 'manuellaalmeida.s@gmail.com',
+    nome: 'Manuella', cargo: 'Curumim', emoji: '🌿',
+    historia: { data_entrada: fmtData('12/10/2025'), guia_chefe: 'Jurema Flecheira das Matas' },
+    guias: {
+      caboclo: 'Jurema Flecheira das Matas', caboclo_data: fmtData('12/12/2025'),
+      exu: 'Marabô do Cruzeiro das Almas', exu_data: fmtData('24/01/2026'),
+      pomba_gira: 'Dama da noite da Calunga', pomba_gira_data: fmtData('10/10/2025'),
+      preto_velho: 'Tia Maria da Bahia', preto_velho_data: fmtData('27/02/2026'),
+      cigana: 'Carmen', cigana_data: fmtData('28/11/2025'),
+      cosme: 'Mariazinha da Cachoeira', cosme_data: fmtData('15/11/2025')
+    },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026'), cruz_praia: fmtData('25/04/2026') }
+  },
+  {
+    email: 'marciadarochaaguiar@gmail.com',
+    nome: 'Márcia', cargo: 'Naurú', emoji: '🏹',
+    historia: { data_entrada: fmtData('16/02/2026'), guia_chefe: 'Pai Oxóssi',
+      madrinha: 'Vanessa - Vô Chico' },
+    guias: { caboclo: 'Pai Oxóssi', exu: 'Sete Encruzilhadas' },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026'), cruz_praia: fmtData('25/04/2026') }
+  },
+  {
+    email: 'marocco.v7@gmail.com',
+    nome: 'Ness', cargo: 'Cacique', emoji: '⚔️',
+    historia: { data_entrada: fmtData('18/02/2021'), guia_chefe: 'Vô Chico',
+      apronte: fmtData('16/08/2024'), coroacao: fmtData('17/05/2024'),
+      cacicamento: fmtData('10/05/2025'),
+      afilhada_1: 'Tassiana - Mãe Iemanjá', afilhada_2: 'Jaque - Mãe Oxum' },
+    guias: {
+      caboclo: 'Mãe Iansã', caboclo_data: fmtData('05/09/2021'),
+      exu: 'Sete Covas', exu_data: fmtData('18/05/2021'),
+      pomba_gira: 'Maria Mulambo das Almas', pomba_gira_data: fmtData('09/07/2021'),
+      preto_velho: 'Vô Chico', preto_velho_data: fmtData('18/05/2021'),
+      cosme: 'Baipu Sa\'yju', cosme_data: fmtData('23/07/2021')
+    },
+    cruzamentos: { cruz_conga: fmtData('30/10/2021') }
+  },
+  {
+    email: 'nicoleparcianello@gmail.com',
+    nome: 'Nicole', cargo: 'Cambona', emoji: '🕯️',
+    historia: { data_entrada: fmtData('07/04/2026') },
+    guias: {}, cruzamentos: {}
+  },
+  {
+    email: 'stephanidalmoro@gmail.com',
+    nome: 'Stephani', cargo: 'Cambona', emoji: '🌙',
+    historia: { data_entrada: fmtData('07/04/2026') },
+    guias: {}, cruzamentos: {}
+  },
+  {
+    email: 'tassiana.taf@gmail.com',
+    nome: 'Tassi', cargo: 'Naurú', emoji: '🌊',
+    historia: { data_entrada: fmtData('27/10/2023'), guia_chefe: 'Mãe Iemanjá',
+      madrinha: 'Vanessa - Vô Chico' },
+    guias: { caboclo: 'Mãe Iemanjá', pomba_gira: 'Morena da Praia', pomba_gira_data: fmtData('11/08/2025') },
+    cruzamentos: { cruz_conga: fmtData('09/03/2024') }
+  },
+  {
+    email: 'thali.bartikoski@gmail.com',
+    nome: 'Thali', cargo: 'Tamoio', emoji: '🦋',
+    historia: { data_entrada: fmtData('17/06/2022'),
+      apronte: fmtData('01/11/2025'), coroacao: fmtData('21/06/2025'),
+      madrinha: 'Brenda - Mãe Iansã' },
+    guias: {
+      caboclo: 'Caboclo Pena Branca', caboclo_data: fmtData('18/06/2022'),
+      exu: 'Omulu', exu_data: fmtData('01/06/2022'),
+      pomba_gira: 'Maria Quitéria', pomba_gira_data: fmtData('14/05/2022'),
+      preto_velho: 'Vó Rita', preto_velho_data: fmtData('14/05/2022'),
+      cigana: 'Menina', cigana_data: fmtData('01/06/2022'),
+      cosme: 'Pedrinho', cosme_data: fmtData('14/05/2022')
+    },
+    cruzamentos: { cruz_conga: fmtData('20/01/2023') }
+  },
+  {
+    email: 'vitoriamersoni1@gmail.com',
+    nome: 'Vitória', cargo: 'Curumim', emoji: '👑',
+    historia: { data_entrada: fmtData('13/08/2025'), guia_chefe: 'Mãe Oxum' },
+    guias: {
+      caboclo: 'Mãe Oxum',
+      exu: 'Zé Pelintra',
+      pomba_gira: 'Rainha das Sete Encruzilhadas', pomba_gira_data: fmtData('19/08/2019')
+    },
+    cruzamentos: { cruz_conga: fmtData('07/03/2026') }
+  }
+];
+
+async function popular() {
+  const btn = document.getElementById('btn');
+  const log = document.getElementById('log');
+  btn.disabled = true;
+  log.innerHTML = '<span class="info">Iniciando...</span>\n';
+
+  for (const p of perfis) {
+    const payload = {
+      ...p,
+      foto: '',
+      notas: '',
+      solicitacao: 'Perfil pré-populado pelo admin',
+      criadoEm: Date.now()
+    };
+    try {
+      const res = await fetch('/api/perfil', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': 'admin',
+          'X-User-Email': p.email
+        },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        log.innerHTML += `<span class="ok">✓ ${p.nome} (${p.email})</span>\n`;
+      } else {
+        log.innerHTML += `<span class="err">✕ ${p.nome} — ${JSON.stringify(data)}</span>\n`;
+      }
+    } catch(e) {
+      log.innerHTML += `<span class="err">✕ ${p.nome} — ${e.message}</span>\n`;
+    }
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  log.innerHTML += '\n<span class="ok">✦ Concluído!</span>';
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
