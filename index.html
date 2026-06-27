@@ -1382,6 +1382,19 @@ let perfilAlteracoes = {};
 // expor globalmente para scripts fora do módulo
 window._getCurrentUser = () => currentUser;
 window._getPerfilData  = () => perfilData;
+window.showSuaHistoria = function() {
+  showPage('sua-historia');
+  if (currentUser) {
+    document.getElementById('sua-historia-banner').style.display   = 'none';
+    document.getElementById('sua-historia-previa').style.display   = 'none';
+    document.getElementById('sua-historia-conteudo').style.display = 'block';
+    renderSuaHistoria();
+  } else {
+    document.getElementById('sua-historia-banner').style.display   = 'block';
+    document.getElementById('sua-historia-previa').style.display   = 'block';
+    document.getElementById('sua-historia-conteudo').style.display = 'none';
+  }
+};
 
 // ── AUTH STATE ──
 onAuthStateChanged(auth, async (user) => {
@@ -1416,42 +1429,28 @@ function atualizarBoasVindas() {
   const banner = document.getElementById('boas-vindas');
   if (!currentUser) { banner.style.display = 'none'; return; }
 
-  const nome  = perfilData.nome  || currentUser.displayName || '';
+  const nomeCompleto = perfilData.nome || currentUser.displayName || '';
+  const primeiroNome = nomeCompleto.split(' ')[0];
   const cargo = perfilData.cargo || '';
   const emoji = perfilData.emoji || '✦';
   const tempo = calcTempo(perfilData.historia?.data_entrada);
 
   document.getElementById('bv-emoji').textContent = emoji;
-  document.getElementById('bv-nome').textContent  = nome;
+  document.getElementById('bv-nome').textContent  = primeiroNome;
   document.getElementById('bv-cargo').textContent = cargo;
   document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
 
-  // esconde separadores se não tiver cargo ou tempo
   document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
 
   banner.style.display = 'block';
 }
+window.atualizarBoasVindas = atualizarBoasVindas;
 
 // ── SUA HISTÓRIA ──
 function atualizarWidgetHistoria(logada) {
-  // atualiza o card dinâmico no grid
   renderCards();
 }
-
-window.showSuaHistoria = function() {
-  showPage('sua-historia');
-  if (currentUser) {
-    document.getElementById('sua-historia-banner').style.display  = 'none';
-    document.getElementById('sua-historia-previa').style.display  = 'none';
-    document.getElementById('sua-historia-conteudo').style.display = 'block';
-    renderSuaHistoria();
-  } else {
-    document.getElementById('sua-historia-banner').style.display   = 'block';
-    document.getElementById('sua-historia-previa').style.display   = 'block';
-    document.getElementById('sua-historia-conteudo').style.display = 'none';
-  }
-};
 
 let shAlteracoes = {};
 
