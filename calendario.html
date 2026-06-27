@@ -460,6 +460,7 @@ window.togglePassadas=()=>{mostrarPassadas=!mostrarPassadas;document.getElementB
 
 window.renderLista=function(){
   const logada=!!window.usuarioLogado;
+  const isAdmin=window.usuarioLogado?.email==='bolhasdeluz@gmail.com';
   let lista=sessoes.filter(s=>{
     if(!sessaoVisivel(s))return false;
     if(filtroTipo&&s.tipo!==filtroTipo)return false;
@@ -483,24 +484,32 @@ window.renderLista=function(){
       const tc='tipo-'+(s.tipo||'').toLowerCase();
       const passada=s.data<todayStr?'passada':'';
       const restrito=!logada&&nivelSessao(s)==='visita'?'restrito':'';
+      const nivel=nivelSessao(s);
+      // botão agenda: só mostra para público em sessões públicas (atendimento)
+      const mostrarAgenda=logada||(nivel==='publico');
+      // descrição: só para logadas
+      const desc=logada&&d.descricao?`<div class="si-desc">${esc(d.descricao)}</div>`:'';
+      // responsável: só para logadas
+      const resp=logada&&s.responsavel?`<div class="si-resp">Resp.: ${esc(s.responsavel)}</div>`:'';
+      // ações de edição: só admin
+      const acoesAdmin=isAdmin?`<button class="icon-btn" onclick="openEdit('${s.id}')">✎</button><button class="icon-btn del" onclick="abrirConfirmDelete('${s.id}')">✕</button>`:'';
       html+=`<div class="sessao-item ${tc} ${passada} ${restrito}">
         <div class="si-header">
-          <div style="display:flex;gap:12px;align-items:center;flex:1;min-width:0">
-            <div class="si-date"><div class="si-day-num">${sd}</div><div><div class="si-dow">${dow}</div><div class="si-time">${logada?(s.hora||''):''}</div></div></div>
-            <div style="flex:1;min-width:0">
-              <div class="si-name">${esc(d.nome)}</div>
-              <div class="si-tipo ${tc}">${TIPO_LABEL[s.tipo]||s.tipo||''}</div>
+          <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;overflow:hidden">
+            <div class="si-date" style="flex-shrink:0"><div class="si-day-num">${sd}</div><div><div class="si-dow">${dow}</div><div class="si-time">${logada?(s.hora||''):''}</div></div></div>
+            <div style="flex:1;min-width:0;overflow:hidden">
+              <div class="si-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.nome)}</div>
+              <div class="si-tipo ${tc}" style="white-space:nowrap">${TIPO_LABEL[s.tipo]||s.tipo||''}</div>
               ${logada&&s.tambor?`<div class="tambor-badge tambor-${s.tambor}">${TAMBOR_LABEL[s.tambor]||''}</div>`:''}
-              ${!logada&&nivelSessao(s)==='visita'?`<div class="lock-badge">🔒 Detalhes visíveis para filhas da casa</div>`:''}
+              ${!logada&&nivel==='visita'?`<div class="lock-badge">🔒 Só para filhas da casa</div>`:''}
             </div>
           </div>
-          <div class="si-actions">
-            <button class="icon-btn" onclick="gerarICS('${s.id}')" title="Agenda">📅</button>
-            ${logada?`<button class="icon-btn" onclick="openEdit('${s.id}')">✎</button><button class="icon-btn del" onclick="abrirConfirmDelete('${s.id}')">✕</button>`:''}
+          <div class="si-actions" style="flex-shrink:0">
+            ${mostrarAgenda?`<button class="icon-btn" onclick="gerarICS('${s.id}')" title="Adicionar à agenda">📅</button>`:''}
+            ${acoesAdmin}
           </div>
         </div>
-        ${d.descricao?`<div class="si-desc">${esc(d.descricao)}</div>`:''}
-        ${logada&&s.responsavel?`<div class="si-resp">Resp.: ${esc(s.responsavel)}</div>`:''}
+        ${desc}${resp}
       </div>`;
     });
     html+='</div>';
