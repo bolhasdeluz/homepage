@@ -833,6 +833,7 @@ let menuData = null;
 async function loadMenu() {
   try {
     const res = await fetch(API);
+    if (!res.ok) throw new Error('KV indisponível');
     menuData = await res.json();
   } catch(e) {
     menuData = getDefaultMenu();
@@ -1327,7 +1328,7 @@ loadMenu();
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -1480,11 +1481,14 @@ window.salvarSuaHistoria = async function() {
 
 window.loginGoogle = async function() {
   try {
-    await signInWithPopup(auth, provider);
+    await signInWithRedirect(auth, provider);
   } catch(e) {
     console.error('Erro login:', e);
   }
 };
+
+// captura resultado ao voltar do redirect
+getRedirectResult(auth).catch(e => console.error('Redirect error:', e));
 
 window.logoutGoogle = async function() {
   await signOut(auth);
