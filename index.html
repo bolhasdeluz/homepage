@@ -1961,8 +1961,13 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
-    // admin vai direto pro painel
+    // admin vai direto pro painel — garante que está no index primeiro
     if (user.email === 'bolhasdeluz@gmail.com') {
+      // se não estiver no index, redireciona
+      if (!window.location.pathname.match(/^\/?$|\/index\.html$/)) {
+        window.location.href = '/';
+        return;
+      }
       showPage('admin');
     }
   } else {
