@@ -2119,7 +2119,11 @@ window.salvarSuaHistoria = async function() {
 };
 
 // captura resultado do redirect ao voltar do Google
-getRedirectResult(auth).catch(e => console.warn('redirect result:', e));
+getRedirectResult(auth).then(result => {
+  if (result?.user) {
+    console.log('Login via redirect ok:', result.user.email);
+  }
+}).catch(e => console.warn('redirect result error:', e.code));
 
 window.loginGoogle = function() {
   // salva origem antes de redirecionar
