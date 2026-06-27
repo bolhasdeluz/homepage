@@ -11,7 +11,7 @@
 :root{
   --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
   --terra:#8c3a1a;
-  --creme:#fdf6ee;--surface:rgba(255,255,255,.72);
+  --creme:#fff5f7;--surface:rgba(255,255,255,.72);
   --border:rgba(196,90,30,.13);
   --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
   --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
@@ -26,12 +26,11 @@ img{max-width:100%;display:block}
 /* fundo fixo */
 body::before{content:'';position:fixed;inset:0;z-index:-3;
   background:
-    radial-gradient(ellipse at 50% 100%,rgba(220,100,40,.16) 0%,rgba(196,57,107,.07) 35%,transparent 65%),
-    radial-gradient(ellipse at 15% 90%,rgba(196,90,30,.09) 0%,transparent 50%),
-    radial-gradient(ellipse at 85% 85%,rgba(230,140,40,.08) 0%,transparent 45%),
-    var(--creme);}
-.bg-entardecer{position:fixed;bottom:0;left:0;right:0;height:260px;z-index:-2;
-  background:linear-gradient(to top,rgba(210,90,40,.2) 0%,rgba(220,100,60,.12) 25%,rgba(196,57,107,.06) 55%,transparent 100%);
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+.bg-entardecer{position:fixed;bottom:0;left:0;right:0;height:220px;z-index:-2;
+  background:linear-gradient(to top,rgba(196,57,107,.1) 0%,rgba(196,57,107,.05) 40%,transparent 100%);
   pointer-events:none;}
 .bg-mountains{position:fixed;bottom:0;left:0;right:0;z-index:-1;height:160px;
   background:url('assets/montanhas.png') bottom center/cover no-repeat;opacity:.2;pointer-events:none;}
@@ -957,8 +956,15 @@ function getDefaultMenu() {
 function renderDrawer() {
   const body = document.getElementById('drawer-body');
   if (!menuData) return;
+  const logada = !!(window._getCurrentUser && window._getCurrentUser());
   body.innerHTML = menuData.sections.map(sec => {
-    const visibleItems = sec.items.filter(i => i.showMenu !== false);
+    const visibleItems = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      const sw = i.showWhen || 'ambos';
+      if (sw === 'logado' && !logada) return false;
+      if (sw === 'publico' && logada) return false;
+      return true;
+    });
     if (!visibleItems.length) return '';
     return `
       <div class="drawer-section">
@@ -1003,6 +1009,11 @@ function renderCards() {
   menuData.sections.forEach(sec => {
     sec.items.forEach(item => {
       if (!item.showCard) return;
+      // filtrar por showWhen
+      const logada = !!(window._getCurrentUser && window._getCurrentUser());
+      const showWhen = item.showWhen || 'ambos';
+      if (showWhen === 'logado' && !logada) return;
+      if (showWhen === 'publico' && logada) return;
       const isMem = item.type === 'members';
 
       // widget especial: historia → Sua História quando logada
@@ -1056,35 +1067,40 @@ function renderAdminPanel() {
         <span class="admin-section-title">${sec.label}</span>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
+      <div id="sortable-${si}" data-section="${si}">
       ${sec.items.map((item, ii) => `
-        <div class="admin-item-row" id="row-${si}-${ii}">
+        <div class="admin-item-row" draggable="true" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}"
+          ondragstart="dragStart(event,${si},${ii})"
+          ondragover="dragOver(event)"
+          ondrop="dragDrop(event,${si},${ii})"
+          ondragend="dragEnd(event)">
+          <span style="color:var(--text-dim);font-size:.8rem;cursor:grab;padding:0 4px">⠿</span>
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
-          <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})" title="Visível no menu">
-            ${item.showMenu!==false?'✓':''} Menu
-          </button>
-          <button class="toggle-pill ${item.showCard?'on-green':''}" onclick="toggleItemCard(${si},${ii})" title="Visível como card">
-            ${item.showCard?'✓':''} Card
-          </button>
-          <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})" title="Editar">✎</button>
+          <button class="toggle-pill ${item.showWhen!=='logado'?'on':''}" onclick="toggleVisibility(${si},${ii},'publico')" title="Público">👁 Público</button>
+          <button class="toggle-pill ${item.showWhen!=='publico'?'on':''}" onclick="toggleVisibility(${si},${ii},'logado')" title="Logado">🔒 Logado</button>
+          <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
+          <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
+          <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
           <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
         </div>
         <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
           <div class="admin-row-inputs">
             <input type="text" id="edit-label-${si}-${ii}" value="${item.label}" placeholder="Nome">
-            <select id="edit-type-${si}-${ii}" onchange="updateEditUrlLabel(${si},${ii})">
+            <select id="edit-type-${si}-${ii}">
               <option value="external" ${item.type==='external'?'selected':''}>Link externo</option>
               <option value="internal" ${item.type==='internal'?'selected':''}>Página interna</option>
               <option value="members" ${item.type==='members'?'selected':''}>Área de membros</option>
             </select>
           </div>
-          <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug da página">
-          <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta (opcional)">
+          <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug">
+          <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta">
           <div style="display:flex;gap:8px">
             <button class="btn-add" onclick="saveEditItem(${si},${ii})">✓ Salvar</button>
             <button class="btn-add" style="background:var(--text-dim)" onclick="toggleEditRow(${si},${ii})">Cancelar</button>
           </div>
         </div>`).join('')}
+      </div>
       <div class="admin-add-form">
         <div class="admin-row-inputs">
           <input type="text" id="label-${si}" placeholder="Nome do item">
@@ -1100,6 +1116,49 @@ function renderAdminPanel() {
         <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
       </div>
     </div>`).join('');
+}
+
+// ── DRAG AND DROP ──
+let dragSrc = null;
+
+function dragStart(e, si, ii) {
+  dragSrc = { si, ii };
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function dragDrop(e, si, ii) {
+  e.preventDefault();
+  if (!dragSrc || (dragSrc.si === si && dragSrc.ii === ii)) return;
+  if (dragSrc.si !== si) return; // só dentro da mesma seção por ora
+  const items = menuData.sections[si].items;
+  const [moved] = items.splice(dragSrc.ii, 1);
+  items.splice(ii, 0, moved);
+  renderAdminPanel();
+  renderDrawer();
+  renderCards();
+}
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragSrc = null;
+}
+
+// ── VISIBILIDADE POR ESTADO ──
+function toggleVisibility(si, ii, tipo) {
+  const item = menuData.sections[si].items[ii];
+  if (tipo === 'publico') {
+    // cicla: ambos → só logado → ambos
+    item.showWhen = item.showWhen === 'logado' ? 'ambos' : 'logado';
+  } else {
+    item.showWhen = item.showWhen === 'publico' ? 'ambos' : 'publico';
+  }
+  renderAdminPanel(); renderCards(); renderDrawer();
 }
 
 function toggleEditRow(si, ii) {
