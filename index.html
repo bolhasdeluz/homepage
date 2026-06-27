@@ -318,19 +318,24 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   background:rgba(253,246,238,.96);
   border-bottom:1px solid var(--border);
   backdrop-filter:blur(8px);
-  padding:8px 60px;
-  box-shadow:0 2px 12px rgba(196,90,30,.08);
+  padding:5px 60px;
+  box-shadow:0 1px 8px rgba(196,90,30,.06);
 }
 #boas-vindas-inner{
-  display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
   max-width:700px;margin:0 auto;
 }
-#bv-emoji{font-size:1rem}
-#bv-nome{font-family:'Cinzel',serif;font-size:.76rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
-#bv-cargo{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic}
-#bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.7rem}
-#bv-tempo{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic}
-body.logada{padding-top:36px}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
+#bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
+#bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
+body.logada{padding-top:28px}
+
+/* modal ficha pessoal */
+#modal-ficha-pessoal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+#modal-ficha-pessoal-overlay.open{display:flex}
+#modal-ficha-pessoal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;margin:auto;padding:24px 20px;position:relative}
 
 .perfil-header{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;margin-bottom:24px;backdrop-filter:blur(4px)}
 .perfil-foto{width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.8rem;color:var(--rosa)}
@@ -731,6 +736,41 @@ body.logada{padding-top:36px}
     <div id="perfil-btn-wrap" style="display:none;text-align:right;margin-top:8px">
       <button class="btn-rosa" id="perfil-btn-enviar" onclick="salvarPerfil()">Enviar solicitação</button>
       <div class="perfil-msg-ok" id="perfil-msg-ok">✦ Enviado com sucesso!</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FICHA PESSOAL -->
+<div id="modal-ficha-pessoal-overlay" onclick="if(event.target===this)fecharFichaPessoal()">
+  <div id="modal-ficha-pessoal">
+    <button class="modal-close" onclick="fecharFichaPessoal()">×</button>
+    <div class="perfil-header" style="margin-bottom:16px">
+      <div class="perfil-foto" id="mfp-foto-wrap">👤</div>
+      <div>
+        <div class="perfil-nome" id="mfp-nome"></div>
+        <div class="perfil-email" id="mfp-email"></div>
+        <div class="perfil-tempo" id="mfp-tempo"></div>
+      </div>
+    </div>
+    <div id="mfp-grid-historia" class="perfil-section" style="margin-bottom:12px">
+      <div class="perfil-section-title">História</div>
+      <div class="perfil-grid" id="mfp-historia"></div>
+    </div>
+    <div class="perfil-section" style="margin-bottom:12px">
+      <div class="perfil-section-title">Guias e Guardiões</div>
+      <div class="perfil-grid" id="mfp-guias"></div>
+    </div>
+    <div class="perfil-section" style="margin-bottom:12px">
+      <div class="perfil-section-title">Cruzamentos e Axés</div>
+      <div class="perfil-grid" id="mfp-cruzamentos"></div>
+    </div>
+    <div class="perfil-section">
+      <div class="perfil-section-title">Sugerir correção</div>
+      <textarea class="perfil-textarea" id="mfp-notas" rows="3" placeholder="Identificou algum erro? Descreva aqui..."></textarea>
+      <div id="mfp-btn-wrap" style="display:none;text-align:right;margin-top:8px">
+        <button class="btn-rosa" onclick="salvarFichaPessoal()">Enviar solicitação</button>
+        <div class="perfil-msg-ok" id="mfp-msg-ok">✦ Enviado!</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1396,17 +1436,77 @@ let perfilAlteracoes = {};
 window._getCurrentUser = () => currentUser;
 window._getPerfilData  = () => perfilData;
 window.showSuaHistoria = function() {
-  showPage('sua-historia');
-  if (currentUser) {
-    document.getElementById('sua-historia-banner').style.display   = 'none';
-    document.getElementById('sua-historia-previa').style.display   = 'none';
-    document.getElementById('sua-historia-conteudo').style.display = 'block';
-    renderSuaHistoria();
-  } else {
-    document.getElementById('sua-historia-banner').style.display   = 'block';
-    document.getElementById('sua-historia-previa').style.display   = 'block';
-    document.getElementById('sua-historia-conteudo').style.display = 'none';
+  if (!currentUser) { openLogin(); return; }
+  // abre modal
+  document.getElementById('modal-ficha-pessoal-overlay').classList.add('open');
+  // header
+  document.getElementById('mfp-nome').textContent  = currentUser.displayName || perfilData.nome || '';
+  document.getElementById('mfp-email').textContent = currentUser.email || '';
+  if (currentUser.photoURL) {
+    document.getElementById('mfp-foto-wrap').innerHTML = `<img src="${currentUser.photoURL}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
   }
+  const tempo = calcTempo(perfilData.historia?.data_entrada);
+  document.getElementById('mfp-tempo').textContent = tempo ? '✦ ' + tempo + ' de casa' : '';
+  document.getElementById('mfp-notas').value = perfilData.notas || '';
+  document.getElementById('mfp-notas').oninput = () => {
+    document.getElementById('mfp-btn-wrap').style.display = 'block';
+  };
+  // campos
+  renderCamposPerfil(camposHistoria, 'mfp-historia',     perfilData.historia    || {});
+  renderCamposPerfil(camposGuias,    'mfp-guias',        perfilData.guias       || {});
+  renderCamposPerfil(camposCruz,     'mfp-cruzamentos',  perfilData.cruzamentos || {});
+  // detectar inputs novos
+  ['mfp-historia','mfp-guias','mfp-cruzamentos'].forEach(id => {
+    document.getElementById(id).querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        document.getElementById('mfp-btn-wrap').style.display = 'block';
+      });
+    });
+  });
+};
+
+window.fecharFichaPessoal = function() {
+  document.getElementById('modal-ficha-pessoal-overlay').classList.remove('open');
+};
+
+window.salvarFichaPessoal = async function() {
+  if (!currentUser) return;
+  const btn = document.querySelector('#modal-ficha-pessoal .btn-rosa');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  const payload = {
+    email: currentUser.email, nome: currentUser.displayName || '',
+    foto: currentUser.photoURL || '', notas: document.getElementById('mfp-notas').value,
+    historia: { ...perfilData.historia }, guias: { ...perfilData.guias },
+    cruzamentos: { ...perfilData.cruzamentos }, criadoEm: perfilData.criadoEm || Date.now(),
+    solicitacao: document.getElementById('mfp-notas').value
+  };
+  // coleta inputs novos
+  ['mfp-historia','mfp-guias','mfp-cruzamentos'].forEach(gridId => {
+    document.getElementById(gridId).querySelectorAll('input').forEach(inp => {
+      if (!inp.value || !inp.dataset.key) return;
+      const k = inp.dataset.key;
+      if (camposHistoria.find(c=>c.key===k)) payload.historia[k] = inp.value;
+      else if (camposGuias.find(c=>c.key===k)) payload.guias[k] = inp.value;
+      else if (camposCruz.find(c=>c.key===k)) payload.cruzamentos[k] = inp.value;
+    });
+  });
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      perfilData = payload;
+      document.getElementById('mfp-msg-ok').style.display = 'block';
+      setTimeout(() => {
+        document.getElementById('mfp-msg-ok').style.display = 'none';
+        document.getElementById('mfp-btn-wrap').style.display = 'none';
+      }, 2500);
+    }
+  } catch(e) { alert('Erro ao salvar.'); }
+  btn.disabled = false; btn.textContent = 'Enviar solicitação';
 };
 
 // ── AUTH STATE ──
@@ -1684,6 +1784,7 @@ function renderCamposPerfil(campos, gridId, dados) {
       const inp = document.createElement('input');
       inp.type = c.tipo === 'data' ? 'date' : 'text';
       inp.placeholder = c.tipo === 'data' ? '' : 'Preencher...';
+      inp.dataset.key = c.key;
       inp.addEventListener('input', () => {
         if (!perfilAlteracoes._campos) perfilAlteracoes._campos = {};
         if (inp.value) perfilAlteracoes._campos[c.key] = { label: c.label, valor: inp.value };
