@@ -1159,7 +1159,8 @@ function renderDrawerItem(item) {
   if (item.type === 'members') {
     return `<button class="drawer-link" onclick="openLogin();closeDrawer()">${dot}${item.label}</button>`;
   }
-  return `<a class="drawer-link" href="${item.url}" target="_blank" rel="noopener" onclick="closeDrawer()">${dot}${item.label}</a>`;
+  // link externo — usa button com onclick em vez de <a href> para evitar navegação acidental
+  return `<button class="drawer-link" onclick="window.open('${item.url}','_blank');closeDrawer()">${dot}${item.label}</button>`;
 }
 
 function toggleSubmenu(btn) {
@@ -1221,7 +1222,7 @@ function renderCards() {
         : `<span class="widget-tag tag-pub">público</span>`;
       if (item.type === 'internal') onclick = `onclick="abrirModal('${item.page}');return false" href="#"`;
       else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
-      else onclick = `href="${item.url}" target="_blank" rel="noopener"`;
+      else onclick = `onclick="window.open('${item.url}','_blank')" href="#"`;
       html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
     });
   });
@@ -1773,7 +1774,7 @@ loadMenu();
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -1953,6 +1954,16 @@ onAuthStateChanged(auth, async (user) => {
   const avatarWrap = document.getElementById('user-avatar-wrap');
   const avatar     = document.getElementById('user-avatar');
 
+  // se veio de um redirect de login e não está no index, volta pro index
+  const loginOrigin = sessionStorage.getItem('loginOrigin');
+  if (user && loginOrigin) {
+    sessionStorage.removeItem('loginOrigin');
+    if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+      window.location.href = '/';
+      return;
+    }
+  }
+
   if (user) {
     avatar.src = user.photoURL || '';
     avatar.style.display = 'block';
@@ -2103,15 +2114,16 @@ window.salvarSuaHistoria = async function() {
   btn.disabled = false; btn.textContent = 'Enviar solicitação';
 };
 
+// captura resultado do redirect ao voltar do Google
+getRedirectResult(auth).catch(e => console.warn('redirect:', e));
+
 window.loginGoogle = async function() {
   try {
-    provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithPopup(auth, provider);
+    // garante que o redirect volta para o index
+    sessionStorage.setItem('loginOrigin', '/');
+    await signInWithRedirect(auth, provider);
   } catch(e) {
-    if (e.code !== 'auth/popup-closed-by-user') {
-      console.error('Erro login:', e.code, e.message);
-      alert('Erro ao fazer login: ' + e.message);
-    }
+    console.error('Erro login:', e.code, e.message);
   }
 };
 
