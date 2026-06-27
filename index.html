@@ -917,7 +917,7 @@ function renderCards() {
 
       // widget especial: historia → Sua História quando logada
       if (item.id === 'historia') {
-        const logada = !!currentUser;
+        const logada = !!window._getCurrentUser?.();
         const nome = logada ? 'Sua História' : 'Nossa História';
         const desc = logada
           ? 'Sua jornada espiritual na casa'
@@ -1348,6 +1348,9 @@ const provider = new GoogleAuthProvider();
 let currentUser = null;
 let perfilData  = {};
 let perfilAlteracoes = {};
+// expor globalmente para scripts fora do módulo
+window._getCurrentUser = () => currentUser;
+window._getPerfilData  = () => perfilData;
 
 // ── AUTH STATE ──
 onAuthStateChanged(auth, async (user) => {
