@@ -874,9 +874,14 @@ body.logada{padding-top:28px}
       <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
       <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        ${['🍿 Pipoca','🌽 Canjica branca','🌾 Canjica amarela','🫘 Feijão','🌿 Lentilha','🫙 Óleo','🕯️ Velas brancas','🌸 Flores'].map(item => `
-          <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${item}</div>
-        `).join('')}
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🍿 Pipoca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌽 Canjica branca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌾 Canjica amarela</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫘 Feijão</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌿 Lentilha</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫙 Óleo</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🕯️ Velas brancas</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌸 Flores</div>
       </div>
       <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:10px">Na dúvida sobre velas: branco nunca erra! 🕯️</p>
     </div>
@@ -1113,7 +1118,7 @@ function renderDrawer() {
 function renderDrawerItem(item) {
   const dot = `<span class="drawer-dot${item.type==='members'?' mem':''}"></span>`;
   if (item.type === 'internal') {
-    return `<button class="drawer-link" onclick="showPage('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
+    return `<button class="drawer-link" onclick="abrirModal('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
   }
   if (item.type === 'members') {
     return `<button class="drawer-link" onclick="openLogin();closeDrawer()">${dot}${item.label}</button>`;
@@ -1178,7 +1183,7 @@ function renderCards() {
       const tag = isMem
         ? `<span class="widget-tag tag-mem">membros</span>`
         : `<span class="widget-tag tag-pub">público</span>`;
-      if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
+      if (item.type === 'internal') onclick = `onclick="abrirModal('${item.page}');return false" href="#"`;
       else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
       else onclick = `href="${item.url}" target="_blank" rel="noopener"`;
       html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
