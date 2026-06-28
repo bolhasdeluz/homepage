@@ -508,7 +508,6 @@ body.logada{padding-top:28px}
     <p class="header-sub">Umbanda e Quimbanda vividas com amor, respeito e tradição. Bem-vinde à nossa casa.</p>
     <div class="header-cta">
       <button class="btn-rosa" onclick="showPage('historia')">Nossa história</button>
-      <button class="btn-ghost" onclick="openLogin()">Sou filha da casa</button>
     </div>
   </header>
 
@@ -748,19 +747,15 @@ body.logada{padding-top:28px}
 <!-- BOAS-VINDAS -->
 <div id="boas-vindas">
   <div id="boas-vindas-inner">
+    <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
     <span id="bv-emoji"></span>
     <span id="bv-nome"></span>
     <span id="bv-sep">·</span>
     <span id="bv-cargo"></span>
     <span id="bv-sep2">·</span>
     <span id="bv-tempo"></span>
+    <button id="user-logout-btn" onclick="logoutGoogle()" style="margin-left:8px">Sair</button>
   </div>
-</div>
-
-<!-- AVATAR USUÁRIO LOGADO -->
-<div id="user-avatar-wrap">
-  <img id="user-avatar" src="" alt="Perfil" onclick="showPage('perfil')">
-  <button id="user-logout-btn" onclick="logoutGoogle()">Sair</button>
 </div>
 
 <!-- PÁGINA PERFIL -->
@@ -2060,27 +2055,24 @@ window.salvarFichaPessoal = async function() {
 // ── AUTH STATE ──
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  const avatarWrap = document.getElementById('user-avatar-wrap');
-  const avatar     = document.getElementById('user-avatar');
 
   // se voltou de um redirect de login, garante que está no index
   const loginOrigin = sessionStorage.getItem('loginOrigin');
   if (user && loginOrigin) {
     sessionStorage.removeItem('loginOrigin');
-    const originUrl = new URL(loginOrigin);
-    // se a origem era o index e estamos em outro lugar, volta
-    if (originUrl.pathname === '/' || originUrl.pathname === '/index.html') {
-      if (window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
+    try {
+      const originUrl = new URL(loginOrigin);
+      if ((originUrl.pathname === '/' || originUrl.pathname === '/index.html') &&
+          window.location.pathname !== '/' && window.location.pathname !== '/index.html') {
         window.location.href = originUrl.href;
         return;
       }
-    }
+    } catch(e) {}
   }
 
   if (user) {
-    avatar.src = user.photoURL || '';
-    avatar.style.display = 'block';
-    avatarWrap.style.display = 'flex';
+    const avatar = document.getElementById('user-avatar');
+    if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
     document.getElementById('drawer-user-section').style.display = 'block';
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
@@ -2095,14 +2087,13 @@ onAuthStateChanged(auth, async (user) => {
       showPage('admin');
     }
   } else {
-    avatar.style.display = 'none';
-    avatarWrap.style.display = 'none';
+    const avatar = document.getElementById('user-avatar');
+    if (avatar) avatar.style.display = 'none';
     document.getElementById('drawer-user-section').style.display = 'none';
     document.getElementById('boas-vindas').style.display = 'none';
     document.body.classList.remove('logada');
     perfilData = {};
     atualizarWidgetHistoria(false);
-    // re-renderiza cards agora que sabemos que não está logada
     if (menuData) renderCards();
   }
 });
