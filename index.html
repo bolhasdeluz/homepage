@@ -106,7 +106,7 @@ body.logada .header-cta{display:none}
 .widget-desc{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);font-style:italic;line-height:1.45;}
 .widget-tag{display:inline-block;margin-top:10px;font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.05em;padding:2px 9px;border-radius:20px;}
 .tag-pub{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green)}
-.tag-mem{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);color:var(--rosa)}
+.tag-mem{background:rgba(74,111,165,.08);border:1px solid rgba(74,111,165,.2);color:#4a6fa5}
 .widget-interna{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
   border-color:rgba(196,57,107,.2);border-top:2px solid var(--rosa);
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
@@ -1193,11 +1193,22 @@ function renderCards() {
   menuData.sections.forEach(sec => {
     sec.items.forEach(item => {
       if (!item.showCard) return;
-      // filtrar por showWhen
       const logada = !!(window._getCurrentUser && window._getCurrentUser());
+      const user = window._getCurrentUser && window._getCurrentUser();
       const showWhen = item.showWhen || 'ambos';
       if (showWhen === 'logado' && !logada) return;
       if (showWhen === 'publico' && logada) return;
+      // verificar grupos se logada
+      if (logada && item.grupos && item.grupos.length < 3) {
+        // busca o cargo da pessoa logada
+        const cargo = (window._simUsuario?._perfil?.cargo || window._getPerfilData?.()?.cargo || '').toLowerCase();
+        const email = user?.email || '';
+        let grupoUsuario = 'filhas'; // padrão
+        if (cargo === 'tamboreiro' || email === 'diegoscantos@hotmail.com') grupoUsuario = 'tamboreiro';
+        else if (!cargo || cargo === '') grupoUsuario = 'amigos';
+        if (!item.grupos.includes(grupoUsuario) && !item.grupos.includes('filhas')) return;
+        if (grupoUsuario !== 'filhas' && !item.grupos.includes(grupoUsuario)) return;
+      }
       const isMem = item.type === 'members';
 
       // widget especial: historia → Sua História quando logada
@@ -1210,7 +1221,7 @@ function renderCards() {
         const onclick = logada
           ? `onclick="showSuaHistoria();return false" href="#"`
           : `onclick="showPage('historia');return false" href="#"`;
-        const tag = `<span class="widget-tag tag-pub">${logada ? 'membros' : 'público'}</span>`;
+        const tag = `<span class="widget-tag tag-pub">${logada ? 'interno' : 'público'}</span>`;
         html += `<a class="widget" ${onclick}><div class="widget-name">${nome}</div><div class="widget-desc">${desc}</div>${tag}</a>`;
         return;
       }
@@ -1222,17 +1233,17 @@ function renderCards() {
       if (item.id === 'filhas') {
         const user = window._getCurrentUser && window._getCurrentUser();
         if (!user) {
-          html += `<a class="widget" href="#" onclick="openLogin();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-mem">membros</span></a>`;
+          html += `<a class="widget" href="#" onclick="openLogin();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-mem">interno</span></a>`;
         } else if (user.email === 'bolhasdeluz@gmail.com') {
           html += `<a class="widget" href="#" onclick="showPage('admin');return false"><div class="widget-name">Painel Admin</div><div class="widget-desc">Gestão da casa</div><span class="widget-tag tag-mem">admin</span></a>`;
         } else {
-          html += `<a class="widget" href="#" onclick="window.showSuaHistoria();return false"><div class="widget-name">Minha Ficha</div><div class="widget-desc">Sua história espiritual</div><span class="widget-tag tag-mem">membros</span></a>`;
+          html += `<a class="widget" href="#" onclick="window.showSuaHistoria();return false"><div class="widget-name">Minha Ficha</div><div class="widget-desc">Sua história espiritual</div><span class="widget-tag tag-mem">interno</span></a>`;
         }
         return;
       }
       let onclick = '';
       const tag = isMem
-        ? `<span class="widget-tag tag-mem">membros</span>`
+        ? `<span class="widget-tag tag-mem">interno</span>`
         : `<span class="widget-tag tag-pub">público</span>`;
       if (item.type === 'internal') onclick = `onclick="abrirModal('${item.page}');return false" href="#"`;
       else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
@@ -1266,11 +1277,18 @@ function renderAdminPanel() {
           <span class="admin-item-url">${item.url||item.page||''}</span>
           <div class="admin-item-actions">
             <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='publico'?'on':''}" onclick="toggleVisibility(${si},${ii},'publico')">👁 Público</button>
-            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='logado'?'on':''}" onclick="toggleVisibility(${si},${ii},'logado')">🔒 Logado</button>
+            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='logado'?'on':''}" onclick="abrirVisibilidadeInterna(${si},${ii})">🔒 Interno ▾</button>
             <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
             <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
             <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
             <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+          </div>
+          <!-- submenu visibilidade interna -->
+          <div class="admin-item-row hidden" id="vis-${si}-${ii}" style="background:rgba(74,111,165,.04);padding:8px 16px 8px 36px;flex-wrap:wrap;gap:6px">
+            <span style="font-family:'Cinzel',serif;font-size:.58rem;color:#4a6fa5;letter-spacing:.06em">Visível para:</span>
+            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('filhas')?'on':''}" onclick="toggleGrupo(${si},${ii},'filhas')" style="font-size:.55rem">🌸 Filhas</button>
+            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('tamboreiro')?'on':''}" onclick="toggleGrupo(${si},${ii},'tamboreiro')" style="font-size:.55rem">🥁 Tamboreiro</button>
+            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('amigos')?'on':''}" onclick="toggleGrupo(${si},${ii},'amigos')" style="font-size:.55rem">🤝 Amigos</button>
           </div>
         </div>
         <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
@@ -1342,12 +1360,25 @@ function dragEnd(e) {
 function toggleVisibility(si, ii, tipo) {
   const item = menuData.sections[si].items[ii];
   if (tipo === 'publico') {
-    // cicla: ambos → só logado → ambos
     item.showWhen = item.showWhen === 'logado' ? 'ambos' : 'logado';
   } else {
     item.showWhen = item.showWhen === 'publico' ? 'ambos' : 'publico';
   }
   renderAdminPanel(); renderCards(); renderDrawer();
+}
+
+function abrirVisibilidadeInterna(si, ii) {
+  const el = document.getElementById(`vis-${si}-${ii}`);
+  if (el) el.classList.toggle('hidden');
+}
+
+function toggleGrupo(si, ii, grupo) {
+  const item = menuData.sections[si].items[ii];
+  if (!item.grupos) item.grupos = ['filhas', 'tamboreiro', 'amigos'];
+  const idx = item.grupos.indexOf(grupo);
+  if (idx >= 0) item.grupos.splice(idx, 1);
+  else item.grupos.push(grupo);
+  renderAdminPanel(); renderCards();
 }
 
 function toggleEditRow(si, ii) {
