@@ -1464,7 +1464,9 @@ function renderCards() {
       html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
     });
   });
-  html += `<div class="widget widget-interna"><div><div class="widget-name">Área das Filhas</div><div class="widget-desc">Acesse ferramentas internas do terreiro</div></div><button class="btn-rosa" onclick="openLogin()">Entrar</button></div>`;
+  if (!userNow) {
+    html += `<div class="widget widget-interna"><div><div class="widget-name">Área das Filhas</div><div class="widget-desc">Acesse ferramentas internas do terreiro</div></div><button class="btn-rosa" onclick="openLogin()">Entrar</button></div>`;
+  }
   grid.innerHTML = html;
 }
 
@@ -1935,8 +1937,10 @@ function showPage(name) {
   if (name === 'sessoes') { showPage('calendario'); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
-  if (p) p.classList.add('active');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (p) {
+    p.classList.add('active');
+    setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  }
   if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
