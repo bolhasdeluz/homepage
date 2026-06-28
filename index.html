@@ -2823,18 +2823,19 @@ window.salvarSuaHistoria = async function() {
 };
 
 window.loginGoogle = async function() {
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  if (isMobile) {
-    sessionStorage.setItem('loginOrigin', window.location.href);
-    const { signInWithRedirect } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-    await signInWithRedirect(auth, provider);
-  } else {
-    try {
-      await signInWithPopup(auth, provider);
-    } catch(e) {
-      if (e.code !== 'auth/popup-closed-by-user') {
-        console.error('Erro login:', e.code, e.message);
-      }
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
+      // iOS Safari: tenta redirect como último recurso
+      try {
+        const { signInWithRedirect } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+        sessionStorage.setItem('loginOrigin', window.location.href);
+        await signInWithRedirect(auth, provider);
+      } catch(e2) { console.error('redirect falhou:', e2.code); }
+    } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
+      alert('Erro: ' + e.code + ' — ' + e.message);
+      console.error('Erro login:', e.code, e.message);
     }
   }
 };
