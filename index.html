@@ -304,13 +304,20 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .cal-grade-sem{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
 .cal-dia-sem{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:3px 0}
 .cal-grade-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-dia{min-height:36px;border-radius:6px;padding:3px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;align-items:center}
+.cal-dia{min-height:72px;border-radius:6px;padding:4px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;align-items:stretch}
 .cal-dia:hover{background:var(--rosa-dim)}
 .cal-dia.outro-mes{opacity:.3}
 .cal-dia.hoje .cal-dia-num{background:var(--rosa);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
 .cal-dia.selecionado{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.3)}
-.cal-dia.tem-sessao::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--rosa);position:absolute;bottom:3px}
-.cal-dia-num{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;color:var(--text);line-height:20px;min-width:20px;text-align:center}
+.cal-dia-num{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;color:var(--text);line-height:20px;min-width:20px;text-align:center;margin-bottom:2px}
+.cal-dia-evento{font-size:.58rem;font-family:'DM Sans',sans-serif;color:#fff;border-radius:3px;padding:1px 4px;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.cal-dia-evento.tipo-interna{background:#4a6fa5}
+.cal-dia-evento.tipo-atendimento{background:#6a9e6a}
+.cal-dia-evento.tipo-visita{background:#9e6a9e}
+.cal-dia-evento.tipo-familia{background:#c9963c}
+.cal-dia-evento.tipo-reuniao{background:#6a8fa5}
+.cal-dia-evento.tipo-default{background:var(--rosa)}
+.cal-dia-mais{font-family:'Cinzel',serif;font-size:.48rem;color:var(--text-dim);padding:0 2px}
 .cal-lista-col{display:flex;flex-direction:column;gap:8px}
 .cal-sessao-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;border-left:3px solid var(--rosa);transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px);box-shadow:0 2px 10px rgba(180,60,90,.06);cursor:pointer}
 .cal-sessao-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(180,60,90,.12)}
@@ -558,7 +565,12 @@ body.logada{padding-top:28px}
     <div class="header-divider"></div>
     <p class="header-sub">Umbanda e Quimbanda vividas com amor, respeito e tradição. Bem-vinde à nossa casa.</p>
     <div class="header-cta">
-      <button class="btn-rosa" onclick="showPage('historia')">Nossa história</button>
+      <div id="proxima-sessao-card" style="display:none;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:10px 18px;cursor:pointer;backdrop-filter:blur(4px);text-align:left;min-width:200px" onclick="showPage('calendario')">
+        <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:4px">✦ Próxima sessão</div>
+        <div id="proxima-sessao-nome" style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:#fff;margin-bottom:2px"></div>
+        <div id="proxima-sessao-data" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:rgba(255,255,255,.75);font-style:italic"></div>
+      </div>
+      <div id="proxima-sessao-loading" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.4)">carregando agenda...</div>
     </div>
   </header>
 
@@ -991,9 +1003,10 @@ body.logada{padding-top:28px}
 </div>
 
 <!-- MODAL NOSSA HISTÓRIA -->
-<div id="modal-historia-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('historia')">
-  <div class="page-modal">
-    <button class="page-modal-close" onclick="fecharModal('historia')">×</button>
+<!-- PÁGINA NOSSA HISTÓRIA -->
+<div id="page-historia" class="page">
+  <div class="section-wrap narrow" style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Fundação</div>
     <div class="section-title">Nossa história</div>
     <p class="section-sub">Da previsão de Exu Tranca Ruas até a conquista da sede própria.</p>
@@ -1009,35 +1022,10 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
-<!-- MODAL SESSÕES -->
-<div id="modal-sessoes-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('sessoes')">
-  <div class="page-modal">
-    <button class="page-modal-close" onclick="fecharModal('sessoes')">×</button>
-    <div class="eyebrow">Calendário 2026</div>
-    <div class="section-title">Sessões & Eventos</div>
-    <p class="section-sub">Giras, sessões e festas da casa. Todos os eventos em Porto Alegre, RS.</p>
-    <div class="events-list">
-      <div class="event-item"><div class="event-date"><span class="event-month">Jun</span><span class="event-day">20</span></div><div class="event-info"><div class="event-name">Festa dos Abóros</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">03</span></div><div class="event-info"><div class="event-name">Quimbanda</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">18</span></div><div class="event-info"><div class="event-name">Cruzamento de Pedreira</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Jul</span><span class="event-day">31</span></div><div class="event-info"><div class="event-name">Desenvolvimento</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">15</span></div><div class="event-info"><div class="event-name">Pretos Velhos — Almas</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">17</span></div><div class="event-info"><div class="event-name">Cruzeiro</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">22</span></div><div class="event-info"><div class="event-name">Corte dos Exus</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Ago</span><span class="event-day">29</span></div><div class="event-info"><div class="event-name">Elebó de Exus</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Set</span><span class="event-day">18</span></div><div class="event-info"><div class="event-name">Ciganos do Oriente</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Out</span><span class="event-day">02</span></div><div class="event-info"><div class="event-name">Desenvolvimento</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Out</span><span class="event-day">17</span></div><div class="event-info"><div class="event-name">Quitanda das Crianças</div></div></div>
-      <div class="event-item"><div class="event-date"><span class="event-month">Nov</span><span class="event-day">01</span></div><div class="event-info"><div class="event-name">Firmeza de Calunga</div></div></div>
-    </div>
-    <div style="margin-top:24px"><a class="btn-outline" href="https://calendario-drf.pages.dev" target="_blank" rel="noopener">Ver calendário completo →</a></div>
-  </div>
-</div>
-
-<!-- MODAL TEXTOS -->
-<div id="modal-textos-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('textos')">
-  <div class="page-modal">
-    <button class="page-modal-close" onclick="fecharModal('textos')">×</button>
+<!-- PÁGINA TEXTOS -->
+<div id="page-textos" class="page">
+  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Arquivos de Informações</div>
     <div class="section-title">Textos da Casa</div>
     <p class="section-sub">Fundamentos, reflexões e ensinamentos da corrente do Bolhas de Luz.</p>
@@ -1068,28 +1056,24 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
-<!-- MODAL APOIE -->
-<div id="modal-apoie-overlay" onclick="if(event.target===this)this.classList.remove('open')" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
-  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;margin:auto;padding:28px 24px;position:relative">
-    <button onclick="document.getElementById('modal-apoie-overlay').classList.remove('open')" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
-
-    <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px">Apoie o Terreiro</div>
-    <p style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:24px;line-height:1.6">Cada contribuição sustenta nossa casa, nossas sessões e nossa corrente. Obrigada pelo axé! 🌸</p>
-
-    <!-- PIX -->
+<!-- PÁGINA APOIE -->
+<div id="page-apoie" class="page">
+  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:500px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Contribuição</div>
+    <div class="section-title">Apoie o Terreiro</div>
+    <p class="section-sub">Cada contribuição sustenta nossa casa, nossas sessões e nossa corrente. Obrigada pelo axé! 🌸</p>
     <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:10px;padding:16px 18px;margin-bottom:20px">
       <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Doação via PIX</div>
       <div style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Qualquer valor é bem-vindo e será revertido às contas e manutenção da casa.</div>
       <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
         <div style="flex:1">
           <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">Chave PIX</div>
-          <div id="pix-key-text" style="font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--text)">bolhasdeluz@gmail.com</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--text)">bolhasdeluz@gmail.com</div>
         </div>
         <button onclick="copiarPix()" id="btn-copiar-pix" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;transition:all .2s">Copiar</button>
       </div>
     </div>
-
-    <!-- DOAÇÕES DE ALIMENTOS -->
     <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:10px;padding:16px 18px">
       <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
       <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
@@ -1365,7 +1349,7 @@ function renderDrawer() {
 function renderDrawerItem(item) {
   const dot = `<span class="drawer-dot${item.type==='members'?' mem':''}"></span>`;
   if (item.type === 'internal') {
-    return `<button class="drawer-link" onclick="abrirModal('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
+    return `<button class="drawer-link" onclick="showPage('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
   }
   if (item.type === 'members') {
     return `<button class="drawer-link" onclick="openLogin();closeDrawer()">${dot}${item.label}</button>`;
@@ -1440,7 +1424,7 @@ function renderCards() {
         return;
       }
       if (item.id === 'apoie') {
-        html += `<a class="widget" href="#" onclick="window.abrirApoie();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Como nos ajudar'}</div><span class="widget-tag tag-pub">público</span></a>`;
+        html += `<a class="widget" href="#" onclick="showPage('apoie');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Como nos ajudar'}</div><span class="widget-tag tag-pub">público</span></a>`;
         return;
       }
       if (item.id === 'filhas') {
@@ -1458,7 +1442,7 @@ function renderCards() {
       const tag = isMem
         ? `<span class="widget-tag tag-mem">interno</span>`
         : `<span class="widget-tag tag-pub">público</span>`;
-      if (item.type === 'internal') onclick = `onclick="abrirModal('${item.page}');return false" href="#"`;
+      if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
       else if (item.type === 'members') onclick = `onclick="openLogin();return false" href="#"`;
       else onclick = `onclick="window.open('${item.url}','_blank')" href="#"`;
       html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
@@ -1931,8 +1915,6 @@ document.addEventListener('keydown', e => {
 });
 function showPage(name) {
   // história, sessões, textos, apoie → modais
-  const comoModal = ['historia','textos','apoie'];
-  if (comoModal.includes(name)) { abrirModal(name); return; }
   // sessoes → calendário interno
   if (name === 'sessoes') { showPage('calendario'); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2131,9 +2113,23 @@ function calRenderGrade() {
     const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ehHoje = dataStr === todayStr;
     const selecionado = dataStr === calDiaSelecionado;
-    const temSessao = calSessoes.some(s => s.data === dataStr && calSessaoVisivel(s));
-    html += `<div class="cal-dia${ehHoje?' hoje':''}${selecionado?' selecionado':''}${temSessao?' tem-sessao':''}" onclick="calClicarDia('${dataStr}')">
+    const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
+
+    let eventosHtml = '';
+    const visiveis = eventos.slice(0, 3);
+    visiveis.forEach(s => {
+      const vis = calSessaoVisivel(s);
+      const tc = 'tipo-' + (s.tipo||'default').toLowerCase();
+      const nome = vis === 'parcial' ? '🔒 Sessão fechada' : (s.nome || '');
+      eventosHtml += `<div class="cal-dia-evento ${tc}">${calEsc(nome)}</div>`;
+    });
+    if (eventos.length > 3) {
+      eventosHtml += `<div class="cal-dia-mais">+${eventos.length - 3} mais</div>`;
+    }
+
+    html += `<div class="cal-dia${ehHoje?' hoje':''}${selecionado?' selecionado':''}" onclick="calClicarDia('${dataStr}')">
       <div class="cal-dia-num">${d}</div>
+      ${eventosHtml}
     </div>`;
   }
   const total = primeiroDia + ultimoDia;
@@ -2355,6 +2351,42 @@ document.addEventListener('DOMContentLoaded', () => {});
 
 // inicializar
 loadMenu();
+
+// ── PRÓXIMA SESSÃO NO HEADER ──
+async function carregarProximaSessao() {
+  try {
+    const res = await fetch('/api/sessoes');
+    const sessoes = await res.json();
+    const hoje = new Date().toISOString().slice(0,10);
+    const grupo = calGetGrupo ? calGetGrupo() : 'publico';
+    const proxima = sessoes
+      .filter(s => s.data >= hoje)
+      .filter(s => {
+        const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
+        return grupo === 'admin' || grupos.includes(grupo);
+      })
+      .sort((a,b) => a.data.localeCompare(b.data))[0];
+
+    const loading = document.getElementById('proxima-sessao-loading');
+    const card = document.getElementById('proxima-sessao-card');
+    if (loading) loading.style.display = 'none';
+
+    if (proxima && card) {
+      const [y,m,d] = proxima.data.split('-');
+      const dataObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+      const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      const dataFmt = `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES[parseInt(m)-1]}${proxima.hora ? ' · ' + proxima.hora : ''}`;
+      document.getElementById('proxima-sessao-nome').textContent = proxima.nome;
+      document.getElementById('proxima-sessao-data').textContent = dataFmt;
+      card.style.display = 'block';
+    }
+  } catch(e) {
+    const loading = document.getElementById('proxima-sessao-loading');
+    if (loading) loading.style.display = 'none';
+  }
+}
+carregarProximaSessao();
 </script>
 <!-- FIREBASE SDK -->
 <script type="module">
