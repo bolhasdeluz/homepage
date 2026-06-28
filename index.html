@@ -1387,6 +1387,16 @@ function renderCards() {
   const grid = document.getElementById('widgets-grid-dynamic');
   if (!grid || !menuData) return;
   let html = '';
+  // card admin fixo — sempre visível para bolhasdeluz@gmail.com
+  const userNow = window._getCurrentUser && window._getCurrentUser();
+  if (userNow && userNow.email === 'bolhasdeluz@gmail.com') {
+    html += `<a class="widget" href="#" onclick="showPage('admin');return false" style="border-top:2px solid var(--rosa)">
+      <div class="widget-name">⚙ Painel Admin</div>
+      <div class="widget-desc">Gerencie menu, perfis e sessões</div>
+      <span class="widget-tag tag-mem">admin</span>
+    </a>`;
+  }
+
   menuData.sections.forEach(sec => {
     sec.items.forEach(item => {
       if (!item.showCard) return;
