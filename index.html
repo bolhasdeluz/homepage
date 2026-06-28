@@ -306,6 +306,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   .cal-grade-sem .cal-dia-sem{font-size:.45rem}
 }
 .cal-mes-col{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;backdrop-filter:blur(4px);box-shadow:0 2px 16px rgba(180,60,90,.07);position:sticky;top:36px}
+@media(max-width:680px){.cal-mes-col{position:static;padding:10px 6px}}
 .cal-mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .cal-nav-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:1rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
 .cal-nav-btn:hover{border-color:var(--rosa);color:var(--rosa)}
@@ -922,27 +923,9 @@ body.logada{padding-top:28px}
     </div>
 
     <!-- LAYOUT LADO A LADO -->
-    <div class="cal-layout">
-      <!-- GRADE MENSAL -->
-      <div class="cal-mes-col">
-        <div class="cal-mes-nav">
-          <button onclick="calNavMes(-1)" class="cal-nav-btn">‹</button>
-          <span id="cal-mes-titulo" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)"></span>
-          <button onclick="calNavMes(1)" class="cal-nav-btn">›</button>
-        </div>
-        <div class="cal-grade-sem">
-          <div class="cal-dia-sem">D</div><div class="cal-dia-sem">S</div><div class="cal-dia-sem">T</div>
-          <div class="cal-dia-sem">Q</div><div class="cal-dia-sem">Q</div><div class="cal-dia-sem">S</div>
-          <div class="cal-dia-sem">S</div>
-        </div>
-        <div class="cal-grade-dias" id="cal-grade-dias"></div>
-      </div>
-
-      <!-- LISTA -->
-      <div class="cal-lista-col">
-        <div id="cal-lista-titulo" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Próximas sessões</div>
-        <div id="cal-lista"></div>
-      </div>
+    <!-- LISTA COM CABEÇALHOS DE MÊS -->
+    <div class="cal-lista-col" style="max-width:680px;margin:0 auto">
+      <div id="cal-lista"></div>
     </div>
   </div>
 </div>
@@ -2001,7 +1984,7 @@ function showPage(name) {
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
     if (!calSessoes.length) calLoad();
-    else { calRenderGrade(); calRenderLista(); }
+    else calRenderLista();
   }
 }
 function toggleDrawer() {
@@ -2176,7 +2159,6 @@ async function calLoad() {
         if (temSessao) { calMesAtual = novoMes; break; }
       }
     }
-    calRenderGrade();
     calRenderLista();
   } catch(e) {
     const el = document.getElementById('cal-lista');
@@ -2254,14 +2236,13 @@ function calRenderLista() {
   if (!el) return;
   const todayStr = calFmtDate(new Date());
   const isAdmin = calGetGrupo() === 'admin';
-  const isLogada = !!( window._getCurrentUser && window._getCurrentUser());
+  const isLogada = !!(window._getCurrentUser && window._getCurrentUser());
 
   let lista = calSessoes.filter(s => {
     const vis = calSessaoVisivel(s);
     if (!vis) return false;
     if (calFiltro && s.tipo !== calFiltro) return false;
     if (!calPassadas && s.data < todayStr) return false;
-    if (calDiaSelecionado && s.data !== calDiaSelecionado) return false;
     if (calBusca) {
       const h = [s.nome, s.descricao, s.responsavel].join(' ').toLowerCase();
       if (!h.includes(calBusca)) return false;
@@ -2274,51 +2255,64 @@ function calRenderLista() {
     return;
   }
 
-  el.innerHTML = lista.map(s => {
-    const vis = calSessaoVisivel(s);
-    const isParcial = vis === 'parcial';
-    const [, sm, sd] = s.data.split('-');
-    const dataObj = new Date(parseInt(s.data.split('-')[0]), parseInt(sm)-1, parseInt(sd));
-    const dow = CAL_DIAS[dataObj.getDay()];
-    const tc = 'tipo-' + (s.tipo||'').toLowerCase();
-    const passada = s.data < todayStr ? 'passada' : '';
+  // agrupar por mês
+  const grupos = {};
+  lista.forEach(s => {
+    const key = s.data.slice(0, 7);
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(s);
+  });
 
-    if (isParcial) {
-      return `<div class="cal-sessao-card parcial ${passada}">
+  let html = '';
+  Object.keys(grupos).sort().forEach(mesKey => {
+    const [y, m] = mesKey.split('-');
+    html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">${CAL_MESES[parseInt(m)-1]} ${y}</div>`;
+    grupos[mesKey].forEach(s => {
+      const vis = calSessaoVisivel(s);
+      const isParcial = vis === 'parcial';
+      const [, sm, sd] = s.data.split('-');
+      const dataObj = new Date(parseInt(s.data.split('-')[0]), parseInt(sm)-1, parseInt(sd));
+      const dow = CAL_DIAS[dataObj.getDay()];
+      const tc = 'tipo-' + (s.tipo||'').toLowerCase();
+      const passada = s.data < todayStr ? 'passada' : '';
+
+      if (isParcial) {
+        html += `<div class="cal-sessao-card parcial ${passada}" style="margin-bottom:8px">
+          <div class="cal-card-top">
+            <div class="cal-card-data"><div class="cal-card-dia">${sd}</div><div class="cal-card-info"><div class="cal-card-dow">${dow}</div></div></div>
+            <div class="cal-card-nome">${calEsc(s.nome)}</div>
+          </div>
+          <div class="cal-sessao-fechada">🔒 Sessão fechada</div>
+        </div>`;
+        return;
+      }
+
+      html += `<div class="cal-sessao-card ${tc} ${passada}" style="margin-bottom:8px">
         <div class="cal-card-top">
           <div class="cal-card-data">
             <div class="cal-card-dia">${sd}</div>
-            <div class="cal-card-info"><div class="cal-card-dow">${dow}</div></div>
+            <div class="cal-card-info">
+              <div class="cal-card-dow">${dow}</div>
+              ${isLogada && s.hora ? `<div class="cal-card-hora">${s.hora}</div>` : ''}
+            </div>
           </div>
           <div class="cal-card-nome">${calEsc(s.nome)}</div>
+          ${isAdmin ? `<div class="cal-admin-acoes">
+            <button class="cal-icon-btn" onclick="calOpenEdit('${s.id}');event.stopPropagation()">✎</button>
+            <button class="cal-icon-btn del" onclick="calDelete('${s.id}');event.stopPropagation()">✕</button>
+          </div>` : ''}
         </div>
-        <div class="cal-sessao-fechada">🔒 Sessão fechada</div>
+        <div class="cal-card-meta">
+          <span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>
+          ${isLogada && s.tambor ? `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>` : ''}
+          ${isLogada && s.responsavel ? `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>` : ''}
+        </div>
+        ${isLogada && s.descricao ? `<div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${calEsc(s.descricao)}</div>` : ''}
       </div>`;
-    }
+    });
+  });
 
-    return `<div class="cal-sessao-card ${tc} ${passada}">
-      <div class="cal-card-top">
-        <div class="cal-card-data">
-          <div class="cal-card-dia">${sd}</div>
-          <div class="cal-card-info">
-            <div class="cal-card-dow">${dow}</div>
-            ${isLogada && s.hora ? `<div class="cal-card-hora">${s.hora}</div>` : ''}
-          </div>
-        </div>
-        <div class="cal-card-nome">${calEsc(s.nome)}</div>
-        ${isAdmin ? `<div class="cal-admin-acoes">
-          <button class="cal-icon-btn" onclick="calOpenEdit('${s.id}');event.stopPropagation()" title="Editar">✎</button>
-          <button class="cal-icon-btn del" onclick="calDelete('${s.id}');event.stopPropagation()" title="Excluir">✕</button>
-        </div>` : ''}
-      </div>
-      <div class="cal-card-meta">
-        <span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>
-        ${isLogada && s.tambor ? `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>` : ''}
-        ${isLogada && s.responsavel ? `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>` : ''}
-      </div>
-      ${isLogada && s.descricao ? `<div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${calEsc(s.descricao)}</div>` : ''}
-    </div>`;
-  }).join('');
+  el.innerHTML = html;
 }
 
 function calSetFiltro(v) { calFiltro = v; calRenderLista(); }
