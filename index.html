@@ -16,6 +16,7 @@
   --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
   --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
   --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+  
 }
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
@@ -465,6 +466,15 @@ body.logada{padding-top:28px}
 .sim-badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.28);border-radius:20px;font-family:'Crimson Pro',serif;font-size:.82rem;color:#fff;font-style:italic;padding:4px 12px;flex:1;text-align:center}
 .sim-exit{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap;transition:all .2s}
 .sim-exit:hover{background:rgba(255,255,255,.35)}
+
+  /* PERFIL */
+.perfil-header { ... }
+.perfil-grid { ... }
+
+/* TIMELINE SUA HISTÓRIA */
+.timeline-sh { ... }
+.timeline-item { ... }
+  
 </style>
 </head>
 <body>
@@ -628,12 +638,16 @@ body.logada{padding-top:28px}
     <!-- banner visitante (não logada) -->
     <div id="sua-historia-banner" style="display:none;background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));border:1px solid rgba(196,57,107,.2);border-top:2px solid var(--rosa);border-radius:12px;padding:24px 20px;margin-bottom:28px;text-align:center">
       <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:8px">Sua História</div>
-      <p style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;line-height:1.7;margin-bottom:20px">Este é o espaço onde você acompanha a sua caminhada espiritual dentro da casa — seus guias, datas de chegada, cruzamentos e axés. Um registro vivo da sua trajetória.<br><br>Este recurso é exclusivo para filhas da casa.</p>
+      <p style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;line-height:1.7;margin-bottom:20px">
+        Este é o espaço onde você acompanha a sua caminhada espiritual dentro da casa — seus guias, datas de chegada, cruzamentos e axés. Um registro vivo da sua trajetória.<br><br>
+        Este recurso é exclusivo para filhas da casa.
+      </p>
       <button class="btn-rosa" onclick="openLogin()">Entrar com Google</button>
     </div>
 
     <!-- conteúdo logada -->
     <div id="sua-historia-conteudo" style="display:none">
+
       <div class="perfil-header">
         <div class="perfil-foto" id="sh-foto-wrap">👤</div>
         <div>
@@ -642,33 +656,87 @@ body.logada{padding-top:28px}
           <div class="perfil-tempo" id="sh-tempo"></div>
         </div>
       </div>
+
+      <!-- ✅ TIMELINE INSERIDA AQUI -->
+      <div class="perfil-section">
+        <div class="perfil-section-title">Linha do Tempo Espiritual</div>
+
+        <div class="timeline-sh" id="sh-timeline">
+
+          <div class="timeline-item done">
+            <div class="dot"></div>
+            <div>
+              <div class="label">Entrada na Casa</div>
+              <div class="desc">Início da caminhada espiritual</div>
+            </div>
+          </div>
+
+          <div class="timeline-item done">
+            <div class="dot"></div>
+            <div>
+              <div class="label">Guia Chefe</div>
+              <div class="desc">Reconhecimento do direcionamento espiritual</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="dot"></div>
+            <div>
+              <div class="label">Apronte</div>
+              <div class="desc">Processo de firmeza e preparo</div>
+            </div>
+          </div>
+
+          <div class="timeline-item">
+            <div class="dot"></div>
+            <div>
+              <div class="label">Coroação</div>
+              <div class="desc">Elevação de coroa espiritual</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">História</div>
         <div class="perfil-grid" id="sh-grid-historia"></div>
       </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">Guias e Guardiões</div>
         <div class="perfil-grid" id="sh-grid-guias"></div>
       </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">Cruzamentos e Axés</div>
         <div class="perfil-grid" id="sh-grid-cruzamentos"></div>
       </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">Sugerir correção</div>
-        <p style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:10px">Identificou algum erro? Descreva abaixo e envie pra administração.</p>
+        <p style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:10px">
+          Identificou algum erro? Descreva abaixo e envie pra administração.
+        </p>
         <textarea class="perfil-textarea" id="sh-notas" rows="4" placeholder="Ex: Meu caboclo está errado, o nome correto é..."></textarea>
       </div>
+
       <div class="perfil-aviso" id="sh-aviso">Solicitação enviada! Aguarde aprovação.</div>
+
       <div id="sh-btn-wrap" style="display:none;text-align:right;margin-top:8px">
         <button class="btn-rosa" id="sh-btn-enviar" onclick="salvarSuaHistoria()">Enviar solicitação</button>
         <div class="perfil-msg-ok" id="sh-msg-ok">✦ Enviado com sucesso!</div>
       </div>
+
     </div>
 
     <!-- ficha vazia como prévia (não logada) -->
     <div id="sua-historia-previa" style="display:none;opacity:.45;pointer-events:none">
-      <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);text-align:center;margin-bottom:20px">Prévia — preencha após o login</div>
+
+      <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);text-align:center;margin-bottom:20px">
+        Prévia — preencha após o login
+      </div>
+
       <div class="perfil-header">
         <div class="perfil-foto">👤</div>
         <div>
@@ -676,22 +744,30 @@ body.logada{padding-top:28px}
           <div class="perfil-email">seu@email.com</div>
         </div>
       </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">História</div>
         <div class="perfil-grid">
-          ${['Data de Entrada','Guia Chefe','Apronte','Coroação','Cacicamento','Madrinha'].map(l=>`<div class="perfil-field"><label>${l}</label><div class="valor" style="color:var(--text-dim);font-style:italic">—</div></div>`).join('')}
+          ${['Data de Entrada','Guia Chefe','Apronte','Coroação','Cacicamento','Madrinha']
+            .map(l=>`<div class="perfil-field"><label>${l}</label><div class="valor" style="color:var(--text-dim);font-style:italic">—</div></div>`)
+            .join('')}
         </div>
       </div>
+
       <div class="perfil-section">
         <div class="perfil-section-title">Guias e Guardiões</div>
         <div class="perfil-grid">
-          ${['Caboclo','Exu','Pomba Gira','Preto Velho','Cigana','Cosme'].map(l=>`<div class="perfil-field"><label>${l}</label><div class="valor" style="color:var(--text-dim);font-style:italic">—</div></div>`).join('')}
+          ${['Caboclo','Exu','Pomba Gira','Preto Velho','Cigana','Cosme']
+            .map(l=>`<div class="perfil-field"><label>${l}</label><div class="valor" style="color:var(--text-dim);font-style:italic">—</div></div>`)
+            .join('')}
         </div>
       </div>
+
     </div>
+
   </div>
 </div>
-
+  
 <!-- PÁGINA SESSÕES -->
 <div id="page-sessoes" class="page">
   <div class="section-wrap narrow">
