@@ -806,6 +806,14 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
+<!-- MODAL CALENDÁRIO -->
+<div id="modal-calendario-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('calendario')" style="padding:0">
+  <div style="background:#fff5f7;width:100%;max-width:760px;height:92vh;margin:auto;border-radius:12px;overflow:hidden;position:relative;display:flex;flex-direction:column;margin-top:4vh">
+    <button class="page-modal-close" onclick="fecharModal('calendario')" style="position:absolute;top:12px;right:14px;z-index:10;background:rgba(255,245,247,.9);border:1px solid var(--border);border-radius:6px;width:32px;height:32px;font-size:1.2rem;display:flex;align-items:center;justify-content:center">×</button>
+    <iframe id="cal-iframe" src="" style="flex:1;border:none;width:100%" allow="clipboard-write" title="Calendário"></iframe>
+  </div>
+</div>
+
 <!-- MODAL NOSSA HISTÓRIA -->
 <div id="modal-historia-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('historia')">
   <div class="page-modal">
@@ -985,6 +993,14 @@ body.logada{padding-top:28px}
           <option value="Curumim">Curumim</option>
         </select>
       </div>
+      <div><label class="form-label">Grupo de acesso</label>
+        <select class="form-input" id="cp-grupo" style="font-family:'Crimson Pro',serif;font-size:15px">
+          <option value="visitante">Visitante (padrão)</option>
+          <option value="filhas">Filhas da Casa</option>
+          <option value="tamboreiro">Tamboreiro</option>
+          <option value="amigos">Amigos</option>
+        </select>
+      </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
     </div>
 
@@ -1139,14 +1155,19 @@ function getDefaultMenu() {
 function renderDrawer() {
   const body = document.getElementById('drawer-body');
   if (!menuData) return;
-  const logada = !!(window._getCurrentUser && window._getCurrentUser());
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const pd = window._getPerfilData?.() || {};
+  let grupoUsuario = 'publico';
+  if (user) {
+    grupoUsuario = pd.grupo || 'visitante';
+    if (user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+  }
   body.innerHTML = menuData.sections.map(sec => {
     const visibleItems = sec.items.filter(i => {
       if (i.showMenu === false) return false;
-      const sw = i.showWhen || 'ambos';
-      if (sw === 'logado' && !logada) return false;
-      if (sw === 'publico' && logada) return false;
-      return true;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
+      return grupos.includes(grupoUsuario);
     });
     if (!visibleItems.length) return '';
     return `
@@ -1193,21 +1214,23 @@ function renderCards() {
   menuData.sections.forEach(sec => {
     sec.items.forEach(item => {
       if (!item.showCard) return;
-      const logada = !!(window._getCurrentUser && window._getCurrentUser());
       const user = window._getCurrentUser && window._getCurrentUser();
-      const showWhen = item.showWhen || 'ambos';
-      if (showWhen === 'logado' && !logada) return;
-      if (showWhen === 'publico' && logada) return;
-      // verificar grupos se logada
-      if (logada && item.grupos && item.grupos.length < 3) {
-        // busca o cargo da pessoa logada
-        const cargo = (window._simUsuario?._perfil?.cargo || window._getPerfilData?.()?.cargo || '').toLowerCase();
-        const email = user?.email || '';
-        let grupoUsuario = 'filhas'; // padrão
-        if (cargo === 'tamboreiro' || email === 'diegoscantos@hotmail.com') grupoUsuario = 'tamboreiro';
-        else if (!cargo || cargo === '') grupoUsuario = 'amigos';
-        if (!item.grupos.includes(grupoUsuario) && !item.grupos.includes('filhas')) return;
-        if (grupoUsuario !== 'filhas' && !item.grupos.includes(grupoUsuario)) return;
+      const logada = !!user;
+
+      // determina grupo do usuário atual
+      let grupoUsuario = 'publico';
+      if (logada) {
+        const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
+        grupoUsuario = pd.grupo || 'visitante';
+        if (user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+      }
+
+      // verifica se o item é visível para o grupo
+      const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
+      if (grupoUsuario === 'admin') {
+        // admin vê tudo
+      } else if (!grupos.includes(grupoUsuario)) {
+        return; // não visível para este grupo
       }
       const isMem = item.type === 'members';
 
@@ -1226,7 +1249,10 @@ function renderCards() {
         return;
       }
 
-      if (item.id === 'apoie') {
+      if (item.id === 'sessoes' || item.id === 'calendario') {
+        html += `<a class="widget" href="#" onclick="abrirModal('calendario');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-pub">público</span></a>`;
+        return;
+      }
         html += `<a class="widget" href="#" onclick="window.abrirApoie();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Como nos ajudar'}</div><span class="widget-tag tag-pub">público</span></a>`;
         return;
       }
@@ -1276,19 +1302,21 @@ function renderAdminPanel() {
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
           <div class="admin-item-actions">
-            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='publico'?'on':''}" onclick="toggleVisibility(${si},${ii},'publico')">👁 Público</button>
-            <button class="toggle-pill ${!item.showWhen||item.showWhen==='ambos'||item.showWhen==='logado'?'on':''}" onclick="abrirVisibilidadeInterna(${si},${ii})">🔒 Interno ▾</button>
             <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
             <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
             <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
             <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
           </div>
-          <!-- submenu visibilidade interna -->
-          <div class="admin-item-row hidden" id="vis-${si}-${ii}" style="background:rgba(74,111,165,.04);padding:8px 16px 8px 36px;flex-wrap:wrap;gap:6px">
-            <span style="font-family:'Cinzel',serif;font-size:.58rem;color:#4a6fa5;letter-spacing:.06em">Visível para:</span>
-            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('filhas')?'on':''}" onclick="toggleGrupo(${si},${ii},'filhas')" style="font-size:.55rem">🌸 Filhas</button>
-            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('tamboreiro')?'on':''}" onclick="toggleGrupo(${si},${ii},'tamboreiro')" style="font-size:.55rem">🥁 Tamboreiro</button>
-            <button class="toggle-pill ${(item.grupos||['filhas','tamboreiro','amigos']).includes('amigos')?'on':''}" onclick="toggleGrupo(${si},${ii},'amigos')" style="font-size:.55rem">🤝 Amigos</button>
+          <!-- visibilidade por grupo -->
+          <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
+            <span style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;color:var(--text-dim);white-space:nowrap">Visível para:</span>
+            ${['publico','visitante','filhas','tamboreiro','amigos'].map(g => {
+              const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
+              const ativo = grupos.includes(g);
+              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝'}[g];
+              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos'}[g];
+              return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
+            }).join('')}
           </div>
         </div>
         <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
@@ -1357,29 +1385,16 @@ function dragEnd(e) {
 }
 
 // ── VISIBILIDADE POR ESTADO ──
-function toggleVisibility(si, ii, tipo) {
+function toggleGrupoCard(si, ii, grupo) {
   const item = menuData.sections[si].items[ii];
-  if (tipo === 'publico') {
-    item.showWhen = item.showWhen === 'logado' ? 'ambos' : 'logado';
-  } else {
-    item.showWhen = item.showWhen === 'publico' ? 'ambos' : 'publico';
-  }
-  renderAdminPanel(); renderCards(); renderDrawer();
-}
-
-function abrirVisibilidadeInterna(si, ii) {
-  const el = document.getElementById(`vis-${si}-${ii}`);
-  if (el) el.classList.toggle('hidden');
-}
-
-function toggleGrupo(si, ii, grupo) {
-  const item = menuData.sections[si].items[ii];
-  if (!item.grupos) item.grupos = ['filhas', 'tamboreiro', 'amigos'];
+  if (!item.grupos) item.grupos = ['publico','visitante','filhas','tamboreiro'];
   const idx = item.grupos.indexOf(grupo);
   if (idx >= 0) item.grupos.splice(idx, 1);
   else item.grupos.push(grupo);
-  renderAdminPanel(); renderCards();
+  renderAdminPanel(); renderCards(); renderDrawer();
 }
+
+function toggleGrupo(si, ii, grupo) { toggleGrupoCard(si, ii, grupo); }
 
 function toggleEditRow(si, ii) {
   const form = document.getElementById(`edit-${si}-${ii}`);
@@ -1581,6 +1596,10 @@ function preencherFormPerfil(p) {
     const sel = document.getElementById('cp-cargo');
     if (sel) sel.value = p.cargo;
   }
+  if (p.grupo) {
+    const sel = document.getElementById('cp-grupo');
+    if (sel) sel.value = p.grupo;
+  }
   if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
@@ -1600,6 +1619,7 @@ async function salvarPerfilAdmin() {
     email: email.toLowerCase(),
     nome:  document.getElementById('cp-nome').value.trim(),
     cargo: document.getElementById('cp-cargo').value,
+    grupo: document.getElementById('cp-grupo').value || 'visitante',
     emoji: document.getElementById('cp-emoji').value.trim(),
     foto: '',
     historia: {}, guias: {}, cruzamentos: {},
@@ -1695,7 +1715,17 @@ async function saveMenu() {
 // ── NAVEGAÇÃO ──
 function abrirModal(id) {
   const el = document.getElementById('modal-' + id + '-overlay');
-  if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  if (!el) return;
+  // carrega iframe do calendário só quando abrir (lazy)
+  if (id === 'calendario') {
+    const iframe = document.getElementById('cal-iframe');
+    if (iframe && !iframe.src.includes('calendario')) {
+      iframe.src = '/calendario.html';
+    }
+  }
+  el.classList.add('open');
+  el.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
 }
 function fecharModal(id) {
   const el = document.getElementById('modal-' + id + '-overlay');
@@ -1704,7 +1734,7 @@ function fecharModal(id) {
 // ESC fecha todos os modais
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    ['historia','sessoes','textos','apoie'].forEach(id => fecharModal(id));
+    ['historia','sessoes','textos','apoie','calendario'].forEach(id => fecharModal(id));
     closeLogin();
     closeDrawer();
     document.getElementById('admin-senha-overlay')?.classList.remove('open');
@@ -1715,7 +1745,7 @@ document.addEventListener('keydown', e => {
 });
 function showPage(name) {
   // história, sessões, textos, apoie → modais
-  const comoModal = ['historia','sessoes','textos','apoie'];
+  const comoModal = ['historia','sessoes','textos','apoie','calendario'];
   if (comoModal.includes(name)) { abrirModal(name); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
@@ -2215,7 +2245,10 @@ window.logoutGoogle = async function() {
 // ── CARREGAR PERFIL ──
 async function carregarPerfil(email) {
   try {
-    const res = await fetch(`/api/perfil?email=${encodeURIComponent(email)}`);
+    const params = new URLSearchParams({ email });
+    if (currentUser?.displayName) params.set('nome', currentUser.displayName);
+    if (currentUser?.photoURL) params.set('foto', currentUser.photoURL);
+    const res = await fetch(`/api/perfil?${params}`);
     perfilData = await res.json();
   } catch(e) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
