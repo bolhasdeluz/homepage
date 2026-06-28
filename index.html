@@ -1878,7 +1878,7 @@ loadMenu();
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getRedirectResult }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -1894,6 +1894,9 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+
+// captura resultado do redirect (mobile)
+getRedirectResult(auth).catch(e => console.warn('redirect result:', e?.code));
 
 let currentUser = null;
 let perfilData  = {};
@@ -2219,8 +2222,8 @@ window.salvarSuaHistoria = async function() {
 };
 
 window.loginGoogle = async function() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  if (isIOS) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  if (isMobile) {
     sessionStorage.setItem('loginOrigin', window.location.href);
     const { signInWithRedirect } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
     await signInWithRedirect(auth, provider);
@@ -2228,7 +2231,9 @@ window.loginGoogle = async function() {
     try {
       await signInWithPopup(auth, provider);
     } catch(e) {
-      console.error('Erro login:', e.code, e.message);
+      if (e.code !== 'auth/popup-closed-by-user') {
+        console.error('Erro login:', e.code, e.message);
+      }
     }
   }
 };
