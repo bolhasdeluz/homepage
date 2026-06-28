@@ -1835,16 +1835,18 @@ async function abrirFicha(email) {
         </div>` : '') +
       (perfil.notas?`<div class="mf-section"><div class="mf-section-title">Notas</div><p style="font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text)">${perfil.notas}</p></div>`:'') +
       // marcos da linha do tempo
-      `<div class="mf-section"><div class="mf-section-title">Linha do Tempo</div><div class="mf-grid">${
-        (perfil.marcos || MH_MARCOS_DEF.map(m=>({...m, data: (perfil.historia||{})[m.key]||''}))).map(m=>`
-          <div class="mf-field"><label>${m.label}</label>
-            <div style="display:flex;gap:6px;align-items:center">
+      (() => {
+        const emailSafe = email.replace(/'/g, "\\'");
+        const marcosLista = perfil.marcos || MH_MARCOS_DEF.map(m=>({...m, data: (perfil.historia||{})[m.key]||''}));
+        return `<div class="mf-section"><div class="mf-section-title">Linha do Tempo</div><div class="mf-grid">${
+          marcosLista.map(m=>`
+            <div class="mf-field"><label>${m.label}</label>
               <input type="date" value="${m.data||''}" data-marco="${m.key}"
-                style="flex:1;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text)"
-                onchange="atualizarMarcoAdmin('${email}','${m.key}',this.value)">
-            </div>
-          </div>`).join('')
-      }</div></div>`;
+                style="width:100%;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text)"
+                onchange="atualizarMarcoAdmin('${emailSafe}','${m.key}',this.value)">
+            </div>`).join('')
+        }</div></div>`;
+      })();
     const histEl = document.getElementById('mf-body-historico');
     histEl.innerHTML = !hist.length
       ? '<div class="hist-vazio">Nenhuma edição registrada ainda.</div>'
