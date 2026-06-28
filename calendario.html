@@ -101,8 +101,38 @@ body.logada{padding-top:28px}
 .cal-btn-add:hover{background:var(--rosa-l)}
 .filhas-only{display:none}
 
-/* lista */
-.cal-main{max-width:680px;margin:0 auto 200px;padding:0 20px;position:relative;z-index:10}
+/* vista toggle */
+.vista-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;backdrop-filter:blur(4px)}
+.vista-btn{background:none;border:none;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);padding:8px 14px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.vista-btn.active{background:var(--rosa);color:#fff}
+
+/* grade mensal */
+#cal-mes{display:none;position:relative;z-index:10;max-width:680px;margin:0 auto 200px;padding:0 20px}
+#cal-mes.active{display:block}
+#cal-main.hidden{display:none}
+.mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.mes-nav-titulo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text)}
+.mes-nav-btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:1rem;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;backdrop-filter:blur(4px)}
+.mes-nav-btn:hover{border-color:var(--rosa);color:var(--rosa)}
+.grade-semana{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.dia-sem{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:4px 0}
+.grade-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.dia-cel{min-height:64px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 4px;cursor:pointer;transition:all .2s;backdrop-filter:blur(4px);position:relative}
+.dia-cel:hover{border-color:var(--rosa);box-shadow:0 2px 8px rgba(196,57,107,.1)}
+.dia-cel.outro-mes{opacity:.35}
+.dia-cel.hoje{border-color:var(--rosa);background:var(--rosa-dim)}
+.dia-cel.tem-sessao{border-color:rgba(196,57,107,.3)}
+.dia-num{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;color:var(--text);margin-bottom:3px}
+.dia-cel.hoje .dia-num{color:var(--rosa)}
+.dia-evento{font-family:'Crimson Pro',serif;font-size:.7rem;color:#fff;border-radius:3px;padding:1px 4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.dia-evento.tipo-interna{background:var(--interna)}
+.dia-evento.tipo-atendimento{background:var(--atendimento)}
+.dia-evento.tipo-visita{background:var(--visita)}
+.dia-evento.tipo-familia{background:var(--familia)}
+.dia-evento.tipo-reuniao{background:var(--reuniao)}
+.dia-evento.tipo-default{background:var(--rosa)}
+.dia-mais{font-family:'Cinzel',serif;font-size:.5rem;color:var(--text-dim);letter-spacing:.04em}
+max-width:680px;margin:0 auto 200px;padding:0 20px;position:relative;z-index:10}
 .mes-header{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;color:var(--rosa);text-transform:uppercase;padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
 .sessoes-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
 
@@ -255,6 +285,11 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 
 <!-- CONTROLES -->
 <div class="cal-controls">
+  <!-- toggle lista/mês -->
+  <div class="vista-toggle">
+    <button class="vista-btn active" id="btn-lista" onclick="setVista('lista')">☰ Lista</button>
+    <button class="vista-btn" id="btn-mes" onclick="setVista('mes')">▦ Mês</button>
+  </div>
   <div class="cal-select-wrap">
     <select class="cal-select" id="filtroSelect" onchange="setFiltro(this.value)">
       <option value="">Todas as sessões</option>
@@ -272,8 +307,23 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   <button class="cal-btn-add filhas-only" onclick="openModal()">+ Nova</button>
 </div>
 
+<!-- GRADE MENSAL -->
+<div id="cal-mes">
+  <div class="mes-nav">
+    <button class="mes-nav-btn" onclick="navegarMes(-1)">‹</button>
+    <div class="mes-nav-titulo" id="mes-titulo"></div>
+    <button class="mes-nav-btn" onclick="navegarMes(1)">›</button>
+  </div>
+  <div class="grade-semana">
+    <div class="dia-sem">Dom</div><div class="dia-sem">Seg</div><div class="dia-sem">Ter</div>
+    <div class="dia-sem">Qua</div><div class="dia-sem">Qui</div><div class="dia-sem">Sex</div>
+    <div class="dia-sem">Sáb</div>
+  </div>
+  <div class="grade-dias" id="grade-dias"></div>
+</div>
+
 <!-- LISTA -->
-<div class="cal-main" id="calMain">
+<div class="cal-main" id="cal-main">
   <div class="loading"><div class="spinner"></div></div>
 </div>
 
@@ -307,6 +357,22 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <option value="arrecadacao">🪘 Depende de arrecadação</option>
         <option value="nao">❌ Não vai ter</option>
       </select>
+    </div>
+    <div class="form-row filhas-only"><label>Visibilidade</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px" id="vis-checkboxes">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="vis-visitante" style="accent-color:var(--rosa);width:14px;height:14px"> 🌍 Visitante
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="vis-amigos" style="accent-color:var(--rosa);width:14px;height:14px"> 🤝 Amigos
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="vis-filhas" style="accent-color:var(--rosa);width:14px;height:14px"> 🌸 Filhas
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="vis-tamboreiro" style="accent-color:var(--rosa);width:14px;height:14px"> 🥁 Tamboreiro
+        </label>
+      </div>
     </div>
     <div class="form-row"><label>Senha</label><input type="password" id="fSenha"><div class="senha-err" id="senhaErr">Senha incorreta.</div></div>
     <div class="modal-footer">
@@ -374,6 +440,7 @@ window.logoutGoogle = async () => { await signOut(auth); };
 
 onAuthStateChanged(auth, async user => {
   window.usuarioLogado = user || null;
+  window._perfilUsuario = null;
 
   const avatar = document.getElementById('user-avatar');
   const avatarWrap = document.getElementById('user-avatar-wrap');
@@ -383,6 +450,12 @@ onAuthStateChanged(auth, async user => {
   const filhasOnly = document.querySelectorAll('.filhas-only');
 
   if (user) {
+    // busca perfil pra saber o cargo/grupo
+    try {
+      const res = await fetch(`/api/perfil?email=${encodeURIComponent(user.email)}`);
+      window._perfilUsuario = await res.json();
+    } catch(e) {}
+
     avatar.src = user.photoURL || '';
     avatar.style.display = 'block';
     avatarWrap.style.display = 'flex';
@@ -391,37 +464,30 @@ onAuthStateChanged(auth, async user => {
     bannerPub.style.display = 'none';
     document.body.classList.add('logada');
 
-    // busca perfil no KV para boas-vindas
-    try {
-      const res = await fetch(`/api/perfil?email=${encodeURIComponent(user.email)}`);
-      const perfil = await res.json();
-      const primeiroNome = (perfil.nome || user.displayName || '').split(' ')[0];
-      const cargo = perfil.cargo || '';
-      const emoji = perfil.emoji || '✦';
-      const dataEntrada = perfil.historia?.data_entrada;
-      let tempo = '';
-      if (dataEntrada) {
-        const inicio = new Date(dataEntrada + 'T12:00:00');
-        const hoje = new Date();
-        let anos = hoje.getFullYear() - inicio.getFullYear();
-        let meses = hoje.getMonth() - inicio.getMonth();
-        if (meses < 0) { anos--; meses += 12; }
-        const p = [];
-        if (anos > 0) p.push(anos + (anos===1?' ano':' anos'));
-        if (meses > 0) p.push(meses + (meses===1?' mês':' meses'));
-        tempo = p.join(' e ');
-      }
-      document.getElementById('bv-emoji').textContent = emoji;
-      document.getElementById('bv-nome').textContent = primeiroNome;
-      document.getElementById('bv-cargo').textContent = cargo;
-      document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
-      document.getElementById('bv-sep').style.display = cargo ? '' : 'none';
-      document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
-      bvBanner.style.display = 'block';
-    } catch(e) {
-      document.getElementById('bv-nome').textContent = user.displayName?.split(' ')[0] || '';
-      bvBanner.style.display = 'block';
+    const perfil = window._perfilUsuario || {};
+    const primeiroNome = (perfil.nome || user.displayName || '').split(' ')[0];
+    const cargo = perfil.cargo || '';
+    const emoji = perfil.emoji || '✦';
+    const dataEntrada = perfil.historia?.data_entrada;
+    let tempo = '';
+    if (dataEntrada) {
+      const inicio = new Date(dataEntrada + 'T12:00:00');
+      const hj = new Date();
+      let anos = hj.getFullYear() - inicio.getFullYear();
+      let meses = hj.getMonth() - inicio.getMonth();
+      if (meses < 0) { anos--; meses += 12; }
+      const p = [];
+      if (anos > 0) p.push(anos + (anos===1?' ano':' anos'));
+      if (meses > 0) p.push(meses + (meses===1?' mês':' meses'));
+      tempo = p.join(' e ');
     }
+    document.getElementById('bv-emoji').textContent = emoji;
+    document.getElementById('bv-nome').textContent = primeiroNome;
+    document.getElementById('bv-cargo').textContent = cargo;
+    document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+    document.getElementById('bv-sep').style.display = cargo ? '' : 'none';
+    document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+    bvBanner.style.display = 'block';
   } else {
     avatar.style.display = 'none';
     avatarWrap.style.display = 'none';
@@ -433,11 +499,102 @@ onAuthStateChanged(auth, async user => {
   }
 
   renderLista();
+  renderMes();
 });
 </script>
 
 <script>
-const API = '/api/sessoes';
+// ── VISTA ────────────────────────────────────────────────────
+let vistaAtual = 'lista';
+let mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+
+function setVista(v) {
+  vistaAtual = v;
+  document.getElementById('btn-lista').classList.toggle('active', v === 'lista');
+  document.getElementById('btn-mes').classList.toggle('active', v === 'mes');
+  document.getElementById('cal-mes').classList.toggle('active', v === 'mes');
+  document.getElementById('cal-main').classList.toggle('hidden', v === 'mes');
+  // esconde controles de busca/passadas na vista mês
+  document.getElementById('searchInput').style.display = v === 'mes' ? 'none' : '';
+  document.getElementById('btnPassadas').style.display = v === 'mes' ? 'none' : '';
+  if (v === 'mes') renderMes();
+}
+
+function navegarMes(dir) {
+  mesAtual = new Date(mesAtual.getFullYear(), mesAtual.getMonth() + dir, 1);
+  renderMes();
+}
+
+function renderMes() {
+  const logada = !!window.usuarioLogado;
+  const ano = mesAtual.getFullYear();
+  const mes = mesAtual.getMonth();
+  const MESES_NOME = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  document.getElementById('mes-titulo').textContent = MESES_NOME[mes] + ' ' + ano;
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  const grid = document.getElementById('grade-dias');
+
+  let html = '';
+  // dias do mês anterior
+  const diasAnt = new Date(ano, mes, 0).getDate();
+  for (let i = primeiroDia - 1; i >= 0; i--) {
+    html += `<div class="dia-cel outro-mes"><div class="dia-num">${diasAnt - i}</div></div>`;
+  }
+
+  // dias do mês atual
+  for (let d = 1; d <= ultimoDia; d++) {
+    const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ehHoje = dataStr === todayStr;
+    const eventos = sessoes.filter(s => s.data === dataStr && sessaoVisivel(s));
+    const temSessao = eventos.length > 0;
+
+    let eventosHtml = '';
+    eventos.slice(0, 2).forEach(s => {
+      const dados = logada ? s : sessaoPublica(s);
+      if (!dados) return;
+      const tc = 'tipo-' + (s.tipo || '').toLowerCase();
+      const nome = logada ? (s.nome || '') : dados.nome;
+      eventosHtml += `<div class="dia-evento ${tc}" title="${esc(nome)}">${esc(nome)}</div>`;
+    });
+    if (eventos.length > 2) {
+      eventosHtml += `<div class="dia-mais">+${eventos.length - 2} mais</div>`;
+    }
+
+    html += `<div class="dia-cel${ehHoje?' hoje':''}${temSessao?' tem-sessao':''}"
+      onclick="if(${temSessao})clicarDia('${dataStr}')">
+      <div class="dia-num">${d}</div>
+      ${eventosHtml}
+    </div>`;
+  }
+
+  // completar última semana
+  const total = primeiroDia + ultimoDia;
+  const resto = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= resto; i++) {
+    html += `<div class="dia-cel outro-mes"><div class="dia-num">${i}</div></div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function clicarDia(dataStr) {
+  // volta pra lista e filtra pelo dia clicado
+  setVista('lista');
+  mostrarPassadas = true;
+  document.getElementById('btnPassadas').classList.add('active');
+  buscaTexto = dataStr;
+  document.getElementById('searchInput').value = dataStr;
+  renderLista();
+  // scroll pro item
+  setTimeout(() => {
+    const items = document.querySelectorAll('.sessao-item');
+    if (items.length) items[0].scrollIntoView({behavior:'smooth', block:'center'});
+  }, 100);
+}
+
+
 let sessoes=[], filtroTipo='', buscaTexto='', mostrarPassadas=false, deletarId=null;
 const hoje=new Date(), todayStr=fmtDate(hoje);
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
@@ -445,16 +602,35 @@ const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feir
 const TIPO_LABEL={Interna:'Sessão Interna',Atendimento:'Sessão com Atendimento',Visita:'Sessão de Visita',Familia:'Sessão da Família',Reuniao:'Reunião'};
 const TAMBOR_LABEL={confirmado:'✅ Tambor confirmado',arrecadacao:'🪘 Depende de arrecadação',nao:'❌ Sem tambor'};
 
-function nivelSessao(s){if(s.tipo==='Atendimento')return'publico';if(s.tipo==='Visita')return'visita';return'interno';}
-function sessaoVisivel(s){if(window.usuarioLogado)return true;return nivelSessao(s)!=='interno';}
-function sessaoPublica(s){const n=nivelSessao(s);if(n==='publico')return s;if(n==='visita')return{...s,nome:'Sessão de Visita',descricao:'Visita à outro Ilê'+(s.responsavel?' · '+s.responsavel:''),responsavel:'',tambor:''};return null;}
-
-async function load(){
-  try{const res=await fetch(API);sessoes=await res.json();renderLista();}
-  catch{document.getElementById('calMain').innerHTML='<div class="empty">Erro ao carregar.</div>';}
+function getGrupoUsuario() {
+  if (!window.usuarioLogado) return 'publico';
+  const email = window.usuarioLogado.email || '';
+  if (email === 'bolhasdeluz@gmail.com') return 'admin';
+  return window._perfilUsuario?.grupo || 'visitante';
 }
 
-window.setFiltro=(tipo)=>{filtroTipo=tipo;renderLista();};
+function sessaoVisivel(s) {
+  const grupo = getGrupoUsuario();
+  if (grupo === 'admin') return true;
+  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
+  return grupos.includes(grupo);
+}
+
+function sessaoPublica(s) {
+  const grupo = getGrupoUsuario();
+  // mascara detalhes de visita para público/visitante
+  if ((grupo === 'publico' || grupo === 'visitante') && s.tipo === 'Visita') {
+    return {...s, nome:'Sessão de Visita', descricao:'Visita à outro Ilê'+(s.responsavel?' · '+s.responsavel:''), responsavel:'', tambor:''};
+  }
+  return s;
+}
+
+async function load(){
+  try{const res=await fetch(API);sessoes=await res.json();renderLista();renderMes();}
+  catch{document.getElementById('cal-main').innerHTML='<div class="empty">Erro ao carregar.</div>';}
+}
+
+window.setFiltro=(tipo)=>{filtroTipo=tipo;renderLista();renderMes();};
 window.onSearch=(val)=>{buscaTexto=val.toLowerCase().trim();renderLista();};
 window.togglePassadas=()=>{mostrarPassadas=!mostrarPassadas;document.getElementById('btnPassadas').classList.toggle('active',mostrarPassadas);renderLista();};
 
@@ -468,7 +644,7 @@ window.renderLista=function(){
     if(buscaTexto){const h=[s.nome,s.descricao,s.responsavel].join(' ').toLowerCase();if(!h.includes(buscaTexto))return false;}
     return true;
   });
-  const el=document.getElementById('calMain');
+  const el=document.getElementById('cal-main');
   if(!lista.length){el.innerHTML='<div class="empty">Nenhuma sessão encontrada.</div>';return;}
   const grupos={};
   lista.sort((a,b)=>mostrarPassadas?b.data.localeCompare(a.data):a.data.localeCompare(b.data))
@@ -526,6 +702,11 @@ window.openModal=()=>{
   document.getElementById('fTipo').value=filtroTipo||'';
   document.getElementById('fTambor').value='';
   document.getElementById('senhaErr').style.display='none';
+  // visibilidade padrão: visitante + filhas + tamboreiro
+  document.getElementById('vis-visitante').checked=true;
+  document.getElementById('vis-amigos').checked=false;
+  document.getElementById('vis-filhas').checked=true;
+  document.getElementById('vis-tamboreiro').checked=true;
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('fNome').focus(),80);
 };
@@ -542,6 +723,12 @@ window.openEdit=(id)=>{
   document.getElementById('fTambor').value=s.tambor||'';
   document.getElementById('fSenha').value='';
   document.getElementById('senhaErr').style.display='none';
+  // visibilidade
+  const grupos = s.grupos || ['visitante','filhas','tamboreiro'];
+  document.getElementById('vis-visitante').checked=grupos.includes('visitante');
+  document.getElementById('vis-amigos').checked=grupos.includes('amigos');
+  document.getElementById('vis-filhas').checked=grupos.includes('filhas');
+  document.getElementById('vis-tamboreiro').checked=grupos.includes('tamboreiro');
   document.getElementById('overlay').classList.add('open');
 };
 window.closeModal=()=>document.getElementById('overlay').classList.remove('open');
@@ -550,7 +737,16 @@ window.salvar=async()=>{
   const data=document.getElementById('fData').value;
   const tipo=document.getElementById('fTipo').value;
   if(!nome||!data||!tipo){alert('Preencha nome, data e tipo.');return;}
-  const payload={nome,data,hora:document.getElementById('fHora').value,tipo,descricao:document.getElementById('fDesc').value.trim(),responsavel:document.getElementById('fResp').value.trim(),tambor:document.getElementById('fTambor').value,senha:document.getElementById('fSenha').value};
+  const grupos=[];
+  ['visitante','amigos','filhas','tamboreiro'].forEach(g=>{
+    if(document.getElementById('vis-'+g)?.checked) grupos.push(g);
+  });
+  const payload={nome,data,hora:document.getElementById('fHora').value,tipo,
+    descricao:document.getElementById('fDesc').value.trim(),
+    responsavel:document.getElementById('fResp').value.trim(),
+    tambor:document.getElementById('fTambor').value,
+    grupos,
+    senha:document.getElementById('fSenha').value};
   const editId=document.getElementById('editId').value;
   if(editId)payload.id=editId;
   const res=await fetch(API,{method:editId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -558,7 +754,7 @@ window.salvar=async()=>{
   if(res.status===403){document.getElementById('senhaErr').style.display='block';return;}
   if(editId){const idx=sessoes.findIndex(x=>x.id===editId);if(idx>=0)sessoes[idx]=json;}
   else{sessoes.push(json);sessoes.sort((a,b)=>a.data.localeCompare(b.data));}
-  closeModal();renderLista();toast(editId?'Sessão atualizada!':'Sessão adicionada!');
+  closeModal();renderLista();renderMes();toast(editId?'Sessão atualizada!':'Sessão adicionada!');
 };
 window.abrirConfirmDelete=(id)=>{
   const s=sessoes.find(x=>x.id===id);if(!s)return;
