@@ -87,8 +87,9 @@ export async function onRequest(context) {
       const nome = url.searchParams.get('nome') || '';
       const foto = url.searchParams.get('foto') || '';
       const novo = {
-        email, nome, foto, cargo: '', emoji: '',
-        grupo: 'visitante', // padrão — admin promove depois
+        email, nome, foto, cargo: 'Visitante', emoji: '👤',
+        grupo: 'visitante',
+        boasVindas: { comoConheceu: '', tempoFrequenta: '' },
         historia: {}, guias: {}, cruzamentos: {}, notas: '',
         criadoEm: Date.now(), primeiroLogin: Date.now()
       };
