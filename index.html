@@ -292,7 +292,58 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .admin-edit-form input,.admin-edit-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
 .admin-edit-form input:focus,.admin-edit-form select:focus{border-color:var(--rosa)}
 .hidden{display:none!important}
-/* ── ADMIN FILHAS ── */
+/* ── CALENDÁRIO INTERNO ── */
+.cal-wrap{max-width:1000px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
+.cal-topo{margin-bottom:20px}
+.cal-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+@media(max-width:680px){.cal-layout{grid-template-columns:1fr}}
+.cal-mes-col{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;backdrop-filter:blur(4px);box-shadow:0 2px 16px rgba(180,60,90,.07);position:sticky;top:36px}
+.cal-mes-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-size:1rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.cal-nav-btn:hover{border-color:var(--rosa);color:var(--rosa)}
+.cal-grade-sem{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.cal-dia-sem{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);text-align:center;padding:3px 0}
+.cal-grade-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dia{min-height:36px;border-radius:6px;padding:3px;cursor:pointer;transition:all .15s;position:relative;display:flex;flex-direction:column;align-items:center}
+.cal-dia:hover{background:var(--rosa-dim)}
+.cal-dia.outro-mes{opacity:.3}
+.cal-dia.hoje .cal-dia-num{background:var(--rosa);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+.cal-dia.selecionado{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.3)}
+.cal-dia.tem-sessao::after{content:'';width:5px;height:5px;border-radius:50%;background:var(--rosa);position:absolute;bottom:3px}
+.cal-dia-num{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;color:var(--text);line-height:20px;min-width:20px;text-align:center}
+.cal-lista-col{display:flex;flex-direction:column;gap:8px}
+.cal-sessao-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;border-left:3px solid var(--rosa);transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px);box-shadow:0 2px 10px rgba(180,60,90,.06);cursor:pointer}
+.cal-sessao-card:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(180,60,90,.12)}
+.cal-sessao-card.passada{opacity:.5}
+.cal-sessao-card.tipo-interna{border-left-color:#4a6fa5}
+.cal-sessao-card.tipo-atendimento{border-left-color:#6a9e6a}
+.cal-sessao-card.tipo-visita{border-left-color:#9e6a9e}
+.cal-sessao-card.tipo-familia{border-left-color:#c9963c}
+.cal-sessao-card.tipo-reuniao{border-left-color:#6a8fa5}
+.cal-sessao-card.parcial{border-left-color:#bbb;background:rgba(255,255,255,.5)}
+.cal-card-top{display:flex;align-items:center;gap:10px}
+.cal-card-data{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.cal-card-dia{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--rosa);line-height:1}
+.cal-card-info{display:flex;flex-direction:column;gap:1px}
+.cal-card-dow{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.1em;color:var(--rosa);text-transform:uppercase}
+.cal-card-hora{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
+.cal-card-nome{font-family:'Playfair Display',serif;font-size:.92rem;font-weight:600;color:var(--text);flex:1;line-height:1.2}
+.cal-card-meta{display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap}
+.cal-tipo-badge{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:20px;border:1px solid}
+.tipo-interna .cal-tipo-badge{color:#4a6fa5;border-color:#4a6fa5;background:rgba(74,111,165,.08)}
+.tipo-atendimento .cal-tipo-badge{color:#6a9e6a;border-color:#6a9e6a;background:rgba(106,158,106,.08)}
+.tipo-visita .cal-tipo-badge{color:#9e6a9e;border-color:#9e6a9e;background:rgba(158,106,158,.08)}
+.tipo-familia .cal-tipo-badge{color:#c9963c;border-color:#c9963c;background:rgba(201,150,60,.08)}
+.tipo-reuniao .cal-tipo-badge{color:#6a8fa5;border-color:#6a8fa5;background:rgba(106,143,165,.08)}
+.cal-tambor-badge{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.04em;padding:2px 7px;border-radius:20px;background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);color:var(--rosa)}
+.cal-sessao-fechada{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:4px}
+.cal-admin-acoes{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+.cal-icon-btn{background:none;border:1px solid var(--border);color:var(--rosa);width:24px;height:24px;border-radius:4px;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cal-icon-btn:hover{border-color:var(--rosa);background:var(--rosa-dim)}
+.cal-icon-btn.del:hover{border-color:#b84040;color:#b84040;background:rgba(184,64,64,.08)}
+.cal-empty{text-align:center;padding:32px 16px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.95rem}
+.cal-filhas-only{display:none}
+
 .admin-filhas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:8px}
 .admin-filha-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px)}
 .admin-filha-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(180,60,90,.12)}
@@ -801,11 +852,141 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
-<!-- MODAL CALENDÁRIO -->
-<div id="modal-calendario-overlay" class="page-modal-overlay" onclick="if(event.target===this)fecharModal('calendario')" style="padding:0">
-  <div style="background:#fff5f7;width:100%;max-width:760px;height:92vh;margin:auto;border-radius:12px;overflow:hidden;position:relative;display:flex;flex-direction:column;margin-top:4vh">
-    <button class="page-modal-close" onclick="fecharModal('calendario')" style="position:absolute;top:12px;right:14px;z-index:10;background:rgba(255,245,247,.9);border:1px solid var(--border);border-radius:6px;width:32px;height:32px;font-size:1.2rem;display:flex;align-items:center;justify-content:center">×</button>
-    <iframe id="cal-iframe" src="" style="flex:1;border:none;width:100%" allow="clipboard-write" title="Calendário"></iframe>
+<!-- PÁGINA CALENDÁRIO -->
+<div id="page-calendario" class="page">
+  <div class="cal-wrap">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('inicio')" style="position:relative;z-index:10">← Voltar</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;position:relative;z-index:10">
+        <div>
+          <div class="eyebrow">Terreiro Bolhas de Luz</div>
+          <div class="section-title" style="margin-bottom:0">Calendário de Sessões</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="cal-controles-admin"></div>
+      </div>
+      <!-- filtros -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;position:relative;z-index:10">
+        <div style="position:relative;flex:1;min-width:140px">
+          <select id="cal-filtro" onchange="calSetFiltro(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;color:var(--text);outline:none;backdrop-filter:blur(4px)">
+            <option value="">Todas as sessões</option>
+            <option value="Atendimento">Atendimento</option>
+            <option value="Visita">Visita</option>
+            <option value="Interna" class="cal-filhas-only">Interna</option>
+            <option value="Familia" class="cal-filhas-only">Família</option>
+            <option value="Reuniao" class="cal-filhas-only">Reunião</option>
+          </select>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--rosa);pointer-events:none;font-size:.8rem">›</span>
+        </div>
+        <input id="cal-busca" type="text" placeholder="Buscar…" oninput="calOnSearch(this.value)"
+          style="flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;backdrop-filter:blur(4px)">
+        <button id="cal-btn-passadas" onclick="calTogglePassadas()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)">📜 Passadas</button>
+      </div>
+    </div>
+
+    <!-- LAYOUT LADO A LADO -->
+    <div class="cal-layout">
+      <!-- GRADE MENSAL -->
+      <div class="cal-mes-col">
+        <div class="cal-mes-nav">
+          <button onclick="calNavMes(-1)" class="cal-nav-btn">‹</button>
+          <span id="cal-mes-titulo" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)"></span>
+          <button onclick="calNavMes(1)" class="cal-nav-btn">›</button>
+        </div>
+        <div class="cal-grade-sem">
+          <div class="cal-dia-sem">D</div><div class="cal-dia-sem">S</div><div class="cal-dia-sem">T</div>
+          <div class="cal-dia-sem">Q</div><div class="cal-dia-sem">Q</div><div class="cal-dia-sem">S</div>
+          <div class="cal-dia-sem">S</div>
+        </div>
+        <div class="cal-grade-dias" id="cal-grade-dias"></div>
+      </div>
+
+      <!-- LISTA -->
+      <div class="cal-lista-col">
+        <div id="cal-lista-titulo" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">Próximas sessões</div>
+        <div id="cal-lista"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SESSÃO (calendário) -->
+<div id="cal-modal-overlay" onclick="if(event.target===this)calCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="calCloseModal()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 id="cal-modal-titulo" style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:18px"></h2>
+    <input type="hidden" id="cal-edit-id">
+    <div style="margin-bottom:12px"><label class="form-label">Nome *</label><input type="text" class="form-input" id="cal-fNome"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="form-label">Data *</label><input type="date" class="form-input" id="cal-fData"></div>
+      <div><label class="form-label">Hora</label><input type="time" class="form-input" id="cal-fHora"></div>
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Tipo *</label>
+      <select class="form-input" id="cal-fTipo">
+        <option value="">— Selecionar —</option>
+        <option value="Interna">Sessão Interna</option>
+        <option value="Atendimento">Sessão com Atendimento</option>
+        <option value="Visita">Sessão de Visita</option>
+        <option value="Familia">Sessão da Família</option>
+        <option value="Reuniao">Reunião</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Descrição</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
+    <div style="margin-bottom:12px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-fResp"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Tambor</label>
+      <select class="form-input" id="cal-fTambor">
+        <option value="">— Sem informação —</option>
+        <option value="confirmado">✅ Confirmado</option>
+        <option value="arrecadacao">🪘 Depende de arrecadação</option>
+        <option value="nao">❌ Não vai ter</option>
+      </select>
+    </div>
+    <!-- VISIBILIDADE -->
+    <div style="margin-bottom:12px">
+      <label class="form-label">Visibilidade por grupo</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-vis-publico" style="accent-color:var(--rosa)"> 🌍 Público
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-vis-visitante" style="accent-color:var(--rosa)"> 👤 Visitante
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-vis-filhas" style="accent-color:var(--rosa)"> 🌸 Filhas
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-vis-tamboreiro" style="accent-color:var(--rosa)"> 🥁 Tamboreiro
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-vis-amigos" style="accent-color:var(--rosa)"> 🤝 Amigos
+        </label>
+      </div>
+    </div>
+    <!-- VISIBILIDADE PARCIAL -->
+    <div style="margin-bottom:16px">
+      <label class="form-label">Visibilidade parcial (só vê nome + "sessão fechada")</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-parc-publico" style="accent-color:#888"> 🌍 Público
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-parc-visitante" style="accent-color:#888"> 👤 Visitante
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-parc-filhas" style="accent-color:#888"> 🌸 Filhas
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-parc-tamboreiro" style="accent-color:#888"> 🥁 Tamboreiro
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="cal-parc-amigos" style="accent-color:#888"> 🤝 Amigos
+        </label>
+      </div>
+    </div>
+    <div style="margin-bottom:12px"><label class="form-label">Senha</label><input type="password" class="form-input" id="cal-fSenha"><div style="color:#b84040;font-size:12px;margin-top:4px;display:none;font-family:'DM Sans',sans-serif" id="cal-senhaErr">Senha incorreta.</div></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
+      <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+      <button onclick="calSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -1245,7 +1426,7 @@ function renderCards() {
       }
 
       if (item.id === 'sessoes' || item.id === 'calendario') {
-        html += `<a class="widget" href="#" onclick="abrirModal('calendario');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-pub">público</span></a>`;
+        html += `<a class="widget" href="#" onclick="showPage('calendario');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-pub">público</span></a>`;
         return;
       }
       if (item.id === 'apoie') {
@@ -1716,13 +1897,6 @@ async function saveMenu() {
 function abrirModal(id) {
   const el = document.getElementById('modal-' + id + '-overlay');
   if (!el) return;
-  // carrega iframe do calendário só quando abrir (lazy)
-  if (id === 'calendario') {
-    const iframe = document.getElementById('cal-iframe');
-    if (iframe && !iframe.src.includes('calendario')) {
-      iframe.src = '/calendario.html';
-    }
-  }
   el.classList.add('open');
   el.style.display = 'flex';
   document.body.style.overflow = 'hidden';
@@ -1734,7 +1908,7 @@ function fecharModal(id) {
 // ESC fecha todos os modais
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    ['historia','sessoes','textos','apoie','calendario'].forEach(id => fecharModal(id));
+    ['historia','sessoes','textos','apoie'].forEach(id => fecharModal(id));
     closeLogin();
     closeDrawer();
     document.getElementById('admin-senha-overlay')?.classList.remove('open');
@@ -1745,13 +1919,18 @@ document.addEventListener('keydown', e => {
 });
 function showPage(name) {
   // história, sessões, textos, apoie → modais
-  const comoModal = ['historia','sessoes','textos','apoie','calendario'];
+  const comoModal = ['historia','sessoes','textos','apoie'];
   if (comoModal.includes(name)) { abrirModal(name); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
   if (p) p.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); }
+  if (name === 'calendario') {
+    calAtualizarControlesAdmin();
+    if (!calSessoes.length) calLoad();
+    else { calRenderGrade(); calRenderLista(); }
+  }
 }
 function toggleDrawer() {
   const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
@@ -1871,6 +2050,292 @@ function toggleDebug(){
   window.addEventListener('error', e => addLog('error', [e.message + ' (' + e.filename + ':' + e.lineno + ')']));
   window.addEventListener('unhandledrejection', e => addLog('error', ['Promise rejeitada:', e.reason]));
 })();
+
+// ── CALENDÁRIO INTERNO ──
+const CAL_API = '/api/sessoes';
+let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
+let calMesAtual = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let calDiaSelecionado = null;
+let calDeletarId = null;
+
+const CAL_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CAL_DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const CAL_TIPO_LABEL = {Interna:'Interna',Atendimento:'Atendimento',Visita:'Visita',Familia:'Família',Reuniao:'Reunião'};
+const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao:'❌ Sem tambor'};
+
+function calGetGrupo() {
+  const u = window._getCurrentUser && window._getCurrentUser();
+  if (!u) return 'publico';
+  if (u.email === 'bolhasdeluz@gmail.com') return 'admin';
+  return window._getPerfilData?.()?.grupo || 'visitante';
+}
+
+function calSessaoVisivel(s) {
+  const g = calGetGrupo();
+  if (g === 'admin') return 'total';
+  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
+  const parcial = s.gruposParcial || [];
+  if (grupos.includes(g)) return 'total';
+  if (parcial.includes(g)) return 'parcial';
+  return false;
+}
+
+async function calLoad() {
+  try {
+    const res = await fetch(CAL_API);
+    calSessoes = await res.json();
+    calRenderGrade();
+    calRenderLista();
+  } catch(e) {
+    const el = document.getElementById('cal-lista');
+    if (el) el.innerHTML = '<div class="cal-empty">Erro ao carregar sessões.</div>';
+  }
+}
+
+function calRenderGrade() {
+  const titulo = document.getElementById('cal-mes-titulo');
+  const grade = document.getElementById('cal-grade-dias');
+  if (!titulo || !grade) return;
+
+  const ano = calMesAtual.getFullYear();
+  const mes = calMesAtual.getMonth();
+  titulo.textContent = CAL_MESES[mes] + ' ' + ano;
+
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+  const hoje = new Date();
+  const todayStr = calFmtDate(hoje);
+
+  let html = '';
+  const diasAnt = new Date(ano, mes, 0).getDate();
+  for (let i = primeiroDia - 1; i >= 0; i--) {
+    html += `<div class="cal-dia outro-mes"><div class="cal-dia-num">${diasAnt - i}</div></div>`;
+  }
+  for (let d = 1; d <= ultimoDia; d++) {
+    const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ehHoje = dataStr === todayStr;
+    const selecionado = dataStr === calDiaSelecionado;
+    const temSessao = calSessoes.some(s => s.data === dataStr && calSessaoVisivel(s));
+    html += `<div class="cal-dia${ehHoje?' hoje':''}${selecionado?' selecionado':''}${temSessao?' tem-sessao':''}" onclick="calClicarDia('${dataStr}')">
+      <div class="cal-dia-num">${d}</div>
+    </div>`;
+  }
+  const total = primeiroDia + ultimoDia;
+  const resto = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= resto; i++) {
+    html += `<div class="cal-dia outro-mes"><div class="cal-dia-num">${i}</div></div>`;
+  }
+  grade.innerHTML = html;
+}
+
+function calClicarDia(dataStr) {
+  calDiaSelecionado = calDiaSelecionado === dataStr ? null : dataStr;
+  calRenderGrade();
+  calRenderLista();
+  const titulo = document.getElementById('cal-lista-titulo');
+  if (titulo) titulo.textContent = calDiaSelecionado ? calDiaSelecionado.split('-').reverse().join('/') : 'Próximas sessões';
+}
+
+function calNavMes(dir) {
+  calMesAtual = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth() + dir, 1);
+  calDiaSelecionado = null;
+  calRenderGrade();
+  calRenderLista();
+}
+
+function calRenderLista() {
+  const el = document.getElementById('cal-lista');
+  if (!el) return;
+  const todayStr = calFmtDate(new Date());
+  const isAdmin = calGetGrupo() === 'admin';
+  const isLogada = !!( window._getCurrentUser && window._getCurrentUser());
+
+  let lista = calSessoes.filter(s => {
+    const vis = calSessaoVisivel(s);
+    if (!vis) return false;
+    if (calFiltro && s.tipo !== calFiltro) return false;
+    if (!calPassadas && s.data < todayStr) return false;
+    if (calDiaSelecionado && s.data !== calDiaSelecionado) return false;
+    if (calBusca) {
+      const h = [s.nome, s.descricao, s.responsavel].join(' ').toLowerCase();
+      if (!h.includes(calBusca)) return false;
+    }
+    return true;
+  }).sort((a, b) => a.data.localeCompare(b.data));
+
+  if (!lista.length) {
+    el.innerHTML = '<div class="cal-empty">Nenhuma sessão encontrada.</div>';
+    return;
+  }
+
+  el.innerHTML = lista.map(s => {
+    const vis = calSessaoVisivel(s);
+    const isParcial = vis === 'parcial';
+    const [, sm, sd] = s.data.split('-');
+    const dataObj = new Date(parseInt(s.data.split('-')[0]), parseInt(sm)-1, parseInt(sd));
+    const dow = CAL_DIAS[dataObj.getDay()];
+    const tc = 'tipo-' + (s.tipo||'').toLowerCase();
+    const passada = s.data < todayStr ? 'passada' : '';
+
+    if (isParcial) {
+      return `<div class="cal-sessao-card parcial ${passada}">
+        <div class="cal-card-top">
+          <div class="cal-card-data">
+            <div class="cal-card-dia">${sd}</div>
+            <div class="cal-card-info"><div class="cal-card-dow">${dow}</div></div>
+          </div>
+          <div class="cal-card-nome">${calEsc(s.nome)}</div>
+        </div>
+        <div class="cal-sessao-fechada">🔒 Sessão fechada</div>
+      </div>`;
+    }
+
+    return `<div class="cal-sessao-card ${tc} ${passada}">
+      <div class="cal-card-top">
+        <div class="cal-card-data">
+          <div class="cal-card-dia">${sd}</div>
+          <div class="cal-card-info">
+            <div class="cal-card-dow">${dow}</div>
+            ${isLogada && s.hora ? `<div class="cal-card-hora">${s.hora}</div>` : ''}
+          </div>
+        </div>
+        <div class="cal-card-nome">${calEsc(s.nome)}</div>
+        ${isAdmin ? `<div class="cal-admin-acoes">
+          <button class="cal-icon-btn" onclick="calOpenEdit('${s.id}');event.stopPropagation()" title="Editar">✎</button>
+          <button class="cal-icon-btn del" onclick="calDelete('${s.id}');event.stopPropagation()" title="Excluir">✕</button>
+        </div>` : ''}
+      </div>
+      <div class="cal-card-meta">
+        <span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>
+        ${isLogada && s.tambor ? `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>` : ''}
+        ${isLogada && s.responsavel ? `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>` : ''}
+      </div>
+      ${isLogada && s.descricao ? `<div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${calEsc(s.descricao)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function calSetFiltro(v) { calFiltro = v; calRenderLista(); }
+function calOnSearch(v) { calBusca = v.toLowerCase().trim(); calRenderLista(); }
+function calTogglePassadas() {
+  calPassadas = !calPassadas;
+  const btn = document.getElementById('cal-btn-passadas');
+  if (btn) btn.style.background = calPassadas ? 'var(--rosa-dim)' : '';
+  calRenderLista();
+}
+
+function calOpenModal() {
+  document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
+  document.getElementById('cal-edit-id').value = '';
+  document.getElementById('cal-fNome').value = '';
+  document.getElementById('cal-fData').value = calDiaSelecionado || calFmtDate(new Date());
+  document.getElementById('cal-fHora').value = '20:30';
+  document.getElementById('cal-fTipo').value = '';
+  document.getElementById('cal-fDesc').value = '';
+  document.getElementById('cal-fResp').value = '';
+  document.getElementById('cal-fTambor').value = '';
+  document.getElementById('cal-fSenha').value = '';
+  document.getElementById('cal-senhaErr').style.display = 'none';
+  // visibilidade padrão
+  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
+    const el = document.getElementById('cal-vis-'+g);
+    const elp = document.getElementById('cal-parc-'+g);
+    if (el) el.checked = ['publico','visitante','filhas','tamboreiro'].includes(g);
+    if (elp) elp.checked = false;
+  });
+  document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+function calOpenEdit(id) {
+  const s = calSessoes.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('cal-modal-titulo').textContent = 'Editar Sessão';
+  document.getElementById('cal-edit-id').value = id;
+  document.getElementById('cal-fNome').value = s.nome || '';
+  document.getElementById('cal-fData').value = s.data || '';
+  document.getElementById('cal-fHora').value = s.hora || '';
+  document.getElementById('cal-fTipo').value = s.tipo || '';
+  document.getElementById('cal-fDesc').value = s.descricao || '';
+  document.getElementById('cal-fResp').value = s.responsavel || '';
+  document.getElementById('cal-fTambor').value = s.tambor || '';
+  document.getElementById('cal-fSenha').value = '';
+  document.getElementById('cal-senhaErr').style.display = 'none';
+  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
+  const parcial = s.gruposParcial || [];
+  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
+    const el = document.getElementById('cal-vis-'+g);
+    const elp = document.getElementById('cal-parc-'+g);
+    if (el) el.checked = grupos.includes(g);
+    if (elp) elp.checked = parcial.includes(g);
+  });
+  document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+function calCloseModal() { document.getElementById('cal-modal-overlay').style.display = 'none'; }
+
+async function calSalvar() {
+  const nome = document.getElementById('cal-fNome').value.trim();
+  const data = document.getElementById('cal-fData').value;
+  const tipo = document.getElementById('cal-fTipo').value;
+  if (!nome || !data || !tipo) { alert('Preencha nome, data e tipo.'); return; }
+
+  const grupos = [], parcial = [];
+  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
+    if (document.getElementById('cal-vis-'+g)?.checked) grupos.push(g);
+    if (document.getElementById('cal-parc-'+g)?.checked) parcial.push(g);
+  });
+
+  const payload = { nome, data,
+    hora: document.getElementById('cal-fHora').value,
+    tipo, descricao: document.getElementById('cal-fDesc').value.trim(),
+    responsavel: document.getElementById('cal-fResp').value.trim(),
+    tambor: document.getElementById('cal-fTambor').value,
+    grupos, gruposParcial: parcial,
+    senha: document.getElementById('cal-fSenha').value
+  };
+  const editId = document.getElementById('cal-edit-id').value;
+  if (editId) payload.id = editId;
+
+  const res = await fetch(CAL_API, { method: editId ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const json = await res.json();
+  if (res.status === 403) { document.getElementById('cal-senhaErr').style.display = 'block'; return; }
+
+  if (editId) { const idx = calSessoes.findIndex(x => x.id === editId); if (idx >= 0) calSessoes[idx] = json; }
+  else { calSessoes.push(json); calSessoes.sort((a,b) => a.data.localeCompare(b.data)); }
+  calCloseModal(); calRenderGrade(); calRenderLista();
+}
+
+async function calDelete(id) {
+  if (!confirm('Excluir esta sessão?')) return;
+  const senha = prompt('Senha do terreiro:');
+  if (!senha) return;
+  const res = await fetch(CAL_API, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, senha}) });
+  if (res.status === 403) { alert('Senha incorreta.'); return; }
+  calSessoes = calSessoes.filter(x => x.id !== id);
+  calRenderGrade(); calRenderLista();
+}
+
+function calFmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function calEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function calAtualizarControlesAdmin() {
+  const el = document.getElementById('cal-controles-admin');
+  if (!el) return;
+  const isAdmin = calGetGrupo() === 'admin';
+  const calFO = document.querySelectorAll('.cal-filhas-only');
+  if (isAdmin) {
+    el.innerHTML = `<button onclick="calOpenModal()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Nova Sessão</button>`;
+    calFO.forEach(x => x.style.display = '');
+  } else {
+    el.innerHTML = '';
+    calFO.forEach(x => x.style.display = 'none');
+  }
+}
+
+// inicializar calendário quando a página abrir
+const _origShowPage = window.showPage;
+// inicializar na primeira abertura
+document.addEventListener('DOMContentLoaded', () => {});
 
 // inicializar
 loadMenu();
