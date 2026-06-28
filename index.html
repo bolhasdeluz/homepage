@@ -674,6 +674,7 @@ body.logada{padding-top:28px}
           <div id="mh-nome" style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:#fff;line-height:1.2"></div>
           <div id="mh-cargo" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:rgba(255,255,255,.8);font-style:italic;margin-top:2px"></div>
           <div id="mh-mae-santo" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:rgba(255,255,255,.65);font-style:italic;margin-top:1px"></div>
+          <div id="mh-banner-terreiro" style="display:none;font-family:'Crimson Pro',serif;font-size:.82rem;color:rgba(255,255,255,.65);font-style:italic;margin-top:2px"></div>
         </div>
         <div id="mh-tempo-badge" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:#fff;white-space:nowrap;flex-shrink:0"></div>
       </div>
@@ -808,7 +809,7 @@ body.logada{padding-top:28px}
       <div class="faq-item">
         <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Quais são as arrecadações?</span><span class="faq-chevron">›</span></button>
         <div class="faq-body"><div class="faq-content">
-          <p>A casa vive de doações — tanto de filhos quanto de visitantes — e das mensalidades dos membros da corrente, destinadas à manutenção da casa.</p>
+          <p>A casa vive de doações — tanto das filhas quanto de visitantes — e das mensalidades das integrantes da corrente, destinadas à manutenção da casa.</p>
           <p>Os valores arrecadados não cobrem todas as contas hoje, então contamos com doações espontâneas. Eventualmente realizamos rifas, vendas de camisetas e similares.</p>
         </div></div>
       </div>
@@ -834,7 +835,7 @@ body.logada{padding-top:28px}
 <!-- MODAL BOAS-VINDAS PRIMEIRO LOGIN -->
 <div id="modal-boasvindas" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:420px;padding:28px 24px;position:relative">
-    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:4px">Bem-vinde! 🌸</div>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:4px">Bem-vinda! 🌸</div>
     <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:20px;line-height:1.6">Ficamos felizes em te conhecer. Conta pra gente um pouquinho sobre você:</p>
     <div style="margin-bottom:14px">
       <label class="form-label">Por onde conheceu a nossa casa?</label>
@@ -1103,7 +1104,7 @@ body.logada{padding-top:28px}
     <p class="section-sub">Cada contribuição sustenta nossa casa, nossas sessões e nossa corrente. Obrigada pelo axé! 🌸</p>
     <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:10px;padding:16px 18px;margin-bottom:20px">
       <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Doação via PIX</div>
-      <div style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Qualquer valor é bem-vindo e será revertido às contas e manutenção da casa.</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Qualquer valor é bem-vinda e será revertido às contas e manutenção da casa.</div>
       <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
         <div style="flex:1">
           <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">Chave PIX</div>
@@ -1176,7 +1177,7 @@ body.logada{padding-top:28px}
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:600px;margin:auto;padding:28px 24px;position:relative">
     <button onclick="fecharCriarPerfil()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
     <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:4px" id="criar-modal-titulo">Criar Perfil</div>
-    <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:20px">O perfil ficará disponível quando a filha logar pela primeira vez.</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:20px">O perfil ficará disponível quando ela logar pela primeira vez.</div>
 
     <div style="margin-bottom:12px">
       <label class="form-label">E-mail (obrigatório)</label>
@@ -2632,12 +2633,25 @@ function renderMinhaHistoria() {
   // subtítulo mãe/pai de santo
   const maeSantoEl = document.getElementById('mh-mae-santo');
   const maeSanto = p.cacique?.mae_de_santo || '';
-  maeSantoEl.textContent = maeSanto ? 'Mãe/Pai de Santo: ' + maeSanto : '';
+  maeSantoEl.textContent = maeSanto;
   maeSantoEl.style.display = maeSanto ? '' : 'none';
+
+  // terreiro no banner (se visível)
+  const bannerTerreiro = document.getElementById('mh-banner-terreiro');
+  if (bannerTerreiro) {
+    const isCacique = ['Cacique','Mãe da Casa'].includes(p.cargo || '');
+    if (isCacique && c.terreiro_visivel && c.terreiro_nome) {
+      const dataFmt = c.terreiro_data ? ' · inaugurado em ' + fmtData(c.terreiro_data) : '';
+      bannerTerreiro.textContent = (c.terreiro_titulo || 'Meu Terreiro') + ': ' + c.terreiro_nome + dataFmt;
+      bannerTerreiro.style.display = '';
+    } else {
+      bannerTerreiro.style.display = 'none';
+    }
+  }
 
   const tempo = calcTempo(p.historia?.data_entrada);
   const tempoBadge = document.getElementById('mh-tempo-badge');
-  tempoBadge.textContent = tempo ? tempo + ' de casa' : 'Bem-vinde!';
+  tempoBadge.textContent = tempo ? tempo + ' de casa' : 'Bem-vinda!';
 
   // bloco terreiro cacique
   const c = p.cacique || {};
