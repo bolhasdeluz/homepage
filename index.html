@@ -299,15 +299,12 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   .mh-layout-2col{grid-template-columns:1fr}
   #mh-tempo-badge{display:none}
 }
-.mh-timeline{position:relative;padding-left:36px}
-.mh-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.1))}
-.mh-item{position:relative;margin-bottom:24px;animation:fadeIn .3s ease both}
-.mh-dot{position:absolute;left:-36px;top:4px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;box-shadow:0 0 0 3px var(--creme),0 0 0 4px currentColor;flex-shrink:0}
-.mh-item-data{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);margin-bottom:3px}
-.mh-item-nome{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;margin-bottom:4px}
-.mh-item-desc{background:rgba(46,26,14,.85);color:#fff;border-radius:8px;padding:8px 12px;font-family:'Crimson Pro',serif;font-size:.82rem;line-height:1.55}
-.mh-futuro .mh-item-nome{color:var(--text-dim)}
-.mh-futuro .mh-dot{opacity:.35}
+.mh-timeline{position:relative;padding-left:36px;padding-bottom:20px}
+.mh-timeline::before{content:'';position:absolute;left:11px;top:8px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.1))}
+.mh-item{position:relative;margin-bottom:0}
+.mh-dot{position:absolute;left:-36px;top:4px;width:22px;height:22px;border-radius:50%;flex-shrink:0}
+.mh-item-data{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.1em;color:var(--text-dim);margin-bottom:2px;text-transform:uppercase}
+.mh-item-nome{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;margin-bottom:16px}
 .mh-progresso{background:var(--rosa-dim);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:20px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic}
 .mh-progresso span{color:var(--rosa);font-style:normal;font-weight:600}
 
@@ -676,6 +673,7 @@ body.logada{padding-top:28px}
           <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:4px">✦ Terreiro Bolhas de Luz</div>
           <div id="mh-nome" style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:#fff;line-height:1.2"></div>
           <div id="mh-cargo" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:rgba(255,255,255,.8);font-style:italic;margin-top:2px"></div>
+          <div id="mh-mae-santo" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:rgba(255,255,255,.65);font-style:italic;margin-top:1px"></div>
         </div>
         <div id="mh-tempo-badge" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:#fff;white-space:nowrap;flex-shrink:0"></div>
       </div>
@@ -705,6 +703,14 @@ body.logada{padding-top:28px}
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Cruzamentos e Axés</div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
+          </div>
+          <!-- Terreiro Cacique -->
+          <div id="mh-bloco-terreiro" style="display:none;background:#fff;border:1px solid rgba(74,111,165,.2);border-left:3px solid #4a6fa5;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(74,111,165,.08)">
+            <div id="mh-terreiro-titulo" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:#4a6fa5;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(74,111,165,.15)">— Meu Terreiro</div>
+            <div class="perfil-grid">
+              <div class="perfil-field"><label>Nome</label><div class="valor" id="mh-terreiro-nome"></div></div>
+              <div class="perfil-field"><label>Inauguração</label><div class="valor" id="mh-terreiro-data"></div></div>
+            </div>
           </div>
           <!-- Sugerir correção -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -1237,6 +1243,36 @@ body.logada{padding-top:28px}
       <div><label class="form-label">Rio/Cachoeira</label><input type="date" class="form-input" id="cp-cruz_rio"></div>
       <div><label class="form-label">Pedreira</label><input type="date" class="form-input" id="cp-cruz_pedreira"></div>
       <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
+    </div>
+
+    <!-- CAMPOS CACIQUE -->
+    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
+      ✦ Cacique — campos especiais
+    </div>
+    <div style="margin-bottom:10px">
+      <label class="form-label">Mãe/Pai de Santo</label>
+      <input type="text" class="form-input" id="cp-mae_de_santo" placeholder="Nome da mãe ou pai de santo">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label class="form-label">Título do campo (ex: "Meu Terreiro")</label>
+        <input type="text" class="form-input" id="cp-terreiro_titulo" placeholder="Meu Terreiro">
+      </div>
+      <div>
+        <label class="form-label">Nome do terreiro</label>
+        <input type="text" class="form-input" id="cp-terreiro_nome" placeholder="ex: Terreiro das Estrelas">
+      </div>
+      <div>
+        <label class="form-label">Data de inauguração</label>
+        <input type="date" class="form-input" id="cp-terreiro_data">
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:flex-end">
+        <label class="form-label">Visível na ficha pessoal?</label>
+        <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;margin-top:6px">
+          <input type="checkbox" id="cp-terreiro_visivel" style="accent-color:var(--rosa);width:16px;height:16px">
+          Mostrar na ficha
+        </label>
+      </div>
     </div>
 
     <div id="cp-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
@@ -1883,22 +1919,20 @@ function fecharCriarPerfil() {
 
 function preencherFormPerfil(p) {
   if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
-  if (p.cargo) {
-    const sel = document.getElementById('cp-cargo');
-    if (sel) sel.value = p.cargo;
-  }
-  if (p.grupo) {
-    const sel = document.getElementById('cp-grupo');
-    if (sel) sel.value = p.grupo;
-  }
+  if (p.cargo) { const sel = document.getElementById('cp-cargo'); if (sel) sel.value = p.cargo; }
+  if (p.grupo) { const sel = document.getElementById('cp-grupo'); if (sel) sel.value = p.grupo; }
   if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
-    keys.forEach(k => {
-      const el = document.getElementById('cp-'+k);
-      if (el && dados[k]) el.value = dados[k];
-    });
+    keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
   });
+  // campos cacique
+  const c = p.cacique || {};
+  if (document.getElementById('cp-mae_de_santo'))     document.getElementById('cp-mae_de_santo').value     = c.mae_de_santo     || p.mae_de_santo || '';
+  if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
+  if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
+  if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
+  if (document.getElementById('cp-terreiro_visivel')) document.getElementById('cp-terreiro_visivel').checked = !!c.terreiro_visivel;
 }
 
 async function salvarPerfilAdmin() {
@@ -1916,7 +1950,14 @@ async function salvarPerfilAdmin() {
     historia: {}, guias: {}, cruzamentos: {},
     notas: '',
     criadoEm: Date.now(),
-    solicitacao: 'Perfil criado/editado pelo admin'
+    solicitacao: 'Perfil criado/editado pelo admin',
+    cacique: {
+      mae_de_santo:    document.getElementById('cp-mae_de_santo')?.value.trim()    || '',
+      terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
+      terreiro_nome:   document.getElementById('cp-terreiro_nome')?.value.trim()   || '',
+      terreiro_data:   document.getElementById('cp-terreiro_data')?.value          || '',
+      terreiro_visivel: document.getElementById('cp-terreiro_visivel')?.checked    || false,
+    }
   };
 
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
@@ -1938,12 +1979,8 @@ async function salvarPerfilAdmin() {
       status.textContent = '✦ Salvo com sucesso!';
       carregarFilhasAdmin();
       setTimeout(fecharCriarPerfil, 1200);
-    } else {
-      status.textContent = 'Erro ao salvar.';
-    }
-  } catch(e) {
-    status.textContent = 'Erro de conexão.';
-  }
+    } else { status.textContent = 'Erro ao salvar.'; }
+  } catch(e) { status.textContent = 'Erro de conexão.'; }
 }
 
 
@@ -2592,9 +2629,30 @@ function renderMinhaHistoria() {
   document.getElementById('mh-cargo').textContent = p.cargo || '';
   document.getElementById('mh-email').textContent = currentUser.email || '';
 
+  // subtítulo mãe/pai de santo
+  const maeSantoEl = document.getElementById('mh-mae-santo');
+  const maeSanto = p.cacique?.mae_de_santo || '';
+  maeSantoEl.textContent = maeSanto ? 'Mãe/Pai de Santo: ' + maeSanto : '';
+  maeSantoEl.style.display = maeSanto ? '' : 'none';
+
   const tempo = calcTempo(p.historia?.data_entrada);
   const tempoBadge = document.getElementById('mh-tempo-badge');
   tempoBadge.textContent = tempo ? tempo + ' de casa' : 'Bem-vinde!';
+
+  // bloco terreiro cacique
+  const c = p.cacique || {};
+  const blocoTerreiro = document.getElementById('mh-bloco-terreiro');
+  if (blocoTerreiro) {
+    const isCacique = ['Cacique','Mãe da Casa'].includes(p.cargo || '');
+    if (isCacique && c.terreiro_visivel && (c.terreiro_nome || c.terreiro_data)) {
+      blocoTerreiro.style.display = 'block';
+      document.getElementById('mh-terreiro-titulo').textContent = '— ' + (c.terreiro_titulo || 'Meu Terreiro');
+      document.getElementById('mh-terreiro-nome').textContent = c.terreiro_nome || '—';
+      document.getElementById('mh-terreiro-data').textContent = c.terreiro_data ? fmtData(c.terreiro_data) : '—';
+    } else {
+      blocoTerreiro.style.display = 'none';
+    }
+  }
 
   // fichas
   renderCamposPerfil(camposHistoria,  'mh-grid-historia',    p.historia    || {});
@@ -2620,10 +2678,9 @@ function renderTimeline(p) {
   if (!el) return;
 
   const hist = p.historia || {};
-  // marcos configuráveis por pessoa — usa padrão se não definido
   const marcos = p.marcos || MH_MARCOS_DEF.map(m => ({ ...m, data: hist[m.key] || '' }));
 
-  // calcular progresso nos 7 anos
+  // barra de progresso 7 anos
   const dataEntrada = hist.data_entrada;
   let progressoHtml = '';
   if (dataEntrada) {
@@ -2636,24 +2693,49 @@ function renderTimeline(p) {
     const anosRestantes = Math.max(0, Math.ceil((fim7 - hoje) / (365.25 * 24 * 3600 * 1000)));
     progressoHtml = `<div class="mh-progresso">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span>Caminhada de 7 anos</span>
-        <span><span>${pct}%</span> concluído</span>
+        <span>Caminhada de 7 anos</span><span><span>${pct}%</span> concluído</span>
       </div>
       <div style="background:rgba(196,57,107,.1);border-radius:20px;height:6px;overflow:hidden">
-        <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${pct}%;border-radius:20px;transition:width .6s ease"></div>
+        <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${pct}%;border-radius:20px"></div>
       </div>
-      ${anosRestantes > 0 ? `<div style="margin-top:6px;font-size:.78rem;opacity:.7">${anosRestantes} ${anosRestantes===1?'ano restante':'anos restantes'}</div>` : '<div style="margin-top:6px;color:var(--rosa);font-weight:600">✦ 7 anos completados!</div>'}
+      ${anosRestantes > 0
+        ? `<div style="margin-top:6px;font-size:.78rem;opacity:.7">${anosRestantes} ${anosRestantes===1?'ano restante':'anos restantes'}</div>`
+        : `<div style="margin-top:6px;color:var(--rosa);font-weight:600">✦ 7 anos completados!</div>`}
     </div>`;
   }
 
+  // calcular posições proporcionais
+  // pegar datas válidas e ordenar para saber span total
+  const comData = marcos.filter(m => m.data).sort((a,b) => a.data.localeCompare(b.data));
+  const dataMin = comData.length ? new Date(comData[0].data + 'T12:00:00') : null;
+  const dataMax = comData.length ? new Date(comData[comData.length-1].data + 'T12:00:00') : null;
+  const spanMs = (dataMax && dataMin && dataMax > dataMin) ? (dataMax - dataMin) : 1;
+
+  // altura total da linha em px (proporcional)
+  const ALTURA_TOTAL = Math.max(comData.length * 80, 320);
+
   const itensHtml = marcos.map(m => {
     const temData = !!m.data;
-    const dataFmt = temData ? fmtData(m.data) : '';
-    return `<div class="mh-item${temData ? '' : ' mh-futuro'}">
-      <div class="mh-dot" style="background:${temData ? m.cor : '#ddd'};color:${temData ? m.cor : '#bbb'};font-size:.7rem">✦</div>
-      ${temData ? `<div class="mh-item-data">${dataFmt}</div>` : ''}
-      <div class="mh-item-nome" style="color:${temData ? m.cor : 'var(--text-dim)'}">${m.label}</div>
-      ${temData ? `<div class="mh-item-desc">${m.desc}</div>` : `<div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">A definir</div>`}
+    if (!temData) return ''; // não mostra sem data
+
+    const dataObj = new Date(m.data + 'T12:00:00');
+    const dataFmt = dataObj.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+
+    // posição proporcional na linha
+    const pctPos = dataMin && dataMax && spanMs > 1
+      ? ((dataObj - dataMin) / spanMs) * 100
+      : 0;
+
+    // label extra (nome do guia/madrinha se existir no perfil)
+    let extra = '';
+    if (m.key === 'guia_chefe') extra = hist.guia_chefe_nome || p.guias?.caboclo || '';
+    if (m.key === 'madrinha')   extra = hist.madrinha_nome || p.historia?.madrinha || '';
+
+    return `<div class="mh-item" style="padding-top:${pctPos > 0 ? Math.round((pctPos/100)*ALTURA_TOTAL*0.85) : 0}px">
+      <div class="mh-dot" style="background:${m.cor};box-shadow:0 0 0 3px var(--creme),0 0 0 5px ${m.cor}40"></div>
+      <div class="mh-item-data">${dataFmt}</div>
+      ${extra ? `<div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px">${extra}</div>` : ''}
+      <div class="mh-item-nome" style="color:${m.cor}">${m.label}</div>
     </div>`;
   }).join('');
 
