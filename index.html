@@ -1919,8 +1919,10 @@ document.addEventListener('keydown', e => {
 });
 function showPage(name) {
   // história, sessões, textos, apoie → modais
-  const comoModal = ['historia','sessoes','textos','apoie'];
+  const comoModal = ['historia','textos','apoie'];
   if (comoModal.includes(name)) { abrirModal(name); return; }
+  // sessoes → calendário interno
+  if (name === 'sessoes') { showPage('calendario'); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
   if (p) p.classList.add('active');
