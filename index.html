@@ -1801,6 +1801,16 @@ async function carregarFilhasAdmin() {
   } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
 }
 
+// marcos padrão da linha do tempo — declarado aqui para estar disponível em abrirFicha e renderTimeline
+const MH_MARCOS_DEF = [
+  { key:'data_entrada', label:'Entrada na Casa', cor:'#c4396b' },
+  { key:'guia_chefe',   label:'Guia Chefe',      cor:'#c9963c' },
+  { key:'apronte',      label:'Apronte',          cor:'#6a9e6a' },
+  { key:'coroacao',     label:'Coroação',         cor:'#4a6fa5' },
+  { key:'cacicamento',  label:'Cacicamento',      cor:'#9e6a9e' },
+  { key:'madrinha',     label:'Madrinha',         cor:'#8a8a9a' },
+];
+
 async function abrirFicha(email) {
   document.getElementById('modal-ficha-overlay').classList.add('open');
   document.getElementById('mf-nome').textContent = 'Carregando...';
@@ -2679,16 +2689,6 @@ function renderMinhaHistoria() {
   // linha do tempo
   renderTimeline(p);
 }
-
-// cores e ícones por marco
-const MH_MARCOS_DEF = [
-  { key:'data_entrada',  label:'Entrada na Casa', cor:'#c4396b', emoji:'✦', desc:'Sua entrada na casa marcando o início da sua caminhada espiritual.' },
-  { key:'guia_chefe',    label:'Guia Chefe',      cor:'#c9963c', emoji:'✦', desc:'Recebimento e reconhecimento do seu guia chefe.' },
-  { key:'apronte',       label:'Apronte',          cor:'#6a9e6a', emoji:'✦', desc:'Período de preparo e firmeza, fortalecendo sua conexão espiritual.' },
-  { key:'coroacao',      label:'Coroação',         cor:'#4a6fa5', emoji:'✦', desc:'Elevação da coroa e assinatura espiritual.' },
-  { key:'cacicamento',   label:'Cacicamento',      cor:'#9e6a9e', emoji:'✦', desc:'Assunção de responsabilidades e fortalecimento do seu axé.' },
-  { key:'madrinha',      label:'Madrinha',         cor:'#8a8a9a', emoji:'✦', desc:'Reconhecimento de sua madrinha espiritual.' },
-];
 
 function renderTimeline(p) {
   const el = document.getElementById('mh-timeline');
