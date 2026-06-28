@@ -295,7 +295,10 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .hidden{display:none!important}
 /* ── MINHA HISTÓRIA ── */
 .mh-layout-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
-@media(max-width:640px){.mh-layout-2col{grid-template-columns:1fr}}
+@media(max-width:640px){
+  .mh-layout-2col{grid-template-columns:1fr}
+  #mh-tempo-badge{display:none}
+}
 .mh-timeline{position:relative;padding-left:36px}
 .mh-timeline::before{content:'';position:absolute;left:11px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.1))}
 .mh-item{position:relative;margin-bottom:24px;animation:fadeIn .3s ease both}
@@ -681,7 +684,7 @@ body.logada{padding-top:28px}
 
     <!-- CONTEÚDO LOGADA -->
     <div id="mh-conteudo" style="display:none">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <div class="mh-layout-2col">
 
         <!-- COLUNA ESQUERDA: LINHA DO TEMPO -->
         <div id="mh-timeline" style="position:relative"></div>
@@ -1145,6 +1148,11 @@ body.logada{padding-top:28px}
     <div class="perfil-section" style="margin-bottom:12px">
       <div class="perfil-section-title">Cruzamentos e Axés</div>
       <div class="perfil-grid" id="mfp-cruzamentos"></div>
+    </div>
+    <div class="perfil-section" style="margin-bottom:12px">
+      <div class="perfil-section-title">Linha do Tempo — Marcos</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:10px">Configure os marcos que aparecem na linha do tempo desta filha.</p>
+      <div id="mfp-marcos" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
     <div class="perfil-section">
       <div class="perfil-section-title">Sugerir correção</div>
@@ -1788,7 +1796,18 @@ async function abrirFicha(email) {
             ${perfil.boasVindas?.tempoFrequenta ? `<div class="mf-field"><label>Tempo que frequenta</label><div class="v">${perfil.boasVindas.tempoFrequenta}</div></div>` : ''}
           </div>
         </div>` : '') +
-      (perfil.notas?`<div class="mf-section"><div class="mf-section-title">Notas</div><p style="font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text)">${perfil.notas}</p></div>`:'');
+      (perfil.notas?`<div class="mf-section"><div class="mf-section-title">Notas</div><p style="font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text)">${perfil.notas}</p></div>`:'') +
+      // marcos da linha do tempo
+      `<div class="mf-section"><div class="mf-section-title">Linha do Tempo</div><div class="mf-grid">${
+        (perfil.marcos || MH_MARCOS_DEF.map(m=>({...m, data: (perfil.historia||{})[m.key]||''}))).map(m=>`
+          <div class="mf-field"><label>${m.label}</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="date" value="${m.data||''}" data-marco="${m.key}"
+                style="flex:1;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text)"
+                onchange="atualizarMarcoAdmin('${email}','${m.key}',this.value)">
+            </div>
+          </div>`).join('')
+      }</div></div>`;
     const histEl = document.getElementById('mf-body-historico');
     histEl.innerHTML = !hist.length
       ? '<div class="hist-vazio">Nenhuma edição registrada ainda.</div>'
@@ -1796,6 +1815,24 @@ async function abrirFicha(email) {
   } catch(e) {
     document.getElementById('mf-body-ficha').innerHTML = '<div class="hist-vazio">Erro ao carregar ficha.</div>';
   }
+}
+
+async function atualizarMarcoAdmin(email, marcoKey, valor) {
+  try {
+    const res = await fetch(`/api/perfil?email=${encodeURIComponent(email)}`, { headers: {'X-Admin-Password':'admin'} });
+    const perfil = await res.json();
+    if (!perfil.historia) perfil.historia = {};
+    perfil.historia[marcoKey] = valor;
+    // atualiza também os marcos customizados
+    if (!perfil.marcos) perfil.marcos = MH_MARCOS_DEF.map(m => ({...m, data: perfil.historia[m.key]||''}));
+    const m = perfil.marcos.find(x => x.key === marcoKey);
+    if (m) m.data = valor;
+    await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ ...perfil, email, solicitacao: `Marco ${marcoKey} atualizado: ${valor}` })
+    });
+  } catch(e) { console.error('Erro ao atualizar marco:', e); }
 }
 
 function mfSection(titulo, dados, keys) {
@@ -2839,69 +2876,30 @@ function atualizarWidgetHistoria(logada) {
 let shAlteracoes = {};
 
 function renderSuaHistoria() {
-  if (!currentUser) return;
-  shAlteracoes = {};
-
-  // header
-  document.getElementById('sh-nome').textContent  = currentUser.displayName || '';
-  document.getElementById('sh-email').textContent = currentUser.email || '';
-  if (currentUser.photoURL) {
-    document.getElementById('sh-foto-wrap').innerHTML = `<img src="${currentUser.photoURL}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  }
-  const tempo = calcTempo(perfilData.historia?.data_entrada);
-  if (tempo) document.getElementById('sh-tempo').textContent = '✦ ' + tempo + ' de casa';
-
-  document.getElementById('sh-notas').value = perfilData.notas || '';
-  document.getElementById('sh-notas').addEventListener('input', () => {
-    shAlteracoes.notas = document.getElementById('sh-notas').value;
-    document.getElementById('sh-btn-wrap').style.display = 'block';
-  });
-
-  renderCamposPerfil(camposHistoria,  'sh-grid-historia',     perfilData.historia    || {});
-  renderCamposPerfil(camposGuias,     'sh-grid-guias',        perfilData.guias       || {});
-  renderCamposPerfil(camposCruz,      'sh-grid-cruzamentos',  perfilData.cruzamentos || {});
-
-  // observar inputs pra mostrar botão
-  ['sh-grid-historia','sh-grid-guias','sh-grid-cruzamentos'].forEach(id => {
-    document.getElementById(id).querySelectorAll('input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        if (!shAlteracoes._campos) shAlteracoes._campos = {};
-        if (inp.value) shAlteracoes._campos[inp.dataset.key] = inp.value;
-        document.getElementById('sh-btn-wrap').style.display = 'block';
-      });
-    });
-  });
+  // mantida por compatibilidade — nova versão usa renderMinhaHistoria()
+  renderMinhaHistoria();
 }
 
 window.salvarSuaHistoria = async function() {
   if (!currentUser) return;
   const btn = document.getElementById('sh-btn-enviar');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
 
+  const texto = document.getElementById('sh-notas')?.value || '';
   const payload = {
     email: currentUser.email,
-    nome: currentUser.displayName || '',
+    nome: perfilData.nome || currentUser.displayName || '',
     foto: currentUser.photoURL || '',
-    notas: document.getElementById('sh-notas').value,
+    notas: texto,
     historia: { ...perfilData.historia },
     guias: { ...perfilData.guias },
     cruzamentos: { ...perfilData.cruzamentos },
-    solicitacao: '',
-    criadoEm: perfilData.criadoEm || Date.now()
+    solicitacao: texto ? 'Correção solicitada: ' + texto : '',
+    criadoEm: perfilData.criadoEm || Date.now(),
+    cargo: perfilData.cargo || '',
+    emoji: perfilData.emoji || '',
+    grupo: perfilData.grupo || 'visitante',
   };
-
-  // coleta campos novos
-  const linhas = [];
-  if (shAlteracoes._campos) {
-    Object.entries(shAlteracoes._campos).forEach(([k, v]) => {
-      if (camposHistoria.find(c=>c.key===k)) payload.historia[k] = v;
-      else if (camposGuias.find(c=>c.key===k)) payload.guias[k] = v;
-      else if (camposCruz.find(c=>c.key===k)) payload.cruzamentos[k] = v;
-      linhas.push(`${camposLabels?.[k]||k}: ${v}`);
-    });
-  }
-  if (shAlteracoes.notas) linhas.push(`Notas: ${shAlteracoes.notas}`);
-  payload.solicitacao = linhas.join('\n');
 
   try {
     const res = await fetch('/api/perfil', {
@@ -2911,16 +2909,15 @@ window.salvarSuaHistoria = async function() {
     });
     const data = await res.json();
     if (data.ok) {
-      perfilData = payload;
-      document.getElementById('sh-msg-ok').style.display = 'block';
-      document.getElementById('sh-aviso').style.display  = 'block';
-      setTimeout(() => {
-        document.getElementById('sh-msg-ok').style.display = 'none';
-        document.getElementById('sh-btn-wrap').style.display = 'none';
-      }, 3000);
+      perfilData = { ...perfilData, ...payload };
+      const ok = document.getElementById('sh-msg-ok');
+      const aviso = document.getElementById('sh-aviso');
+      if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
+      if (aviso) aviso.style.display = 'block';
     }
   } catch(e) { alert('Erro ao salvar.'); }
-  btn.disabled = false; btn.textContent = 'Enviar solicitação';
+
+  if (btn) { btn.disabled = false; btn.textContent = 'Enviar solicitação ✦'; }
 };
 
 window.loginGoogle = async function() {
