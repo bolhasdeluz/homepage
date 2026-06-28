@@ -1253,6 +1253,7 @@ function renderCards() {
         html += `<a class="widget" href="#" onclick="abrirModal('calendario');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-pub">público</span></a>`;
         return;
       }
+      if (item.id === 'apoie') {
         html += `<a class="widget" href="#" onclick="window.abrirApoie();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Como nos ajudar'}</div><span class="widget-tag tag-pub">público</span></a>`;
         return;
       }
@@ -1411,7 +1412,11 @@ function saveEditItem(si, ii) {
   renderAdminPanel(); renderDrawer(); renderCards();
 }
 
-// ── SIMULAÇÃO DE VISÃO ──
+// fallback enquanto Firebase carrega
+window.loginGoogle = function() { console.warn('Firebase ainda carregando...'); };
+window._simUsuario = null;
+window._getCurrentUser = () => null;
+window._getPerfilData  = () => ({});
 let _modoSimulacao = null; // null = admin real, 'publico', 'filha', ou email específico
 
 async function iniciarSimulacao() {
