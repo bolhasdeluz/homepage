@@ -1216,8 +1216,11 @@ body.logada{padding-top:28px}
       <div><label class="form-label">Coroação</label><input type="date" class="form-input" id="cp-coroacao"></div>
       <div><label class="form-label">Cacicamento</label><input type="date" class="form-input" id="cp-cacicamento"></div>
       <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="cp-madrinha" placeholder="Nome da madrinha"></div>
+      <div><label class="form-label">Data — Madrinha</label><input type="date" class="form-input" id="cp-madrinha_data"></div>
       <div><label class="form-label">Afilhada 1</label><input type="text" class="form-input" id="cp-afilhada_1" placeholder="Nome"></div>
+      <div><label class="form-label">Data — Afilhada 1</label><input type="date" class="form-input" id="cp-afilhada_1_data"></div>
       <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" placeholder="Nome"></div>
+      <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Guias e Guardiões</div>
@@ -1766,8 +1769,10 @@ window._getCurrentUser = () => {
 
 const camposLabels = {
   data_entrada:'Data de Entrada', guia_chefe:'Guia Chefe', apronte:'Apronte',
-  coroacao:'Coroação', cacicamento:'Cacicamento', madrinha:'Madrinha',
-  afilhada_1:'Afilhada', afilhada_2:'Afilhada',
+  coroacao:'Coroação', cacicamento:'Cacicamento',
+  madrinha:'Madrinha', madrinha_data:'Data — Madrinha',
+  afilhada_1:'Afilhada 1', afilhada_1_data:'Data — Afilhada 1',
+  afilhada_2:'Afilhada 2', afilhada_2_data:'Data — Afilhada 2',
   caboclo:'Caboclo', caboclo_data:'Chegada do Caboclo',
   exu:'Exu', exu_data:'Chegada do Exu',
   pomba_gira:'Pomba Gira', pomba_gira_data:'Chegada da P. Gira',
@@ -1803,12 +1808,12 @@ async function carregarFilhasAdmin() {
 
 // marcos padrão da linha do tempo — declarado aqui para estar disponível em abrirFicha e renderTimeline
 const MH_MARCOS_DEF = [
-  { key:'data_entrada', label:'Entrada na Casa', cor:'#c4396b' },
-  { key:'guia_chefe',   label:'Guia Chefe',      cor:'#c9963c' },
-  { key:'apronte',      label:'Apronte',          cor:'#6a9e6a' },
-  { key:'coroacao',     label:'Coroação',         cor:'#4a6fa5' },
-  { key:'cacicamento',  label:'Cacicamento',      cor:'#9e6a9e' },
-  { key:'madrinha',     label:'Madrinha',         cor:'#8a8a9a' },
+  { key:'data_entrada', label:'Entrada na Casa', cor:'#c4396b', tipo:'data' },
+  { key:'guia_chefe',   label:'Guia Chefe',      cor:'#c9963c', tipo:'texto' },
+  { key:'apronte',      label:'Apronte',          cor:'#6a9e6a', tipo:'data' },
+  { key:'coroacao',     label:'Coroação',         cor:'#4a6fa5', tipo:'data' },
+  { key:'cacicamento',  label:'Cacicamento',      cor:'#9e6a9e', tipo:'data' },
+  { key:'madrinha',     label:'Madrinha',         cor:'#8a8a9a', tipo:'texto' },
 ];
 
 async function abrirFicha(email) {
@@ -1833,7 +1838,7 @@ async function abrirFicha(email) {
     if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
     const ficha = document.getElementById('mf-body-ficha');
     ficha.innerHTML =
-      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','afilhada_1','afilhada_2']) +
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
       mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1']) +
       (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
@@ -1849,12 +1854,15 @@ async function abrirFicha(email) {
         const emailSafe = email.replace(/'/g, "\\'");
         const marcosLista = perfil.marcos || MH_MARCOS_DEF.map(m=>({...m, data: (perfil.historia||{})[m.key]||''}));
         return `<div class="mf-section"><div class="mf-section-title">Linha do Tempo</div><div class="mf-grid">${
-          marcosLista.map(m=>`
-            <div class="mf-field"><label>${m.label}</label>
-              <input type="date" value="${m.data||''}" data-marco="${m.key}"
+          marcosLista.map(m=>{
+            const tipo = m.tipo || (m.data && m.data.match(/^\d{4}-\d{2}-\d{2}$/) ? 'data' : 'texto');
+            const inputType = tipo === 'data' ? 'date' : 'text';
+            return `<div class="mf-field"><label>${m.label}</label>
+              <input type="${inputType}" value="${m.data||''}" data-marco="${m.key}"
                 style="width:100%;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text)"
                 onchange="atualizarMarcoAdmin('${emailSafe}','${m.key}',this.value)">
-            </div>`).join('')
+            </div>`;
+          }).join('')
         }</div></div>`;
       })();
     const histEl = document.getElementById('mf-body-historico');
@@ -1886,7 +1894,15 @@ async function atualizarMarcoAdmin(email, marcoKey, valor) {
 
 function mfSection(titulo, dados, keys) {
   return `<div class="mf-section"><div class="mf-section-title">${titulo}</div><div class="mf-grid">${
-    keys.map(k=>`<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${dados[k]?(k.includes('_data')||k==='data_entrada'||k.startsWith('cruz')||k==='corte_1'?fmtDataAdmin(dados[k]):dados[k]):'<span style="opacity:.25">—</span>'}</div></div>`).join('')
+    keys.map(k => {
+      const v = dados[k];
+      const isDataKey = k.includes('_data') || k === 'data_entrada' || k.startsWith('cruz') || k === 'corte_1';
+      const isDataVal = v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+      const display = v
+        ? (isDataKey || isDataVal ? fmtDataAdmin(v) : v)
+        : '<span style="opacity:.25">—</span>';
+      return `<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${display}</div></div>`;
+    }).join('')
   }</div></div>`;
 }
 
@@ -1900,7 +1916,7 @@ function mfTab(tab, btn) {
 
 // ── CRIAR / EDITAR PERFIL ADMIN ──
 const cpCampos = {
-  historia:     ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','afilhada_1','afilhada_2'],
+  historia:     ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data'],
   guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
   cruzamentos:  ['cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1']
 };
