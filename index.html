@@ -2711,69 +2711,131 @@ function renderTimeline(p) {
   if (!el) return;
 
   const hist = p.historia || {};
-  const marcos = p.marcos || MH_MARCOS_DEF.map(m => ({ ...m, data: hist[m.key] || '' }));
+  const guias = p.guias || {};
+  const cruz = p.cruzamentos || {};
+  const ocultos = p.timelineOcultos || [];
 
-  // barra de progresso 7 anos
-  const dataEntrada = hist.data_entrada;
+  const EVENTOS_DEF = [
+    { key:'data_entrada',    label:'Entrada na Casa',       cor:'#c4396b', src:'historia' },
+    { key:'apronte',         label:'Apronte',               cor:'#6a9e6a', src:'historia' },
+    { key:'coroacao',        label:'Coroação',              cor:'#4a6fa5', src:'historia' },
+    { key:'cacicamento',     label:'Cacicamento',           cor:'#9e6a9e', src:'historia' },
+    { key:'madrinha_data',   label:'Madrinha',              cor:'#8a8a9a', src:'historia', nomeKey:'madrinha', nomeSrc:'historia' },
+    { key:'afilhada_1_data', label:'Afilhada 1',            cor:'#e07a90', src:'historia', nomeKey:'afilhada_1', nomeSrc:'historia' },
+    { key:'afilhada_2_data', label:'Afilhada 2',            cor:'#d4607a', src:'historia', nomeKey:'afilhada_2', nomeSrc:'historia' },
+    { key:'caboclo_data',    label:'Caboclo',               cor:'#6a9e6a', src:'guias',   nomeKey:'caboclo',    nomeSrc:'guias' },
+    { key:'exu_data',        label:'Exu',                   cor:'#c4396b', src:'guias',   nomeKey:'exu',        nomeSrc:'guias' },
+    { key:'pomba_gira_data', label:'Pomba Gira',            cor:'#9e6a9e', src:'guias',   nomeKey:'pomba_gira', nomeSrc:'guias' },
+    { key:'preto_velho_data',label:'Preto Velho',           cor:'#8a8a9a', src:'guias',   nomeKey:'preto_velho',nomeSrc:'guias' },
+    { key:'cigana_data',     label:'Cigana',                cor:'#c9963c', src:'guias',   nomeKey:'cigana',     nomeSrc:'guias' },
+    { key:'cosme_data',      label:'Cosme',                 cor:'#4a6fa5', src:'guias',   nomeKey:'cosme',      nomeSrc:'guias' },
+    { key:'cruz_conga',      label:'Conga',                 cor:'#5a8a5a', src:'cruz' },
+    { key:'cruz_mata',       label:'Mata',                  cor:'#4a7a4a', src:'cruz' },
+    { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz' },
+    { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz' },
+    { key:'cruz_pedreira',   label:'Pedreira',              cor:'#8a7a6a', src:'cruz' },
+    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'cruz' },
+  ];
+
+  const srcs = { historia: hist, guias, cruz };
+  let eventos = [];
+  EVENTOS_DEF.forEach(def => {
+    const dados = srcs[def.src] || {};
+    const data = dados[def.key] || '';
+    if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    const nomeSrc = def.nomeSrc ? srcs[def.nomeSrc] : {};
+    const nome = def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '';
+    eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
+  });
+
+  if (!eventos.length) {
+    el.innerHTML = '<div style="font-family:\'Crimson Pro\',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;padding:20px 0">Nenhuma data registrada ainda.</div>';
+    return;
+  }
+
+  eventos.sort((a,b) => a.data.localeCompare(b.data));
+  const dataMin = new Date(eventos[0].data + 'T12:00:00');
+  const dataMax = new Date(eventos[eventos.length-1].data + 'T12:00:00');
+  const spanMs = Math.max(dataMax - dataMin, 1);
+  const ALTURA = Math.max(600, eventos.length * 68);
+  const PX_POR_MS = ALTURA / spanMs;
+
+  // agrupar por data
+  const porData = {};
+  eventos.forEach(e => { if (!porData[e.data]) porData[e.data]=[]; porData[e.data].push(e); });
+
+  // barra 7 anos
   let progressoHtml = '';
-  if (dataEntrada) {
-    const inicio = new Date(dataEntrada + 'T12:00:00');
-    const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear() + 7);
+  if (hist.data_entrada) {
+    const inicio = new Date(hist.data_entrada + 'T12:00:00');
+    const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear()+7);
     const hoje = new Date();
-    const totalMs = fim7 - inicio;
-    const passadoMs = Math.min(hoje - inicio, totalMs);
-    const pct = Math.round((passadoMs / totalMs) * 100);
-    const anosRestantes = Math.max(0, Math.ceil((fim7 - hoje) / (365.25 * 24 * 3600 * 1000)));
-    progressoHtml = `<div class="mh-progresso">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-        <span>Caminhada de 7 anos</span><span><span>${pct}%</span> concluído</span>
-      </div>
+    const pct = Math.round(Math.min((hoje-inicio)/(fim7-inicio),1)*100);
+    const anosR = Math.max(0,Math.ceil((fim7-hoje)/(365.25*24*3600*1000)));
+    progressoHtml = `<div class="mh-progresso" style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de 7 anos</span><span><span>${pct}%</span> concluído</span></div>
       <div style="background:rgba(196,57,107,.1);border-radius:20px;height:6px;overflow:hidden">
         <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${pct}%;border-radius:20px"></div>
       </div>
-      ${anosRestantes > 0
-        ? `<div style="margin-top:6px;font-size:.78rem;opacity:.7">${anosRestantes} ${anosRestantes===1?'ano restante':'anos restantes'}</div>`
-        : `<div style="margin-top:6px;color:var(--rosa);font-weight:600">✦ 7 anos completados!</div>`}
+      <div style="margin-top:6px;font-size:.78rem;opacity:.7">${anosR>0?anosR+(anosR===1?' ano restante':' anos restantes'):'✦ 7 anos completados!'}</div>
     </div>`;
   }
 
-  // calcular posições proporcionais
-  // pegar datas válidas e ordenar para saber span total
-  const comData = marcos.filter(m => m.data).sort((a,b) => a.data.localeCompare(b.data));
-  const dataMin = comData.length ? new Date(comData[0].data + 'T12:00:00') : null;
-  const dataMax = comData.length ? new Date(comData[comData.length-1].data + 'T12:00:00') : null;
-  const spanMs = (dataMax && dataMin && dataMax > dataMin) ? (dataMax - dataMin) : 1;
+  let itensHtml = '';
+  let posAnterior = -1;
 
-  // altura total da linha em px (proporcional)
-  const ALTURA_TOTAL = Math.max(comData.length * 80, 320);
+  Object.entries(porData).sort(([a],[b])=>a.localeCompare(b)).forEach(([data, evs]) => {
+    const dataObj = new Date(data + 'T12:00:00');
+    const posMs = dataObj - dataMin;
+    const posTop = Math.max(Math.round(posMs * PX_POR_MS), posAnterior + 48);
+    posAnterior = posTop + evs.length * 26;
 
-  const itensHtml = marcos.map(m => {
-    const temData = !!m.data;
-    if (!temData) return ''; // não mostra sem data
+    const [y,m,d] = data.split('-');
+    const dataFmt = `${d}/${m}/${y}`;
+    const corPrincipal = evs.find(e=>!e.oculto)?.cor || evs[0].cor;
 
-    const dataObj = new Date(m.data + 'T12:00:00');
-    const dataFmt = dataObj.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+    const evsHtml = evs.map(e => `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${e.oculto?'#ddd':e.cor}"></div>
+        <span style="font-family:'Playfair Display',serif;font-size:.82rem;font-weight:600;color:${e.oculto?'#bbb':e.cor}">
+          ${e.label}${e.nome?' — '+e.nome:''}
+        </span>
+        <button onclick="toggleTimelineItem('${e.key}')"
+          style="background:none;border:none;cursor:pointer;font-size:.65rem;color:var(--text-dim);padding:0;opacity:.4;transition:opacity .2s;flex-shrink:0"
+          title="${e.oculto?'Mostrar na linha':'Ocultar da linha'}"
+          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.4">${e.oculto?'👁':'🙈'}</button>
+      </div>`).join('');
 
-    // posição proporcional na linha
-    const pctPos = dataMin && dataMax && spanMs > 1
-      ? ((dataObj - dataMin) / spanMs) * 100
-      : 0;
+    itensHtml += `
+      <div style="position:absolute;left:0;top:${posTop}px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid ${corPrincipal};z-index:2"></div>
+      <div style="position:absolute;left:22px;top:${posTop-2}px;right:0">
+        <div style="font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.08em;color:var(--text-dim);margin-bottom:3px">${dataFmt}</div>
+        ${evsHtml}
+      </div>`;
+  });
 
-    // label extra (nome do guia/madrinha se existir no perfil)
-    let extra = '';
-    if (m.key === 'guia_chefe') extra = hist.guia_chefe_nome || p.guias?.caboclo || '';
-    if (m.key === 'madrinha')   extra = hist.madrinha_nome || p.historia?.madrinha || '';
+  const alturaFinal = posAnterior + 60;
 
-    return `<div class="mh-item" style="padding-top:${pctPos > 0 ? Math.round((pctPos/100)*ALTURA_TOTAL*0.85) : 0}px">
-      <div class="mh-dot" style="background:${m.cor};box-shadow:0 0 0 3px var(--creme),0 0 0 5px ${m.cor}40"></div>
-      <div class="mh-item-data">${dataFmt}</div>
-      ${extra ? `<div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:2px">${extra}</div>` : ''}
-      <div class="mh-item-nome" style="color:${m.cor}">${m.label}</div>
+  el.innerHTML = `${progressoHtml}
+    <div style="position:relative;padding-left:22px;min-height:${alturaFinal}px">
+      <div style="position:absolute;left:4px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.06))"></div>
+      ${itensHtml}
     </div>`;
-  }).join('');
-
-  el.innerHTML = `<div class="mh-timeline">${progressoHtml}${itensHtml}</div>`;
 }
+
+window.toggleTimelineItem = async function(key) {
+  if (!currentUser) return;
+  const ocultos = perfilData.timelineOcultos ? [...perfilData.timelineOcultos] : [];
+  const idx = ocultos.indexOf(key);
+  if (idx >= 0) ocultos.splice(idx,1); else ocultos.push(key);
+  perfilData.timelineOcultos = ocultos;
+  await fetch('/api/perfil', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-User-Email':currentUser.email},
+    body:JSON.stringify({...perfilData, solicitacao:''})
+  });
+  renderTimeline(perfilData);
+};
 
 
 let mfpModoEdicao = false;
