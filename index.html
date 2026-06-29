@@ -1396,7 +1396,7 @@ function getDefaultMenu() {
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
       ]},
       { id: 'corrente', label: 'Corrente', items: [
-        { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: '/tesouraria', showCard: true, showMenu: true },
+        { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: 'https://tesouraria.pages.dev', showCard: true, showMenu: true },
         { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
         { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
       ]}
@@ -1504,6 +1504,8 @@ function renderCards() {
         return;
       }
       const isMem = item.type === 'members';
+      const tagTexto = item.tagLabel || (grupoUsuario === 'admin' ? 'interno' : isMem ? 'interno' : 'público');
+      const tagClass = item.tagLabel ? 'tag-pub' : (isMem ? 'tag-mem' : 'tag-pub');
 
       // widget especial: historia
       if (item.id === 'historia') {
@@ -1540,9 +1542,7 @@ function renderCards() {
         return;
       }
       let onclick = '';
-      const tag = isMem
-        ? `<span class="widget-tag tag-mem">interno</span>`
-        : `<span class="widget-tag tag-pub">público</span>`;
+      const tag = `<span class="widget-tag ${tagClass}">${tagTexto}</span>`;
       if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
       else if (item.type === 'members') {
         const u = window._getCurrentUser && window._getCurrentUser();
@@ -1609,6 +1609,7 @@ function renderAdminPanel() {
           </div>
           <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug">
           <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta">
+          <input type="text" id="edit-tagLabel-${si}-${ii}" value="${item.tagLabel||''}" placeholder="Texto da pílula (ex: público, interno, admin) — deixe vazio para padrão">
           <div style="display:flex;gap:8px">
             <button class="btn-add" onclick="saveEditItem(${si},${ii})">✓ Salvar</button>
             <button class="btn-add" style="background:var(--text-dim)" onclick="toggleEditRow(${si},${ii})">Cancelar</button>
@@ -1684,6 +1685,9 @@ function saveEditItem(si, ii) {
   item.label = document.getElementById(`edit-label-${si}-${ii}`).value.trim() || item.label;
   item.type  = document.getElementById(`edit-type-${si}-${ii}`).value;
   item.desc  = document.getElementById(`edit-desc-${si}-${ii}`).value.trim();
+  const tagLabel = document.getElementById(`edit-tagLabel-${si}-${ii}`)?.value.trim();
+  if (tagLabel) item.tagLabel = tagLabel;
+  else delete item.tagLabel;
   const urlVal = document.getElementById(`edit-url-${si}-${ii}`).value.trim();
   if (item.type === 'internal') { item.page = urlVal; delete item.url; }
   else { item.url = urlVal; delete item.page; }
@@ -2789,6 +2793,7 @@ function renderTimeline(p) {
     { key:'madrinha_data',   label:'Madrinha',              cor:'#8a8a9a', src:'historia', nomeKey:'madrinha', nomeSrc:'historia' },
     { key:'afilhada_1_data', label:'Afilhada 1',            cor:'#e07a90', src:'historia', nomeKey:'afilhada_1', nomeSrc:'historia' },
     { key:'afilhada_2_data', label:'Afilhada 2',            cor:'#d4607a', src:'historia', nomeKey:'afilhada_2', nomeSrc:'historia' },
+    { key:'terreiro_data',   label: p.cacique?.terreiro_titulo || 'Inauguração do Terreiro', cor:'#4a6fa5', src:'cacique', nomeKey:'terreiro_nome', nomeSrc:'cacique' },
     { key:'caboclo_data',    label:'Caboclo',               cor:'#6a9e6a', src:'guias',   nomeKey:'caboclo',    nomeSrc:'guias' },
     { key:'exu_data',        label:'Exu',                   cor:'#c4396b', src:'guias',   nomeKey:'exu',        nomeSrc:'guias' },
     { key:'pomba_gira_data', label:'Pomba Gira',            cor:'#9e6a9e', src:'guias',   nomeKey:'pomba_gira', nomeSrc:'guias' },
@@ -2803,7 +2808,7 @@ function renderTimeline(p) {
     { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'cruz' },
   ];
 
-  const srcs = { historia: hist, guias, cruz };
+  const srcs = { historia: hist, guias, cruz, cacique: p.cacique || {} };
   let eventos = [];
   EVENTOS_DEF.forEach(def => {
     const dados = srcs[def.src] || {};
@@ -3313,7 +3318,7 @@ function renderCamposPerfil(campos, gridId, dados) {
   // chaves que aparecem na linha do tempo
   const CHAVES_TIMELINE = new Set([
     'data_entrada','apronte','coroacao','cacicamento','madrinha_data',
-    'afilhada_1_data','afilhada_2_data',
+    'afilhada_1_data','afilhada_2_data','terreiro_data',
     'caboclo_data','exu_data','pomba_gira_data','preto_velho_data','cigana_data','cosme_data',
     'cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1'
   ]);
