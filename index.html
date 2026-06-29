@@ -2714,6 +2714,7 @@ async function guiasLoad() {
   try {
     const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
     const todos = await res.json();
+    console.log('perfis no KV:', todos.length, 'com visivelGuias:', todos.filter(p=>p.visivelGuias).length);
     guiasData = todos.filter(p => p.visivelGuias && p.nome);
     guiasRenderGrid(guiasData);
   } catch(e) {
@@ -2769,7 +2770,9 @@ function guiasFiltrar(busca) {
 }
 
 function guiasAbrirPainel(email) {
+  console.log('abrirPainel:', email, 'guiasData:', guiasData.length);
   const p = guiasData.find(x => x.email === email);
+  console.log('perfil encontrado:', p?.nome);
   if (!p) return;
 
   // guarda referência ao perfil atual
