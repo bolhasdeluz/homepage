@@ -1731,34 +1731,90 @@ async function iniciarSimulacao() {
 function mudarSimulacao(valor) {
   _modoSimulacao = valor;
   const badge = document.getElementById('sim-badge');
+
+  function aplicarSimulacao(simUser, simPerfil) {
+    window._simUsuario = simUser;
+    // substitui perfilData temporariamente para renderizações que dependem dele
+    window._getPerfilData = () => simPerfil || {};
+
+    // atualiza badge
+    if (simPerfil) {
+      badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
+    }
+
+    // re-renderiza tudo como a usuária veria
+    renderCards();
+    renderDrawer();
+    atualizarBoasVindas();
+
+    // atualiza barra de boas-vindas com dados da simulada
+    if (simPerfil && simUser) {
+      const primeiroNome = (simPerfil.nome || '').split(' ')[0];
+      const cargo = simPerfil.cargo || '';
+      const emoji = simPerfil.emoji || '✦';
+      const tempo = calcTempo(simPerfil.historia?.data_entrada);
+      document.getElementById('bv-emoji').textContent = emoji;
+      document.getElementById('bv-nome').textContent  = primeiroNome;
+      document.getElementById('bv-cargo').textContent = cargo;
+      document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+      document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
+      document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+      document.getElementById('boas-vindas').style.display = 'block';
+      document.body.classList.add('logada');
+    } else if (!simUser) {
+      document.getElementById('boas-vindas').style.display = 'none';
+      document.body.classList.remove('logada');
+    }
+
+    // se calendário estiver aberto, re-renderiza
+    const calPage = document.getElementById('page-calendario');
+    if (calPage?.classList.contains('active')) {
+      calAtualizarControlesAdmin();
+      calRenderLista();
+    }
+  }
+
   if (valor === 'publico') {
     badge.textContent = 'Visitante pública (não logada)';
-    window._simUsuario = null;
+    aplicarSimulacao(null, null);
   } else if (valor === 'filha') {
     badge.textContent = 'Filha da casa (logada, sem perfil específico)';
-    window._simUsuario = { email: 'filha@simulacao.com', displayName: 'Filha da Casa', photoURL: null };
+    aplicarSimulacao(
+      { email: 'filha@simulacao.com', displayName: 'Filha da Casa', photoURL: null },
+      { nome: 'Filha da Casa', cargo: '', grupo: 'filhas', emoji: '🌸', historia: {} }
+    );
   } else {
-    // email específico — busca perfil
+    // email específico — busca perfil real
     fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
       .then(r => r.json())
       .then(p => {
-        badge.textContent = (p.nome || valor.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
-        window._simUsuario = { email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p };
-        renderCards();
-        atualizarBoasVindas();
+        aplicarSimulacao(
+          { email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
+          p
+        );
       });
-    return;
   }
-  renderCards();
-  atualizarBoasVindas();
 }
 
 function sairSimulacao() {
   _modoSimulacao = null;
   window._simUsuario = null;
+  // restaura getPerfilData para o perfil real
+  window._getPerfilData = () => perfilData || {};
   document.getElementById('sim-bar').classList.remove('active');
   renderCards();
+  renderDrawer();
   atualizarBoasVindas();
+  // volta barra de boas-vindas para admin
+  const tempo = calcTempo(perfilData?.historia?.data_entrada);
+  document.getElementById('bv-emoji').textContent = perfilData?.emoji || '✦';
+  document.getElementById('bv-nome').textContent  = (perfilData?.nome || currentUser?.displayName || '').split(' ')[0];
+  document.getElementById('bv-cargo').textContent = perfilData?.cargo || '';
+  document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+  document.getElementById('bv-sep').style.display  = perfilData?.cargo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+  document.getElementById('boas-vindas').style.display = 'block';
+  document.body.classList.add('logada');
 }
 
 // override de _getCurrentUser para modo simulação
