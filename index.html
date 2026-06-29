@@ -1733,25 +1733,30 @@ function mudarSimulacao(valor) {
 
   function aplicarSimulacao(simUser, simPerfil) {
     window._simUsuario = simUser;
-    // substitui perfilData temporariamente para renderizações que dependem dele
     window._getPerfilData = () => simPerfil || {};
 
     // atualiza badge
     if (simPerfil) {
       badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
+    } else {
+      badge.textContent = 'Visitante pública (não logada)';
     }
 
-    // re-renderiza tudo como a usuária veria
+    // volta para o início para ver a visão da pessoa
+    showPage('inicio');
+
+    // re-renderiza tudo
     renderCards();
     renderDrawer();
-    atualizarBoasVindas();
 
-    // atualiza barra de boas-vindas com dados da simulada
+    // atualiza barra de boas-vindas
     if (simPerfil && simUser) {
       const primeiroNome = (simPerfil.nome || '').split(' ')[0];
       const cargo = simPerfil.cargo || '';
       const emoji = simPerfil.emoji || '✦';
       const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
+      const avatar = document.getElementById('user-avatar');
+      if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
       document.getElementById('bv-emoji').textContent = emoji;
       document.getElementById('bv-nome').textContent  = primeiroNome;
       document.getElementById('bv-cargo').textContent = cargo;
@@ -1760,12 +1765,12 @@ function mudarSimulacao(valor) {
       document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
       document.getElementById('boas-vindas').style.display = 'block';
       document.body.classList.add('logada');
-    } else if (!simUser) {
+    } else {
       document.getElementById('boas-vindas').style.display = 'none';
       document.body.classList.remove('logada');
     }
 
-    // se calendário estiver aberto, re-renderiza
+    // re-renderiza calendário se estiver aberto
     const calPage = document.getElementById('page-calendario');
     if (calPage?.classList.contains('active')) {
       calAtualizarControlesAdmin();
@@ -2684,7 +2689,8 @@ let perfilAlteracoes = {};
 window._getCurrentUser = () => currentUser;
 window._getPerfilData  = () => perfilData;
 window.showSuaHistoria = function() {
-  if (!currentUser) {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user) {
     showPage('sua-historia');
     document.getElementById('mh-banner-login').style.display = 'block';
     document.getElementById('mh-banner-logada').style.display = 'none';
@@ -2692,12 +2698,17 @@ window.showSuaHistoria = function() {
     return;
   }
   showPage('sua-historia');
-  renderMinhaHistoria();
+  // em modo simulação usa o perfil simulado
+  const perfilParaUsar = (_modoSimulacao !== null && window._simUsuario?._perfil)
+    ? window._simUsuario._perfil
+    : perfilData;
+  renderMinhaHistoria(perfilParaUsar, user);
 };
 
-function renderMinhaHistoria() {
-  if (!currentUser) return;
-  const p = perfilData || {};
+function renderMinhaHistoria(p, user) {
+  p = p || perfilData || {};
+  user = user || currentUser;
+  if (!user) return;
 
   // banner logada
   document.getElementById('mh-banner-login').style.display = 'none';
@@ -2706,12 +2717,12 @@ function renderMinhaHistoria() {
 
   // avatar
   const avatarEl = document.getElementById('mh-avatar');
-  if (currentUser.photoURL) avatarEl.innerHTML = `<img src="${currentUser.photoURL}" style="width:100%;height:100%;object-fit:cover">`;
+  if (user.photoURL || p.foto) avatarEl.innerHTML = `<img src="${user.photoURL || p.foto}" style="width:100%;height:100%;object-fit:cover">`;
   else avatarEl.textContent = (p.emoji || '👤');
 
-  document.getElementById('mh-nome').textContent = p.nome || currentUser.displayName || '';
+  document.getElementById('mh-nome').textContent = p.nome || user.displayName || '';
   document.getElementById('mh-cargo').textContent = p.cargo || '';
-  document.getElementById('mh-email').textContent = currentUser.email || '';
+  document.getElementById('mh-email').textContent = user.email || '';
 
   // subtítulo mãe/pai de santo
   const maeSantoEl = document.getElementById('mh-mae-santo');
