@@ -714,15 +714,41 @@ body.logada{padding-top:28px}
               <div class="perfil-field"><label>Inauguração</label><div class="valor" id="mh-terreiro-data"></div></div>
             </div>
           </div>
-          <!-- Sugerir correção -->
+          <!-- Editar perfil -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:6px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Sugerir correção</div>
-            <p style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic;margin-bottom:10px;line-height:1.5">Identificou algum erro? Descreva abaixo e envie pra administração.</p>
-            <textarea class="perfil-textarea" id="sh-notas" rows="3" placeholder="Ex: Meu caboclo está errado, o nome correto é..." style="width:100%;margin-bottom:8px"></textarea>
-            <div id="sh-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic;margin-bottom:8px">Solicitação enviada! Aguarde aprovação.</div>
-            <div style="text-align:right">
-              <button class="btn-rosa" id="sh-btn-enviar" onclick="salvarSuaHistoria()" style="font-size:.65rem;padding:10px 22px">Enviar solicitação ✦</button>
-              <div class="perfil-msg-ok" id="sh-msg-ok" style="display:none">✦ Enviado com sucesso!</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Editar meu perfil</div>
+              <button id="sh-btn-editar" onclick="toggleEditarMinhaHistoria()"
+                style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer">
+                ✎ Editar
+              </button>
+            </div>
+            <div id="sh-form-edicao" style="display:none">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+                <div><label class="form-label">Guia Chefe</label><input type="text" class="form-input" id="sh-edit-guia_chefe"></div>
+                <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="sh-edit-madrinha"></div>
+                <div><label class="form-label">Caboclo</label><input type="text" class="form-input" id="sh-edit-caboclo"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-caboclo_data"></div>
+                <div><label class="form-label">Exu</label><input type="text" class="form-input" id="sh-edit-exu"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-exu_data"></div>
+                <div><label class="form-label">Pomba Gira</label><input type="text" class="form-input" id="sh-edit-pomba_gira"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-pomba_gira_data"></div>
+                <div><label class="form-label">Preto Velho</label><input type="text" class="form-input" id="sh-edit-preto_velho"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-preto_velho_data"></div>
+                <div><label class="form-label">Cigana</label><input type="text" class="form-input" id="sh-edit-cigana"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-cigana_data"></div>
+                <div><label class="form-label">Cosme</label><input type="text" class="form-input" id="sh-edit-cosme"></div>
+                <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-cosme_data"></div>
+              </div>
+              <div id="sh-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic;margin-bottom:8px">Alterações salvas!</div>
+              <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button onclick="toggleEditarMinhaHistoria()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer">Cancelar</button>
+                <button id="sh-btn-enviar" onclick="salvarSuaHistoria()" class="btn-rosa" style="font-size:.65rem;padding:10px 22px">Salvar alterações ✦</button>
+                <div class="perfil-msg-ok" id="sh-msg-ok" style="display:none">✦ Salvo!</div>
+              </div>
+            </div>
+            <div id="sh-form-fechado" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">
+              Clique em Editar para atualizar seus guias e datas de chegada.
             </div>
           </div>
         </div>
@@ -951,7 +977,10 @@ body.logada{padding-top:28px}
         <div id="gp-cargo" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-top:2px"></div>
         <div id="gp-tempo" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--rosa);font-style:italic;margin-top:1px"></div>
       </div>
-      <button onclick="guiasFecharPainel()" style="background:none;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;cursor:pointer;color:var(--text-dim);font-size:1rem;flex-shrink:0">✕</button>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button id="gp-btn-editar" onclick="guiasToggleEditar()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim);cursor:pointer">✎ Editar</button>
+        <button onclick="guiasFecharPainel()" style="background:none;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;cursor:pointer;color:var(--text-dim);font-size:1rem;flex-shrink:0">✕</button>
+      </div>
     </div>
     <!-- corpo -->
     <div id="gp-body" style="padding:20px;flex:1"></div>
@@ -2225,6 +2254,8 @@ function showPage(name) {
 function toggleDrawer() {
   const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
   const open=d.classList.contains('open');
+  // fecha painel lateral de guias se estiver aberto
+  if (!open) guiasFecharPainel?.();
   d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
   document.body.style.overflow=open?'':'hidden';
 }
@@ -2683,7 +2714,6 @@ async function guiasLoad() {
   try {
     const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
     const todos = await res.json();
-    // só quem o admin marcou como visível nos guias
     guiasData = todos.filter(p => p.visivelGuias && p.nome);
     guiasRenderGrid(guiasData);
   } catch(e) {
@@ -2742,7 +2772,10 @@ function guiasAbrirPainel(email) {
   const p = guiasData.find(x => x.email === email);
   if (!p) return;
 
-  // avatar
+  // guarda referência ao perfil atual
+  window._guiasPainelEmail = email;
+  window._guiasPainelPerfil = p;
+
   const avatarEl = document.getElementById('gp-avatar');
   avatarEl.innerHTML = p.foto
     ? `<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover">`
@@ -2753,60 +2786,154 @@ function guiasAbrirPainel(email) {
   const tempo = window.calcTempo?.(p.historia?.data_entrada);
   document.getElementById('gp-tempo').textContent = tempo ? tempo + ' de casa' : '';
 
-  // corpo: guias + cruzamentos
+  // mostra botão editar só para a própria pessoa logada
+  const user = window._getCurrentUser?.();
+  const btnEditar = document.getElementById('gp-btn-editar');
+  if (btnEditar) {
+    const ehPropria = user && user.email === email;
+    btnEditar.style.display = ehPropria ? '' : 'none';
+    btnEditar.textContent = '✎ Editar';
+    btnEditar.dataset.editando = '0';
+  }
+
+  guiasRenderPainel(p, false);
+
+  document.getElementById('guias-overlay').style.display = 'block';
+  document.getElementById('guias-painel').style.transform = 'translateX(0)';
+}
+
+function guiasRenderPainel(p, editavel) {
   const G = p.guias || {};
-  const C = p.cruzamentos || {};
   const H = p.historia || {};
 
   const GUIAS_DEF = [
-    {key:'caboclo',    label:'Caboclo',     dataKey:'caboclo_data'},
-    {key:'exu',        label:'Exu',         dataKey:'exu_data'},
-    {key:'pomba_gira', label:'Pomba Gira',  dataKey:'pomba_gira_data'},
-    {key:'preto_velho',label:'Preto Velho', dataKey:'preto_velho_data'},
-    {key:'cigana',     label:'Cigana',      dataKey:'cigana_data'},
-    {key:'cosme',      label:'Cosme',       dataKey:'cosme_data'},
+    {key:'caboclo',    label:'Caboclo',     dataKey:'caboclo_data',    notaKey:'caboclo_nota'},
+    {key:'exu',        label:'Exu',         dataKey:'exu_data',        notaKey:'exu_nota'},
+    {key:'pomba_gira', label:'Pomba Gira',  dataKey:'pomba_gira_data', notaKey:'pomba_gira_nota'},
+    {key:'preto_velho',label:'Preto Velho', dataKey:'preto_velho_data',notaKey:'preto_velho_nota'},
+    {key:'cigana',     label:'Cigana',      dataKey:'cigana_data',     notaKey:'cigana_nota'},
+    {key:'cosme',      label:'Cosme',       dataKey:'cosme_data',      notaKey:'cosme_nota'},
   ];
 
   const CRUZ_DEF = [
-    {key:'cruz_conga',    label:'Conga'},
-    {key:'cruz_mata',     label:'Mata'},
-    {key:'cruz_praia',    label:'Praia'},
-    {key:'cruz_rio',      label:'Rio/Cachoeira'},
-    {key:'cruz_pedreira', label:'Pedreira'},
-    {key:'corte_1',       label:'1º Corte'},
+    {key:'cruz_conga',label:'Conga'},{key:'cruz_mata',label:'Mata'},
+    {key:'cruz_praia',label:'Praia'},{key:'cruz_rio',label:'Rio/Cachoeira'},
+    {key:'cruz_pedreira',label:'Pedreira'},{key:'corte_1',label:'1º Corte'},
   ];
 
-  const guiasHtml = GUIAS_DEF.filter(d => G[d.key]).map(d => `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
-      <div>
-        <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">${d.label}</div>
-        <div style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)">${G[d.key]}</div>
+  if (editavel) {
+    const C = p.cruzamentos || {};
+    const camposHtml = [
+      H.guia_chefe ? `<div style="margin-bottom:10px"><label class="form-label">Guia Chefe</label><input type="text" class="form-input" id="gpe-guia_chefe" value="${H.guia_chefe||''}"></div>` : '',
+      ...GUIAS_DEF.map(d => `
+        <div style="margin-bottom:10px">
+          <label class="form-label">${d.label}</label>
+          <input type="text" class="form-input" id="gpe-${d.key}" value="${G[d.key]||''}" placeholder="Nome do guia">
+          <input type="date" class="form-input" id="gpe-${d.dataKey}" value="${G[d.dataKey]||''}" style="margin-top:4px">
+          <textarea class="form-input" id="gpe-${d.notaKey}" rows="2" style="margin-top:4px;font-size:13px" placeholder="Notas...">${G[d.notaKey]||''}</textarea>
+        </div>`)
+    ].join('');
+
+    document.getElementById('gp-body').innerHTML = `
+      ${camposHtml}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button onclick="guiasToggleEditar()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-family:'Cinzel',serif;font-size:.6rem;color:var(--text-dim);cursor:pointer">Cancelar</button>
+        <button onclick="guiasSalvar()" class="btn-rosa" style="font-size:.65rem;padding:8px 18px">Salvar ✦</button>
       </div>
-      ${G[d.dataKey] ? `<div style="font-family:'Cinzel',serif;font-size:.6rem;color:var(--text-dim)">${fmtData(G[d.dataKey])}</div>` : ''}
+      <div id="gp-msg-ok" style="display:none;text-align:center;color:var(--rosa);font-family:'Crimson Pro',serif;font-style:italic;margin-top:8px">✦ Salvo com sucesso!</div>`;
+    return;
+  }
+
+  // modo leitura
+  const histHtml = H.guia_chefe ? `
+    <div style="background:var(--rosa-dim);border-radius:8px;padding:10px 14px;margin-bottom:16px">
+      <span style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px">Guia Chefe</span>
+      <span style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text)">${H.guia_chefe}</span>
+    </div>` : '';
+
+  const guiasHtml = GUIAS_DEF.filter(d => G[d.key]).map(d => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">${d.label}</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)">${G[d.key]}</div>
+        </div>
+        ${G[d.dataKey] ? `<div style="font-family:'Cinzel',serif;font-size:.6rem;color:var(--text-dim)">${fmtData(G[d.dataKey])}</div>` : ''}
+      </div>
+      ${G[d.notaKey] ? `<div style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:4px;line-height:1.5">${G[d.notaKey]}</div>` : ''}
     </div>`).join('');
 
+  const C = p.cruzamentos || {};
   const cruzHtml = CRUZ_DEF.filter(d => C[d.key]).map(d => `
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(196,57,107,.07)">
       <span style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim)">${d.label}</span>
       <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${fmtData(C[d.key])}</span>
     </div>`).join('');
 
-  const histHtml = H.guia_chefe ? `
-    <div style="background:var(--rosa-dim);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text)">
-      <span style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px">Guia Chefe</span>
-      ${H.guia_chefe}
-    </div>` : '';
-
   document.getElementById('gp-body').innerHTML = `
     ${histHtml}
     ${guiasHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;margin-top:4px">Guias e Guardiões</div>${guiasHtml}` : ''}
     ${cruzHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 8px">Cruzamentos</div>${cruzHtml}` : ''}
-    ${!guiasHtml && !cruzHtml && !histHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}
-  `;
-
-  document.getElementById('guias-overlay').style.display = 'block';
-  document.getElementById('guias-painel').style.transform = 'translateX(0)';
+    ${!guiasHtml && !cruzHtml && !histHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}`;
 }
+
+window.guiasToggleEditar = function() {
+  const btn = document.getElementById('gp-btn-editar');
+  const p = window._guiasPainelPerfil;
+  if (!p || !btn) return;
+  const editando = btn.dataset.editando === '1';
+  if (editando) {
+    guiasRenderPainel(p, false);
+    btn.textContent = '✎ Editar';
+    btn.dataset.editando = '0';
+  } else {
+    guiasRenderPainel(p, true);
+    btn.textContent = '✕ Cancelar';
+    btn.dataset.editando = '1';
+  }
+};
+
+window.guiasSalvar = async function() {
+  const email = window._guiasPainelEmail;
+  const p = window._guiasPainelPerfil;
+  const user = window._getCurrentUser?.();
+  if (!email || !user || user.email !== email) return;
+
+  const G = { ...p.guias };
+  const H = { ...p.historia };
+
+  const guiaChefe = document.getElementById('gpe-guia_chefe');
+  if (guiaChefe) H.guia_chefe = guiaChefe.value.trim();
+
+  ['caboclo','exu','pomba_gira','preto_velho','cigana','cosme'].forEach(k => {
+    const nm = document.getElementById('gpe-'+k); if (nm) G[k] = nm.value.trim();
+    const dt = document.getElementById('gpe-'+k+'_data'); if (dt) G[k+'_data'] = dt.value;
+    const nt = document.getElementById('gpe-'+k+'_nota'); if (nt) G[k+'_nota'] = nt.value.trim();
+  });
+
+  const payload = { ...p, historia: H, guias: G, solicitacao: 'Edição própria via página de guias' };
+
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': email },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      window._guiasPainelPerfil = payload;
+      // atualiza no array local
+      const idx = guiasData.findIndex(x => x.email === email);
+      if (idx >= 0) guiasData[idx] = payload;
+      guiasRenderPainel(payload, false);
+      const btn = document.getElementById('gp-btn-editar');
+      if (btn) { btn.textContent = '✎ Editar'; btn.dataset.editando = '0'; }
+      const ok = document.getElementById('gp-msg-ok');
+      if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
+      guiasRenderGrid(guiasData); // atualiza grid
+    }
+  } catch(e) { alert('Erro ao salvar.'); }
+};
 
 function guiasFecharPainel() {
   document.getElementById('guias-overlay').style.display = 'none';
@@ -3316,26 +3443,56 @@ function renderSuaHistoria() {
   renderMinhaHistoria();
 }
 
+window.toggleEditarMinhaHistoria = function() {
+  const btn = document.getElementById('sh-btn-editar');
+  const form = document.getElementById('sh-form-edicao');
+  const fechado = document.getElementById('sh-form-fechado');
+  if (!btn) return;
+
+  const editando = btn.dataset.editando === '1';
+
+  if (!editando) {
+    // ativa modo edição: re-renderiza fichas com inputs
+    perfilAlteracoes = {};
+    renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {}, true);
+    renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {}, true);
+    renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {}, true);
+    if (form) form.style.display = 'block';
+    if (fechado) fechado.style.display = 'none';
+    btn.textContent = '✕ Cancelar';
+    btn.dataset.editando = '1';
+  } else {
+    // cancela — volta modo leitura
+    renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {});
+    renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {});
+    renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {});
+    if (form) form.style.display = 'none';
+    if (fechado) fechado.style.display = 'block';
+    btn.textContent = '✎ Editar';
+    btn.dataset.editando = '0';
+  }
+};
+
 window.salvarSuaHistoria = async function() {
   if (!currentUser) return;
   const btn = document.getElementById('sh-btn-enviar');
-  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
-  const texto = document.getElementById('sh-notas')?.value || '';
-  const payload = {
-    email: currentUser.email,
-    nome: perfilData.nome || currentUser.displayName || '',
-    foto: currentUser.photoURL || '',
-    notas: texto,
-    historia: { ...perfilData.historia },
-    guias: { ...perfilData.guias },
-    cruzamentos: { ...perfilData.cruzamentos },
-    solicitacao: texto ? 'Correção solicitada: ' + texto : '',
-    criadoEm: perfilData.criadoEm || Date.now(),
-    cargo: perfilData.cargo || '',
-    emoji: perfilData.emoji || '',
-    grupo: perfilData.grupo || 'visitante',
-  };
+  // coleta todos os inputs visíveis nas fichas
+  const H = { ...perfilData.historia };
+  const G = { ...perfilData.guias };
+  const C = { ...perfilData.cruzamentos };
+
+  document.querySelectorAll('#mh-grid-historia input, #mh-grid-guias input, #mh-grid-cruzamentos input').forEach(inp => {
+    const k = inp.dataset.key;
+    if (!k) return;
+    const v = inp.value.trim();
+    if (camposHistoria.find(c=>c.key===k))   H[k] = v;
+    else if (camposGuias.find(c=>c.key===k)) G[k] = v;
+    else if (camposCruz.find(c=>c.key===k))  C[k] = v;
+  });
+
+  const payload = { ...perfilData, historia: H, guias: G, cruzamentos: C, solicitacao: 'Edição direta pela filha' };
 
   try {
     const res = await fetch('/api/perfil', {
@@ -3345,15 +3502,15 @@ window.salvarSuaHistoria = async function() {
     });
     const data = await res.json();
     if (data.ok) {
-      perfilData = { ...perfilData, ...payload };
+      perfilData = payload;
+      // volta modo leitura e atualiza tudo
+      renderMinhaHistoria(perfilData, currentUser);
       const ok = document.getElementById('sh-msg-ok');
-      const aviso = document.getElementById('sh-aviso');
       if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
-      if (aviso) aviso.style.display = 'block';
     }
   } catch(e) { alert('Erro ao salvar.'); }
 
-  if (btn) { btn.disabled = false; btn.textContent = 'Enviar solicitação ✦'; }
+  if (btn) { btn.disabled = false; btn.textContent = 'Salvar alterações ✦'; }
 };
 
 window.loginGoogle = async function() {
@@ -3500,12 +3657,12 @@ function renderPerfil() {
   renderCamposPerfil(camposCruz,      'perfil-grid-cruzamentos',   perfilData.cruzamentos  || {});
 }
 
-function renderCamposPerfil(campos, gridId, dados) {
+function renderCamposPerfil(campos, gridId, dados, editavel) {
   const grid = document.getElementById(gridId);
+  if (!grid) return;
   grid.innerHTML = '';
   const ocultos = perfilData.timelineOcultos || [];
 
-  // chaves que aparecem na linha do tempo
   const CHAVES_TIMELINE = new Set([
     'data_entrada','apronte','coroacao','cacicamento','madrinha_data',
     'afilhada_1_data','afilhada_2_data','terreiro_data',
@@ -3517,7 +3674,6 @@ function renderCamposPerfil(campos, gridId, dados) {
     const wrap = document.createElement('div');
     wrap.className = 'perfil-field';
 
-    // label + toggle se o campo aparece na linha do tempo
     const lblRow = document.createElement('div');
     lblRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:4px';
     const lbl = document.createElement('label');
@@ -3525,7 +3681,9 @@ function renderCamposPerfil(campos, gridId, dados) {
     lbl.style.marginBottom = '0';
     lblRow.appendChild(lbl);
 
-    if (CHAVES_TIMELINE.has(c.key) && dados[c.key]) {
+    const valor = dados[c.key];
+
+    if (CHAVES_TIMELINE.has(c.key) && valor && !editavel) {
       const oculto = ocultos.includes(c.key);
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -3539,24 +3697,30 @@ function renderCamposPerfil(campos, gridId, dados) {
     }
     wrap.appendChild(lblRow);
 
-    const valor = dados[c.key];
-    if (valor) {
+    if (editavel) {
+      // sempre mostra input no modo edição
+      const inp = document.createElement('input');
+      inp.type = c.tipo === 'data' ? 'date' : 'text';
+      inp.className = 'form-input';
+      inp.style.cssText = 'width:100%;margin-top:4px;font-size:14px';
+      inp.value = valor || '';
+      inp.dataset.key = c.key;
+      inp.addEventListener('input', () => {
+        if (!perfilAlteracoes._campos) perfilAlteracoes._campos = {};
+        if (inp.value) perfilAlteracoes._campos[c.key] = { label: c.label, valor: inp.value, grupo: c.grupo };
+        else delete perfilAlteracoes._campos[c.key];
+      });
+      wrap.appendChild(inp);
+    } else if (valor) {
       const p = document.createElement('div');
       p.className = 'valor';
       p.textContent = c.tipo === 'data' ? fmtData(valor) : valor;
       wrap.appendChild(p);
     } else {
-      const inp = document.createElement('input');
-      inp.type = c.tipo === 'data' ? 'date' : 'text';
-      inp.placeholder = c.tipo === 'data' ? '' : 'Preencher...';
-      inp.dataset.key = c.key;
-      inp.addEventListener('input', () => {
-        if (!perfilAlteracoes._campos) perfilAlteracoes._campos = {};
-        if (inp.value) perfilAlteracoes._campos[c.key] = { label: c.label, valor: inp.value };
-        else delete perfilAlteracoes._campos[c.key];
-        atualizarBotaoPerfil();
-      });
-      wrap.appendChild(inp);
+      const vazio = document.createElement('div');
+      vazio.style.cssText = 'color:rgba(80,30,50,.25);font-size:.85rem;font-family:\'Crimson Pro\',serif;font-style:italic';
+      vazio.textContent = '—';
+      wrap.appendChild(vazio);
     }
     grid.appendChild(wrap);
   });
