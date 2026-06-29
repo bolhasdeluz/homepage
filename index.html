@@ -1753,7 +1753,7 @@ function mudarSimulacao(valor) {
       const primeiroNome = (simPerfil.nome || '').split(' ')[0];
       const cargo = simPerfil.cargo || '';
       const emoji = simPerfil.emoji || '✦';
-      const tempo = calcTempo(simPerfil.historia?.data_entrada);
+      const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
       document.getElementById('bv-emoji').textContent = emoji;
       document.getElementById('bv-nome').textContent  = primeiroNome;
       document.getElementById('bv-cargo').textContent = cargo;
@@ -1807,7 +1807,7 @@ function sairSimulacao() {
   renderDrawer();
   atualizarBoasVindas();
   // volta barra de boas-vindas para admin
-  const tempo = calcTempo(perfilData?.historia?.data_entrada);
+  const tempo = window.calcTempo?.(perfilData?.historia?.data_entrada);
   document.getElementById('bv-emoji').textContent = perfilData?.emoji || '✦';
   document.getElementById('bv-nome').textContent  = (perfilData?.nome || currentUser?.displayName || '').split(' ')[0];
   document.getElementById('bv-cargo').textContent = perfilData?.cargo || '';
@@ -3255,7 +3255,7 @@ function fmtData(v) {
   return isNaN(d.getTime()) ? v : d.toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
 }
 
-function calcTempo(dataStr) {
+window.calcTempo = function calcTempo(dataStr) {
   if (!dataStr) return null;
   const inicio = new Date(dataStr + 'T12:00:00');
   const hoje = new Date();
