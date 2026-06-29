@@ -1661,6 +1661,17 @@ function renderDrawer() {
         <span class="drawer-card-desc">Área das filhas da casa</span>
       </button>`;
 
+  // cards exclusivos do admin
+  const adminCards = grupoUsuario === 'admin' ? `
+    <button class="drawer-card" onclick="showPage('admin');closeDrawer()" style="border-top:2px solid var(--rosa);border-color:rgba(196,57,107,.3);background:linear-gradient(135deg,rgba(196,57,107,.09),rgba(196,57,107,.03));">
+      <span class="drawer-card-name" style="color:var(--rosa);">⚙ Painel Admin</span>
+      <span class="drawer-card-desc">Gerencie menu, perfis e sessões</span>
+    </button>
+    <button class="drawer-card" onclick="iniciarSimulacao();closeDrawer()" style="border-color:rgba(42,122,96,.25);background:linear-gradient(135deg,rgba(42,122,96,.07),rgba(42,122,96,.02));">
+      <span class="drawer-card-name" style="color:var(--green);">👁 Simular visão</span>
+      <span class="drawer-card-desc">Ver o site como outra usuária</span>
+    </button>` : '';
+
   body.innerHTML = `<div style="padding:8px 24px 16px;">` +
     menuData.sections.map(sec => {
       const visibleItems = sec.items.filter(i => {
@@ -1681,7 +1692,8 @@ function renderDrawer() {
               onkeydown="if(event.key==='Enter')drawerSaveSecName(${si});if(event.key==='Escape')drawerCancelSecName(${si})">
           </div>
           <div class="drawer-cards-grid">
-            ${perfilCard && sec === menuData.sections[0] ? perfilCard : ''}
+            ${sec === menuData.sections[0] ? perfilCard : ''}
+            ${sec === menuData.sections[0] ? adminCards : ''}
             ${visibleItems.map(item => renderDrawerItem(item)).join('')}
           </div>
         </div>`;
