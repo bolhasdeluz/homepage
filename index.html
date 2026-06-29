@@ -1623,7 +1623,7 @@ function getDefaultMenu() {
       { id: 'publico', label: 'Público', items: [
         { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
         { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true },
-        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
+        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'internal', page: 'calendario', showCard: true, showMenu: true },
         { id: 'textos',   label: 'Textos da Casa',    type: 'internal', page: 'textos',   showCard: true, showMenu: true },
         { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
         { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
@@ -1705,6 +1705,10 @@ function renderDrawerItem(item) {
   // blog interno
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
     return `<button class="drawer-card" onclick="showPage('blog');closeDrawer()">${inner}</button>`;
+  }
+  // calendário externo → interno
+  if (item.url && item.url.includes('calendario-drf.pages.dev')) {
+    return `<button class="drawer-card" onclick="showPage('calendario');closeDrawer()">${inner}</button>`;
   }
   // link externo
   return `<button class="drawer-card" onclick="window.open('${item.url}','_blank');closeDrawer()">${inner}</button>`;
