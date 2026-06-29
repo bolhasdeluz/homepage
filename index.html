@@ -1737,7 +1737,8 @@ function mudarSimulacao(valor) {
 
   function aplicarSimulacao(simUser, simPerfil) {
     window._simUsuario = simUser;
-    window._getPerfilData = () => simPerfil || {};
+    // em simulação, retorna o perfil simulado; fora, retorna o real via closure do módulo
+    window._getPerfilData = simPerfil ? () => simPerfil : window._getPerfilDataReal || (() => ({}));
 
     // atualiza badge
     if (simPerfil) {
@@ -1807,8 +1808,8 @@ function mudarSimulacao(valor) {
 function sairSimulacao() {
   _modoSimulacao = null;
   window._simUsuario = null;
-  // restaura getPerfilData para o perfil real
-  window._getPerfilData = () => perfilData || {};
+  // restaura para o perfil real
+  window._getPerfilData = window._getPerfilDataReal || (() => ({}));
   document.getElementById('sim-bar').classList.remove('active');
   renderCards();
   renderDrawer();
@@ -2692,6 +2693,7 @@ let perfilAlteracoes = {};
 // expor globalmente para scripts fora do módulo
 window._getCurrentUser = () => currentUser;
 window._getPerfilData  = () => perfilData;
+window._getPerfilDataReal = () => perfilData; // referência fixa para restaurar após simulação
 window.showSuaHistoria = function() {
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user) {
