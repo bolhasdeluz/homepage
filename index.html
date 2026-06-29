@@ -922,6 +922,42 @@ body.logada{padding-top:28px}
   </div>
 </div>
 
+<!-- PÁGINA GUIAS -->
+<div id="page-guias" class="page">
+  <div style="max-width:1000px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">Filhas da Casa</div>
+    <p class="section-sub">Conheça as integrantes da nossa corrente e seus guias.</p>
+
+    <!-- busca -->
+    <div style="max-width:400px;margin:0 auto 28px;position:relative">
+      <input id="guias-busca" type="text" placeholder="Buscar pelo nome…" oninput="guiasFiltrar(this.value)"
+        style="width:100%;background:#fff;border:1px solid var(--border);border-radius:40px;padding:10px 18px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;box-shadow:0 2px 12px rgba(196,57,107,.06)">
+    </div>
+
+    <!-- grid -->
+    <div id="guias-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
+  </div>
+
+  <!-- painel lateral -->
+  <div id="guias-overlay" onclick="guiasFecharPainel()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.45);backdrop-filter:blur(3px);z-index:300"></div>
+  <div id="guias-painel" style="position:fixed;top:0;right:0;bottom:0;width:min(380px,100vw);background:#fff;border-left:1px solid var(--border);z-index:310;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(196,57,107,.1);overflow-y:auto">
+    <!-- header do painel -->
+    <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;position:sticky;top:0;background:#fff;z-index:1">
+      <div id="gp-avatar" style="width:52px;height:52px;border-radius:50%;background:var(--rosa-dim);border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden">👤</div>
+      <div style="flex:1;min-width:0">
+        <div id="gp-nome" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+        <div id="gp-cargo" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:var(--text-dim);text-transform:uppercase;margin-top:2px"></div>
+        <div id="gp-tempo" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--rosa);font-style:italic;margin-top:1px"></div>
+      </div>
+      <button onclick="guiasFecharPainel()" style="background:none;border:1px solid var(--border);border-radius:6px;width:32px;height:32px;cursor:pointer;color:var(--text-dim);font-size:1rem;flex-shrink:0">✕</button>
+    </div>
+    <!-- corpo -->
+    <div id="gp-body" style="padding:20px;flex:1"></div>
+  </div>
+</div>
+
 <!-- PÁGINA CALENDÁRIO -->
 <div id="page-calendario" class="page">
   <div class="cal-wrap">
@@ -1258,6 +1294,12 @@ body.logada{padding-top:28px}
       <label class="form-label">Mãe/Pai de Santo</label>
       <input type="text" class="form-input" id="cp-mae_de_santo" placeholder="Nome da mãe ou pai de santo">
     </div>
+    <div style="margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-visivelGuias" style="accent-color:var(--rosa);width:16px;height:16px">
+        Exibir na página de Guias (pública)
+      </label>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div>
         <label class="form-label">Título do campo (ex: "Meu Terreiro")</label>
@@ -1533,10 +1575,9 @@ function renderCards() {
       }
       if (item.id === 'filhas') {
         if (!logada) {
-          html += `<a class="widget" href="#" onclick="openLogin();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-mem">interno</span></a>`;
+          html += `<a class="widget" href="#" onclick="showPage('guias');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Conheça as filhas da casa'}</div><span class="widget-tag tag-pub">público</span></a>`;
         } else {
-          // nunca mostra "Painel Admin" em simulação
-          html += `<a class="widget" href="#" onclick="window.showSuaHistoria();return false"><div class="widget-name">Minha Ficha</div><div class="widget-desc">Sua história espiritual</div><span class="widget-tag tag-mem">interno</span></a>`;
+          html += `<a class="widget" href="#" onclick="showPage('guias');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Conheça as filhas da casa'}</div><span class="widget-tag tag-pub">público</span></a>`;
         }
         return;
       }
@@ -2025,7 +2066,7 @@ function preencherFormPerfil(p) {
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
   if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
   if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
-  if (document.getElementById('cp-terreiro_visivel')) document.getElementById('cp-terreiro_visivel').checked = !!c.terreiro_visivel;
+  if (document.getElementById('cp-visivelGuias')) document.getElementById('cp-visivelGuias').checked = !!p.visivelGuias;
 }
 
 async function salvarPerfilAdmin() {
@@ -2044,6 +2085,7 @@ async function salvarPerfilAdmin() {
     notas: '',
     criadoEm: Date.now(),
     solicitacao: 'Perfil criado/editado pelo admin',
+    visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     cacique: {
       mae_de_santo:    document.getElementById('cp-mae_de_santo')?.value.trim()    || '',
       terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
@@ -2172,6 +2214,10 @@ function showPage(name) {
     calAtualizarControlesAdmin();
     if (!calSessoes.length) calLoad();
     else calRenderLista();
+  }
+  if (name === 'guias') {
+    if (!guiasData.length) guiasLoad();
+    else guiasRenderGrid(guiasData);
   }
 }
 function toggleDrawer() {
@@ -2623,6 +2669,147 @@ function calAtualizarControlesAdmin() {
 const _origShowPage = window.showPage;
 // inicializar na primeira abertura
 document.addEventListener('DOMContentLoaded', () => {});
+
+// ── GUIAS ──────────────────────────────────────────────────────
+let guiasData = [];
+
+async function guiasLoad() {
+  const grid = document.getElementById('guias-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-family:\'Crimson Pro\',serif;font-style:italic"><div class="spinner" style="border-color:rgba(196,57,107,.15);border-top-color:var(--rosa);width:24px;height:24px;margin:0 auto 12px"></div>Carregando...</div>';
+
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
+    const todos = await res.json();
+    // só quem o admin marcou como visível nos guias
+    guiasData = todos.filter(p => p.visivelGuias && p.nome);
+    guiasRenderGrid(guiasData);
+  } catch(e) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-family:\'Crimson Pro\',serif;font-style:italic">Erro ao carregar.</div>';
+  }
+}
+
+function guiasRenderGrid(lista) {
+  const grid = document.getElementById('guias-grid');
+  if (!grid) return;
+  if (!lista.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-family:\'Crimson Pro\',serif;font-style:italic;grid-column:1/-1">Nenhuma filha encontrada.</div>';
+    return;
+  }
+
+  const CARGOS_ORDEM = ['Mãe da Casa','Cacique','Tamoio','Naurú','Cambona','Tamboreiro','Curumim','Visitante',''];
+  const ordenada = [...lista].sort((a,b) => {
+    const ia = CARGOS_ORDEM.indexOf(a.cargo||'');
+    const ib = CARGOS_ORDEM.indexOf(b.cargo||'');
+    return (ia<0?99:ia) - (ib<0?99:ib) || (a.nome||'').localeCompare(b.nome||'');
+  });
+
+  grid.innerHTML = ordenada.map((p,i) => {
+    const guias = [p.guias?.caboclo, p.guias?.exu, p.guias?.pomba_gira, p.guias?.preto_velho, p.guias?.cigana, p.guias?.cosme].filter(Boolean);
+    const tempo = window.calcTempo?.(p.historia?.data_entrada);
+    const avatarHtml = p.foto
+      ? `<img src="${p.foto}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border);display:block;margin-bottom:12px">`
+      : `<div style="width:52px;height:52px;border-radius:50%;background:var(--rosa-dim);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:12px">${p.emoji||'👤'}</div>`;
+
+    return `<div onclick="guiasAbrirPainel('${p.email}')"
+      style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 18px 16px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;animation:fadeIn .3s ease ${i*0.04}s both"
+      onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 32px rgba(196,57,107,.13)';this.style.borderColor='rgba(196,57,107,.3)'"
+      onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor=''">
+      ${avatarHtml}
+      <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:2px">${p.nome||''}</div>
+      ${p.cargo ? `<div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">${p.cargo}</div>` : ''}
+      ${tempo ? `<div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic;margin-bottom:8px">${tempo} de casa</div>` : ''}
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${guias.slice(0,3).map(g=>`<span style="font-size:.68rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim);border:1px solid var(--border)">${g}</span>`).join('')}
+        ${guias.length>3?`<span style="font-size:.68rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim)">+${guias.length-3}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function guiasFiltrar(busca) {
+  const b = busca.toLowerCase().trim();
+  if (!b) { guiasRenderGrid(guiasData); return; }
+  guiasRenderGrid(guiasData.filter(p => {
+    const txt = [p.nome, p.cargo, p.guias?.caboclo, p.guias?.exu, p.guias?.pomba_gira, p.guias?.preto_velho, p.guias?.cigana, p.guias?.cosme].join(' ').toLowerCase();
+    return txt.includes(b);
+  }));
+}
+
+function guiasAbrirPainel(email) {
+  const p = guiasData.find(x => x.email === email);
+  if (!p) return;
+
+  // avatar
+  const avatarEl = document.getElementById('gp-avatar');
+  avatarEl.innerHTML = p.foto
+    ? `<img src="${p.foto}" style="width:100%;height:100%;object-fit:cover">`
+    : (p.emoji || '👤');
+
+  document.getElementById('gp-nome').textContent  = p.nome || '';
+  document.getElementById('gp-cargo').textContent = p.cargo || '';
+  const tempo = window.calcTempo?.(p.historia?.data_entrada);
+  document.getElementById('gp-tempo').textContent = tempo ? tempo + ' de casa' : '';
+
+  // corpo: guias + cruzamentos
+  const G = p.guias || {};
+  const C = p.cruzamentos || {};
+  const H = p.historia || {};
+
+  const GUIAS_DEF = [
+    {key:'caboclo',    label:'Caboclo',     dataKey:'caboclo_data'},
+    {key:'exu',        label:'Exu',         dataKey:'exu_data'},
+    {key:'pomba_gira', label:'Pomba Gira',  dataKey:'pomba_gira_data'},
+    {key:'preto_velho',label:'Preto Velho', dataKey:'preto_velho_data'},
+    {key:'cigana',     label:'Cigana',      dataKey:'cigana_data'},
+    {key:'cosme',      label:'Cosme',       dataKey:'cosme_data'},
+  ];
+
+  const CRUZ_DEF = [
+    {key:'cruz_conga',    label:'Conga'},
+    {key:'cruz_mata',     label:'Mata'},
+    {key:'cruz_praia',    label:'Praia'},
+    {key:'cruz_rio',      label:'Rio/Cachoeira'},
+    {key:'cruz_pedreira', label:'Pedreira'},
+    {key:'corte_1',       label:'1º Corte'},
+  ];
+
+  const guiasHtml = GUIAS_DEF.filter(d => G[d.key]).map(d => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">${d.label}</div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)">${G[d.key]}</div>
+      </div>
+      ${G[d.dataKey] ? `<div style="font-family:'Cinzel',serif;font-size:.6rem;color:var(--text-dim)">${fmtData(G[d.dataKey])}</div>` : ''}
+    </div>`).join('');
+
+  const cruzHtml = CRUZ_DEF.filter(d => C[d.key]).map(d => `
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(196,57,107,.07)">
+      <span style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim)">${d.label}</span>
+      <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${fmtData(C[d.key])}</span>
+    </div>`).join('');
+
+  const histHtml = H.guia_chefe ? `
+    <div style="background:var(--rosa-dim);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text)">
+      <span style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px">Guia Chefe</span>
+      ${H.guia_chefe}
+    </div>` : '';
+
+  document.getElementById('gp-body').innerHTML = `
+    ${histHtml}
+    ${guiasHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;margin-top:4px">Guias e Guardiões</div>${guiasHtml}` : ''}
+    ${cruzHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 8px">Cruzamentos</div>${cruzHtml}` : ''}
+    ${!guiasHtml && !cruzHtml && !histHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}
+  `;
+
+  document.getElementById('guias-overlay').style.display = 'block';
+  document.getElementById('guias-painel').style.transform = 'translateX(0)';
+}
+
+function guiasFecharPainel() {
+  document.getElementById('guias-overlay').style.display = 'none';
+  document.getElementById('guias-painel').style.transform = 'translateX(100%)';
+}
 
 // inicializar
 loadMenu();
