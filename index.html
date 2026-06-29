@@ -2851,13 +2851,15 @@ function renderTimeline(p) {
     const dataFmt = `${d}/${m}/${y}`;
     const corPrincipal = evs.find(e=>!e.oculto)?.cor || evs[0].cor;
 
-    const evsHtml = evs.map(e => `
+    const evsHtml = evs.filter(e => !e.oculto).map(e => `
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
-        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${e.oculto?'#ddd':e.cor}"></div>
-        <span style="font-family:'Playfair Display',serif;font-size:.82rem;font-weight:600;color:${e.oculto?'#bbb':e.cor};${e.oculto?'text-decoration:line-through;opacity:.35':''}">
+        <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${e.cor}"></div>
+        <span style="font-family:'Playfair Display',serif;font-size:.82rem;font-weight:600;color:${e.cor}">
           ${e.label}${e.nome?' — '+e.nome:''}
         </span>
       </div>`).join('');
+
+    if (!evsHtml) return; // pula grupo se todos ocultos
 
     itensHtml += `
       <div style="position:absolute;left:0;top:${posTop}px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid ${corPrincipal};z-index:2"></div>
@@ -3324,10 +3326,10 @@ function renderCamposPerfil(campos, gridId, dados) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.title = oculto ? 'Mostrar na linha do tempo' : 'Ocultar da linha do tempo';
-      btn.textContent = oculto ? '👁' : '🙈';
-      btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:.7rem;padding:0;opacity:.45;transition:opacity .2s;flex-shrink:0';
+      btn.innerHTML = '👁';
+      btn.style.cssText = `background:none;border:none;cursor:pointer;font-size:.75rem;padding:0;flex-shrink:0;opacity:${oculto?'0.25':'1'};filter:${oculto?'grayscale(1)':'none'};transition:all .2s`;
       btn.onmouseenter = () => btn.style.opacity = 1;
-      btn.onmouseleave = () => btn.style.opacity = .45;
+      btn.onmouseleave = () => btn.style.opacity = ocultos.includes(c.key) ? '0.25' : '1';
       btn.onclick = () => toggleTimelineItem(c.key);
       lblRow.appendChild(btn);
     }
