@@ -2502,15 +2502,9 @@ function showPage(name) {
     p.classList.add('active');
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
-  // barra de boas-vindas e hint só aparecem na página início
-  const bv = document.getElementById('boas-vindas');
+  // hint da homepage só aparece na página início
   const hint = document.getElementById('menu-hint');
-  const isInicio = name === 'inicio';
-  const user = window._getCurrentUser && window._getCurrentUser();
-  if (bv) bv.style.display = isInicio && user ? 'block' : 'none';
-  if (hint) hint.style.display = isInicio && !user ? '' : 'none';
-  // padding-top: só na início quando logada
-  document.body.classList.toggle('logada', isInicio && !!user);
+  if (hint) hint.style.display = name === 'inicio' ? '' : 'none';
   if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
@@ -4226,14 +4220,11 @@ function atualizarBoasVindas() {
   document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
 
-  // só mostra a barra se estiver na página início
-  const paginaAtiva = document.querySelector('.page.active')?.id;
-  if (paginaAtiva === 'page-inicio') {
-    banner.style.display = 'block';
-    document.body.classList.add('logada');
-    const hint = document.getElementById('menu-hint');
-    if (hint) hint.style.display = 'none';
-  }
+  banner.style.display = 'block';
+  document.body.classList.add('logada');
+  // oculta hint da homepage quando a barra de boas-vindas aparece
+  const hint = document.getElementById('menu-hint');
+  if (hint) hint.style.display = 'none';
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
 
