@@ -210,13 +210,19 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 
 /* ── HAMBURGUER + DRAWER ── */
 #menu-toggle{
-  position:fixed;top:16px;right:16px;z-index:390;
-  background:rgba(253,246,238,.92);border:1px solid var(--border);border-radius:10px;
-  width:42px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  box-shadow:0 2px 12px rgba(196,90,30,.12);backdrop-filter:blur(6px);transition:all .2s;
+  position:fixed;top:14px;right:14px;z-index:390;
+  background:var(--rosa);border:none;border-radius:12px;
+  width:auto;height:auto;padding:9px 14px 9px 12px;
+  display:flex;flex-direction:row;align-items:center;gap:9px;
+  box-shadow:0 3px 16px rgba(196,57,107,.35);backdrop-filter:blur(6px);transition:all .2s;
 }
-#menu-toggle:hover{background:#fff;box-shadow:0 4px 16px rgba(196,57,107,.15)}
-#menu-toggle span{display:block;width:18px;height:1.5px;background:var(--terra);border-radius:2px;transition:all .3s}
+#menu-toggle:hover{background:var(--rosa-l);box-shadow:0 5px 20px rgba(196,57,107,.45);transform:translateY(-1px)}
+#menu-toggle-bars{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;}
+#menu-toggle span{display:block;width:16px;height:1.5px;background:#fff;border-radius:2px;transition:all .3s}
+#menu-toggle-label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1;}
+#menu-toggle.open #menu-toggle-bars span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+#menu-toggle.open #menu-toggle-bars span:nth-child(2){opacity:0;transform:scaleX(0)}
+#menu-toggle.open #menu-toggle-bars span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
 #menu-toggle.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
 #menu-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
 #menu-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
@@ -667,7 +673,8 @@ body.logada{padding-top:28px}
 
 <!-- HAMBURGUER -->
 <button id="menu-toggle" onclick="toggleDrawer()" aria-label="Menu">
-  <span></span><span></span><span></span>
+  <div id="menu-toggle-bars"><span></span><span></span><span></span></div>
+  <span id="menu-toggle-label">Menu</span>
 </button>
 
 <!-- DRAWER OVERLAY -->
@@ -952,34 +959,15 @@ body.logada{padding-top:28px}
 
 <!-- PÁGINA TEXTOS -->
 <div id="page-textos" class="page">
-  <div class="section-wrap">
+  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
-    <div class="eyebrow">Arquivos de Informações</div>
+    <div class="eyebrow">Conteúdo do Terreiro</div>
     <div class="section-title">Textos da Casa</div>
-    <p class="section-sub">Fundamentos, reflexões e ensinamentos escritos pela corrente do Bolhas de Luz.</p>
-    <div class="blog-note">✦ Os textos completos estão sendo migrados. Em breve disponíveis aqui.</div>
-    <div style="margin-bottom:20px">
-      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('todos')">Todos</span>
-      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('fundamentos')">Fundamentos</span>
-      <span class="widget-tag tag-pub" style="cursor:pointer;background:var(--green-dim);border-color:var(--green-border);color:var(--green)" onclick="filterBlog('reflexoes')">Reflexões</span>
-    </div>
-    <div class="blog-grid">
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Que é Estar na Corrente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Macumba se Aprende na Macumba</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Medo Não — Respeito Sim</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Função de Vocês é Sentir</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Sonhos Solitários São Projeções</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Cuidar de Quem Cuida de Vocês</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Eles Viveram Entre Nós</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Início da Caminhada</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Umbanda é Tradição Oral — E Tem Raízes Mais Antigas do que Contam</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Passe em Roupa de Ausente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">A História da Benção para Abrir Casa</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+    <p class="section-sub">Os textos do Bolhas de Luz estão no blog — com categorias, busca e comentários.</p>
+    <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:12px;padding:20px 24px;margin-bottom:28px;">
+      <div style="font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px;">✦ Conteúdo migrado</div>
+      <p style="font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.7;margin-bottom:16px;">Fundamentos, reflexões e ensinamentos da corrente agora ficam no Blog do Terreiro — com categorias, busca e comentários.</p>
+      <button onclick="showPage('blog')" class="btn-rosa" style="font-size:11px;">📖 Ir para o Blog do Terreiro →</button>
     </div>
   </div>
 </div>
@@ -1295,38 +1283,7 @@ body.logada{padding-top:28px}
 </div>
 
 <!-- PÁGINA TEXTOS -->
-<div id="page-textos" class="page">
-  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
-    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
-    <div class="eyebrow">Arquivos de Informações</div>
-    <div class="section-title">Textos da Casa</div>
-    <p class="section-sub">Fundamentos, reflexões e ensinamentos da corrente do Bolhas de Luz.</p>
-    <div class="blog-note">✦ Os textos completos estão sendo migrados. Em breve disponíveis aqui.</div>
-    <div style="margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap">
-      <span class="widget-tag tag-pub" style="cursor:pointer" onclick="filterBlog('todos')">Todos</span>
-      <span class="widget-tag tag-pub" style="cursor:pointer" onclick="filterBlog('fundamentos')">Fundamentos</span>
-      <span class="widget-tag tag-pub" style="cursor:pointer;background:var(--green-dim);border-color:var(--green-border);color:var(--green)" onclick="filterBlog('reflexoes')">Reflexões</span>
-    </div>
-    <div class="blog-grid">
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Que é Estar na Corrente</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Macumba se Aprende na Macumba</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Medo Não — Respeito Sim</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Função de Vocês é Sentir</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Sonhos Solitários São Projeções</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Cuidar de Quem Cuida de Vocês</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Eles Viveram Entre Nós</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Início da Caminhada</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Umbanda é Tradição Oral</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Passe em Roupa de Ausente</div><div class="blog-placeholder">Em breve</div></div>
-      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">A História da Benção para Abrir Casa</div><div class="blog-placeholder">Em breve</div></div>
-    </div>
-  </div>
-</div>
+
 
 <!-- PÁGINA APOIE -->
 <div id="page-apoie" class="page">
@@ -3315,7 +3272,9 @@ async function blogSaveCats() {
 function blogRenderList() {
   const el = document.getElementById('blog-post-list');
   if (!el) return;
-  const lista = _blogFilter === 'todas' ? _blogPosts : _blogPosts.filter(p => p.category === _blogFilter);
+  const isAdmList = blogIsAdmin();
+  const listaBase = _blogPosts.filter(p => isAdmList || !p.hidden);
+  const lista = _blogFilter === 'todas' ? listaBase : listaBase.filter(p => p.category === _blogFilter);
   if (!lista.length) {
     el.innerHTML = '<p class="blog-empty">Nenhum post nesta categoria ainda. 🌙</p>';
     return;
@@ -3326,8 +3285,9 @@ function blogRenderList() {
   const isAdm = blogIsAdmin();
   el.innerHTML = page.map(p => `
     <div class="blog-post-card" data-pid="${blogEscAttr(p.id)}">
-      <div class="blog-card-top">
+      <div class="blog-card-top" style="${p.hidden && isAdm ? 'background:rgba(100,80,80,.15);' : ''}">
         <span class="blog-cat-badge">${p.category||'Geral'}</span>
+        ${p.hidden && isAdm ? '<span style="font-family:\'Cinzel\',serif;font-size:.52rem;background:rgba(100,80,80,.15);color:rgba(150,100,100,.8);border-radius:20px;padding:2px 8px;border:1px solid rgba(150,100,100,.2);">🙈 oculto</span>' : ''}
         <span style="font-size:.67rem;color:var(--text-dim);">✍️ ${p.author||BLOG_AUTHOR}</span>
         <span class="blog-post-date">${p.date||''}</span>
       </div>
@@ -3340,6 +3300,8 @@ function blogRenderList() {
         <div style="display:flex;align-items:center;gap:.5rem;">
           ${isAdm ? `<div class="blog-admin-btns">
             <button class="blog-btn-edit" data-action="edit" data-pid="${blogEscAttr(p.id)}">Editar</button>
+            <button class="blog-btn-edit" data-action="toggle-hidden" data-pid="${blogEscAttr(p.id)}" title="${p.hidden ? 'Reexibir post' : 'Ocultar post'}"
+              style="${p.hidden ? 'border-color:rgba(196,57,107,.4);color:var(--rosa);' : ''}">${p.hidden ? '👁 Exibir' : '🙈 Ocultar'}</button>
             <button class="blog-btn-del" data-action="del" data-pid="${blogEscAttr(p.id)}">Excluir</button>
           </div>` : ''}
           <span class="blog-read-more">Ler mais →</span>
@@ -3354,12 +3316,14 @@ function blogRenderList() {
     </div>
   </div>`;
   el.onclick = (e) => {
-    const del  = e.target.closest("[data-action='del']");
-    const edit = e.target.closest("[data-action='edit']");
-    const card = e.target.closest('.blog-post-card');
-    if (del)  { e.stopPropagation(); blogDeletePost(del.dataset.pid); return; }
-    if (edit) { e.stopPropagation(); blogEditInSlot(edit.dataset.pid); return; }
-    if (card) { blogOpenPost(card.dataset.pid); }
+    const del    = e.target.closest("[data-action='del']");
+    const edit   = e.target.closest("[data-action='edit']");
+    const toggle = e.target.closest("[data-action='toggle-hidden']");
+    const card   = e.target.closest('.blog-post-card');
+    if (del)    { e.stopPropagation(); blogDeletePost(del.dataset.pid); return; }
+    if (toggle) { e.stopPropagation(); blogToggleHidden(toggle.dataset.pid); return; }
+    if (edit)   { e.stopPropagation(); blogEditInSlot(edit.dataset.pid); return; }
+    if (card)   { blogOpenPost(card.dataset.pid); }
   };
   blogRenderSidebar();
 }
@@ -3397,6 +3361,16 @@ async function blogDeletePost(id) {
   if (!confirm('Excluir este post?')) return;
   try { await window._blogDeletePost(id); showToast('Excluído.'); }
   catch(e) { showToast('Erro ao excluir.', true); }
+}
+
+async function blogToggleHidden(id) {
+  const p = _blogPosts.find(x => x.id === id);
+  if (!p) return;
+  const novoPerfil = { ...p, hidden: !p.hidden };
+  try {
+    await window._blogSavePosts([novoPerfil]);
+    showToast(novoPerfil.hidden ? '🙈 Post ocultado — visível só para admin.' : '👁 Post reexibido para todas.');
+  } catch(e) { showToast('Erro ao salvar.', true); }
 }
 
 function blogEditInSlot(id) {
@@ -3526,6 +3500,10 @@ function blogAddSlot(data = {}) {
         </select>
         <input type="date" class="blog-slot-input blog-slot-date" id="${id}-date" value="${data.date||today}">
       </div>
+      <label style="display:flex;align-items:center;gap:4px;color:rgba(255,255,255,.5);font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+        <input type="checkbox" id="${id}-hidden" style="accent-color:var(--rosa);width:13px;height:13px;">
+        Ocultar
+      </label>
       <button class="blog-slot-rm" onclick="blogRemoveSlot('${id}')">✕</button>
     </div>
     <div class="blog-slot-body">
@@ -3610,8 +3588,9 @@ async function blogPublishAll() {
       .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-')
       + '-' + dateVal.replace(/-/g,'');
     const [y,m,d] = dateVal.split('-');
+    const hidden = document.getElementById(`${id}-hidden`)?.checked || false;
     toSave.push({ id:slug, title, category:cat, body, excerpt, raw,
-      date:`${d}/${m}/${y}`, dateSort:dateVal, author:BLOG_AUTHOR });
+      date:`${d}/${m}/${y}`, dateSort:dateVal, author:BLOG_AUTHOR, hidden });
   });
   if (!toSave.length) { showToast('Nenhum slot com título.', true); btn.disabled=false; spin.style.display='none'; return; }
   try {
