@@ -533,13 +533,14 @@ body.logada{padding-top:28px}
 <!-- BARRA DE SIMULAÇÃO -->
 <div id="sim-bar">
   <span class="sim-label">👁 Simulando como:</span>
-  <select class="sim-select" id="sim-select" onchange="mudarSimulacao(this.value)">
+  <select class="sim-select" id="sim-select">
     <option value="publico">Visitante (não logada)</option>
     <option value="filha">Filha da casa (logada)</option>
     <optgroup label="Filha específica" id="sim-filhas-group"></optgroup>
   </select>
-  <div class="sim-badge" id="sim-badge">Visitante pública</div>
-  <button class="sim-exit" onclick="sairSimulacao()">✕ Sair da simulação</button>
+  <button class="sim-exit" style="background:rgba(255,255,255,.35);font-weight:700" onclick="mudarSimulacao(document.getElementById('sim-select').value)">Aplicar ▶</button>
+  <div class="sim-badge" id="sim-badge"></div>
+  <button class="sim-exit" onclick="sairSimulacao()">✕ Sair</button>
 </div>
 
 <!-- ADMIN SENHA -->
@@ -2853,13 +2854,9 @@ function renderTimeline(p) {
     const evsHtml = evs.map(e => `
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
         <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${e.oculto?'#ddd':e.cor}"></div>
-        <span style="font-family:'Playfair Display',serif;font-size:.82rem;font-weight:600;color:${e.oculto?'#bbb':e.cor}">
+        <span style="font-family:'Playfair Display',serif;font-size:.82rem;font-weight:600;color:${e.oculto?'#bbb':e.cor};${e.oculto?'text-decoration:line-through;opacity:.35':''}">
           ${e.label}${e.nome?' — '+e.nome:''}
         </span>
-        <button onclick="toggleTimelineItem('${e.key}')"
-          style="background:none;border:none;cursor:pointer;font-size:.65rem;color:var(--text-dim);padding:0;opacity:.4;transition:opacity .2s;flex-shrink:0"
-          title="${e.oculto?'Mostrar na linha':'Ocultar da linha'}"
-          onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.4">${e.oculto?'👁':'🙈'}</button>
       </div>`).join('');
 
     itensHtml += `
@@ -3300,12 +3297,41 @@ function renderPerfil() {
 function renderCamposPerfil(campos, gridId, dados) {
   const grid = document.getElementById(gridId);
   grid.innerHTML = '';
+  const ocultos = perfilData.timelineOcultos || [];
+
+  // chaves que aparecem na linha do tempo
+  const CHAVES_TIMELINE = new Set([
+    'data_entrada','apronte','coroacao','cacicamento','madrinha_data',
+    'afilhada_1_data','afilhada_2_data',
+    'caboclo_data','exu_data','pomba_gira_data','preto_velho_data','cigana_data','cosme_data',
+    'cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1'
+  ]);
+
   campos.forEach(c => {
     const wrap = document.createElement('div');
     wrap.className = 'perfil-field';
+
+    // label + toggle se o campo aparece na linha do tempo
+    const lblRow = document.createElement('div');
+    lblRow.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:4px';
     const lbl = document.createElement('label');
     lbl.textContent = c.label;
-    wrap.appendChild(lbl);
+    lbl.style.marginBottom = '0';
+    lblRow.appendChild(lbl);
+
+    if (CHAVES_TIMELINE.has(c.key) && dados[c.key]) {
+      const oculto = ocultos.includes(c.key);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.title = oculto ? 'Mostrar na linha do tempo' : 'Ocultar da linha do tempo';
+      btn.textContent = oculto ? '👁' : '🙈';
+      btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:.7rem;padding:0;opacity:.45;transition:opacity .2s;flex-shrink:0';
+      btn.onmouseenter = () => btn.style.opacity = 1;
+      btn.onmouseleave = () => btn.style.opacity = .45;
+      btn.onclick = () => toggleTimelineItem(c.key);
+      lblRow.appendChild(btn);
+    }
+    wrap.appendChild(lblRow);
 
     const valor = dados[c.key];
     if (valor) {
