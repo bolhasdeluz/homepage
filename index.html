@@ -610,6 +610,51 @@ body.logada{padding-top:28px}
 .blog-btn-pub:disabled{opacity:.4;cursor:not-allowed;}
 .blog-add-slot{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:7px;color:rgba(255,255,255,.62);font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;cursor:pointer;transition:background .14s;display:inline-flex;align-items:center;gap:.35rem;}
 .blog-add-slot:hover{background:rgba(255,255,255,.12);}
+
+/* ── DRAWER ITENS CARD-STYLE ── */
+.drawer-card{
+  display:flex;flex-direction:column;gap:2px;
+  padding:9px 12px;margin:3px 0;
+  background:rgba(255,255,255,.55);
+  border:1px solid rgba(196,90,30,.1);
+  border-radius:8px;
+  cursor:pointer;transition:all .18s;
+  text-align:left;width:100%;
+  backdrop-filter:blur(3px);
+}
+.drawer-card:hover{
+  background:#fff;
+  border-color:rgba(196,57,107,.22);
+  box-shadow:0 2px 10px rgba(196,57,107,.08);
+  transform:translateY(-1px);
+}
+.drawer-card-name{
+  font-family:'Cinzel',serif;font-size:.63rem;font-weight:600;
+  letter-spacing:.05em;color:var(--text);line-height:1.3;
+}
+.drawer-card-desc{
+  font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;
+  color:var(--text-dim);font-style:italic;line-height:1.3;
+}
+/* toggle de edição do nome da seção */
+.drawer-sec-label-wrap{
+  display:flex;align-items:center;gap:6px;flex:1;min-width:0;
+}
+.drawer-sec-edit-btn{
+  background:none;border:none;color:rgba(196,90,30,.35);
+  font-size:.7rem;cursor:pointer;padding:0 3px;
+  transition:color .16s;flex-shrink:0;line-height:1;
+}
+.drawer-sec-edit-btn:hover{color:var(--terra);}
+.drawer-sec-name-input{
+  font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;
+  letter-spacing:.05em;color:var(--text);
+  background:rgba(255,255,255,.8);border:1px solid rgba(196,57,107,.3);
+  border-radius:5px;padding:3px 7px;outline:none;width:100%;
+  display:none;
+}
+.drawer-sec-name-input.visible{display:block;}
+
 </style>
 </head>
 <body>
@@ -1703,15 +1748,21 @@ function renderDrawer() {
       return grupos.includes(grupoUsuario);
     });
     if (!visibleItems.length) return '';
+    const si = menuData.sections.indexOf(sec);
     return `
       <div class="drawer-section">
         <button class="drawer-submenu-toggle" onclick="toggleSubmenu(this)">
-          <span style="display:flex;align-items:center;gap:10px">
+          <div class="drawer-sec-label-wrap">
             <span class="drawer-dot${sec.id==='corrente'?' mem':''}"></span>
-            ${sec.label}
-          </span>
+            <span id="drawer-sec-name-${si}">${sec.label}</span>
+            ${grupoUsuario === 'admin' ? `<button class="drawer-sec-edit-btn" onclick="drawerEditSecName(event,${si})" title="Editar nome">✎</button>` : ''}
+          </div>
           <span class="dsm-arrow">›</span>
         </button>
+        <input class="drawer-sec-name-input" id="drawer-sec-input-${si}"
+          value="${sec.label}"
+          onblur="drawerSaveSecName(${si})"
+          onkeydown="if(event.key==='Enter')drawerSaveSecName(${si});if(event.key==='Escape')drawerCancelSecName(${si})">
         <div class="drawer-submenu">
           ${visibleItems.map(item => renderDrawerItem(item)).join('')}
         </div>
@@ -1720,21 +1771,24 @@ function renderDrawer() {
 }
 
 function renderDrawerItem(item) {
-  const dot = `<span class="drawer-dot${item.type==='members'?' mem':''}"></span>`;
+  const desc = item.desc ? `<span class="drawer-card-desc">${item.desc}</span>` : '';
+  const inner = `<span class="drawer-card-name">${item.label}</span>${desc}`;
+
   if (item.type === 'internal') {
-    return `<button class="drawer-link" onclick="showPage('${item.page}');closeDrawer()">${dot}${item.label}</button>`;
+    return `<button class="drawer-card" onclick="showPage('${item.page}');closeDrawer()">${inner}</button>`;
   }
   if (item.type === 'members') {
     const u = window._getCurrentUser && window._getCurrentUser();
     return u
-      ? `<a class="drawer-link" href="${item.url}" target="_blank" rel="noopener" onclick="closeDrawer()">${dot}${item.label}</a>`
-      : `<button class="drawer-link" onclick="openLogin();closeDrawer()">${dot}${item.label}</button>`;
+      ? `<button class="drawer-card" onclick="window.open('${item.url}','_self');closeDrawer()">${inner}</button>`
+      : `<button class="drawer-card" onclick="openLogin();closeDrawer()">${inner}</button>`;
   }
-  // link externo — usa button com onclick em vez de <a href> para evitar navegação acidental
+  // blog interno
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
-    return `<button class="drawer-link" onclick="showPage('blog');closeDrawer()">${dot}${item.label}</button>`;
+    return `<button class="drawer-card" onclick="showPage('blog');closeDrawer()">${inner}</button>`;
   }
-  return `<button class="drawer-link" onclick="window.open('${item.url}','_blank');closeDrawer()">${dot}${item.label}</button>`;
+  // link externo
+  return `<button class="drawer-card" onclick="window.open('${item.url}','_blank');closeDrawer()">${inner}</button>`;
 }
 
 function toggleSubmenu(btn) {
@@ -1851,7 +1905,14 @@ function renderAdminPanel() {
   container.innerHTML = menuData.sections.map((sec, si) => `
     <div class="admin-section-block">
       <div class="admin-section-header">
-        <span class="admin-section-title">${sec.label}</span>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <input type="text" value="${sec.label}"
+            style="font-family:'Cinzel',serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;color:var(--terra);background:transparent;border:none;border-bottom:1px dashed transparent;outline:none;flex:1;min-width:0;transition:border-color .16s;"
+            onfocus="this.style.borderColor='var(--rosa)';this.style.background='rgba(196,57,107,.04)'"
+            onblur="this.style.borderColor='transparent';this.style.background='transparent';adminSaveSecLabel(${si},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()"
+            title="Clique para editar o nome da seção">
+        </div>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
       <div id="sortable-${si}" data-section="${si}">
@@ -2362,6 +2423,13 @@ async function salvarPerfilAdmin() {
   } catch(e) { status.textContent = 'Erro de conexão.'; }
 }
 
+
+function adminSaveSecLabel(si, newLabel) {
+  const v = (newLabel||'').trim();
+  if (!v || !menuData?.sections[si]) return;
+  menuData.sections[si].label = v;
+  renderDrawer();
+}
 
 function toggleItemMenu(si, ii) {
   menuData.sections[si].items[ii].showMenu = !menuData.sections[si].items[ii].showMenu;
@@ -3581,6 +3649,43 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') blogCloseModal({ target: document.getElementById('blog-modal-overlay') });
   if (e.target?.id === 'bm-comment-input' && (e.ctrlKey||e.metaKey) && e.key==='Enter') blogSubmitComment();
 });
+
+
+// ── Edição do nome da seção no drawer ──
+function drawerEditSecName(event, si) {
+  event.stopPropagation();
+  const nameEl  = document.getElementById(`drawer-sec-name-${si}`);
+  const inputEl = document.getElementById(`drawer-sec-input-${si}`);
+  if (!nameEl || !inputEl) return;
+  nameEl.style.display  = 'none';
+  inputEl.classList.add('visible');
+  inputEl.focus();
+  inputEl.select();
+}
+
+function drawerSaveSecName(si) {
+  const nameEl  = document.getElementById(`drawer-sec-name-${si}`);
+  const inputEl = document.getElementById(`drawer-sec-input-${si}`);
+  if (!nameEl || !inputEl) return;
+  const newLabel = inputEl.value.trim();
+  if (newLabel && menuData?.sections[si]) {
+    menuData.sections[si].label = newLabel;
+    nameEl.textContent = newLabel;
+    // atualiza painel admin se estiver aberto
+    renderAdminPanel();
+  }
+  nameEl.style.display = '';
+  inputEl.classList.remove('visible');
+}
+
+function drawerCancelSecName(si) {
+  const nameEl  = document.getElementById(`drawer-sec-name-${si}`);
+  const inputEl = document.getElementById(`drawer-sec-input-${si}`);
+  if (!nameEl || !inputEl) return;
+  inputEl.value = menuData?.sections[si]?.label || '';
+  nameEl.style.display = '';
+  inputEl.classList.remove('visible');
+}
 
 // inicializar
 loadMenu();
