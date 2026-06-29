@@ -77,7 +77,15 @@ header{position:relative;z-index:10;padding:40px 24px 8px;text-align:center;tran
 .btn-ghost{background:none;border:1px solid rgba(196,57,107,.2);border-radius:6px;color:rgba(196,57,107,.65);font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;padding:11px 20px;transition:all .2s;}
 .btn-ghost:hover{border-color:var(--rosa);color:var(--rosa)}
 
-/* header compacto quando logada — removido, header fica igual para todas */
+/* header compacto quando logada */
+body.logada header{padding:12px 24px 8px}
+body.logada .header-logo{max-height:28px;margin-bottom:0}
+body.logada .header-eyebrow,
+body.logada .ornamento,
+body.logada .header-title,
+body.logada .header-divider,
+body.logada .header-sub,
+body.logada .header-cta{display:none}
 
 /* drag and drop */
 .admin-item-row{cursor:grab}
@@ -106,6 +114,7 @@ header{position:relative;z-index:10;padding:40px 24px 8px;text-align:center;tran
 
 /* páginas internas */
 .page{display:none}.page.active{display:block}
+#page-inicio{display:block}
 .section-wrap{max-width:1000px;margin:0 auto;padding:52px 24px 200px}
 .section-wrap.narrow{max-width:720px}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
@@ -201,30 +210,31 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 
 /* ── HAMBURGUER + DRAWER ── */
 #menu-toggle{
-  display:none; /* oculto — o gatilho do drawer é a flechinha da barra */
+  position:fixed;top:16px;right:16px;z-index:390;
+  background:rgba(253,246,238,.92);border:1px solid var(--border);border-radius:10px;
+  width:42px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 2px 12px rgba(196,90,30,.12);backdrop-filter:blur(6px);transition:all .2s;
 }
-#menu-toggle-bars{display:none;}
-#menu-toggle-label{display:none;}
+#menu-toggle:hover{background:#fff;box-shadow:0 4px 16px rgba(196,57,107,.15)}
+#menu-toggle span{display:block;width:18px;height:1.5px;background:var(--terra);border-radius:2px;transition:all .3s}
 #menu-toggle.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
 #menu-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
 #menu-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
 #drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.45);backdrop-filter:blur(2px)}
 #drawer-overlay.open{display:block}
 #drawer{
-  position:fixed;top:0;left:0;right:0;z-index:360;
-  max-height:92vh;background:var(--creme);
-  border-bottom:1px solid var(--border);
-  box-shadow:0 8px 40px rgba(46,26,14,.18);
-  transform:translateY(-100%);transition:transform .35s cubic-bezier(.4,0,.2,1);
+  position:fixed;top:0;left:0;bottom:0;z-index:360;
+  width:min(300px,85vw);background:var(--creme);
+  border-right:1px solid var(--border);box-shadow:4px 0 32px rgba(46,26,14,.15);
+  transform:translateX(-100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
   overflow-y:auto;display:flex;flex-direction:column;
-  border-radius:0 0 20px 20px;
 }
-#drawer.open{transform:translateY(0)}
-.drawer-header{padding:16px 24px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#drawer.open{transform:translateX(0)}
+.drawer-header{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--terra);letter-spacing:.1em}
 .drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
 .drawer-close:hover{color:var(--rosa)}
-.drawer-section{padding:12px 24px 8px}
+.drawer-section{padding:18px 20px 4px}
 .drawer-section-label{
   font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px;
@@ -241,12 +251,14 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .drawer-link:last-child{border-bottom:none}
 .drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
 .drawer-dot.mem{background:rgba(196,57,107,.28)}
-.drawer-footer{padding:12px 24px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0;}.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
+.drawer-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;text-align:center}.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
 .drawer-submenu-toggle:hover{color:var(--rosa)}
 .drawer-submenu-toggle .dsm-arrow{font-size:.7rem;transition:transform .25s;color:var(--text-dim)}
 .drawer-submenu-toggle.open .dsm-arrow{transform:rotate(90deg)}
 .drawer-submenu{max-height:0;overflow:hidden;transition:max-height .3s ease;padding-left:18px}
 .drawer-submenu.open{max-height:600px}
+#page-admin{display:none}
+#page-admin.active{display:block}
 .admin-panel{max-width:680px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
 .admin-panel h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--text);margin-bottom:6px}
 .admin-panel .sub{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
@@ -407,22 +419,19 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   background:rgba(253,246,238,.96);
   border-bottom:1px solid var(--border);
   backdrop-filter:blur(8px);
-  padding:0;
+  padding:5px 60px;
   box-shadow:0 1px 8px rgba(196,90,30,.06);
-  cursor:pointer;
-  transition:background .2s;
 }
-#boas-vindas:hover{background:rgba(253,246,238,1);}
 #boas-vindas-inner{
   display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
-  max-width:700px;margin:0 auto;padding:5px 60px;
+  max-width:700px;margin:0 auto;
 }
 #bv-emoji{font-size:.85rem}
 #bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
 #bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
 #bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
 #bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
-body.logada{padding-top:44px}
+body.logada{padding-top:28px}
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -602,36 +611,30 @@ body.logada{padding-top:44px}
 .blog-add-slot{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:7px;color:rgba(255,255,255,.62);font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;cursor:pointer;transition:background .14s;display:inline-flex;align-items:center;gap:.35rem;}
 .blog-add-slot:hover{background:rgba(255,255,255,.12);}
 
-/* ── DRAWER GRID DE CARDS ── */
-.drawer-cards-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:8px;
-  padding:0 0 8px;
-}
+/* ── DRAWER ITENS CARD-STYLE ── */
 .drawer-card{
   display:flex;flex-direction:column;gap:2px;
-  padding:11px 13px;
-  background:rgba(255,255,255,.72);
+  padding:9px 12px;margin:3px 0;
+  background:rgba(255,255,255,.55);
   border:1px solid rgba(196,90,30,.1);
-  border-radius:10px;
+  border-radius:8px;
   cursor:pointer;transition:all .18s;
   text-align:left;width:100%;
   backdrop-filter:blur(3px);
 }
 .drawer-card:hover{
   background:#fff;
-  border-color:rgba(196,57,107,.25);
-  box-shadow:0 3px 12px rgba(196,57,107,.1);
-  transform:translateY(-2px);
+  border-color:rgba(196,57,107,.22);
+  box-shadow:0 2px 10px rgba(196,57,107,.08);
+  transform:translateY(-1px);
 }
 .drawer-card-name{
   font-family:'Cinzel',serif;font-size:.63rem;font-weight:600;
   letter-spacing:.05em;color:var(--text);line-height:1.3;
 }
 .drawer-card-desc{
-  font-family:'Crimson Pro',Georgia,serif;font-size:.8rem;
-  color:var(--text-dim);font-style:italic;line-height:1.35;
+  font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;
+  color:var(--text-dim);font-style:italic;line-height:1.3;
 }
 /* toggle de edição do nome da seção */
 .drawer-sec-label-wrap{
@@ -652,15 +655,6 @@ body.logada{padding-top:44px}
 }
 .drawer-sec-name-input.visible{display:block;}
 
-
-/* ── DRAWER GAVETÃO ── */
-#drawer-overlay{background:rgba(46,26,14,.35);backdrop-filter:blur(3px)}
-.drawer-logo{font-family:'Cinzel',serif;font-size:.88rem;font-weight:700;color:var(--terra);letter-spacing:.1em}
-.drawer-close{background:rgba(196,57,107,.08);border:1px solid rgba(196,57,107,.15);border-radius:8px;font-size:1.2rem;color:var(--text-dim);line-height:1;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
-.drawer-close:hover{background:var(--rosa-dim);color:var(--rosa);border-color:rgba(196,57,107,.3)}
-.drawer-section{padding:10px 0 4px}
-.drawer-section + .drawer-section{border-top:1px solid var(--border);padding-top:14px;}
-
 </style>
 </head>
 <body>
@@ -673,8 +667,7 @@ body.logada{padding-top:44px}
 
 <!-- HAMBURGUER -->
 <button id="menu-toggle" onclick="toggleDrawer()" aria-label="Menu">
-  <div id="menu-toggle-bars"><span></span><span></span><span></span></div>
-  <span id="menu-toggle-label">Menu</span>
+  <span></span><span></span><span></span>
 </button>
 
 <!-- DRAWER OVERLAY -->
@@ -683,14 +676,15 @@ body.logada{padding-top:44px}
 <!-- DRAWER LATERAL -->
 <div id="drawer">
   <div class="drawer-header">
-    <div>
-      <span class="drawer-logo">Bolhas de Luz</span>
-      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Nossa casa digital</div>
-    </div>
+    <span class="drawer-logo">Bolhas de Luz</span>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
   <div id="drawer-body"></div>
-  <div id="drawer-user-section" style="display:none;"></div>
+  <div id="drawer-user-section" style="display:none;padding:12px 20px;border-top:1px solid var(--border)">
+    <button class="drawer-link" onclick="showPage('perfil');closeDrawer()" style="color:var(--rosa)">
+      <span class="drawer-dot mem"></span>Meu Perfil
+    </button>
+  </div>
   <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
 </div>
 
@@ -769,16 +763,12 @@ body.logada{padding-top:44px}
       </div>
       <div id="proxima-sessao-loading" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.4)">carregando agenda...</div>
     </div>
-
-    <!-- hint do menu — visível só para não-logadas -->
-    <div id="menu-hint" style="padding-bottom:40px;">
-      <button id="menu-hint-btn" onclick="toggleDrawer()" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto;transition:opacity .2s;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">
-        <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--terra)">Nossa casa digital</div>
-        <svg width="20" height="12" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg" style="transition:transform .3s"><path d="M1 1l9 9 9-9" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round"/></svg>
-      </button>
-    </div>
   </header>
 
+  <div class="widgets-wrap">
+    <div class="widgets-label">Nossa casa digital</div>
+    <div class="widgets-grid" id="widgets-grid-dynamic"></div>
+  </div>
 </div>
 
 <!-- PÁGINA HISTÓRIA DA CASA -->
@@ -962,15 +952,34 @@ body.logada{padding-top:44px}
 
 <!-- PÁGINA TEXTOS -->
 <div id="page-textos" class="page">
-  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
+  <div class="section-wrap">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
-    <div class="eyebrow">Conteúdo do Terreiro</div>
+    <div class="eyebrow">Arquivos de Informações</div>
     <div class="section-title">Textos da Casa</div>
-    <p class="section-sub">Os textos do Bolhas de Luz estão no blog — com categorias, busca e comentários.</p>
-    <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:12px;padding:20px 24px;margin-bottom:28px;">
-      <div style="font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px;">✦ Conteúdo migrado</div>
-      <p style="font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.7;margin-bottom:16px;">Fundamentos, reflexões e ensinamentos da corrente agora ficam no Blog do Terreiro — com categorias, busca e comentários.</p>
-      <button onclick="showPage('blog')" class="btn-rosa" style="font-size:11px;">📖 Ir para o Blog do Terreiro →</button>
+    <p class="section-sub">Fundamentos, reflexões e ensinamentos escritos pela corrente do Bolhas de Luz.</p>
+    <div class="blog-note">✦ Os textos completos estão sendo migrados. Em breve disponíveis aqui.</div>
+    <div style="margin-bottom:20px">
+      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('todos')">Todos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer;margin-right:6px" onclick="filterBlog('fundamentos')">Fundamentos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer;background:var(--green-dim);border-color:var(--green-border);color:var(--green)" onclick="filterBlog('reflexoes')">Reflexões</span>
+    </div>
+    <div class="blog-grid">
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Que é Estar na Corrente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Macumba se Aprende na Macumba</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Medo Não — Respeito Sim</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Função de Vocês é Sentir</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Sonhos Solitários São Projeções</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Cuidar de Quem Cuida de Vocês</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Eles Viveram Entre Nós</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Início da Caminhada</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Umbanda é Tradição Oral — E Tem Raízes Mais Antigas do que Contam</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Passe em Roupa de Ausente</div><div class="blog-placeholder">Conteúdo em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">A História da Benção para Abrir Casa</div><div class="blog-placeholder">Conteúdo em breve</div></div>
     </div>
   </div>
 </div>
@@ -1050,22 +1059,16 @@ body.logada{padding-top:44px}
 </div>
 
 <!-- BOAS-VINDAS -->
-<div id="boas-vindas" onclick="toggleDrawer()">
-  <div id="boas-vindas-inner" style="padding:5px 60px;max-width:700px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;">
-    <img id="user-avatar" src="" alt="" onclick="event.stopPropagation();showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
     <span id="bv-emoji"></span>
     <span id="bv-nome"></span>
     <span id="bv-sep">·</span>
     <span id="bv-cargo"></span>
     <span id="bv-sep2">·</span>
     <span id="bv-tempo"></span>
-    <button id="user-logout-btn" onclick="event.stopPropagation();logoutGoogle()" style="margin-left:8px">Sair</button>
-  </div>
-  <!-- flechinha gatilho -->
-  <div style="text-align:center;padding:2px 0 5px;line-height:1;" id="bv-arrow">
-    <svg width="16" height="9" viewBox="0 0 16 9" fill="none" style="transition:transform .3s" id="bv-arrow-svg">
-      <path d="M1 1l7 7 7-7" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <button id="user-logout-btn" onclick="logoutGoogle()" style="margin-left:8px">Sair</button>
   </div>
 </div>
 
@@ -1273,6 +1276,93 @@ body.logada{padding-top:44px}
 
 <!-- MODAL NOSSA HISTÓRIA -->
 <!-- PÁGINA NOSSA HISTÓRIA -->
+<div id="page-historia" class="page">
+  <div class="section-wrap narrow" style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Fundação</div>
+    <div class="section-title">Nossa história</div>
+    <p class="section-sub">Da previsão de Exu Tranca Ruas até a conquista da sede própria.</p>
+    <div class="timeline">
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">Final de 2020</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>O Anúncio e a Previsão</h3><p>Exu Tranca Ruas previu a caminhada que estava por vir, anunciando a chegada dos axés, dos filhos e da futura casa.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">Fevereiro de 2021</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>O Encontro Inicial</h3><p>O destino trouxe o encontro de Vanessa com Anna, dando início real a esta jornada espiritual.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">Maio de 2021</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>A Manifestação de Vô Chico</h3><p>A espiritualidade se manifestou decisivamente com o nascimento de Vô Chico através da médium Vanessa.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">Outubro de 2021</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>Abertura das Portas</h3><p>Com a benção de Mãe Betânia, o Bolhas de Luz abriu suas portas oficialmente em um quarto improvisado.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">2021 — 2022</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>Sessões de Visita</h3><p>Tocando nas ruas e praças, indo em sessões de amigos — a casa deu seus primeiros passos e foi estruturando seu calendário.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">2022 — 2023</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>O Período no "Empilhadeiro"</h3><p>Anos de desenvolvimento em espaço reduzido, com sessões de tambor nas ruas torcendo pra não chover — e mesmo assim a casa foi crescendo até não caber mais em si.</p></div></div>
+      <div class="timeline-item"><div class="timeline-date"><div class="timeline-date-label">Março de 2024</div><div class="timeline-dot"></div></div><div class="timeline-content"><h3>A Conquista da Sede Própria</h3><p>Os guias autorizaram a busca por uma sede física. O terreiro estabeleceu seu salão e chão na Rua Ary Tarrago, 2155.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA TEXTOS -->
+<div id="page-textos" class="page">
+  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:680px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Arquivos de Informações</div>
+    <div class="section-title">Textos da Casa</div>
+    <p class="section-sub">Fundamentos, reflexões e ensinamentos da corrente do Bolhas de Luz.</p>
+    <div class="blog-note">✦ Os textos completos estão sendo migrados. Em breve disponíveis aqui.</div>
+    <div style="margin-bottom:16px;display:flex;gap:6px;flex-wrap:wrap">
+      <span class="widget-tag tag-pub" style="cursor:pointer" onclick="filterBlog('todos')">Todos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer" onclick="filterBlog('fundamentos')">Fundamentos</span>
+      <span class="widget-tag tag-pub" style="cursor:pointer;background:var(--green-dim);border-color:var(--green-border);color:var(--green)" onclick="filterBlog('reflexoes')">Reflexões</span>
+    </div>
+    <div class="blog-grid">
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Causa e Consequência — A Relação com a Espiritualidade</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Sessão é um Momento de Atendimento Ancestral</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Que é Estar na Corrente</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Macumba se Aprende na Macumba</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Medo Não — Respeito Sim</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Função de Vocês é Sentir</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Sonhos Solitários São Projeções</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Vai Ser Forte. Vai Cansar. E Vale Cada Segundo</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Cuidar de Quem Cuida de Vocês</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">Eles Viveram Entre Nós</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">O Início da Caminhada</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">A Umbanda é Tradição Oral</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Imagens, Cores e Quartinhas — Antes de Comprar, Pergunte</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Desenvolvimento, Humildade e Confiança nos Guias</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="fundamentos"><span class="blog-cat fundamentos">Fundamentos</span><div class="blog-title">Passe em Roupa de Ausente</div><div class="blog-placeholder">Em breve</div></div>
+      <div class="blog-card" data-cat="reflexoes"><span class="blog-cat reflexoes">Reflexões</span><div class="blog-title">A História da Benção para Abrir Casa</div><div class="blog-placeholder">Em breve</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PÁGINA APOIE -->
+<div id="page-apoie" class="page">
+  <div style="position:relative;z-index:10;padding:40px 20px 200px;max-width:500px;margin:0 auto">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Contribuição</div>
+    <div class="section-title">Apoie o Terreiro</div>
+    <p class="section-sub">Cada contribuição sustenta nossa casa, nossas sessões e nossa corrente. Obrigada pelo axé! 🌸</p>
+    <div style="background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:10px;padding:16px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Doação via PIX</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Qualquer valor é bem-vinda e será revertido às contas e manutenção da casa.</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px">
+        <div style="flex:1">
+          <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px">Chave PIX</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--text)">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix()" id="btn-copiar-pix" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 14px;cursor:pointer;white-space:nowrap;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+    <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:10px;padding:16px 18px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🍿 Pipoca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌽 Canjica branca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌾 Canjica amarela</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫘 Feijão</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌿 Lentilha</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫙 Óleo</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🕯️ Velas brancas</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌸 Flores</div>
+      </div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:10px">Na dúvida sobre velas: branco nunca erra! 🕯️</p>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL FICHA PESSOAL -->
 <div id="modal-ficha-pessoal-overlay" onclick="if(event.target===this)fecharFichaPessoal()">
@@ -1623,7 +1713,7 @@ function getDefaultMenu() {
       { id: 'publico', label: 'Público', items: [
         { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
         { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true },
-        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'internal', page: 'calendario', showCard: true, showMenu: true },
+        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
         { id: 'textos',   label: 'Textos da Casa',    type: 'internal', page: 'textos',   showCard: true, showMenu: true },
         { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
         { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
@@ -1650,55 +1740,34 @@ function renderDrawer() {
     grupoUsuario = pd.grupo || 'visitante';
     if (user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
   }
-  // card de perfil (logada) ou login (não-logada)
-  const perfilCard = grupoUsuario !== 'publico'
-    ? `<button class="drawer-card" onclick="showPage('perfil');closeDrawer()" style="border-color:rgba(196,57,107,.25);background:linear-gradient(135deg,rgba(196,57,107,.07),rgba(196,57,107,.02));">
-        <span class="drawer-card-name" style="color:var(--rosa);">✦ Meu Perfil</span>
-        <span class="drawer-card-desc">Sua jornada espiritual</span>
-      </button>`
-    : `<button class="drawer-card" onclick="openLogin();closeDrawer()" style="border-color:rgba(196,57,107,.2);background:linear-gradient(135deg,rgba(196,57,107,.06),rgba(196,57,107,.01));">
-        <span class="drawer-card-name" style="color:var(--rosa);">🌸 Entrar</span>
-        <span class="drawer-card-desc">Área das filhas da casa</span>
-      </button>`;
-
-  // cards exclusivos do admin
-  const adminCards = grupoUsuario === 'admin' ? `
-    <button class="drawer-card" onclick="showPage('admin');closeDrawer()" style="border-top:2px solid var(--rosa);border-color:rgba(196,57,107,.3);background:linear-gradient(135deg,rgba(196,57,107,.09),rgba(196,57,107,.03));">
-      <span class="drawer-card-name" style="color:var(--rosa);">⚙ Painel Admin</span>
-      <span class="drawer-card-desc">Gerencie menu, perfis e sessões</span>
-    </button>
-    <button class="drawer-card" onclick="iniciarSimulacao();closeDrawer()" style="border-color:rgba(42,122,96,.25);background:linear-gradient(135deg,rgba(42,122,96,.07),rgba(42,122,96,.02));">
-      <span class="drawer-card-name" style="color:var(--green);">👁 Simular visão</span>
-      <span class="drawer-card-desc">Ver o site como outra usuária</span>
-    </button>` : '';
-
-  body.innerHTML = `<div style="padding:8px 24px 16px;">` +
-    menuData.sections.map(sec => {
-      const visibleItems = sec.items.filter(i => {
-        if (i.showMenu === false) return false;
-        if (grupoUsuario === 'admin') return true;
-        const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
-        return grupos.includes(grupoUsuario);
-      });
-      if (!visibleItems.length) return '';
-      const si = menuData.sections.indexOf(sec);
-      return `
-        <div class="drawer-section">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-            <span style="font-family:'Cinzel',serif;font-size:.52rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,90,30,.5);">${sec.label}</span>
-            ${grupoUsuario === 'admin' ? `<button class="drawer-sec-edit-btn" onclick="drawerEditSecName(event,${si})" title="Editar nome" style="font-size:.65rem;">✎</button>` : ''}
-            <input class="drawer-sec-name-input" id="drawer-sec-input-${si}" value="${sec.label}"
-              onblur="drawerSaveSecName(${si})"
-              onkeydown="if(event.key==='Enter')drawerSaveSecName(${si});if(event.key==='Escape')drawerCancelSecName(${si})">
+  body.innerHTML = menuData.sections.map(sec => {
+    const visibleItems = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
+      return grupos.includes(grupoUsuario);
+    });
+    if (!visibleItems.length) return '';
+    const si = menuData.sections.indexOf(sec);
+    return `
+      <div class="drawer-section">
+        <button class="drawer-submenu-toggle" onclick="toggleSubmenu(this)">
+          <div class="drawer-sec-label-wrap">
+            <span class="drawer-dot${sec.id==='corrente'?' mem':''}"></span>
+            <span id="drawer-sec-name-${si}">${sec.label}</span>
+            ${grupoUsuario === 'admin' ? `<button class="drawer-sec-edit-btn" onclick="drawerEditSecName(event,${si})" title="Editar nome">✎</button>` : ''}
           </div>
-          <div class="drawer-cards-grid">
-            ${sec === menuData.sections[0] ? perfilCard : ''}
-            ${sec === menuData.sections[0] ? adminCards : ''}
-            ${visibleItems.map(item => renderDrawerItem(item)).join('')}
-          </div>
-        </div>`;
-    }).join('') +
-  `</div>`;
+          <span class="dsm-arrow">›</span>
+        </button>
+        <input class="drawer-sec-name-input" id="drawer-sec-input-${si}"
+          value="${sec.label}"
+          onblur="drawerSaveSecName(${si})"
+          onkeydown="if(event.key==='Enter')drawerSaveSecName(${si});if(event.key==='Escape')drawerCancelSecName(${si})">
+        <div class="drawer-submenu">
+          ${visibleItems.map(item => renderDrawerItem(item)).join('')}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 function renderDrawerItem(item) {
@@ -1718,10 +1787,6 @@ function renderDrawerItem(item) {
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
     return `<button class="drawer-card" onclick="showPage('blog');closeDrawer()">${inner}</button>`;
   }
-  // calendário externo → interno
-  if (item.url && item.url.includes('calendario-drf.pages.dev')) {
-    return `<button class="drawer-card" onclick="showPage('calendario');closeDrawer()">${inner}</button>`;
-  }
   // link externo
   return `<button class="drawer-card" onclick="window.open('${item.url}','_blank');closeDrawer()">${inner}</button>`;
 }
@@ -1736,8 +1801,6 @@ function toggleSubmenu(btn) {
 
 // ── RENDERIZAR CARDS ──
 function renderCards() {
-  // cards removidos da homepage — navegação agora é pelo drawer
-  return;
   const grid = document.getElementById('widgets-grid-dynamic');
   if (!grid || !menuData) return;
   let html = '';
@@ -2451,6 +2514,7 @@ document.addEventListener('keydown', e => {
 function showPage(name) {
   // normaliza — remove barra inicial se houver
   name = name.replace(/^\//, '');
+  // história, sessões, textos, apoie → modais
   // sessoes → calendário interno
   if (name === 'sessoes') { showPage('calendario'); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2459,9 +2523,6 @@ function showPage(name) {
     p.classList.add('active');
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
-  // hint da homepage só aparece na página início
-  const hint = document.getElementById('menu-hint');
-  if (hint) hint.style.display = name === 'inicio' ? '' : 'none';
   if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
@@ -2475,29 +2536,17 @@ function showPage(name) {
   }
 }
 function toggleDrawer() {
-  const d=document.getElementById('drawer');
-  const o=document.getElementById('drawer-overlay');
-  const t=document.getElementById('menu-toggle');
-  const arrow=document.getElementById('bv-arrow-svg');
+  const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
   const open=d.classList.contains('open');
+  // fecha painel lateral de guias se estiver aberto
   if (!open) guiasFecharPainel?.();
-  d.classList.toggle('open');
-  o.classList.toggle('open');
-  if (t) t.classList.toggle('open');
-  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
-  const hintArrow = document.getElementById('hint-arrow-svg');
-  if (hintArrow) hintArrow.style.transform = open ? '' : 'rotate(180deg)';
+  d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
   document.body.style.overflow=open?'':'hidden';
 }
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
-  const t=document.getElementById('menu-toggle');
-  if (t) t.classList.remove('open');
-  const arrow=document.getElementById('bv-arrow-svg');
-  if (arrow) arrow.style.transform='';
-  const hintArrow2 = document.getElementById('hint-arrow-svg');
-  if (hintArrow2) hintArrow2.style.transform='';
+  document.getElementById('menu-toggle').classList.remove('open');
   document.body.style.overflow='';
 }
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
@@ -3266,9 +3315,7 @@ async function blogSaveCats() {
 function blogRenderList() {
   const el = document.getElementById('blog-post-list');
   if (!el) return;
-  const isAdmList = blogIsAdmin();
-  const listaBase = _blogPosts.filter(p => isAdmList || !p.hidden);
-  const lista = _blogFilter === 'todas' ? listaBase : listaBase.filter(p => p.category === _blogFilter);
+  const lista = _blogFilter === 'todas' ? _blogPosts : _blogPosts.filter(p => p.category === _blogFilter);
   if (!lista.length) {
     el.innerHTML = '<p class="blog-empty">Nenhum post nesta categoria ainda. 🌙</p>';
     return;
@@ -3279,9 +3326,8 @@ function blogRenderList() {
   const isAdm = blogIsAdmin();
   el.innerHTML = page.map(p => `
     <div class="blog-post-card" data-pid="${blogEscAttr(p.id)}">
-      <div class="blog-card-top" style="${p.hidden && isAdm ? 'background:rgba(100,80,80,.15);' : ''}">
+      <div class="blog-card-top">
         <span class="blog-cat-badge">${p.category||'Geral'}</span>
-        ${p.hidden && isAdm ? '<span style="font-family:\'Cinzel\',serif;font-size:.52rem;background:rgba(100,80,80,.15);color:rgba(150,100,100,.8);border-radius:20px;padding:2px 8px;border:1px solid rgba(150,100,100,.2);">🙈 oculto</span>' : ''}
         <span style="font-size:.67rem;color:var(--text-dim);">✍️ ${p.author||BLOG_AUTHOR}</span>
         <span class="blog-post-date">${p.date||''}</span>
       </div>
@@ -3294,8 +3340,6 @@ function blogRenderList() {
         <div style="display:flex;align-items:center;gap:.5rem;">
           ${isAdm ? `<div class="blog-admin-btns">
             <button class="blog-btn-edit" data-action="edit" data-pid="${blogEscAttr(p.id)}">Editar</button>
-            <button class="blog-btn-edit" data-action="toggle-hidden" data-pid="${blogEscAttr(p.id)}" title="${p.hidden ? 'Reexibir post' : 'Ocultar post'}"
-              style="${p.hidden ? 'border-color:rgba(196,57,107,.4);color:var(--rosa);' : ''}">${p.hidden ? '👁 Exibir' : '🙈 Ocultar'}</button>
             <button class="blog-btn-del" data-action="del" data-pid="${blogEscAttr(p.id)}">Excluir</button>
           </div>` : ''}
           <span class="blog-read-more">Ler mais →</span>
@@ -3310,14 +3354,12 @@ function blogRenderList() {
     </div>
   </div>`;
   el.onclick = (e) => {
-    const del    = e.target.closest("[data-action='del']");
-    const edit   = e.target.closest("[data-action='edit']");
-    const toggle = e.target.closest("[data-action='toggle-hidden']");
-    const card   = e.target.closest('.blog-post-card');
-    if (del)    { e.stopPropagation(); blogDeletePost(del.dataset.pid); return; }
-    if (toggle) { e.stopPropagation(); blogToggleHidden(toggle.dataset.pid); return; }
-    if (edit)   { e.stopPropagation(); blogEditInSlot(edit.dataset.pid); return; }
-    if (card)   { blogOpenPost(card.dataset.pid); }
+    const del  = e.target.closest("[data-action='del']");
+    const edit = e.target.closest("[data-action='edit']");
+    const card = e.target.closest('.blog-post-card');
+    if (del)  { e.stopPropagation(); blogDeletePost(del.dataset.pid); return; }
+    if (edit) { e.stopPropagation(); blogEditInSlot(edit.dataset.pid); return; }
+    if (card) { blogOpenPost(card.dataset.pid); }
   };
   blogRenderSidebar();
 }
@@ -3355,16 +3397,6 @@ async function blogDeletePost(id) {
   if (!confirm('Excluir este post?')) return;
   try { await window._blogDeletePost(id); showToast('Excluído.'); }
   catch(e) { showToast('Erro ao excluir.', true); }
-}
-
-async function blogToggleHidden(id) {
-  const p = _blogPosts.find(x => x.id === id);
-  if (!p) return;
-  const novoPerfil = { ...p, hidden: !p.hidden };
-  try {
-    await window._blogSavePosts([novoPerfil]);
-    showToast(novoPerfil.hidden ? '🙈 Post ocultado — visível só para admin.' : '👁 Post reexibido para todas.');
-  } catch(e) { showToast('Erro ao salvar.', true); }
 }
 
 function blogEditInSlot(id) {
@@ -3494,10 +3526,6 @@ function blogAddSlot(data = {}) {
         </select>
         <input type="date" class="blog-slot-input blog-slot-date" id="${id}-date" value="${data.date||today}">
       </div>
-      <label style="display:flex;align-items:center;gap:4px;color:rgba(255,255,255,.5);font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap;flex-shrink:0;">
-        <input type="checkbox" id="${id}-hidden" style="accent-color:var(--rosa);width:13px;height:13px;">
-        Ocultar
-      </label>
       <button class="blog-slot-rm" onclick="blogRemoveSlot('${id}')">✕</button>
     </div>
     <div class="blog-slot-body">
@@ -3582,9 +3610,8 @@ async function blogPublishAll() {
       .replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-')
       + '-' + dateVal.replace(/-/g,'');
     const [y,m,d] = dateVal.split('-');
-    const hidden = document.getElementById(`${id}-hidden`)?.checked || false;
     toSave.push({ id:slug, title, category:cat, body, excerpt, raw,
-      date:`${d}/${m}/${y}`, dateSort:dateVal, author:BLOG_AUTHOR, hidden });
+      date:`${d}/${m}/${y}`, dateSort:dateVal, author:BLOG_AUTHOR });
   });
   if (!toSave.length) { showToast('Nenhum slot com título.', true); btn.disabled=false; spin.style.display='none'; return; }
   try {
@@ -4179,9 +4206,6 @@ function atualizarBoasVindas() {
 
   banner.style.display = 'block';
   document.body.classList.add('logada');
-  // oculta hint da homepage quando a barra de boas-vindas aparece
-  const hint = document.getElementById('menu-hint');
-  if (hint) hint.style.display = 'none';
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
 
@@ -4288,8 +4312,6 @@ window.loginGoogle = async function() {
 window.logoutGoogle = async function() {
   await signOut(auth);
   showPage('inicio');
-  const hint3 = document.getElementById('menu-hint');
-  if (hint3) hint3.style.display = '';
 };
 
 // ── CARREGAR PERFIL ──
