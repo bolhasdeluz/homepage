@@ -1467,9 +1467,13 @@ function renderCards() {
   const grid = document.getElementById('widgets-grid-dynamic');
   if (!grid || !menuData) return;
   let html = '';
-  // card admin fixo — sempre visível para bolhasdeluz@gmail.com
+
+  // em modo simulação, nunca mostra card admin
   const userNow = window._getCurrentUser && window._getCurrentUser();
-  if (userNow && userNow.email === 'bolhasdeluz@gmail.com') {
+  const emSimulacao = _modoSimulacao !== null;
+  const ehAdmin = !emSimulacao && userNow && userNow.email === 'bolhasdeluz@gmail.com';
+
+  if (ehAdmin) {
     html += `<a class="widget" href="#" onclick="showPage('admin');return false" style="border-top:2px solid var(--rosa)">
       <div class="widget-name">⚙ Painel Admin</div>
       <div class="widget-desc">Gerencie menu, perfis e sessões</div>
@@ -1488,7 +1492,8 @@ function renderCards() {
       if (logada) {
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         grupoUsuario = pd.grupo || 'visitante';
-        if (user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+        // só é admin se NÃO estiver simulando
+        if (!emSimulacao && user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
       }
 
       // verifica se o item é visível para o grupo
@@ -1496,29 +1501,24 @@ function renderCards() {
       if (grupoUsuario === 'admin') {
         // admin vê tudo
       } else if (!grupos.includes(grupoUsuario)) {
-        return; // não visível para este grupo
+        return;
       }
       const isMem = item.type === 'members';
 
-      // widget especial: historia → Sua História quando logada
+      // widget especial: historia
       if (item.id === 'historia') {
-        const user = window._getCurrentUser && window._getCurrentUser();
-        const logada = !!user;
-        // não logada → Nossa História pública
         if (!logada) {
           html += `<a class="widget" href="#" onclick="showPage('historia');return false"><div class="widget-name">Nossa História</div><div class="widget-desc">A fundação do Bolhas de Luz</div><span class="widget-tag tag-pub">público</span></a>`;
           return;
         }
-        // logada → verifica se o grupo pode ver Sua História
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         const grupoUser = pd.grupo || 'visitante';
-        const isAdmin = user.email === 'bolhasdeluz@gmail.com';
-        if (!isAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
-          // grupo não tem acesso — mostra Nossa História
+        const isAdminReal = ehAdmin;
+        if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) {
           html += `<a class="widget" href="#" onclick="showPage('historia');return false"><div class="widget-name">Nossa História</div><div class="widget-desc">A fundação do Bolhas de Luz</div><span class="widget-tag tag-pub">público</span></a>`;
           return;
         }
-        html += `<a class="widget" href="#" onclick="showSuaHistoria();return false"><div class="widget-name">Sua História</div><div class="widget-desc">Sua jornada espiritual na casa</div><span class="widget-tag tag-mem">interno</span></a>`;
+        html += `<a class="widget" href="#" onclick="showSuaHistoria();return false"><div class="widget-name">Minha História</div><div class="widget-desc">Sua jornada espiritual na casa</div><span class="widget-tag tag-mem">interno</span></a>`;
         return;
       }
 
@@ -1531,12 +1531,10 @@ function renderCards() {
         return;
       }
       if (item.id === 'filhas') {
-        const user = window._getCurrentUser && window._getCurrentUser();
-        if (!user) {
+        if (!logada) {
           html += `<a class="widget" href="#" onclick="openLogin();return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-mem">interno</span></a>`;
-        } else if (user.email === 'bolhasdeluz@gmail.com') {
-          html += `<a class="widget" href="#" onclick="showPage('admin');return false"><div class="widget-name">Painel Admin</div><div class="widget-desc">Gestão da casa</div><span class="widget-tag tag-mem">admin</span></a>`;
         } else {
+          // nunca mostra "Painel Admin" em simulação
           html += `<a class="widget" href="#" onclick="window.showSuaHistoria();return false"><div class="widget-name">Minha Ficha</div><div class="widget-desc">Sua história espiritual</div><span class="widget-tag tag-mem">interno</span></a>`;
         }
         return;
