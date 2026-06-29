@@ -202,19 +202,10 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 
 /* ── HAMBURGUER + DRAWER ── */
 #menu-toggle{
-  position:fixed;top:14px;right:14px;z-index:390;
-  background:var(--rosa);border:none;border-radius:12px;
-  width:auto;height:auto;padding:9px 14px 9px 12px;
-  display:flex;flex-direction:row;align-items:center;gap:9px;
-  box-shadow:0 3px 16px rgba(196,57,107,.35);backdrop-filter:blur(6px);transition:all .2s;
+  display:none; /* oculto — o gatilho do drawer é a flechinha da barra */
 }
-#menu-toggle:hover{background:var(--rosa-l);box-shadow:0 5px 20px rgba(196,57,107,.45);transform:translateY(-1px)}
-#menu-toggle-bars{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;}
-#menu-toggle span{display:block;width:16px;height:1.5px;background:#fff;border-radius:2px;transition:all .3s}
-#menu-toggle-label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#fff;line-height:1;}
-#menu-toggle.open #menu-toggle-bars span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
-#menu-toggle.open #menu-toggle-bars span:nth-child(2){opacity:0;transform:scaleX(0)}
-#menu-toggle.open #menu-toggle-bars span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+#menu-toggle-bars{display:none;}
+#menu-toggle-label{display:none;}
 #menu-toggle.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
 #menu-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
 #menu-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
@@ -419,19 +410,22 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   background:rgba(253,246,238,.96);
   border-bottom:1px solid var(--border);
   backdrop-filter:blur(8px);
-  padding:5px 60px;
+  padding:0;
   box-shadow:0 1px 8px rgba(196,90,30,.06);
+  cursor:pointer;
+  transition:background .2s;
 }
+#boas-vindas:hover{background:rgba(253,246,238,1);}
 #boas-vindas-inner{
   display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;
-  max-width:700px;margin:0 auto;
+  max-width:700px;margin:0 auto;padding:5px 60px;
 }
 #bv-emoji{font-size:.85rem}
 #bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
 #bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
 #bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
 #bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
-body.logada{padding-top:28px}
+body.logada{padding-top:44px}
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -779,11 +773,11 @@ body.logada{padding-top:28px}
       <div id="proxima-sessao-loading" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.4)">carregando agenda...</div>
     </div>
 
-    <!-- hint do menu -->
+    <!-- hint do menu — visível só para não-logadas -->
     <div id="menu-hint" style="padding-bottom:40px;">
-      <button onclick="toggleDrawer()" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto;opacity:.55;transition:opacity .2s;" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='.55'">
+      <button id="menu-hint-btn" onclick="toggleDrawer()" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto;transition:opacity .2s;opacity:.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">
         <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--terra)">Nossa casa digital</div>
-        <svg width="20" height="12" viewBox="0 0 20 12" fill="none"><path d="M1 1l9 9 9-9" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <svg width="20" height="12" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg" style="transition:transform .3s"><path d="M1 1l9 9 9-9" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round"/></svg>
       </button>
     </div>
   </header>
@@ -1059,16 +1053,22 @@ body.logada{padding-top:28px}
 </div>
 
 <!-- BOAS-VINDAS -->
-<div id="boas-vindas">
-  <div id="boas-vindas-inner">
-    <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
+<div id="boas-vindas" onclick="toggleDrawer()">
+  <div id="boas-vindas-inner" style="padding:5px 60px;max-width:700px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;">
+    <img id="user-avatar" src="" alt="" onclick="event.stopPropagation();showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
     <span id="bv-emoji"></span>
     <span id="bv-nome"></span>
     <span id="bv-sep">·</span>
     <span id="bv-cargo"></span>
     <span id="bv-sep2">·</span>
     <span id="bv-tempo"></span>
-    <button id="user-logout-btn" onclick="logoutGoogle()" style="margin-left:8px">Sair</button>
+    <button id="user-logout-btn" onclick="event.stopPropagation();logoutGoogle()" style="margin-left:8px">Sair</button>
+  </div>
+  <!-- flechinha gatilho -->
+  <div style="text-align:center;padding:2px 0 5px;line-height:1;" id="bv-arrow">
+    <svg width="16" height="9" viewBox="0 0 16 9" fill="none" style="transition:transform .3s" id="bv-arrow-svg">
+      <path d="M1 1l7 7 7-7" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
 </div>
 
@@ -2516,17 +2516,29 @@ function showPage(name) {
   }
 }
 function toggleDrawer() {
-  const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
+  const d=document.getElementById('drawer');
+  const o=document.getElementById('drawer-overlay');
+  const t=document.getElementById('menu-toggle');
+  const arrow=document.getElementById('bv-arrow-svg');
   const open=d.classList.contains('open');
-  // fecha painel lateral de guias se estiver aberto
   if (!open) guiasFecharPainel?.();
-  d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
+  d.classList.toggle('open');
+  o.classList.toggle('open');
+  if (t) t.classList.toggle('open');
+  if (arrow) arrow.style.transform = open ? '' : 'rotate(180deg)';
+  const hintArrow = document.getElementById('hint-arrow-svg');
+  if (hintArrow) hintArrow.style.transform = open ? '' : 'rotate(180deg)';
   document.body.style.overflow=open?'':'hidden';
 }
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
-  document.getElementById('menu-toggle').classList.remove('open');
+  const t=document.getElementById('menu-toggle');
+  if (t) t.classList.remove('open');
+  const arrow=document.getElementById('bv-arrow-svg');
+  if (arrow) arrow.style.transform='';
+  const hintArrow2 = document.getElementById('hint-arrow-svg');
+  if (hintArrow2) hintArrow2.style.transform='';
   document.body.style.overflow='';
 }
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
@@ -4208,6 +4220,9 @@ function atualizarBoasVindas() {
 
   banner.style.display = 'block';
   document.body.classList.add('logada');
+  // oculta hint da homepage quando a barra de boas-vindas aparece
+  const hint = document.getElementById('menu-hint');
+  if (hint) hint.style.display = 'none';
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
 
@@ -4314,6 +4329,8 @@ window.loginGoogle = async function() {
 window.logoutGoogle = async function() {
   await signOut(auth);
   showPage('inicio');
+  const hint3 = document.getElementById('menu-hint');
+  if (hint3) hint3.style.display = '';
 };
 
 // ── CARREGAR PERFIL ──
