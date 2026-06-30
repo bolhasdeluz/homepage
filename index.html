@@ -578,6 +578,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .perfil-aviso{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:11px 15px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--rosa);margin-bottom:16px;display:none}
 .perfil-msg-ok{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;color:var(--green);margin-top:10px;display:none}
 
+/* ── CORTES ADICIONAIS ── */
+.mh-corte-card{background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:relative}
+.mh-corte-num{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
+.mh-corte-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:480px){.mh-corte-grid{grid-template-columns:1fr}}
+.mh-corte-grid label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px}
+.mh-corte-grid .valor{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text)}
+.mh-corte-del{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(184,64,64,.4);font-size:.85rem;cursor:pointer;padding:2px 6px;transition:color .2s}
+.mh-corte-del:hover{color:#b84040}
+.mh-corte-empty{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:10px 0}
+
 /* estado de login no header */
 #user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);cursor:pointer;display:none}
 #user-avatar-wrap{position:fixed;top:16px;left:16px;z-index:400;display:none;align-items:center;gap:8px}
@@ -933,6 +944,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="dash-progresso" id="dash-progresso" style="display:none">
         <div class="dash-progresso-top"><span>Caminhada de 7 anos</span><span id="dash-progresso-pct"></span></div>
         <div class="dash-progresso-bar"><div class="dash-progresso-fill" id="dash-progresso-fill" style="width:0%"></div></div>
+        <div style="margin-top:6px;font-family:'Crimson Pro',Georgia,serif;font-size:.74rem;font-style:italic;color:rgba(255,255,255,.75)" id="dash-progresso-msg"></div>
       </div>
     </div>
 
@@ -1065,6 +1077,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Cruzamentos e Axés</div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
+          </div>
+          <!-- Cortes Adicionais (2º em diante) -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Cortes Adicionais</div>
+              <button id="mh-cortes-btn-add" onclick="mhAdicionarCorte()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar corte</button>
+            </div>
+            <div id="mh-cortes-lista" style="display:flex;flex-direction:column;gap:10px"></div>
           </div>
           <!-- Terreiro Cacique -->
           <div id="mh-bloco-terreiro" style="display:none;background:#fff;border:1px solid rgba(74,111,165,.2);border-left:3px solid #4a6fa5;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(74,111,165,.08)">
@@ -1572,6 +1592,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div><label class="form-label">Data — Afilhada 1</label><input type="date" class="form-input" id="cp-afilhada_1_data"></div>
       <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" placeholder="Nome"></div>
       <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
+      <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
+      <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
+      <div><label class="form-label">1º Corte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-corte_1_galinhas" placeholder="0"></div>
+      <div><label class="form-label">1º Corte — Galos</label><input type="number" min="0" class="form-input" id="cp-corte_1_galos" placeholder="0"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Guias e Guardiões</div>
@@ -1592,12 +1616,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Cruzamentos e Axés</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div><label class="form-label">Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
       <div><label class="form-label">Mata</label><input type="date" class="form-input" id="cp-cruz_mata"></div>
       <div><label class="form-label">Praia</label><input type="date" class="form-input" id="cp-cruz_praia"></div>
       <div><label class="form-label">Rio/Cachoeira</label><input type="date" class="form-input" id="cp-cruz_rio"></div>
       <div><label class="form-label">Pedreira</label><input type="date" class="form-input" id="cp-cruz_pedreira"></div>
-      <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
     </div>
 
     <!-- CAMPOS CACIQUE -->
@@ -2490,9 +2512,9 @@ async function abrirFicha(email) {
     if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
     const ficha = document.getElementById('mf-body-ficha');
     ficha.innerHTML =
-      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data']) +
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
-      mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1']) +
+      mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
       (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
         <div class="mf-section"><div class="mf-section-title">🌸 Boas-vindas</div>
           <div class="mf-grid">
@@ -2568,9 +2590,9 @@ function mfTab(tab, btn) {
 
 // ── CRIAR / EDITAR PERFIL ADMIN ──
 const cpCampos = {
-  historia:     ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data'],
+  historia:     ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1','corte_1_galinhas','corte_1_galos'],
   guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
-  cruzamentos:  ['cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1']
+  cruzamentos:  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']
 };
 
 function abrirCriarPerfil(emailParaEditar) {
@@ -4165,6 +4187,9 @@ function renderMinhaHistoria(p, user) {
   renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {});
   renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', p.cruzamentos || {});
 
+  // cortes adicionais
+  mhRenderCortes(p.cortes || [], false);
+
   // linha do tempo
   renderTimeline(p);
 }
@@ -4193,12 +4218,13 @@ function renderTimeline(p, elId) {
     { key:'preto_velho_data',label:'Preto Velho',           cor:'#8a8a9a', src:'guias',   nomeKey:'preto_velho',nomeSrc:'guias' },
     { key:'cigana_data',     label:'Cigana',                cor:'#c9963c', src:'guias',   nomeKey:'cigana',     nomeSrc:'guias' },
     { key:'cosme_data',      label:'Cosme',                 cor:'#4a6fa5', src:'guias',   nomeKey:'cosme',      nomeSrc:'guias' },
-    { key:'cruz_conga',      label:'Conga',                 cor:'#5a8a5a', src:'cruz' },
     { key:'cruz_mata',       label:'Mata',                  cor:'#4a7a4a', src:'cruz' },
     { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz' },
     { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz' },
     { key:'cruz_pedreira',   label:'Pedreira',              cor:'#8a7a6a', src:'cruz' },
-    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'cruz' },
+    { key:'cruz_conga',      label:'Conga',                 cor:'#5a8a5a', src:'historia' },
+    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia',
+      nomeFn:(dados)=>{ const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
 
   const srcs = { historia: hist, guias, cruz, cacique: p.cacique || {} };
@@ -4208,8 +4234,20 @@ function renderTimeline(p, elId) {
     const data = dados[def.key] || '';
     if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const nomeSrc = def.nomeSrc ? srcs[def.nomeSrc] : {};
-    const nome = def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '';
+    const nome = def.nomeFn ? def.nomeFn(dados) : (def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '');
     eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
+  });
+
+  // cortes adicionais (2º em diante) — vêm do array p.cortes
+  (p.cortes || []).forEach((c, i) => {
+    if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    const numCorte = i + 2;
+    const aves = (c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '';
+    eventos.push({
+      key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b',
+      data: c.data, nome: aves,
+      oculto: ocultos.includes(`corte_extra_${i}`)
+    });
   });
 
   if (!eventos.length) {
@@ -4228,20 +4266,23 @@ function renderTimeline(p, elId) {
   const porData = {};
   eventos.forEach(e => { if (!porData[e.data]) porData[e.data]=[]; porData[e.data].push(e); });
 
-  // barra 7 anos
+  // barra 7 anos — tom de conquista (celebra o caminho já trilhado, sem contagem regressiva)
   let progressoHtml = '';
   if (hist.data_entrada) {
     const inicio = new Date(hist.data_entrada + 'T12:00:00');
     const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear()+7);
     const hoje = new Date();
     const pct = Math.round(Math.min((hoje-inicio)/(fim7-inicio),1)*100);
-    const anosR = Math.max(0,Math.ceil((fim7-hoje)/(365.25*24*3600*1000)));
+    const tempoTrilhado = calcTempo(hist.data_entrada) || 'Recém chegada';
+    const mensagemConquista = pct >= 100
+      ? '✦ 7 anos de caminhada completados!'
+      : `✦ ${tempoTrilhado} de caminhada já vividos`;
     progressoHtml = `<div class="mh-progresso" style="margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de 7 anos</span><span><span>${pct}%</span> concluído</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de 7 anos</span><span><span>${pct}%</span> trilhado</span></div>
       <div style="background:rgba(196,57,107,.1);border-radius:20px;height:6px;overflow:hidden">
         <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${pct}%;border-radius:20px"></div>
       </div>
-      <div style="margin-top:6px;font-size:.78rem;opacity:.7">${anosR>0?anosR+(anosR===1?' ano restante':' anos restantes'):'✦ 7 anos completados!'}</div>
+      <div style="margin-top:6px;font-size:.78rem;opacity:.7">${mensagemConquista}</div>
     </div>`;
   }
 
@@ -4305,18 +4346,18 @@ const DASH_BADGES_GUIAS = [
   { key:'cosme',        dataKey:'cosme_data',       label:'Cosme',        emoji:'🍬', cor:'#4a6fa5' },
 ];
 const DASH_BADGES_CRUZ = [
-  { dataKey:'cruz_conga',    label:'Conga',          emoji:'🌳', cor:'#5a8a5a' },
   { dataKey:'cruz_mata',     label:'Mata',           emoji:'🌿', cor:'#4a7a4a' },
   { dataKey:'cruz_praia',    label:'Praia',          emoji:'🌊', cor:'#4a6fa5' },
   { dataKey:'cruz_rio',      label:'Rio/Cachoeira',  emoji:'💧', cor:'#5a9ab5' },
   { dataKey:'cruz_pedreira', label:'Pedreira',       emoji:'⛰️', cor:'#8a7a6a' },
-  { dataKey:'corte_1',       label:'1º Corte',       emoji:'⚔️', cor:'#c4396b' },
 ];
 const DASH_BADGES_HISTORIA = [
   { dataKey:'data_entrada', label:'Entrada na Casa', emoji:'🚪', cor:'#c4396b' },
   { dataKey:'apronte',      label:'Apronte',         emoji:'🌱', cor:'#6a9e6a' },
   { dataKey:'coroacao',     label:'Coroação',        emoji:'👑', cor:'#4a6fa5' },
   { dataKey:'cacicamento',  label:'Cacicamento',     emoji:'⭐', cor:'#9e6a9e' },
+  { dataKey:'cruz_conga',   label:'Conga',           emoji:'🌳', cor:'#5a8a5a' },
+  { dataKey:'corte_1',      label:'1º Corte',        emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos' },
 ];
 
 function dashBadgeHtml(b, dados) {
@@ -4330,12 +4371,36 @@ function dashBadgeHtml(b, dados) {
       <div class="dash-badge-sub">A desbloquear</div>
     </div>`;
   }
+  // subtexto especial: quantidade de aves, quando o badge é um corte
+  let subtexto = nome ? `<div class="dash-badge-sub">${nome}</div>` : '';
+  if (b.avesKeyGalinhas || b.avesKeyGalos) {
+    const galinhas = dados[b.avesKeyGalinhas] || 0;
+    const galos = dados[b.avesKeyGalos] || 0;
+    if (galinhas || galos) {
+      subtexto = `<div class="dash-badge-sub">🐔 ${galinhas} · 🐓 ${galos}</div>`;
+    }
+  }
   return `<div class="dash-badge unlocked">
     <div class="dash-badge-icon" style="background:${b.cor}22">${b.emoji}</div>
     <div class="dash-badge-name">${b.label}</div>
-    ${nome ? `<div class="dash-badge-sub">${nome}</div>` : ''}
+    ${subtexto}
     <div class="dash-badge-data">${fmtData(data)}</div>
   </div>`;
+}
+
+// gera badges para os cortes adicionais (2º em diante), vindos do array p.cortes
+function dashBadgesCortesHtml(cortes) {
+  if (!cortes || !cortes.length) return '';
+  return cortes.map((c, i) => {
+    const numCorte = i + 2;
+    if (!c.data) return '';
+    return `<div class="dash-badge unlocked">
+      <div class="dash-badge-icon" style="background:#c4396b22">⚔️</div>
+      <div class="dash-badge-name">${numCorte}º Corte</div>
+      <div class="dash-badge-sub">🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}</div>
+      <div class="dash-badge-data">${fmtData(c.data)}</div>
+    </div>`;
+  }).join('');
 }
 
 function renderDashPessoal(p, user) {
@@ -4368,18 +4433,42 @@ function renderDashPessoal(p, user) {
     seloEl.style.display = 'none';
   }
 
-  // frase de efeito
+  // frase de efeito — usa a frase customizada pelo admin se existir, senão gera automaticamente
   const tempo = calcTempo(hist.data_entrada);
   const fraseEl = document.getElementById('dash-frase');
-  if (tempo) {
+  if (p.fraseDestaque && p.fraseDestaque.trim()) {
+    fraseEl.textContent = p.fraseDestaque;
+  } else if (tempo) {
     fraseEl.innerHTML = `<strong>${tempo}</strong> de caminhada na casa. ${DASH_FRASES_CARGO[cargo] || 'Cada passo guiado pela espiritualidade.'}`;
   } else {
     fraseEl.innerHTML = `Bem-vinda à sua jornada no <strong>Bolhas de Luz</strong>. ✨`;
   }
 
+  // botão de editar frase — visível só para o admin, mesmo vendo o perfil de outra pessoa
+  const ehAdminAtual = (() => {
+    const u = window._getCurrentUser && window._getCurrentUser();
+    return !!u && u.email === 'bolhasdeluz@gmail.com' && _modoSimulacao === null;
+  })();
+  let btnEditarFrase = document.getElementById('dash-frase-edit-btn');
+  if (ehAdminAtual) {
+    if (!btnEditarFrase) {
+      btnEditarFrase = document.createElement('button');
+      btnEditarFrase.id = 'dash-frase-edit-btn';
+      btnEditarFrase.type = 'button';
+      btnEditarFrase.textContent = '✎ Editar frase';
+      btnEditarFrase.style.cssText = 'position:relative;display:inline-block;margin-top:4px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:14px;color:#fff;font-family:\'Cinzel\',serif;font-size:.52rem;letter-spacing:.06em;padding:4px 10px;cursor:pointer';
+      fraseEl.insertAdjacentElement('afterend', btnEditarFrase);
+    }
+    btnEditarFrase.onclick = () => dashEditarFrase(p.email || user.email, fraseEl.textContent);
+    btnEditarFrase.style.display = '';
+  } else if (btnEditarFrase) {
+    btnEditarFrase.style.display = 'none';
+  }
+
   // stats rápidos
   const totalGuias = DASH_BADGES_GUIAS.filter(b => guias[b.dataKey]).length;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length;
+  const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCortesExtra;
   const totalMarcos = DASH_BADGES_HISTORIA.filter(b => hist[b.dataKey]).length;
   document.getElementById('dash-stats').innerHTML = `
     <div class="dash-stat"><div class="dash-stat-num">${totalGuias}</div><div class="dash-stat-label">Guias</div></div>
@@ -4387,7 +4476,7 @@ function renderDashPessoal(p, user) {
     <div class="dash-stat"><div class="dash-stat-num">${totalMarcos}</div><div class="dash-stat-label">Marcos</div></div>
   `;
 
-  // barra de progresso 7 anos
+  // barra de progresso 7 anos — tom de conquista
   const progEl = document.getElementById('dash-progresso');
   if (hist.data_entrada) {
     const inicio = new Date(hist.data_entrada + 'T12:00:00');
@@ -4396,6 +4485,12 @@ function renderDashPessoal(p, user) {
     const pct = Math.round(Math.min((hoje - inicio) / (fim7 - inicio), 1) * 100);
     document.getElementById('dash-progresso-pct').textContent = pct + '%';
     document.getElementById('dash-progresso-fill').style.width = pct + '%';
+    const msgEl = document.getElementById('dash-progresso-msg');
+    if (msgEl) {
+      msgEl.textContent = pct >= 100
+        ? '✦ 7 anos de caminhada completados!'
+        : `✦ ${tempo || 'Recém chegada'} de caminhada já vividos`;
+    }
     progEl.style.display = 'block';
   } else {
     progEl.style.display = 'none';
@@ -4403,7 +4498,9 @@ function renderDashPessoal(p, user) {
 
   // badges de conquista
   document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
-  document.getElementById('dash-badges-cruz').innerHTML = DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('');
+  document.getElementById('dash-badges-cruz').innerHTML =
+    DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
+    dashBadgesCortesHtml(p.cortes || []);
   document.getElementById('dash-badges-historia').innerHTML = DASH_BADGES_HISTORIA.map(b => dashBadgeHtml(b, hist)).join('');
 
   // linha do tempo pessoal (reaproveita renderTimeline)
@@ -4412,6 +4509,31 @@ function renderDashPessoal(p, user) {
   wrap.style.display = 'block';
 }
 window.renderDashPessoal = renderDashPessoal;
+
+// permite ao admin editar a frase de destaque do dashboard de qualquer filha
+window.dashEditarFrase = async function(email, fraseAtual) {
+  if (!email) return;
+  const nova = prompt('Frase de destaque para esta filha (deixe em branco para voltar à frase automática):', fraseAtual || '');
+  if (nova === null) return; // cancelou
+  try {
+    const res = await fetch(`/api/perfil?email=${encodeURIComponent(email)}`, { headers: {'X-Admin-Password':'admin'} });
+    const perfil = await res.json();
+    perfil.fraseDestaque = nova.trim();
+    await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ ...perfil, email, solicitacao: 'Frase de destaque editada pelo admin' })
+    });
+    showToast?.('Frase atualizada! ✨');
+    // se for o próprio perfil sendo visualizado agora, atualiza na hora
+    if (window._getCurrentUser?.()?.email === email) {
+      perfilData.fraseDestaque = perfil.fraseDestaque;
+      window.renderDashPessoal?.(perfilData, currentUser);
+    }
+  } catch(e) {
+    alert('Erro ao salvar a frase.');
+  }
+};
 
 window.toggleTimelineItem = async function(key) {
   if (!currentUser) return;
@@ -4689,6 +4811,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {}, true);
     renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {}, true);
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {}, true);
+    mhRenderCortes(perfilData.cortes || [], true);
     if (form) form.style.display = 'block';
     if (fechado) fechado.style.display = 'none';
     btn.textContent = '✕ Cancelar';
@@ -4698,6 +4821,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {});
     renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {});
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {});
+    mhRenderCortes(perfilData.cortes || [], false);
     if (form) form.style.display = 'none';
     if (fechado) fechado.style.display = 'block';
     btn.textContent = '✎ Editar';
@@ -4724,7 +4848,13 @@ window.salvarSuaHistoria = async function() {
     else if (camposCruz.find(c=>c.key===k))  C[k] = v;
   });
 
-  const payload = { ...perfilData, historia: H, guias: G, cruzamentos: C, solicitacao: 'Edição direta pela filha' };
+  const payload = {
+    ...perfilData,
+    historia: H, guias: G, cruzamentos: C,
+    // filtra cortes vazios (sem data nem aves) antes de salvar
+    cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos),
+    solicitacao: 'Edição direta pela filha'
+  };
 
   try {
     const res = await fetch('/api/perfil', {
@@ -4819,6 +4949,8 @@ const camposHistoria = [
   { label:'Madrinha',          key:'madrinha',       tipo:'texto' },
   { label:'Afilhada',          key:'afilhada_1',     tipo:'texto' },
   { label:'Afilhada',          key:'afilhada_2',     tipo:'texto' },
+  { label:'Cruzamento de Conga', key:'cruz_conga',   tipo:'data'  },
+  { label:'1º Corte',          key:'corte_1',        tipo:'data'  },
 ];
 const camposGuias = [
   { label:'Caboclo',            key:'caboclo',        tipo:'texto' },
@@ -4835,12 +4967,10 @@ const camposGuias = [
   { label:'Chegada do Cosme',   key:'cosme_data',     tipo:'data'  },
 ];
 const camposCruz = [
-  { label:'Cruzamento de Conga',    key:'cruz_conga',    tipo:'data' },
   { label:'Cruzamento de Mata',     key:'cruz_mata',     tipo:'data' },
   { label:'Cruzamento de Praia',    key:'cruz_praia',    tipo:'data' },
   { label:'Cruzamento de Rio',      key:'cruz_rio',      tipo:'data' },
   { label:'Cruzamento de Pedreira', key:'cruz_pedreira', tipo:'data' },
-  { label:'1º Corte',               key:'corte_1',       tipo:'data' },
 ];
 
 window.fmtData = function fmtData(v) {
@@ -4963,6 +5093,70 @@ function atualizarBotaoPerfil() {
   const tem = Object.keys(perfilAlteracoes).length > 0;
   document.getElementById('perfil-btn-wrap').style.display = tem ? 'block' : 'none';
 }
+
+// ── CORTES ADICIONAIS (2º corte em diante) ──
+// estrutura: perfilData.cortes = [{ data:'YYYY-MM-DD', galinhas:'0', galos:'0' }, ...]
+// o 1º corte continua em perfilData.historia.corte_1 (+ corte_1_galinhas/corte_1_galos)
+let _mhCortesEditando = [];
+
+function mhRenderCortes(cortes, editavel) {
+  const lista = document.getElementById('mh-cortes-lista');
+  const btnAdd = document.getElementById('mh-cortes-btn-add');
+  if (!lista) return;
+  cortes = cortes || [];
+
+  if (editavel) {
+    _mhCortesEditando = cortes.map(c => ({ ...c }));
+    if (btnAdd) btnAdd.style.display = '';
+  } else {
+    if (btnAdd) btnAdd.style.display = 'none';
+  }
+
+  const dadosParaExibir = editavel ? _mhCortesEditando : cortes;
+
+  if (!dadosParaExibir.length) {
+    lista.innerHTML = '<div class="mh-corte-empty">Nenhum corte adicional registrado ainda.</div>';
+    return;
+  }
+
+  lista.innerHTML = dadosParaExibir.map((c, i) => {
+    const numCorte = i + 2; // o 1º corte já existe em História, então este é o 2º em diante
+    if (editavel) {
+      return `<div class="mh-corte-card">
+        <button type="button" class="mh-corte-del" onclick="mhRemoverCorte(${i})" title="Remover este corte">✕</button>
+        <div class="mh-corte-num">${numCorte}º Corte</div>
+        <div class="mh-corte-grid">
+          <div><label>Data</label><input type="date" class="form-input" style="margin-bottom:0" value="${c.data||''}" oninput="mhAtualizarCorte(${i},'data',this.value)"></div>
+          <div><label>Galinhas</label><input type="number" min="0" class="form-input" style="margin-bottom:0" value="${c.galinhas||''}" placeholder="0" oninput="mhAtualizarCorte(${i},'galinhas',this.value)"></div>
+          <div><label>Galos</label><input type="number" min="0" class="form-input" style="margin-bottom:0" value="${c.galos||''}" placeholder="0" oninput="mhAtualizarCorte(${i},'galos',this.value)"></div>
+        </div>
+      </div>`;
+    }
+    return `<div class="mh-corte-card">
+      <div class="mh-corte-num">${numCorte}º Corte</div>
+      <div class="mh-corte-grid">
+        <div><label>Data</label><div class="valor">${c.data ? fmtData(c.data) : '—'}</div></div>
+        <div><label>Galinhas</label><div class="valor">${c.galinhas || '—'}</div></div>
+        <div><label>Galos</label><div class="valor">${c.galos || '—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.mhAdicionarCorte = function() {
+  _mhCortesEditando.push({ data:'', galinhas:'', galos:'' });
+  mhRenderCortes(_mhCortesEditando, true);
+};
+
+window.mhRemoverCorte = function(i) {
+  _mhCortesEditando.splice(i, 1);
+  mhRenderCortes(_mhCortesEditando, true);
+};
+
+window.mhAtualizarCorte = function(i, campo, valor) {
+  if (!_mhCortesEditando[i]) return;
+  _mhCortesEditando[i][campo] = valor;
+};
 
 // ── SALVAR PERFIL ──
 window.salvarPerfil = async function() {
