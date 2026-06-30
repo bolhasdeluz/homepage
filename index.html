@@ -87,6 +87,91 @@ body.logada .header-divider,
 body.logada .header-sub,
 body.logada .header-cta{display:none}
 
+/* ── GAVETÃO DE BAIXO ── */
+.widgets-wrap{display:none} /* esconde a grade fixa original */
+
+#gaveta-btn{
+  position:fixed;bottom:0;left:0;right:0;z-index:150;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  background:rgba(253,246,238,.96);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  padding:14px 20px 18px;
+  cursor:pointer;
+  transition:background .2s;
+  box-shadow:0 -2px 16px rgba(196,57,107,.08);
+}
+#gaveta-btn:hover{background:#fff}
+#gaveta-btn-label{
+  font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--terra);
+}
+#gaveta-btn-arrow{
+  font-size:.9rem;color:var(--rosa);
+  transition:transform .32s cubic-bezier(.4,0,.2,1);
+}
+#gaveta-btn.open #gaveta-btn-arrow{transform:rotate(180deg)}
+#gaveta-btn-dot{width:5px;height:5px;background:var(--rosa);border-radius:50%;opacity:.6}
+
+#gaveta-overlay{
+  display:none;position:fixed;inset:0;z-index:155;
+  background:rgba(46,26,14,.4);backdrop-filter:blur(3px);
+}
+#gaveta-overlay.open{display:block}
+
+#gaveta{
+  position:fixed;bottom:0;left:0;right:0;z-index:160;
+  background:var(--creme);
+  border-top:3px solid var(--rosa);
+  border-radius:20px 20px 0 0;
+  box-shadow:0 -8px 40px rgba(196,57,107,.18);
+  transform:translateY(100%);
+  transition:transform .36s cubic-bezier(.4,0,.2,1);
+  max-height:80vh;
+  display:flex;flex-direction:column;
+}
+#gaveta.open{transform:translateY(0)}
+
+.gaveta-handle{
+  display:flex;align-items:center;justify-content:center;
+  padding:12px 20px 6px;flex-shrink:0;cursor:pointer;
+}
+.gaveta-handle-pill{
+  width:36px;height:4px;background:rgba(196,90,30,.2);border-radius:4px;
+}
+.gaveta-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:4px 20px 12px;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+.gaveta-titulo{
+  font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--terra);
+}
+.gaveta-fechar{
+  background:rgba(196,90,30,.08);border:1px solid var(--border);
+  border-radius:8px;width:30px;height:30px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;color:var(--text-dim);cursor:pointer;transition:all .2s;
+}
+.gaveta-fechar:hover{background:var(--rosa-dim);color:var(--rosa);border-color:rgba(196,57,107,.3)}
+
+.gaveta-body{
+  overflow-y:auto;padding:16px 16px 32px;
+  flex:1;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* grade de cards dentro da gaveta */
+.gaveta-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:10px;
+}
+.gaveta-grid .widget{
+  /* reutiliza estilo .widget existente */
+}
+
 /* drag and drop */
 .admin-item-row{cursor:grab}
 .admin-item-row.dragging{opacity:.4;cursor:grabbing}
@@ -432,6 +517,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 #bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
 #bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
 body.logada{padding-top:28px}
+body{padding-bottom:56px} /* espaço pro gaveta-btn */
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -767,7 +853,32 @@ body.logada{padding-top:28px}
 
   <div class="widgets-wrap">
     <div class="widgets-label">Nossa casa digital</div>
-    <div class="widgets-grid" id="widgets-grid-dynamic"></div>
+    <div class="widgets-grid"></div>
+  </div>
+</div>
+
+<!-- GAVETÃO DE BAIXO — botão fixo -->
+<button id="gaveta-btn" onclick="toggleGaveta()" aria-label="Abrir menu da casa">
+  <span id="gaveta-btn-dot"></span>
+  <span id="gaveta-btn-label">Nossa casa digital</span>
+  <span id="gaveta-btn-arrow">▲</span>
+</button>
+
+<!-- overlay escurece o fundo quando a gaveta está aberta -->
+<div id="gaveta-overlay" onclick="fecharGaveta()"></div>
+
+<!-- a gaveta em si -->
+<div id="gaveta" role="dialog" aria-modal="true" aria-label="Menu da casa">
+  <div class="gaveta-handle" onclick="fecharGaveta()">
+    <div class="gaveta-handle-pill"></div>
+  </div>
+  <div class="gaveta-header">
+    <span class="gaveta-titulo">Nossa casa digital</span>
+    <button class="gaveta-fechar" onclick="fecharGaveta()">×</button>
+  </div>
+  <div class="gaveta-body">
+    <!-- os cards são injetados aqui pelo renderCards() -->
+    <div class="gaveta-grid" id="widgets-grid-dynamic"></div>
   </div>
 </div>
 
@@ -3686,6 +3797,40 @@ function drawerCancelSecName(si) {
   nameEl.style.display = '';
   inputEl.classList.remove('visible');
 }
+
+// ── GAVETÃO DE BAIXO ──
+function abrirGaveta() {
+  document.getElementById('gaveta').classList.add('open');
+  document.getElementById('gaveta-overlay').classList.add('open');
+  document.getElementById('gaveta-btn').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function fecharGaveta() {
+  document.getElementById('gaveta').classList.remove('open');
+  document.getElementById('gaveta-overlay').classList.remove('open');
+  document.getElementById('gaveta-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function toggleGaveta() {
+  const isOpen = document.getElementById('gaveta').classList.contains('open');
+  isOpen ? fecharGaveta() : abrirGaveta();
+}
+// fecha gaveta ao arrastar pra baixo
+(function() {
+  let startY = 0;
+  const gaveta = document.getElementById('gaveta');
+  gaveta.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive:true });
+  gaveta.addEventListener('touchend', e => {
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy > 60) fecharGaveta();
+  }, { passive:true });
+})();
+// fecha gaveta ao navegar para uma página interna
+const _showPageOriginal = window.showPage;
+window.showPage = function(name) {
+  fecharGaveta();
+  _showPageOriginal(name);
+};
 
 // inicializar
 loadMenu();
