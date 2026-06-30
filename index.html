@@ -87,90 +87,40 @@ body.logada .header-divider,
 body.logada .header-sub,
 body.logada .header-cta{display:none}
 
-/* ── GAVETÃO DE BAIXO ── */
-.widgets-wrap{display:none} /* esconde a grade fixa original */
+/* ── HINT MENU FIXO ── */
+.widgets-wrap{display:none} /* grade fixa original — não usada */
 
-#gaveta-btn{
-  position:fixed;bottom:0;left:0;right:0;z-index:150;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  background:rgba(253,246,238,.96);
-  border-top:1px solid var(--border);
-  backdrop-filter:blur(10px);
-  padding:14px 20px 18px;
-  cursor:pointer;
-  transition:background .2s;
-  box-shadow:0 -2px 16px rgba(196,57,107,.08);
-}
-#gaveta-btn:hover{background:#fff}
-#gaveta-btn-label{
-  font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--terra);
-}
-#gaveta-btn-arrow{
-  font-size:.9rem;color:var(--rosa);
-  transition:transform .32s cubic-bezier(.4,0,.2,1);
-}
-#gaveta-btn.open #gaveta-btn-arrow{transform:rotate(180deg)}
-#gaveta-btn-dot{width:5px;height:5px;background:var(--rosa);border-radius:50%;opacity:.6}
-
-#gaveta-overlay{
-  display:none;position:fixed;inset:0;z-index:155;
-  background:rgba(46,26,14,.4);backdrop-filter:blur(3px);
-}
-#gaveta-overlay.open{display:block}
-
-#gaveta{
-  position:fixed;bottom:0;left:0;right:0;z-index:160;
-  background:var(--creme);
-  border-top:3px solid var(--rosa);
-  border-radius:20px 20px 0 0;
-  box-shadow:0 -8px 40px rgba(196,57,107,.18);
-  transform:translateY(100%);
-  transition:transform .36s cubic-bezier(.4,0,.2,1);
-  max-height:80vh;
-  display:flex;flex-direction:column;
-}
-#gaveta.open{transform:translateY(0)}
-
-.gaveta-handle{
+#menu-hint{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:195; /* abaixo do #boas-vindas (z-index:200) */
   display:flex;align-items:center;justify-content:center;
-  padding:12px 20px 6px;flex-shrink:0;cursor:pointer;
+  padding:6px 20px 7px;
+  background:rgba(253,246,238,.94);
+  border-bottom:1px solid rgba(196,90,30,.10);
+  backdrop-filter:blur(8px);
+  transition:top .25s ease;
 }
-.gaveta-handle-pill{
-  width:36px;height:4px;background:rgba(196,90,30,.2);border-radius:4px;
-}
-.gaveta-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:4px 20px 12px;flex-shrink:0;
-  border-bottom:1px solid var(--border);
-}
-.gaveta-titulo{
-  font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;
-  letter-spacing:.14em;text-transform:uppercase;color:var(--terra);
-}
-.gaveta-fechar{
-  background:rgba(196,90,30,.08);border:1px solid var(--border);
-  border-radius:8px;width:30px;height:30px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1rem;color:var(--text-dim);cursor:pointer;transition:all .2s;
-}
-.gaveta-fechar:hover{background:var(--rosa-dim);color:var(--rosa);border-color:rgba(196,57,107,.3)}
+/* quando logada, desce para baixo da barra de boas-vindas */
+body.logada #menu-hint{top:28px}
 
-.gaveta-body{
-  overflow-y:auto;padding:16px 16px 32px;
-  flex:1;
-  -webkit-overflow-scrolling:touch;
+#menu-hint-btn{
+  background:none;border:none;cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  opacity:.55;transition:opacity .2s;
+  padding:2px 0;
 }
+#menu-hint-btn:hover{opacity:1}
+#menu-hint-label{
+  font-family:'Cinzel',serif;font-size:.55rem;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--terra);
+}
+#hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
 
-/* grade de cards dentro da gaveta */
-.gaveta-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-  gap:10px;
-}
-.gaveta-grid .widget{
-  /* reutiliza estilo .widget existente */
-}
+/* empurra o conteúdo para não ficar escondido atrás do hint */
+body{padding-top:26px}
+body.logada{padding-top:54px}
 
 /* drag and drop */
 .admin-item-row{cursor:grab}
@@ -293,32 +243,25 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
   .blog-grid{grid-template-columns:1fr}
 }
 
-/* ── HAMBURGUER + DRAWER ── */
-#menu-toggle{
-  position:fixed;top:16px;right:16px;z-index:390;
-  background:rgba(253,246,238,.92);border:1px solid var(--border);border-radius:10px;
-  width:42px;height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
-  box-shadow:0 2px 12px rgba(196,90,30,.12);backdrop-filter:blur(6px);transition:all .2s;
-}
-#menu-toggle:hover{background:#fff;box-shadow:0 4px 16px rgba(196,57,107,.15)}
-#menu-toggle span{display:block;width:18px;height:1.5px;background:var(--terra);border-radius:2px;transition:all .3s}
-#menu-toggle.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg)}
-#menu-toggle.open span:nth-child(2){opacity:0;transform:scaleX(0)}
-#menu-toggle.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg)}
-#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.45);backdrop-filter:blur(2px)}
+/* ── GAVETÃO DE BAIXO (delicado) ── */
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
 #drawer-overlay.open{display:block}
 #drawer{
-  position:fixed;top:0;left:0;bottom:0;z-index:360;
-  width:min(300px,85vw);background:var(--creme);
-  border-right:1px solid var(--border);box-shadow:4px 0 32px rgba(46,26,14,.15);
-  transform:translateX(-100%);transition:transform .32s cubic-bezier(.4,0,.2,1);
-  overflow-y:auto;display:flex;flex-direction:column;
+  position:fixed;left:0;right:0;bottom:0;z-index:360;
+  max-height:78vh;background:var(--creme);
+  border-top:1px solid var(--border);border-radius:18px 18px 0 0;
+  box-shadow:0 -8px 32px rgba(46,26,14,.14);
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
 }
-#drawer.open{transform:translateX(0)}
-.drawer-header{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+#drawer.open{transform:translateY(0)}
+.drawer-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px;cursor:pointer;flex-shrink:0}
+.drawer-handle-pill{width:32px;height:3px;border-radius:3px;background:rgba(196,90,30,.18)}
+.drawer-header{padding:6px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--terra);letter-spacing:.1em}
 .drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
 .drawer-close:hover{color:var(--rosa)}
+.drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
 .drawer-section{padding:18px 20px 4px}
 .drawer-section-label{
   font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
@@ -336,7 +279,8 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .drawer-link:last-child{border-bottom:none}
 .drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
 .drawer-dot.mem{background:rgba(196,57,107,.28)}
-.drawer-footer{margin-top:auto;padding:16px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;text-align:center}.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
+.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
 .drawer-submenu-toggle:hover{color:var(--rosa)}
 .drawer-submenu-toggle .dsm-arrow{font-size:.7rem;transition:transform .25s;color:var(--text-dim)}
 .drawer-submenu-toggle.open .dsm-arrow{transform:rotate(90deg)}
@@ -516,8 +460,8 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 #bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
 #bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
 #bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
-body.logada{padding-top:28px}
-body{padding-bottom:56px} /* espaço pro gaveta-btn */
+body.logada{padding-top:54px} /* sobrescreve a regra acima quando logada */
+body{padding-bottom:0}
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -751,28 +695,37 @@ body{padding-bottom:56px} /* espaço pro gaveta-btn */
 <canvas id="jardim"></canvas>
 <div id="bolhas-container"></div>
 
-<!-- HAMBURGUER -->
-<button id="menu-toggle" onclick="toggleDrawer()" aria-label="Menu">
-  <span></span><span></span><span></span>
-</button>
+<!-- HINT DE MENU — fixo no topo, abaixo da barra de boas-vindas -->
+<div id="menu-hint">
+  <button id="menu-hint-btn" onclick="toggleDrawer()">
+    <span id="menu-hint-label">Nossa casa digital</span>
+    <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
 
 <!-- DRAWER OVERLAY -->
 <div id="drawer-overlay" onclick="closeDrawer()"></div>
 
-<!-- DRAWER LATERAL -->
+<!-- GAVETÃO DE BAIXO (delicado) -->
 <div id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()">
+    <div class="drawer-handle-pill"></div>
+  </div>
   <div class="drawer-header">
-    <span class="drawer-logo">Bolhas de Luz</span>
+    <div>
+      <span class="drawer-logo">Bolhas de Luz</span>
+      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Nossa casa digital</div>
+    </div>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
-  <div id="drawer-body"></div>
-  <div id="drawer-user-section" style="display:none;padding:12px 20px;border-top:1px solid var(--border)">
-    <button class="drawer-link" onclick="showPage('perfil');closeDrawer()" style="color:var(--rosa)">
-      <span class="drawer-dot mem"></span>Meu Perfil
-    </button>
+  <div class="drawer-body-scroll">
+    <div id="drawer-body"></div>
+    <div id="drawer-user-section" style="display:none;"></div>
   </div>
   <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
 </div>
+
+<!-- PÁGINA HISTÓRIA DA CASA -->
 
 <!-- DEBUG -->
 <button id="debug-btn" onclick="toggleDebug()">🐛</button>
@@ -857,30 +810,6 @@ body{padding-bottom:56px} /* espaço pro gaveta-btn */
   </div>
 </div>
 
-<!-- GAVETÃO DE BAIXO — botão fixo -->
-<button id="gaveta-btn" onclick="toggleGaveta()" aria-label="Abrir menu da casa">
-  <span id="gaveta-btn-dot"></span>
-  <span id="gaveta-btn-label">Nossa casa digital</span>
-  <span id="gaveta-btn-arrow">▲</span>
-</button>
-
-<!-- overlay escurece o fundo quando a gaveta está aberta -->
-<div id="gaveta-overlay" onclick="fecharGaveta()"></div>
-
-<!-- a gaveta em si -->
-<div id="gaveta" role="dialog" aria-modal="true" aria-label="Menu da casa">
-  <div class="gaveta-handle" onclick="fecharGaveta()">
-    <div class="gaveta-handle-pill"></div>
-  </div>
-  <div class="gaveta-header">
-    <span class="gaveta-titulo">Nossa casa digital</span>
-    <button class="gaveta-fechar" onclick="fecharGaveta()">×</button>
-  </div>
-  <div class="gaveta-body">
-    <!-- os cards são injetados aqui pelo renderCards() -->
-    <div class="gaveta-grid" id="widgets-grid-dynamic"></div>
-  </div>
-</div>
 
 <!-- PÁGINA HISTÓRIA DA CASA -->
 <div id="page-historia" class="page">
@@ -2647,7 +2576,7 @@ function showPage(name) {
   }
 }
 function toggleDrawer() {
-  const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');
+  const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-hint-btn');
   const open=d.classList.contains('open');
   // fecha painel lateral de guias se estiver aberto
   if (!open) guiasFecharPainel?.();
@@ -2657,7 +2586,7 @@ function toggleDrawer() {
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-overlay').classList.remove('open');
-  document.getElementById('menu-toggle').classList.remove('open');
+  document.getElementById('menu-hint-btn').classList.remove('open');
   document.body.style.overflow='';
 }
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
