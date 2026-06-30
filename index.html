@@ -588,6 +588,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mh-corte-del{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(184,64,64,.4);font-size:.85rem;cursor:pointer;padding:2px 6px;transition:color .2s}
 .mh-corte-del:hover{color:#b84040}
 .mh-corte-empty{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:10px 0}
+.mh-corte-grid.mh-corte-grid-2{grid-template-columns:1fr 1fr}
+@media(max-width:480px){.mh-corte-grid.mh-corte-grid-2{grid-template-columns:1fr}}
 
 /* estado de login no header */
 #user-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);cursor:pointer;display:none}
@@ -1111,8 +1113,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           <!-- Cruzamentos -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Cruzamentos e Axés</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Cruzamentos e Axés</div>
+              <button id="mh-cruz-btn-add" onclick="mhAdicionarCruzamento()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar cruzamento</button>
+            </div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
+            <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
           </div>
           <!-- Terreiro Cacique -->
           <div id="mh-bloco-terreiro" style="display:none;background:#fff;border:1px solid rgba(74,111,165,.2);border-left:3px solid #4a6fa5;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(74,111,165,.08)">
@@ -4223,6 +4229,7 @@ function renderMinhaHistoria(p, user) {
   // quimbanda (apronte + 1º corte) e cortes adicionais
   mhRenderQuimbanda(p.historia || {}, false);
   mhRenderCortes(p.cortes || [], false);
+  mhRenderCruzamentosExtras(p.cruzamentosExtras || [], false);
 
   // linha do tempo
   renderTimeline(p);
@@ -4282,6 +4289,16 @@ function renderTimeline(p, elId) {
       key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b',
       data: c.data, nome: aves,
       oculto: ocultos.includes(`corte_extra_${i}`)
+    });
+  });
+
+  // cruzamentos extras — vêm do array p.cruzamentosExtras
+  (p.cruzamentosExtras || []).forEach((c, i) => {
+    if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    eventos.push({
+      key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5',
+      data: c.data, nome: '',
+      oculto: ocultos.includes(`cruz_extra_${i}`)
     });
   });
 
@@ -4466,6 +4483,19 @@ function dashBadgesCortesHtml(cortes) {
   }).join('');
 }
 
+// gera badges para os cruzamentos extras, vindos do array p.cruzamentosExtras
+function dashBadgesCruzamentosExtrasHtml(extras) {
+  if (!extras || !extras.length) return '';
+  return extras.map(c => {
+    if (!c.data) return '';
+    return `<div class="dash-badge unlocked">
+      <div class="dash-badge-icon" style="background:#4a6fa522">✨</div>
+      <div class="dash-badge-name">${c.nome || 'Cruzamento'}</div>
+      <div class="dash-badge-data">${fmtData(c.data)}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderDashPessoal(p, user) {
   const wrap = document.getElementById('dash-pessoal');
   if (!wrap) return;
@@ -4532,7 +4562,8 @@ function renderDashPessoal(p, user) {
   const totalGuias = DASH_BADGES_GUIAS.filter(b => guias[b.dataKey]).length;
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length;
+  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras;
 
   // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
   const totalAves =
@@ -4568,7 +4599,9 @@ function renderDashPessoal(p, user) {
 
   // badges de conquista
   document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
-  document.getElementById('dash-badges-cruz').innerHTML = DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('');
+  document.getElementById('dash-badges-cruz').innerHTML =
+    DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
+    dashBadgesCruzamentosExtrasHtml(p.cruzamentosExtras || []);
   document.getElementById('dash-badges-historia').innerHTML = DASH_BADGES_HISTORIA.map(b => dashBadgeHtml(b, hist)).join('');
   document.getElementById('dash-badges-quimbanda').innerHTML =
     DASH_BADGES_QUIMBANDA.map(b => dashBadgeHtml(b, hist)).join('') +
@@ -4884,6 +4917,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {}, true);
     mhRenderQuimbanda(perfilData.historia || {}, true);
     mhRenderCortes(perfilData.cortes || [], true);
+    mhRenderCruzamentosExtras(perfilData.cruzamentosExtras || [], true);
     if (form) form.style.display = 'block';
     if (fechado) fechado.style.display = 'none';
     btn.textContent = '✕ Cancelar';
@@ -4895,6 +4929,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {});
     mhRenderQuimbanda(perfilData.historia || {}, false);
     mhRenderCortes(perfilData.cortes || [], false);
+    mhRenderCruzamentosExtras(perfilData.cruzamentosExtras || [], false);
     if (form) form.style.display = 'none';
     if (fechado) fechado.style.display = 'block';
     btn.textContent = '✎ Editar';
@@ -4933,6 +4968,8 @@ window.salvarSuaHistoria = async function() {
     historia: H, guias: G, cruzamentos: C,
     // filtra cortes vazios (sem data nem aves) antes de salvar
     cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos),
+    // filtra cruzamentos extras vazios (sem nome nem data)
+    cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
     solicitacao: 'Edição direta pela filha'
   };
 
@@ -5279,6 +5316,67 @@ window.mhRemoverCorte = function(i) {
 window.mhAtualizarCorte = function(i, campo, valor) {
   if (!_mhCortesEditando[i]) return;
   _mhCortesEditando[i][campo] = valor;
+};
+
+// ── CRUZAMENTOS EXTRAS ──
+// estrutura: perfilData.cruzamentosExtras = [{ nome:'texto livre', data:'YYYY-MM-DD' }, ...]
+// os 4 cruzamentos fixos (Mata/Praia/Rio/Pedreira) continuam em perfilData.cruzamentos
+let _mhCruzExtrasEditando = [];
+
+function mhRenderCruzamentosExtras(extras, editavel) {
+  const lista = document.getElementById('mh-cruz-extras-lista');
+  const btnAdd = document.getElementById('mh-cruz-btn-add');
+  if (!lista) return;
+  extras = extras || [];
+
+  if (editavel) {
+    _mhCruzExtrasEditando = extras.map(c => ({ ...c }));
+    if (btnAdd) btnAdd.style.display = '';
+  } else {
+    if (btnAdd) btnAdd.style.display = 'none';
+  }
+
+  const dadosParaExibir = editavel ? _mhCruzExtrasEditando : extras;
+
+  if (!dadosParaExibir.length) {
+    lista.innerHTML = '';
+    return;
+  }
+
+  lista.innerHTML = dadosParaExibir.map((c, i) => {
+    if (editavel) {
+      return `<div class="mh-corte-card">
+        <button type="button" class="mh-corte-del" onclick="mhRemoverCruzamentoExtra(${i})" title="Remover este cruzamento">✕</button>
+        <div class="mh-corte-num">Cruzamento Extra</div>
+        <div class="mh-corte-grid mh-corte-grid-2">
+          <div><label>Nome</label><input type="text" class="form-input" style="margin-bottom:0" value="${c.nome||''}" placeholder="ex: Encruzilhada" oninput="mhAtualizarCruzamentoExtra(${i},'nome',this.value)"></div>
+          <div><label>Data</label><input type="date" class="form-input" style="margin-bottom:0" value="${c.data||''}" oninput="mhAtualizarCruzamentoExtra(${i},'data',this.value)"></div>
+        </div>
+      </div>`;
+    }
+    return `<div class="mh-corte-card">
+      <div class="mh-corte-num">${c.nome || 'Cruzamento'}</div>
+      <div class="mh-corte-grid mh-corte-grid-2">
+        <div><label>Nome</label><div class="valor">${c.nome || '—'}</div></div>
+        <div><label>Data</label><div class="valor">${c.data ? fmtData(c.data) : '—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.mhAdicionarCruzamentoExtra = function() {
+  _mhCruzExtrasEditando.push({ nome:'', data:'' });
+  mhRenderCruzamentosExtras(_mhCruzExtrasEditando, true);
+};
+
+window.mhRemoverCruzamentoExtra = function(i) {
+  _mhCruzExtrasEditando.splice(i, 1);
+  mhRenderCruzamentosExtras(_mhCruzExtrasEditando, true);
+};
+
+window.mhAtualizarCruzamentoExtra = function(i, campo, valor) {
+  if (!_mhCruzExtrasEditando[i]) return;
+  _mhCruzExtrasEditando[i][campo] = valor;
 };
 
 // ── SALVAR PERFIL ──
