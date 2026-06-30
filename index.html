@@ -666,6 +666,21 @@ body{padding-bottom:0}
   font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;
   color:var(--text-dim);font-style:italic;line-height:1.3;
 }
+.drawer-card-tag{
+  display:inline-block;margin-top:5px;align-self:flex-start;
+  font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.05em;
+  padding:2px 8px;border-radius:20px;
+}
+.drawer-card-tag.tag-pub{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green)}
+.drawer-card-tag.tag-mem{background:rgba(74,111,165,.08);border:1px solid rgba(74,111,165,.2);color:#4a6fa5}
+.drawer-card.admin-card{border-top:2px solid var(--rosa);background:linear-gradient(135deg,rgba(196,57,107,.07),rgba(196,90,30,.04))}
+.drawer-login-banner{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
+  border:1px solid rgba(196,57,107,.2);border-top:2px solid var(--rosa);
+  border-radius:10px;padding:12px 14px;margin:8px 0 3px;
+}
+.drawer-login-banner .drawer-card-name{font-size:.7rem}
 /* toggle de edição do nome da seção */
 .drawer-sec-label-wrap{
   display:flex;align-items:center;gap:6px;flex:1;min-width:0;
@@ -1776,14 +1791,29 @@ function renderDrawer() {
     body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Carregando menu...</div>';
     return;
   }
-  const user = window._getCurrentUser && window._getCurrentUser();
-  const pd = window._getPerfilData?.() || {};
+  const userNow = window._getCurrentUser && window._getCurrentUser();
+  const logada = !!userNow;
+  const emSimulacao = _modoSimulacao !== null;
+  const ehAdmin = !emSimulacao && userNow && userNow.email === 'bolhasdeluz@gmail.com';
+
+  // grupo do usuário atual (mesma lógica do renderCards)
   let grupoUsuario = 'publico';
-  if (user) {
+  if (logada) {
+    const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
     grupoUsuario = pd.grupo || 'visitante';
-    if (user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+    if (!emSimulacao && userNow.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
   }
-  body.innerHTML = menuData.sections.map(sec => {
+
+  // card especial do Painel Admin, sempre no topo, fora das seções
+  const adminCardHtml = ehAdmin
+    ? `<button class="drawer-card admin-card" onclick="showPage('admin');closeDrawer()">
+         <span class="drawer-card-name">⚙ Painel Admin</span>
+         <span class="drawer-card-desc">Gerencie menu, perfis e sessões</span>
+         <span class="drawer-card-tag tag-mem">admin</span>
+       </button>`
+    : '';
+
+  const sectionsHtml = menuData.sections.map(sec => {
     const visibleItems = sec.items.filter(i => {
       if (i.showMenu === false) return false;
       if (grupoUsuario === 'admin') return true;
@@ -1807,15 +1837,88 @@ function renderDrawer() {
           onblur="drawerSaveSecName(${si})"
           onkeydown="if(event.key==='Enter')drawerSaveSecName(${si});if(event.key==='Escape')drawerCancelSecName(${si})">
         <div class="drawer-submenu">
-          ${visibleItems.map(item => renderDrawerItem(item)).join('')}
+          ${visibleItems.map(item => renderDrawerItem(item, { ehAdmin, logada, grupoUsuario })).join('')}
         </div>
       </div>`;
   }).join('');
+
+  // banner de login, se não estiver logada
+  const loginBannerHtml = !userNow
+    ? `<div class="drawer-login-banner">
+         <div>
+           <div class="drawer-card-name" style="color:var(--rosa)">Área das Filhas</div>
+           <div class="drawer-card-desc">Acesse ferramentas internas do terreiro</div>
+         </div>
+         <button class="btn-rosa" style="padding:8px 16px;font-size:.6rem;flex-shrink:0" onclick="openLogin();closeDrawer()">Entrar</button>
+       </div>`
+    : '';
+
+  body.innerHTML = adminCardHtml + sectionsHtml + loginBannerHtml;
 }
 
-function renderDrawerItem(item) {
+function renderDrawerItem(item, ctx) {
+  ctx = ctx || {};
+  const { ehAdmin, logada, grupoUsuario } = ctx;
+  const isMem = item.type === 'members';
+  const tagTexto = item.tagLabel || (grupoUsuario === 'admin' ? 'interno' : isMem ? 'interno' : 'público');
+  const tagClass = item.tagLabel ? 'tag-pub' : (isMem ? 'tag-mem' : 'tag-pub');
+  const tagHtml = `<span class="drawer-card-tag ${tagClass}">${tagTexto}</span>`;
+
+  // ── widget especial: Nossa História / Minha História ──
+  if (item.id === 'historia') {
+    if (!logada) {
+      return `<button class="drawer-card" onclick="showPage('historia');closeDrawer()">
+        <span class="drawer-card-name">Nossa História</span>
+        <span class="drawer-card-desc">A fundação do Bolhas de Luz</span>
+        <span class="drawer-card-tag tag-pub">público</span>
+      </button>`;
+    }
+    const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
+    const grupoUser = pd.grupo || 'visitante';
+    if (!ehAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
+      return `<button class="drawer-card" onclick="showPage('historia');closeDrawer()">
+        <span class="drawer-card-name">Nossa História</span>
+        <span class="drawer-card-desc">A fundação do Bolhas de Luz</span>
+        <span class="drawer-card-tag tag-pub">público</span>
+      </button>`;
+    }
+    return `<button class="drawer-card" onclick="showSuaHistoria();closeDrawer()">
+      <span class="drawer-card-name">Minha História</span>
+      <span class="drawer-card-desc">Sua jornada espiritual na casa</span>
+      <span class="drawer-card-tag tag-mem">interno</span>
+    </button>`;
+  }
+
+  // ── widget especial: Sessões & Eventos / Calendário ──
+  if (item.id === 'sessoes' || item.id === 'calendario') {
+    return `<button class="drawer-card" onclick="showPage('calendario');closeDrawer()">
+      <span class="drawer-card-name">${item.label}</span>
+      <span class="drawer-card-desc">${item.desc||''}</span>
+      <span class="drawer-card-tag tag-pub">público</span>
+    </button>`;
+  }
+
+  // ── widget especial: Apoie o Terreiro ──
+  if (item.id === 'apoie') {
+    return `<button class="drawer-card" onclick="showPage('apoie');closeDrawer()">
+      <span class="drawer-card-name">${item.label}</span>
+      <span class="drawer-card-desc">${item.desc||'Como nos ajudar'}</span>
+      <span class="drawer-card-tag tag-pub">público</span>
+    </button>`;
+  }
+
+  // ── widget especial: Filhas da Casa ──
+  if (item.id === 'filhas') {
+    return `<button class="drawer-card" onclick="showPage('guias');closeDrawer()">
+      <span class="drawer-card-name">${item.label}</span>
+      <span class="drawer-card-desc">${item.desc||'Conheça as filhas da casa'}</span>
+      <span class="drawer-card-tag tag-pub">público</span>
+    </button>`;
+  }
+
+  // ── itens normais (interno / membros / link externo / blog) ──
   const desc = item.desc ? `<span class="drawer-card-desc">${item.desc}</span>` : '';
-  const inner = `<span class="drawer-card-name">${item.label}</span>${desc}`;
+  const inner = `<span class="drawer-card-name">${item.label}</span>${desc}${tagHtml}`;
 
   if (item.type === 'internal') {
     return `<button class="drawer-card" onclick="showPage('${item.page}');closeDrawer()">${inner}</button>`;
