@@ -3597,8 +3597,13 @@ function blogRenderCatBar() {
   const catsPosts = [...new Set(_blogPosts.map(p => (p.category || '').trim()).filter(Boolean))];
   const todasCats = [...new Set([..._blogCats, ...catsPosts])];
   el.innerHTML =
-    `<button class="blog-cat-pill ${_blogFilter==='todas'?'active':''}" onclick="blogFilterCat('todas')">Todas</button>` +
-    todasCats.map(c => `<button class="blog-cat-pill ${blogNormCat(_blogFilter)===blogNormCat(c)?'active':''}" onclick="blogFilterCat(${JSON.stringify(c)})">${c}</button>`).join('');
+    `<button class="blog-cat-pill ${_blogFilter==='todas'?'active':''}" data-cat="todas">Todas</button>` +
+    todasCats.map(c => `<button class="blog-cat-pill ${blogNormCat(_blogFilter)===blogNormCat(c)?'active':''}" data-cat="${blogEscAttr(c)}">${c}</button>`).join('');
+  // event delegation: evita o problema de aspas quebradas que ocorria com onclick inline + JSON.stringify
+  el.onclick = (e) => {
+    const btn = e.target.closest('.blog-cat-pill');
+    if (btn && btn.dataset.cat !== undefined) blogFilterCat(btn.dataset.cat);
+  };
 }
 
 function blogRenderCatChips() {
@@ -3743,13 +3748,18 @@ function blogRenderSidebar() {
     <div class="blog-sb-section">
       <div class="blog-sb-head">
         <span class="blog-sb-label">${cat}</span>
-        <button class="blog-sb-see-all" onclick="blogFilterCat(${JSON.stringify(cat)})">Ver todos →</button>
+        <button class="blog-sb-see-all" data-seeall-cat="${blogEscAttr(cat)}">Ver todos →</button>
       </div>
       <div class="blog-sb-list">
         ${posts.map(p => `<div class="blog-sb-item" data-sid="${blogEscAttr(p.id)}"><div class="blog-sb-title">${p.title}</div><div class="blog-sb-date">${p.date||''}</div></div>`).join('')}
       </div>
     </div>`).join('');
-  sb.onclick = (e) => { const it = e.target.closest('.blog-sb-item'); if (it) blogOpenPost(it.dataset.sid); };
+  sb.onclick = (e) => {
+    const it = e.target.closest('.blog-sb-item');
+    if (it) { blogOpenPost(it.dataset.sid); return; }
+    const seeAll = e.target.closest('.blog-sb-see-all');
+    if (seeAll && seeAll.dataset.seeallCat !== undefined) blogFilterCat(seeAll.dataset.seeallCat);
+  };
 }
 
 async function blogDeletePost(id) {
