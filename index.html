@@ -334,6 +334,80 @@ footer{
   .mh-layout-2col{grid-template-columns:1fr}
   #mh-tempo-badge{display:none}
 }
+
+/* ── DASHBOARD PESSOAL NA HOME ── */
+.dash-wrap{max-width:760px;margin:0 auto;padding:0 16px 24px;position:relative;z-index:10}
+.dash-card{
+  position:relative;overflow:hidden;border-radius:20px;
+  background:linear-gradient(135deg,#b8305a 0%,#c4396b 45%,#d4607a 75%,#e08aa0 100%);
+  padding:30px 26px 26px;margin-bottom:20px;
+  box-shadow:0 8px 36px rgba(196,57,107,.28);
+}
+.dash-card::before{content:'';position:absolute;top:-40px;right:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.07)}
+.dash-card::after{content:'';position:absolute;bottom:-50px;left:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.05)}
+.dash-eyebrow{position:relative;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.dash-eyebrow::before{content:'✦'}
+.dash-top{position:relative;display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.dash-avatar{
+  width:64px;height:64px;border-radius:50%;flex-shrink:0;overflow:hidden;
+  background:rgba(255,255,255,.18);border:2.5px solid rgba(255,255,255,.55);
+  display:flex;align-items:center;justify-content:center;font-size:1.7rem;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+}
+.dash-avatar img{width:100%;height:100%;object-fit:cover}
+.dash-nome{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:#fff;line-height:1.15}
+.dash-selo{
+  display:inline-flex;align-items:center;gap:5px;margin-top:5px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);
+  border-radius:20px;padding:3px 11px;
+  font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.07em;color:#fff;
+}
+.dash-frase{
+  position:relative;font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;font-style:italic;
+  color:rgba(255,255,255,.92);line-height:1.5;margin-bottom:18px;
+}
+.dash-frase strong{font-style:normal;font-weight:600;color:#fff}
+.dash-stats{position:relative;display:flex;gap:10px;flex-wrap:wrap}
+.dash-stat{
+  flex:1;min-width:84px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+  border-radius:12px;padding:10px 12px;text-align:center;
+}
+.dash-stat-num{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:#fff;line-height:1}
+.dash-stat-label{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:3px}
+
+/* progresso 7 anos dentro do card */
+.dash-progresso{position:relative;margin-top:18px}
+.dash-progresso-top{display:flex;justify-content:space-between;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:6px}
+.dash-progresso-bar{background:rgba(255,255,255,.18);border-radius:20px;height:7px;overflow:hidden}
+.dash-progresso-fill{background:linear-gradient(90deg,#fff,rgba(255,255,255,.75));height:100%;border-radius:20px;transition:width .6s ease}
+
+/* seção título genérica do dashboard */
+.dash-section-title{
+  font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(196,90,30,.55);margin:24px 0 12px;display:flex;align-items:center;gap:10px;
+}
+.dash-section-title::after{content:'';flex:1;height:1px;background:rgba(196,90,30,.13)}
+
+/* badges de conquista */
+.dash-badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
+.dash-badge{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:14px 10px 12px;text-align:center;backdrop-filter:blur(4px);
+  transition:transform .2s,box-shadow .2s;cursor:default;
+}
+.dash-badge.unlocked:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(180,60,90,.12)}
+.dash-badge-icon{
+  width:42px;height:42px;border-radius:50%;margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;font-size:1.25rem;
+}
+.dash-badge.locked{opacity:.42}
+.dash-badge.locked .dash-badge-icon{background:rgba(46,26,14,.06);filter:grayscale(1)}
+.dash-badge-name{font-family:'Cinzel',serif;font-size:.58rem;font-weight:600;letter-spacing:.03em;color:var(--text);line-height:1.25}
+.dash-badge-sub{font-family:'Crimson Pro',Georgia,serif;font-size:.68rem;color:var(--text-dim);font-style:italic;margin-top:2px;line-height:1.2}
+.dash-badge-data{font-family:'DM Sans',sans-serif;font-size:.6rem;color:var(--text-dim);margin-top:4px}
+
+/* timeline embutida no dashboard */
+.dash-timeline-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;backdrop-filter:blur(4px);margin-top:24px}
 .mh-timeline{position:relative;padding-left:36px;padding-bottom:20px}
 .mh-timeline::before{content:'';position:absolute;left:11px;top:8px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.1))}
 .mh-item{position:relative;margin-bottom:0}
@@ -825,40 +899,48 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     </div>
   </header>
 
-  <!-- LINHA DO TEMPO NA HOME -->
-  <div class="section-wrap narrow" style="padding-top:8px">
-    <div class="eyebrow">Fundação</div>
-    <div class="section-title">Nossa história</div>
-    <p class="section-sub">Da previsão de Exu Tranca Ruas até a conquista da sede própria — cada passo foi guiado pela espiritualidade.</p>
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">Final de 2020</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>O Anúncio e a Previsão</h3><p>Exu Tranca Ruas previu a caminhada que estava por vir, anunciando a chegada dos axés, dos filhos e da futura casa.</p></div>
+  <!-- MENSAGEM DE BOAS-VINDAS — visível para quem não está logada -->
+  <!-- (já está acima no <header>: título, subtítulo e CTA de próxima sessão) -->
+
+  <!-- DASHBOARD PESSOAL — visível para quem está logada -->
+  <div id="dash-pessoal" class="dash-wrap" style="display:none">
+    <div class="dash-card">
+      <div class="dash-eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="dash-top">
+        <div class="dash-avatar" id="dash-avatar">👤</div>
+        <div>
+          <div class="dash-nome" id="dash-nome"></div>
+          <div class="dash-selo" id="dash-selo" style="display:none">
+            <span id="dash-selo-emoji">✦</span><span id="dash-selo-cargo"></span>
+          </div>
+        </div>
       </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">Fevereiro de 2021</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>O Encontro Inicial</h3><p>O destino se apressou e trouxe o encontro de Vanessa com Anna, passando assim a acompanhá-la nas terreiras, e se deu o início real a esta jornada espiritual.</p></div>
+      <p class="dash-frase" id="dash-frase"></p>
+      <div class="dash-stats" id="dash-stats"></div>
+      <div class="dash-progresso" id="dash-progresso" style="display:none">
+        <div class="dash-progresso-top"><span>Caminhada de 7 anos</span><span id="dash-progresso-pct"></span></div>
+        <div class="dash-progresso-bar"><div class="dash-progresso-fill" id="dash-progresso-fill" style="width:0%"></div></div>
       </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">Maio de 2021</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>A Manifestação de Vô Chico</h3><p>A espiritualidade se manifestou decisivamente com o nascimento de Vô Chico através da médium Vanessa, marcando a necessidade de movimento de Anna para a iniciação de sua filha.</p></div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">Outubro de 2021</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>Abertura das Portas</h3><p>Com a benção de Mãe Betânia, o Bolhas de Luz abriu suas portas oficialmente em um quarto improvisado, unindo Anna como Mãe da casa e Vanessa como sua primeira filha.</p></div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">2021 — 2022</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>Sessões de Visita</h3><p>Começamos ali, nos adaptando: tocando nas ruas e nas praças, indo em sessões de amigos, e assim foram os primeiros três anos de trabalhos, onde a casa deu seus primeiros passos, foi estruturando seu calendário, suas obrigações, seus fundamentos.</p></div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">2022 — 2023</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>O Período no "Empilhadeiro"</h3><p>Anos voltados ao desenvolvimento e manutenção reservada, adaptando-se ao espaço reduzido do apartamento, enquanto buscávamos a "casa de chão". Sessões com tambor eram nas ruas, torcendo para não vir chuva. A maior parte das sessões eram em quarto apertado, e mesmo assim, a casa foi crescendo até não caber mais em si.</p></div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-date"><div class="timeline-date-label">Março de 2024</div><div class="timeline-dot"></div></div>
-        <div class="timeline-content"><h3>A Conquista da Sede Própria</h3><p>Os guias autorizaram a busca por uma sede física. O terreiro finalmente estabeleceu seu salão e chão na Rua Ary Tarrago, 2155, garantindo liberdade para os trabalhos e assentamentos.</p></div>
-      </div>
+    </div>
+
+    <!-- CONQUISTAS — badges desbloqueáveis -->
+    <div class="dash-section-title">Guias e Guardiões</div>
+    <div class="dash-badges-grid" id="dash-badges-guias"></div>
+
+    <div class="dash-section-title">Cruzamentos e Axés</div>
+    <div class="dash-badges-grid" id="dash-badges-cruz"></div>
+
+    <div class="dash-section-title">Marcos da Jornada</div>
+    <div class="dash-badges-grid" id="dash-badges-historia"></div>
+
+    <!-- LINHA DO TEMPO PESSOAL -->
+    <div class="dash-section-title">Sua linha do tempo</div>
+    <div class="dash-timeline-wrap">
+      <div id="dash-timeline" style="position:relative"></div>
+    </div>
+
+    <div style="text-align:center;margin-top:22px">
+      <button class="btn-outline" onclick="showSuaHistoria()">Ver ficha completa e editar perfil →</button>
     </div>
   </div>
 
@@ -2232,9 +2314,12 @@ function mudarSimulacao(valor) {
       document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
       document.getElementById('boas-vindas').style.display = 'block';
       document.body.classList.add('logada');
+      window.renderDashPessoal?.(simPerfil, simUser);
     } else {
       document.getElementById('boas-vindas').style.display = 'none';
       document.body.classList.remove('logada');
+      const dashEl = document.getElementById('dash-pessoal');
+      if (dashEl) dashEl.style.display = 'none';
     }
     window.ajustarTopoFixo?.();
 
@@ -2277,16 +2362,19 @@ function sairSimulacao() {
   renderCards();
   renderDrawer();
   atualizarBoasVindas();
-  // volta barra de boas-vindas para admin
-  const tempo = window.calcTempo?.(perfilData?.historia?.data_entrada);
-  document.getElementById('bv-emoji').textContent = perfilData?.emoji || '✦';
-  document.getElementById('bv-nome').textContent  = (perfilData?.nome || currentUser?.displayName || '').split(' ')[0];
-  document.getElementById('bv-cargo').textContent = perfilData?.cargo || '';
+  // volta barra de boas-vindas para admin (usa os getters globais, já que perfilData/currentUser vivem no módulo Firebase)
+  const realUser = window._getCurrentUser ? window._getCurrentUser() : null;
+  const realPerfil = window._getPerfilDataReal ? window._getPerfilDataReal() : {};
+  const tempo = window.calcTempo?.(realPerfil?.historia?.data_entrada);
+  document.getElementById('bv-emoji').textContent = realPerfil?.emoji || '✦';
+  document.getElementById('bv-nome').textContent  = (realPerfil?.nome || realUser?.displayName || '').split(' ')[0];
+  document.getElementById('bv-cargo').textContent = realPerfil?.cargo || '';
   document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
-  document.getElementById('bv-sep').style.display  = perfilData?.cargo ? '' : 'none';
+  document.getElementById('bv-sep').style.display  = realPerfil?.cargo ? '' : 'none';
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
   document.getElementById('boas-vindas').style.display = 'block';
   document.body.classList.add('logada');
+  window.renderDashPessoal?.(realPerfil, realUser);
   window.ajustarTopoFixo?.();
 }
 
@@ -3994,8 +4082,8 @@ function renderMinhaHistoria(p, user) {
   renderTimeline(p);
 }
 
-function renderTimeline(p) {
-  const el = document.getElementById('mh-timeline');
+function renderTimeline(p, elId) {
+  const el = document.getElementById(elId || 'mh-timeline');
   if (!el) return;
 
   const hist = p.historia || {};
@@ -4109,6 +4197,134 @@ function renderTimeline(p) {
       ${itensHtml}
     </div>`;
 }
+
+// ── DASHBOARD PESSOAL NA HOME ──
+const DASH_FRASES_CARGO = {
+  'Mãe da Casa':  'Guia e zela por toda a corrente do Bolhas de Luz.',
+  'Cacique':      'Conduz os trabalhos e a tradição da casa.',
+  'Tamoio':       'Sustenta a corrente com firmeza e dedicação.',
+  'Naurú':        'Caminha junto, fortalecendo os fundamentos da casa.',
+  'Cambona':      'Cuida dos detalhes que sustentam cada gira.',
+  'Tamboreiro':   'Dá o ritmo e o axé de cada sessão.',
+  'Curumim':      'Os primeiros passos de uma caminhada que floresce.',
+};
+
+const DASH_BADGES_GUIAS = [
+  { key:'caboclo',     dataKey:'caboclo_data',     label:'Caboclo',      emoji:'🪶', cor:'#6a9e6a' },
+  { key:'exu',          dataKey:'exu_data',         label:'Exu',          emoji:'🔥', cor:'#c4396b' },
+  { key:'pomba_gira',   dataKey:'pomba_gira_data',  label:'Pomba Gira',   emoji:'🌹', cor:'#9e6a9e' },
+  { key:'preto_velho',  dataKey:'preto_velho_data', label:'Preto Velho',  emoji:'🕯️', cor:'#8a8a9a' },
+  { key:'cigana',       dataKey:'cigana_data',      label:'Cigana',       emoji:'🔮', cor:'#c9963c' },
+  { key:'cosme',        dataKey:'cosme_data',       label:'Cosme',        emoji:'🍬', cor:'#4a6fa5' },
+];
+const DASH_BADGES_CRUZ = [
+  { dataKey:'cruz_conga',    label:'Conga',          emoji:'🌳', cor:'#5a8a5a' },
+  { dataKey:'cruz_mata',     label:'Mata',           emoji:'🌿', cor:'#4a7a4a' },
+  { dataKey:'cruz_praia',    label:'Praia',          emoji:'🌊', cor:'#4a6fa5' },
+  { dataKey:'cruz_rio',      label:'Rio/Cachoeira',  emoji:'💧', cor:'#5a9ab5' },
+  { dataKey:'cruz_pedreira', label:'Pedreira',       emoji:'⛰️', cor:'#8a7a6a' },
+  { dataKey:'corte_1',       label:'1º Corte',       emoji:'⚔️', cor:'#c4396b' },
+];
+const DASH_BADGES_HISTORIA = [
+  { dataKey:'data_entrada', label:'Entrada na Casa', emoji:'🚪', cor:'#c4396b' },
+  { dataKey:'apronte',      label:'Apronte',         emoji:'🌱', cor:'#6a9e6a' },
+  { dataKey:'coroacao',     label:'Coroação',        emoji:'👑', cor:'#4a6fa5' },
+  { dataKey:'cacicamento',  label:'Cacicamento',     emoji:'⭐', cor:'#9e6a9e' },
+];
+
+function dashBadgeHtml(b, dados) {
+  const data = dados[b.dataKey] || '';
+  const desbloqueado = !!data && data.match(/^\d{4}-\d{2}-\d{2}$/);
+  const nome = b.key ? (dados[b.key] || '') : '';
+  if (!desbloqueado) {
+    return `<div class="dash-badge locked">
+      <div class="dash-badge-icon">${b.emoji}</div>
+      <div class="dash-badge-name">${b.label}</div>
+      <div class="dash-badge-sub">A desbloquear</div>
+    </div>`;
+  }
+  return `<div class="dash-badge unlocked">
+    <div class="dash-badge-icon" style="background:${b.cor}22">${b.emoji}</div>
+    <div class="dash-badge-name">${b.label}</div>
+    ${nome ? `<div class="dash-badge-sub">${nome}</div>` : ''}
+    <div class="dash-badge-data">${fmtData(data)}</div>
+  </div>`;
+}
+
+function renderDashPessoal(p, user) {
+  const wrap = document.getElementById('dash-pessoal');
+  if (!wrap) return;
+  if (!user) { wrap.style.display = 'none'; return; }
+  p = p || {};
+
+  const nomeCompleto = p.nome || user.displayName || '';
+  const primeiroNome = nomeCompleto.split(' ')[0] || 'Filha da casa';
+  const cargo = p.cargo || '';
+  const emoji = p.emoji || '✦';
+  const hist = p.historia || {};
+  const guias = p.guias || {};
+  const cruz = p.cruzamentos || {};
+
+  // avatar
+  const avatarEl = document.getElementById('dash-avatar');
+  if (user.photoURL || p.foto) avatarEl.innerHTML = `<img src="${user.photoURL || p.foto}" alt="">`;
+  else avatarEl.textContent = emoji;
+
+  document.getElementById('dash-nome').textContent = primeiroNome;
+
+  const seloEl = document.getElementById('dash-selo');
+  if (cargo) {
+    document.getElementById('dash-selo-emoji').textContent = emoji;
+    document.getElementById('dash-selo-cargo').textContent = cargo;
+    seloEl.style.display = 'inline-flex';
+  } else {
+    seloEl.style.display = 'none';
+  }
+
+  // frase de efeito
+  const tempo = calcTempo(hist.data_entrada);
+  const fraseEl = document.getElementById('dash-frase');
+  if (tempo) {
+    fraseEl.innerHTML = `<strong>${tempo}</strong> de caminhada na casa. ${DASH_FRASES_CARGO[cargo] || 'Cada passo guiado pela espiritualidade.'}`;
+  } else {
+    fraseEl.innerHTML = `Bem-vinda à sua jornada no <strong>Bolhas de Luz</strong>. ✨`;
+  }
+
+  // stats rápidos
+  const totalGuias = DASH_BADGES_GUIAS.filter(b => guias[b.dataKey]).length;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length;
+  const totalMarcos = DASH_BADGES_HISTORIA.filter(b => hist[b.dataKey]).length;
+  document.getElementById('dash-stats').innerHTML = `
+    <div class="dash-stat"><div class="dash-stat-num">${totalGuias}</div><div class="dash-stat-label">Guias</div></div>
+    <div class="dash-stat"><div class="dash-stat-num">${totalCruz}</div><div class="dash-stat-label">Cruzamentos</div></div>
+    <div class="dash-stat"><div class="dash-stat-num">${totalMarcos}</div><div class="dash-stat-label">Marcos</div></div>
+  `;
+
+  // barra de progresso 7 anos
+  const progEl = document.getElementById('dash-progresso');
+  if (hist.data_entrada) {
+    const inicio = new Date(hist.data_entrada + 'T12:00:00');
+    const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear() + 7);
+    const hoje = new Date();
+    const pct = Math.round(Math.min((hoje - inicio) / (fim7 - inicio), 1) * 100);
+    document.getElementById('dash-progresso-pct').textContent = pct + '%';
+    document.getElementById('dash-progresso-fill').style.width = pct + '%';
+    progEl.style.display = 'block';
+  } else {
+    progEl.style.display = 'none';
+  }
+
+  // badges de conquista
+  document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
+  document.getElementById('dash-badges-cruz').innerHTML = DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('');
+  document.getElementById('dash-badges-historia').innerHTML = DASH_BADGES_HISTORIA.map(b => dashBadgeHtml(b, hist)).join('');
+
+  // linha do tempo pessoal (reaproveita renderTimeline)
+  renderTimeline(p, 'dash-timeline');
+
+  wrap.style.display = 'block';
+}
+window.renderDashPessoal = renderDashPessoal;
 
 window.toggleTimelineItem = async function(key) {
   if (!currentUser) return;
@@ -4355,6 +4571,14 @@ window.addEventListener('load', ajustarTopoFixo);
 // ── SUA HISTÓRIA ──
 function atualizarWidgetHistoria(logada) {
   renderCards();
+  if (logada) {
+    const u = window._getCurrentUser && window._getCurrentUser();
+    const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
+    window.renderDashPessoal?.(pd, u);
+  } else {
+    const dashEl = document.getElementById('dash-pessoal');
+    if (dashEl) dashEl.style.display = 'none';
+  }
 }
 
 let shAlteracoes = {};
@@ -4426,6 +4650,7 @@ window.salvarSuaHistoria = async function() {
       perfilData = payload;
       // volta modo leitura e atualiza tudo
       renderMinhaHistoria(perfilData, currentUser);
+      window.renderDashPessoal?.(perfilData, currentUser);
       const ok = document.getElementById('sh-msg-ok');
       if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
     }
