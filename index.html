@@ -1772,7 +1772,10 @@ function getDefaultMenu() {
 // ── RENDERIZAR DRAWER ──
 function renderDrawer() {
   const body = document.getElementById('drawer-body');
-  if (!menuData) return;
+  if (!menuData) {
+    body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Carregando menu...</div>';
+    return;
+  }
   const user = window._getCurrentUser && window._getCurrentUser();
   const pd = window._getPerfilData?.() || {};
   let grupoUsuario = 'publico';
@@ -2580,6 +2583,8 @@ function toggleDrawer() {
   const open=d.classList.contains('open');
   // fecha painel lateral de guias se estiver aberto
   if (!open) guiasFecharPainel?.();
+  // garante que o conteúdo esteja renderizado ao abrir (corrige drawer vazio se menuData ainda não tinha carregado)
+  if (!open) renderDrawer();
   d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
   document.body.style.overflow=open?'':'hidden';
 }
