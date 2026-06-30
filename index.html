@@ -262,7 +262,7 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
 .drawer-close:hover{color:var(--rosa)}
 .drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
-.drawer-section{padding:18px 20px 4px}
+.drawer-section{padding:14px 16px 4px}
 .drawer-section-label{
   font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;
   color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px;
@@ -280,12 +280,12 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 .drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
 .drawer-dot.mem{background:rgba(196,57,107,.28)}
 .drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
-.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;transition:color .2s}
-.drawer-submenu-toggle:hover{color:var(--rosa)}
-.drawer-submenu-toggle .dsm-arrow{font-size:.7rem;transition:transform .25s;color:var(--text-dim)}
-.drawer-submenu-toggle.open .dsm-arrow{transform:rotate(90deg)}
-.drawer-submenu{max-height:0;overflow:hidden;transition:max-height .3s ease;padding-left:18px}
-.drawer-submenu.open{max-height:600px}
+.drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 8px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(196,90,30,.5);background:none;border:none;width:100%;text-align:left;cursor:default}
+.drawer-submenu-toggle .dsm-arrow{display:none}
+.drawer-submenu{
+  display:grid;grid-template-columns:repeat(2,1fr);gap:9px;
+  padding:0 0 14px;
+}
 #page-admin{display:none}
 #page-admin.active{display:block}
 .admin-panel{max-width:680px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
@@ -641,15 +641,15 @@ body{padding-bottom:0}
 .blog-add-slot{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:7px;color:rgba(255,255,255,.62);font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;cursor:pointer;transition:background .14s;display:inline-flex;align-items:center;gap:.35rem;}
 .blog-add-slot:hover{background:rgba(255,255,255,.12);}
 
-/* ── DRAWER ITENS CARD-STYLE ── */
+/* ── DRAWER ITENS — GRADE DE QUADRADINHOS ── */
 .drawer-card{
   display:flex;flex-direction:column;gap:2px;
-  padding:9px 12px;margin:3px 0;
+  padding:11px 13px;
   background:rgba(255,255,255,.55);
   border:1px solid rgba(196,90,30,.1);
-  border-radius:8px;
+  border-radius:10px;
   cursor:pointer;transition:all .18s;
-  text-align:left;width:100%;
+  text-align:left;
   backdrop-filter:blur(3px);
 }
 .drawer-card:hover{
@@ -1806,11 +1806,13 @@ function renderDrawer() {
 
   // card especial do Painel Admin, sempre no topo, fora das seções
   const adminCardHtml = ehAdmin
-    ? `<button class="drawer-card admin-card" onclick="showPage('admin');closeDrawer()">
-         <span class="drawer-card-name">⚙ Painel Admin</span>
-         <span class="drawer-card-desc">Gerencie menu, perfis e sessões</span>
-         <span class="drawer-card-tag tag-mem">admin</span>
-       </button>`
+    ? `<div class="drawer-section" style="padding-bottom:0">
+         <button class="drawer-card admin-card" style="width:100%" onclick="showPage('admin');closeDrawer()">
+           <span class="drawer-card-name">⚙ Painel Admin</span>
+           <span class="drawer-card-desc">Gerencie menu, perfis e sessões</span>
+           <span class="drawer-card-tag tag-mem">admin</span>
+         </button>
+       </div>`
     : '';
 
   const sectionsHtml = menuData.sections.map(sec => {
@@ -1824,13 +1826,12 @@ function renderDrawer() {
     const si = menuData.sections.indexOf(sec);
     return `
       <div class="drawer-section">
-        <button class="drawer-submenu-toggle" onclick="toggleSubmenu(this)">
+        <button class="drawer-submenu-toggle">
           <div class="drawer-sec-label-wrap">
             <span class="drawer-dot${sec.id==='corrente'?' mem':''}"></span>
             <span id="drawer-sec-name-${si}">${sec.label}</span>
             ${grupoUsuario === 'admin' ? `<button class="drawer-sec-edit-btn" onclick="drawerEditSecName(event,${si})" title="Editar nome">✎</button>` : ''}
           </div>
-          <span class="dsm-arrow">›</span>
         </button>
         <input class="drawer-sec-name-input" id="drawer-sec-input-${si}"
           value="${sec.label}"
@@ -1844,12 +1845,14 @@ function renderDrawer() {
 
   // banner de login, se não estiver logada
   const loginBannerHtml = !userNow
-    ? `<div class="drawer-login-banner">
-         <div>
-           <div class="drawer-card-name" style="color:var(--rosa)">Área das Filhas</div>
-           <div class="drawer-card-desc">Acesse ferramentas internas do terreiro</div>
+    ? `<div class="drawer-section" style="padding-top:4px">
+         <div class="drawer-login-banner">
+           <div>
+             <div class="drawer-card-name" style="color:var(--rosa)">Área das Filhas</div>
+             <div class="drawer-card-desc">Acesse ferramentas internas do terreiro</div>
+           </div>
+           <button class="btn-rosa" style="padding:8px 16px;font-size:.6rem;flex-shrink:0" onclick="openLogin();closeDrawer()">Entrar</button>
          </div>
-         <button class="btn-rosa" style="padding:8px 16px;font-size:.6rem;flex-shrink:0" onclick="openLogin();closeDrawer()">Entrar</button>
        </div>`
     : '';
 
