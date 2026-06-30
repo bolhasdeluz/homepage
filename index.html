@@ -367,13 +367,13 @@ footer{
   color:rgba(255,255,255,.92);line-height:1.5;margin-bottom:18px;
 }
 .dash-frase strong{font-style:normal;font-weight:600;color:#fff}
-.dash-stats{position:relative;display:flex;gap:10px;flex-wrap:wrap}
+.dash-stats{position:relative;display:flex;gap:8px;flex-wrap:wrap}
 .dash-stat{
-  flex:1;min-width:84px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
-  border-radius:12px;padding:10px 12px;text-align:center;
+  flex:1;min-width:68px;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+  border-radius:12px;padding:9px 8px;text-align:center;
 }
-.dash-stat-num{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:#fff;line-height:1}
-.dash-stat-label{font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:3px}
+.dash-stat-num{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:#fff;line-height:1}
+.dash-stat-label{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-top:3px}
 
 /* progresso 7 anos dentro do card */
 .dash-progresso{position:relative;margin-top:18px}
@@ -4293,13 +4293,14 @@ function renderTimeline(p, elId) {
   eventos.sort((a,b) => a.data.localeCompare(b.data));
   const dataMin = new Date(eventos[0].data + 'T12:00:00');
 
-  // a linha do tempo se estende até o fim dos 7 anos de caminhada (não só até o último evento),
+  // a linha do tempo se estende até o fim do ciclo de caminhada atual (7, 14, 21... anos),
   // assim dá pra mostrar visualmente o trecho ainda por vir
   let dataMax = new Date(eventos[eventos.length-1].data + 'T12:00:00');
   let fim7anos = null;
+  let cicloAtual = null;
   if (hist.data_entrada) {
-    fim7anos = new Date(hist.data_entrada + 'T12:00:00');
-    fim7anos.setFullYear(fim7anos.getFullYear() + 7);
+    cicloAtual = window.calcCicloCaminhada(hist.data_entrada);
+    fim7anos = cicloAtual.fimCiclo;
     if (fim7anos > dataMax) dataMax = fim7anos;
   }
 
@@ -4315,21 +4316,17 @@ function renderTimeline(p, elId) {
   const porData = {};
   eventos.forEach(e => { if (!porData[e.data]) porData[e.data]=[]; porData[e.data].push(e); });
 
-  // barra 7 anos — tom de conquista (celebra o caminho já trilhado, sem contagem regressiva)
+  // barra de progresso do ciclo de caminhada — tom de conquista (celebra o caminho já trilhado)
   let progressoHtml = '';
-  if (hist.data_entrada) {
-    const inicio = new Date(hist.data_entrada + 'T12:00:00');
-    const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear()+7);
-    const hoje = new Date();
-    const pct = Math.round(Math.min((hoje-inicio)/(fim7-inicio),1)*100);
+  if (hist.data_entrada && cicloAtual) {
     const tempoTrilhado = calcTempo(hist.data_entrada) || 'Recém chegada';
-    const mensagemConquista = pct >= 100
-      ? '✦ 7 anos de caminhada completados!'
+    const mensagemConquista = cicloAtual.pct >= 100
+      ? `✦ ${cicloAtual.metaAnos} anos de caminhada completados!`
       : `✦ ${tempoTrilhado} de caminhada já vividos`;
     progressoHtml = `<div class="mh-progresso" style="margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de 7 anos</span><span><span>${pct}%</span> trilhado</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de ${cicloAtual.metaAnos} anos</span><span><span>${cicloAtual.pct}%</span> trilhado</span></div>
       <div style="background:rgba(196,57,107,.1);border-radius:20px;height:6px;overflow:hidden">
-        <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${pct}%;border-radius:20px"></div>
+        <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${cicloAtual.pct}%;border-radius:20px"></div>
       </div>
       <div style="margin-top:6px;font-size:.78rem;opacity:.7">${mensagemConquista}</div>
     </div>`;
@@ -4434,7 +4431,7 @@ function dashBadgeHtml(b, dados) {
     return `<div class="dash-badge locked">
       <div class="dash-badge-icon">${b.emoji}</div>
       <div class="dash-badge-name">${b.label}</div>
-      <div class="dash-badge-sub">A desbloquear</div>
+      <div class="dash-badge-sub">—</div>
     </div>`;
   }
   // subtexto especial: quantidade de aves, quando o badge é um corte
@@ -4536,26 +4533,32 @@ function renderDashPessoal(p, user) {
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
   const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length;
-  const totalMarcos = DASH_BADGES_HISTORIA.filter(b => hist[b.dataKey]).length;
+
+  // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
+  const totalAves =
+    (Number(hist.apronte_galinhas) || 0) + (Number(hist.apronte_galos) || 0) +
+    (Number(hist.corte_1_galinhas) || 0) + (Number(hist.corte_1_galos) || 0) +
+    (p.cortes || []).reduce((soma, c) => soma + (Number(c.galinhas) || 0) + (Number(c.galos) || 0), 0);
+
   document.getElementById('dash-stats').innerHTML = `
     <div class="dash-stat"><div class="dash-stat-num">${totalGuias}</div><div class="dash-stat-label">Guias</div></div>
+    <div class="dash-stat"><div class="dash-stat-num">${totalCruz}</div><div class="dash-stat-label">Cruzamentos</div></div>
     <div class="dash-stat"><div class="dash-stat-num">${totalQuimbanda}</div><div class="dash-stat-label">Quimbanda</div></div>
-    <div class="dash-stat"><div class="dash-stat-num">${totalMarcos}</div><div class="dash-stat-label">Marcos</div></div>
+    <div class="dash-stat"><div class="dash-stat-num">${totalAves}</div><div class="dash-stat-label">Aves</div></div>
   `;
 
   // barra de progresso 7 anos — tom de conquista
   const progEl = document.getElementById('dash-progresso');
   if (hist.data_entrada) {
-    const inicio = new Date(hist.data_entrada + 'T12:00:00');
-    const fim7 = new Date(inicio); fim7.setFullYear(fim7.getFullYear() + 7);
-    const hoje = new Date();
-    const pct = Math.round(Math.min((hoje - inicio) / (fim7 - inicio), 1) * 100);
-    document.getElementById('dash-progresso-pct').textContent = pct + '%';
-    document.getElementById('dash-progresso-fill').style.width = pct + '%';
+    const ciclo = window.calcCicloCaminhada(hist.data_entrada);
+    document.getElementById('dash-progresso-pct').textContent = ciclo.pct + '%';
+    document.getElementById('dash-progresso-fill').style.width = ciclo.pct + '%';
+    const topEl = document.querySelector('#dash-progresso .dash-progresso-top span:first-child');
+    if (topEl) topEl.textContent = `Caminhada de ${ciclo.metaAnos} anos`;
     const msgEl = document.getElementById('dash-progresso-msg');
     if (msgEl) {
-      msgEl.textContent = pct >= 100
-        ? '✦ 7 anos de caminhada completados!'
+      msgEl.textContent = ciclo.pct >= 100
+        ? `✦ ${ciclo.metaAnos} anos de caminhada completados!`
         : `✦ ${tempo || 'Recém chegada'} de caminhada já vividos`;
     }
     progEl.style.display = 'block';
@@ -5065,6 +5068,24 @@ window.calcTempo = function calcTempo(dataStr) {
   if (anos > 0)  p.push(anos  + (anos  === 1 ? ' ano'  : ' anos'));
   if (meses > 0) p.push(meses + (meses === 1 ? ' mês'  : ' meses'));
   return p.length ? p.join(' e ') : 'Recém chegada';
+}
+
+// calcula o ciclo de caminhada atual: 7 anos até completar o primeiro ciclo,
+// depois passa a contar para 14 anos, e assim por diante a cada 7 anos completados
+window.calcCicloCaminhada = function calcCicloCaminhada(dataEntradaStr) {
+  if (!dataEntradaStr) return null;
+  const inicio = new Date(dataEntradaStr + 'T12:00:00');
+  const hoje = new Date();
+  const anosCompletos = Math.floor((hoje - inicio) / (365.25 * 24 * 3600 * 1000));
+  // quantos ciclos de 7 anos já foram concluídos; o ciclo atual sempre mira o próximo múltiplo de 7
+  const ciclosConcluidos = Math.floor(anosCompletos / 7);
+  const metaAnos = (ciclosConcluidos + 1) * 7;
+  const fimCiclo = new Date(inicio);
+  fimCiclo.setFullYear(fimCiclo.getFullYear() + metaAnos);
+  const inicioCiclo = new Date(inicio);
+  inicioCiclo.setFullYear(inicioCiclo.getFullYear() + ciclosConcluidos * 7);
+  const pct = Math.round(Math.min((hoje - inicioCiclo) / (fimCiclo - inicioCiclo), 1) * 100);
+  return { metaAnos, fimCiclo, inicioCiclo, pct, ciclosConcluidos };
 }
 
 // ── RENDERIZAR PERFIL ──
