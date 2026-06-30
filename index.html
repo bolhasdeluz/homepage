@@ -95,9 +95,10 @@ body.logada .header-cta{display:none}
   top:0;left:0;right:0;
   z-index:195; /* abaixo do #boas-vindas (z-index:200) */
   display:flex;align-items:center;justify-content:center;
-  padding:6px 20px 7px;
-  background:rgba(253,246,238,.94);
-  border-bottom:1px solid rgba(196,90,30,.10);
+  padding:10px 20px 11px;
+  background:rgba(253,246,238,.96);
+  border-bottom:1px solid rgba(196,90,30,.14);
+  box-shadow:0 1px 8px rgba(196,90,30,.06);
   backdrop-filter:blur(8px);
   transition:top .25s ease;
 }
@@ -106,21 +107,21 @@ body.logada #menu-hint{top:28px}
 
 #menu-hint-btn{
   background:none;border:none;cursor:pointer;
-  display:flex;align-items:center;gap:8px;
-  opacity:.55;transition:opacity .2s;
-  padding:2px 0;
+  display:flex;align-items:center;gap:9px;
+  opacity:.85;transition:opacity .2s;
+  padding:3px 4px;
 }
-#menu-hint-btn:hover{opacity:1}
+#menu-hint-btn:hover,#menu-hint-btn:active{opacity:1}
 #menu-hint-label{
-  font-family:'Cinzel',serif;font-size:.55rem;
-  letter-spacing:.2em;text-transform:uppercase;color:var(--terra);
+  font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--terra);
 }
 #hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
 #menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
 
 /* empurra o conteúdo para não ficar escondido atrás do hint */
-body{padding-top:26px}
-body.logada{padding-top:54px}
+body{padding-top:34px}
+body.logada{padding-top:62px}
 
 /* drag and drop */
 .admin-item-row{cursor:grab}
@@ -228,10 +229,15 @@ body.logada{padding-top:54px}
 .form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;padding:10px 12px;width:100%;outline:none;margin-bottom:16px;transition:border-color .2s}
 .form-input:focus{border-color:var(--rosa)}
 
-/* footer */
-footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3a2030);padding:32px 24px;text-align:center}
-.footer-logo{font-family:'Cinzel',serif;font-size:.85rem;font-weight:600;color:rgba(255,255,255,.55);letter-spacing:.12em;margin-bottom:6px}
-.footer-sub{font-family:'Crimson Pro',serif;font-size:.85rem;color:rgba(255,255,255,.25);font-style:italic}
+/* footer — fixo na base da tela, sempre visível */
+footer{
+  position:fixed;left:0;right:0;bottom:0;z-index:120;
+  background:linear-gradient(135deg,#2a1a22,#3a2030);
+  padding:10px 24px;text-align:center;
+  box-shadow:0 -4px 20px rgba(0,0,0,.18);
+}
+.footer-logo{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.1em;margin-bottom:2px}
+.footer-sub{font-family:'Crimson Pro',serif;font-size:.72rem;color:rgba(255,255,255,.3);font-style:italic}
 
 @media(max-width:500px){
   .widgets-grid{grid-template-columns:1fr 1fr}
@@ -460,8 +466,8 @@ footer{position:relative;z-index:10;background:linear-gradient(135deg,#2a1a22,#3
 #bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
 #bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
 #bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
-body.logada{padding-top:54px} /* sobrescreve a regra acima quando logada */
-body{padding-bottom:0}
+body.logada{padding-top:62px} /* sobrescreve a regra acima quando logada */
+body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -2268,6 +2274,7 @@ function mudarSimulacao(valor) {
       document.getElementById('boas-vindas').style.display = 'none';
       document.body.classList.remove('logada');
     }
+    window.ajustarTopoFixo?.();
 
     // re-renderiza calendário se estiver aberto
     const calPage = document.getElementById('page-calendario');
@@ -2318,6 +2325,7 @@ function sairSimulacao() {
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
   document.getElementById('boas-vindas').style.display = 'block';
   document.body.classList.add('logada');
+  window.ajustarTopoFixo?.();
 }
 
 // override de _getCurrentUser para modo simulação
@@ -4331,6 +4339,7 @@ onAuthStateChanged(auth, async (user) => {
     perfilData = {};
     atualizarWidgetHistoria(false);
     if (menuData) renderCards();
+    window.ajustarTopoFixo?.();
   }
 });
 
@@ -4341,7 +4350,7 @@ function atualizarBoasVindas() {
   const user = (window._modoSimulacao !== undefined && window._modoSimulacao !== null)
     ? window._simUsuario
     : currentUser;
-  if (!user) { banner.style.display = 'none'; document.body.classList.remove('logada'); return; }
+  if (!user) { banner.style.display = 'none'; document.body.classList.remove('logada'); ajustarTopoFixo(); return; }
 
   const perfil = user._perfil || perfilData || {};
   const nomeCompleto = perfil.nome || user.displayName || '';
@@ -4359,8 +4368,27 @@ function atualizarBoasVindas() {
 
   banner.style.display = 'block';
   document.body.classList.add('logada');
+  ajustarTopoFixo();
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
+
+// ── mede a altura real da barra de boas-vindas e posiciona o menu-hint logo abaixo dela ──
+function ajustarTopoFixo() {
+  requestAnimationFrame(() => {
+    const banner = document.getElementById('boas-vindas');
+    const hint = document.getElementById('menu-hint');
+    if (!banner || !hint) return;
+    const visivel = banner.style.display !== 'none' && getComputedStyle(banner).display !== 'none';
+    const alturaBanner = visivel ? banner.offsetHeight : 0;
+    hint.style.top = alturaBanner + 'px';
+    // empurra o conteúdo da página o suficiente pra não ficar atrás da barra fixa + hint
+    const alturaHint = hint.offsetHeight;
+    document.body.style.paddingTop = (alturaBanner + alturaHint) + 'px';
+  });
+}
+window.ajustarTopoFixo = ajustarTopoFixo;
+window.addEventListener('resize', ajustarTopoFixo);
+window.addEventListener('load', ajustarTopoFixo);
 
 // ── SUA HISTÓRIA ──
 function atualizarWidgetHistoria(logada) {
