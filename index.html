@@ -1115,7 +1115,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
               <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Cruzamentos e Axés</div>
-              <button id="mh-cruz-btn-add" onclick="mhAdicionarCruzamento()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar cruzamento</button>
+              <button id="mh-cruz-btn-add" onclick="mhAdicionarCruzamentoExtra()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar cruzamento</button>
             </div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
             <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
@@ -5323,6 +5323,12 @@ window.mhAtualizarCorte = function(i, campo, valor) {
 // os 4 cruzamentos fixos (Mata/Praia/Rio/Pedreira) continuam em perfilData.cruzamentos
 let _mhCruzExtrasEditando = [];
 
+// tipos de cruzamento pré-definidos para o seletor
+const MH_TIPOS_CRUZAMENTO = [
+  'Mata', 'Praia', 'Rio/Cachoeira', 'Pedreira', 'Encruzilhada',
+  'Cemitério', 'Lixo', 'Estrada', 'Beira de Mar', 'Outro'
+];
+
 function mhRenderCruzamentosExtras(extras, editavel) {
   const lista = document.getElementById('mh-cruz-extras-lista');
   const btnAdd = document.getElementById('mh-cruz-btn-add');
@@ -5345,24 +5351,55 @@ function mhRenderCruzamentosExtras(extras, editavel) {
 
   lista.innerHTML = dadosParaExibir.map((c, i) => {
     if (editavel) {
+      // se o nome salvo não bate com nenhum tipo pré-definido, trata como "Outro" com o nome customizado
+      const tipoSelecionado = MH_TIPOS_CRUZAMENTO.includes(c.nome) ? c.nome : (c.nome ? 'Outro' : '');
+      const mostrarCampoOutro = tipoSelecionado === 'Outro';
       return `<div class="mh-corte-card">
         <button type="button" class="mh-corte-del" onclick="mhRemoverCruzamentoExtra(${i})" title="Remover este cruzamento">✕</button>
         <div class="mh-corte-num">Cruzamento Extra</div>
         <div class="mh-corte-grid mh-corte-grid-2">
-          <div><label>Nome</label><input type="text" class="form-input" style="margin-bottom:0" value="${c.nome||''}" placeholder="ex: Encruzilhada" oninput="mhAtualizarCruzamentoExtra(${i},'nome',this.value)"></div>
+          <div>
+            <label>Tipo</label>
+            <select class="form-input" style="margin-bottom:0" onchange="mhTipoCruzamentoMudou(${i}, this.value)">
+              <option value="" ${!tipoSelecionado?'selected':''}>— Selecionar —</option>
+              ${MH_TIPOS_CRUZAMENTO.map(t => `<option value="${t}" ${t===tipoSelecionado?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
           <div><label>Data</label><input type="date" class="form-input" style="margin-bottom:0" value="${c.data||''}" oninput="mhAtualizarCruzamentoExtra(${i},'data',this.value)"></div>
+        </div>
+        <div id="mh-cruz-outro-${i}" style="margin-top:8px;${mostrarCampoOutro?'':'display:none'}">
+          <label class="form-label">Qual cruzamento?</label>
+          <input type="text" class="form-input" style="margin-bottom:0" value="${tipoSelecionado==='Outro' ? (c.nome||'') : ''}" placeholder="ex: Porteira, Tronqueira..." oninput="mhAtualizarCruzamentoExtra(${i},'nome',this.value)">
         </div>
       </div>`;
     }
     return `<div class="mh-corte-card">
       <div class="mh-corte-num">${c.nome || 'Cruzamento'}</div>
       <div class="mh-corte-grid mh-corte-grid-2">
-        <div><label>Nome</label><div class="valor">${c.nome || '—'}</div></div>
+        <div><label>Tipo</label><div class="valor">${c.nome || '—'}</div></div>
         <div><label>Data</label><div class="valor">${c.data ? fmtData(c.data) : '—'}</div></div>
       </div>
     </div>`;
   }).join('');
 }
+
+window.mhTipoCruzamentoMudou = function(i, tipo) {
+  if (!_mhCruzExtrasEditando[i]) return;
+  if (tipo === 'Outro') {
+    // limpa o nome pra forçar digitação no campo livre, e mostra o campo
+    _mhCruzExtrasEditando[i].nome = '';
+    const campoOutro = document.getElementById(`mh-cruz-outro-${i}`);
+    if (campoOutro) {
+      campoOutro.style.display = '';
+      const input = campoOutro.querySelector('input');
+      if (input) input.focus();
+    }
+  } else {
+    _mhCruzExtrasEditando[i].nome = tipo;
+    const campoOutro = document.getElementById(`mh-cruz-outro-${i}`);
+    if (campoOutro) campoOutro.style.display = 'none';
+  }
+};
 
 window.mhAdicionarCruzamentoExtra = function() {
   _mhCruzExtrasEditando.push({ nome:'', data:'' });
