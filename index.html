@@ -952,11 +952,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="dash-section-title">Guias e Guardiões</div>
     <div class="dash-badges-grid" id="dash-badges-guias"></div>
 
-    <div class="dash-section-title">Cruzamentos e Axés</div>
-    <div class="dash-badges-grid" id="dash-badges-cruz"></div>
-
     <div class="dash-section-title">Marcos da Jornada</div>
     <div class="dash-badges-grid" id="dash-badges-historia"></div>
+
+    <div class="dash-section-title">Quimbanda</div>
+    <div class="dash-badges-grid" id="dash-badges-quimbanda"></div>
+
+    <div class="dash-section-title">Cruzamentos e Axés</div>
+    <div class="dash-badges-grid" id="dash-badges-cruz"></div>
 
     <!-- LINHA DO TEMPO PESSOAL -->
     <div class="dash-section-title">Sua linha do tempo</div>
@@ -1073,18 +1076,43 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Guias e Guardiões</div>
             <div class="perfil-grid" id="mh-grid-guias"></div>
           </div>
+          <!-- Quimbanda — apronte e cortes, com contagem de aves -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Quimbanda</div>
+            <div class="mh-corte-grid" style="margin-bottom:14px">
+              <div><label>Apronte</label><div class="valor" id="mh-apronte-data">—</div></div>
+              <div><label>Galinhas</label><div class="valor" id="mh-apronte-galinhas">—</div></div>
+              <div><label>Galos</label><div class="valor" id="mh-apronte-galos">—</div></div>
+            </div>
+            <div class="mh-corte-grid" style="margin-bottom:4px">
+              <div><label>1º Corte</label><div class="valor" id="mh-corte1-data">—</div></div>
+              <div><label>Galinhas</label><div class="valor" id="mh-corte1-galinhas">—</div></div>
+              <div><label>Galos</label><div class="valor" id="mh-corte1-galos">—</div></div>
+            </div>
+            <!-- inputs de edição (ocultos em modo leitura) -->
+            <div id="mh-quimbanda-edicao" style="display:none;margin-top:10px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+                <div><label class="form-label">Apronte</label><input type="date" class="form-input" id="mh-edit-apronte" style="margin-bottom:0"></div>
+                <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galinhas" style="margin-bottom:0" placeholder="0"></div>
+                <div><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galos" style="margin-bottom:0" placeholder="0"></div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="mh-edit-corte_1" style="margin-bottom:0"></div>
+                <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galinhas" style="margin-bottom:0" placeholder="0"></div>
+                <div><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galos" style="margin-bottom:0" placeholder="0"></div>
+              </div>
+            </div>
+            <!-- Cortes Adicionais (2º em diante) -->
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;margin-top:14px;border-top:1px solid var(--border)">
+              <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)">Cortes Adicionais</div>
+              <button id="mh-cortes-btn-add" onclick="mhAdicionarCorte()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar corte</button>
+            </div>
+            <div id="mh-cortes-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
+          </div>
           <!-- Cruzamentos -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Cruzamentos e Axés</div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
-          </div>
-          <!-- Cortes Adicionais (2º em diante) -->
-          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
-              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Cortes Adicionais</div>
-              <button id="mh-cortes-btn-add" onclick="mhAdicionarCorte()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar corte</button>
-            </div>
-            <div id="mh-cortes-lista" style="display:flex;flex-direction:column;gap:10px"></div>
           </div>
           <!-- Terreiro Cacique -->
           <div id="mh-bloco-terreiro" style="display:none;background:#fff;border:1px solid rgba(74,111,165,.2);border-left:3px solid #4a6fa5;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(74,111,165,.08)">
@@ -1584,6 +1612,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div><label class="form-label">Data de Entrada</label><input type="date" class="form-input" id="cp-data_entrada"></div>
       <div><label class="form-label">Guia Chefe</label><input type="text" class="form-input" id="cp-guia_chefe" placeholder="Nome do guia chefe"></div>
       <div><label class="form-label">Apronte</label><input type="date" class="form-input" id="cp-apronte"></div>
+      <div><label class="form-label">Apronte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-apronte_galinhas" placeholder="0"></div>
+      <div><label class="form-label">Apronte — Galos</label><input type="number" min="0" class="form-input" id="cp-apronte_galos" placeholder="0"></div>
       <div><label class="form-label">Coroação</label><input type="date" class="form-input" id="cp-coroacao"></div>
       <div><label class="form-label">Cacicamento</label><input type="date" class="form-input" id="cp-cacicamento"></div>
       <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="cp-madrinha" placeholder="Nome da madrinha"></div>
@@ -2454,7 +2484,9 @@ const camposLabels = {
   cigana:'Cigana', cigana_data:'Chegada da Cigana',
   cosme:'Cosme', cosme_data:'Chegada do Cosme',
   cruz_conga:'Conga', cruz_mata:'Mata', cruz_praia:'Praia',
-  cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte'
+  cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte',
+  apronte_galinhas:'Apronte — Galinhas', apronte_galos:'Apronte — Galos',
+  corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos'
 };
 
 function fmtDataAdmin(v) {
@@ -2512,8 +2544,9 @@ async function abrirFicha(email) {
     if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
     const ficha = document.getElementById('mf-body-ficha');
     ficha.innerHTML =
-      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1']) +
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
+      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_galinhas','corte_1_galos']) +
       mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
       (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
         <div class="mf-section"><div class="mf-section-title">🌸 Boas-vindas</div>
@@ -2590,7 +2623,7 @@ function mfTab(tab, btn) {
 
 // ── CRIAR / EDITAR PERFIL ADMIN ──
 const cpCampos = {
-  historia:     ['data_entrada','guia_chefe','apronte','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1','corte_1_galinhas','corte_1_galos'],
+  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1','corte_1_galinhas','corte_1_galos'],
   guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
   cruzamentos:  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']
 };
@@ -4187,7 +4220,8 @@ function renderMinhaHistoria(p, user) {
   renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {});
   renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', p.cruzamentos || {});
 
-  // cortes adicionais
+  // quimbanda (apronte + 1º corte) e cortes adicionais
+  mhRenderQuimbanda(p.historia || {}, false);
   mhRenderCortes(p.cortes || [], false);
 
   // linha do tempo
@@ -4205,7 +4239,8 @@ function renderTimeline(p, elId) {
 
   const EVENTOS_DEF = [
     { key:'data_entrada',    label:'Entrada na Casa',       cor:'#c4396b', src:'historia' },
-    { key:'apronte',         label:'Apronte',               cor:'#6a9e6a', src:'historia' },
+    { key:'apronte',         label:'Apronte',               cor:'#6a9e6a', src:'historia',
+      nomeFn:(dados)=>{ const g=dados.apronte_galinhas, ga=dados.apronte_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
     { key:'coroacao',        label:'Coroação',              cor:'#4a6fa5', src:'historia' },
     { key:'cacicamento',     label:'Cacicamento',           cor:'#9e6a9e', src:'historia' },
     { key:'madrinha_data',   label:'Madrinha',              cor:'#8a8a9a', src:'historia', nomeKey:'madrinha', nomeSrc:'historia' },
@@ -4257,10 +4292,24 @@ function renderTimeline(p, elId) {
 
   eventos.sort((a,b) => a.data.localeCompare(b.data));
   const dataMin = new Date(eventos[0].data + 'T12:00:00');
-  const dataMax = new Date(eventos[eventos.length-1].data + 'T12:00:00');
+
+  // a linha do tempo se estende até o fim dos 7 anos de caminhada (não só até o último evento),
+  // assim dá pra mostrar visualmente o trecho ainda por vir
+  let dataMax = new Date(eventos[eventos.length-1].data + 'T12:00:00');
+  let fim7anos = null;
+  if (hist.data_entrada) {
+    fim7anos = new Date(hist.data_entrada + 'T12:00:00');
+    fim7anos.setFullYear(fim7anos.getFullYear() + 7);
+    if (fim7anos > dataMax) dataMax = fim7anos;
+  }
+
   const spanMs = Math.max(dataMax - dataMin, 1);
   const ALTURA = Math.max(600, eventos.length * 68);
   const PX_POR_MS = ALTURA / spanMs;
+
+  // posição proporcional de "hoje" na linha — define onde a cor vira cinza
+  const hojeObj = new Date();
+  const pctHoje = Math.max(0, Math.min(1, (hojeObj - dataMin) / spanMs));
 
   // agrupar por data
   const porData = {};
@@ -4317,11 +4366,25 @@ function renderTimeline(p, elId) {
       </div>`;
   });
 
-  const alturaFinal = posAnterior + 60;
+  // a altura final cobre o span completo até o fim dos 7 anos (ou até o último evento, o que for maior)
+  const alturaFinal = Math.max(posAnterior + 60, ALTURA);
+
+  // gradiente: colorido (rosa) do início até hoje, cinza de hoje até o fim do período
+  const pctHojeFmt = (pctHoje * 100).toFixed(2);
+  const gradienteLinha = fim7anos
+    ? `linear-gradient(to bottom, var(--rosa) 0%, var(--rosa) ${pctHojeFmt}%, rgba(46,26,14,.12) ${pctHojeFmt}%, rgba(46,26,14,.12) 100%)`
+    : `linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.06))`;
+
+  // marcador de "hoje" na linha
+  const marcadorHoje = fim7anos ? `
+    <div style="position:absolute;left:-3px;top:${Math.round(pctHoje*ALTURA)}px;width:10px;height:10px;border-radius:50%;background:var(--rosa);box-shadow:0 0 0 4px rgba(196,57,107,.18);z-index:3" title="Hoje"></div>
+    <div style="position:absolute;left:22px;top:${Math.round(pctHoje*ALTURA)-7}px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.08em;color:var(--rosa);font-weight:600;z-index:3">HOJE</div>
+  ` : '';
 
   el.innerHTML = `${progressoHtml}
     <div style="position:relative;padding-left:22px;min-height:${alturaFinal}px">
-      <div style="position:absolute;left:4px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.06))"></div>
+      <div style="position:absolute;left:4px;top:0;bottom:0;width:2px;background:${gradienteLinha}"></div>
+      ${marcadorHoje}
       ${itensHtml}
     </div>`;
 }
@@ -4353,11 +4416,14 @@ const DASH_BADGES_CRUZ = [
 ];
 const DASH_BADGES_HISTORIA = [
   { dataKey:'data_entrada', label:'Entrada na Casa', emoji:'🚪', cor:'#c4396b' },
-  { dataKey:'apronte',      label:'Apronte',         emoji:'🌱', cor:'#6a9e6a' },
   { dataKey:'coroacao',     label:'Coroação',        emoji:'👑', cor:'#4a6fa5' },
   { dataKey:'cacicamento',  label:'Cacicamento',     emoji:'⭐', cor:'#9e6a9e' },
   { dataKey:'cruz_conga',   label:'Conga',           emoji:'🌳', cor:'#5a8a5a' },
-  { dataKey:'corte_1',      label:'1º Corte',        emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos' },
+];
+// Quimbanda — apronte e cortes, cada um com contagem de aves
+const DASH_BADGES_QUIMBANDA = [
+  { dataKey:'apronte',  label:'Apronte',  emoji:'🌱', cor:'#6a9e6a', avesKeyGalinhas:'apronte_galinhas', avesKeyGalos:'apronte_galos' },
+  { dataKey:'corte_1',  label:'1º Corte', emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos' },
 ];
 
 function dashBadgeHtml(b, dados) {
@@ -4468,11 +4534,12 @@ function renderDashPessoal(p, user) {
   // stats rápidos
   const totalGuias = DASH_BADGES_GUIAS.filter(b => guias[b.dataKey]).length;
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCortesExtra;
+  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length;
   const totalMarcos = DASH_BADGES_HISTORIA.filter(b => hist[b.dataKey]).length;
   document.getElementById('dash-stats').innerHTML = `
     <div class="dash-stat"><div class="dash-stat-num">${totalGuias}</div><div class="dash-stat-label">Guias</div></div>
-    <div class="dash-stat"><div class="dash-stat-num">${totalCruz}</div><div class="dash-stat-label">Cruzamentos</div></div>
+    <div class="dash-stat"><div class="dash-stat-num">${totalQuimbanda}</div><div class="dash-stat-label">Quimbanda</div></div>
     <div class="dash-stat"><div class="dash-stat-num">${totalMarcos}</div><div class="dash-stat-label">Marcos</div></div>
   `;
 
@@ -4498,10 +4565,11 @@ function renderDashPessoal(p, user) {
 
   // badges de conquista
   document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
-  document.getElementById('dash-badges-cruz').innerHTML =
-    DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
-    dashBadgesCortesHtml(p.cortes || []);
+  document.getElementById('dash-badges-cruz').innerHTML = DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('');
   document.getElementById('dash-badges-historia').innerHTML = DASH_BADGES_HISTORIA.map(b => dashBadgeHtml(b, hist)).join('');
+  document.getElementById('dash-badges-quimbanda').innerHTML =
+    DASH_BADGES_QUIMBANDA.map(b => dashBadgeHtml(b, hist)).join('') +
+    dashBadgesCortesHtml(p.cortes || []);
 
   // linha do tempo pessoal (reaproveita renderTimeline)
   renderTimeline(p, 'dash-timeline');
@@ -4811,6 +4879,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {}, true);
     renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {}, true);
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {}, true);
+    mhRenderQuimbanda(perfilData.historia || {}, true);
     mhRenderCortes(perfilData.cortes || [], true);
     if (form) form.style.display = 'block';
     if (fechado) fechado.style.display = 'none';
@@ -4821,6 +4890,7 @@ window.toggleEditarMinhaHistoria = function() {
     renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {});
     renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {});
     renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {});
+    mhRenderQuimbanda(perfilData.historia || {}, false);
     mhRenderCortes(perfilData.cortes || [], false);
     if (form) form.style.display = 'none';
     if (fechado) fechado.style.display = 'block';
@@ -4846,6 +4916,13 @@ window.salvarSuaHistoria = async function() {
     if (camposHistoria.find(c=>c.key===k))   H[k] = v;
     else if (camposGuias.find(c=>c.key===k)) G[k] = v;
     else if (camposCruz.find(c=>c.key===k))  C[k] = v;
+  });
+
+  // campos de Quimbanda (apronte + 1º corte, com aves) — não fazem parte de camposHistoria genérico
+  const quimbandaKeys = ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_galinhas','corte_1_galos'];
+  quimbandaKeys.forEach(k => {
+    const el = document.getElementById('mh-edit-' + k);
+    if (el) H[k] = el.value.trim();
   });
 
   const payload = {
@@ -4943,14 +5020,12 @@ window.salvarBoasVindas = async function() {
 const camposHistoria = [
   { label:'Data de Entrada',   key:'data_entrada',   tipo:'data'  },
   { label:'Guia Chefe',        key:'guia_chefe',     tipo:'texto' },
-  { label:'Apronte',           key:'apronte',        tipo:'data'  },
   { label:'Coroação',          key:'coroacao',       tipo:'data'  },
   { label:'Cacicamento',       key:'cacicamento',    tipo:'data'  },
   { label:'Madrinha',          key:'madrinha',       tipo:'texto' },
   { label:'Afilhada',          key:'afilhada_1',     tipo:'texto' },
   { label:'Afilhada',          key:'afilhada_2',     tipo:'texto' },
   { label:'Cruzamento de Conga', key:'cruz_conga',   tipo:'data'  },
-  { label:'1º Corte',          key:'corte_1',        tipo:'data'  },
 ];
 const camposGuias = [
   { label:'Caboclo',            key:'caboclo',        tipo:'texto' },
@@ -5092,6 +5167,33 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
 function atualizarBotaoPerfil() {
   const tem = Object.keys(perfilAlteracoes).length > 0;
   document.getElementById('perfil-btn-wrap').style.display = tem ? 'block' : 'none';
+}
+
+// ── QUIMBANDA — Apronte e 1º Corte, com contagem de aves ──
+function mhRenderQuimbanda(hist, editavel) {
+  hist = hist || {};
+  const editEl = document.getElementById('mh-quimbanda-edicao');
+
+  if (editavel) {
+    if (editEl) editEl.style.display = 'block';
+    const setIfExists = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+    setIfExists('mh-edit-apronte', hist.apronte);
+    setIfExists('mh-edit-apronte_galinhas', hist.apronte_galinhas);
+    setIfExists('mh-edit-apronte_galos', hist.apronte_galos);
+    setIfExists('mh-edit-corte_1', hist.corte_1);
+    setIfExists('mh-edit-corte_1_galinhas', hist.corte_1_galinhas);
+    setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
+    return;
+  }
+
+  if (editEl) editEl.style.display = 'none';
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  setText('mh-apronte-data', hist.apronte ? fmtData(hist.apronte) : '—');
+  setText('mh-apronte-galinhas', hist.apronte_galinhas || '—');
+  setText('mh-apronte-galos', hist.apronte_galos || '—');
+  setText('mh-corte1-data', hist.corte_1 ? fmtData(hist.corte_1) : '—');
+  setText('mh-corte1-galinhas', hist.corte_1_galinhas || '—');
+  setText('mh-corte1-galos', hist.corte_1_galos || '—');
 }
 
 // ── CORTES ADICIONAIS (2º corte em diante) ──
