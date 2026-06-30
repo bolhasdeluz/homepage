@@ -819,7 +819,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <!-- HINT DE MENU — fixo no topo, abaixo da barra de boas-vindas -->
 <div id="menu-hint">
   <button id="menu-hint-btn" onclick="toggleDrawer()">
-    <span id="menu-hint-label">Nossa casa digital</span>
+    <span id="menu-hint-label">Ferramentas</span>
     <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--rosa)" stroke-width="1.5" stroke-linecap="round"/></svg>
   </button>
 </div>
@@ -835,7 +835,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   <div class="drawer-header">
     <div>
       <span class="drawer-logo">Bolhas de Luz</span>
-      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Nossa casa digital</div>
+      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Ferramentas</div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
   </div>
@@ -853,7 +853,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <div id="debug-panel">
   <div style="display:flex;justify-content:space-between;margin-bottom:6px;border-bottom:1px solid #0f0;padding-bottom:4px">
     <span style="color:#ff0">▶ Console de Debug</span>
-    <span style="cursor:pointer;color:#f00" onclick="document.getElementById('debug-panel').innerHTML='<div style=\'display:flex;justify-content:space-between;margin-bottom:6px;border-bottom:1px solid #0f0;padding-bottom:4px\'><span style=color:#ff0>▶ Console de Debug</span><span style=\'cursor:pointer;color:#f00\' onclick=\'document.getElementById(\"debug-panel\").querySelectorAll(\"div\").forEach((el,i)=>{if(i>0)el.remove()})\'>🗑 Limpar</span></div>';'>🗑 Limpar</span>
+    <span style="cursor:pointer;color:#f00" onclick="document.getElementById('debug-panel').querySelectorAll('div').forEach((el,i)=>{if(i>0)el.remove()})">🗑 Limpar</span>
   </div>
 </div>
 
@@ -975,7 +975,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 
   <div class="widgets-wrap">
-    <div class="widgets-label">Nossa casa digital</div>
+    <div class="widgets-label">Ferramentas</div>
     <div class="widgets-grid"></div>
   </div>
 </div>
@@ -1153,6 +1153,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
                 <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-cigana_data"></div>
                 <div><label class="form-label">Cosme</label><input type="text" class="form-input" id="sh-edit-cosme"></div>
                 <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="sh-edit-cosme_data"></div>
+              </div>
+              <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border)">
+                <label class="form-label">Sobre você (aparece na página de Guias)</label>
+                <textarea class="form-input" id="sh-edit-descricao" rows="3" placeholder="Conte um pouco sobre você, sua caminhada espiritual, seus interesses..." style="font-size:14px;resize:vertical"></textarea>
+                <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;color:var(--text-dim);margin-top:4px">Máximo 300 caracteres</div>
               </div>
               <div id="sh-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic;margin-bottom:8px">Alterações salvas!</div>
               <div style="display:flex;gap:8px;justify-content:flex-end">
@@ -3447,7 +3452,12 @@ function guiasRenderPainel(p, editavel) {
           <input type="text" class="form-input" id="gpe-${d.key}" value="${G[d.key]||''}" placeholder="Nome do guia">
           <input type="date" class="form-input" id="gpe-${d.dataKey}" value="${G[d.dataKey]||''}" style="margin-top:4px">
           <textarea class="form-input" id="gpe-${d.notaKey}" rows="2" style="margin-top:4px;font-size:13px" placeholder="Notas...">${G[d.notaKey]||''}</textarea>
-        </div>`)
+        </div>`),
+      `<div style="margin-bottom:10px;padding-top:10px;border-top:1px solid rgba(196,57,107,.1)">
+        <label class="form-label">Sobre você</label>
+        <textarea class="form-input" id="gpe-descricao" rows="3" placeholder="Conte um pouco sobre você..." style="font-size:13px;resize:vertical">${H.descricao||''}</textarea>
+        <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.08em;color:var(--text-dim);margin-top:4px">Máximo 300 caracteres</div>
+      </div>`
     ].join('');
 
     document.getElementById('gp-body').innerHTML = `
@@ -3465,6 +3475,11 @@ function guiasRenderPainel(p, editavel) {
     <div style="background:var(--rosa-dim);border-radius:8px;padding:10px 14px;margin-bottom:16px">
       <span style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:3px">Guia Chefe</span>
       <span style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text)">${H.guia_chefe}</span>
+    </div>` : '';
+
+  const descricaoHtml = H.descricao ? `
+    <div style="background:rgba(196,57,107,.06);border-left:2px solid var(--rosa);border-radius:6px;padding:10px 12px;margin-bottom:16px">
+      <div style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.6;font-style:italic">${H.descricao}</div>
     </div>` : '';
 
   const guiasHtml = GUIAS_DEF.filter(d => G[d.key]).map(d => `
@@ -3488,9 +3503,10 @@ function guiasRenderPainel(p, editavel) {
 
   document.getElementById('gp-body').innerHTML = `
     ${histHtml}
+    ${descricaoHtml}
     ${guiasHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;margin-top:4px">Guias e Guardiões</div>${guiasHtml}` : ''}
     ${cruzHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 8px">Cruzamentos</div>${cruzHtml}` : ''}
-    ${!guiasHtml && !cruzHtml && !histHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}`;
+    ${!guiasHtml && !cruzHtml && !histHtml && !descricaoHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}`;
 }
 
 window.guiasToggleEditar = function() {
@@ -3520,6 +3536,9 @@ window.guiasSalvar = async function() {
 
   const guiaChefe = document.getElementById('gpe-guia_chefe');
   if (guiaChefe) H.guia_chefe = guiaChefe.value.trim();
+
+  const descricao = document.getElementById('gpe-descricao');
+  if (descricao) H.descricao = descricao.value.trim().substring(0, 300);
 
   ['caboclo','exu','pomba_gira','preto_velho','cigana','cosme'].forEach(k => {
     const nm = document.getElementById('gpe-'+k); if (nm) G[k] = nm.value.trim();
@@ -4950,6 +4969,9 @@ window.toggleEditarMinhaHistoria = function() {
     mhRenderQuimbanda(perfilData.historia || {}, true);
     mhRenderCortes(perfilData.cortes || [], true);
     mhRenderCruzamentosExtras(perfilData.cruzamentosExtras || [], true);
+    // carrega descrição
+    const descricaoEl = document.getElementById('sh-edit-descricao');
+    if (descricaoEl) descricaoEl.value = (perfilData.historia?.descricao || '').trim();
     if (form) form.style.display = 'block';
     if (fechado) fechado.style.display = 'none';
     btn.textContent = '✕ Cancelar';
@@ -4994,6 +5016,10 @@ window.salvarSuaHistoria = async function() {
     const el = document.getElementById('mh-edit-' + k);
     if (el) H[k] = el.value.trim();
   });
+
+  // campo de descrição
+  const descricaoEl = document.getElementById('sh-edit-descricao');
+  if (descricaoEl) H.descricao = descricaoEl.value.trim().substring(0, 300);
 
   const payload = {
     ...perfilData,
