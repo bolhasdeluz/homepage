@@ -2555,6 +2555,8 @@ document.addEventListener('keydown', e => {
   }
 });
 function showPage(name) {
+  // fecha o gavetão se estiver aberto
+  closeDrawer();
   // normaliza — remove barra inicial se houver
   name = name.replace(/^\//, '');
   // história, sessões, textos, apoie → modais
@@ -3731,40 +3733,6 @@ function drawerCancelSecName(si) {
   nameEl.style.display = '';
   inputEl.classList.remove('visible');
 }
-
-// ── GAVETÃO DE BAIXO ──
-function abrirGaveta() {
-  document.getElementById('gaveta').classList.add('open');
-  document.getElementById('gaveta-overlay').classList.add('open');
-  document.getElementById('gaveta-btn').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function fecharGaveta() {
-  document.getElementById('gaveta').classList.remove('open');
-  document.getElementById('gaveta-overlay').classList.remove('open');
-  document.getElementById('gaveta-btn').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function toggleGaveta() {
-  const isOpen = document.getElementById('gaveta').classList.contains('open');
-  isOpen ? fecharGaveta() : abrirGaveta();
-}
-// fecha gaveta ao arrastar pra baixo
-(function() {
-  let startY = 0;
-  const gaveta = document.getElementById('gaveta');
-  gaveta.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive:true });
-  gaveta.addEventListener('touchend', e => {
-    const dy = e.changedTouches[0].clientY - startY;
-    if (dy > 60) fecharGaveta();
-  }, { passive:true });
-})();
-// fecha gaveta ao navegar para uma página interna
-const _showPageOriginal = window.showPage;
-window.showPage = function(name) {
-  fecharGaveta();
-  _showPageOriginal(name);
-};
 
 // inicializar
 loadMenu();
