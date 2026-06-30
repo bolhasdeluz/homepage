@@ -1238,6 +1238,20 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="eyebrow">Apoie a Terreira</div>
     <div class="section-title">Como posso ajudar?</div>
     <p class="section-sub">Algumas dúvidas sobre a dinâmica financeira e como nos apoiar.</p>
+
+    <!-- PIX EM DESTAQUE -->
+    <div style="background:linear-gradient(135deg,var(--rosa),#e07a90);border-radius:14px;padding:20px 22px;margin-bottom:24px;box-shadow:0 6px 24px rgba(196,57,107,.25)">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:6px">✦ Doe via PIX</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.92rem;color:rgba(255,255,255,.92);font-style:italic;margin-bottom:14px;line-height:1.5">Qualquer valor é bem-vinda e será revertido às contas e manutenção da casa.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 14px">
+        <div style="min-width:0">
+          <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:2px">Chave PIX (copia e cola)</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix('btn-copiar-pix-topo')" id="btn-copiar-pix-topo" style="background:#fff;border:none;border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+
     <div class="faq-list">
       <div class="faq-item">
         <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Não há cobrança de atendimentos</span><span class="faq-chevron">›</span></button>
@@ -2859,22 +2873,30 @@ function closeDrawer() {
 function openLogin(){document.getElementById('login-overlay').classList.add('open')}
 function closeLogin(){document.getElementById('login-overlay').classList.remove('open')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLogin();closeDrawer();document.getElementById('admin-senha-overlay').classList.remove('open')}});
-function copiarPix() {
-  navigator.clipboard.writeText('bolhasdeluz@gmail.com').then(() => {
-    const btn = document.getElementById('btn-copiar-pix');
+function copiarPix(btnId) {
+  btnId = btnId || 'btn-copiar-pix';
+  const chave = 'bolhasdeluz@gmail.com';
+  navigator.clipboard.writeText(chave).then(() => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const textoOriginal = btn.dataset.textoOriginal || btn.textContent;
+    btn.dataset.textoOriginal = textoOriginal;
     btn.textContent = '✓ Copiado!';
     btn.style.background = 'var(--green)';
-    setTimeout(() => { btn.textContent = 'Copiar'; btn.style.background = 'var(--rosa)'; }, 2000);
+    setTimeout(() => { btn.textContent = textoOriginal; btn.style.background = 'var(--rosa)'; }, 2000);
   }).catch(() => {
     // fallback para iOS
     const el = document.createElement('textarea');
-    el.value = 'bolhasdeluz@gmail.com';
+    el.value = chave;
     document.body.appendChild(el);
     el.select(); document.execCommand('copy');
     document.body.removeChild(el);
-    const btn = document.getElementById('btn-copiar-pix');
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const textoOriginal = btn.dataset.textoOriginal || btn.textContent;
+    btn.dataset.textoOriginal = textoOriginal;
     btn.textContent = '✓ Copiado!';
-    setTimeout(() => btn.textContent = 'Copiar', 2000);
+    setTimeout(() => btn.textContent = textoOriginal, 2000);
   });
 }
 window.abrirApoie = function() {
