@@ -612,6 +612,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .blog-cat-pill{background:var(--rosa-dim);border:1px solid var(--border);border-radius:20px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:5px 13px;cursor:pointer;white-space:nowrap;transition:all .16s;}
 .blog-cat-pill:hover{background:rgba(196,57,107,.14);color:var(--text);}
 .blog-cat-pill.active{background:var(--rosa);border-color:var(--rosa);color:#fff;}
+.blog-date-filter{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-bottom:1.4rem;}
+.blog-date-select{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.04em;
+  padding:7px 10px;cursor:pointer;outline:none;transition:border-color .16s;
+}
+.blog-date-select:focus,.blog-date-select:hover{border-color:rgba(196,57,107,.35);}
+.blog-date-clear{
+  background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);
+  font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.05em;padding:7px 11px;
+  cursor:pointer;transition:all .16s;
+}
+.blog-date-clear:hover{border-color:var(--rosa);color:var(--rosa);}
 .blog-list-layout{display:grid;grid-template-columns:1fr 240px;gap:1.5rem;align-items:start;}
 @media(max-width:720px){.blog-list-layout{grid-template-columns:1fr}.blog-sidebar-wrap{display:none}}
 #blog-post-list{display:grid;gap:1rem;}
@@ -1741,6 +1754,28 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     </div>
 
     <div class="blog-cat-bar" id="blog-cat-bar"></div>
+
+    <div class="blog-date-filter" id="blog-date-filter">
+      <select class="blog-date-select" id="blog-filtro-ano" onchange="blogFiltrarData()">
+        <option value="">Todos os anos</option>
+      </select>
+      <select class="blog-date-select" id="blog-filtro-mes" onchange="blogFiltrarData()">
+        <option value="">Todos os meses</option>
+        <option value="01">Janeiro</option>
+        <option value="02">Fevereiro</option>
+        <option value="03">Março</option>
+        <option value="04">Abril</option>
+        <option value="05">Maio</option>
+        <option value="06">Junho</option>
+        <option value="07">Julho</option>
+        <option value="08">Agosto</option>
+        <option value="09">Setembro</option>
+        <option value="10">Outubro</option>
+        <option value="11">Novembro</option>
+        <option value="12">Dezembro</option>
+      </select>
+      <button class="blog-date-clear" id="blog-date-clear" onclick="blogLimparFiltroData()" style="display:none">✕ Limpar data</button>
+    </div>
 
     <div class="blog-list-layout">
       <div id="blog-post-list"><div class="spinner"></div></div>
@@ -3449,6 +3484,8 @@ const BLOG_PAGE_SZ = 5;
 let _blogPosts   = [];
 let _blogCats    = ['Doutrina e Fundamentos','Desenvolvimento Mediúnico','Práticas e Preceitos','Orixás e Guias','Vida no Terreiro','Notícias e Avisos'];
 let _blogFilter  = 'todas';
+let _blogFiltroAno = '';
+let _blogFiltroMes = '';
 let _blogPage    = 0;
 let _blogModal   = null;
 let _blogModalV  = 'original';
@@ -3457,6 +3494,9 @@ let _blogUnsub   = null;
 let _blogUnsubCm = null;
 let _blogInited  = false;
 
+// normaliza categorias para comparação tolerante (remove espaços extras, ignora maiúsc/minúsc)
+function blogNormCat(s) { return String(s || '').trim().toLowerCase(); }
+
 function blogIsAdmin() {
   const u = window._getCurrentUser && window._getCurrentUser();
   return u && u.email === 'bolhasdeluz@gmail.com';
@@ -3464,7 +3504,7 @@ function blogIsAdmin() {
 
 function blogInit() {
   document.getElementById('blog-compose').style.display = blogIsAdmin() ? '' : 'none';
-  if (_blogInited) { blogRenderCatBar(); blogRenderList(); return; }
+  if (_blogInited) { blogRenderCatBar(); blogPopularFiltroAnos(); blogRenderList(); return; }
   _blogInited = true;
   if (window._blogLoadCats) {
     window._blogLoadCats().then(cats => {
@@ -3474,6 +3514,8 @@ function blogInit() {
   if (window._blogLoadPosts) {
     _blogUnsub = window._blogLoadPosts(posts => {
       _blogPosts = posts;
+      blogRenderCatBar();
+      blogPopularFiltroAnos();
       blogRenderList();
       blogRenderSidebar();
     });
@@ -3489,9 +3531,13 @@ function blogInit() {
 function blogRenderCatBar() {
   const el = document.getElementById('blog-cat-bar');
   if (!el) return;
+  // une as categorias administrativas com quaisquer categorias que já existam nos posts
+  // (evita pills "órfãos" quando um post tem uma categoria que não está mais na lista admin)
+  const catsPosts = [...new Set(_blogPosts.map(p => (p.category || '').trim()).filter(Boolean))];
+  const todasCats = [...new Set([..._blogCats, ...catsPosts])];
   el.innerHTML =
     `<button class="blog-cat-pill ${_blogFilter==='todas'?'active':''}" onclick="blogFilterCat('todas')">Todas</button>` +
-    _blogCats.map(c => `<button class="blog-cat-pill ${_blogFilter===c?'active':''}" onclick="blogFilterCat(${JSON.stringify(c)})">${c}</button>`).join('');
+    todasCats.map(c => `<button class="blog-cat-pill ${blogNormCat(_blogFilter)===blogNormCat(c)?'active':''}" onclick="blogFilterCat(${JSON.stringify(c)})">${c}</button>`).join('');
 }
 
 function blogRenderCatChips() {
@@ -3505,6 +3551,44 @@ function blogRenderCatChips() {
 }
 
 function blogFilterCat(cat) { _blogFilter = cat; _blogPage = 0; blogRenderCatBar(); blogRenderList(); }
+
+// ── Filtro por ano/mês ────────────────────────
+function blogPopularFiltroAnos() {
+  const sel = document.getElementById('blog-filtro-ano');
+  if (!sel) return;
+  const anos = [...new Set(_blogPosts
+    .map(p => (p.dateSort || '').slice(0, 4))
+    .filter(a => /^\d{4}$/.test(a))
+  )].sort((a, b) => b.localeCompare(a)); // mais recente primeiro
+
+  const valorAtual = sel.value;
+  sel.innerHTML = '<option value="">Todos os anos</option>' +
+    anos.map(a => `<option value="${a}">${a}</option>`).join('');
+  // preserva a seleção se o ano ainda existir na lista
+  if (anos.includes(valorAtual)) sel.value = valorAtual;
+}
+
+function blogFiltrarData() {
+  _blogFiltroAno = document.getElementById('blog-filtro-ano')?.value || '';
+  _blogFiltroMes = document.getElementById('blog-filtro-mes')?.value || '';
+  _blogPage = 0;
+  const clearBtn = document.getElementById('blog-date-clear');
+  if (clearBtn) clearBtn.style.display = (_blogFiltroAno || _blogFiltroMes) ? '' : 'none';
+  blogRenderList();
+}
+
+function blogLimparFiltroData() {
+  _blogFiltroAno = '';
+  _blogFiltroMes = '';
+  const selAno = document.getElementById('blog-filtro-ano');
+  const selMes = document.getElementById('blog-filtro-mes');
+  if (selAno) selAno.value = '';
+  if (selMes) selMes.value = '';
+  const clearBtn = document.getElementById('blog-date-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  _blogPage = 0;
+  blogRenderList();
+}
 
 function blogAddCat() {
   const inp = document.getElementById('blog-cat-input');
@@ -3526,9 +3610,12 @@ async function blogSaveCats() {
 function blogRenderList() {
   const el = document.getElementById('blog-post-list');
   if (!el) return;
-  const lista = _blogFilter === 'todas' ? _blogPosts : _blogPosts.filter(p => p.category === _blogFilter);
+  let lista = _blogFilter === 'todas' ? _blogPosts : _blogPosts.filter(p => blogNormCat(p.category) === blogNormCat(_blogFilter));
+  if (_blogFiltroAno) lista = lista.filter(p => (p.dateSort || '').slice(0, 4) === _blogFiltroAno);
+  if (_blogFiltroMes) lista = lista.filter(p => (p.dateSort || '').slice(5, 7) === _blogFiltroMes);
   if (!lista.length) {
-    el.innerHTML = '<p class="blog-empty">Nenhum post nesta categoria ainda. 🌙</p>';
+    const motivoData = (_blogFiltroAno || _blogFiltroMes) ? ' neste período' : '';
+    el.innerHTML = `<p class="blog-empty">Nenhum post nesta categoria${motivoData} ainda. 🌙</p>`;
     return;
   }
   const start = _blogPage * BLOG_PAGE_SZ;
