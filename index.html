@@ -923,7 +923,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </div>
       <div id="proxima-sessao-loading" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.4)">carregando agenda...</div>
 
-      <div id="proximo-aniversario-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px">
+      <div id="proximo-aniversario-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;cursor:pointer;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px" onclick="abrirModalAniversarios()">
         <div id="aniversario-label" style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:5px">✦ Próximo aniversário</div>
         <div id="aniversario-nome" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
         <div id="aniversario-data" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
@@ -1726,6 +1726,21 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+<!-- MODAL ANIVERSÁRIOS -->
+<div id="modal-aniversarios-overlay" onclick="if(event.target===this)fecharModalAniversarios()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:550;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;margin:40px auto;padding:26px 22px;position:relative">
+    <button onclick="fecharModalAniversarios()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:4px">🎂 Aniversários da Casa</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic;margin-bottom:16px">Ordenados do mais próximo ao mais distante.</div>
+    <div id="aniversarios-lista" style="max-height:50vh;overflow-y:auto;margin-bottom:12px;padding-right:2px"></div>
+    <div id="aniversarios-admin-acoes" style="display:none">
+      <button type="button" onclick="adicionarAniversarioRow()" style="width:100%;background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Crimson Pro',serif;font-size:.88rem;padding:9px;cursor:pointer;margin-bottom:10px">+ Adicionar aniversariante</button>
+      <div id="aniversarios-modal-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;min-height:18px"></div>
+      <button type="button" onclick="salvarAniversariosAdmin()" class="btn-rosa" style="width:100%;padding:12px;font-size:11px;letter-spacing:.1em">✦ Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL FICHA ADMIN -->
 <div id="modal-ficha-overlay" onclick="if(event.target===this)fecharFicha()">
   <div id="modal-ficha">
@@ -1919,6 +1934,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 const API = '/api/menu';
 let menuData = null;
 
+// ── E-MAILS COM ACESSO ADMIN ──
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+function isEmailAdmin(email) { return !!email && ADMIN_EMAILS.includes(email); }
+
+
 // ── CARREGAR MENU DO KV ──
 async function loadMenu() {
   try {
@@ -1964,14 +1984,14 @@ function renderDrawer() {
   const userNow = window._getCurrentUser && window._getCurrentUser();
   const logada = !!userNow;
   const emSimulacao = _modoSimulacao !== null;
-  const ehAdmin = !emSimulacao && userNow && userNow.email === 'bolhasdeluz@gmail.com';
+  const ehAdmin = !emSimulacao && userNow && isEmailAdmin(userNow.email);
 
   // grupo do usuário atual (mesma lógica do renderCards)
   let grupoUsuario = 'publico';
   if (logada) {
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
     grupoUsuario = pd.grupo || 'visitante';
-    if (!emSimulacao && userNow.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+    if (!emSimulacao && isEmailAdmin(userNow.email)) grupoUsuario = 'admin';
   }
 
   // card especial do Painel Admin, sempre no topo, fora das seções
@@ -2127,7 +2147,7 @@ function renderCards() {
   // em modo simulação, nunca mostra card admin
   const userNow = window._getCurrentUser && window._getCurrentUser();
   const emSimulacao = _modoSimulacao !== null;
-  const ehAdmin = !emSimulacao && userNow && userNow.email === 'bolhasdeluz@gmail.com';
+  const ehAdmin = !emSimulacao && userNow && isEmailAdmin(userNow.email);
 
   if (ehAdmin) {
     html += `<a class="widget" href="#" onclick="showPage('admin');return false" style="border-top:2px solid var(--rosa)">
@@ -2149,7 +2169,7 @@ function renderCards() {
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         grupoUsuario = pd.grupo || 'visitante';
         // só é admin se NÃO estiver simulando
-        if (!emSimulacao && user.email === 'bolhasdeluz@gmail.com') grupoUsuario = 'admin';
+        if (!emSimulacao && isEmailAdmin(user.email)) grupoUsuario = 'admin';
       }
 
       // verifica se o item é visível para o grupo
@@ -3015,7 +3035,7 @@ const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao
 function calGetGrupo() {
   const u = window._getCurrentUser && window._getCurrentUser();
   if (!u) return 'publico';
-  if (u.email === 'bolhasdeluz@gmail.com') return 'admin';
+  if (isEmailAdmin(u.email)) return 'admin';
   return window._getPerfilData?.()?.grupo || 'visitante';
 }
 
@@ -3611,7 +3631,7 @@ function blogNormCat(s) { return String(s || '').trim().toLowerCase(); }
 
 function blogIsAdmin() {
   const u = window._getCurrentUser && window._getCurrentUser();
-  return u && u.email === 'bolhasdeluz@gmail.com';
+  return u && isEmailAdmin(u.email);
 }
 
 function blogInit() {
@@ -4146,7 +4166,7 @@ async function carregarProximaSessao() {
 }
 carregarProximaSessao();
 
-// ── PRÓXIMO ANIVERSÁRIO NO HEADER ──
+// ── ANIVERSÁRIOS ──
 const ANIVERSARIOS = [
   { mes:1,  dia:16, nome:'Jaque' },
   { mes:1,  dia:30, nome:'Diego do Tambor' },
@@ -4170,6 +4190,21 @@ const ANIVERSARIOS = [
   { mes:12, dia:24, nome:'Dona Olívia' },
 ];
 const MESES_ANIV = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+let aniversariosEdit = null; // cópia de trabalho quando admin está editando
+
+function isAdminAniversarios() {
+  try { return typeof calGetGrupo === 'function' && calGetGrupo() === 'admin'; } catch(e) { return false; }
+}
+
+// aplica uma nova lista (ex: vinda do Firestore) e atualiza a UI
+window.setAniversarios = function(lista) {
+  if (!Array.isArray(lista)) return;
+  ANIVERSARIOS.length = 0;
+  lista.forEach(a => { if (a && a.nome && a.mes && a.dia) ANIVERSARIOS.push({ mes:parseInt(a.mes), dia:parseInt(a.dia), nome:String(a.nome) }); });
+  atualizarAniversarioCard();
+  const overlay = document.getElementById('modal-aniversarios-overlay');
+  if (overlay && overlay.style.display === 'flex' && !isAdminAniversarios()) renderModalAniversarios();
+};
 
 function atualizarAniversarioCard() {
   const card  = document.getElementById('proximo-aniversario-card');
@@ -4196,17 +4231,115 @@ function atualizarAniversarioCard() {
     label.textContent = '✦ Aniversariante do Mês';
     nomeEl.textContent = prox.nome + (outros.length ? ` (+ ${outros.join(', ')})` : '');
     dataEl.textContent = `${prox.dia} de ${MESES_ANIV[prox.mes-1]}`;
-  } else {
+  } else if (ANIVERSARIOS.length) {
     const ordenado = [...ANIVERSARIOS].sort((a,b) => (a.mes-b.mes) || (a.dia-b.dia));
     const proximo = ordenado.find(a => (a.mes > hm) || (a.mes === hm && a.dia > hd)) || ordenado[0];
-    if (!proximo) return;
     label.textContent = '✦ Próximo Aniversário';
     nomeEl.textContent = proximo.nome;
     dataEl.textContent = `${proximo.dia} de ${MESES_ANIV[proximo.mes-1]}`;
+  } else {
+    card.style.display = 'none';
+    return;
   }
   card.style.display = 'block';
 }
 atualizarAniversarioCard();
+
+// ── MODAL COM A LISTA COMPLETA (editável para admin) ──
+function abrirModalAniversarios() {
+  aniversariosEdit = null;
+  document.getElementById('modal-aniversarios-overlay').style.display = 'flex';
+  renderModalAniversarios();
+}
+function fecharModalAniversarios() {
+  document.getElementById('modal-aniversarios-overlay').style.display = 'none';
+  aniversariosEdit = null;
+}
+
+function renderModalAniversarios() {
+  const isAdmin = isAdminAniversarios();
+  if (isAdmin && !aniversariosEdit) aniversariosEdit = ANIVERSARIOS.map(a => ({...a}));
+  const fonte = isAdmin ? aniversariosEdit : ANIVERSARIOS;
+
+  document.getElementById('aniversarios-admin-acoes').style.display = isAdmin ? '' : 'none';
+
+  const hoje = new Date();
+  const hojeZero = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  const hm = hoje.getMonth()+1, hd = hoje.getDate();
+
+  function proximaData(a) {
+    const ano = hoje.getFullYear();
+    let d = new Date(ano, (a.mes||1)-1, a.dia||1);
+    if (d < hojeZero) d = new Date(ano+1, (a.mes||1)-1, a.dia||1);
+    return d;
+  }
+
+  const indices = fonte.map((a,i) => i).sort((i1,i2) => proximaData(fonte[i1]) - proximaData(fonte[i2]));
+
+  const wrap = document.getElementById('aniversarios-lista');
+  wrap.innerHTML = '';
+
+  if (!fonte.length) {
+    wrap.innerHTML = '<div style="font-family:\'Crimson Pro\',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;text-align:center;padding:14px">Nenhum aniversário cadastrado.</div>';
+    return;
+  }
+
+  indices.forEach(i => {
+    const item = fonte[i];
+    const isHoje = item.mes === hm && item.dia === hd;
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;margin-bottom:6px;background:${isHoje?'rgba(196,57,107,.08)':'rgba(255,255,255,.5)'};border:1px solid ${isHoje?'rgba(196,57,107,.35)':'var(--border)'}`;
+
+    if (isAdmin) {
+      const selectHtml = MESES_ANIV.map((m,mi)=>`<option value="${mi+1}" ${mi+1===item.mes?'selected':''}>${m}</option>`).join('');
+      row.innerHTML = `
+        <input type="number" min="1" max="31" value="${item.dia}" class="av-dia" style="width:52px;padding:6px;border:1px solid var(--border);border-radius:6px;font-family:'Crimson Pro',serif;font-size:14px">
+        <select class="av-mes" style="padding:6px;border:1px solid var(--border);border-radius:6px;font-family:'Crimson Pro',serif;font-size:13px;max-width:110px">${selectHtml}</select>
+        <input type="text" value="${(item.nome||'').replace(/"/g,'&quot;')}" placeholder="Nome" class="av-nome" style="flex:1;min-width:80px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-family:'Crimson Pro',serif;font-size:14px">
+        <button type="button" class="av-del" title="Remover" style="background:none;border:none;color:#a33;font-size:1.05rem;cursor:pointer;flex-shrink:0">🗑</button>
+      `;
+      row.querySelector('.av-dia').addEventListener('input', e => { aniversariosEdit[i].dia = parseInt(e.target.value) || 1; });
+      row.querySelector('.av-mes').addEventListener('change', e => { aniversariosEdit[i].mes = parseInt(e.target.value); });
+      row.querySelector('.av-nome').addEventListener('input', e => { aniversariosEdit[i].nome = e.target.value; });
+      row.querySelector('.av-del').addEventListener('click', () => { aniversariosEdit.splice(i,1); renderModalAniversarios(); });
+    } else {
+      row.innerHTML = `
+        <div style="font-family:'Cinzel',serif;font-size:.72rem;color:var(--rosa);min-width:56px;flex-shrink:0">${String(item.dia).padStart(2,'0')} ${MESES_ANIV[item.mes-1].slice(0,3)}</div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text)">${isHoje?'🎂 ':''}${item.nome}</div>
+      `;
+    }
+    wrap.appendChild(row);
+  });
+}
+
+function adicionarAniversarioRow() {
+  if (!aniversariosEdit) aniversariosEdit = ANIVERSARIOS.map(a => ({...a}));
+  const hoje = new Date();
+  aniversariosEdit.push({ mes: hoje.getMonth()+1, dia: hoje.getDate(), nome: '' });
+  renderModalAniversarios();
+}
+
+async function salvarAniversariosAdmin() {
+  const statusEl = document.getElementById('aniversarios-modal-status');
+  if (!aniversariosEdit) return;
+  const limpos = aniversariosEdit
+    .filter(a => (a.nome||'').trim())
+    .map(a => ({
+      mes:  Math.min(12, Math.max(1, parseInt(a.mes) || 1)),
+      dia:  Math.min(31, Math.max(1, parseInt(a.dia) || 1)),
+      nome: a.nome.trim()
+    }));
+  statusEl.textContent = 'Salvando...';
+  try {
+    window.setAniversarios(limpos);
+    if (window._aniversariosSave) await window._aniversariosSave(limpos);
+    statusEl.textContent = '✦ Salvo com sucesso!';
+    aniversariosEdit = null;
+    renderModalAniversarios();
+  } catch(e) {
+    statusEl.textContent = 'Erro ao salvar. Tente novamente.';
+  }
+}
 </script>
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4257,6 +4390,20 @@ const auth = getAuth(app);
     const d = snap.docs.find(d => d.id === 'categories');
     return d ? d.data().list : null;
   };
+
+  // ── Aniversários da Casa ──
+  window._aniversariosSave = async (lista) => setDoc(doc(db,'config','aniversarios'), { list:lista });
+  window._aniversariosLoad = async () => {
+    const snap = await getDocs(collection(db,'config'));
+    const d = snap.docs.find(d => d.id === 'aniversarios');
+    return d ? d.data().list : null;
+  };
+  (async () => {
+    try {
+      const salvos = await window._aniversariosLoad();
+      if (salvos && Array.isArray(salvos) && salvos.length) window.setAniversarios?.(salvos);
+    } catch(e) { console.warn('aniversarios load:', e); }
+  })();
   const provider = new GoogleAuthProvider();
 
 // captura resultado do redirect (mobile)
@@ -4663,7 +4810,7 @@ function renderDashPessoal(p, user) {
   // botão de editar frase — visível só para o admin, mesmo vendo o perfil de outra pessoa
   const ehAdminAtual = (() => {
     const u = window._getCurrentUser && window._getCurrentUser();
-    return !!u && u.email === 'bolhasdeluz@gmail.com' && _modoSimulacao === null;
+    return !!u && isEmailAdmin(u.email) && _modoSimulacao === null;
   })();
   let btnEditarFrase = document.getElementById('dash-frase-edit-btn');
   if (ehAdminAtual) {
@@ -4936,7 +5083,7 @@ onAuthStateChanged(auth, async (user) => {
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
     // admin vai direto pro painel — garante que está no index primeiro
-    if (user.email === 'bolhasdeluz@gmail.com') {
+    if (isEmailAdmin(user.email)) {
       // se não estiver no index, redireciona
       if (!window.location.pathname.match(/^\/?$|\/index\.html$/)) {
         window.location.href = '/';
