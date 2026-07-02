@@ -922,6 +922,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div id="proxima-sessao-data" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
       </div>
       <div id="proxima-sessao-loading" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;color:rgba(255,255,255,.4)">carregando agenda...</div>
+
+      <div id="proximo-aniversario-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px">
+        <div id="aniversario-label" style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:5px">✦ Próximo aniversário</div>
+        <div id="aniversario-nome" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
+        <div id="aniversario-data" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
+      </div>
     </div>
   </header>
 
@@ -1364,6 +1370,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="perfil-nome" id="perfil-nome-display">Carregando...</div>
         <div class="perfil-email" id="perfil-email-display"></div>
         <div class="perfil-tempo" id="perfil-tempo-display"></div>
+        <div class="perfil-tempo" id="perfil-aniversario-display" style="display:none"></div>
       </div>
     </div>
 
@@ -1630,6 +1637,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </select>
       </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
+      <div><label class="form-label">🎂 Data de Aniversário</label><input type="date" class="form-input" id="cp-data_nascimento"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">História</div>
@@ -2655,7 +2663,7 @@ const cpCampos = {
 
 function abrirCriarPerfil(emailParaEditar) {
   // limpar campos
-  ['email','nome','cargo'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
+  ['email','nome','cargo','data_nascimento'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
   Object.values(cpCampos).flat().forEach(k => { const el = document.getElementById('cp-'+k); if(el) el.value = ''; });
   document.getElementById('cp-status').textContent = '';
   document.getElementById('cp-email').disabled = false;
@@ -2683,6 +2691,7 @@ function preencherFormPerfil(p) {
   if (p.cargo) { const sel = document.getElementById('cp-cargo'); if (sel) sel.value = p.cargo; }
   if (p.grupo) { const sel = document.getElementById('cp-grupo'); if (sel) sel.value = p.grupo; }
   if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
+  if (p.dataNascimento) document.getElementById('cp-data_nascimento').value = p.dataNascimento;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
     keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
@@ -2707,6 +2716,7 @@ async function salvarPerfilAdmin() {
     cargo: document.getElementById('cp-cargo').value,
     grupo: document.getElementById('cp-grupo').value || 'visitante',
     emoji: document.getElementById('cp-emoji').value.trim(),
+    dataNascimento: document.getElementById('cp-data_nascimento').value || '',
     foto: '',
     historia: {}, guias: {}, cruzamentos: {},
     notas: '',
@@ -4135,6 +4145,68 @@ async function carregarProximaSessao() {
   }
 }
 carregarProximaSessao();
+
+// ── PRÓXIMO ANIVERSÁRIO NO HEADER ──
+const ANIVERSARIOS = [
+  { mes:1,  dia:16, nome:'Jaque' },
+  { mes:1,  dia:30, nome:'Diego do Tambor' },
+  { mes:2,  dia:18, nome:'Saints Mom' },
+  { mes:3,  dia:19, nome:'Stephani' },
+  { mes:3,  dia:29, nome:'Dona Helena' },
+  { mes:4,  dia:16, nome:'Vanessa' },
+  { mes:6,  dia:10, nome:'Manuella' },
+  { mes:6,  dia:25, nome:'Anne' },
+  { mes:7,  dia:2,  nome:'Brenda' },
+  { mes:7,  dia:9,  nome:'Alex do Agê' },
+  { mes:7,  dia:30, nome:'Vitória' },
+  { mes:8,  dia:26, nome:'Tranca Ruas' },
+  { mes:9,  dia:11, nome:'Gabi' },
+  { mes:9,  dia:26, nome:'Thali' },
+  { mes:10, dia:10, nome:'Nicole' },
+  { mes:10, dia:30, nome:'Terreira' },
+  { mes:11, dia:3,  nome:'Marcia' },
+  { mes:11, dia:13, nome:'Tassiana' },
+  { mes:11, dia:14, nome:'Ju' },
+  { mes:12, dia:24, nome:'Dona Olívia' },
+];
+const MESES_ANIV = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+function atualizarAniversarioCard() {
+  const card  = document.getElementById('proximo-aniversario-card');
+  const label = document.getElementById('aniversario-label');
+  const nomeEl= document.getElementById('aniversario-nome');
+  const dataEl= document.getElementById('aniversario-data');
+  if (!card) return;
+
+  const hoje = new Date();
+  const hm = hoje.getMonth() + 1, hd = hoje.getDate();
+
+  const hojeList = ANIVERSARIOS.filter(a => a.mes === hm && a.dia === hd);
+  const mesRestante = ANIVERSARIOS
+    .filter(a => a.mes === hm && a.dia > hd)
+    .sort((a,b) => a.dia - b.dia);
+
+  if (hojeList.length) {
+    label.textContent = '🎂 Aniversariante do Dia';
+    nomeEl.textContent = hojeList.map(a => a.nome).join(' · ');
+    dataEl.textContent = 'Hoje é o dia dela(s)! Parabéns! 🎉';
+  } else if (mesRestante.length) {
+    const prox = mesRestante[0];
+    const outros = mesRestante.slice(1).map(a => a.nome);
+    label.textContent = '✦ Aniversariante do Mês';
+    nomeEl.textContent = prox.nome + (outros.length ? ` (+ ${outros.join(', ')})` : '');
+    dataEl.textContent = `${prox.dia} de ${MESES_ANIV[prox.mes-1]}`;
+  } else {
+    const ordenado = [...ANIVERSARIOS].sort((a,b) => (a.mes-b.mes) || (a.dia-b.dia));
+    const proximo = ordenado.find(a => (a.mes > hm) || (a.mes === hm && a.dia > hd)) || ordenado[0];
+    if (!proximo) return;
+    label.textContent = '✦ Próximo Aniversário';
+    nomeEl.textContent = proximo.nome;
+    dataEl.textContent = `${proximo.dia} de ${MESES_ANIV[proximo.mes-1]}`;
+  }
+  card.style.display = 'block';
+}
+atualizarAniversarioCard();
 </script>
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5198,6 +5270,15 @@ function renderPerfil() {
   const tempo = calcTempo(perfilData.historia?.data_entrada);
   const tempoEl = document.getElementById('perfil-tempo-display');
   if (tempo) tempoEl.textContent = '✦ ' + tempo + ' de casa';
+
+  const aniversarioEl = document.getElementById('perfil-aniversario-display');
+  if (perfilData.dataNascimento && aniversarioEl) {
+    const d = new Date(perfilData.dataNascimento + 'T12:00:00');
+    if (!isNaN(d.getTime())) {
+      aniversarioEl.textContent = '🎂 ' + d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long' });
+      aniversarioEl.style.display = '';
+    }
+  }
 
   // notas
   document.getElementById('perfil-notas').value = perfilData.notas || '';
