@@ -135,18 +135,20 @@ body.logada{padding-top:62px}
 .widgets-label{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(196,90,30,.55);
   display:flex;align-items:center;gap:12px;margin-bottom:12px;}
 .widgets-label::before,.widgets-label::after{content:'';flex:1;height:1px;background:rgba(196,90,30,.12)}
-.widgets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
-.widget{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 13px;
-  transition:transform .22s,box-shadow .22s;display:block;backdrop-filter:blur(4px);}
+.widgets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px;}
+.widget{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 8px 13px;
+  transition:transform .22s,box-shadow .22s;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;gap:6px;backdrop-filter:blur(4px);min-height:82px;}
 .widget:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(180,60,90,.1)}
-.widget-name{font-family:'Cinzel',serif;font-size:.63rem;font-weight:600;letter-spacing:.05em;color:var(--text);margin-bottom:3px;}
+.widget-icon{font-size:1.7rem;line-height:1}
+.widget-name{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;letter-spacing:.02em;color:var(--text);line-height:1.25;}
 .widget-desc{font-family:'Crimson Pro',Georgia,serif;font-size:.82rem;color:var(--text-dim);font-style:italic;line-height:1.35;}
 .widget-tag{display:inline-block;margin-top:6px;font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.05em;padding:2px 7px;border-radius:20px;}
 .tag-pub{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green)}
 .tag-mem{background:rgba(74,111,165,.08);border:1px solid rgba(74,111,165,.2);color:#4a6fa5}
 .widget-interna{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
   border-color:rgba(196,57,107,.2);border-top:2px solid var(--rosa);
-  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:0;padding:14px 16px;}
 .widget-interna .widget-name{font-size:.78rem;margin-bottom:4px}
 
 /* páginas internas */
@@ -289,9 +291,10 @@ footer{
 .drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 8px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(196,90,30,.5);background:none;border:none;width:100%;text-align:left;cursor:default}
 .drawer-submenu-toggle .dsm-arrow{display:none}
 .drawer-submenu{
-  display:grid;grid-template-columns:repeat(2,1fr);gap:9px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:9px;
   padding:0 0 14px;
 }
+@media(min-width:420px){.drawer-submenu{grid-template-columns:repeat(4,1fr)}}
 #page-admin{display:none}
 #page-admin.active{display:block}
 .admin-panel{max-width:680px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
@@ -749,25 +752,30 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* ── DRAWER ITENS — GRADE DE QUADRADINHOS ── */
 .drawer-card{
-  display:flex;flex-direction:column;gap:2px;
-  padding:11px 13px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:14px 8px 12px;
   background:rgba(255,255,255,.55);
   border:1px solid rgba(196,90,30,.1);
-  border-radius:10px;
+  border-radius:12px;
   cursor:pointer;transition:all .18s;
-  text-align:left;
+  text-align:center;
   backdrop-filter:blur(3px);
+  position:relative;
+  min-height:76px;
 }
 .drawer-card:hover{
   background:#fff;
-  border-color:rgba(196,57,107,.22);
-  box-shadow:0 2px 10px rgba(196,57,107,.08);
-  transform:translateY(-1px);
+  border-color:rgba(196,57,107,.28);
+  box-shadow:0 4px 14px rgba(196,57,107,.12);
+  transform:translateY(-2px);
 }
+.drawer-card-icon{font-size:1.55rem;line-height:1}
 .drawer-card-name{
-  font-family:'Cinzel',serif;font-size:.63rem;font-weight:600;
-  letter-spacing:.05em;color:var(--text);line-height:1.3;
+  font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;
+  letter-spacing:.02em;color:var(--text);line-height:1.25;
 }
+.drawer-card-dot-corner{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:rgba(196,90,30,.22)}
+.drawer-card-dot-corner.mem{background:var(--rosa)}
 .drawer-card-desc{
   font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;
   color:var(--text-dim);font-style:italic;line-height:1.3;
@@ -779,7 +787,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .drawer-card-tag.tag-pub{background:var(--green-dim);border:1px solid var(--green-border);color:var(--green)}
 .drawer-card-tag.tag-mem{background:rgba(74,111,165,.08);border:1px solid rgba(74,111,165,.2);color:#4a6fa5}
-.drawer-card.admin-card{border-top:2px solid var(--rosa);background:linear-gradient(135deg,rgba(196,57,107,.07),rgba(196,90,30,.04))}
+.drawer-card.admin-card{
+  flex-direction:row;text-align:left;justify-content:flex-start;min-height:0;
+  border-top:2px solid var(--rosa);background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
+  padding:12px 14px;gap:3px;
+}
+.drawer-card.admin-card .drawer-card-name,
+.drawer-card.admin-card .drawer-card-desc{display:block}
 .drawer-login-banner{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));
@@ -1021,6 +1035,96 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   .es-grid{grid-template-columns:1fr}
 }
 
+/* ══ MANUTENÇÃO ══ */
+.mn-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.mn-btn-relatorio{background:linear-gradient(135deg,var(--terra),#5c2a10);color:#fff;border:none;border-radius:11px;padding:12px 22px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.08em;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(140,58,26,.25);transition:transform .15s,box-shadow .15s}
+.mn-btn-relatorio:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(140,58,26,.35)}
+.mn-stats{display:flex;gap:10px;flex-wrap:wrap}
+.mn-stat{text-align:center;background:#fff;border:1px solid var(--border);padding:9px 16px;border-radius:12px;box-shadow:0 2px 10px rgba(196,57,107,.06);min-width:64px}
+.mn-stat-n{display:block;font-family:'Cinzel',serif;font-size:1.25rem;font-weight:700;line-height:1}
+.mn-stat-n.pendente{color:var(--terra)}
+.mn-stat-n.aguardando{color:var(--amber,#b45309)}
+.mn-stat-n.agendada{color:#4a6fa5}
+.mn-stat-n.concluida{color:var(--green)}
+.mn-stat-l{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim)}
+
+/* faixa decorativa de ferramentas */
+.mn-faixa{display:flex;justify-content:center;gap:22px;padding:14px 0;margin-bottom:20px;background:linear-gradient(90deg,transparent,rgba(140,58,26,.06),transparent);border-radius:14px}
+.mn-faixa span{font-size:1.5rem;opacity:.7;animation:mnBalanca 3s ease-in-out infinite}
+.mn-faixa span:nth-child(2){animation-delay:.3s}
+.mn-faixa span:nth-child(3){animation-delay:.6s}
+.mn-faixa span:nth-child(4){animation-delay:.9s}
+@keyframes mnBalanca{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+.mn-proxima-card{background:linear-gradient(135deg,#fff,#fff8f4);border:1px solid var(--border);border-left:5px solid var(--terra);border-radius:14px;padding:18px 22px;margin-bottom:24px;box-shadow:0 4px 20px rgba(140,58,26,.08);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.mn-proxima-icon{font-size:2.1rem;flex-shrink:0}
+.mn-proxima-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);font-weight:700;margin-bottom:3px}
+.mn-proxima-titulo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text)}
+.mn-proxima-sub{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic}
+
+.mn-form{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:26px;box-shadow:0 4px 20px rgba(196,57,107,.07)}
+.mn-form-titulo{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);font-weight:600;margin-bottom:14px}
+.mn-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.mn-campo{display:flex;flex-direction:column;gap:5px;flex:1 1 160px}
+.mn-campo.mn-full{flex-basis:100%}
+.mn-campo label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+.mn-campo input,.mn-campo select,.mn-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+.mn-campo textarea{min-height:70px;resize:vertical;font-family:'DM Sans',sans-serif;line-height:1.5}
+.mn-campo input:focus,.mn-campo select:focus,.mn-campo textarea:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(140,58,26,.1);background:#fff}
+.mn-btn-add{background:var(--terra);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.06em;white-space:nowrap;transition:transform .12s,box-shadow .15s,background .15s}
+.mn-btn-add:hover{background:#6b2c12;transform:translateY(-2px);box-shadow:0 4px 14px rgba(140,58,26,.3)}
+
+.mn-sec-label{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:22px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.mn-sec-label.pendente{color:var(--terra)}
+.mn-sec-label.aguardando{color:var(--amber,#b45309)}
+.mn-sec-label.agendada{color:#4a6fa5}
+.mn-sec-label.concluida{color:var(--green)}
+
+.mn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:6px}
+.mn-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:17px 19px;box-shadow:0 2px 10px rgba(196,57,107,.06);transition:box-shadow .2s,transform .2s;animation:cpEntra .25s cubic-bezier(.2,.9,.3,1.2);position:relative}
+.mn-card:hover{box-shadow:0 8px 24px rgba(140,58,26,.12);transform:translateY(-2px)}
+.mn-card.pendente{border-left:4px solid var(--terra)}
+.mn-card.aguardando{border-left:4px solid var(--amber,#b45309)}
+.mn-card.agendada{border-left:4px solid #4a6fa5}
+.mn-card.concluida{border-left:4px solid var(--green);opacity:.72;background:linear-gradient(90deg,var(--green-dim) 0%,#fff 16%)}
+.mn-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.mn-card-titulo{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:600;color:var(--text);line-height:1.3}
+.mn-card.concluida .mn-card-titulo{text-decoration:line-through;color:var(--green)}
+.mn-card-acoes{display:flex;gap:2px;flex-shrink:0}
+.mn-icon-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:3px 5px;border-radius:5px;transition:color .15s,background .15s}
+.mn-icon-btn:hover{color:var(--terra);background:var(--rosa-dim)}
+.mn-icon-btn.del:hover{color:#c0392b}
+.mn-card-desc{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;line-height:1.5;margin-bottom:10px;white-space:pre-wrap}
+.mn-card-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.mn-meta-pill{display:inline-flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;font-size:11.5px;color:var(--text-dim);background:var(--rosa-dim);padding:3px 10px;border-radius:20px}
+.mn-badge-status{display:inline-flex;align-items:center;gap:4px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;padding:4px 11px;border-radius:20px}
+.mn-badge-status.pendente{background:rgba(140,58,26,.08);color:var(--terra)}
+.mn-badge-status.aguardando{background:#fef3c7;color:var(--amber,#b45309)}
+.mn-badge-status.agendada{background:rgba(74,111,165,.1);color:#4a6fa5}
+.mn-badge-status.concluida{background:var(--green-dim);color:var(--green)}
+.mn-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.mn-btn-concluir{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:6px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.mn-btn-concluir:hover{background:var(--green);color:#fff}
+
+.mn-vazio{text-align:center;padding:56px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+.mn-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
+.mn-modal-bg{position:fixed;inset:0;background:rgba(40,10,20,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;overflow-y:auto}
+.mn-modal{background:#fff;border:1px solid var(--border);border-top:4px solid var(--terra);border-radius:14px;padding:26px;width:380px;max-width:100%;box-shadow:0 8px 40px rgba(140,58,26,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1);margin:auto}
+.mn-modal h3{font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:16px}
+.mn-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.mn-modal-btns button{border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
+
+/* card no header (junto com sessão/aniversário) */
+#proxima-manutencao-card{display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;cursor:pointer;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px}
+
+@media(max-width:600px){
+  .mn-row{flex-direction:column;align-items:stretch}
+  .mn-btn-add{width:100%}
+  .mn-topo{flex-direction:column;align-items:stretch}
+  .mn-proxima-card{flex-direction:column;text-align:center;justify-content:center}
+}
+
 </style>
 </head>
 <body>
@@ -1053,6 +1157,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Ferramentas</div>
     </div>
     <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div style="padding:2px 16px 10px">
+    <input type="text" id="drawer-busca" placeholder="🔍 Buscar uma ferramenta…"
+      oninput="drawerFiltrar(this.value)"
+      style="width:100%;background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:20px;padding:9px 16px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s;">
   </div>
   <div class="drawer-body-scroll">
     <div id="drawer-body"></div>
@@ -1149,6 +1258,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div id="lista-compras-card-txt" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
         <div id="lista-compras-card-sub" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
       </div>
+
+      <div id="proxima-manutencao-card" onclick="showPage('manutencao')">
+        <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--terra);margin-bottom:5px">🔧 Próxima Manutenção</div>
+        <div id="manutencao-card-txt" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
+        <div id="manutencao-card-sub" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
+      </div>
     </div>
   </header>
 
@@ -1203,7 +1318,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
   <div class="widgets-wrap">
     <div class="widgets-label">Ferramentas</div>
-    <div class="widgets-grid"></div>
+    <div class="widgets-grid" id="widgets-grid-dynamic"></div>
   </div>
 </div>
 
@@ -1794,6 +1909,106 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+<!-- PÁGINA MANUTENÇÃO -->
+<div id="page-manutencao" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">🔧 Manutenção da Casa</div>
+    <p class="section-sub">O que precisa de reparo, quem cuida, e pra quando ✦</p>
+
+    <div class="mn-faixa">
+      <span>🔧</span><span>🪛</span><span>🧰</span><span>🔨</span>
+    </div>
+
+    <div class="mn-proxima-card" id="mn-proxima-card">
+      <div class="mn-proxima-icon" id="mn-proxima-icon">🔧</div>
+      <div>
+        <div class="mn-proxima-label" id="mn-proxima-label">Próxima Manutenção</div>
+        <div class="mn-proxima-titulo" id="mn-proxima-titulo">Tudo em dia por aqui ✦</div>
+        <div class="mn-proxima-sub" id="mn-proxima-sub">Nenhuma tarefa pendente no momento</div>
+      </div>
+    </div>
+
+    <div class="mn-topo">
+      <div class="mn-stats">
+        <div class="mn-stat"><span class="mn-stat-n pendente" id="mn-cnt-pendente">0</span><span class="mn-stat-l">pendente</span></div>
+        <div class="mn-stat"><span class="mn-stat-n aguardando" id="mn-cnt-aguardando">0</span><span class="mn-stat-l">aguardando</span></div>
+        <div class="mn-stat"><span class="mn-stat-n agendada" id="mn-cnt-agendada">0</span><span class="mn-stat-l">agendada</span></div>
+        <div class="mn-stat"><span class="mn-stat-n concluida" id="mn-cnt-concluida">0</span><span class="mn-stat-l">concluída</span></div>
+      </div>
+      <button class="mn-btn-relatorio" onclick="abrirRelatorioManutencao()">📋 Gerar Relatório</button>
+    </div>
+
+    <div class="mn-form">
+      <div class="mn-form-titulo">✦ Nova tarefa de manutenção</div>
+      <div class="mn-row">
+        <div class="mn-campo mn-full"><label>O que precisa ser feito?</label><input type="text" id="mn-inp-titulo" placeholder="Ex: Consertar vazamento do banheiro"></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-campo mn-full"><label>Descrição / detalhes / lista do que precisa</label><textarea id="mn-inp-descricao" placeholder="Descreva a tarefa, materiais necessários, passos..."></textarea></div>
+      </div>
+      <div class="mn-row">
+        <div class="mn-campo"><label>Status</label>
+          <select id="mn-inp-status">
+            <option value="pendente">🔧 Pendente</option>
+            <option value="aguardando">⏳ Aguardando</option>
+            <option value="agendada">📅 Agendada</option>
+          </select>
+        </div>
+        <div class="mn-campo"><label>Data limite</label><input type="date" id="mn-inp-data"></div>
+        <div class="mn-campo"><label>Responsável (opcional)</label><input type="text" id="mn-inp-responsavel" placeholder="Nome de quem vai cuidar"></div>
+        <button class="mn-btn-add" id="mn-btn-add">+ Adicionar tarefa</button>
+      </div>
+    </div>
+
+    <div id="mn-lista-pendente"></div>
+    <div id="mn-lista-aguardando"></div>
+    <div id="mn-lista-agendada"></div>
+    <div id="mn-lista-concluida"></div>
+    <div id="mn-carregando" class="mn-carregando">Carregando manutenções...</div>
+    <div id="mn-vazio" class="mn-vazio" style="display:none">Nenhuma tarefa de manutenção cadastrada. Adicione a primeira! 🔧</div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TAREFA DE MANUTENÇÃO -->
+<div class="mn-modal-bg" id="mn-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>✎ Editar tarefa</h3>
+    <div class="mn-campo mn-full" style="margin-bottom:10px"><label>O que precisa ser feito?</label><input type="text" id="mn-modal-titulo"></div>
+    <div class="mn-campo mn-full" style="margin-bottom:10px"><label>Descrição / detalhes</label><textarea id="mn-modal-descricao"></textarea></div>
+    <div class="mn-row">
+      <div class="mn-campo"><label>Status</label>
+        <select id="mn-modal-status">
+          <option value="pendente">🔧 Pendente</option>
+          <option value="aguardando">⏳ Aguardando</option>
+          <option value="agendada">📅 Agendada</option>
+          <option value="concluida">✅ Concluída</option>
+        </select>
+      </div>
+      <div class="mn-campo"><label>Data limite</label><input type="date" id="mn-modal-data"></div>
+    </div>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Responsável</label><input type="text" id="mn-modal-responsavel"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="mn-modal-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="mn-modal-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO WHATSAPP MANUTENÇÃO -->
+<div class="mn-modal-bg" id="mn-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📋 Relatório de Manutenção</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="mn-rel-texto"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="mn-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="mn-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
 <!-- PÁGINA CALENDÁRIO -->
 <div id="page-calendario" class="page">
   <div class="cal-wrap">
@@ -2319,6 +2534,7 @@ function getDefaultMenu() {
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
         { id: 'compras',  label: '🛒 Lista de Compras', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
         { id: 'estoque',  label: '📦 Estoque',          type: 'internal', page: 'estoque', desc: 'O que temos e o que está acabando', showCard: true, showMenu: true },
+        { id: 'manutencao', label: '🔧 Manutenção',     type: 'internal', page: 'manutencao', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
       ]},
       { id: 'corrente', label: 'Corrente', items: [
         { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: 'https://tesouraria.pages.dev', showCard: true, showMenu: true },
@@ -2404,85 +2620,76 @@ function renderDrawer() {
   body.innerHTML = adminCardHtml + sectionsHtml + loginBannerHtml;
 }
 
+const DRAWER_ICONES_PADRAO = {
+  inicio:'🏠', historia:'📜', sessoes:'📅', calendario:'📅', textos:'📖', blog:'✍️',
+  apoie:'💗', pontos:'🎵', lojas:'🛍️', tesouraria:'💰', filhas:'🌸',
+  regimento:'📋', compras:'🛒', estoque:'📦', manutencao:'🔧', admin:'⚙️'
+};
+function drawerIconeLabel(item) {
+  const label = item.label || '';
+  const m = label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\uFE0F?\s*(.*)$/u);
+  if (m && m[2]) return { icone: m[1], texto: m[2] };
+  return { icone: DRAWER_ICONES_PADRAO[item.id] || '✦', texto: label };
+}
+function drawerTile(item, onclickAttr, descFallback, dotClass) {
+  const { icone, texto } = drawerIconeLabel(item);
+  const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
+  const dot = dotClass ? `<span class="drawer-card-dot-corner ${dotClass}"></span>` : '';
+  return `<button class="drawer-card" ${onclickAttr} title="${desc}">
+    ${dot}
+    <span class="drawer-card-icon">${icone}</span>
+    <span class="drawer-card-name">${texto}</span>
+  </button>`;
+}
+
 function renderDrawerItem(item, ctx) {
   ctx = ctx || {};
   const { ehAdmin, logada, grupoUsuario } = ctx;
   const isMem = item.type === 'members';
-  const tagTexto = item.tagLabel || (grupoUsuario === 'admin' ? 'interno' : isMem ? 'interno' : 'público');
-  const tagClass = item.tagLabel ? 'tag-pub' : (isMem ? 'tag-mem' : 'tag-pub');
-  const tagHtml = `<span class="drawer-card-tag ${tagClass}">${tagTexto}</span>`;
+  const dotClass = isMem || grupoUsuario === 'admin' ? 'mem' : '';
 
   // ── widget especial: Nossa História / Minha História ──
   if (item.id === 'historia') {
-    if (!logada) {
-      return `<button class="drawer-card" onclick="showPage('historia');closeDrawer()">
-        <span class="drawer-card-name">Nossa História</span>
-        <span class="drawer-card-desc">A fundação do Bolhas de Luz</span>
-        <span class="drawer-card-tag tag-pub">público</span>
-      </button>`;
-    }
+    if (!logada) return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
     const grupoUser = pd.grupo || 'visitante';
     if (!ehAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
-      return `<button class="drawer-card" onclick="showPage('historia');closeDrawer()">
-        <span class="drawer-card-name">Nossa História</span>
-        <span class="drawer-card-desc">A fundação do Bolhas de Luz</span>
-        <span class="drawer-card-tag tag-pub">público</span>
-      </button>`;
+      return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     }
-    return `<button class="drawer-card" onclick="showSuaHistoria();closeDrawer()">
-      <span class="drawer-card-name">Minha História</span>
-      <span class="drawer-card-desc">Sua jornada espiritual na casa</span>
-      <span class="drawer-card-tag tag-mem">interno</span>
-    </button>`;
+    return drawerTile({ id:'historia', label:'Minha História' }, `onclick="showSuaHistoria();closeDrawer()"`, 'Sua jornada espiritual na casa', 'mem');
   }
 
   // ── widget especial: Sessões & Eventos / Calendário ──
   if (item.id === 'sessoes' || item.id === 'calendario') {
-    return `<button class="drawer-card" onclick="showPage('calendario');closeDrawer()">
-      <span class="drawer-card-name">${item.label}</span>
-      <span class="drawer-card-desc">${item.desc||''}</span>
-      <span class="drawer-card-tag tag-pub">público</span>
-    </button>`;
+    return drawerTile(item, `onclick="showPage('calendario');closeDrawer()"`);
   }
 
   // ── widget especial: Apoie o Terreiro ──
   if (item.id === 'apoie') {
-    return `<button class="drawer-card" onclick="showPage('apoie');closeDrawer()">
-      <span class="drawer-card-name">${item.label}</span>
-      <span class="drawer-card-desc">${item.desc||'Como nos ajudar'}</span>
-      <span class="drawer-card-tag tag-pub">público</span>
-    </button>`;
+    return drawerTile(item, `onclick="showPage('apoie');closeDrawer()"`, 'Como nos ajudar');
   }
 
   // ── widget especial: Filhas da Casa ──
   if (item.id === 'filhas') {
-    return `<button class="drawer-card" onclick="showPage('guias');closeDrawer()">
-      <span class="drawer-card-name">${item.label}</span>
-      <span class="drawer-card-desc">${item.desc||'Conheça as filhas da casa'}</span>
-      <span class="drawer-card-tag tag-pub">público</span>
-    </button>`;
+    return drawerTile(item, `onclick="showPage('guias');closeDrawer()"`, 'Conheça as filhas da casa');
   }
 
   // ── itens normais (interno / membros / link externo / blog) ──
-  const desc = item.desc ? `<span class="drawer-card-desc">${item.desc}</span>` : '';
-  const inner = `<span class="drawer-card-name">${item.label}</span>${desc}${tagHtml}`;
-
   if (item.type === 'internal') {
-    return `<button class="drawer-card" onclick="showPage('${item.page}');closeDrawer()">${inner}</button>`;
+    return drawerTile(item, `onclick="showPage('${item.page}');closeDrawer()"`);
   }
   if (item.type === 'members') {
     const u = window._getCurrentUser && window._getCurrentUser();
     return u
-      ? `<button class="drawer-card" onclick="window.open('${item.url}','_self');closeDrawer()">${inner}</button>`
-      : `<button class="drawer-card" onclick="openLogin();closeDrawer()">${inner}</button>`;
+      ? drawerTile(item, `onclick="window.open('${item.url}','_self');closeDrawer()"`, '', 'mem')
+      : drawerTile(item, `onclick="openLogin();closeDrawer()"`, '', 'mem');
   }
   // blog interno
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
-    return `<button class="drawer-card" onclick="showPage('blog');closeDrawer()">${inner}</button>`;
+    return drawerTile(item, `onclick="showPage('blog');closeDrawer()"`);
   }
   // link externo
-  return `<button class="drawer-card" onclick="window.open('${item.url}','_blank');closeDrawer()">${inner}</button>`;
+  return drawerTile(item, `onclick="window.open('${item.url}','_blank');closeDrawer()"`);
 }
 
 function toggleSubmenu(btn) {
@@ -2494,6 +2701,15 @@ function toggleSubmenu(btn) {
 }
 
 // ── RENDERIZAR CARDS ──
+function widgetTile(item, onclickAttr, descFallback) {
+  const { icone, texto } = drawerIconeLabel(item);
+  const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
+  return `<a class="widget" href="#" ${onclickAttr} title="${desc}">
+    <div class="widget-icon">${icone}</div>
+    <div class="widget-name">${texto}</div>
+  </a>`;
+}
+
 function renderCards() {
   const grid = document.getElementById('widgets-grid-dynamic');
   if (!grid || !menuData) return;
@@ -2505,11 +2721,7 @@ function renderCards() {
   const ehAdmin = !emSimulacao && userNow && isEmailAdmin(userNow.email);
 
   if (ehAdmin) {
-    html += `<a class="widget" href="#" onclick="showPage('admin');return false" style="border-top:2px solid var(--rosa)">
-      <div class="widget-name">⚙ Painel Admin</div>
-      <div class="widget-desc">Gerencie menu, perfis e sessões</div>
-      <span class="widget-tag tag-mem">admin</span>
-    </a>`;
+    html += widgetTile({ id:'admin', label:'⚙ Painel Admin' }, `onclick="showPage('admin');return false"`, 'Gerencie menu, perfis e sessões');
   }
 
   menuData.sections.forEach(sec => {
@@ -2534,56 +2746,42 @@ function renderCards() {
       } else if (!grupos.includes(grupoUsuario)) {
         return;
       }
-      const isMem = item.type === 'members';
-      const tagTexto = item.tagLabel || (grupoUsuario === 'admin' ? 'interno' : isMem ? 'interno' : 'público');
-      const tagClass = item.tagLabel ? 'tag-pub' : (isMem ? 'tag-mem' : 'tag-pub');
 
       // widget especial: historia
       if (item.id === 'historia') {
-        if (!logada) {
-          html += `<a class="widget" href="#" onclick="showPage('historia');return false"><div class="widget-name">Nossa História</div><div class="widget-desc">A fundação do Bolhas de Luz</div><span class="widget-tag tag-pub">público</span></a>`;
-          return;
-        }
+        if (!logada) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         const grupoUser = pd.grupo || 'visitante';
         const isAdminReal = ehAdmin;
-        if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) {
-          html += `<a class="widget" href="#" onclick="showPage('historia');return false"><div class="widget-name">Nossa História</div><div class="widget-desc">A fundação do Bolhas de Luz</div><span class="widget-tag tag-pub">público</span></a>`;
-          return;
-        }
-        html += `<a class="widget" href="#" onclick="showSuaHistoria();return false"><div class="widget-name">Minha História</div><div class="widget-desc">Sua jornada espiritual na casa</div><span class="widget-tag tag-mem">interno</span></a>`;
+        if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
+        html += widgetTile({ id:'historia', label:'Minha História' }, `onclick="showSuaHistoria();return false"`, 'Sua jornada espiritual na casa');
         return;
       }
 
       if (item.id === 'sessoes' || item.id === 'calendario') {
-        html += `<a class="widget" href="#" onclick="showPage('calendario');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div><span class="widget-tag tag-pub">público</span></a>`;
+        html += widgetTile(item, `onclick="showPage('calendario');return false"`);
         return;
       }
       if (item.id === 'apoie') {
-        html += `<a class="widget" href="#" onclick="showPage('apoie');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Como nos ajudar'}</div><span class="widget-tag tag-pub">público</span></a>`;
+        html += widgetTile(item, `onclick="showPage('apoie');return false"`, 'Como nos ajudar');
         return;
       }
       if (item.id === 'filhas') {
-        if (!logada) {
-          html += `<a class="widget" href="#" onclick="showPage('guias');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Conheça as filhas da casa'}</div><span class="widget-tag tag-pub">público</span></a>`;
-        } else {
-          html += `<a class="widget" href="#" onclick="showPage('guias');return false"><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||'Conheça as filhas da casa'}</div><span class="widget-tag tag-pub">público</span></a>`;
-        }
+        html += widgetTile(item, `onclick="showPage('guias');return false"`, 'Conheça as filhas da casa');
         return;
       }
       let onclick = '';
-      const tag = `<span class="widget-tag ${tagClass}">${tagTexto}</span>`;
-      if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false" href="#"`;
+      if (item.type === 'internal') onclick = `onclick="showPage('${item.page}');return false"`;
       else if (item.type === 'members') {
         const u = window._getCurrentUser && window._getCurrentUser();
         onclick = u
-          ? `onclick="window.open('${item.url}','_self');return false" href="#"`
-          : `onclick="openLogin();return false" href="#"`;
+          ? `onclick="window.open('${item.url}','_self');return false"`
+          : `onclick="openLogin();return false"`;
       }
       else if (item.url && item.url.includes('blogbolhas.pages.dev'))
-        onclick = `onclick="showPage('blog');return false" href="#"`;
-      else onclick = `onclick="window.open('${item.url}','_blank')" href="#"`;
-      html += `<a class="widget" ${onclick}><div class="widget-name">${item.label}</div><div class="widget-desc">${item.desc||''}</div>${tag}</a>`;
+        onclick = `onclick="showPage('blog');return false"`;
+      else onclick = `onclick="window.open('${item.url}','_blank')"`;
+      html += widgetTile(item, onclick);
     });
   });
   if (!userNow) {
@@ -3273,8 +3471,25 @@ function toggleDrawer() {
   if (!open) guiasFecharPainel?.();
   // garante que o conteúdo esteja renderizado ao abrir (corrige drawer vazio se menuData ainda não tinha carregado)
   if (!open) renderDrawer();
+  if (!open) {
+    const busca = document.getElementById('drawer-busca');
+    if (busca) { busca.value = ''; drawerFiltrar(''); }
+  }
   d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
   document.body.style.overflow=open?'':'hidden';
+}
+function drawerFiltrar(texto) {
+  const termo = (texto || '').trim().toLowerCase();
+  document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
+    let algumVisivel = false;
+    sec.querySelectorAll('.drawer-card').forEach(card => {
+      const nome = card.querySelector('.drawer-card-name')?.textContent.toLowerCase() || '';
+      const match = !termo || nome.includes(termo);
+      card.style.display = match ? '' : 'none';
+      if (match) algumVisivel = true;
+    });
+    sec.style.display = (termo && !algumVisivel) ? 'none' : '';
+  });
 }
 function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
@@ -4554,7 +4769,7 @@ const ANIVERSARIOS = [
   { mes:6,  dia:10, nome:'Manuella' },
   { mes:6,  dia:25, nome:'Anne' },
   { mes:7,  dia:2,  nome:'Brenda' },
-  { mes:7,  dia:9,  nome:'Alex do Agê' },
+  { mes:7,  dia:9,  nome:'Alex' },
   { mes:7,  dia:30, nome:'Vitória' },
   { mes:8,  dia:26, nome:'Tranca Ruas' },
   { mes:9,  dia:11, nome:'Gabi' },
@@ -4583,6 +4798,12 @@ window.setAniversarios = function(lista) {
   if (overlay && overlay.style.display === 'flex' && !isAdminAniversarios()) renderModalAniversarios();
 };
 
+function formatarListaNomes(nomes) {
+  if (nomes.length <= 1) return nomes[0] || '';
+  if (nomes.length === 2) return nomes[0] + ' e ' + nomes[1];
+  return nomes.slice(0, -1).join(', ') + ' e ' + nomes[nomes.length - 1];
+}
+
 function atualizarAniversarioCard() {
   const card  = document.getElementById('proximo-aniversario-card');
   const label = document.getElementById('aniversario-label');
@@ -4600,13 +4821,12 @@ function atualizarAniversarioCard() {
 
   if (hojeList.length) {
     label.textContent = '🎂 Aniversariante do Dia';
-    nomeEl.textContent = hojeList.map(a => a.nome).join(' · ');
+    nomeEl.textContent = formatarListaNomes(hojeList.map(a => a.nome));
     dataEl.textContent = 'Hoje é o dia dela(s)! Parabéns! 🎉';
   } else if (mesRestante.length) {
     const prox = mesRestante[0];
-    const outros = mesRestante.slice(1).map(a => a.nome);
     label.textContent = '✦ Aniversariante do Mês';
-    nomeEl.textContent = prox.nome + (outros.length ? ` (+ ${outros.join(', ')})` : '');
+    nomeEl.textContent = formatarListaNomes(mesRestante.slice().reverse().map(a => a.nome));
     dataEl.textContent = `${prox.dia} de ${MESES_ANIV[prox.mes-1]}`;
   } else if (ANIVERSARIOS.length) {
     const ordenado = [...ANIVERSARIOS].sort((a,b) => (a.mes-b.mes) || (a.dia-b.dia));
@@ -5300,6 +5520,287 @@ const auth = getAuth(app);
     document.getElementById('es-modal-salvar')?.addEventListener('click', esSalvarEdicao);
     document.getElementById('es-rel-cancelar')?.addEventListener('click', esFecharRelatorio);
     document.getElementById('es-rel-enviar')?.addEventListener('click', esEnviarWhatsapp);
+  })();
+
+  // ══ MANUTENÇÃO ══
+  (function initManutencao() {
+    const colManutencao = collection(db, 'manutencao');
+    let mnItens = [];
+
+    const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', concluida: '✅' };
+    const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', concluida: '✅ Concluída' };
+
+    function mnToast(msg, erro) {
+      const t = document.createElement('div');
+      t.className = 'cp-toast' + (erro ? ' erro' : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2800);
+    }
+    function mnNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
+    function mnFmtData(dataStr) {
+      if (!dataStr) return '';
+      const d = new Date(dataStr + 'T12:00:00');
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    const qManutencao = query(colManutencao, orderBy('criadoEm', 'desc'));
+    onSnapshot(qManutencao, snap => {
+      mnItens = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const carregando = document.getElementById('mn-carregando');
+      if (carregando) carregando.style.display = 'none';
+      mnRenderizar();
+      mnAtualizarProxima();
+      mnAtualizarCard();
+    }, err => console.warn('manutencao onSnapshot:', err));
+
+    async function mnAdicionarItem() {
+      const tituloEl = document.getElementById('mn-inp-titulo');
+      const titulo = tituloEl.value.trim();
+      if (!titulo) { mnToast('Digite o que precisa ser feito', true); return; }
+      const descricao = document.getElementById('mn-inp-descricao').value.trim();
+      const status = document.getElementById('mn-inp-status').value;
+      const dataLimite = document.getElementById('mn-inp-data').value || '';
+      const responsavel = document.getElementById('mn-inp-responsavel').value.trim();
+      const btn = document.getElementById('mn-btn-add');
+      btn.disabled = true;
+      try {
+        await addDoc(colManutencao, {
+          titulo, descricao, status, dataLimite, responsavel,
+          criadoEm: serverTimestamp(), criadoPor: mnNomeAtual()
+        });
+        tituloEl.value = '';
+        document.getElementById('mn-inp-descricao').value = '';
+        document.getElementById('mn-inp-data').value = '';
+        document.getElementById('mn-inp-responsavel').value = '';
+        document.getElementById('mn-inp-status').value = 'pendente';
+        mnToast('Tarefa adicionada! ✦');
+      } catch (e) { mnToast('Erro ao adicionar', true); }
+      btn.disabled = false;
+    }
+
+    let mnEditandoId = null;
+    function mnAbrirEditar(id) {
+      const item = mnItens.find(i => i.id === id);
+      if (!item) return;
+      mnEditandoId = id;
+      document.getElementById('mn-modal-titulo').value = item.titulo || '';
+      document.getElementById('mn-modal-descricao').value = item.descricao || '';
+      document.getElementById('mn-modal-status').value = item.status || 'pendente';
+      document.getElementById('mn-modal-data').value = item.dataLimite || '';
+      document.getElementById('mn-modal-responsavel').value = item.responsavel || '';
+      document.getElementById('mn-modal').style.display = 'flex';
+    }
+    function mnFecharEditar() { document.getElementById('mn-modal').style.display = 'none'; mnEditandoId = null; }
+    async function mnSalvarEdicao() {
+      if (!mnEditandoId) return;
+      const titulo = document.getElementById('mn-modal-titulo').value.trim();
+      if (!titulo) { mnToast('Digite o que precisa ser feito', true); return; }
+      try {
+        await updateDoc(doc(db, 'manutencao', mnEditandoId), {
+          titulo,
+          descricao: document.getElementById('mn-modal-descricao').value.trim(),
+          status: document.getElementById('mn-modal-status').value,
+          dataLimite: document.getElementById('mn-modal-data').value || '',
+          responsavel: document.getElementById('mn-modal-responsavel').value.trim(),
+          atualizadoEm: serverTimestamp(), atualizadoPor: mnNomeAtual()
+        });
+        mnToast('Tarefa atualizada! ✦');
+        mnFecharEditar();
+      } catch (e) { mnToast('Erro ao salvar', true); }
+    }
+    async function mnExcluir(id) {
+      if (!confirm('Remover esta tarefa de manutenção?')) return;
+      try { await deleteDoc(doc(db, 'manutencao', id)); } catch (e) { mnToast('Erro ao remover', true); }
+    }
+    async function mnConcluir(id) {
+      try {
+        await updateDoc(doc(db, 'manutencao', id), { status: 'concluida', atualizadoEm: serverTimestamp(), atualizadoPor: mnNomeAtual() });
+        mnToast('Tarefa concluída! 🎉');
+      } catch (e) { mnToast('Erro ao concluir', true); }
+    }
+
+    function mnCardTarefa(item) {
+      const status = item.status || 'pendente';
+      const d = document.createElement('div');
+      d.className = 'mn-card ' + status;
+      const metaHtml = `
+        ${item.dataLimite ? `<span class="mn-meta-pill">📅 ${mnFmtData(item.dataLimite)}</span>` : ''}
+        ${item.responsavel ? `<span class="mn-meta-pill">👤 ${item.responsavel}</span>` : ''}
+      `;
+      d.innerHTML = `
+        <div class="mn-card-topo">
+          <div class="mn-card-titulo">${item.titulo}</div>
+          <div class="mn-card-acoes">
+            <button class="mn-icon-btn edit" title="Editar">✎</button>
+            <button class="mn-icon-btn del" title="Remover">✕</button>
+          </div>
+        </div>
+        ${item.descricao ? `<div class="mn-card-desc">${item.descricao}</div>` : ''}
+        <div class="mn-card-meta">${metaHtml}</div>
+        <div class="mn-card-footer">
+          <span class="mn-badge-status ${status}">${MN_LABEL_STATUS[status] || status}</span>
+          ${status !== 'concluida' ? `<button class="mn-btn-concluir">✓ Concluir</button>` : ''}
+        </div>
+      `;
+      d.querySelector('.mn-icon-btn.edit').addEventListener('click', () => mnAbrirEditar(item.id));
+      d.querySelector('.mn-icon-btn.del').addEventListener('click', () => mnExcluir(item.id));
+      const concluirBtn = d.querySelector('.mn-btn-concluir');
+      if (concluirBtn) concluirBtn.addEventListener('click', () => mnConcluir(item.id));
+      return d;
+    }
+
+    function mnRenderizar() {
+      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
+      const aguardando = mnItens.filter(i => i.status === 'aguardando');
+      const agendadas = mnItens.filter(i => i.status === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const concluidas = mnItens.filter(i => i.status === 'concluida');
+
+      const cP = document.getElementById('mn-cnt-pendente'), cA = document.getElementById('mn-cnt-aguardando'),
+            cG = document.getElementById('mn-cnt-agendada'), cC = document.getElementById('mn-cnt-concluida');
+      if (!cP) return;
+      cP.textContent = pendentes.length; cA.textContent = aguardando.length;
+      cG.textContent = agendadas.length; cC.textContent = concluidas.length;
+
+      const lp = document.getElementById('mn-lista-pendente'); lp.innerHTML = '';
+      const la = document.getElementById('mn-lista-aguardando'); la.innerHTML = '';
+      const lg = document.getElementById('mn-lista-agendada'); lg.innerHTML = '';
+      const lc = document.getElementById('mn-lista-concluida'); lc.innerHTML = '';
+
+      if (pendentes.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label pendente'; s.innerHTML = '🔧 Pendente';
+        lp.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        pendentes.forEach(i => grid.appendChild(mnCardTarefa(i))); lp.appendChild(grid);
+      }
+      if (aguardando.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label aguardando'; s.innerHTML = '⏳ Aguardando';
+        la.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        aguardando.forEach(i => grid.appendChild(mnCardTarefa(i))); la.appendChild(grid);
+      }
+      if (agendadas.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label agendada'; s.innerHTML = '📅 Agendada';
+        lg.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        agendadas.forEach(i => grid.appendChild(mnCardTarefa(i))); lg.appendChild(grid);
+      }
+      if (concluidas.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label concluida'; s.innerHTML = '✅ Concluída';
+        lc.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        concluidas.forEach(i => grid.appendChild(mnCardTarefa(i))); lc.appendChild(grid);
+      }
+      const vazio = document.getElementById('mn-vazio');
+      if (vazio) vazio.style.display = mnItens.length === 0 ? 'block' : 'none';
+    }
+
+    // ── "PRÓXIMA MANUTENÇÃO" (topo da página + card na home) ──
+    function mnProximaInfo() {
+      const agendadas = mnItens.filter(i => i.status === 'agendada' && i.dataLimite)
+        .sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
+      if (agendadas.length) {
+        const prox = agendadas[0];
+        return { icone: '📅', label: 'Próxima Manutenção', titulo: prox.titulo, sub: mnFmtData(prox.dataLimite) + (prox.responsavel ? ' · ' + prox.responsavel : '') };
+      }
+      const aguardando = mnItens.filter(i => i.status === 'aguardando');
+      if (aguardando.length) {
+        return { icone: '⏳', label: 'Aguardando', titulo: aguardando[0].titulo, sub: aguardando.length > 1 ? `+ ${aguardando.length - 1} outra(s) aguardando` : 'Sem data definida ainda' };
+      }
+      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
+      if (pendentes.length) {
+        return { icone: '🔧', label: 'Pendente', titulo: pendentes[0].titulo, sub: pendentes.length > 1 ? `+ ${pendentes.length - 1} outra(s) pendente(s)` : 'Ainda não começou' };
+      }
+      return null;
+    }
+
+    function mnAtualizarProxima() {
+      const info = mnProximaInfo();
+      const icone = document.getElementById('mn-proxima-icon');
+      const label = document.getElementById('mn-proxima-label');
+      const titulo = document.getElementById('mn-proxima-titulo');
+      const sub = document.getElementById('mn-proxima-sub');
+      if (!icone) return;
+      if (info) {
+        icone.textContent = info.icone;
+        label.textContent = info.label;
+        titulo.textContent = info.titulo;
+        sub.textContent = info.sub;
+      } else {
+        icone.textContent = '✦';
+        label.textContent = 'Próxima Manutenção';
+        titulo.textContent = 'Tudo em dia por aqui ✦';
+        sub.textContent = 'Nenhuma tarefa pendente no momento';
+      }
+    }
+
+    function mnAtualizarCard() {
+      const card = document.getElementById('proxima-manutencao-card');
+      const txt = document.getElementById('manutencao-card-txt');
+      const sub = document.getElementById('manutencao-card-sub');
+      if (!card) return;
+      const info = mnProximaInfo();
+      if (info) {
+        txt.textContent = info.titulo;
+        sub.textContent = info.sub;
+      } else {
+        txt.textContent = 'Tudo em dia ✦';
+        sub.textContent = 'Nenhuma manutenção pendente';
+      }
+      card.style.display = 'block';
+    }
+
+    // ── RELATÓRIO WHATSAPP ──
+    function mnGerarTextoRelatorio() {
+      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
+      const aguardando = mnItens.filter(i => i.status === 'aguardando');
+      const agendadas = mnItens.filter(i => i.status === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const concluidas = mnItens.filter(i => i.status === 'concluida');
+      const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      let txt = `🔧 *Manutenção do Terreiro Bolhas de Luz*\n📅 ${hoje}\n\n`;
+      if (agendadas.length) {
+        txt += `📅 *Agendadas:*\n`;
+        agendadas.forEach(i => { txt += `• ${i.titulo} — ${mnFmtData(i.dataLimite)}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (aguardando.length) {
+        txt += `⏳ *Aguardando:*\n`;
+        aguardando.forEach(i => { txt += `• ${i.titulo}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (pendentes.length) {
+        txt += `🔧 *Pendentes:*\n`;
+        pendentes.forEach(i => { txt += `• ${i.titulo}\n`; });
+        txt += `\n`;
+      }
+      if (!agendadas.length && !aguardando.length && !pendentes.length) {
+        txt += `✅ Nenhuma manutenção pendente — tudo em dia! 🎉\n\n`;
+      }
+      txt += `✅ Concluídas recentemente: ${concluidas.length}\n`;
+      if (agendadas.length || aguardando.length || pendentes.length) txt += `\n💌 Quem puder ajudar com alguma tarefa, é só falar na corrente ✦\n`;
+      txt += `\n_Atualizado por ${mnNomeAtual()} via bolhasdeluz.ong.br_`;
+      return txt;
+    }
+
+    function mnAbrirRelatorio() {
+      document.getElementById('mn-rel-texto').value = mnGerarTextoRelatorio();
+      document.getElementById('mn-rel-overlay').style.display = 'flex';
+    }
+    function mnFecharRelatorio() { document.getElementById('mn-rel-overlay').style.display = 'none'; }
+    function mnEnviarWhatsapp() {
+      const texto = document.getElementById('mn-rel-texto').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    }
+    window.abrirRelatorioManutencao = mnAbrirRelatorio;
+
+    document.getElementById('mn-btn-add')?.addEventListener('click', mnAdicionarItem);
+    document.getElementById('mn-inp-titulo')?.addEventListener('keydown', e => { if (e.key === 'Enter') mnAdicionarItem(); });
+    document.getElementById('mn-modal-cancelar')?.addEventListener('click', mnFecharEditar);
+    document.getElementById('mn-modal-salvar')?.addEventListener('click', mnSalvarEdicao);
+    document.getElementById('mn-rel-cancelar')?.addEventListener('click', mnFecharRelatorio);
+    document.getElementById('mn-rel-enviar')?.addEventListener('click', mnEnviarWhatsapp);
   })();
 
   const provider = new GoogleAuthProvider();
