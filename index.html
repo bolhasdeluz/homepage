@@ -1831,14 +1831,20 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <!-- BOAS-VINDAS -->
 <div id="boas-vindas">
   <div id="boas-vindas-inner">
-    <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
-    <span id="bv-emoji"></span>
-    <span id="bv-nome"></span>
-    <span id="bv-sep">·</span>
-    <span id="bv-cargo"></span>
-    <span id="bv-sep2">·</span>
-    <span id="bv-tempo"></span>
-    <button id="user-logout-btn" onclick="logoutGoogle()" style="margin-left:8px">Sair</button>
+    <div id="bv-logged" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+      <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
+      <span id="bv-emoji"></span>
+      <span id="bv-nome"></span>
+      <span id="bv-sep">·</span>
+      <span id="bv-cargo"></span>
+      <span id="bv-sep2">·</span>
+      <span id="bv-tempo"></span>
+      <button id="user-logout-btn" onclick="logoutGoogle()" style="margin-left:8px">Sair</button>
+    </div>
+    <div id="bv-guest" style="display:none;align-items:center;gap:9px">
+      <span style="font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;color:var(--text-dim);font-style:italic">✦ Área das Filhas</span>
+      <button class="btn-rosa" style="padding:5px 15px;font-size:.6rem;letter-spacing:.06em" onclick="openLogin()">Entrar</button>
+    </div>
   </div>
 </div>
 
@@ -2948,20 +2954,7 @@ function renderDrawer() {
       </div>`;
   }).join('');
 
-  // banner de login, se não estiver logada
-  const loginBannerHtml = !userNow
-    ? `<div class="drawer-section" style="padding-top:4px">
-         <div class="drawer-login-banner">
-           <div>
-             <div class="drawer-card-name" style="color:var(--rosa)">Área das Filhas</div>
-             <div class="drawer-card-desc">Acesse ferramentas internas do terreiro</div>
-           </div>
-           <button class="btn-rosa" style="padding:8px 16px;font-size:.6rem;flex-shrink:0" onclick="openLogin();closeDrawer()">Entrar</button>
-         </div>
-       </div>`
-    : '';
-
-  body.innerHTML = adminCardHtml + sectionsHtml + loginBannerHtml;
+  body.innerHTML = adminCardHtml + sectionsHtml;
 }
 
 const DRAWER_ICONES_PADRAO = {
@@ -3128,9 +3121,6 @@ function renderCards() {
       html += widgetTile(item, onclick);
     });
   });
-  if (!userNow) {
-    html += `<div class="widget widget-interna"><div><div class="widget-name">Área das Filhas</div><div class="widget-desc">Acesse ferramentas internas do terreiro</div></div><button class="btn-rosa" onclick="openLogin()">Entrar</button></div>`;
-  }
   grid.innerHTML = html;
 }
 
@@ -3352,11 +3342,15 @@ function mudarSimulacao(valor) {
       document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
       document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
       document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+      document.getElementById('bv-guest').style.display = 'none';
+      document.getElementById('bv-logged').style.display = 'flex';
       document.getElementById('boas-vindas').style.display = 'block';
       document.body.classList.add('logada');
       window.renderDashPessoal?.(simPerfil, simUser);
     } else {
-      document.getElementById('boas-vindas').style.display = 'none';
+      document.getElementById('bv-logged').style.display = 'none';
+      document.getElementById('bv-guest').style.display = 'flex';
+      document.getElementById('boas-vindas').style.display = 'block';
       document.body.classList.remove('logada');
       const dashEl = document.getElementById('dash-pessoal');
       if (dashEl) dashEl.style.display = 'none';
@@ -3412,6 +3406,8 @@ function sairSimulacao() {
   document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
   document.getElementById('bv-sep').style.display  = realPerfil?.cargo ? '' : 'none';
   document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+  document.getElementById('bv-guest').style.display = 'none';
+  document.getElementById('bv-logged').style.display = 'flex';
   document.getElementById('boas-vindas').style.display = 'block';
   document.body.classList.add('logada');
   window.renderDashPessoal?.(realPerfil, realUser);
@@ -7205,23 +7201,32 @@ onAuthStateChanged(auth, async (user) => {
     const avatar = document.getElementById('user-avatar');
     if (avatar) avatar.style.display = 'none';
     document.getElementById('drawer-user-section').style.display = 'none';
-    document.getElementById('boas-vindas').style.display = 'none';
-    document.body.classList.remove('logada');
     perfilData = {};
     atualizarWidgetHistoria(false);
     if (menuData) renderCards();
-    window.ajustarTopoFixo?.();
+    window.atualizarBoasVindas?.();
   }
 });
 
 // ── BOAS-VINDAS ──
 function atualizarBoasVindas() {
   const banner = document.getElementById('boas-vindas');
+  const logged = document.getElementById('bv-logged');
+  const guest  = document.getElementById('bv-guest');
   // no modo simulação usa _simUsuario, senão usa currentUser
   const user = (window._modoSimulacao !== undefined && window._modoSimulacao !== null)
     ? window._simUsuario
     : currentUser;
-  if (!user) { banner.style.display = 'none'; document.body.classList.remove('logada'); ajustarTopoFixo(); return; }
+  if (!user) {
+    logged.style.display = 'none';
+    guest.style.display = 'flex';
+    banner.style.display = 'block';
+    document.body.classList.remove('logada');
+    ajustarTopoFixo();
+    return;
+  }
+  guest.style.display = 'none';
+  logged.style.display = 'flex';
 
   const perfil = user._perfil || perfilData || {};
   const nomeCompleto = perfil.nome || user.displayName || '';
