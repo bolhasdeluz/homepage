@@ -150,6 +150,9 @@ body.logada{padding-top:62px}
   border-color:rgba(196,57,107,.2);border-top:2px solid var(--rosa);
   display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:0;padding:14px 16px;}
 .widget-interna .widget-name{font-size:.78rem;margin-bottom:4px}
+.widget-admin-only{position:relative;background:#f0f0ef !important;filter:grayscale(.35)}
+.widget-admin-only::after{content:'';position:absolute;inset:0;border-radius:12px;border:1px dashed rgba(0,0,0,.15);pointer-events:none}
+.widget-admin-tag{position:absolute;top:7px;right:7px;font-family:'Cinzel',serif;font-size:.44rem;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a;background:rgba(0,0,0,.07);padding:2px 6px;border-radius:20px}
 
 /* páginas internas */
 .page{display:none}.page.active{display:block}
@@ -775,6 +778,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   letter-spacing:.02em;color:var(--text);line-height:1.25;
 }
 .drawer-card-dot-corner{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:rgba(196,90,30,.22)}
+.drawer-card-admin-only{background:#eeeeed !important;filter:grayscale(.35)}
+.drawer-card-admin-only::after{content:'';position:absolute;inset:0;border-radius:12px;border:1px dashed rgba(0,0,0,.15);pointer-events:none}
+.drawer-card-admin-tag{position:absolute;top:7px;right:7px;font-family:'Cinzel',serif;font-size:.42rem;letter-spacing:.04em;text-transform:uppercase;color:#8a8a8a;background:rgba(0,0,0,.08);padding:2px 6px;border-radius:20px}
 .drawer-card-dot-corner.mem{background:var(--rosa)}
 .drawer-card-desc{
   font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;
@@ -2929,6 +2935,7 @@ function renderDrawer() {
   const sectionsHtml = menuData.sections.map(sec => {
     const visibleItems = sec.items.filter(i => {
       if (i.showMenu === false) return false;
+      if (i.adminOnly && grupoUsuario !== 'admin') return false;
       if (grupoUsuario === 'admin') return true;
       const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
       return grupos.includes(grupoUsuario);
@@ -2972,10 +2979,11 @@ function drawerTile(item, onclickAttr, descFallback, dotClass) {
   const { icone, texto } = drawerIconeLabel(item);
   const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
   const dot = dotClass ? `<span class="drawer-card-dot-corner ${dotClass}"></span>` : '';
-  return `<button class="drawer-card" ${onclickAttr} title="${desc}">
+  return `<button class="drawer-card${item.adminOnly ? ' drawer-card-admin-only' : ''}" ${onclickAttr} title="${desc}">
     ${dot}
     <span class="drawer-card-icon">${icone}</span>
     <span class="drawer-card-name">${texto}</span>
+    ${item.adminOnly ? '<span class="drawer-card-admin-tag">só admin</span>' : ''}
   </button>`;
 }
 
@@ -3041,9 +3049,10 @@ function toggleSubmenu(btn) {
 function widgetTile(item, onclickAttr, descFallback) {
   const { icone, texto } = drawerIconeLabel(item);
   const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
-  return `<a class="widget" href="#" ${onclickAttr} title="${desc}">
+  return `<a class="widget${item.adminOnly ? ' widget-admin-only' : ''}" href="#" ${onclickAttr} title="${desc}">
     <div class="widget-icon">${icone}</div>
     <div class="widget-name">${texto}</div>
+    ${item.adminOnly ? '<span class="widget-admin-tag">só admin</span>' : ''}
   </a>`;
 }
 
@@ -3083,6 +3092,8 @@ function renderCards() {
       } else if (!grupos.includes(grupoUsuario)) {
         return;
       }
+      // item marcado como "só admin" — ninguém mais vê, nem quem está nos grupos acima
+      if (item.adminOnly && grupoUsuario !== 'admin') return;
 
       // widget especial: historia
       if (item.id === 'historia') {
@@ -3167,6 +3178,8 @@ function renderAdminPanel() {
               const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos'}[g];
               return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
             }).join('')}
+            <span style="width:1px;height:14px;background:rgba(196,90,30,.15);margin:0 2px"></span>
+            <button class="toggle-pill ${item.adminOnly?'on':''}" style="font-size:.54rem;padding:3px 8px;${item.adminOnly?'background:#888;border-color:#888':''}" onclick="toggleAdminOnly(${si},${ii})" title="Se ativado, só admin vê esse card — ignora os grupos acima">🔒 Só admin</button>
           </div>
         </div>
         <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
@@ -3248,6 +3261,13 @@ function toggleGrupoCard(si, ii, grupo) {
 }
 
 function toggleGrupo(si, ii, grupo) { toggleGrupoCard(si, ii, grupo); }
+
+function toggleAdminOnly(si, ii) {
+  const item = menuData.sections[si].items[ii];
+  item.adminOnly = !item.adminOnly;
+  renderAdminPanel(); renderCards(); renderDrawer();
+  agendarSalvarMenu();
+}
 
 function toggleEditRow(si, ii) {
   const form = document.getElementById(`edit-${si}-${ii}`);
@@ -5176,19 +5196,18 @@ function atualizarAniversarioCard() {
   const hm = hoje.getMonth() + 1, hd = hoje.getDate();
 
   const hojeList = ANIVERSARIOS.filter(a => a.mes === hm && a.dia === hd);
-  const mesRestante = ANIVERSARIOS
-    .filter(a => a.mes === hm && a.dia > hd)
+  const doMesTodos = ANIVERSARIOS
+    .filter(a => a.mes === hm)
     .sort((a,b) => a.dia - b.dia);
 
   if (hojeList.length) {
     label.textContent = '🎂 Aniversariante do Dia';
     nomeEl.textContent = formatarListaNomes(hojeList.map(a => a.nome));
     dataEl.textContent = 'Hoje é o dia dela(s)! Parabéns! 🎉';
-  } else if (mesRestante.length) {
-    const prox = mesRestante[0];
+  } else if (doMesTodos.length) {
     label.textContent = '✦ Aniversariante do Mês';
-    nomeEl.textContent = formatarListaNomes(mesRestante.slice().reverse().map(a => a.nome));
-    dataEl.textContent = `${prox.dia} de ${MESES_ANIV[prox.mes-1]}`;
+    nomeEl.textContent = formatarListaNomes(doMesTodos.map(a => a.nome));
+    dataEl.textContent = `este mês (${MESES_ANIV[hm-1]})`;
   } else if (ANIVERSARIOS.length) {
     const ordenado = [...ANIVERSARIOS].sort((a,b) => (a.mes-b.mes) || (a.dia-b.dia));
     const proximo = ordenado.find(a => (a.mes > hm) || (a.mes === hm && a.dia > hd)) || ordenado[0];
