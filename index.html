@@ -1963,8 +1963,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <button class="btn-add" onclick="addSection()">+ Adicionar Seção</button>
       </div>
     </div>
-    <button class="btn-save-menu" onclick="saveMenu()">✦ Salvar todas as alterações</button>
+    <button class="btn-save-menu" onclick="saveMenu()">↻ Forçar salvar agora</button>
     <div class="save-status" id="save-status"></div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:4px">Toda alteração já é salva automaticamente ✦</div>
   </div>
 </div>
 
@@ -2495,6 +2496,7 @@ function dragDrop(e, si, ii) {
   renderAdminPanel();
   renderDrawer();
   renderCards();
+  agendarSalvarMenu();
 }
 function dragEnd(e) {
   e.currentTarget.classList.remove('dragging');
@@ -2510,6 +2512,7 @@ function toggleGrupoCard(si, ii, grupo) {
   if (idx >= 0) item.grupos.splice(idx, 1);
   else item.grupos.push(grupo);
   renderAdminPanel(); renderCards(); renderDrawer();
+  agendarSalvarMenu();
 }
 
 function toggleGrupo(si, ii, grupo) { toggleGrupoCard(si, ii, grupo); }
@@ -2530,6 +2533,7 @@ function saveEditItem(si, ii) {
   if (item.type === 'internal') { item.page = urlVal; delete item.url; }
   else { item.url = urlVal; delete item.page; }
   renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
 }
 
 // fallback enquanto Firebase carrega
@@ -2935,25 +2939,30 @@ function adminSaveSecLabel(si, newLabel) {
   if (!v || !menuData?.sections[si]) return;
   menuData.sections[si].label = v;
   renderDrawer();
+  agendarSalvarMenu();
 }
 
 function toggleItemMenu(si, ii) {
   menuData.sections[si].items[ii].showMenu = !menuData.sections[si].items[ii].showMenu;
   renderAdminPanel(); renderDrawer();
+  agendarSalvarMenu();
 }
 function toggleItemCard(si, ii) {
   menuData.sections[si].items[ii].showCard = !menuData.sections[si].items[ii].showCard;
   renderAdminPanel(); renderCards();
+  agendarSalvarMenu();
 }
 function deleteItem(si, ii) {
   if (!confirm('Remover este item?')) return;
   menuData.sections[si].items.splice(ii, 1);
   renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
 }
 function deleteSection(si) {
   if (!confirm('Remover esta seção e todos os seus itens?')) return;
   menuData.sections.splice(si, 1);
   renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
 }
 function addItem(si) {
   const label = document.getElementById(`label-${si}`).value.trim();
@@ -2967,6 +2976,7 @@ function addItem(si) {
   else item.url = url;
   menuData.sections[si].items.push(item);
   renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
 }
 function addSection() {
   const label = document.getElementById('new-section-label').value.trim();
@@ -2975,10 +2985,20 @@ function addSection() {
   menuData.sections.push({ id, label, items: [] });
   document.getElementById('new-section-label').value = '';
   renderAdminPanel();
+  agendarSalvarMenu();
 }
+// ── AUTOSAVE ──
+let _menuSaveTimer = null;
+function agendarSalvarMenu() {
+  const status = document.getElementById('save-status');
+  if (status) { status.textContent = '✎ salvando...'; status.style.color = 'var(--text-dim)'; }
+  clearTimeout(_menuSaveTimer);
+  _menuSaveTimer = setTimeout(saveMenu, 700);
+}
+
 async function saveMenu() {
   const status = document.getElementById('save-status');
-  status.textContent = 'Salvando...';
+  if (status) { status.textContent = '✎ salvando...'; status.style.color = 'var(--text-dim)'; }
   try {
     const res = await fetch(API, {
       method: 'POST',
@@ -2986,11 +3006,14 @@ async function saveMenu() {
       body: JSON.stringify(menuData)
     });
     const data = await res.json();
-    status.textContent = data.ok ? '✦ Salvo com sucesso!' : '✕ Erro ao salvar.';
+    if (status) {
+      status.style.color = data.ok ? 'var(--green,#2a7a60)' : '#c0392b';
+      status.textContent = data.ok ? '✦ Salvo automaticamente' : '✕ Erro ao salvar.';
+    }
   } catch(e) {
-    status.textContent = '✕ Erro de conexão.';
+    if (status) { status.style.color = '#c0392b'; status.textContent = '✕ Erro de conexão.'; }
   }
-  setTimeout(() => status.textContent = '', 3000);
+  if (status) setTimeout(() => { if (status.textContent.includes('Salvo')) status.textContent = ''; }, 2500);
 }
 
 // ── NAVEGAÇÃO ──
