@@ -874,6 +874,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .cp-item:hover{box-shadow:0 8px 24px rgba(196,57,107,.13);transform:translateY(-2px)}
 .cp-item-parcial{border-left:4px solid var(--amber)}
 .cp-item-completo{opacity:.72;border-left:4px solid var(--green);background:linear-gradient(90deg,var(--green-dim) 0%,#fff 16%)}
+.cp-item-precisando{border-left:4px solid #c0392b;background:linear-gradient(90deg,rgba(192,57,43,.05) 0%,#fff 16%)}
+.cp-item-cat{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
+.cp-btn-toggle-precisa{background:rgba(192,57,43,.08);color:#c0392b;border:1px solid rgba(192,57,43,.25);border-radius:20px;padding:7px 15px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.cp-btn-toggle-precisa:hover{background:#c0392b;color:#fff}
+.cp-badge-precisando{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:#c0392b;display:inline-flex;align-items:center;gap:4px;animation:cpPop .3s cubic-bezier(.3,1.4,.5,1)}
 .cp-item-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
 .cp-item-info{flex:1;display:flex;flex-wrap:wrap;align-items:center;gap:7px}
 .cp-item-nome{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--text)}
@@ -1124,6 +1129,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   .mn-topo{flex-direction:column;align-items:stretch}
   .mn-proxima-card{flex-direction:column;text-align:center;justify-content:center}
 }
+
+/* mini-cards discretos no topo do perfil (Minha História) */
+.mh-mini-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.75);border:1px solid var(--border);border-radius:10px;padding:7px 13px;flex:1 1 150px;text-decoration:none;transition:all .15s;box-shadow:0 1px 4px rgba(196,57,107,.05)}
+.mh-mini-card:hover{background:#fff;box-shadow:0 3px 10px rgba(196,57,107,.1);transform:translateY(-1px)}
+.mh-mini-icon{font-size:1.05rem;flex-shrink:0;opacity:.85}
+.mh-mini-txt{display:flex;flex-direction:column;min-width:0}
+.mh-mini-label{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.mh-mini-val{font-family:'Crimson Pro',serif;font-size:.76rem;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 </style>
 </head>
@@ -1399,6 +1412,30 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div id="mh-tempo-badge" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:6px 14px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:#fff;white-space:nowrap;flex-shrink:0"></div>
       </div>
       <div id="mh-email" style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:rgba(255,255,255,.55);margin-top:10px;position:relative"></div>
+    </div>
+
+    <div id="mh-mini-cards" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:24px">
+      <a href="#" onclick="showPage('calendario');return false" class="mh-mini-card">
+        <span class="mh-mini-icon">📅</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label">Sessão</span>
+          <span class="mh-mini-val" id="mh-mini-sessao">—</span>
+        </span>
+      </a>
+      <a href="#" onclick="abrirModalAniversarios();return false" class="mh-mini-card">
+        <span class="mh-mini-icon">🎂</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label" id="mh-mini-aniv-label">Aniversário</span>
+          <span class="mh-mini-val" id="mh-mini-aniv">—</span>
+        </span>
+      </a>
+      <a href="#" onclick="showPage('manutencao');return false" class="mh-mini-card">
+        <span class="mh-mini-icon">🔧</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label">Manutenção</span>
+          <span class="mh-mini-val" id="mh-mini-manut">—</span>
+        </span>
+      </a>
     </div>
 
     <!-- CONTEÚDO LOGADA -->
@@ -1784,62 +1821,33 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
     <div class="section-title">🛒 Lista de Compras</div>
-    <p class="section-sub">Ajude a cuidar da nossa casa — cada item conta ✦</p>
+    <p class="section-sub">Os potes cheios estão em dia — os vazios estão precisando ✦</p>
 
     <div class="cp-prateleira-frame">
       <div class="cp-prateleira-titulo">✦ Nossa Prateleira ✦</div>
-      <div class="cp-prateleira-sub">cada potinho é um item — vá enchendo a estante!</div>
+      <div class="cp-prateleira-sub">toque num pote pra marcar ou desmarcar</div>
       <div id="cp-prateleira"></div>
     </div>
 
     <div class="cp-stats">
-      <div class="cp-stat"><span class="cp-stat-n" id="cp-cnt-p">0</span><span class="cp-stat-l">pendentes</span></div>
-      <div class="cp-stat"><span class="cp-stat-n" id="cp-cnt-r">0</span><span class="cp-stat-l">andamento</span></div>
-      <div class="cp-stat"><span class="cp-stat-n" id="cp-cnt-c">0</span><span class="cp-stat-l">completos</span></div>
+      <div class="cp-stat"><span class="cp-stat-n" id="cp-cnt-precisando" style="color:#c0392b">0</span><span class="cp-stat-l">precisando</span></div>
+      <div class="cp-stat"><span class="cp-stat-n ok" id="cp-cnt-ok">0</span><span class="cp-stat-l">em dia</span></div>
     </div>
 
     <div class="cp-form">
-      <div class="cp-form-titulo">✦ Adicionar item</div>
+      <div class="cp-form-titulo">✦ Adicionar item fixo à prateleira</div>
       <div class="cp-row">
-        <div class="cp-campo cp-grow"><label>O que precisamos?</label><input type="text" id="cp-inp-nome" placeholder="Ex: Arroz integral"></div>
-        <div class="cp-campo cp-sm"><label>Qtd total</label><input type="number" id="cp-inp-qtd" value="1" min="0.1" step="0.1"></div>
-        <div class="cp-campo cp-sm"><label>Unidade</label><input type="text" id="cp-inp-un" value="un"></div>
-      </div>
-      <div class="cp-row">
-        <div class="cp-campo cp-grow" id="cp-campo-autor"><label>Quem está pedindo?</label><input type="text" id="cp-inp-autor" placeholder="Seu nome"></div>
-        <div class="cp-autor-auto" id="cp-autor-auto">
-          <img id="cp-autor-auto-avatar" src="" alt="">
-          <span>Pedido por você ✦</span>
-        </div>
-        <div class="cp-campo cp-grow"><label>Observação</label><input type="text" id="cp-inp-obs" placeholder="Ex: sem glúten, orgânico..."></div>
+        <div class="cp-campo cp-grow"><label>Nome do item</label><input type="text" id="cp-inp-nome" placeholder="Ex: Arroz integral"></div>
+        <div class="cp-campo cp-grow"><label>Categoria (opcional)</label><input type="text" id="cp-inp-categoria" placeholder="Ex: Ritual, Limpeza..."></div>
         <button class="cp-btn-add" id="cp-btn-add">+ Adicionar</button>
       </div>
-      <div class="cp-hint" id="cp-hint-login">💡 Entre pela Área Interna e a gente preenche seu nome automaticamente.</div>
+      <div class="cp-hint">💡 Essa lista é fixa — os itens ficam sempre na prateleira. Só marque quando estiver precisando, e desmarque quando alguém trouxer.</div>
     </div>
 
-    <div id="cp-lista-pendentes"></div>
-    <div id="cp-lista-parciais"></div>
-    <div id="cp-lista-completos"></div>
+    <div id="cp-lista-precisando"></div>
+    <div id="cp-lista-ok"></div>
     <div id="cp-carregando" class="cp-carregando">Carregando lista...</div>
-    <div id="cp-vazio" class="cp-vazio" style="display:none"><div class="cp-vazio-icon">🛒</div><p>A lista está vazia. Adicione o primeiro item!</p></div>
-  </div>
-</div>
-
-<div class="cp-modal-bg" id="cp-modal" style="display:none">
-  <div class="cp-modal">
-    <h3>Quanto você vai trazer?</h3>
-    <p>Pode ser menos que o total — outras pessoas complementam!</p>
-    <div class="cp-modal-quem" id="cp-modal-quem" style="display:none">
-      <img id="cp-modal-quem-avatar" src="" alt="">
-      <span id="cp-modal-quem-nome"></span>
-    </div>
-    <div class="cp-modal-campo" id="cp-modal-campo-nome"><label>Seu nome</label><input type="text" id="cp-modal-nome" placeholder="Seu nome" maxlength="40"></div>
-    <div class="cp-modal-campo"><label id="cp-modal-qtd-label">Quantidade</label><input type="number" id="cp-modal-qtd" min="0.1" step="0.1" placeholder="0"></div>
-    <div class="cp-modal-falta">Ainda falta: <span id="cp-modal-falta-val">—</span></div>
-    <div class="cp-modal-btns">
-      <button class="cp-btn-cancelar" id="cp-btn-cancelar">Cancelar</button>
-      <button class="cp-btn-confirmar" id="cp-btn-confirmar">Confirmar ✦</button>
-    </div>
+    <div id="cp-vazio" class="cp-vazio" style="display:none"><div class="cp-vazio-icon">🛒</div><p>A prateleira está vazia. Adicione os itens fixos que a casa sempre usa!</p></div>
   </div>
 </div>
 
@@ -4723,6 +4731,25 @@ function drawerCancelSecName(si) {
 loadMenu();
 
 // ── PRÓXIMA SESSÃO NO HEADER ──
+function sincronizarMiniCardsPerfil() {
+  const miniSessao = document.getElementById('mh-mini-sessao');
+  if (miniSessao) {
+    const nome = document.getElementById('proxima-sessao-nome')?.textContent;
+    const data = document.getElementById('proxima-sessao-data')?.textContent;
+    miniSessao.textContent = nome ? `${nome} · ${data}` : 'Sem sessão marcada';
+  }
+  const miniAnivLabel = document.getElementById('mh-mini-aniv-label');
+  const miniAniv = document.getElementById('mh-mini-aniv');
+  if (miniAniv) {
+    miniAnivLabel.textContent = document.getElementById('aniversario-label')?.textContent.replace(/^[✦🎂]\s*/, '') || 'Aniversário';
+    miniAniv.textContent = document.getElementById('aniversario-nome')?.textContent || '—';
+  }
+  const miniManut = document.getElementById('mh-mini-manut');
+  if (miniManut) {
+    miniManut.textContent = document.getElementById('manutencao-card-txt')?.textContent || '—';
+  }
+}
+
 async function carregarProximaSessao() {
   try {
     const res = await fetch('/api/sessoes');
@@ -4750,6 +4777,7 @@ async function carregarProximaSessao() {
       document.getElementById('proxima-sessao-nome').textContent = proxima.nome;
       document.getElementById('proxima-sessao-data').textContent = dataFmt;
       card.style.display = 'block';
+      sincronizarMiniCardsPerfil();
     }
   } catch(e) {
     const loading = document.getElementById('proxima-sessao-loading');
@@ -4839,6 +4867,7 @@ function atualizarAniversarioCard() {
     return;
   }
   card.style.display = 'block';
+  sincronizarMiniCardsPerfil();
 }
 atualizarAniversarioCard();
 
@@ -5007,13 +5036,6 @@ const auth = getAuth(app);
     const colCompras = collection(db, 'lista_compras');
     let cpItens = [];
 
-    const CP_PALETA = ['#c4396b','#e8688a','#8c3a1a','#2a7a60','#4a6fa5','#9e6a9e','#c9963c','#6a9e6a','#8a1a40','#3c8cae'];
-    function cpCor(nome) {
-      let h = 0;
-      for (let i = 0; i < (nome||'').length; i++) h = (h * 31 + nome.charCodeAt(i)) >>> 0;
-      return CP_PALETA[h % CP_PALETA.length];
-    }
-    function cpInicial(nome) { return (nome||'?').trim().charAt(0).toUpperCase(); }
     function cpToast(msg, erro) {
       const t = document.createElement('div');
       t.className = 'cp-toast' + (erro ? ' erro' : '');
@@ -5021,39 +5043,10 @@ const auth = getAuth(app);
       document.body.appendChild(t);
       setTimeout(() => t.remove(), 2800);
     }
-    function cpQtdComprada(item) { return (item.compradores || []).reduce((a,c) => a + c.qtd, 0); }
-    function cpEstado(item) { const c = cpQtdComprada(item); if (c <= 0) return 'pendente'; if (c >= item.qtdTotal) return 'completo'; return 'parcial'; }
-    function cpNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : null; }
+    function cpEstado(item) { return item.precisando ? 'precisando' : 'ok'; }
+    function cpNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
 
-    function cpAtualizarLogin() {
-      const campoAutor = document.getElementById('cp-campo-autor');
-      const autorAuto  = document.getElementById('cp-autor-auto');
-      const hint       = document.getElementById('cp-hint-login');
-      const modalCampoNome = document.getElementById('cp-modal-campo-nome');
-      const modalQuem  = document.getElementById('cp-modal-quem');
-      if (!campoAutor) return; // página ainda não está no DOM (não deve acontecer, mas por segurança)
-      if (currentUser) {
-        campoAutor.style.display = 'none';
-        autorAuto.style.display = 'flex';
-        document.getElementById('cp-autor-auto-avatar').src = currentUser.photoURL || '';
-        if (hint) hint.style.display = 'none';
-        if (modalCampoNome) modalCampoNome.style.display = 'none';
-        if (modalQuem) {
-          modalQuem.style.display = 'flex';
-          document.getElementById('cp-modal-quem-avatar').src = currentUser.photoURL || '';
-          document.getElementById('cp-modal-quem-nome').textContent = 'Você vai trazer como ' + (currentUser.displayName || currentUser.email);
-        }
-      } else {
-        campoAutor.style.display = 'flex';
-        autorAuto.style.display = 'none';
-        if (hint) hint.style.display = 'block';
-        if (modalCampoNome) modalCampoNome.style.display = 'flex';
-        if (modalQuem) modalQuem.style.display = 'none';
-      }
-    }
-    window._cpAtualizarLogin = cpAtualizarLogin;
-
-    const qCompras = query(colCompras, orderBy('criadoEm', 'desc'));
+    const qCompras = query(colCompras, orderBy('nome', 'asc'));
     onSnapshot(qCompras, snap => {
       cpItens = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const carregando = document.getElementById('cp-carregando');
@@ -5064,17 +5057,13 @@ const auth = getAuth(app);
     }, err => console.warn('lista_compras onSnapshot:', err));
 
     // ── ILUSTRAÇÃO: PRATELEIRA DE POTINHOS ──
+    // pote CHEIO = item em dia (não precisa) · pote VAZIO = item precisando (marcar pra alguém trazer)
     function cpJarSVG(item) {
-      const est = cpEstado(item);
-      const pct = Math.min(100, Math.round((cpQtdComprada(item) / item.qtdTotal) * 100));
-      const cor = cpCor(item.nome);
+      const precisando = !!item.precisando;
+      const cor = '#2a7a60';
       const clipId = 'cpclip-' + item.id;
       const corpoAltura = 30;
       const corpoTopo = 16;
-      const fillH = Math.max(0, corpoAltura * (pct / 100));
-      const fillY = corpoTopo + (corpoAltura - fillH);
-      const isPend = est === 'pendente';
-      const isCompleto = est === 'completo';
       return `
         <svg class="cp-jar-svg" viewBox="0 0 44 56" width="40" height="51">
           <defs>
@@ -5085,14 +5074,13 @@ const auth = getAuth(app);
             </linearGradient>
           </defs>
           <rect x="6" y="${corpoTopo}" width="32" height="${corpoAltura}" rx="7"
-            fill="${isPend ? 'rgba(196,57,107,.04)' : '#fffdfb'}"
-            stroke="${isPend ? 'rgba(196,57,107,.4)' : cor}" stroke-width="2"
-            stroke-dasharray="${isPend ? '4 3' : '0'}"/>
-          ${!isPend ? `<rect x="6" y="${fillY.toFixed(1)}" width="32" height="${fillH.toFixed(1)}" fill="url(#${clipId}-g)" clip-path="url(#${clipId})"/>` : ''}
-          <rect x="13" y="7" width="18" height="8" rx="2" fill="${isPend ? 'rgba(196,57,107,.18)' : cor}"/>
-          <rect x="15" y="3" width="14" height="6" rx="2" fill="${isPend ? 'rgba(196,57,107,.14)' : 'var(--terra,#8a1a40)'}"/>
-          ${isCompleto ? `<text x="22" y="35" text-anchor="middle" font-size="13" fill="#fff">✦</text>` : ''}
-          ${isPend ? `<text x="22" y="34" text-anchor="middle" font-size="12" fill="rgba(196,57,107,.5)">?</text>` : ''}
+            fill="${precisando ? 'rgba(192,57,43,.05)' : '#fffdfb'}"
+            stroke="${precisando ? 'rgba(192,57,43,.5)' : cor}" stroke-width="2"
+            stroke-dasharray="${precisando ? '4 3' : '0'}"/>
+          ${!precisando ? `<rect x="6" y="${corpoTopo}" width="32" height="${corpoAltura}" fill="url(#${clipId}-g)" clip-path="url(#${clipId})"/>` : ''}
+          <rect x="13" y="7" width="18" height="8" rx="2" fill="${precisando ? 'rgba(192,57,43,.18)' : cor}"/>
+          <rect x="15" y="3" width="14" height="6" rx="2" fill="${precisando ? 'rgba(192,57,43,.14)' : 'var(--terra,#8a1a40)'}"/>
+          ${precisando ? `<text x="22" y="34" text-anchor="middle" font-size="16" fill="rgba(192,57,43,.55)">!</text>` : `<text x="22" y="35" text-anchor="middle" font-size="13" fill="#fff">✦</text>`}
         </svg>`;
     }
 
@@ -5100,7 +5088,7 @@ const auth = getAuth(app);
       const wrap = document.getElementById('cp-prateleira');
       if (!wrap) return;
       if (!cpItens.length) {
-        wrap.innerHTML = `<div class="cp-shelf-board"></div><div class="cp-prateleira-vazia">A prateleira está te esperando ✦ adicione o primeiro item!</div>`;
+        wrap.innerHTML = `<div class="cp-shelf-board"></div><div class="cp-prateleira-vazia">A prateleira está te esperando ✦ adicione os itens fixos da casa!</div>`;
         return;
       }
       const POR_PRATELEIRA = 6;
@@ -5109,24 +5097,20 @@ const auth = getAuth(app);
 
       wrap.innerHTML = linhas.map(linha => {
         const jarsHtml = linha.map(item => {
-          const est = cpEstado(item);
-          const pct = Math.min(100, Math.round((cpQtdComprada(item) / item.qtdTotal) * 100));
+          const precisando = !!item.precisando;
           const nomeCurto = item.nome.length > 11 ? item.nome.slice(0, 10) + '…' : item.nome;
           return `
-            <div class="cp-jar cp-jar-${est}" title="${item.nome} — ${pct}%" data-id="${item.id}">
+            <div class="cp-jar cp-jar-${precisando ? 'precisando' : 'ok'}" title="${item.nome} — ${precisando ? 'precisando' : 'em dia'} (toque pra alternar)" data-id="${item.id}">
               ${cpJarSVG(item)}
               <span class="cp-jar-label">${nomeCurto}</span>
-              <span class="cp-jar-pct">${est === 'completo' ? '✓ completo' : pct + '%'}</span>
+              <span class="cp-jar-pct" style="color:${precisando ? '#c0392b' : 'var(--green)'}">${precisando ? 'precisando' : 'em dia'}</span>
             </div>`;
         }).join('');
         return `<div class="cp-shelf-row"><div class="cp-shelf-items">${jarsHtml}</div><div class="cp-shelf-board"></div></div>`;
       }).join('');
 
       wrap.querySelectorAll('.cp-jar').forEach(el => {
-        el.addEventListener('click', () => {
-          const item = cpItens.find(i => i.id === el.dataset.id);
-          if (item && cpEstado(item) !== 'completo') cpAbrirModal(item.id);
-        });
+        el.addEventListener('click', () => cpToggle(el.dataset.id));
       });
     }
 
@@ -5135,16 +5119,20 @@ const auth = getAuth(app);
       const txt  = document.getElementById('lista-compras-card-txt');
       const sub  = document.getElementById('lista-compras-card-sub');
       if (!card) return;
-      const pendentes = cpItens.filter(i => cpEstado(i) !== 'completo').length;
-      if (pendentes > 0) {
-        txt.textContent = pendentes === 1 ? '1 item precisando de você' : `${pendentes} itens precisando de você`;
+      const precisando = cpItens.filter(i => i.precisando);
+      if (precisando.length) {
+        const nomes = precisando.map(i => i.nome);
+        const MAX = 3;
+        const mostrar = nomes.slice(0, MAX);
+        const resto = nomes.length - mostrar.length;
+        txt.textContent = formatarListaNomes(mostrar) + (resto > 0 ? ` (+${resto})` : '');
         sub.textContent = 'Toque para ver a lista completa';
       } else if (cpItens.length) {
-        txt.textContent = 'Tudo coberto! ✓';
-        sub.textContent = 'A lista está em dia ✦';
+        txt.textContent = 'Tudo em dia! ✓';
+        sub.textContent = 'Nada precisando no momento ✦';
       } else {
         txt.textContent = 'Lista vazia';
-        sub.textContent = 'Nada pendente por aqui ✦';
+        sub.textContent = 'Nada cadastrado por aqui ✦';
       }
       card.style.display = 'block';
     }
@@ -5153,140 +5141,77 @@ const auth = getAuth(app);
       const nomeEl = document.getElementById('cp-inp-nome');
       const nome = nomeEl.value.trim();
       if (!nome) { cpToast('Digite o nome do item', true); return; }
-      const autor = cpNomeAtual() || document.getElementById('cp-inp-autor').value.trim() || 'Anônimo';
-      const qtd = parseFloat(document.getElementById('cp-inp-qtd').value) || 1;
-      const un = document.getElementById('cp-inp-un').value.trim() || 'un';
-      const obs = document.getElementById('cp-inp-obs').value.trim();
+      const categoria = document.getElementById('cp-inp-categoria').value.trim();
       const btn = document.getElementById('cp-btn-add');
       btn.disabled = true;
       try {
-        const payload = { nome, autor, qtdTotal: qtd, un, obs, compradores: [], criadoEm: serverTimestamp() };
-        if (currentUser) { payload.autorUid = currentUser.uid; payload.autorFoto = currentUser.photoURL || ''; }
-        await addDoc(colCompras, payload);
+        await addDoc(colCompras, { nome, categoria, precisando: false, criadoEm: serverTimestamp(), criadoPor: cpNomeAtual() });
         nomeEl.value = '';
-        document.getElementById('cp-inp-obs').value = '';
-        cpToast('Item adicionado! ✦');
+        document.getElementById('cp-inp-categoria').value = '';
+        cpToast('Item adicionado à prateleira! ✦');
       } catch (e) { cpToast('Erro ao adicionar', true); }
       btn.disabled = false;
     }
 
-    let cpPendingId = null;
-    function cpAbrirModal(id) {
+    async function cpToggle(id) {
       const item = cpItens.find(i => i.id === id);
       if (!item) return;
-      const falta = +(item.qtdTotal - cpQtdComprada(item)).toFixed(2);
-      cpPendingId = id;
-      document.getElementById('cp-modal-nome').value = '';
-      document.getElementById('cp-modal-qtd').value = '';
-      document.getElementById('cp-modal-qtd').max = falta;
-      document.getElementById('cp-modal-qtd-label').textContent = 'Quantidade (' + item.un + ')';
-      document.getElementById('cp-modal-falta-val').textContent = falta + ' ' + item.un;
-      document.getElementById('cp-modal').style.display = 'flex';
-      setTimeout(() => document.getElementById(currentUser ? 'cp-modal-qtd' : 'cp-modal-nome').focus(), 50);
-    }
-    function cpFecharModal() { document.getElementById('cp-modal').style.display = 'none'; cpPendingId = null; }
-
-    async function cpConfirmarCompra() {
-      const nome = cpNomeAtual() || document.getElementById('cp-modal-nome').value.trim();
-      const qtd = parseFloat(document.getElementById('cp-modal-qtd').value);
-      if (!nome) { cpToast('Digite seu nome', true); return; }
-      if (!qtd || qtd <= 0) { cpToast('Digite uma quantidade válida', true); return; }
-      const item = cpItens.find(i => i.id === cpPendingId);
-      if (!item) { cpFecharModal(); return; }
-      const falta = +(item.qtdTotal - cpQtdComprada(item)).toFixed(2);
-      if (qtd > falta + 0.001) { cpToast('Quantidade maior que o necessário', true); return; }
-      const comprador = { nome, qtd };
-      if (currentUser) { comprador.uid = currentUser.uid; comprador.foto = currentUser.photoURL || ''; }
-      const novos = [...(item.compradores || []), comprador];
       try {
-        await updateDoc(doc(db, 'lista_compras', cpPendingId), { compradores: novos });
-        const total = novos.reduce((a,c) => a + c.qtd, 0);
-        cpToast(total >= item.qtdTotal ? 'Item completamente coberto! 🎉' : nome + ' vai trazer ' + qtd + ' ' + item.un + '! ✦');
-      } catch (e) { cpToast('Erro ao salvar', true); }
-      cpFecharModal();
+        await updateDoc(doc(db, 'lista_compras', id), { precisando: !item.precisando, atualizadoEm: serverTimestamp(), atualizadoPor: cpNomeAtual() });
+      } catch (e) { cpToast('Erro ao atualizar', true); }
+    }
+
+    async function cpExcluir(id) {
+      if (!confirm('Remover este item da prateleira fixa?')) return;
+      try { await deleteDoc(doc(db, 'lista_compras', id)); } catch (e) { cpToast('Erro ao remover', true); }
     }
 
     function cpRenderItem(item) {
       const d = document.createElement('div');
-      const est = cpEstado(item);
-      const comprado = cpQtdComprada(item);
-      const pct = Math.min(100, Math.round((comprado / item.qtdTotal) * 100));
-      d.className = 'cp-item' + (est === 'parcial' ? ' cp-item-parcial' : '') + (est === 'completo' ? ' cp-item-completo' : '');
+      const precisando = !!item.precisando;
+      d.className = 'cp-item' + (precisando ? ' cp-item-precisando' : ' cp-item-completo');
 
       const info = document.createElement('div'); info.className = 'cp-item-info';
-      info.innerHTML = `<span class="cp-item-nome">${item.nome}</span><span class="cp-item-qtd">${item.qtdTotal} ${item.un}</span>${item.obs ? `<span class="cp-item-obs">${item.obs}</span>` : ''}<span class="cp-item-autor">${item.autorFoto ? `<img src="${item.autorFoto}" style="width:15px;height:15px;border-radius:50%;object-fit:cover">` : ''} pedido por ${item.autor}</span>`;
+      info.innerHTML = `<span class="cp-item-nome">${item.nome}</span>${item.categoria ? `<span class="cp-item-cat">${item.categoria}</span>` : ''}`;
 
       const acoes = document.createElement('div'); acoes.className = 'cp-item-acoes';
-      if (est === 'completo') {
-        const ok = document.createElement('span'); ok.className = 'cp-badge-ok'; ok.textContent = '✓ Completo 🎉'; acoes.appendChild(ok);
-      } else {
-        const btn = document.createElement('button'); btn.className = 'cp-btn-vou'; btn.textContent = '✦ Vou trazer' + (est === 'parcial' ? ' mais' : '');
-        btn.addEventListener('click', () => cpAbrirModal(item.id)); acoes.appendChild(btn);
-      }
-      const del = document.createElement('button'); del.className = 'cp-btn-del'; del.textContent = '✕'; del.title = 'Remover item';
-      del.addEventListener('click', async () => { try { await deleteDoc(doc(db, 'lista_compras', item.id)); } catch(e) { cpToast('Erro', true); } });
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = precisando ? 'cp-btn-vou' : 'cp-btn-toggle-precisa';
+      toggleBtn.textContent = precisando ? '✓ Já trouxemos' : 'Marcar como precisando';
+      toggleBtn.addEventListener('click', () => cpToggle(item.id));
+      acoes.appendChild(toggleBtn);
+
+      const badge = document.createElement('span');
+      badge.className = precisando ? 'cp-badge-precisando' : 'cp-badge-ok';
+      badge.textContent = precisando ? '🔴 Precisando' : '✓ Em dia';
+      acoes.appendChild(badge);
+
+      const del = document.createElement('button'); del.className = 'cp-btn-del'; del.textContent = '✕'; del.title = 'Remover da prateleira';
+      del.addEventListener('click', () => cpExcluir(item.id));
       acoes.appendChild(del);
-
-      const barra = document.createElement('div'); barra.className = 'cp-progresso';
-      const compradoresLista = item.compradores || [];
-      let acumulado = 0;
-      const segmentosHtml = compradoresLista.map((c, i) => {
-        const larguraPct = Math.max(0, Math.min(100, (c.qtd / item.qtdTotal) * 100));
-        const esquerdaPct = acumulado;
-        acumulado += larguraPct;
-        const isFirst = i === 0;
-        const isLast = i === compradoresLista.length - 1 && acumulado >= 99.5;
-        const raio = `${isFirst?'20px':'0'} ${isLast?'20px':'0'} ${isLast?'20px':'0'} ${isFirst?'20px':'0'}`;
-        return `<div class="cp-seg" style="left:${esquerdaPct}%;width:${larguraPct}%;background:${cpCor(c.nome)};border-radius:${raio}" title="${c.nome}: ${c.qtd} ${item.un}"></div>`;
-      }).join('');
-      barra.innerHTML = `<div class="cp-progresso-info"><span class="cp-progresso-txt">${comprado} de ${item.qtdTotal} ${item.un}</span><span class="cp-progresso-pct">${pct}%</span></div><div class="cp-bar${est==='completo'?' completo':''}">${segmentosHtml}</div>`;
-
-      const compradores = document.createElement('div'); compradores.className = 'cp-compradores';
-      compradoresLista.forEach((c, i) => {
-        const b = document.createElement('span'); b.className = 'cp-badge';
-        b.innerHTML = c.foto
-          ? `<img src="${c.foto}" class="cp-avatar" style="object-fit:cover">`
-          : `<span class="cp-avatar" style="background:${cpCor(c.nome)}">${cpInicial(c.nome)}</span>`;
-        const txt = document.createElement('span'); txt.textContent = `${c.nome}: ${c.qtd} ${item.un}`;
-        b.appendChild(txt);
-        const x = document.createElement('button'); x.className = 'cp-badge-del'; x.textContent = '✕'; x.title = 'Remover';
-        x.addEventListener('click', async () => {
-          const novos = [...(item.compradores || [])]; novos.splice(i, 1);
-          try { await updateDoc(doc(db, 'lista_compras', item.id), { compradores: novos }); } catch(e) { cpToast('Erro', true); }
-        });
-        b.appendChild(x); compradores.appendChild(b);
-      });
 
       const topo = document.createElement('div'); topo.className = 'cp-item-topo';
       topo.appendChild(info); topo.appendChild(acoes);
-      d.appendChild(topo); d.appendChild(barra);
-      if (compradoresLista.length) d.appendChild(compradores);
+      d.appendChild(topo);
       return d;
     }
 
     function cpRenderizar() {
-      const p = cpItens.filter(i => cpEstado(i) === 'pendente');
-      const r = cpItens.filter(i => cpEstado(i) === 'parcial');
-      const c = cpItens.filter(i => cpEstado(i) === 'completo');
-      const cntP = document.getElementById('cp-cnt-p'), cntR = document.getElementById('cp-cnt-r'), cntC = document.getElementById('cp-cnt-c');
+      const precisando = cpItens.filter(i => i.precisando);
+      const emDia = cpItens.filter(i => !i.precisando);
+      const cntP = document.getElementById('cp-cnt-precisando'), cntO = document.getElementById('cp-cnt-ok');
       if (!cntP) return; // página ainda não renderizada
-      cntP.textContent = p.length; cntR.textContent = r.length; cntC.textContent = c.length;
-      const lp = document.getElementById('cp-lista-pendentes'); lp.innerHTML = '';
-      const lr = document.getElementById('cp-lista-parciais'); lr.innerHTML = '';
-      const lc = document.getElementById('cp-lista-completos'); lc.innerHTML = '';
-      if (p.length) { const s = document.createElement('div'); s.className = 'cp-sec-label'; s.innerHTML = '🌱 Precisamos de alguém'; lp.appendChild(s); p.forEach(i => lp.appendChild(cpRenderItem(i))); }
-      if (r.length) { const s = document.createElement('div'); s.className = 'cp-sec-label'; s.innerHTML = '🧡 Em andamento — ainda falta'; lr.appendChild(s); r.forEach(i => lr.appendChild(cpRenderItem(i))); }
-      if (c.length) { const s = document.createElement('div'); s.className = 'cp-sec-label ok'; s.innerHTML = '✓ Completamente coberto'; lc.appendChild(s); c.forEach(i => lc.appendChild(cpRenderItem(i))); }
+      cntP.textContent = precisando.length; cntO.textContent = emDia.length;
+      const lp = document.getElementById('cp-lista-precisando'); lp.innerHTML = '';
+      const lo = document.getElementById('cp-lista-ok'); lo.innerHTML = '';
+      if (precisando.length) { const s = document.createElement('div'); s.className = 'cp-sec-label'; s.innerHTML = '🔴 Precisando'; lp.appendChild(s); precisando.forEach(i => lp.appendChild(cpRenderItem(i))); }
+      if (emDia.length) { const s = document.createElement('div'); s.className = 'cp-sec-label ok'; s.innerHTML = '✓ Em dia'; lo.appendChild(s); emDia.forEach(i => lo.appendChild(cpRenderItem(i))); }
       const vazio = document.getElementById('cp-vazio');
       if (vazio) vazio.style.display = cpItens.length === 0 ? 'block' : 'none';
     }
 
     document.getElementById('cp-btn-add')?.addEventListener('click', cpAdicionarItem);
     document.getElementById('cp-inp-nome')?.addEventListener('keydown', e => { if (e.key === 'Enter') cpAdicionarItem(); });
-    document.getElementById('cp-btn-cancelar')?.addEventListener('click', cpFecharModal);
-    document.getElementById('cp-btn-confirmar')?.addEventListener('click', cpConfirmarCompra);
-    document.getElementById('cp-modal-qtd')?.addEventListener('keydown', e => { if (e.key === 'Enter') cpConfirmarCompra(); if (e.key === 'Escape') cpFecharModal(); });
-    document.getElementById('cp-modal-nome')?.addEventListener('keydown', e => { if (e.key === 'Escape') cpFecharModal(); });
   })();
 
   // ══ ESTOQUE ══
@@ -5391,12 +5316,12 @@ const auth = getAuth(app);
     async function esPedirNaLista(id) {
       const item = esItens.find(i => i.id === id);
       if (!item) return;
-      const falta = Math.max(1, (item.quantidadeMinima || 1) - (item.quantidadeAtual || 0));
       try {
-        const payload = { nome: item.nome, autor: esNomeAtual(), qtdTotal: falta, un: item.un || 'un', obs: 'pedido automático via Estoque', compradores: [], criadoEm: serverTimestamp() };
-        if (currentUser) { payload.autorUid = currentUser.uid; payload.autorFoto = currentUser.photoURL || ''; }
-        await addDoc(collection(db, 'lista_compras'), payload);
-        esToast(`"${item.nome}" adicionado à Lista de Compras! ✦`);
+        await addDoc(collection(db, 'lista_compras'), {
+          nome: item.nome, categoria: item.categoria || '', precisando: true,
+          criadoEm: serverTimestamp(), criadoPor: esNomeAtual()
+        });
+        esToast(`"${item.nome}" marcado na Lista de Compras! ✦`);
       } catch (e) { esToast('Erro ao pedir', true); }
     }
 
@@ -5749,6 +5674,7 @@ const auth = getAuth(app);
         sub.textContent = 'Nenhuma manutenção pendente';
       }
       card.style.display = 'block';
+      sincronizarMiniCardsPerfil();
     }
 
     // ── RELATÓRIO WHATSAPP ──
@@ -5822,6 +5748,7 @@ window.showSuaHistoria = function() {
     document.getElementById('mh-banner-login').style.display = 'block';
     document.getElementById('mh-banner-logada').style.display = 'none';
     document.getElementById('mh-conteudo').style.display = 'none';
+    document.getElementById('mh-mini-cards').style.display = 'none';
     return;
   }
   showPage('sua-historia');
@@ -5841,6 +5768,8 @@ function renderMinhaHistoria(p, user) {
   document.getElementById('mh-banner-login').style.display = 'none';
   document.getElementById('mh-banner-logada').style.display = 'block';
   document.getElementById('mh-conteudo').style.display = 'block';
+  document.getElementById('mh-mini-cards').style.display = 'flex';
+  sincronizarMiniCardsPerfil();
 
   // avatar
   const avatarEl = document.getElementById('mh-avatar');
@@ -6459,7 +6388,6 @@ window.salvarFichaPessoal = async function() {
 // ── AUTH STATE ──
 onAuthStateChanged(auth, async (user) => {
   currentUser = user;
-  window._cpAtualizarLogin?.();
 
   // se voltou de um redirect de login, garante que está no index
   const loginOrigin = sessionStorage.getItem('loginOrigin');
