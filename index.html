@@ -2172,11 +2172,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <p class="section-sub">Tudo num só lugar — pronto pra printar e mandar no grupo ✦</p>
 
     <div class="rm-topo-acoes">
+      <button class="rm-btn-mes" id="rm-btn-mes-editar">📅 Escolher mês</button>
       <button class="rm-btn-whats" id="rm-btn-whats">📱 Gerar mensagem pro WhatsApp</button>
+      <button class="rm-btn-mes" id="rm-btn-tela-cheia" style="background:linear-gradient(135deg,#4a6fa5,#2f4d75)">🔍 Ver tela cheia</button>
     </div>
 
     <div class="rm-frame" id="rm-frame">
       <div class="rm-header">
+        <button class="rm-edit-btn" id="rm-header-editar" style="color:rgba(255,255,255,.75)" title="Escolher mês">✎</button>
         <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
         <div class="rm-header-titulo" id="rm-mes-titulo">—</div>
         <div class="rm-header-sub">Um espaço de fé, axé e comunidade</div>
@@ -2274,6 +2277,25 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <button class="es-btn-whats" id="rm-rel-enviar">📱 Enviar no WhatsApp</button>
     </div>
   </div>
+</div>
+
+<!-- MODAL ESCOLHER MÊS DO RESUMO -->
+<div class="mn-modal-bg" id="rm-mes-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>📅 Qual mês este resumo representa?</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Isso muda o título do cartão e os aniversariantes exibidos.</p>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Mês / ano</label><input type="month" id="rm-mes-inp"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-mes-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-mes-salvar">Usar este mês ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TELA CHEIA DO RESUMO -->
+<div id="rm-full-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:#fdeef2;overflow-y:auto;padding:20px 14px 60px">
+  <button id="rm-full-fechar" style="position:fixed;top:16px;right:16px;z-index:1000;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer">×</button>
+  <div id="rm-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
 </div>
 
 <!-- PÁGINA ORIENTAÇÕES DA SESSÃO -->
@@ -6142,6 +6164,8 @@ const auth = getAuth(app);
     let rmSessoes = [];
     let rmManutencao = [];
     let rmCompras = [];
+    const hojeISO = new Date();
+    let rmMesEscolhido = `${hojeISO.getFullYear()}-${String(hojeISO.getMonth()+1).padStart(2,'0')}`; // 'YYYY-MM'
 
     function rmNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
     function rmFmtMoeda(v) { return 'R$ ' + (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -6153,13 +6177,64 @@ const auth = getAuth(app);
       const MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
     }
+    function rmMesNumero() { return parseInt(rmMesEscolhido.split('-')[1], 10); } // 1-12
+    function rmAnoNumero() { return parseInt(rmMesEscolhido.split('-')[0], 10); }
 
     function rmTitulo() {
-      const hoje = new Date();
       const el = document.getElementById('rm-mes-titulo');
-      if (el) el.textContent = MESES_RM[hoje.getMonth()].charAt(0).toUpperCase() + MESES_RM[hoje.getMonth()].slice(1) + ' de ' + hoje.getFullYear();
+      const m = rmMesNumero(), a = rmAnoNumero();
+      if (el) el.textContent = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
     }
     rmTitulo();
+
+    // ── ESCOLHER MÊS (Firestore config/resumo_config) ──
+    async function rmCarregarMesEscolhido() {
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'resumo_config');
+        if (d && d.data().mesRef) rmMesEscolhido = d.data().mesRef;
+      } catch(e) { console.warn('resumo_config load:', e); }
+      rmTitulo();
+      rmRenderAniversariantes();
+    }
+    async function rmSalvarMesEscolhido(novoMes) {
+      rmMesEscolhido = novoMes;
+      rmTitulo();
+      rmRenderAniversariantes();
+      try { await setDoc(doc(db, 'config', 'resumo_config'), { mesRef: novoMes }); } catch(e) { console.warn('resumo_config save:', e); }
+    }
+    document.getElementById('rm-btn-mes-editar')?.addEventListener('click', () => {
+      document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+      document.getElementById('rm-mes-modal').style.display = 'flex';
+    });
+    document.getElementById('rm-header-editar')?.addEventListener('click', () => {
+      document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+      document.getElementById('rm-mes-modal').style.display = 'flex';
+    });
+    document.getElementById('rm-mes-cancelar')?.addEventListener('click', () => { document.getElementById('rm-mes-modal').style.display = 'none'; });
+    document.getElementById('rm-mes-salvar')?.addEventListener('click', () => {
+      const v = document.getElementById('rm-mes-inp').value;
+      if (!v) return;
+      rmSalvarMesEscolhido(v);
+      document.getElementById('rm-mes-modal').style.display = 'none';
+    });
+
+    // ── VER TELA CHEIA ──
+    document.getElementById('rm-btn-tela-cheia')?.addEventListener('click', () => {
+      const frame = document.getElementById('rm-frame');
+      const destino = document.getElementById('rm-full-conteudo');
+      destino.innerHTML = '';
+      const clone = frame.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+      destino.appendChild(clone);
+      document.getElementById('rm-full-overlay').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    });
+    document.getElementById('rm-full-fechar')?.addEventListener('click', () => {
+      document.getElementById('rm-full-overlay').style.display = 'none';
+      document.body.style.overflow = '';
+    });
 
     // ── RECADO DO MÊS (Firestore config/resumo_recado) ──
     async function rmCarregarRecado() {
@@ -6256,8 +6331,7 @@ const auth = getAuth(app);
     function rmRenderAniversariantes() {
       const wrap = document.getElementById('rm-aniv-lista');
       if (!wrap) return;
-      const hoje = new Date();
-      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === hoje.getMonth() + 1).sort((a,b) => a.dia - b.dia);
+      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
       if (!doMes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum aniversariante este mês</div>'; return; }
       wrap.innerHTML = doMes.map(a => `<div class="rm-linha"><span>${a.nome}</span><span class="rm-linha-tag">${a.dia} de ${MESES_RM[a.mes-1]}</span></div>`).join('');
     }
@@ -6283,8 +6357,7 @@ const auth = getAuth(app);
 
     // ── MENSAGEM WHATSAPP ──
     function rmGerarTexto() {
-      const hoje = new Date();
-      const mesAtual = MESES_RM[hoje.getMonth()].charAt(0).toUpperCase() + MESES_RM[hoje.getMonth()].slice(1) + ' de ' + hoje.getFullYear();
+      const mesAtual = MESES_RM[rmMesNumero()-1].charAt(0).toUpperCase() + MESES_RM[rmMesNumero()-1].slice(1) + ' de ' + rmAnoNumero();
       const t = rmTesouraria || {};
       let txt = `📋 *Resumo Mensal — Terreiro Bolhas de Luz*\n✦ ${mesAtual} ✦\n\n`;
 
@@ -6304,7 +6377,7 @@ const auth = getAuth(app);
       else txt += `Nenhuma sessão marcada no momento\n`;
       txt += `\n`;
 
-      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === hoje.getMonth() + 1).sort((a,b) => a.dia - b.dia);
+      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
       txt += `🎂 *Aniversariantes do Mês:*\n`;
       if (doMes.length) doMes.forEach(a => { txt += `• ${a.nome} — ${a.dia} de ${MESES_RM[a.mes-1]}\n`; });
       else txt += `Ninguém este mês\n`;
@@ -6336,6 +6409,7 @@ const auth = getAuth(app);
 
     // inicializa quando a página existir no DOM
     if (document.getElementById('rm-mes-titulo')) {
+      rmCarregarMesEscolhido();
       rmCarregarRecado();
       rmCarregarTesouraria();
       rmCarregarSessoes();
