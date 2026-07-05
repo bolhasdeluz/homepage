@@ -1498,6 +1498,30 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </div>
     </div>
 
+    <div id="dash-mini-cards" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+      <a href="#" onclick="showPage('calendario');return false" class="mh-mini-card">
+        <span class="mh-mini-icon">📅</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label">Sessão</span>
+          <span class="mh-mini-val" id="dash-mini-sessao">—</span>
+        </span>
+      </a>
+      <a href="#" onclick="abrirModalAniversarios();return false" class="mh-mini-card">
+        <span class="mh-mini-icon">🎂</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label" id="dash-mini-aniv-label">Aniversário</span>
+          <span class="mh-mini-val" id="dash-mini-aniv">—</span>
+        </span>
+      </a>
+      <a href="#" onclick="showPage('manutencao');return false" class="mh-mini-card">
+        <span class="mh-mini-icon">🔧</span>
+        <span class="mh-mini-txt">
+          <span class="mh-mini-label">Manutenção</span>
+          <span class="mh-mini-val" id="dash-mini-manut">—</span>
+        </span>
+      </a>
+    </div>
+
     <!-- CONQUISTAS — badges desbloqueáveis -->
     <div class="dash-section-title">Guias e Guardiões</div>
     <div class="dash-badges-grid" id="dash-badges-guias"></div>
@@ -5159,22 +5183,29 @@ loadMenu();
 
 // ── PRÓXIMA SESSÃO NO HEADER ──
 function sincronizarMiniCardsPerfil() {
-  const miniSessao = document.getElementById('mh-mini-sessao');
-  if (miniSessao) {
-    const nome = document.getElementById('proxima-sessao-nome')?.textContent;
-    const data = document.getElementById('proxima-sessao-data')?.textContent;
-    miniSessao.textContent = nome ? `${nome} · ${data}` : 'Sem sessão marcada';
-  }
-  const miniAnivLabel = document.getElementById('mh-mini-aniv-label');
-  const miniAniv = document.getElementById('mh-mini-aniv');
-  if (miniAniv) {
-    miniAnivLabel.textContent = document.getElementById('aniversario-label')?.textContent.replace(/^[✦🎂]\s*/, '') || 'Aniversário';
-    miniAniv.textContent = document.getElementById('aniversario-nome')?.textContent || '—';
-  }
-  const miniManut = document.getElementById('mh-mini-manut');
-  if (miniManut) {
-    miniManut.textContent = document.getElementById('manutencao-card-txt')?.textContent || '—';
-  }
+  const nomeSessao = document.getElementById('proxima-sessao-nome')?.textContent;
+  const dataSessao = document.getElementById('proxima-sessao-data')?.textContent;
+  const txtSessao = nomeSessao ? `${nomeSessao} · ${dataSessao}` : 'Sem sessão marcada';
+
+  const anivLabelTxt = document.getElementById('aniversario-label')?.textContent.replace(/^[✦🎂]\s*/, '') || 'Aniversário';
+  const anivValTxt = document.getElementById('aniversario-nome')?.textContent || '—';
+
+  const manutTxt = document.getElementById('manutencao-card-txt')?.textContent || '—';
+
+  ['mh', 'dash'].forEach(prefixo => {
+    const miniSessao = document.getElementById(`${prefixo}-mini-sessao`);
+    if (miniSessao) miniSessao.textContent = txtSessao;
+
+    const miniAnivLabel = document.getElementById(`${prefixo}-mini-aniv-label`);
+    const miniAniv = document.getElementById(`${prefixo}-mini-aniv`);
+    if (miniAniv) {
+      miniAnivLabel.textContent = anivLabelTxt;
+      miniAniv.textContent = anivValTxt;
+    }
+
+    const miniManut = document.getElementById(`${prefixo}-mini-manut`);
+    if (miniManut) miniManut.textContent = manutTxt;
+  });
 }
 
 async function carregarProximaSessao() {
