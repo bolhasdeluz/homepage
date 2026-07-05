@@ -675,7 +675,16 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         <div class="field"><label class="field-label">Valor (R$)</label><input type="number" id="caixa-valor" placeholder="0,00" min="0" step="0.01"></div>
         <div class="field"><label class="field-label">Data</label><input type="date" id="caixa-data"></div>
       </div>
-      <div class="field"><label class="field-label">Descrição / origem</label><input type="text" id="caixa-desc" placeholder="Ex: Pix da Ness, dinheiro do caixa…"></div>
+      <div class="field"><label class="field-label">De quem é?</label>
+        <select id="caixa-membro">
+          <option value="">Selecionar membro…</option>
+          <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
+          <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
+          <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+          <option value="__externo">Externo / não é membro</option>
+        </select>
+      </div>
+      <div class="field"><label class="field-label">Descrição / observação</label><input type="text" id="caixa-desc" placeholder="Opcional…"></div>
       <button class="btn-primary" onclick="salvarCaixa()">Adicionar à Caixa</button>
     </div>
   </div>
@@ -2129,6 +2138,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     document.getElementById('fab-btn').style.transform = 'rotate(0)';
     document.getElementById('caixa-valor').value = '';
     document.getElementById('caixa-desc').value = '';
+    document.getElementById('caixa-membro').value = '';
     document.getElementById('caixa-data').value = today();
     setCaixaTipo('entrada');
     document.getElementById('caixa-add-overlay').classList.add('open');
@@ -2150,8 +2160,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     var valor = parseFloat(document.getElementById('caixa-valor').value);
     var data = document.getElementById('caixa-data').value;
     var desc = document.getElementById('caixa-desc').value.trim();
+    var membro = document.getElementById('caixa-membro').value;
     if (!valor || valor <= 0) { showToast('Informe o valor'); return; }
-    caixa.unshift({ id: Date.now(), tipo: caixaTipo, valor: valor, data: data, desc: desc });
+    if (!membro) { showToast('Selecione de quem é'); return; }
+    caixa.unshift({ id: Date.now(), tipo: caixaTipo, valor: valor, data: data, desc: desc, membro: membro });
     saveCaixa();
     document.getElementById('caixa-add-overlay').classList.remove('open');
     showToast('Adicionado à Caixa 📥');
@@ -2167,10 +2179,11 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     }
     el.innerHTML = caixa.map(function(c){
       var isE = c.tipo === 'entrada';
+      var quemLabel = c.membro === '__externo' ? 'Externo' : (c.membro || '—');
       return '<div class="lancamento-item" style="border-left:3px solid '+(isE?'var(--green)':'var(--red)')+';">'
         + '<div class="lancamento-dot '+(isE?'entrada':'gasto')+'">'+(isE?'💚':'🧾')+'</div>'
         + '<div class="lancamento-info">'
-        + '<div class="lancamento-nome">'+(c.desc||(isE?'Entrada':'Saída'))+'</div>'
+        + '<div class="lancamento-nome">'+quemLabel+(c.desc?' · '+c.desc:'')+'</div>'
         + '<span class="cat-badge" style="background:var(--gold-dim);color:var(--gold);">a categorizar</span>'
         + '<button class="lancamento-clone" style="border-color:var(--gold);color:var(--gold);" onclick="abrirDirecionar('+c.id+')">🎯 Direcionar</button>'
         + '<button class="lancamento-clone" onclick="removerCaixa('+c.id+')">🗑 Excluir</button>'
@@ -2196,10 +2209,10 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     if (!c) return;
     direcionandoId = id;
     var isE = c.tipo === 'entrada';
+    var quemLabel = c.membro === '__externo' ? 'Externo' : (c.membro || '—');
     document.getElementById('direcionar-info').innerHTML =
-      '<strong>'+(c.desc||(isE?'Entrada':'Saída'))+'</strong><br>'
+      '<strong>'+quemLabel+'</strong>'+(c.desc?' · '+c.desc:'')+'<br>'
       + (isE?'💚 Entrada':'🧾 Saída') + ' · ' + fmt(c.valor) + ' · ' + fmtData(c.data);
-    // Começa com uma parte com o valor total
     document.getElementById('direcionar-partes').innerHTML = '';
     adicionarParte(c.valor);
     atualizarResto();
@@ -2210,39 +2223,37 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     var c = caixa.find(function(x){ return x.id === direcionandoId; });
     if (!c) return;
     var isE = c.tipo === 'entrada';
+    var ehMembro = c.membro && c.membro !== '__externo';
     var idx = document.querySelectorAll('.direcionar-parte').length;
     var div = document.createElement('div');
     div.className = 'direcionar-parte';
     div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;';
 
-    // Destino: para entrada = membro (tesouraria) ou categoria agosto; para gasto = conta ou categoria agosto
     var destinoOpts = '';
     if (isE) {
-      destinoOpts = '<optgroup label="Tesouraria — Membro">'
-        + MEMBROS_CAIXA.map(function(m){ return '<option value="tes-membro:'+m+'">'+m+'</option>'; }).join('')
-        + '</optgroup>'
-        + '<option value="tes-extra">Tesouraria — Entrada Extra</option>'
-        + '<optgroup label="Agosto — Pagamento">'
-        + '<option value="ag-obr">Agosto — Obrigação</option>'
-        + '<option value="ag-aves">Agosto — Aves</option>'
-        + '</optgroup>';
+      // Entrada: se é membro, destino padrão é mensalidade dele; senão extra
+      if (ehMembro) {
+        destinoOpts = '<option value="tes-mensalidade">💚 Mensalidade — '+c.membro+'</option>'
+          + '<option value="ag-obr">🕯 Agosto Obrigação — '+c.membro+'</option>'
+          + '<option value="ag-aves">🐓 Agosto Aves — '+c.membro+'</option>'
+          + '<option value="tes-extra">✨ Entrada Extra</option>';
+      } else {
+        destinoOpts = '<option value="tes-extra">✨ Entrada Extra</option>';
+      }
     } else {
       destinoOpts = '<optgroup label="Tesouraria — Conta">'
         + CONTAS_GASTO.map(function(ct){ return '<option value="tes-conta:'+ct+'">'+ct+'</option>'; }).join('')
         + '</optgroup>'
-        + '<optgroup label="Agosto — Gasto">'
-        + '<option value="ag-gasto">Agosto — Gasto avulso</option>'
-        + '</optgroup>';
+        + '<option value="ag-gasto">🕯 Agosto — Gasto avulso</option>';
     }
 
     div.innerHTML = '<div style="display:flex;gap:8px;align-items:center;">'
       + '<input type="number" class="parte-valor" value="'+(valorInicial||'')+'" placeholder="Valor" step="0.01" oninput="atualizarResto()" style="width:90px;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:15px;padding:6px 8px;-webkit-appearance:none;">'
       + '<select class="parte-destino" onchange="parteDestChange(this)" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;-webkit-appearance:none;">'
-      + '<option value="">Escolher destino…</option>' + destinoOpts
+      + '<option value="">Para onde?…</option>' + destinoOpts
       + '</select>'
       + (idx>0 ? '<button onclick="this.closest(\'.direcionar-parte\').remove();atualizarResto()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;">✕</button>' : '<span style="width:20px;"></span>')
       + '</div>'
-      // Campo membro/pessoa extra (aparece conforme destino)
       + '<div class="parte-extra" style="display:none;"></div>';
     document.getElementById('direcionar-partes').appendChild(div);
   }
@@ -2251,14 +2262,22 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     var parte = sel.closest('.direcionar-parte');
     var extra = parte.querySelector('.parte-extra');
     var val = sel.value;
-    // Agosto obr/aves precisa escolher a pessoa
-    if (val === 'ag-obr' || val === 'ag-aves') {
-      extra.style.display = 'block';
-      extra.innerHTML = '<select class="parte-pessoa" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;-webkit-appearance:none;"><option value="">Qual pessoa?…</option>'
-        + MEMBROS_CAIXA.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('') + '</select>';
-    } else if (val === 'tes-extra' || val === 'ag-gasto') {
+    // Só entrada extra e gasto avulso precisam de descrição
+    if (val === 'tes-extra' || val === 'ag-gasto') {
       extra.style.display = 'block';
       extra.innerHTML = '<input type="text" class="parte-obs" placeholder="Descrição…" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;">';
+    } else if (val === 'tes-mensalidade') {
+      // Opção de competência
+      extra.style.display = 'block';
+      extra.innerHTML = '<select class="parte-competencia" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;-webkit-appearance:none;">'
+        + '<option value="">Mês de competência (opcional)…</option>'
+        + '<option value="2026-01">Janeiro/2026</option><option value="2026-02">Fevereiro/2026</option>'
+        + '<option value="2026-03">Março/2026</option><option value="2026-04">Abril/2026</option>'
+        + '<option value="2026-05">Maio/2026</option><option value="2026-06">Junho/2026</option>'
+        + '<option value="2026-07">Julho/2026</option><option value="2026-08">Agosto/2026</option>'
+        + '<option value="2026-09">Setembro/2026</option><option value="2026-10">Outubro/2026</option>'
+        + '<option value="2026-11">Novembro/2026</option><option value="2026-12">Dezembro/2026</option>'
+        + '</select>';
     } else {
       extra.style.display = 'none';
       extra.innerHTML = '';
@@ -2287,6 +2306,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   function confirmarDirecionamento() {
     var c = caixa.find(function(x){ return x.id === direcionandoId; });
     if (!c) return;
+    var membro = c.membro && c.membro !== '__externo' ? c.membro : null;
     var partes = document.querySelectorAll('.direcionar-parte');
     var novos = [];
     var agostoMudou = false;
@@ -2298,27 +2318,27 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       var destino = parte.querySelector('.parte-destino').value;
       if (valor <= 0 || !destino) { erro = 'Preencha valor e destino em todas as partes'; return; }
 
-      var pessoaEl = parte.querySelector('.parte-pessoa');
       var obsEl = parte.querySelector('.parte-obs');
-      var pessoa = pessoaEl ? pessoaEl.value : '';
+      var compEl = parte.querySelector('.parte-competencia');
       var obs = obsEl ? obsEl.value.trim() : '';
+      var comp = compEl ? compEl.value : '';
 
-      if (destino.startsWith('tes-membro:')) {
-        var m = destino.split(':')[1];
-        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:m, subTipo:'membro', valor:valor, data:c.data, obs:obs, competencia:'' });
+      if (destino === 'tes-mensalidade') {
+        if (!membro) { erro = 'Esse lançamento não tem membro'; return; }
+        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:membro, subTipo:'membro', valor:valor, data:c.data, obs:c.desc||'', competencia:comp });
       } else if (destino === 'tes-extra') {
-        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:obs||'Extra', subTipo:'extra', valor:valor, data:c.data, obs:'', competencia:'' });
+        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:obs||c.desc||'Extra', subTipo:'extra', valor:valor, data:c.data, obs:'', competencia:'' });
       } else if (destino.startsWith('tes-conta:')) {
         var ct = destino.split(':')[1];
-        novos.push({ id: Date.now()+Math.random(), tipo:'gasto', conta:ct, valor:valor, data:c.data, obs:obs, status:'pago' });
+        novos.push({ id: Date.now()+Math.random(), tipo:'gasto', conta:ct, valor:valor, data:c.data, obs:obs||c.desc||'', status:'pago' });
       } else if (destino === 'ag-obr' || destino === 'ag-aves') {
-        if (!pessoa) { erro = 'Escolha a pessoa para o pagamento do Agosto'; return; }
-        if (!agPgtos[pessoa]) agPgtos[pessoa] = {obr:0, aves:0};
-        if (destino === 'ag-obr') agPgtos[pessoa].obr += valor;
-        else agPgtos[pessoa].aves += valor;
+        if (!membro) { erro = 'Esse lançamento não tem membro para o Agosto'; return; }
+        if (!agPgtos[membro]) agPgtos[membro] = {obr:0, aves:0};
+        if (destino === 'ag-obr') agPgtos[membro].obr += valor;
+        else agPgtos[membro].aves += valor;
         agostoMudou = true;
       } else if (destino === 'ag-gasto') {
-        agGastos.push({ desc: obs||'Gasto', valor: valor, categoria:'Avulso', data: c.data });
+        agGastos.push({ desc: obs||c.desc||'Gasto', valor: valor, categoria:'Avulso', data: c.data });
         agostoMudou = true;
       }
     });
@@ -2326,12 +2346,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     if (erro) { showToast(erro); return; }
     if (!novos.length && !agostoMudou) { showToast('Nada para direcionar'); return; }
 
-    // Aplica na tesouraria
     novos.forEach(function(n){ lancamentos.unshift(n); });
     if (novos.length) save();
-    // Aplica no agosto
     if (agostoMudou) agSalvar();
-    // Remove da caixa
     var idx = caixa.findIndex(function(x){ return x.id === direcionandoId; });
     if (idx !== -1) caixa.splice(idx, 1);
     saveCaixa();
@@ -2565,7 +2582,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
   <!-- Sec Orçamento -->
   <div class="ag-sec" id="ag-sec-orcamento">
-    <div class="ag-orc-total"><div class="ag-lbl">Total Orçado</div><div class="ag-val" id="ag-orc-total">R$ 0,00</div></div>
+    <div class="ag-orc-total"><div class="ag-lbl">Total Orçado</div><div class="ag-val" id="ag-orc-total">R$ 0,00</div><div id="ag-orc-aves-linha" style="display:none;font-family:'DM Sans',sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);margin-top:2px;"></div></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
       <p class="ag-sec-title" style="margin:0">Categorias</p>
       <div style="display:flex;gap:6px;">
@@ -2994,7 +3011,21 @@ function agRenderOrc() {
 
     list.appendChild(block);
   });
-  document.getElementById('ag-orc-total').textContent = agFmt(total);
+  // Soma o valor total das aves de todas as pessoas
+  var totalAves = 0;
+  agPessoas.forEach(function(p){ totalAves += agAvesVal(p); });
+  var totalGeral = total + totalAves;
+  document.getElementById('ag-orc-total').textContent = agFmt(totalGeral);
+  // Se há aves, mostra a composição
+  var avesLinha = document.getElementById('ag-orc-aves-linha');
+  if (avesLinha) {
+    if (totalAves > 0) {
+      avesLinha.style.display = 'block';
+      avesLinha.textContent = 'Itens: ' + agFmt(total) + ' + Aves: ' + agFmt(totalAves);
+    } else {
+      avesLinha.style.display = 'none';
+    }
+  }
 }
 
 function agItemRowHTML(item, ci, si, ii) {
@@ -3359,42 +3390,45 @@ function agRenderAves(){
   var body=document.getElementById('ag-aves-body'); body.innerHTML='';
   var tG=0,tH=0;
   agPessoas.forEach(function(p,pi){
-    if(!p.galos&&!p.galinhas) return;
     tG+=p.galos; tH+=p.galinhas;
     var pg = agPgtos[p.nome];
     var tAves = agAvesVal(p);
-    var quitou = pg && pg.aves >= tAves && tAves > 0;
+    var quitou = pg && tAves > 0 && pg.aves >= tAves;
+    var temAves = p.galos > 0 || p.galinhas > 0;
 
-    // Monta detalhes de aves com cor por grupo
-    var avesDetalhe = '';
-    if (p.galos > 0) {
-      var corGalos = (p.coresGalos && p.coresGalos[0]) || '';
-      avesDetalhe += '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px;">'
-        + '<span style="font-size:.9rem;">'+p.galos+'🐓</span>'
-        + '<input type="text" value="'+corGalos+'" placeholder="cor…" maxlength="20"'
-        + ' onchange="agSetCorAve('+pi+',\'galos\',0,this.value)"'
-        + ' style="width:70px;background:transparent;border:none;border-bottom:1px solid rgba(196,57,107,.2);font-family:\'DM Sans\',sans-serif;font-size:.72rem;color:rgba(80,30,50,.7);padding:1px 3px;outline:none;">'
-        + '</span>';
-    }
-    if (p.galinhas > 0) {
-      var corGalinhas = (p.coresGalinhas && p.coresGalinhas[0]) || '';
-      avesDetalhe += '<span style="display:inline-flex;align-items:center;gap:4px;">'
-        + '<span style="font-size:.9rem;">'+p.galinhas+'🐔</span>'
-        + '<input type="text" value="'+corGalinhas+'" placeholder="cor…" maxlength="20"'
-        + ' onchange="agSetCorAve('+pi+',\'galinhas\',0,this.value)"'
-        + ' style="width:70px;background:transparent;border:none;border-bottom:1px solid rgba(196,57,107,.2);font-family:\'DM Sans\',sans-serif;font-size:.72rem;color:rgba(80,30,50,.7);padding:1px 3px;outline:none;">'
-        + '</span>';
-    }
+    var corGalos = (p.coresGalos && p.coresGalos[0]) || '';
+    var corGalinhas = (p.coresGalinhas && p.coresGalinhas[0]) || '';
 
     var row = document.createElement('div');
     row.className = 'ag-aves-row';
-    row.style.cssText = 'flex-wrap:wrap;gap:4px;padding:8px 0;align-items:flex-start;'+(quitou?'background:rgba(42,122,96,.05);border-radius:7px;padding:8px;':'');
-    row.innerHTML = '<div style="display:flex;align-items:center;gap:7px;width:100%;">'
+    row.style.cssText = 'flex-wrap:wrap;gap:6px;padding:10px 8px;align-items:flex-start;border-bottom:1px solid rgba(196,57,107,.07);'+(quitou?'background:rgba(42,122,96,.05);border-radius:7px;':'');
+
+    // Header com nome, status e valor
+    var html = '<div style="display:flex;align-items:center;gap:7px;width:100%;">'
       + '<span style="font-weight:600;">' + p.nome + '</span>'
-      + (quitou ? '<span style="font-size:.75rem;background:#e8f4f0;color:#2a7a60;border-radius:10px;padding:1px 7px;font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.04em;">✅ PAGO</span>' : '')
-      + '<span class="ag-aves-val" style="margin-left:auto;">'+agFmt(tAves)+'</span>'
-      + '</div>'
-      + '<div style="width:100%;padding-left:4px;flex-wrap:wrap;display:flex;gap:2px;">' + avesDetalhe + '</div>';
+      + (quitou ? '<span style="background:#e8f4f0;color:#2a7a60;border-radius:10px;padding:1px 7px;font-family:\'Cinzel\',serif;font-size:.6rem;letter-spacing:.04em;">✅ PAGO</span>' : '')
+      + '<span class="ag-aves-val" style="margin-left:auto;">'+(tAves>0?agFmt(tAves):'—')+'</span>'
+      + '</div>';
+
+    // Galos: contador + cor
+    html += '<div style="display:flex;align-items:center;gap:6px;width:100%;padding-left:4px;flex-wrap:wrap;">'
+      + '<span style="font-family:\'Cinzel\',serif;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(80,30,50,.55);min-width:52px;">Galo:</span>'
+      + '<button onclick="agSetQtdAve('+pi+',\'galos\',-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--gold);font-size:.9rem;cursor:pointer;line-height:1;">−</button>'
+      + '<span style="min-width:16px;text-align:center;font-family:\'Crimson Pro\',serif;font-weight:600;">'+p.galos+'</span>'
+      + '<button onclick="agSetQtdAve('+pi+',\'galos\',1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--gold);font-size:.9rem;cursor:pointer;line-height:1;">+</button>'
+      + (p.galos>0 ? '<input type="text" value="'+corGalos+'" placeholder="cor…" maxlength="20" onchange="agSetCorAve('+pi+',\'galos\',0,this.value)" style="flex:1;min-width:80px;background:transparent;border:none;border-bottom:1px solid rgba(196,57,107,.2);font-family:\'DM Sans\',sans-serif;font-size:.72rem;color:rgba(80,30,50,.7);padding:1px 3px;outline:none;">' : '')
+      + '</div>';
+
+    // Galinhas: contador + cor
+    html += '<div style="display:flex;align-items:center;gap:6px;width:100%;padding-left:4px;flex-wrap:wrap;">'
+      + '<span style="font-family:\'Cinzel\',serif;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:rgba(80,30,50,.55);min-width:52px;">Galinha:</span>'
+      + '<button onclick="agSetQtdAve('+pi+',\'galinhas\',-1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--gold);font-size:.9rem;cursor:pointer;line-height:1;">−</button>'
+      + '<span style="min-width:16px;text-align:center;font-family:\'Crimson Pro\',serif;font-weight:600;">'+p.galinhas+'</span>'
+      + '<button onclick="agSetQtdAve('+pi+',\'galinhas\',1)" style="width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:#fff;color:var(--gold);font-size:.9rem;cursor:pointer;line-height:1;">+</button>'
+      + (p.galinhas>0 ? '<input type="text" value="'+corGalinhas+'" placeholder="cor…" maxlength="20" onchange="agSetCorAve('+pi+',\'galinhas\',0,this.value)" style="flex:1;min-width:80px;background:transparent;border:none;border-bottom:1px solid rgba(196,57,107,.2);font-family:\'DM Sans\',sans-serif;font-size:.72rem;color:rgba(80,30,50,.7);padding:1px 3px;outline:none;">' : '')
+      + '</div>';
+
+    row.innerHTML = html;
     body.appendChild(row);
   });
   var tv=tG*AG_PRECO_GALO+tH*AG_PRECO_GALINHA;
@@ -3402,6 +3436,17 @@ function agRenderAves(){
   document.getElementById('ag-aves-totais').innerHTML='<div class="ag-aves-row"><span>Total galos</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tG+' × R$'+AG_PRECO_GALO+'</span><span class="ag-aves-val">'+agFmt(tG*AG_PRECO_GALO)+'</span></div>'
     +'<div class="ag-aves-row"><span>Total galinhas</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tH+' × R$'+AG_PRECO_GALINHA+'</span><span class="ag-aves-val">'+agFmt(tH*AG_PRECO_GALINHA)+'</span></div>'
     +'<div class="ag-aves-row" style="font-weight:700"><span>TOTAL AVES</span><span></span><span class="ag-aves-val">'+agFmt(tv)+'</span></div>';
+}
+
+function agSetQtdAve(pi, tipo, delta) {
+  var p = agPessoas[pi];
+  var atual = p[tipo] || 0;
+  var novo = Math.max(0, atual + delta);
+  p[tipo] = novo;
+  agSalvar();
+  agRenderAves();
+  agAtualizarSaldo();
+  agRenderOrc();
 }
 
 function agSetCorAve(pi, tipo, idx, val) {
@@ -3413,7 +3458,6 @@ function agSetCorAve(pi, tipo, idx, val) {
     if (!p.coresGalinhas) p.coresGalinhas = [];
     p.coresGalinhas[idx] = val;
   }
-  // Salva cores junto com pgtos para persistir
   if (!agPgtos[p.nome]) agPgtos[p.nome] = {obr:0,aves:0};
   agPgtos[p.nome]['cores_galos_'+pi] = p.coresGalos;
   agPgtos[p.nome]['cores_galinhas_'+pi] = p.coresGalinhas;
