@@ -1504,6 +1504,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="dash-progresso-top"><span>Caminhada de 7 anos</span><span id="dash-progresso-pct"></span></div>
         <div class="dash-progresso-bar"><div class="dash-progresso-fill" id="dash-progresso-fill" style="width:0%"></div></div>
         <div style="margin-top:6px;font-family:'Crimson Pro',Georgia,serif;font-size:.74rem;font-style:italic;color:rgba(255,255,255,.75)" id="dash-progresso-msg"></div>
+        <button onclick="abrirLinhaDoTempoModal()" style="margin-top:10px;background:none;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:6px 16px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;cursor:pointer;transition:background .15s">Ver minha linha do tempo →</button>
       </div>
     </div>
 
@@ -1544,14 +1545,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Cruzamentos e Axés</div>
     <div class="dash-badges-grid dash-collapsible" id="dash-badges-cruz" style="display:none"></div>
 
-    <!-- LINHA DO TEMPO PESSOAL -->
-    <div class="dash-section-title">Sua linha do tempo</div>
-    <div class="dash-timeline-wrap">
-      <div id="dash-timeline" style="position:relative"></div>
-    </div>
-
     <div style="text-align:center;margin-top:22px">
       <button class="btn-outline" onclick="showSuaHistoria()">Ver ficha completa e editar perfil →</button>
+    </div>
+  </div>
+
+  <!-- MODAL LINHA DO TEMPO (chamado pelo botão no card acima) -->
+  <div id="dash-timeline-modal-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:14px;box-shadow:0 8px 40px rgba(196,57,107,.18);width:100%;max-width:560px;margin:20px auto;padding:22px 20px;position:relative">
+      <button onclick="document.getElementById('dash-timeline-modal-overlay').style.display='none';document.body.style.overflow=''" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+      <div class="dash-section-title" style="margin-top:0">Sua linha do tempo</div>
+      <div class="dash-timeline-wrap" style="margin-top:0">
+        <div id="dash-timeline" style="position:relative"></div>
+      </div>
     </div>
   </div>
 
@@ -7185,10 +7191,6 @@ function renderTimeline(p, elId) {
   const ALTURA = Math.max(600, eventos.length * 68);
   const PX_POR_MS = ALTURA / spanMs;
 
-  // posição proporcional de "hoje" na linha — define onde a cor vira cinza
-  const hojeObj = new Date();
-  const pctHoje = Math.max(0, Math.min(1, (hojeObj - dataMin) / spanMs));
-
   // agrupar por data
   const porData = {};
   eventos.forEach(e => { if (!porData[e.data]) porData[e.data]=[]; porData[e.data].push(e); });
@@ -7199,7 +7201,7 @@ function renderTimeline(p, elId) {
   Object.entries(porData).sort(([a],[b])=>a.localeCompare(b)).forEach(([data, evs]) => {
     const dataObj = new Date(data + 'T12:00:00');
     const posMs = dataObj - dataMin;
-    const posTop = Math.max(Math.round(posMs * PX_POR_MS), posAnterior + 48);
+    const posTop = Math.max(Math.round(posMs * PX_POR_MS), posAnterior + 30);
     posAnterior = posTop + evs.length * 26;
 
     const [y,m,d] = data.split('-');
@@ -7224,19 +7226,26 @@ function renderTimeline(p, elId) {
       </div>`;
   });
 
-  // a altura final cobre o span completo até o fim dos 7 anos (ou até o último evento, o que for maior)
-  const alturaFinal = Math.max(posAnterior + 60, ALTURA);
+  // posição de "hoje": proporcional ao tempo, mas NUNCA antes do último evento já desenhado —
+  // isso corrige o marcador aparecer "no meio" da linha quando eventos próximos empurravam o desenho pra baixo
+  const hojeObj = new Date();
+  const hojeMs = hojeObj - dataMin;
+  const posTopHojeProporcional = Math.round(hojeMs * PX_POR_MS);
+  const posTopHoje = Math.max(posTopHojeProporcional, posAnterior + 36);
 
-  // gradiente: colorido (rosa) do início até hoje, cinza de hoje até o fim do período
-  const pctHojeFmt = (pctHoje * 100).toFixed(2);
+  // a altura final cobre o span completo até o fim dos 7 anos (ou até "hoje"/último evento, o que for maior)
+  const alturaFinal = Math.max(posAnterior + 60, posTopHoje + 60, ALTURA);
+
+  // gradiente: colorido (rosa) do início até hoje, cinza de hoje até o fim do período — usa a posição REAL de hoje, não a proporcional teórica
+  const pctHojeFmt = fim7anos ? ((posTopHoje / alturaFinal) * 100).toFixed(2) : null;
   const gradienteLinha = fim7anos
     ? `linear-gradient(to bottom, var(--rosa) 0%, var(--rosa) ${pctHojeFmt}%, rgba(46,26,14,.12) ${pctHojeFmt}%, rgba(46,26,14,.12) 100%)`
     : `linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.06))`;
 
   // marcador de "hoje" na linha
   const marcadorHoje = fim7anos ? `
-    <div style="position:absolute;left:-3px;top:${Math.round(pctHoje*ALTURA)}px;width:10px;height:10px;border-radius:50%;background:var(--rosa);box-shadow:0 0 0 4px rgba(196,57,107,.18);z-index:3" title="Hoje"></div>
-    <div style="position:absolute;left:22px;top:${Math.round(pctHoje*ALTURA)-7}px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.08em;color:var(--rosa);font-weight:600;z-index:3">HOJE</div>
+    <div style="position:absolute;left:-3px;top:${posTopHoje}px;width:10px;height:10px;border-radius:50%;background:var(--rosa);box-shadow:0 0 0 4px rgba(196,57,107,.18);z-index:3" title="Hoje"></div>
+    <div style="position:absolute;left:22px;top:${posTopHoje-7}px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.08em;color:var(--rosa);font-weight:600;z-index:3">HOJE</div>
   ` : '';
 
   el.innerHTML = `${filtroHtml}
@@ -7340,6 +7349,15 @@ function dashBadgesCruzamentosExtrasHtml(extras) {
   }).join('');
 }
 
+function abrirLinhaDoTempoModal() {
+  const overlay = document.getElementById('dash-timeline-modal-overlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderTimeline(perfilData || {}, 'dash-timeline');
+}
+window.abrirLinhaDoTempoModal = abrirLinhaDoTempoModal;
+
 function dashToggleSecao(tituloEl) {
   const grid = tituloEl.nextElementSibling;
   if (!grid) return;
@@ -7411,7 +7429,6 @@ function renderDashPessoal(p, user) {
   }
 
   // stats rápidos
-  const totalGuias = DASH_BADGES_GUIAS.filter(b => guias[b.dataKey]).length;
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
   const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
@@ -7424,7 +7441,6 @@ function renderDashPessoal(p, user) {
     (p.cortes || []).reduce((soma, c) => soma + (Number(c.galinhas) || 0) + (Number(c.galos) || 0), 0);
 
   document.getElementById('dash-stats').innerHTML = `
-    <div class="dash-stat"><div class="dash-stat-num">${totalGuias}</div><div class="dash-stat-label">Guias</div></div>
     <div class="dash-stat"><div class="dash-stat-num">${totalCruz}</div><div class="dash-stat-label">Cruzamentos</div></div>
     <div class="dash-stat"><div class="dash-stat-num">${totalQuimbanda}</div><div class="dash-stat-label">Quimbanda</div></div>
     <div class="dash-stat"><div class="dash-stat-num">${totalAves}</div><div class="dash-stat-label">Aves</div></div>
@@ -7458,9 +7474,6 @@ function renderDashPessoal(p, user) {
   document.getElementById('dash-badges-quimbanda').innerHTML =
     DASH_BADGES_QUIMBANDA.map(b => dashBadgeHtml(b, hist)).join('') +
     dashBadgesCortesHtml(p.cortes || []);
-
-  // linha do tempo pessoal (reaproveita renderTimeline)
-  renderTimeline(p, 'dash-timeline');
 
   wrap.style.display = 'block';
 }
