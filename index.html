@@ -393,6 +393,12 @@ footer{
   color:rgba(196,90,30,.55);margin:24px 0 12px;display:flex;align-items:center;gap:10px;
 }
 .dash-section-title::after{content:'';flex:1;height:1px;background:rgba(196,90,30,.13)}
+.dash-section-title.dash-toggle{cursor:pointer;user-select:none;transition:color .15s}
+.dash-section-title.dash-toggle:hover{color:rgba(196,90,30,.85)}
+.dash-toggle-arrow{display:inline-block;transition:transform .2s;font-size:.7rem}
+.dash-section-title.dash-toggle.aberto .dash-toggle-arrow{transform:rotate(90deg)}
+.dash-badges-grid.dash-collapsible{animation:dashExpandir .25s ease}
+@keyframes dashExpandir{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
 /* badges de conquista */
 .dash-badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
@@ -414,6 +420,9 @@ footer{
 
 /* timeline embutida no dashboard */
 .dash-timeline-wrap{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px 18px;backdrop-filter:blur(4px);margin-top:24px}
+.tl-filtro-pill{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.05em;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;transition:all .15s}
+.tl-filtro-pill.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
+.tl-filtro-pill:hover{border-color:var(--rosa)}
 .mh-timeline{position:relative;padding-left:36px;padding-bottom:20px}
 .mh-timeline::before{content:'';position:absolute;left:11px;top:8px;bottom:0;width:2px;background:linear-gradient(to bottom,var(--rosa),rgba(196,57,107,.1))}
 .mh-item{position:relative;margin-bottom:0}
@@ -1522,18 +1531,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </a>
     </div>
 
-    <!-- CONQUISTAS — badges desbloqueáveis -->
-    <div class="dash-section-title">Guias e Guardiões</div>
-    <div class="dash-badges-grid" id="dash-badges-guias"></div>
+    <!-- CONQUISTAS — badges desbloqueáveis, em seções expansíveis pra economizar espaço -->
+    <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Guias e Guardiões</div>
+    <div class="dash-badges-grid dash-collapsible" id="dash-badges-guias" style="display:none"></div>
 
-    <div class="dash-section-title">Marcos da Jornada</div>
-    <div class="dash-badges-grid" id="dash-badges-historia"></div>
+    <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Marcos da Jornada</div>
+    <div class="dash-badges-grid dash-collapsible" id="dash-badges-historia" style="display:none"></div>
 
-    <div class="dash-section-title">Quimbanda</div>
-    <div class="dash-badges-grid" id="dash-badges-quimbanda"></div>
+    <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Quimbanda</div>
+    <div class="dash-badges-grid dash-collapsible" id="dash-badges-quimbanda" style="display:none"></div>
 
-    <div class="dash-section-title">Cruzamentos e Axés</div>
-    <div class="dash-badges-grid" id="dash-badges-cruz"></div>
+    <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Cruzamentos e Axés</div>
+    <div class="dash-badges-grid dash-collapsible" id="dash-badges-cruz" style="display:none"></div>
 
     <!-- LINHA DO TEMPO PESSOAL -->
     <div class="dash-section-title">Sua linha do tempo</div>
@@ -7061,37 +7070,52 @@ function renderMinhaHistoria(p, user) {
   renderTimeline(p);
 }
 
+// filtro de grupos da linha do tempo — guarda o estado e os últimos dados por elemento,
+// já que a mesma função alimenta a timeline da home e a de Minha História, cada uma com seu próprio filtro
+const timelineFiltros = {};
+const timelineDadosCache = {};
+window.timelineToggleFiltro = function(elId, grupo) {
+  if (!timelineFiltros[elId]) timelineFiltros[elId] = { guias: true, cruzamentos: true, quimbanda: true };
+  timelineFiltros[elId][grupo] = !timelineFiltros[elId][grupo];
+  renderTimeline(timelineDadosCache[elId], elId);
+};
+
 function renderTimeline(p, elId) {
-  const el = document.getElementById(elId || 'mh-timeline');
+  elId = elId || 'mh-timeline';
+  const el = document.getElementById(elId);
   if (!el) return;
+  timelineDadosCache[elId] = p;
+  if (!timelineFiltros[elId]) timelineFiltros[elId] = { guias: true, cruzamentos: true, quimbanda: true };
+  const filtro = timelineFiltros[elId];
 
   const hist = p.historia || {};
   const guias = p.guias || {};
   const cruz = p.cruzamentos || {};
   const ocultos = p.timelineOcultos || [];
 
+  // "marcos" = fixos, sempre exibidos; os demais grupos passam pelo filtro no topo
   const EVENTOS_DEF = [
-    { key:'data_entrada',    label:'Entrada na Casa',       cor:'#c4396b', src:'historia' },
-    { key:'apronte',         label:'Apronte',               cor:'#6a9e6a', src:'historia',
+    { key:'data_entrada',    label:'Entrada na Casa',       cor:'#c4396b', src:'historia', grupo:'marcos' },
+    { key:'apronte',         label:'Apronte',               cor:'#6a9e6a', src:'historia', grupo:'quimbanda',
       nomeFn:(dados)=>{ const g=dados.apronte_galinhas, ga=dados.apronte_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
-    { key:'coroacao',        label:'Coroação',              cor:'#4a6fa5', src:'historia' },
-    { key:'cacicamento',     label:'Cacicamento',           cor:'#9e6a9e', src:'historia' },
-    { key:'madrinha_data',   label:'Madrinha',              cor:'#8a8a9a', src:'historia', nomeKey:'madrinha', nomeSrc:'historia' },
-    { key:'afilhada_1_data', label:'Afilhada 1',            cor:'#e07a90', src:'historia', nomeKey:'afilhada_1', nomeSrc:'historia' },
-    { key:'afilhada_2_data', label:'Afilhada 2',            cor:'#d4607a', src:'historia', nomeKey:'afilhada_2', nomeSrc:'historia' },
-    { key:'terreiro_data',   label: p.cacique?.terreiro_titulo || 'Inauguração do Terreiro', cor:'#4a6fa5', src:'cacique', nomeKey:'terreiro_nome', nomeSrc:'cacique' },
-    { key:'caboclo_data',    label:'Caboclo',               cor:'#6a9e6a', src:'guias',   nomeKey:'caboclo',    nomeSrc:'guias' },
-    { key:'exu_data',        label:'Exu',                   cor:'#c4396b', src:'guias',   nomeKey:'exu',        nomeSrc:'guias' },
-    { key:'pomba_gira_data', label:'Pomba Gira',            cor:'#9e6a9e', src:'guias',   nomeKey:'pomba_gira', nomeSrc:'guias' },
-    { key:'preto_velho_data',label:'Preto Velho',           cor:'#8a8a9a', src:'guias',   nomeKey:'preto_velho',nomeSrc:'guias' },
-    { key:'cigana_data',     label:'Cigana',                cor:'#c9963c', src:'guias',   nomeKey:'cigana',     nomeSrc:'guias' },
-    { key:'cosme_data',      label:'Cosme',                 cor:'#4a6fa5', src:'guias',   nomeKey:'cosme',      nomeSrc:'guias' },
-    { key:'cruz_mata',       label:'Mata',                  cor:'#4a7a4a', src:'cruz' },
-    { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz' },
-    { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz' },
-    { key:'cruz_pedreira',   label:'Pedreira',              cor:'#8a7a6a', src:'cruz' },
-    { key:'cruz_conga',      label:'Conga',                 cor:'#5a8a5a', src:'historia' },
-    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia',
+    { key:'coroacao',        label:'Coroação',              cor:'#4a6fa5', src:'historia', grupo:'marcos' },
+    { key:'cacicamento',     label:'Cacicamento',           cor:'#9e6a9e', src:'historia', grupo:'marcos' },
+    { key:'madrinha_data',   label:'Madrinha',              cor:'#8a8a9a', src:'historia', grupo:'marcos', nomeKey:'madrinha', nomeSrc:'historia' },
+    { key:'afilhada_1_data', label:'Afilhada 1',            cor:'#e07a90', src:'historia', grupo:'marcos', nomeKey:'afilhada_1', nomeSrc:'historia' },
+    { key:'afilhada_2_data', label:'Afilhada 2',            cor:'#d4607a', src:'historia', grupo:'marcos', nomeKey:'afilhada_2', nomeSrc:'historia' },
+    { key:'terreiro_data',   label: p.cacique?.terreiro_titulo || 'Inauguração do Terreiro', cor:'#4a6fa5', src:'cacique', grupo:'marcos', nomeKey:'terreiro_nome', nomeSrc:'cacique' },
+    { key:'caboclo_data',    label:'Caboclo',               cor:'#6a9e6a', src:'guias',   grupo:'guias', nomeKey:'caboclo',    nomeSrc:'guias' },
+    { key:'exu_data',        label:'Exu',                   cor:'#c4396b', src:'guias',   grupo:'guias', nomeKey:'exu',        nomeSrc:'guias' },
+    { key:'pomba_gira_data', label:'Pomba Gira',            cor:'#9e6a9e', src:'guias',   grupo:'guias', nomeKey:'pomba_gira', nomeSrc:'guias' },
+    { key:'preto_velho_data',label:'Preto Velho',           cor:'#8a8a9a', src:'guias',   grupo:'guias', nomeKey:'preto_velho',nomeSrc:'guias' },
+    { key:'cigana_data',     label:'Cigana',                cor:'#c9963c', src:'guias',   grupo:'guias', nomeKey:'cigana',     nomeSrc:'guias' },
+    { key:'cosme_data',      label:'Cosme',                 cor:'#4a6fa5', src:'guias',   grupo:'guias', nomeKey:'cosme',      nomeSrc:'guias' },
+    { key:'cruz_mata',       label:'Mata',                  cor:'#4a7a4a', src:'cruz', grupo:'cruzamentos' },
+    { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
+    { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
+    { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
+    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos' },
+    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
       nomeFn:(dados)=>{ const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
 
@@ -7106,30 +7130,40 @@ function renderTimeline(p, elId) {
     eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
   });
 
-  // cortes adicionais (2º em diante) — vêm do array p.cortes
+  // cortes adicionais (2º em diante) — vêm do array p.cortes — grupo Quimbanda
   (p.cortes || []).forEach((c, i) => {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const numCorte = i + 2;
     const aves = (c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '';
     eventos.push({
-      key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b',
+      key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b', grupo:'quimbanda',
       data: c.data, nome: aves,
       oculto: ocultos.includes(`corte_extra_${i}`)
     });
   });
 
-  // cruzamentos extras — vêm do array p.cruzamentosExtras
+  // cruzamentos extras — vêm do array p.cruzamentosExtras — grupo Cruzamentos
   (p.cruzamentosExtras || []).forEach((c, i) => {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     eventos.push({
-      key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5',
+      key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
       data: c.data, nome: '',
       oculto: ocultos.includes(`cruz_extra_${i}`)
     });
   });
 
+  // filtro por grupo — "marcos" é sempre exibido; os demais respeitam os botões do topo
+  eventos = eventos.filter(e => e.grupo === 'marcos' || filtro[e.grupo]);
+
+  const filtroHtml = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+      <button class="tl-filtro-pill ${filtro.guias?'ativo':''}" onclick="timelineToggleFiltro('${elId}','guias')">Guias</button>
+      <button class="tl-filtro-pill ${filtro.cruzamentos?'ativo':''}" onclick="timelineToggleFiltro('${elId}','cruzamentos')">Cruzamentos</button>
+      <button class="tl-filtro-pill ${filtro.quimbanda?'ativo':''}" onclick="timelineToggleFiltro('${elId}','quimbanda')">Quimbanda</button>
+    </div>`;
+
   if (!eventos.length) {
-    el.innerHTML = '<div style="font-family:\'Crimson Pro\',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;padding:20px 0">Nenhuma data registrada ainda.</div>';
+    el.innerHTML = filtroHtml + '<div style="font-family:\'Crimson Pro\',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;padding:20px 0">Nenhuma data registrada nesse filtro ainda.</div>';
     return;
   }
 
@@ -7158,22 +7192,6 @@ function renderTimeline(p, elId) {
   // agrupar por data
   const porData = {};
   eventos.forEach(e => { if (!porData[e.data]) porData[e.data]=[]; porData[e.data].push(e); });
-
-  // barra de progresso do ciclo de caminhada — tom de conquista (celebra o caminho já trilhado)
-  let progressoHtml = '';
-  if (hist.data_entrada && cicloAtual) {
-    const tempoTrilhado = calcTempo(hist.data_entrada) || 'Recém chegada';
-    const mensagemConquista = cicloAtual.pct >= 100
-      ? `✦ ${cicloAtual.metaAnos} anos de caminhada completados!`
-      : `✦ ${tempoTrilhado} de caminhada já vividos`;
-    progressoHtml = `<div class="mh-progresso" style="margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span>Caminhada de ${cicloAtual.metaAnos} anos</span><span><span>${cicloAtual.pct}%</span> trilhado</span></div>
-      <div style="background:rgba(196,57,107,.1);border-radius:20px;height:6px;overflow:hidden">
-        <div style="background:linear-gradient(90deg,var(--rosa),#e07a90);height:100%;width:${cicloAtual.pct}%;border-radius:20px"></div>
-      </div>
-      <div style="margin-top:6px;font-size:.78rem;opacity:.7">${mensagemConquista}</div>
-    </div>`;
-  }
 
   let itensHtml = '';
   let posAnterior = -1;
@@ -7221,7 +7239,7 @@ function renderTimeline(p, elId) {
     <div style="position:absolute;left:22px;top:${Math.round(pctHoje*ALTURA)-7}px;font-family:'Cinzel',serif;font-size:.5rem;letter-spacing:.08em;color:var(--rosa);font-weight:600;z-index:3">HOJE</div>
   ` : '';
 
-  el.innerHTML = `${progressoHtml}
+  el.innerHTML = `${filtroHtml}
     <div style="position:relative;padding-left:22px;min-height:${alturaFinal}px">
       <div style="position:absolute;left:4px;top:0;bottom:0;width:2px;background:${gradienteLinha}"></div>
       ${marcadorHoje}
@@ -7320,6 +7338,14 @@ function dashBadgesCruzamentosExtrasHtml(extras) {
       <div class="dash-badge-data">${fmtData(c.data)}</div>
     </div>`;
   }).join('');
+}
+
+function dashToggleSecao(tituloEl) {
+  const grid = tituloEl.nextElementSibling;
+  if (!grid) return;
+  const abrindo = grid.style.display === 'none';
+  grid.style.display = abrindo ? 'grid' : 'none';
+  tituloEl.classList.toggle('aberto', abrindo);
 }
 
 function renderDashPessoal(p, user) {
