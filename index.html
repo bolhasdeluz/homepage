@@ -1368,8 +1368,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 #mh-modal-overlay #mh-cruz-extras-lista{gap:6px!important;margin-top:6px!important}
 #mh-modal-overlay .mh-corte-empty{padding:6px 0!important}
 
-/* "Meu Terreiro" — oculto aqui, já aparece preenchido em outro lugar pra quem tem */
-#mh-modal-overlay #mh-bloco-terreiro{display:none!important}
+/* aniversário — agora mora na Início, ao lado do nome; não duplica aqui */
+#mh-modal-overlay #mh-aniversario{display:none!important}
 
 /* título e cabeçalho do modal mais compactos */
 #mh-modal-overlay > div{padding:16px 15px!important}
@@ -1532,13 +1532,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="dash-top">
         <div class="dash-avatar" id="dash-avatar">👤</div>
         <div>
-          <div class="dash-nome" id="dash-nome"></div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <div class="dash-nome" id="dash-nome"></div>
+            <span id="dash-aniversario" style="display:none;font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;font-style:italic;color:rgba(255,255,255,.75);white-space:nowrap"></span>
+          </div>
           <div class="dash-selo" id="dash-selo" style="display:none">
             <span id="dash-selo-emoji">✦</span><span id="dash-selo-cargo"></span>
           </div>
         </div>
       </div>
       <p class="dash-frase" id="dash-frase"></p>
+      <div id="dash-terreiro" style="display:none;font-family:'Crimson Pro',Georgia,serif;font-size:.82rem;font-style:italic;color:rgba(255,255,255,.8);margin-top:-6px;margin-bottom:10px"></div>
       <div class="dash-stats" id="dash-stats"></div>
       <div class="dash-progresso" id="dash-progresso" style="display:none">
         <div class="dash-progresso-top"><span>Caminhada de 7 anos</span><span id="dash-progresso-pct"></span></div>
@@ -1701,14 +1705,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
             <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
-          </div>
-          <!-- Terreiro Cacique -->
-          <div id="mh-bloco-terreiro" style="display:none;background:#fff;border:1px solid rgba(74,111,165,.2);border-left:3px solid #4a6fa5;border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(74,111,165,.08)">
-            <div id="mh-terreiro-titulo" style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:#4a6fa5;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(74,111,165,.15)">— Meu Terreiro</div>
-            <div class="perfil-grid">
-              <div class="perfil-field"><label>Nome</label><div class="valor" id="mh-terreiro-nome"></div></div>
-              <div class="perfil-field"><label>Inauguração</label><div class="valor" id="mh-terreiro-data"></div></div>
-            </div>
           </div>
           <!-- Sobre você e observações — sempre editável -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -2676,10 +2672,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       ✦ Cacique — campos especiais
     </div>
     <div style="margin-bottom:10px">
-      <label class="form-label">Mãe/Pai de Santo</label>
-      <input type="text" class="form-input" id="cp-mae_de_santo" placeholder="Nome da mãe ou pai de santo">
-    </div>
-    <div style="margin-bottom:10px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
         <input type="checkbox" id="cp-visivelGuias" style="accent-color:var(--rosa);width:16px;height:16px">
         Exibir na página de Guias (pública)
@@ -2699,10 +2691,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <input type="date" class="form-input" id="cp-terreiro_data">
       </div>
       <div style="display:flex;flex-direction:column;justify-content:flex-end">
-        <label class="form-label">Visível na ficha pessoal?</label>
+        <label class="form-label">Visível na Início?</label>
         <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;margin-top:6px">
           <input type="checkbox" id="cp-terreiro_visivel" style="accent-color:var(--rosa);width:16px;height:16px">
-          Mostrar na ficha
+          Mostrar na Início
         </label>
       </div>
     </div>
@@ -3698,7 +3690,6 @@ function preencherFormPerfil(p) {
   });
   // campos cacique
   const c = p.cacique || {};
-  if (document.getElementById('cp-mae_de_santo'))     document.getElementById('cp-mae_de_santo').value     = c.mae_de_santo     || p.mae_de_santo || '';
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
   if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
   if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
@@ -3730,7 +3721,6 @@ async function salvarPerfilAdmin() {
     visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     cacique: {
       ...(base.cacique || {}),
-      mae_de_santo:    document.getElementById('cp-mae_de_santo')?.value.trim()    || '',
       terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
       terreiro_nome:   document.getElementById('cp-terreiro_nome')?.value.trim()   || '',
       terreiro_data:   document.getElementById('cp-terreiro_data')?.value          || '',
@@ -6962,21 +6952,6 @@ function renderMinhaHistoria(p, user) {
     }
   }
 
-  // bloco terreiro cacique (só pra quem é Cacique/Mãe da Casa com terreiro próprio cadastrado)
-  const c = p.cacique || {};
-  const blocoTerreiro = document.getElementById('mh-bloco-terreiro');
-  if (blocoTerreiro) {
-    const isCacique = ['Cacique','Mãe da Casa'].includes(p.cargo || '');
-    if (isCacique && c.terreiro_visivel && (c.terreiro_nome || c.terreiro_data)) {
-      blocoTerreiro.style.display = 'block';
-      document.getElementById('mh-terreiro-titulo').textContent = '— ' + (c.terreiro_titulo || 'Meu Terreiro');
-      document.getElementById('mh-terreiro-nome').textContent = c.terreiro_nome || '—';
-      document.getElementById('mh-terreiro-data').textContent = c.terreiro_data ? fmtData(c.terreiro_data) : '—';
-    } else {
-      blocoTerreiro.style.display = 'none';
-    }
-  }
-
   // fichas
   renderCamposPerfil(camposHistoria,  'mh-grid-historia',    p.historia    || {}, true);
   renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {}, true);
@@ -7304,6 +7279,34 @@ function renderDashPessoal(p, user) {
   else avatarEl.textContent = emoji;
 
   document.getElementById('dash-nome').textContent = primeiroNome;
+
+  // aniversário (se cadastrado) — ao lado do nome
+  const dashAnivEl = document.getElementById('dash-aniversario');
+  if (dashAnivEl) {
+    if (p.dataNascimento) {
+      const d = new Date(p.dataNascimento + 'T12:00:00');
+      if (!isNaN(d.getTime())) {
+        dashAnivEl.textContent = '🎂 ' + d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long' });
+        dashAnivEl.style.display = 'inline';
+      } else dashAnivEl.style.display = 'none';
+    } else dashAnivEl.style.display = 'none';
+  }
+
+  // meu terreiro (só Cacique/Mãe da Casa, admin preenche e marca como visível)
+  const dashTerreiroEl = document.getElementById('dash-terreiro');
+  if (dashTerreiroEl) {
+    const ct = p.cacique || {};
+    const isCaciqueDash = ['Cacique','Mãe da Casa'].includes(cargo);
+    if (isCaciqueDash && ct.terreiro_visivel && (ct.terreiro_nome || ct.terreiro_data)) {
+      const partes = [];
+      if (ct.terreiro_nome) partes.push(ct.terreiro_nome);
+      if (ct.terreiro_data) partes.push('inaugurado em ' + fmtData(ct.terreiro_data));
+      dashTerreiroEl.textContent = '✦ ' + (ct.terreiro_titulo || 'Meu Terreiro') + ': ' + partes.join(' · ');
+      dashTerreiroEl.style.display = 'block';
+    } else {
+      dashTerreiroEl.style.display = 'none';
+    }
+  }
 
   const seloEl = document.getElementById('dash-selo');
   if (cargo) {
