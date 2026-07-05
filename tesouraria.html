@@ -220,6 +220,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showPanel('painel-inicio', this)">Início</button>
+  <button class="nav-btn" onclick="showPanel('painel-caixa', this)">Caixa <span id="caixa-badge" style="display:none;background:var(--gold);color:#fff;border-radius:10px;font-size:8px;padding:1px 5px;margin-left:2px;vertical-align:middle;">0</span></button>
   <button class="nav-btn" onclick="showPanel('painel-historico', this)">Histórico</button>
   <button class="nav-btn" onclick="showPanel('painel-resumo', this)">Resumo</button>
 </nav>
@@ -339,11 +340,25 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <div class="resumo-table" id="resumo-contas"><div class="rt-header"><div class="rt-header-text">Gastos por Conta</div></div></div>
   </div>
 
+  <!-- CAIXA (pré-lançamentos a categorizar) -->
+  <div id="painel-caixa" class="panel">
+    <div style="background:var(--gold-dim);border:1px solid var(--border);border-radius:10px;padding:11px 14px;margin-bottom:14px;">
+      <div style="font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);line-height:1.5;">📥 <strong>Caixa Rápida</strong> — registre valores na hora e categorize depois. Cada item pode ser direcionado para uma conta da Tesouraria ou uma categoria do Agosto, inteiro ou dividido.</div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+      <button onclick="abrirCaixaRapida()" style="background:linear-gradient(135deg,#c0405a,#e07a90);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:8px 14px;cursor:pointer;">+ Adicionar à Caixa</button>
+    </div>
+    <div id="lista-caixa"></div>
+  </div>
+
 </div>
 
 <!-- FAB botão lançar -->
 <div id="fab-container" style="position:fixed;bottom:24px;right:20px;z-index:250;display:flex;flex-direction:column;align-items:flex-end;gap:10px;">
   <div id="fab-menu" style="display:none;flex-direction:column;gap:8px;align-items:flex-end;">
+    <button onclick="abrirCaixaRapida()" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);">
+      <span style="width:28px;height:28px;background:var(--gold-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">📥</span> Caixa Rápida
+    </button>
     <button onclick="abrirLancamentoModal('gasto')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--red);">
       <span style="width:28px;height:28px;background:var(--red-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">🧾</span> Gasto
     </button>
@@ -647,6 +662,40 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   </div>
 </div>
 
+<!-- MODAL CAIXA RÁPIDA (adicionar) -->
+<div class="modal-overlay" id="caixa-add-overlay" onclick="fecharModal('caixa-add-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header"><div class="modal-title">📥 Adicionar à Caixa</div><button class="modal-close" onclick="document.getElementById('caixa-add-overlay').classList.remove('open')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:6px;margin-bottom:4px;">
+        <button id="caixa-tipo-entrada" onclick="setCaixaTipo('entrada')" style="flex:1;background:var(--green);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;padding:9px;cursor:pointer;">💚 Entrada</button>
+        <button id="caixa-tipo-gasto" onclick="setCaixaTipo('gasto')" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;padding:9px;cursor:pointer;">🧾 Saída</button>
+      </div>
+      <div class="field-row">
+        <div class="field"><label class="field-label">Valor (R$)</label><input type="number" id="caixa-valor" placeholder="0,00" min="0" step="0.01"></div>
+        <div class="field"><label class="field-label">Data</label><input type="date" id="caixa-data"></div>
+      </div>
+      <div class="field"><label class="field-label">Descrição / origem</label><input type="text" id="caixa-desc" placeholder="Ex: Pix da Ness, dinheiro do caixa…"></div>
+      <button class="btn-primary" onclick="salvarCaixa()">Adicionar à Caixa</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DIRECIONAR -->
+<div class="modal-overlay" id="direcionar-overlay" onclick="fecharModal('direcionar-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header"><div class="modal-title">🎯 Direcionar Lançamento</div><button class="modal-close" onclick="document.getElementById('direcionar-overlay').classList.remove('open')">✕</button></div>
+    <div class="modal-body">
+      <div id="direcionar-info" style="background:var(--gold-dim);border-radius:8px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);"></div>
+      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Distribuir para:</div>
+      <div id="direcionar-partes" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <button onclick="adicionarParte()" style="background:none;border:1px dashed rgba(196,57,107,.3);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:8px;cursor:pointer;">+ Dividir em outra parte</button>
+      <div id="direcionar-resto" style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);text-align:right;"></div>
+      <button class="btn-primary" onclick="confirmarDirecionamento()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -790,6 +839,13 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     if (id === 'painel-historico') renderHistorico();
     if (id === 'painel-resumo') renderResumo();
     if (id === 'painel-inicio') renderInicio();
+    if (id === 'painel-caixa') {
+      renderCaixa();
+      // Garante que os dados do Agosto estão carregados para poder direcionar
+      if (typeof agCarregarDados === 'function' && Object.keys(agPgtos).length === 0) {
+        agCarregarDados(function(){});
+      }
+    }
   }
 
   // ── ENTRADA ───────────────────────────────────────────────
@@ -2047,6 +2103,245 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     renderResumo();
   }
 
+  // ── CAIXA RÁPIDA (pré-lançamentos) ────────────────────────
+  var caixa = [];
+  var caixaTipo = 'entrada';
+  var direcionandoId = null;
+
+  var CONTAS_GASTO = ['Luz','Água','Alarme Serviço','Internet','Aluguel','Tambor','Agosto','Extras'];
+  var MEMBROS_CAIXA = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+
+  function saveCaixa() {
+    try { localStorage.setItem('bdl-caixa', JSON.stringify(caixa)); } catch(e){}
+    kvSet('caixa', caixa);
+    atualizarBadgeCaixa();
+  }
+
+  function atualizarBadgeCaixa() {
+    var badge = document.getElementById('caixa-badge');
+    if (caixa.length > 0) { badge.style.display = 'inline-block'; badge.textContent = caixa.length; }
+    else badge.style.display = 'none';
+  }
+
+  function abrirCaixaRapida() {
+    fabAberto = false;
+    document.getElementById('fab-menu').style.display = 'none';
+    document.getElementById('fab-btn').style.transform = 'rotate(0)';
+    document.getElementById('caixa-valor').value = '';
+    document.getElementById('caixa-desc').value = '';
+    document.getElementById('caixa-data').value = today();
+    setCaixaTipo('entrada');
+    document.getElementById('caixa-add-overlay').classList.add('open');
+  }
+
+  function setCaixaTipo(t) {
+    caixaTipo = t;
+    var be = document.getElementById('caixa-tipo-entrada');
+    var bg = document.getElementById('caixa-tipo-gasto');
+    be.style.background = t==='entrada' ? 'var(--green)' : 'none';
+    be.style.color = t==='entrada' ? '#fff' : 'var(--text-dim)';
+    be.style.border = t==='entrada' ? 'none' : '1px solid var(--border)';
+    bg.style.background = t==='gasto' ? 'var(--red)' : 'none';
+    bg.style.color = t==='gasto' ? '#fff' : 'var(--text-dim)';
+    bg.style.border = t==='gasto' ? 'none' : '1px solid var(--border)';
+  }
+
+  function salvarCaixa() {
+    var valor = parseFloat(document.getElementById('caixa-valor').value);
+    var data = document.getElementById('caixa-data').value;
+    var desc = document.getElementById('caixa-desc').value.trim();
+    if (!valor || valor <= 0) { showToast('Informe o valor'); return; }
+    caixa.unshift({ id: Date.now(), tipo: caixaTipo, valor: valor, data: data, desc: desc });
+    saveCaixa();
+    document.getElementById('caixa-add-overlay').classList.remove('open');
+    showToast('Adicionado à Caixa 📥');
+    renderCaixa();
+  }
+
+  function renderCaixa() {
+    atualizarBadgeCaixa();
+    var el = document.getElementById('lista-caixa');
+    if (!caixa.length) {
+      el.innerHTML = '<div class="empty"><div class="empty-icon">📥</div><div class="empty-text">Caixa vazia — tudo categorizado!</div></div>';
+      return;
+    }
+    el.innerHTML = caixa.map(function(c){
+      var isE = c.tipo === 'entrada';
+      return '<div class="lancamento-item" style="border-left:3px solid '+(isE?'var(--green)':'var(--red)')+';">'
+        + '<div class="lancamento-dot '+(isE?'entrada':'gasto')+'">'+(isE?'💚':'🧾')+'</div>'
+        + '<div class="lancamento-info">'
+        + '<div class="lancamento-nome">'+(c.desc||(isE?'Entrada':'Saída'))+'</div>'
+        + '<span class="cat-badge" style="background:var(--gold-dim);color:var(--gold);">a categorizar</span>'
+        + '<button class="lancamento-clone" style="border-color:var(--gold);color:var(--gold);" onclick="abrirDirecionar('+c.id+')">🎯 Direcionar</button>'
+        + '<button class="lancamento-clone" onclick="removerCaixa('+c.id+')">🗑 Excluir</button>'
+        + '</div>'
+        + '<div class="lancamento-right">'
+        + '<div class="lancamento-valor '+(isE?'entrada':'gasto')+'">'+(isE?'+':'−')+' '+fmt(c.valor)+'</div>'
+        + '<div class="lancamento-data">'+fmtData(c.data)+'</div>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  function removerCaixa(id) {
+    var idx = caixa.findIndex(function(c){ return c.id === id; });
+    if (idx === -1) return;
+    caixa.splice(idx, 1);
+    saveCaixa();
+    showToast('Removido da Caixa');
+    renderCaixa();
+  }
+
+  function abrirDirecionar(id) {
+    var c = caixa.find(function(x){ return x.id === id; });
+    if (!c) return;
+    direcionandoId = id;
+    var isE = c.tipo === 'entrada';
+    document.getElementById('direcionar-info').innerHTML =
+      '<strong>'+(c.desc||(isE?'Entrada':'Saída'))+'</strong><br>'
+      + (isE?'💚 Entrada':'🧾 Saída') + ' · ' + fmt(c.valor) + ' · ' + fmtData(c.data);
+    // Começa com uma parte com o valor total
+    document.getElementById('direcionar-partes').innerHTML = '';
+    adicionarParte(c.valor);
+    atualizarResto();
+    document.getElementById('direcionar-overlay').classList.add('open');
+  }
+
+  function adicionarParte(valorInicial) {
+    var c = caixa.find(function(x){ return x.id === direcionandoId; });
+    if (!c) return;
+    var isE = c.tipo === 'entrada';
+    var idx = document.querySelectorAll('.direcionar-parte').length;
+    var div = document.createElement('div');
+    div.className = 'direcionar-parte';
+    div.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;';
+
+    // Destino: para entrada = membro (tesouraria) ou categoria agosto; para gasto = conta ou categoria agosto
+    var destinoOpts = '';
+    if (isE) {
+      destinoOpts = '<optgroup label="Tesouraria — Membro">'
+        + MEMBROS_CAIXA.map(function(m){ return '<option value="tes-membro:'+m+'">'+m+'</option>'; }).join('')
+        + '</optgroup>'
+        + '<option value="tes-extra">Tesouraria — Entrada Extra</option>'
+        + '<optgroup label="Agosto — Pagamento">'
+        + '<option value="ag-obr">Agosto — Obrigação</option>'
+        + '<option value="ag-aves">Agosto — Aves</option>'
+        + '</optgroup>';
+    } else {
+      destinoOpts = '<optgroup label="Tesouraria — Conta">'
+        + CONTAS_GASTO.map(function(ct){ return '<option value="tes-conta:'+ct+'">'+ct+'</option>'; }).join('')
+        + '</optgroup>'
+        + '<optgroup label="Agosto — Gasto">'
+        + '<option value="ag-gasto">Agosto — Gasto avulso</option>'
+        + '</optgroup>';
+    }
+
+    div.innerHTML = '<div style="display:flex;gap:8px;align-items:center;">'
+      + '<input type="number" class="parte-valor" value="'+(valorInicial||'')+'" placeholder="Valor" step="0.01" oninput="atualizarResto()" style="width:90px;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:15px;padding:6px 8px;-webkit-appearance:none;">'
+      + '<select class="parte-destino" onchange="parteDestChange(this)" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;-webkit-appearance:none;">'
+      + '<option value="">Escolher destino…</option>' + destinoOpts
+      + '</select>'
+      + (idx>0 ? '<button onclick="this.closest(\'.direcionar-parte\').remove();atualizarResto()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;">✕</button>' : '<span style="width:20px;"></span>')
+      + '</div>'
+      // Campo membro/pessoa extra (aparece conforme destino)
+      + '<div class="parte-extra" style="display:none;"></div>';
+    document.getElementById('direcionar-partes').appendChild(div);
+  }
+
+  function parteDestChange(sel) {
+    var parte = sel.closest('.direcionar-parte');
+    var extra = parte.querySelector('.parte-extra');
+    var val = sel.value;
+    // Agosto obr/aves precisa escolher a pessoa
+    if (val === 'ag-obr' || val === 'ag-aves') {
+      extra.style.display = 'block';
+      extra.innerHTML = '<select class="parte-pessoa" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;-webkit-appearance:none;"><option value="">Qual pessoa?…</option>'
+        + MEMBROS_CAIXA.map(function(m){ return '<option value="'+m+'">'+m+'</option>'; }).join('') + '</select>';
+    } else if (val === 'tes-extra' || val === 'ag-gasto') {
+      extra.style.display = 'block';
+      extra.innerHTML = '<input type="text" class="parte-obs" placeholder="Descrição…" style="width:100%;background:transparent;border:1px solid var(--border);border-radius:6px;font-family:\'DM Sans\',sans-serif;font-size:13px;padding:6px 8px;">';
+    } else {
+      extra.style.display = 'none';
+      extra.innerHTML = '';
+    }
+  }
+
+  function atualizarResto() {
+    var c = caixa.find(function(x){ return x.id === direcionandoId; });
+    if (!c) return;
+    var soma = 0;
+    document.querySelectorAll('.parte-valor').forEach(function(inp){ soma += parseFloat(inp.value)||0; });
+    var resto = c.valor - soma;
+    var el = document.getElementById('direcionar-resto');
+    if (Math.abs(resto) < 0.01) {
+      el.textContent = '✓ Distribuição completa';
+      el.style.color = 'var(--green)';
+    } else if (resto > 0) {
+      el.textContent = 'Falta distribuir: ' + fmt(resto);
+      el.style.color = 'var(--text-dim)';
+    } else {
+      el.textContent = 'Excedeu em: ' + fmt(-resto);
+      el.style.color = 'var(--red)';
+    }
+  }
+
+  function confirmarDirecionamento() {
+    var c = caixa.find(function(x){ return x.id === direcionandoId; });
+    if (!c) return;
+    var partes = document.querySelectorAll('.direcionar-parte');
+    var novos = [];
+    var agostoMudou = false;
+    var erro = null;
+
+    partes.forEach(function(parte){
+      if (erro) return;
+      var valor = parseFloat(parte.querySelector('.parte-valor').value) || 0;
+      var destino = parte.querySelector('.parte-destino').value;
+      if (valor <= 0 || !destino) { erro = 'Preencha valor e destino em todas as partes'; return; }
+
+      var pessoaEl = parte.querySelector('.parte-pessoa');
+      var obsEl = parte.querySelector('.parte-obs');
+      var pessoa = pessoaEl ? pessoaEl.value : '';
+      var obs = obsEl ? obsEl.value.trim() : '';
+
+      if (destino.startsWith('tes-membro:')) {
+        var m = destino.split(':')[1];
+        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:m, subTipo:'membro', valor:valor, data:c.data, obs:obs, competencia:'' });
+      } else if (destino === 'tes-extra') {
+        novos.push({ id: Date.now()+Math.random(), tipo:'entrada', membro:obs||'Extra', subTipo:'extra', valor:valor, data:c.data, obs:'', competencia:'' });
+      } else if (destino.startsWith('tes-conta:')) {
+        var ct = destino.split(':')[1];
+        novos.push({ id: Date.now()+Math.random(), tipo:'gasto', conta:ct, valor:valor, data:c.data, obs:obs, status:'pago' });
+      } else if (destino === 'ag-obr' || destino === 'ag-aves') {
+        if (!pessoa) { erro = 'Escolha a pessoa para o pagamento do Agosto'; return; }
+        if (!agPgtos[pessoa]) agPgtos[pessoa] = {obr:0, aves:0};
+        if (destino === 'ag-obr') agPgtos[pessoa].obr += valor;
+        else agPgtos[pessoa].aves += valor;
+        agostoMudou = true;
+      } else if (destino === 'ag-gasto') {
+        agGastos.push({ desc: obs||'Gasto', valor: valor, categoria:'Avulso', data: c.data });
+        agostoMudou = true;
+      }
+    });
+
+    if (erro) { showToast(erro); return; }
+    if (!novos.length && !agostoMudou) { showToast('Nada para direcionar'); return; }
+
+    // Aplica na tesouraria
+    novos.forEach(function(n){ lancamentos.unshift(n); });
+    if (novos.length) save();
+    // Aplica no agosto
+    if (agostoMudou) agSalvar();
+    // Remove da caixa
+    var idx = caixa.findIndex(function(x){ return x.id === direcionandoId; });
+    if (idx !== -1) caixa.splice(idx, 1);
+    saveCaixa();
+
+    document.getElementById('direcionar-overlay').classList.remove('open');
+    showToast('Direcionado com sucesso ✓');
+    renderCaixa();
+    renderInicio();
+  }
+
   // ── INIT ──────────────────────────────────────────────────
   inicializarFiltroMes();
 
@@ -2058,9 +2353,15 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   } catch(e) { lancamentos = []; }
 
   // Renderiza já com o que tem (cada um isolado)
+  try {
+    var localCaixa = localStorage.getItem('bdl-caixa');
+    caixa = localCaixa ? JSON.parse(localCaixa) : [];
+    if (!Array.isArray(caixa)) caixa = [];
+  } catch(e) { caixa = []; }
   try { renderInicio(); } catch(e){ console.error('renderInicio:', e); }
   try { renderHistorico(); } catch(e){ console.error('renderHistorico:', e); }
   try { renderResumo(); } catch(e){ console.error('renderResumo:', e); }
+  try { renderCaixa(); } catch(e){ console.error('renderCaixa:', e); }
 
   // 2. Em segundo plano, busca do KV e atualiza se houver dados melhores
   fetchComTimeout('/api/dados?chave=lancamentos', 8000)
@@ -2080,6 +2381,18 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       // KV indisponível — segue com localStorage (já renderizado)
       console.warn('KV indisponível, usando dados locais:', err.message);
     });
+
+  // Busca caixa do KV em segundo plano
+  fetchComTimeout('/api/dados?chave=caixa', 8000)
+    .then(function(r){ if(!r.ok) throw new Error('sem KV'); return r.json(); })
+    .then(function(dadosKV){
+      if (Array.isArray(dadosKV)) {
+        caixa = dadosKV;
+        try { localStorage.setItem('bdl-caixa', JSON.stringify(dadosKV)); } catch(e){}
+        try { renderCaixa(); } catch(e){}
+      }
+    })
+    .catch(function(){});
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -2213,12 +2526,18 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div style="margin:8px 12px 0;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
     <div style="background:#fffbe8;border:1px solid #e8d080;border-radius:9px;padding:8px 11px;">
       <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#8c5a00;">⭐ Meta Mínima</div>
-      <div id="ag-meta-prio" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;">R$0</div>
+      <div style="display:flex;align-items:baseline;gap:2px;">
+        <span style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;">R$</span>
+        <input type="number" id="ag-meta-prio-input" placeholder="0" onchange="agSetMeta('prio',this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px dashed #e8d080;font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;outline:none;padding:0;-webkit-appearance:none;">
+      </div>
       <div id="ag-meta-prio-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:#c88c00;margin-top:1px;"></div>
     </div>
     <div style="background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:9px;padding:8px 11px;">
       <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">📋 Meta Total</div>
-      <div id="ag-meta-total" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$0</div>
+      <div style="display:flex;align-items:baseline;gap:2px;">
+        <span style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$</span>
+        <input type="number" id="ag-meta-total-input" placeholder="0" onchange="agSetMeta('total',this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px dashed rgba(196,57,107,.25);font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);outline:none;padding:0;-webkit-appearance:none;">
+      </div>
       <div id="ag-meta-total-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:1px;"></div>
     </div>
   </div>
@@ -2396,20 +2715,20 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 var AG_PRECO_GALO = 58, AG_PRECO_GALINHA = 53, AG_OBRIGACAO = 270;
 
 var agPessoas = [
-  {nome:'Ness',galos:1,galinhas:2,coresGalos:[''],coresGalinhas:['']},
-  {nome:'Thali',galos:2,galinhas:5,coresGalos:[''],coresGalinhas:['']},
+  {nome:'Ness',galos:0,galinhas:0},{nome:'Thali',galos:0,galinhas:0},
   {nome:'Jaque',galos:2,galinhas:3,coresGalos:['',''],coresGalinhas:['','','']},
   {nome:'Tassi',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Brenda',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Anne',galos:0,galinhas:0},{nome:'Vitória',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Manu',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Juliana',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
-  {nome:'Gabi',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
+  {nome:'Gabi',galos:0,galinhas:1,coresGalinhas:['']},
   {nome:'Márcia',galos:0,galinhas:0},{nome:'Nicole',galos:0,galinhas:0},{nome:'Stephani',galos:0,galinhas:0}
 ];
 
 var agPgtos    = {};
 var agGastos   = [];
+var agMetas    = { prio: 0, total: 0 };
 var agCats     = [
   {nome:'Umbanda',   itens:[{desc:'Umbanda geral',val:100,pago:false,resp:''}]},
   {nome:'Padês',     itens:[{desc:'Padês',val:170,pago:false,resp:''}]},
@@ -2423,6 +2742,8 @@ var _agSaveTimer = null;
 
 function agSalvar() {
   clearTimeout(_agSaveTimer);
+  // Guarda metas dentro de agPgtos
+  agPgtos.__metas = agMetas;
   _agSaveTimer = setTimeout(function(){
     kvSet('ag_pgtos', agPgtos);
     kvSet('ag_gastos', agGastos);
@@ -2441,9 +2762,10 @@ function agCarregarDados(cb) {
     agPgtos  = res[0] || {};
     agGastos = Array.isArray(res[1]) ? res[1] : [];
     agCats   = res[2] || agCats;
+    // Restaura metas
+    if (agPgtos.__metas) agMetas = agPgtos.__metas;
     agPessoas.forEach(function(p, pi){ 
       if(!agPgtos[p.nome]) agPgtos[p.nome]={obr:0,aves:0};
-      // Restaura cores das aves se salvas
       if (agPgtos[p.nome]['cores_galos_'+pi]) p.coresGalos = agPgtos[p.nome]['cores_galos_'+pi];
       if (agPgtos[p.nome]['cores_galinhas_'+pi]) p.coresGalinhas = agPgtos[p.nome]['cores_galinhas_'+pi];
     });
@@ -2466,23 +2788,24 @@ function agAtualizarSaldo() {
   el.textContent=agFmtS(sal);
   el.style.color=sal>=0?'#2a7a60':'#b84040';
 
-  // Metas
-  var metaPrio=0, metaTot=0;
-  agCats.forEach(function(cat){
-    var allItens = cat.itens.slice();
-    (cat.subcats||[]).forEach(function(sc){ allItens = allItens.concat(sc.itens); });
-    allItens.forEach(function(item){
-      var v = agItemTotal(item);
-      metaTot += v;
-      if (item.prio) metaPrio += v;
-    });
-  });
+  // Metas (valores manuais salvos)
+  var metaPrio = agMetas.prio || 0;
+  var metaTot  = agMetas.total || 0;
   var pctPrio = metaPrio>0 ? Math.round(e/metaPrio*100) : 0;
   var pctTot  = metaTot>0  ? Math.round(e/metaTot*100)  : 0;
-  document.getElementById('ag-meta-prio').textContent = agFmtS(metaPrio);
-  document.getElementById('ag-meta-prio-pct').textContent = pctPrio+'% arrecadado'+(e>=metaPrio&&metaPrio>0?' ✅':'');
-  document.getElementById('ag-meta-total').textContent = agFmtS(metaTot);
-  document.getElementById('ag-meta-total-pct').textContent = pctTot+'% arrecadado'+(e>=metaTot&&metaTot>0?' ✅':'');
+  // Preenche inputs (sem sobrescrever se o usuário está digitando)
+  var inpP = document.getElementById('ag-meta-prio-input');
+  var inpT = document.getElementById('ag-meta-total-input');
+  if (inpP && document.activeElement !== inpP) inpP.value = metaPrio || '';
+  if (inpT && document.activeElement !== inpT) inpT.value = metaTot || '';
+  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(e)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(e>=metaPrio?' ✅':'')) : 'defina a meta';
+  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(e)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(e>=metaTot?' ✅':'')) : 'defina a meta';
+}
+
+function agSetMeta(tipo, valor) {
+  agMetas[tipo] = parseFloat(valor) || 0;
+  agSalvar();
+  agAtualizarSaldo();
 }
 
 function agTogglePrio(ci, si, ii) {
@@ -2690,7 +3013,6 @@ function agItemRowHTML(item, ci, si, ii) {
     + (item.pago?'<span style="font-size:.62rem;background:#e8f4f0;color:#2a7a60;border-radius:10px;padding:1px 5px;margin-left:4px">→ Gastos</span>':'')
     + '</span>'
     + linkBtn
-    + prioBtn
     + '<button class="ag-item-del" onclick="agClonarItem('+ci+','+siStr+','+ii+')" title="Clonar">⧉</button>'
     + '<button class="ag-item-del" onclick="agAbrirEditItem('+ci+','+siStr+','+ii+')" style="color:rgba(80,30,50,.4);">✏️</button>'
     + '<button class="ag-item-del" onclick="agDelItem('+ci+','+siStr+','+ii+')">🗑</button>'
