@@ -1546,7 +1546,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="dash-badges-grid dash-collapsible" id="dash-badges-cruz" style="display:none"></div>
 
     <div style="text-align:center;margin-top:22px">
-      <button class="btn-outline" onclick="showSuaHistoria()">✎ Editar minha ficha</button>
+      <button class="btn-rosa" style="cursor:pointer" onclick="showSuaHistoria()">✎ Editar minha ficha</button>
     </div>
   </div>
 
@@ -1619,12 +1619,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <!-- CONTEÚDO -->
     <div id="mh-conteudo" style="display:block">
-      <div class="mh-layout-2col">
-
-        <!-- COLUNA ESQUERDA: LINHA DO TEMPO -->
-        <div id="mh-timeline" style="position:relative"></div>
-
-        <!-- COLUNA DIREITA: FICHAS -->
+        <!-- FICHAS -->
         <div style="display:flex;flex-direction:column;gap:16px">
           <!-- História -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -1639,18 +1634,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <!-- Quimbanda — apronte e cortes, com contagem de aves -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Quimbanda</div>
-            <div class="mh-corte-grid" style="margin-bottom:14px">
-              <div><label>Apronte</label><div class="valor" id="mh-apronte-data">—</div></div>
-              <div><label>Galinhas</label><div class="valor" id="mh-apronte-galinhas">—</div></div>
-              <div><label>Galos</label><div class="valor" id="mh-apronte-galos">—</div></div>
-            </div>
-            <div class="mh-corte-grid" style="margin-bottom:4px">
-              <div><label>1º Corte</label><div class="valor" id="mh-corte1-data">—</div></div>
-              <div><label>Galinhas</label><div class="valor" id="mh-corte1-galinhas">—</div></div>
-              <div><label>Galos</label><div class="valor" id="mh-corte1-galos">—</div></div>
-            </div>
-            <!-- inputs de edição (ocultos em modo leitura) -->
-            <div id="mh-quimbanda-edicao" style="display:none;margin-top:10px">
+            <div id="mh-quimbanda-edicao">
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
                 <div><label class="form-label">Apronte</label><input type="date" class="form-input" id="mh-edit-apronte" style="margin-bottom:0"></div>
                 <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galinhas" style="margin-bottom:0" placeholder="0"></div>
@@ -1686,16 +1670,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <div class="perfil-field"><label>Inauguração</label><div class="valor" id="mh-terreiro-data"></div></div>
             </div>
           </div>
-          <!-- Editar perfil -->
+          <!-- Sobre você e observações — sempre editável -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
-              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Sobre você e observações</div>
-              <button id="sh-btn-editar" onclick="toggleEditarMinhaHistoria()"
-                style="background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer">
-                ✎ Editar
-              </button>
-            </div>
-            <div id="sh-form-edicao" style="display:none">
+            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Sobre você e observações</div>
+            <div id="sh-form-edicao">
               <div>
                 <label class="form-label">Sobre você (aparece na página de Guias)</label>
                 <textarea class="form-input" id="sh-edit-descricao" rows="3" placeholder="Conte um pouco sobre você, sua caminhada espiritual, seus interesses..." style="font-size:14px;resize:vertical"></textarea>
@@ -1707,18 +1685,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               </div>
               <div id="sh-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--rosa);font-style:italic;margin-bottom:8px"></div>
               <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-                <button onclick="toggleEditarMinhaHistoria()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer">Cancelar</button>
+                <button onclick="fecharEditarPerfilModal()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:8px 16px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer">Fechar</button>
                 <button id="sh-btn-enviar" onclick="salvarSuaHistoria()" class="btn-rosa" style="font-size:.65rem;padding:10px 22px">Salvar alterações ✦</button>
                 <div class="perfil-msg-ok" id="sh-msg-ok" style="display:none">✦ Salvo!</div>
               </div>
             </div>
-            <div id="sh-form-fechado" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">
-              Clique em Editar para atualizar sua descrição e deixar uma observação pra Mãe da Casa. Guias, datas e cruzamentos são editados direto nas fichas acima, também pelo botão ✎ Editar.
-              <div id="sh-notas-atual" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-style:normal;color:var(--text)"></div>
-            </div>
+            <div id="sh-notas-atual" style="display:none;margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim)"></div>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </div>
@@ -6964,17 +6938,20 @@ function renderMinhaHistoria(p, user) {
   }
 
   // fichas
-  renderCamposPerfil(camposHistoria,  'mh-grid-historia',    p.historia    || {});
-  renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {});
-  renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', p.cruzamentos || {});
+  renderCamposPerfil(camposHistoria,  'mh-grid-historia',    p.historia    || {}, true);
+  renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {}, true);
+  renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', p.cruzamentos || {}, true);
 
-  // quimbanda (apronte + 1º corte) e cortes adicionais
-  mhRenderQuimbanda(p.historia || {}, false);
-  mhRenderCortes(p.cortes || [], false);
-  mhRenderCruzamentosExtras(p.cruzamentosExtras || [], false);
+  // quimbanda (apronte + 1º corte) e cortes adicionais — sempre em modo edição, já que este modal É o editar
+  mhRenderQuimbanda(p.historia || {});
+  mhRenderCortes(p.cortes || [], true);
+  mhRenderCruzamentosExtras(p.cruzamentosExtras || [], true);
 
-  // linha do tempo
-  renderTimeline(p);
+  // descrição e observações — sempre visíveis e prontas pra editar
+  const descricaoEl = document.getElementById('sh-edit-descricao');
+  if (descricaoEl) descricaoEl.value = (p.historia?.descricao || '').trim();
+  const notasEl = document.getElementById('sh-edit-notas');
+  if (notasEl) notasEl.value = (p.notas || '').trim();
 }
 
 // filtro de grupos da linha do tempo — guarda o estado e os últimos dados por elemento,
@@ -7543,46 +7520,6 @@ function renderSuaHistoria() {
   renderMinhaHistoria();
 }
 
-window.toggleEditarMinhaHistoria = function() {
-  const btn = document.getElementById('sh-btn-editar');
-  const form = document.getElementById('sh-form-edicao');
-  const fechado = document.getElementById('sh-form-fechado');
-  if (!btn) return;
-
-  const editando = btn.dataset.editando === '1';
-
-  if (!editando) {
-    // ativa modo edição: re-renderiza fichas com inputs
-    renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {}, true);
-    renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {}, true);
-    renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {}, true);
-    mhRenderQuimbanda(perfilData.historia || {}, true);
-    mhRenderCortes(perfilData.cortes || [], true);
-    mhRenderCruzamentosExtras(perfilData.cruzamentosExtras || [], true);
-    // carrega descrição e observações
-    const descricaoEl = document.getElementById('sh-edit-descricao');
-    if (descricaoEl) descricaoEl.value = (perfilData.historia?.descricao || '').trim();
-    const notasEl = document.getElementById('sh-edit-notas');
-    if (notasEl) notasEl.value = (perfilData.notas || '').trim();
-    if (form) form.style.display = 'block';
-    if (fechado) fechado.style.display = 'none';
-    btn.textContent = '✕ Cancelar';
-    btn.dataset.editando = '1';
-  } else {
-    // cancela — volta modo leitura
-    renderCamposPerfil(camposHistoria,  'mh-grid-historia',    perfilData.historia    || {});
-    renderCamposPerfil(camposGuias,     'mh-grid-guias',       perfilData.guias       || {});
-    renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', perfilData.cruzamentos || {});
-    mhRenderQuimbanda(perfilData.historia || {}, false);
-    mhRenderCortes(perfilData.cortes || [], false);
-    mhRenderCruzamentosExtras(perfilData.cruzamentosExtras || [], false);
-    if (form) form.style.display = 'none';
-    if (fechado) fechado.style.display = 'block';
-    btn.textContent = '✎ Editar';
-    btn.dataset.editando = '0';
-  }
-};
-
 window.salvarSuaHistoria = async function() {
   if (!currentUser) return;
   const btn = document.getElementById('sh-btn-enviar');
@@ -7853,30 +7790,15 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
 }
 
 // ── QUIMBANDA — Apronte e 1º Corte, com contagem de aves ──
-function mhRenderQuimbanda(hist, editavel) {
+function mhRenderQuimbanda(hist) {
   hist = hist || {};
-  const editEl = document.getElementById('mh-quimbanda-edicao');
-
-  if (editavel) {
-    if (editEl) editEl.style.display = 'block';
-    const setIfExists = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-    setIfExists('mh-edit-apronte', hist.apronte);
-    setIfExists('mh-edit-apronte_galinhas', hist.apronte_galinhas);
-    setIfExists('mh-edit-apronte_galos', hist.apronte_galos);
-    setIfExists('mh-edit-corte_1', hist.corte_1);
-    setIfExists('mh-edit-corte_1_galinhas', hist.corte_1_galinhas);
-    setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
-    return;
-  }
-
-  if (editEl) editEl.style.display = 'none';
-  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
-  setText('mh-apronte-data', hist.apronte ? fmtData(hist.apronte) : '—');
-  setText('mh-apronte-galinhas', hist.apronte_galinhas || '—');
-  setText('mh-apronte-galos', hist.apronte_galos || '—');
-  setText('mh-corte1-data', hist.corte_1 ? fmtData(hist.corte_1) : '—');
-  setText('mh-corte1-galinhas', hist.corte_1_galinhas || '—');
-  setText('mh-corte1-galos', hist.corte_1_galos || '—');
+  const setIfExists = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  setIfExists('mh-edit-apronte', hist.apronte);
+  setIfExists('mh-edit-apronte_galinhas', hist.apronte_galinhas);
+  setIfExists('mh-edit-apronte_galos', hist.apronte_galos);
+  setIfExists('mh-edit-corte_1', hist.corte_1);
+  setIfExists('mh-edit-corte_1_galinhas', hist.corte_1_galinhas);
+  setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
 }
 
 // ── CORTES ADICIONAIS (2º corte em diante) ──
