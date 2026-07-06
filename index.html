@@ -2082,6 +2082,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <div id="page-manutencao" class="page">
   <div class="section-wrap">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div id="mn-debug-temp" style="display:none;background:#fff3cd;border:2px solid #d4a017;border-radius:10px;padding:14px;margin-bottom:16px;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;color:#5a4a10"></div>
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
     <div class="section-title">🔧 Manutenção da Casa</div>
     <p class="section-sub">O que precisa de reparo, quem cuida, e pra quando ✦</p>
@@ -5920,12 +5921,30 @@ const auth = getAuth(app);
     onSnapshot(colManutencao, snap => {
       mnItens = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));
+
+      // DEBUG TEMPORÁRIO — remover depois de identificar a causa
+      const debugEl = document.getElementById('mn-debug-temp');
+      if (debugEl) {
+        debugEl.style.display = 'block';
+        debugEl.textContent = `🔍 DEBUG — ${new Date().toLocaleTimeString('pt-BR')}\ndocumentos encontrados: ${snap.docs.length}\n\n` +
+          (mnItens.length ? mnItens.map(i => `• "${i.titulo}" — status: ${JSON.stringify(i.status)} — id: ${i.id}`).join('\n') : '(nenhum documento retornado pela consulta)');
+      }
+
       const carregando = document.getElementById('mn-carregando');
       if (carregando) carregando.style.display = 'none';
       mnRenderizar();
       mnAtualizarProxima();
       mnAtualizarCard();
-    }, err => console.warn('manutencao onSnapshot:', err));
+    }, err => {
+      console.warn('manutencao onSnapshot:', err);
+      const debugEl = document.getElementById('mn-debug-temp');
+      if (debugEl) {
+        debugEl.style.display = 'block';
+        debugEl.style.background = '#fdecea';
+        debugEl.style.borderColor = '#c0392b';
+        debugEl.textContent = `🔴 ERRO na consulta — ${new Date().toLocaleTimeString('pt-BR')}\n${err.code || ''}: ${err.message || err}`;
+      }
+    });
 
     async function mnAdicionarItem() {
       const tituloEl = document.getElementById('mn-inp-titulo');
@@ -6396,7 +6415,8 @@ const auth = getAuth(app);
       if (!wrap) return;
       if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
       const ICONE = { pendente: '🔧', aguardando: '⏳', agendada: '📅' };
-      wrap.innerHTML = rmManutencao.map(m => `<div class="rm-linha"><span>${ICONE[m.status] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${m.status === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (m.status === 'aguardando' ? 'aguardando' : 'pendente')}</span></div>`).join('');
+      wrap.innerHTML = `<div style="background:#fff3cd;border:2px solid #d4a017;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin-bottom:8px;white-space:pre-wrap">🔍 DEBUG (Resumo) — ${snap.docs.length} documentos brutos, ${rmManutencao.length} após filtro de concluída — ${new Date().toLocaleTimeString('pt-BR')}</div>` +
+        rmManutencao.map(m => `<div class="rm-linha"><span>${ICONE[m.status] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${m.status === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (m.status === 'aguardando' ? 'aguardando' : 'pendente')}</span></div>`).join('');
     }, err => console.warn('resumo manutencao:', err));
 
     // ── LISTA DE COMPRAS (itens precisando) ──
