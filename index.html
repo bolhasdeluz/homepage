@@ -1368,6 +1368,24 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 #mh-modal-overlay #mh-cruz-extras-lista{gap:6px!important;margin-top:6px!important}
 #mh-modal-overlay .mh-corte-empty{padding:6px 0!important}
 
+/* corrige sobreposição: box-sizing padrão soma padding fora dos 100% de largura,
+   fazendo o campo "vazar" pra cima do vizinho no grid — e esconde as setinhas do
+   number input, que também contribuíam pra sobreposição em campos estreitos */
+#mh-modal-overlay input,
+#mh-modal-overlay textarea,
+#mh-modal-overlay select{box-sizing:border-box!important;max-width:100%!important}
+#mh-modal-overlay input[type=number]::-webkit-outer-spin-button,
+#mh-modal-overlay input[type=number]::-webkit-inner-spin-button{
+  -webkit-appearance:none!important;margin:0!important;
+}
+#mh-modal-overlay input[type=number]{-moz-appearance:textfield;appearance:textfield}
+#mh-modal-overlay .perfil-grid,
+#mh-modal-overlay .mh-corte-grid{min-width:0!important}
+#mh-modal-overlay .perfil-grid > *,
+#mh-modal-overlay .mh-corte-grid > *{min-width:0!important;overflow:hidden!important}
+
+#mh-modal-overlay input[type=text]{text-overflow:ellipsis}
+
 /* aniversário — agora mora na Início, ao lado do nome; não duplica aqui */
 #mh-modal-overlay #mh-aniversario{display:none!important}
 
@@ -2667,6 +2685,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div><label class="form-label">Pedreira</label><input type="date" class="form-input" id="cp-cruz_pedreira"></div>
     </div>
 
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-ativo" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        Perfil ativo (desmarque se a pessoa saiu da casa — some de tudo, mas os dados ficam guardados)
+      </label>
+    </div>
     <!-- CAMPOS CACIQUE -->
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
       ✦ Cacique — campos especiais
@@ -3371,7 +3395,7 @@ async function iniciarSimulacao() {
   try {
     const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
     const perfis = await res.json();
-    perfis.forEach(p => {
+    perfis.filter(p => p.ativo !== false).forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.email;
       opt.textContent = (p.nome || p.email.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
@@ -3524,10 +3548,11 @@ async function carregarFilhasAdmin() {
     const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
     const perfis = await res.json();
     if (!perfis.length) { grid.innerHTML = '<div class="admin-filhas-vazio">Nenhum perfil salvo ainda.</div>'; return; }
-    grid.innerHTML = perfis.map(p => `
-      <div class="admin-filha-card" onclick="abrirFicha('${p.email}')">
+    const ordenados = [...perfis].sort((a,b) => (a.ativo===false?1:0) - (b.ativo===false?1:0));
+    grid.innerHTML = ordenados.map(p => `
+      <div class="admin-filha-card" style="${p.ativo===false?'opacity:.5':''}" onclick="abrirFicha('${p.email}')">
         <div class="admin-filha-foto">${p.foto?`<img src="${p.foto}" alt="">`:'👤'}</div>
-        <div class="admin-filha-nome">${p.nome||p.email.split('@')[0]}</div>
+        <div class="admin-filha-nome">${p.nome||p.email.split('@')[0]}${p.ativo===false?' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>':''}</div>
         <div class="admin-filha-guia">${p.guias?.caboclo||p.historia?.guia_chefe||'sem guia'}</div>
       </div>`).join('');
   } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
@@ -3659,6 +3684,7 @@ function abrirCriarPerfil(emailParaEditar) {
   document.getElementById('cp-status').textContent = '';
   document.getElementById('cp-email').disabled = false;
   document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
+  if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -3694,6 +3720,7 @@ function preencherFormPerfil(p) {
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
   if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
   if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
+  if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = p.ativo !== false;
   if (document.getElementById('cp-visivelGuias')) document.getElementById('cp-visivelGuias').checked = !!p.visivelGuias;
 }
 
@@ -3719,6 +3746,7 @@ async function salvarPerfilAdmin() {
     cruzamentos: { ...(base.cruzamentos || {}) },
     criadoEm: base.criadoEm || Date.now(),
     solicitacao: 'Perfil criado/editado pelo admin',
+    ativo: document.getElementById('cp-ativo')?.checked !== false,
     visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     cacique: {
       ...(base.cacique || {}),
@@ -4379,7 +4407,7 @@ async function guiasLoad() {
     const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
     const todos = await res.json();
     console.log('perfis no KV:', todos.length, 'com visivelGuias:', todos.filter(p=>p.visivelGuias).length);
-    guiasData = todos.filter(p => p.visivelGuias && p.nome);
+    guiasData = todos.filter(p => p.visivelGuias && p.nome && p.ativo !== false);
     guiasRenderGrid(guiasData);
   } catch(e) {
     grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);font-family:\'Crimson Pro\',serif;font-style:italic">Erro ao carregar.</div>';
@@ -5227,7 +5255,6 @@ const ANIVERSARIOS = [
   { mes:10, dia:30, nome:'Terreira' },
   { mes:11, dia:3,  nome:'Marcia' },
   { mes:11, dia:13, nome:'Tassiana' },
-  { mes:11, dia:14, nome:'Ju' },
   { mes:12, dia:24, nome:'Dona Olívia' },
 ];
 window.ANIVERSARIOS = ANIVERSARIOS;
