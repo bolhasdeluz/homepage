@@ -6371,7 +6371,9 @@ const auth = getAuth(app);
         });
         rmTesEntradas = doMes.filter(l => l.tipo === 'entrada').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
         // gastos pendentes (contas ainda não pagas) não entram na saída realizada do mês
-        rmTesSaidas = doMes.filter(l => l.tipo === 'gasto' && l.status !== 'pendente').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+        // a Tesouraria real soma TODOS os gastos do mês no total exibido, sem excluir pendentes —
+        // segue o mesmo critério aqui pra bater com o número de lá
+        rmTesSaidas = doMes.filter(l => l.tipo === 'gasto').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
       } catch(e) { console.warn('lancamentos (tesouraria real) load:', e); rmTesEntradas = 0; rmTesSaidas = 0; }
 
       rmRenderTesouraria();
