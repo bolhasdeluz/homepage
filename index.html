@@ -3050,7 +3050,8 @@ function renderDrawerItem(item, ctx) {
   const isMem = item.type === 'members';
   const dotClass = isMem || grupoUsuario === 'admin' ? 'mem' : '';
 
-  // ── widget especial: Nossa História / Minha História ──
+  // ── widget especial: Nossa História (pública) — "Minha História" foi removida daqui,
+  // já que agora abre pelo botão "✎ Editar minha ficha" direto na Início ──
   if (item.id === 'historia') {
     if (!logada) return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
@@ -3058,7 +3059,7 @@ function renderDrawerItem(item, ctx) {
     if (!ehAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
       return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     }
-    return drawerTile({ id:'historia', label:'Minha História' }, `onclick="showSuaHistoria();closeDrawer()"`, 'Sua jornada espiritual na casa', 'mem');
+    return ''; // é filha da casa/admin — já tem o editar na Início, não precisa do atalho aqui
   }
 
   // ── widget especial: Sessões & Eventos / Calendário ──
@@ -3152,15 +3153,15 @@ function renderCards() {
       // item marcado como "só admin" — ninguém mais vê, nem quem está nos grupos acima
       if (item.adminOnly && grupoUsuario !== 'admin') return;
 
-      // widget especial: historia
+      // widget especial: historia (pública) — "Minha História" removida daqui,
+      // já que agora abre pelo botão "✎ Editar minha ficha" direto na Início
       if (item.id === 'historia') {
         if (!logada) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         const grupoUser = pd.grupo || 'visitante';
         const isAdminReal = ehAdmin;
         if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
-        html += widgetTile({ id:'historia', label:'Minha História' }, `onclick="showSuaHistoria();return false"`, 'Sua jornada espiritual na casa');
-        return;
+        return; // é filha da casa/admin — já tem o editar na Início, não precisa do card aqui
       }
 
       if (item.id === 'sessoes' || item.id === 'calendario') {
