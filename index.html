@@ -1094,6 +1094,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mn-sec-label.pendente{color:var(--terra)}
 .mn-sec-label.aguardando{color:var(--amber,#b45309)}
 .mn-sec-label.agendada{color:#4a6fa5}
+.mn-sec-label.andamento{color:#8a5ec4}
 .mn-sec-label.concluida{color:var(--green)}
 
 .mn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:6px}
@@ -1102,6 +1103,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mn-card.pendente{border-left:4px solid var(--terra)}
 .mn-card.aguardando{border-left:4px solid var(--amber,#b45309)}
 .mn-card.agendada{border-left:4px solid #4a6fa5}
+.mn-card.andamento{border-left:4px solid #8a5ec4}
 .mn-card.concluida{border-left:4px solid var(--green);opacity:.72;background:linear-gradient(90deg,var(--green-dim) 0%,#fff 16%)}
 .mn-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
 .mn-card-titulo{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:600;color:var(--text);line-height:1.3}
@@ -1117,6 +1119,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mn-badge-status.pendente{background:rgba(140,58,26,.08);color:var(--terra)}
 .mn-badge-status.aguardando{background:#fef3c7;color:var(--amber,#b45309)}
 .mn-badge-status.agendada{background:rgba(74,111,165,.1);color:#4a6fa5}
+.mn-badge-status.andamento{background:rgba(138,94,196,.1);color:#8a5ec4}
 .mn-badge-status.concluida{background:var(--green-dim);color:var(--green)}
 .mn-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
 .mn-btn-concluir{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:6px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
@@ -2082,7 +2085,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <div id="page-manutencao" class="page">
   <div class="section-wrap">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
-    <div id="mn-debug-temp" style="display:none;background:#fff3cd;border:2px solid #d4a017;border-radius:10px;padding:14px;margin-bottom:16px;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;color:#5a4a10"></div>
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
     <div class="section-title">🔧 Manutenção da Casa</div>
     <p class="section-sub">O que precisa de reparo, quem cuida, e pra quando ✦</p>
@@ -2104,6 +2106,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="mn-stats">
         <div class="mn-stat"><span class="mn-stat-n pendente" id="mn-cnt-pendente">0</span><span class="mn-stat-l">pendente</span></div>
         <div class="mn-stat"><span class="mn-stat-n aguardando" id="mn-cnt-aguardando">0</span><span class="mn-stat-l">aguardando</span></div>
+        <div class="mn-stat"><span class="mn-stat-n andamento" id="mn-cnt-andamento" style="color:#4a6fa5">0</span><span class="mn-stat-l">andamento</span></div>
         <div class="mn-stat"><span class="mn-stat-n agendada" id="mn-cnt-agendada">0</span><span class="mn-stat-l">agendada</span></div>
         <div class="mn-stat"><span class="mn-stat-n concluida" id="mn-cnt-concluida">0</span><span class="mn-stat-l">concluída</span></div>
       </div>
@@ -2123,6 +2126,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <select id="mn-inp-status">
             <option value="pendente">🔧 Pendente</option>
             <option value="aguardando">⏳ Aguardando</option>
+            <option value="andamento">🔄 Em Andamento</option>
             <option value="agendada">📅 Agendada</option>
           </select>
         </div>
@@ -2134,6 +2138,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <div id="mn-lista-pendente"></div>
     <div id="mn-lista-aguardando"></div>
+    <div id="mn-lista-andamento"></div>
     <div id="mn-lista-agendada"></div>
     <div id="mn-lista-concluida"></div>
     <div id="mn-carregando" class="mn-carregando">Carregando manutenções...</div>
@@ -2152,6 +2157,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <select id="mn-modal-status">
           <option value="pendente">🔧 Pendente</option>
           <option value="aguardando">⏳ Aguardando</option>
+          <option value="andamento">🔄 Em Andamento</option>
           <option value="agendada">📅 Agendada</option>
           <option value="concluida">✅ Concluída</option>
         </select>
@@ -5892,13 +5898,21 @@ const auth = getAuth(app);
     document.getElementById('es-rel-enviar')?.addEventListener('click', esEnviarWhatsapp);
   })();
 
+  // ── normalização de status de manutenção, compartilhada entre a página de Manutenção
+  // e o card de Manutenção do Resumo Mensal — cobre status "antigos"/digitados manualmente
+  // (era por isso que "futura"/"andamento" apareciam num lugar e não no outro)
+  const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', andamento: '🔄', concluida: '✅' };
+  const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', andamento: '🔄 Em Andamento', concluida: '✅ Concluída' };
+  function mnStatusReal(item) {
+    const s = (item.status || 'pendente').toLowerCase().trim();
+    if (['pendente','aguardando','agendada','andamento','concluida'].includes(s)) return s;
+    return 'pendente'; // cobre "futura" e qualquer outro valor desconhecido
+  }
+
   // ══ MANUTENÇÃO ══
   (function initManutencao() {
     const colManutencao = collection(db, 'manutencao');
     let mnItens = [];
-
-    const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', concluida: '✅' };
-    const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', concluida: '✅ Concluída' };
 
     function mnToast(msg, erro) {
       const t = document.createElement('div');
@@ -5922,29 +5936,12 @@ const auth = getAuth(app);
       mnItens = snap.docs.map(d => ({ id: d.id, ...d.data() }))
         .sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));
 
-      // DEBUG TEMPORÁRIO — remover depois de identificar a causa
-      const debugEl = document.getElementById('mn-debug-temp');
-      if (debugEl) {
-        debugEl.style.display = 'block';
-        debugEl.textContent = `🔍 DEBUG — ${new Date().toLocaleTimeString('pt-BR')}\ndocumentos encontrados: ${snap.docs.length}\n\n` +
-          (mnItens.length ? mnItens.map(i => `• "${i.titulo}" — status: ${JSON.stringify(i.status)} — id: ${i.id}`).join('\n') : '(nenhum documento retornado pela consulta)');
-      }
-
       const carregando = document.getElementById('mn-carregando');
       if (carregando) carregando.style.display = 'none';
       mnRenderizar();
       mnAtualizarProxima();
       mnAtualizarCard();
-    }, err => {
-      console.warn('manutencao onSnapshot:', err);
-      const debugEl = document.getElementById('mn-debug-temp');
-      if (debugEl) {
-        debugEl.style.display = 'block';
-        debugEl.style.background = '#fdecea';
-        debugEl.style.borderColor = '#c0392b';
-        debugEl.textContent = `🔴 ERRO na consulta — ${new Date().toLocaleTimeString('pt-BR')}\n${err.code || ''}: ${err.message || err}`;
-      }
-    });
+    }, err => console.warn('manutencao onSnapshot:', err));
 
     async function mnAdicionarItem() {
       const tituloEl = document.getElementById('mn-inp-titulo');
@@ -5978,7 +5975,7 @@ const auth = getAuth(app);
       mnEditandoId = id;
       document.getElementById('mn-modal-titulo').value = item.titulo || '';
       document.getElementById('mn-modal-descricao').value = item.descricao || '';
-      document.getElementById('mn-modal-status').value = item.status || 'pendente';
+      document.getElementById('mn-modal-status').value = mnStatusReal(item);
       document.getElementById('mn-modal-data').value = item.dataLimite || '';
       document.getElementById('mn-modal-responsavel').value = item.responsavel || '';
       document.getElementById('mn-modal').style.display = 'flex';
@@ -6013,7 +6010,7 @@ const auth = getAuth(app);
     }
 
     function mnCardTarefa(item) {
-      const status = item.status || 'pendente';
+      const status = mnStatusReal(item);
       const d = document.createElement('div');
       d.className = 'mn-card ' + status;
       const metaHtml = `
@@ -6043,20 +6040,24 @@ const auth = getAuth(app);
     }
 
     function mnRenderizar() {
-      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
-      const aguardando = mnItens.filter(i => i.status === 'aguardando');
-      const agendadas = mnItens.filter(i => i.status === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
-      const concluidas = mnItens.filter(i => i.status === 'concluida');
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      const concluidas = mnItens.filter(i => mnStatusReal(i) === 'concluida');
 
       const cP = document.getElementById('mn-cnt-pendente'), cA = document.getElementById('mn-cnt-aguardando'),
-            cG = document.getElementById('mn-cnt-agendada'), cC = document.getElementById('mn-cnt-concluida');
+            cG = document.getElementById('mn-cnt-agendada'), cAn = document.getElementById('mn-cnt-andamento'),
+            cC = document.getElementById('mn-cnt-concluida');
       if (!cP) return;
       cP.textContent = pendentes.length; cA.textContent = aguardando.length;
       cG.textContent = agendadas.length; cC.textContent = concluidas.length;
+      if (cAn) cAn.textContent = andamento.length;
 
       const lp = document.getElementById('mn-lista-pendente'); lp.innerHTML = '';
       const la = document.getElementById('mn-lista-aguardando'); la.innerHTML = '';
       const lg = document.getElementById('mn-lista-agendada'); lg.innerHTML = '';
+      const lan = document.getElementById('mn-lista-andamento'); if (lan) lan.innerHTML = '';
       const lc = document.getElementById('mn-lista-concluida'); lc.innerHTML = '';
 
       if (pendentes.length) {
@@ -6077,6 +6078,12 @@ const auth = getAuth(app);
         const grid = document.createElement('div'); grid.className = 'mn-grid';
         agendadas.forEach(i => grid.appendChild(mnCardTarefa(i))); lg.appendChild(grid);
       }
+      if (andamento.length && lan) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label andamento'; s.innerHTML = '🔄 Em Andamento';
+        lan.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        andamento.forEach(i => grid.appendChild(mnCardTarefa(i))); lan.appendChild(grid);
+      }
       if (concluidas.length) {
         const s = document.createElement('div'); s.className = 'mn-sec-label concluida'; s.innerHTML = '✅ Concluída';
         lc.appendChild(s);
@@ -6089,17 +6096,21 @@ const auth = getAuth(app);
 
     // ── "PRÓXIMA MANUTENÇÃO" (topo da página + card na home) ──
     function mnProximaInfo() {
-      const agendadas = mnItens.filter(i => i.status === 'agendada' && i.dataLimite)
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada' && i.dataLimite)
         .sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
       if (agendadas.length) {
         const prox = agendadas[0];
         return { icone: '📅', label: 'Próxima Manutenção', titulo: prox.titulo, sub: mnFmtData(prox.dataLimite) + (prox.responsavel ? ' · ' + prox.responsavel : '') };
       }
-      const aguardando = mnItens.filter(i => i.status === 'aguardando');
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      if (andamento.length) {
+        return { icone: '🔄', label: 'Em Andamento', titulo: andamento[0].titulo, sub: andamento.length > 1 ? `+ ${andamento.length - 1} outra(s) em andamento` : 'Sendo cuidada agora' };
+      }
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
       if (aguardando.length) {
         return { icone: '⏳', label: 'Aguardando', titulo: aguardando[0].titulo, sub: aguardando.length > 1 ? `+ ${aguardando.length - 1} outra(s) aguardando` : 'Sem data definida ainda' };
       }
-      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
       if (pendentes.length) {
         return { icone: '🔧', label: 'Pendente', titulo: pendentes[0].titulo, sub: pendentes.length > 1 ? `+ ${pendentes.length - 1} outra(s) pendente(s)` : 'Ainda não começou' };
       }
@@ -6145,16 +6156,22 @@ const auth = getAuth(app);
 
     // ── RELATÓRIO WHATSAPP ──
     function mnGerarTextoRelatorio() {
-      const pendentes = mnItens.filter(i => (i.status || 'pendente') === 'pendente');
-      const aguardando = mnItens.filter(i => i.status === 'aguardando');
-      const agendadas = mnItens.filter(i => i.status === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
-      const concluidas = mnItens.filter(i => i.status === 'concluida');
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      const concluidas = mnItens.filter(i => mnStatusReal(i) === 'concluida');
       const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
       let txt = `🔧 *Manutenção do Terreiro Bolhas de Luz*\n📅 ${hoje}\n\n`;
       if (agendadas.length) {
         txt += `📅 *Agendadas:*\n`;
         agendadas.forEach(i => { txt += `• ${i.titulo} — ${mnFmtData(i.dataLimite)}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (andamento.length) {
+        txt += `🔄 *Em andamento:*\n`;
+        andamento.forEach(i => { txt += `• ${i.titulo}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
         txt += `\n`;
       }
       if (aguardando.length) {
@@ -6167,11 +6184,11 @@ const auth = getAuth(app);
         pendentes.forEach(i => { txt += `• ${i.titulo}\n`; });
         txt += `\n`;
       }
-      if (!agendadas.length && !aguardando.length && !pendentes.length) {
+      if (!agendadas.length && !andamento.length && !aguardando.length && !pendentes.length) {
         txt += `✅ Nenhuma manutenção pendente — tudo em dia! 🎉\n\n`;
       }
       txt += `✅ Concluídas recentemente: ${concluidas.length}\n`;
-      if (agendadas.length || aguardando.length || pendentes.length) txt += `\n💌 Quem puder ajudar com alguma tarefa, é só falar na corrente ✦\n`;
+      if (agendadas.length || andamento.length || aguardando.length || pendentes.length) txt += `\n💌 Quem puder ajudar com alguma tarefa, é só falar na corrente ✦\n`;
       txt += `\n_Atualizado por ${mnNomeAtual()} via bolhasdeluz.ong.br_`;
       return txt;
     }
@@ -6410,13 +6427,15 @@ const auth = getAuth(app);
 
     // ── MANUTENÇÃO ATUAL ──
     onSnapshot(collection(db, 'manutencao'), snap => {
-      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => (i.status || 'pendente') !== 'concluida');
+      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => mnStatusReal(i) !== 'concluida');
       const wrap = document.getElementById('rm-manut-lista');
       if (!wrap) return;
       if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
-      const ICONE = { pendente: '🔧', aguardando: '⏳', agendada: '📅' };
-      wrap.innerHTML = `<div style="background:#fff3cd;border:2px solid #d4a017;font-family:monospace;font-size:11px;padding:8px;border-radius:6px;margin-bottom:8px;white-space:pre-wrap">🔍 DEBUG (Resumo) — ${snap.docs.length} documentos brutos, ${rmManutencao.length} após filtro de concluída — ${new Date().toLocaleTimeString('pt-BR')}</div>` +
-        rmManutencao.map(m => `<div class="rm-linha"><span>${ICONE[m.status] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${m.status === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (m.status === 'aguardando' ? 'aguardando' : 'pendente')}</span></div>`).join('');
+      wrap.innerHTML = rmManutencao.map(m => {
+        const st = mnStatusReal(m);
+        const tag = st === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (MN_LABEL_STATUS[st] || st).replace(/^\S+\s/, '');
+        return `<div class="rm-linha"><span>${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${tag}</span></div>`;
+      }).join('');
     }, err => console.warn('resumo manutencao:', err));
 
     // ── LISTA DE COMPRAS (itens precisando) ──
@@ -6458,8 +6477,7 @@ const auth = getAuth(app);
 
       txt += `🔧 *Manutenção:*\n`;
       if (rmManutencao.length) {
-        const ICONE = { pendente: '🔧', aguardando: '⏳', agendada: '📅' };
-        rmManutencao.forEach(m => { txt += `• ${ICONE[m.status] || '🔧'} ${m.titulo}${m.status === 'agendada' && m.dataLimite ? ' — ' + rmFmtDataISO(m.dataLimite) : ''}\n`; });
+        rmManutencao.forEach(m => { const st = mnStatusReal(m); txt += `• ${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}${st === 'agendada' && m.dataLimite ? ' — ' + rmFmtDataISO(m.dataLimite) : ''}\n`; });
       } else txt += `Tudo em dia ✦\n`;
       txt += `\n`;
 
