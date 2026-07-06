@@ -6344,11 +6344,9 @@ const auth = getAuth(app);
       // mês anterior ao mês selecionado no resumo
       let m = rmMesNumero() - 1, a = rmAnoNumero();
       if (m < 1) { m = 12; a -= 1; }
-      const inicio = `${a}-${String(m).padStart(2,'0')}-01`;
-      const ultimoDia = new Date(a, m, 0).getDate();
-      const fim = `${a}-${String(m).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+      const mesRef = `${a}-${String(m).padStart(2,'0')}`;
       const label = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
-      return { inicio, fim, label };
+      return { mesRef, label };
     }
     async function rmCarregarTesouraria() {
       // observação manual (única coisa que ainda é digitada aqui)
@@ -6358,15 +6356,23 @@ const auth = getAuth(app);
         rmTesouraria = d ? d.data() : null;
       } catch(e) { console.warn('tesouraria load:', e); rmTesouraria = null; }
 
-      // dados reais: soma dos lançamentos da Tesouraria no mês passado (relativo ao mês do resumo)
-      const { inicio, fim, label } = rmMesPassadoInfo();
+      // dados reais: vêm da Tesouraria de verdade (app separado em /tesouraria, API própria em /api/dados —
+      // não é Firestore). Soma os lançamentos do mês passado (relativo ao mês escolhido no resumo).
+      const { mesRef, label } = rmMesPassadoInfo();
       rmTesMesLabel = label;
       try {
-        const snapLanc = await getDocs(collection(db, 'tesouraria_lancamentos'));
-        const doMes = snapLanc.docs.map(d => d.data()).filter(l => l.data >= inicio && l.data <= fim);
+        const res = await fetch('/api/dados?chave=lancamentos');
+        const lancamentos = await res.json();
+        const lista = Array.isArray(lancamentos) ? lancamentos : [];
+        const doMes = lista.filter(l => {
+          // entradas usam "competencia" quando preenchida, senão a data do pagamento
+          const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : '');
+          return ref === mesRef;
+        });
         rmTesEntradas = doMes.filter(l => l.tipo === 'entrada').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
-        rmTesSaidas = doMes.filter(l => l.tipo === 'saida').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
-      } catch(e) { console.warn('lancamentos load:', e); rmTesEntradas = 0; rmTesSaidas = 0; }
+        // gastos pendentes (contas ainda não pagas) não entram na saída realizada do mês
+        rmTesSaidas = doMes.filter(l => l.tipo === 'gasto' && l.status !== 'pendente').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+      } catch(e) { console.warn('lancamentos (tesouraria real) load:', e); rmTesEntradas = 0; rmTesSaidas = 0; }
 
       rmRenderTesouraria();
     }
