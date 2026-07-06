@@ -435,7 +435,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             <option value="">Selecionar membro…</option>
             <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
             <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-            <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+            <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           </select>
         </div>
         <div class="field"><label class="field-label">Mês de competência</label>
@@ -570,7 +570,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             <option value="">Selecionar membro…</option>
             <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
             <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-            <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+            <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           </select>
         </div>
         <div id="campo-extra" class="field" style="display:none;"><label class="field-label">Descrição</label>
@@ -680,7 +680,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
           <option value="">Selecionar membro…</option>
           <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
           <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-          <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+          <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           <option value="__externo">Externo / não é membro</option>
         </select>
       </div>
@@ -709,6 +709,20 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
 <script>
   // ── HELPERS ───────────────────────────────────────────────
+  // Membros que saíram da casa, com o mês (YYYY-MM) a partir do qual não contam mais
+  var MEMBROS_SAIDA = { 'Juliana': '2026-07' };
+  // Lista completa histórica (usada para não quebrar cálculos de meses antigos)
+  var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+
+  // Retorna a lista de membros ativos num dado mês (YYYY-MM). Sem argumento = ativos hoje.
+  function getMembrosAtivos(mesRef) {
+    var ref = mesRef || today().slice(0,7);
+    return MEMBROS_TODOS.filter(function(m){
+      var saida = MEMBROS_SAIDA[m];
+      return !saida || ref < saida;
+    });
+  }
+
   function today() {
     return new Date().toISOString().split('T')[0];
   }
@@ -1102,7 +1116,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     var totalG = lista.filter(function(l){ return l.tipo === 'gasto'; }).reduce(function(a,l){ return a + l.valor; }, 0);
     var saldo = totalE - totalG;
 
-    var MEMBROS_FIXOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+    var MEMBROS_FIXOS = getMembrosAtivos(filtroMesAtivo);
 
     if (filtroMesAtivo) {
       // Modo mês: mostra % em destaque
@@ -1160,16 +1174,17 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         mesesAno[ref][l.membro] = true;
       });
       var mesesAnoKeys = Object.keys(mesesAno);
-      var somaPct = mesesAnoKeys.reduce(function(s,m){ return s + Object.keys(mesesAno[m]).length/MEMBROS_FIXOS.length*100; }, 0);
+      var somaPct = mesesAnoKeys.reduce(function(s,m){ return s + Object.keys(mesesAno[m]).length/getMembrosAtivos(m).length*100; }, 0);
       var pctPagAno = mesesAnoKeys.length > 0 ? Math.round(somaPct / mesesAnoKeys.length) : 0;
-      var nPagAno = Math.round(pctPagAno / 100 * MEMBROS_FIXOS.length);
+      var membrosAgora = getMembrosAtivos();
+      var nPagAno = Math.round(pctPagAno / 100 * membrosAgora.length);
       var pctCobAno = totalGAno>0 ? Math.round(totalEAno/totalGAno*100) : (totalEAno>0?100:0);
 
       document.getElementById('card-modo-mes').style.display = 'none';
       document.getElementById('card-modo-total').style.display = 'block';
       document.getElementById('saldo-label-mes').textContent = 'Ano ' + anoAtual;
       document.getElementById('stat-ano-pct-pag').textContent = pctPagAno + '%';
-      document.getElementById('stat-ano-pag-sub').textContent = nPagAno + '/' + MEMBROS_FIXOS.length + ' membros';
+      document.getElementById('stat-ano-pag-sub').textContent = nPagAno + '/' + membrosAgora.length + ' membros';
       document.getElementById('stat-ano-pct-cob').textContent = pctCobAno + '%';
       document.getElementById('stat-ano-cob-sub').textContent = fmt(totalEAno) + ' / ' + fmt(totalGAno);
       document.getElementById('stat-ano-bar').style.width = Math.min(pctCobAno,100) + '%';
@@ -1201,7 +1216,6 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   }
 
   function renderHistorico() {
-    var MEMBROS_FIXOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
     var el = document.getElementById('lista-historico');
 
     // ── Visão panorâmica de meses ────────────────────────────
@@ -1226,6 +1240,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         + '<div style="font-family:\'Cinzel\',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Extrato Mensal</div>'
         + mesesOrdenados.map(function(mes) {
             var d = meses[mes];
+            var MEMBROS_FIXOS = getMembrosAtivos(mes);
             var saldo = d.e - d.g;
             var pctValor = d.g > 0 ? Math.round(d.e / d.g * 100) : (d.e > 0 ? 100 : 0);
             var nPag = Object.keys(d.pagantes).length;
@@ -1285,9 +1300,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   }
 
   function renderResumo() {
-    var MEMBROS_FIXOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
-
-    // ── Tabela mensalidade membro × mês ──────────────────────
+    var MEMBROS_FIXOS = MEMBROS_TODOS;
     var mesesSet = {};
     lancamentos.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; }).forEach(function(l){
       var ref = l.competencia || (l.data ? l.data.slice(0,7) : null);
@@ -1714,7 +1727,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         html += '</table>';
       } else {
         html += '<table><tr><th>Membro</th><th>Competência</th><th>Data Pgto</th><th style="text-align:right">Valor</th></tr>';
-        var MEMBROS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+        var MEMBROS = MEMBROS_TODOS;
         var membrosOrdenados = Object.keys(porMembro).sort(function(a,b){
           var ia=MEMBROS.indexOf(a), ib=MEMBROS.indexOf(b);
           if(ia===-1&&ib===-1) return a.localeCompare(b);
@@ -1762,7 +1775,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       }
 
       html += '<h2>Resumo Final</h2>';
-      var MEMBROS_EXP = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+      var MEMBROS_EXP = getMembrosAtivos(ate);
       var pagamMes = {};
       entradas.filter(function(l){ return l.subTipo!=='extra'; }).forEach(function(l){ if(l.membro) pagamMes[l.membro]=true; });
       var nPagEXP = Object.keys(pagamMes).length;
@@ -1828,7 +1841,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       });
       rows.push(['TOTAL GASTOS','','','',totalG.toFixed(2),'']);
       // % stats
-      var MEMBROS_CSV = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+      var MEMBROS_CSV = getMembrosAtivos(ate);
       var pagamCSV = {};
       entradas.filter(function(l){return l.subTipo!=='extra';}).forEach(function(l){if(l.membro)pagamCSV[l.membro]=true;});
       var nPagCSV = Object.keys(pagamCSV).length;
@@ -1901,7 +1914,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       });
 
       // % pagantes e cobertura
-      var MEMBROS_WPP = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+      var MEMBROS_WPP = getMembrosAtivos(ate);
       var pagamWPP = {};
       entradas.filter(function(l){return l.subTipo!=='extra';}).forEach(function(l){if(l.membro)pagamWPP[l.membro]=true;});
       var nPagWPP = Object.keys(pagamWPP).length;
@@ -2118,7 +2131,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   var direcionandoId = null;
 
   var CONTAS_GASTO = ['Luz','Água','Alarme Serviço','Internet','Aluguel','Tambor','Agosto','Extras'];
-  var MEMBROS_CAIXA = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+  var MEMBROS_CAIXA = getMembrosAtivos();
 
   function saveCaixa() {
     try { localStorage.setItem('bdl-caixa', JSON.stringify(caixa)); } catch(e){}
@@ -2569,8 +2582,26 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
   <!-- Sec Pessoas -->
   <div class="ag-sec active" id="ag-sec-pessoas">
-    <p class="ag-sec-title">Pagamentos por Pessoa</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <p class="ag-sec-title" style="margin:0">Pagamentos por Pessoa</p>
+      <button onclick="agAbrirGerenciarPessoas()" style="background:linear-gradient(135deg,#c0405a,#e07a90);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">👥 Gerenciar Pessoas</button>
+    </div>
     <div id="ag-pessoas-list"></div>
+  </div>
+
+  <!-- Modal Gerenciar Pessoas -->
+  <div id="ag-gerenciar-modal" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.6);backdrop-filter:blur(4px);z-index:600;align-items:flex-start;justify-content:center;padding-top:60px;">
+    <div style="background:#fff;border:1px solid rgba(196,57,107,.15);border-bottom:3px solid #c4396b;border-radius:0 0 16px 16px;width:100%;max-width:500px;max-height:85vh;display:flex;flex-direction:column;animation:slideDown .25s ease;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px 12px;border-bottom:1px solid rgba(196,57,107,.1);flex-shrink:0;">
+        <span style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#2a1a22;">👥 Gerenciar Pessoas</span>
+        <button onclick="document.getElementById('ag-gerenciar-modal').style.display='none'" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:rgba(80,30,50,.5);">✕</button>
+      </div>
+      <div style="padding:12px 18px;border-bottom:1px solid rgba(196,57,107,.08);flex-shrink:0;display:flex;gap:7px;">
+        <input id="ag-nova-pessoa" placeholder="Nome da nova pessoa…" style="flex:1;background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:6px;color:#2a1a22;font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;">
+        <button onclick="agAdicionarPessoa()" style="background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.06em;padding:0 14px;cursor:pointer;">+ Adicionar</button>
+      </div>
+      <div id="ag-gerenciar-lista" style="padding:10px 18px;overflow-y:auto;flex:1;"></div>
+    </div>
   </div>
 
   <!-- Sec Gastos -->
@@ -2602,14 +2633,17 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
   <!-- Sec Aves -->
   <div class="ag-sec" id="ag-sec-aves">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+      <button onclick="agExportarAvesWpp()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">💬 Exportar Lista</button>
+    </div>
     <div class="ag-aves-resumo">
       <div class="ag-aves-resumo-hdr"><span>Resumo de Aves</span><span id="ag-aves-total" style="font-family:'Crimson Pro',serif;font-size:.95rem;color:#2a1a22">R$ 0,00</span></div>
       <div class="ag-aves-body" id="ag-aves-body"></div>
     </div>
     <p class="ag-sec-title">Preços unitários</p>
     <div style="background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:9px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.82rem;display:flex;gap:18px;">
-      <div>🐓 Galo: <strong>R$ 58,00</strong></div>
-      <div>🐔 Galinha: <strong>R$ 53,00</strong></div>
+      <div>Galo: <strong>R$ 58,00</strong></div>
+      <div>Galinha: <strong>R$ 53,00</strong></div>
     </div>
     <div style="margin-top:8px;background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:9px;padding:10px 13px;">
       <p style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;color:rgba(80,30,50,.5);margin-bottom:7px;">TOTAIS</p>
@@ -2640,7 +2674,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
             <option value="">— Nenhum —</option>
             <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
             <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-            <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+            <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           </select>
         </div>
         <div class="ag-form-row"><label>🛒 Link de compra (opcional)</label><input id="ag-ei-link" placeholder="https://…" type="url"></div>
@@ -2717,7 +2751,7 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
         <option value="">— Ninguém / Geral —</option>
         <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
         <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-        <option>Juliana</option><option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
+        <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
       </select>
     </div>
     <div class="ag-modal-btns">
@@ -2738,7 +2772,6 @@ var agPessoas = [
   {nome:'Brenda',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Anne',galos:0,galinhas:0},{nome:'Vitória',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Manu',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
-  {nome:'Juliana',galos:1,galinhas:1,coresGalos:[''],coresGalinhas:['']},
   {nome:'Gabi',galos:0,galinhas:1,coresGalinhas:['']},
   {nome:'Márcia',galos:0,galinhas:0},{nome:'Nicole',galos:0,galinhas:0},{nome:'Stephani',galos:0,galinhas:0}
 ];
@@ -2765,6 +2798,7 @@ function agSalvar() {
     kvSet('ag_pgtos', agPgtos);
     kvSet('ag_gastos', agGastos);
     kvSet('ag_cats', agCats);
+    kvSet('ag_pessoas', agPessoas);
   }, 400);
 }
 
@@ -2774,11 +2808,13 @@ function agCarregarDados(cb) {
   Promise.all([
     kvGet('ag_pgtos', null),
     kvGet('ag_gastos', []),
-    kvGet('ag_cats', null)
+    kvGet('ag_cats', null),
+    kvGet('ag_pessoas', null)
   ]).then(function(res) {
     agPgtos  = res[0] || {};
     agGastos = Array.isArray(res[1]) ? res[1] : [];
     agCats   = res[2] || agCats;
+    if (Array.isArray(res[3]) && res[3].length > 0) agPessoas = res[3];
     // Restaura metas
     if (agPgtos.__metas) agMetas = agPgtos.__metas;
     agPessoas.forEach(function(p, pi){ 
@@ -2849,6 +2885,7 @@ function agRenderPessoas() {
     card.innerHTML='<div class="ag-pessoa-hdr" onclick="agTogglePessoa(\''+p.nome+'\')">'
       +'<span style="font-size:1rem;flex-shrink:0;">'+statusIcon+'</span>'
       +'<span class="ag-pessoa-nome">'+p.nome+'</span>'
+      +'<input type="text" value="'+(pg.dataPrevista||'')+'" placeholder="data prevista…" maxlength="30" onclick="event.stopPropagation()" onchange="agSetDataPrevista(\''+p.nome+'\',this.value)" style="width:78px;background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.65);padding:3px 5px;flex-shrink:0;">'
       +'<span class="ag-pill ag-pill-'+sO+'">Obr</span>'
       +(tAves>0?'<span class="ag-pill ag-pill-'+sA+'">Aves</span>':'')
       +'<span class="ag-pessoa-total">'+(tPago>0?agFmt(tPago):'')+'</span>'
@@ -2859,7 +2896,7 @@ function agRenderPessoas() {
       +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.obr+'" onchange="agSetPgto(\''+p.nome+'\',\'obr\',this.value)"></div>'
       +'<div class="ag-pgto-sub">'+agFmt(pg.obr)+' / '+agFmt(AG_OBRIGACAO)+' '+(pg.obr>=AG_OBRIGACAO?'✅':'— falta '+agFmt(AG_OBRIGACAO-pg.obr))+'</div></div>'
       +(tAves>0
-        ?'<div class="ag-pgto-grp" style="margin-top:8px"><div class="ag-pgto-grp-title">Aves — '+p.galos+'🐓 + '+p.galinhas+'🐔 = '+agFmt(tAves)+'</div>'
+        ?'<div class="ag-pgto-grp" style="margin-top:8px"><div class="ag-pgto-grp-title">Aves — Galo: '+p.galos+' + Galinha: '+p.galinhas+' = '+agFmt(tAves)+'</div>'
          +'<div class="ag-pgto-row"><span class="ag-pgto-label">Já pagou:</span>'
          +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.aves+'" onchange="agSetPgto(\''+p.nome+'\',\'aves\',this.value)"></div>'
          +'<div class="ag-pgto-sub">'+agFmt(pg.aves)+' / '+agFmt(tAves)+' '+(pg.aves>=tAves?'✅':'— falta '+agFmt(tAves-pg.aves))+'</div></div>'
@@ -2875,6 +2912,71 @@ function agSetPgto(nome,campo,val) {
   agPgtos[nome][campo]=parseFloat(val)||0;
   agSalvar(); agAtualizarSaldo(); agRenderPessoas();
   setTimeout(function(){ var c=document.getElementById('ag-pc-'+nome); if(c) c.classList.add('open'); },10);
+}
+function agSetDataPrevista(nome, val) {
+  if (!agPgtos[nome]) agPgtos[nome] = {obr:0,aves:0};
+  agPgtos[nome].dataPrevista = val;
+  agSalvar();
+}
+
+// ── GERENCIAR PESSOAS ─────────────────────────────────────────
+function agAbrirGerenciarPessoas() {
+  document.getElementById('ag-nova-pessoa').value = '';
+  agRenderGerenciarPessoas();
+  document.getElementById('ag-gerenciar-modal').style.display = 'flex';
+}
+
+function agRenderGerenciarPessoas() {
+  var lista = document.getElementById('ag-gerenciar-lista');
+  if (!agPessoas.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:20px;font-family:\'Crimson Pro\',serif;font-style:italic;color:rgba(80,30,50,.5);">Nenhuma pessoa cadastrada</div>';
+    return;
+  }
+  lista.innerHTML = agPessoas.map(function(p, idx){
+    var pg = agPgtos[p.nome] || {obr:0,aves:0};
+    var temDados = pg.obr > 0 || pg.aves > 0 || p.galos > 0 || p.galinhas > 0;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid rgba(196,57,107,.08);">'
+      + '<div style="flex:1;">'
+      + '<div style="font-family:\'Crimson Pro\',serif;font-size:.95rem;font-weight:600;color:#2a1a22;">'+p.nome+'</div>'
+      + (temDados ? '<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);">tem pagamentos ou aves registradas</div>' : '')
+      + '</div>'
+      + '<button onclick="agRemoverPessoa('+idx+')" style="background:none;border:none;color:rgba(184,64,64,.6);cursor:pointer;font-size:.85rem;padding:4px 8px;">🗑 Remover</button>'
+      + '</div>';
+  }).join('');
+}
+
+function agAdicionarPessoa() {
+  var nome = document.getElementById('ag-nova-pessoa').value.trim();
+  if (!nome) { showToast('Informe o nome'); return; }
+  if (agPessoas.some(function(p){ return p.nome.toLowerCase() === nome.toLowerCase(); })) {
+    showToast('Essa pessoa já está na lista'); return;
+  }
+  agPessoas.push({ nome: nome, galos: 0, galinhas: 0, coresGalos: [''], coresGalinhas: [''] });
+  if (!agPgtos[nome]) agPgtos[nome] = { obr: 0, aves: 0 };
+  agSalvar();
+  document.getElementById('ag-nova-pessoa').value = '';
+  agRenderGerenciarPessoas();
+  agRenderPessoas();
+  agRenderAves();
+  agAtualizarSaldo();
+  showToast('Pessoa adicionada ✓');
+}
+
+function agRemoverPessoa(idx) {
+  var p = agPessoas[idx];
+  if (!p) return;
+  var pg = agPgtos[p.nome] || {obr:0,aves:0};
+  var temDados = pg.obr > 0 || pg.aves > 0 || p.galos > 0 || p.galinhas > 0;
+  if (temDados && !confirm('"'+p.nome+'" tem pagamentos ou aves registradas. Remover mesmo assim? Os dados serão perdidos.')) return;
+  agPessoas.splice(idx, 1);
+  delete agPgtos[p.nome];
+  agSalvar();
+  agRenderGerenciarPessoas();
+  agRenderPessoas();
+  agRenderAves();
+  agAtualizarSaldo();
+  agRenderOrc();
+  showToast('Pessoa removida');
 }
 
 // ── GASTOS ───────────────────────────────────────────────────
@@ -2924,7 +3026,7 @@ function agRenderGastos() {
 }
 
 // ── ORÇAMENTO ────────────────────────────────────────────────
-var AG_RESPONSAVEIS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+var AG_RESPONSAVEIS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Gabi','Márcia','Nicole','Stephani'];
 
 function agItemTotal(item) {
   var qtd = parseFloat(item.qtd) || 1;
@@ -3436,6 +3538,42 @@ function agRenderAves(){
   document.getElementById('ag-aves-totais').innerHTML='<div class="ag-aves-row"><span>Total galos</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tG+' × R$'+AG_PRECO_GALO+'</span><span class="ag-aves-val">'+agFmt(tG*AG_PRECO_GALO)+'</span></div>'
     +'<div class="ag-aves-row"><span>Total galinhas</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tH+' × R$'+AG_PRECO_GALINHA+'</span><span class="ag-aves-val">'+agFmt(tH*AG_PRECO_GALINHA)+'</span></div>'
     +'<div class="ag-aves-row" style="font-weight:700"><span>TOTAL AVES</span><span></span><span class="ag-aves-val">'+agFmt(tv)+'</span></div>';
+}
+
+function agExportarAvesWpp() {
+  var linhas = [];
+  agPessoas.forEach(function(p){
+    if (!p.galos && !p.galinhas) return;
+    var partes = [];
+    if (p.galos > 0) {
+      var corG = (p.coresGalos && p.coresGalos[0]) || 'sem cor definida';
+      partes.push(p.galos + ' galo' + (p.galos>1?'s':'') + ' de cor ' + corG);
+    }
+    if (p.galinhas > 0) {
+      var corH = (p.coresGalinhas && p.coresGalinhas[0]) || 'sem cor definida';
+      partes.push(p.galinhas + ' galinha' + (p.galinhas>1?'s':'') + ' de cor ' + corH);
+    }
+    linhas.push('• *' + p.nome + '*: ' + partes.join(', '));
+  });
+
+  if (!linhas.length) { showToast('Nenhuma ave cadastrada ainda'); return; }
+
+  var tG=0, tH=0;
+  agPessoas.forEach(function(p){ tG+=p.galos; tH+=p.galinhas; });
+
+  var msg = '🐓 *LISTA DE AVES — OBRIGAÇÃO DE AGOSTO*\n\n'
+    + linhas.join('\n')
+    + '\n\n📊 *TOTAL:* ' + tG + ' galo' + (tG!==1?'s':'') + ' · ' + tH + ' galinha' + (tH!==1?'s':'');
+
+  if (navigator.share) {
+    navigator.share({ text: msg }).catch(function(){});
+  } else {
+    navigator.clipboard.writeText(msg).then(function(){
+      showToast('Lista copiada! Cole no WhatsApp 💬');
+    }).catch(function(){
+      showToast('Não foi possível copiar automaticamente');
+    });
+  }
 }
 
 function agSetQtdAve(pi, tipo, delta) {
