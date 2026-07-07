@@ -2637,6 +2637,11 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
     <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
       <button onclick="agExportarAvesWpp()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">💬 Exportar Lista</button>
     </div>
+    <div style="background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:9px;padding:8px 11px;margin-bottom:10px;">
+      <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🐓 Aves — Pago / Total</div>
+      <div id="ag-aves-pago-total" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$0 / R$0</div>
+      <div id="ag-aves-pago-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:1px;"></div>
+    </div>
     <div class="ag-aves-resumo">
       <div class="ag-aves-resumo-hdr"><span>Resumo de Aves</span><span id="ag-aves-total" style="font-family:'Crimson Pro',serif;font-size:.95rem;color:#2a1a22">R$ 0,00</span></div>
       <div class="ag-aves-body" id="ag-aves-body"></div>
@@ -3622,6 +3627,14 @@ function agRenderAves(){
   });
   var tv=tG*AG_PRECO_GALO+tH*AG_PRECO_GALINHA;
   document.getElementById('ag-aves-total').textContent=agFmt(tv);
+
+  // Card Pago/Total das aves
+  var pagoAves = 0;
+  agPessoas.forEach(function(p){ var pg = agPgtos[p.nome]; if (pg) pagoAves += (pg.aves||0); });
+  var pctPagoAves = tv>0 ? Math.round(pagoAves/tv*100) : 0;
+  document.getElementById('ag-aves-pago-total').textContent = agFmtS(pagoAves) + ' / ' + agFmtS(tv);
+  document.getElementById('ag-aves-pago-pct').textContent = tv>0 ? (pctPagoAves+'%'+(pagoAves>=tv?' ✅':'')) : 'nenhuma ave cadastrada';
+
   document.getElementById('ag-aves-totais').innerHTML='<div class="ag-aves-row"><span>Total galos</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tG+' × R$'+AG_PRECO_GALO+'</span><span class="ag-aves-val">'+agFmt(tG*AG_PRECO_GALO)+'</span></div>'
     +'<div class="ag-aves-row"><span>Total galinhas</span><span style="color:rgba(80,30,50,.5);font-size:.76rem">'+tH+' × R$'+AG_PRECO_GALINHA+'</span><span class="ag-aves-val">'+agFmt(tH*AG_PRECO_GALINHA)+'</span></div>'
     +'<div class="ag-aves-row" style="font-weight:700"><span>TOTAL AVES</span><span></span><span class="ag-aves-val">'+agFmt(tv)+'</span></div>';
