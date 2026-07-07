@@ -3190,7 +3190,7 @@ function agItemRowHTML(item, ci, si, ii) {
     + '</div>'
     + '<div style="display:flex;align-items:center;gap:5px;padding-left:20px;width:100%;">'
     + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);">Pago:</span>'
-    + '<input type="number" value="'+(valorPago||'')+'" min="0" step="0.01" placeholder="0,00" onchange="agSetValorPago('+ci+','+siStr+','+ii+',this.value)" style="width:70px;background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'Crimson Pro\',serif;font-size:.78rem;padding:3px 5px;-webkit-appearance:none;">'
+    + '<input type="text" inputmode="decimal" value="'+(valorPago?String(valorPago).replace('.',','):'')+'" placeholder="0,00" onblur="agSetValorPago('+ci+','+siStr+','+ii+',this.value)" style="width:70px;background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'Crimson Pro\',serif;font-size:.78rem;padding:3px 5px;-webkit-appearance:none;">'
     + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.4);">/ '+agFmt(total)+(quitado?' ✅':'')+'</span>'
     + '</div>'
     + '</div>';
@@ -3377,7 +3377,8 @@ function agSetResp(ci, si, ii, val) {
 
 function agSetValorPago(ci, si, ii, val) {
   var item = agGetItens(ci, si)[ii];
-  var novoValor = parseFloat(val) || 0;
+  var valNormalizado = String(val || '').replace(',', '.').trim();
+  var novoValor = parseFloat(valNormalizado) || 0;
   item.valorPago = novoValor;
 
   var catNome = agCats[ci].nome + (si !== null && si !== undefined && si !== 'null' ? ' / '+(agCats[ci].subcats[si].nome) : '');
