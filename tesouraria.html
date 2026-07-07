@@ -3192,6 +3192,9 @@ function agItemRowHTML(item, ci, si, ii) {
     + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);">Pago:</span>'
     + '<input type="text" inputmode="decimal" value="'+(valorPago?String(valorPago).replace('.',','):'')+'" placeholder="0,00" onblur="agSetValorPago('+ci+','+siStr+','+ii+',this.value)" style="width:70px;background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'Crimson Pro\',serif;font-size:.78rem;padding:3px 5px;-webkit-appearance:none;">'
     + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.4);">/ '+agFmt(total)+(quitado?' ✅':'')+'</span>'
+    + (quitado
+        ? '<button onclick="agDesmarcarComprado('+ci+','+siStr+','+ii+')" style="margin-left:auto;background:#e8f4f0;border:1px solid #b8ddd4;border-radius:6px;color:#2a7a60;font-family:\'Cinzel\',serif;font-size:8.5px;font-weight:700;letter-spacing:.05em;padding:4px 8px;cursor:pointer;white-space:nowrap;">✓ Comprado</button>'
+        : '<button onclick="agMarcarComprado('+ci+','+siStr+','+ii+')" style="margin-left:auto;background:none;border:1px solid rgba(196,57,107,.2);border-radius:6px;color:rgba(80,30,50,.5);font-family:\'Cinzel\',serif;font-size:8.5px;font-weight:700;letter-spacing:.05em;padding:4px 8px;cursor:pointer;white-space:nowrap;">Marcar comprado</button>')
     + '</div>'
     + '</div>';
 }
@@ -3373,6 +3376,18 @@ function agSetQtd(ci, si, ii, val) {
 function agSetResp(ci, si, ii, val) {
   agGetItens(ci, si)[ii].resp = val;
   agSalvar();
+}
+
+function agMarcarComprado(ci, si, ii) {
+  var item = agGetItens(ci, si)[ii];
+  var total = agItemTotal(item);
+  agSetValorPago(ci, si, ii, String(total).replace('.', ','));
+  showToast('✓ Marcado como comprado');
+}
+
+function agDesmarcarComprado(ci, si, ii) {
+  agSetValorPago(ci, si, ii, '0');
+  showToast('Desmarcado');
 }
 
 function agSetValorPago(ci, si, ii, val) {
