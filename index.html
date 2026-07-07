@@ -1405,6 +1405,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -2196,6 +2197,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="rm-topo-acoes">
       <button class="rm-btn-mes" id="rm-btn-mes-editar">📅 Escolher mês</button>
       <button class="rm-btn-whats" id="rm-btn-whats">📱 Gerar mensagem pro WhatsApp</button>
+      <button class="rm-btn-mes" id="rm-btn-imagem" style="background:linear-gradient(135deg,#8c5a00,#c88c00)">📸 Gerar Imagem</button>
       <button class="rm-btn-mes" id="rm-btn-tela-cheia" style="background:linear-gradient(135deg,#4a6fa5,#2f4d75)">🔍 Ver tela cheia</button>
     </div>
 
@@ -6296,6 +6298,60 @@ const auth = getAuth(app);
     document.getElementById('rm-full-fechar')?.addEventListener('click', () => {
       document.getElementById('rm-full-overlay').style.display = 'none';
       document.body.style.overflow = '';
+    });
+
+    // ── GERAR IMAGEM (PNG) — pra mandar direto no WhatsApp, sem precisar printar ──
+    document.getElementById('rm-btn-imagem')?.addEventListener('click', async () => {
+      const btn = document.getElementById('rm-btn-imagem');
+      const textoOriginal = btn.textContent;
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      try {
+        const frame = document.getElementById('rm-frame');
+        // clona o cartão numa cópia fixa fora da tela, sem os lápis de editar,
+        // com largura fixa pra a imagem sair sempre igual, não importa o tamanho da tela
+        const clone = frame.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+        clone.style.margin = '0';
+        clone.style.width = '520px';
+        clone.style.maxWidth = '520px';
+
+        const palco = document.createElement('div');
+        palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:20px;width:560px;';
+        palco.appendChild(clone);
+        document.body.appendChild(palco);
+
+        const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
+        document.body.removeChild(palco);
+
+        canvas.toBlob(async (blob) => {
+          btn.textContent = textoOriginal;
+          btn.disabled = false;
+          if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+          const nomeArquivo = `resumo-${rmMesEscolhido}.png`;
+          const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+
+          // no celular, tenta abrir direto o menu de compartilhar (WhatsApp já aparece como opção)
+          if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+            try {
+              await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz' });
+              return;
+            } catch(e) { /* usuária cancelou o compartilhamento — segue pro download */ }
+          }
+
+          // fallback: baixa a imagem pra galeria/downloads, pra anexar manualmente
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = nomeArquivo; a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      } catch(e) {
+        console.warn('erro ao gerar imagem do resumo:', e);
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+        alert('Não deu pra gerar a imagem. Tenta de novo.');
+      }
     });
 
     // ── RECADO DO MÊS (Firestore config/resumo_recado) ──
