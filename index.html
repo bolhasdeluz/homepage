@@ -1195,10 +1195,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rm-tes-obs{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;line-height:1.5}
 
 /* listas genéricas dentro das seções */
-.rm-lista{display:flex;flex-direction:column;gap:5px}
-.rm-linha{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);padding:6px 10px;background:var(--rosa-dim);border-radius:9px}
-.rm-linha-tag{font-family:'Cinzel',serif;font-size:.6rem;color:var(--rosa);font-weight:700;white-space:nowrap;flex-shrink:0}
-.rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0}
+.rm-lista{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rm-linha{display:flex;flex-direction:column;gap:2px;font-family:'DM Sans',sans-serif;font-size:.76rem;color:var(--text);padding:6px 9px;background:var(--rosa-dim);border-radius:9px;overflow:hidden;min-width:0}
+.rm-linha>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.rm-linha-tag{font-family:'Cinzel',serif;font-size:.56rem;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
 .rm-footer{text-align:center;padding:18px 22px 24px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim)}
 .rm-footer .sub{display:block;font-family:'Crimson Pro',serif;font-size:.75rem;letter-spacing:0;text-transform:none;font-style:italic;margin-top:3px;color:rgba(196,90,30,.5)}
@@ -2222,6 +2223,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <button class="rm-edit-btn" id="rm-tes-editar" title="Editar">✎</button>
           <div class="rm-secao-titulo"><span class="ic">💰</span> Tesouraria — mês passado</div>
           <div class="rm-tesouraria-mes" id="rm-tes-mes">Ainda não preenchido</div>
+          <div class="rm-tes-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px">
+            <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">👥 Pagantes</span><span class="rm-tes-valor" id="rm-tes-pct-pag" style="color:var(--rosa)">0%</span><div style="font-family:'DM Sans',sans-serif;font-size:.62rem;color:var(--text-dim);margin-top:1px" id="rm-tes-pag-sub"></div></div>
+            <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">💰 Coberto</span><span class="rm-tes-valor" id="rm-tes-pct-cob" style="color:var(--rosa)">0%</span></div>
+          </div>
           <div class="rm-tes-grid">
             <div class="rm-tes-pill entrada"><span class="rm-tes-label">Entradas</span><span class="rm-tes-valor" id="rm-tes-entradas">R$ 0</span></div>
             <div class="rm-tes-pill saida"><span class="rm-tes-label">Saídas</span><span class="rm-tes-valor" id="rm-tes-saidas">R$ 0</span></div>
@@ -3922,6 +3927,11 @@ function showPage(name) {
   if (name === 'guias') {
     if (!guiasData.length) guiasLoad();
     else guiasRenderGrid(guiasData);
+  }
+  if (name === 'orientacoes') {
+    // recarrega a próxima sessão sempre que a página abrir — antes só carregava
+    // uma vez, quando o site era aberto pela primeira vez, e ficava desatualizada
+    window.orCarregarProximaSessao?.();
   }
 }
 function toggleDrawer() {
@@ -6220,6 +6230,14 @@ const auth = getAuth(app);
     const MESES_RM = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     let rmTesouraria = null;
     let rmTesEntradas = 0, rmTesSaidas = 0, rmTesMesLabel = '';
+    let rmTesPctPag = 0, rmTesNPag = 0, rmTesTotalMembros = 0, rmTesPctCob = 0;
+    // mesma lista de membros da Tesouraria real (não vem de API — é fixa lá também).
+    // se alguém sair da casa por lá, espelhar aqui também em RM_MEMBROS_SAIDA.
+    const RM_MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+    const RM_MEMBROS_SAIDA = { 'Juliana': '2026-07' };
+    function rmMembrosAtivos(mesRef) {
+      return RM_MEMBROS_TODOS.filter(m => { const s = RM_MEMBROS_SAIDA[m]; return !s || mesRef < s; });
+    }
     let rmRecado = null;
     let rmSessoes = [];
     let rmManutencao = [];
@@ -6431,7 +6449,20 @@ const auth = getAuth(app);
         // a Tesouraria real soma TODOS os gastos do mês no total exibido, sem excluir pendentes —
         // segue o mesmo critério aqui pra bater com o número de lá
         rmTesSaidas = doMes.filter(l => l.tipo === 'gasto').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
-      } catch(e) { console.warn('lancamentos (tesouraria real) load:', e); rmTesEntradas = 0; rmTesSaidas = 0; }
+
+        // % pagantes: quantas pessoas fizeram entrada de mensalidade (não conta "extra") neste mês
+        const pagantes = {};
+        doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra' && l.membro).forEach(l => { pagantes[l.membro] = true; });
+        rmTesNPag = Object.keys(pagantes).length;
+        rmTesTotalMembros = rmMembrosAtivos(mesRef).length;
+        rmTesPctPag = rmTesTotalMembros > 0 ? Math.round(rmTesNPag / rmTesTotalMembros * 100) : 0;
+
+        // % coberto: quanto das saídas as entradas já cobrem
+        rmTesPctCob = rmTesSaidas > 0 ? Math.round(rmTesEntradas / rmTesSaidas * 100) : (rmTesEntradas > 0 ? 100 : 0);
+      } catch(e) {
+        console.warn('lancamentos (tesouraria real) load:', e);
+        rmTesEntradas = 0; rmTesSaidas = 0; rmTesPctPag = 0; rmTesPctCob = 0; rmTesNPag = 0; rmTesTotalMembros = 0;
+      }
 
       rmRenderTesouraria();
     }
@@ -6442,6 +6473,9 @@ const auth = getAuth(app);
       document.getElementById('rm-tes-saidas').textContent = rmFmtMoeda(rmTesSaidas || 0);
       document.getElementById('rm-tes-saldo').textContent = rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0));
       document.getElementById('rm-tes-obs').textContent = t.observacao || '';
+      document.getElementById('rm-tes-pct-pag').textContent = (rmTesPctPag || 0) + '%';
+      document.getElementById('rm-tes-pag-sub').textContent = rmTesTotalMembros ? (rmTesNPag + '/' + rmTesTotalMembros + ' membros') : '';
+      document.getElementById('rm-tes-pct-cob').textContent = (rmTesPctCob || 0) + '%';
     }
     function rmAbrirEditarTesouraria() {
       const t = rmTesouraria || {};
@@ -6523,6 +6557,8 @@ const auth = getAuth(app);
       }
 
       txt += `💰 *Tesouraria (${rmTesMesLabel || 'mês passado'}):*\n`;
+      txt += `👥 Pagantes: ${rmTesPctPag || 0}% (${rmTesNPag}/${rmTesTotalMembros})\n`;
+      txt += `💰 Coberto: ${rmTesPctCob || 0}%\n`;
       txt += `Entradas: ${rmFmtMoeda(rmTesEntradas || 0)}\n`;
       txt += `Saídas: ${rmFmtMoeda(rmTesSaidas || 0)}\n`;
       txt += `Saldo: ${rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0))}\n`;
@@ -6796,6 +6832,10 @@ const auth = getAuth(app);
       const texto = document.getElementById('or-rel-texto').value;
       window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
     });
+
+    // exposta globalmente pra showPage() poder chamar de novo toda vez que a página reabrir —
+    // sem isso, a "próxima sessão" ficava travada na que existia quando o site carregou pela primeira vez
+    window.orCarregarProximaSessao = orCarregarProximaSessao;
 
     // inicializa quando a página existir no DOM
     if (document.getElementById('or-proxima-titulo')) {
