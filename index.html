@@ -6332,6 +6332,10 @@ const auth = getAuth(app);
         const clone = frame.cloneNode(true);
         clone.removeAttribute('id');
         clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+        // o Recado do Mês sai da imagem — vira texto na própria mensagem do WhatsApp,
+        // já que é o que mais ocupava espaço e fica mais legível como texto corrido
+        const recadoEl = clone.querySelector('#rm-secao-recado-wrap');
+        if (recadoEl) recadoEl.remove();
         clone.style.margin = '0';
         clone.style.width = '620px';
         clone.style.maxWidth = '620px';
@@ -6344,6 +6348,10 @@ const auth = getAuth(app);
         const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
         document.body.removeChild(palco);
 
+        // texto que acompanha a imagem: recado do mês (se tiver) + assinatura
+        const recadoTexto = (rmRecado && rmRecado.texto && rmRecado.texto.trim()) ? rmRecado.texto.trim() : '';
+        const textoCompartilhar = (recadoTexto ? `💌 ${recadoTexto}\n\n` : '') + '🌸 Terreiro Bolhas de Luz';
+
         canvas.toBlob(async (blob) => {
           btn.textContent = textoOriginal;
           btn.disabled = false;
@@ -6354,7 +6362,7 @@ const auth = getAuth(app);
           // no celular, tenta abrir direto o menu de compartilhar (WhatsApp já aparece como opção)
           if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
             try {
-              await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz' });
+              await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz', text: textoCompartilhar });
               return;
             } catch(e) { /* usuária cancelou o compartilhamento — segue pro download */ }
           }
