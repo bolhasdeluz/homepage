@@ -204,9 +204,12 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 <body>
 
 <header class="header">
-  <div>
-    <div class="header-title">Tesouraria</div>
-    <div class="header-subtitle">Bolhas de Luz</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="https://bolhasdeluz.ong.br" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.72rem;padding:5px 11px;text-decoration:none;white-space:nowrap;flex-shrink:0;">← Voltar</a>
+    <div>
+      <div class="header-title">Tesouraria</div>
+      <div class="header-subtitle">Bolhas de Luz</div>
+    </div>
   </div>
   <div class="header-right">
     <button onclick="document.getElementById('agosto-modal').classList.add('open')" style="background:linear-gradient(135deg,#8c5a00,#c88c00);border:none;border-radius:20px;color:#fff8e0;font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;letter-spacing:.07em;padding:5px 12px;cursor:pointer;white-space:nowrap;">🕯 Agosto</button>
@@ -2530,9 +2533,12 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
   <!-- Header Agosto -->
   <div class="ag-header">
-    <div>
-      <h1>🕯 Obrigação de Agosto</h1>
-      <p>Bolhas de Luz — Controle Financeiro</p>
+    <div style="display:flex;align-items:center;gap:9px;">
+      <a href="https://bolhasdeluz.ong.br" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;text-decoration:none;white-space:nowrap;flex-shrink:0;">← Voltar</a>
+      <div>
+        <h1>🕯 Obrigação de Agosto</h1>
+        <p>Bolhas de Luz — Controle Financeiro</p>
+      </div>
     </div>
     <div style="display:flex;gap:7px;align-items:center;position:relative;">
       <button onclick="agToggleExport(event)" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.72rem;padding:5px 11px;cursor:pointer;white-space:nowrap;">↑ Exportar</button>
@@ -2556,21 +2562,16 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
   <div style="margin:8px 12px 0;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
     <div style="background:#fffbe8;border:1px solid #e8d080;border-radius:9px;padding:8px 11px;">
       <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#8c5a00;">⭐ Meta Mínima</div>
-      <div style="display:flex;align-items:baseline;gap:2px;">
-        <span style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;">R$</span>
-        <input type="number" id="ag-meta-prio-input" placeholder="0" onchange="agSetMeta('prio',this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px dashed #e8d080;font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;outline:none;padding:0;-webkit-appearance:none;">
-      </div>
+      <div id="ag-meta-prio" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;">R$0</div>
       <div id="ag-meta-prio-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:#c88c00;margin-top:1px;"></div>
     </div>
     <div style="background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:9px;padding:8px 11px;">
-      <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">📋 Meta Total</div>
-      <div style="display:flex;align-items:baseline;gap:2px;">
-        <span style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$</span>
-        <input type="number" id="ag-meta-total-input" placeholder="0" onchange="agSetMeta('total',this.value)" style="width:100%;background:transparent;border:none;border-bottom:1px dashed rgba(196,57,107,.25);font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);outline:none;padding:0;-webkit-appearance:none;">
-      </div>
+      <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">📋 Meta Total (orçamento)</div>
+      <div id="ag-meta-total" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$0</div>
       <div id="ag-meta-total-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:1px;"></div>
     </div>
   </div>
+  <div style="margin:6px 12px 0;font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(80,30,50,.4);text-align:center;">⭐ marque itens no Orçamento como "meta mínima" · a meta total segue automaticamente o valor orçado</div>
 
   <!-- Tabs -->
   <div class="ag-tabs">
@@ -2641,9 +2642,9 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
       <div class="ag-aves-body" id="ag-aves-body"></div>
     </div>
     <p class="ag-sec-title">Preços unitários</p>
-    <div style="background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:9px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.82rem;display:flex;gap:18px;">
-      <div>Galo: <strong>R$ 58,00</strong></div>
-      <div>Galinha: <strong>R$ 53,00</strong></div>
+    <div style="background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:9px;padding:10px 13px;font-family:'DM Sans',sans-serif;font-size:.82rem;display:flex;gap:18px;align-items:center;">
+      <div style="display:flex;align-items:center;gap:5px;">Galo: R$ <input type="number" id="ag-preco-galo-input" step="0.01" onchange="agSetPrecoAve('galo',this.value)" style="width:60px;background:transparent;border:none;border-bottom:1px dashed rgba(196,57,107,.3);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;color:#2a1a22;padding:2px 3px;-webkit-appearance:none;"></div>
+      <div style="display:flex;align-items:center;gap:5px;">Galinha: R$ <input type="number" id="ag-preco-galinha-input" step="0.01" onchange="agSetPrecoAve('galinha',this.value)" style="width:60px;background:transparent;border:none;border-bottom:1px dashed rgba(196,57,107,.3);font-family:'DM Sans',sans-serif;font-weight:600;font-size:.82rem;color:#2a1a22;padding:2px 3px;-webkit-appearance:none;"></div>
     </div>
     <div style="margin-top:8px;background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:9px;padding:10px 13px;">
       <p style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;color:rgba(80,30,50,.5);margin-bottom:7px;">TOTAIS</p>
@@ -2763,7 +2764,8 @@ body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-s
 
 <script>
 // ══ AGOSTO DATA ══════════════════════════════════════════════
-var AG_PRECO_GALO = 58, AG_PRECO_GALINHA = 53, AG_OBRIGACAO = 270;
+var AG_PRECO_GALO = 58, AG_PRECO_GALINHA = 53;
+var AG_OBRIGACAO = 270;
 
 var agPessoas = [
   {nome:'Ness',galos:0,galinhas:0},{nome:'Thali',galos:0,galinhas:0},
@@ -2792,14 +2794,25 @@ var _agSaveTimer = null;
 
 function agSalvar() {
   clearTimeout(_agSaveTimer);
-  // Guarda metas dentro de agPgtos
+  // Guarda metas e preços dentro de agPgtos
   agPgtos.__metas = agMetas;
+  agPgtos.__precos = { galo: AG_PRECO_GALO, galinha: AG_PRECO_GALINHA };
   _agSaveTimer = setTimeout(function(){
     kvSet('ag_pgtos', agPgtos);
     kvSet('ag_gastos', agGastos);
     kvSet('ag_cats', agCats);
     kvSet('ag_pessoas', agPessoas);
   }, 400);
+}
+
+function agSetPrecoAve(tipo, val) {
+  var v = parseFloat(val) || 0;
+  if (tipo === 'galo') AG_PRECO_GALO = v;
+  else AG_PRECO_GALINHA = v;
+  agSalvar();
+  agRenderAves();
+  agAtualizarSaldo();
+  agRenderOrc();
 }
 
 function agCarregarDados(cb) {
@@ -2815,8 +2828,16 @@ function agCarregarDados(cb) {
     agGastos = Array.isArray(res[1]) ? res[1] : [];
     agCats   = res[2] || agCats;
     if (Array.isArray(res[3]) && res[3].length > 0) agPessoas = res[3];
-    // Restaura metas
+    // Restaura metas e preços
     if (agPgtos.__metas) agMetas = agPgtos.__metas;
+    if (agPgtos.__precos) {
+      AG_PRECO_GALO = agPgtos.__precos.galo || AG_PRECO_GALO;
+      AG_PRECO_GALINHA = agPgtos.__precos.galinha || AG_PRECO_GALINHA;
+    }
+    var inpGalo = document.getElementById('ag-preco-galo-input');
+    var inpGalinha = document.getElementById('ag-preco-galinha-input');
+    if (inpGalo) inpGalo.value = AG_PRECO_GALO;
+    if (inpGalinha) inpGalinha.value = AG_PRECO_GALINHA;
     agPessoas.forEach(function(p, pi){ 
       if(!agPgtos[p.nome]) agPgtos[p.nome]={obr:0,aves:0};
       if (agPgtos[p.nome]['cores_galos_'+pi]) p.coresGalos = agPgtos[p.nome]['cores_galos_'+pi];
@@ -2841,24 +2862,28 @@ function agAtualizarSaldo() {
   el.textContent=agFmtS(sal);
   el.style.color=sal>=0?'#2a7a60':'#b84040';
 
-  // Metas (valores manuais salvos)
-  var metaPrio = agMetas.prio || 0;
-  var metaTot  = agMetas.total || 0;
+  // Metas — Meta Mínima = soma dos itens marcados com ⭐; Meta Total = orçamento total (itens + aves)
+  var metaPrio = 0;
+  var metaTot = 0;
+  agCats.forEach(function(cat){
+    var allItens = cat.itens.slice();
+    (cat.subcats||[]).forEach(function(sc){ allItens = allItens.concat(sc.itens); });
+    allItens.forEach(function(item){
+      var v = agItemTotal(item);
+      metaTot += v;
+      if (item.prio) metaPrio += v;
+    });
+  });
+  var totalAvesMeta = 0;
+  agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
+  metaTot += totalAvesMeta;
+
   var pctPrio = metaPrio>0 ? Math.round(e/metaPrio*100) : 0;
   var pctTot  = metaTot>0  ? Math.round(e/metaTot*100)  : 0;
-  // Preenche inputs (sem sobrescrever se o usuário está digitando)
-  var inpP = document.getElementById('ag-meta-prio-input');
-  var inpT = document.getElementById('ag-meta-total-input');
-  if (inpP && document.activeElement !== inpP) inpP.value = metaPrio || '';
-  if (inpT && document.activeElement !== inpT) inpT.value = metaTot || '';
-  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(e)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(e>=metaPrio?' ✅':'')) : 'defina a meta';
-  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(e)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(e>=metaTot?' ✅':'')) : 'defina a meta';
-}
-
-function agSetMeta(tipo, valor) {
-  agMetas[tipo] = parseFloat(valor) || 0;
-  agSalvar();
-  agAtualizarSaldo();
+  document.getElementById('ag-meta-prio').textContent = agFmtS(metaPrio);
+  document.getElementById('ag-meta-total').textContent = agFmtS(metaTot);
+  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(e)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(e>=metaPrio?' ✅':'')) : 'marque itens ⭐ no orçamento';
+  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(e)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(e>=metaTot?' ✅':'')) : 'adicione itens ao orçamento';
 }
 
 function agTogglePrio(ci, si, ii) {
@@ -3133,19 +3158,22 @@ function agRenderOrc() {
 function agItemRowHTML(item, ci, si, ii) {
   var total = agItemTotal(item);
   var qtd = parseFloat(item.qtd) || 1;
+  var valorPago = parseFloat(item.valorPago) || 0;
+  var quitado = valorPago >= total && total > 0;
   var respOpts = AG_RESPONSAVEIS.map(function(r){
     return '<option value="'+r+'"'+(item.resp===r?' selected':'')+'>'+r+'</option>';
   }).join('');
   var siStr = si !== null ? si : 'null';
   var linkBtn = item.link ? '<a href="'+item.link+'" target="_blank" style="text-decoration:none;font-size:.9rem;" title="Abrir link">🛒</a>' : '';
-  var prioBtn = '<button onclick="agTogglePrio('+ci+','+siStr+','+ii+')" title="'+(item.prio?'Prioritário':'Marcar como prioritário')+'" style="background:none;border:none;cursor:pointer;font-size:.85rem;opacity:'+(item.prio?'1':'.3')+'" >⭐</button>';
-  return '<div class="ag-item-row'+(item.pago?' ag-item-pago':'')+'" style="flex-wrap:wrap;gap:4px;">'
+  var prioBtn = '<button onclick="agTogglePrio('+ci+','+siStr+','+ii+')" title="'+(item.prio?'Meta mínima':'Marcar como meta mínima')+'" style="background:none;border:none;cursor:pointer;font-size:.85rem;opacity:'+(item.prio?'1':'.3')+'" >⭐</button>';
+  return '<div class="ag-item-row'+(quitado?' ag-item-pago':'')+'" style="flex-wrap:wrap;gap:4px;'+(item.prio?'background:#fffbe8;border-radius:6px;':'')+'">'
     + '<div style="display:flex;align-items:center;gap:5px;width:100%;">'
-    + '<input type="checkbox" class="ag-item-chk"'+(item.pago?' checked':'')+' onchange="agTogglePago('+ci+','+siStr+','+ii+',this.checked)">'
-    + '<span class="ag-item-desc'+(item.pago?' pago':'')+'">'+item.desc
-    + (item.pago?'<span style="font-size:.62rem;background:#e8f4f0;color:#2a7a60;border-radius:10px;padding:1px 5px;margin-left:4px">→ Gastos</span>':'')
+    + '<span class="ag-item-desc'+(quitado?' pago':'')+'">'+item.desc
+    + (quitado?'<span style="font-size:.62rem;background:#e8f4f0;color:#2a7a60;border-radius:10px;padding:1px 5px;margin-left:4px">✓ pago</span>':'')
+    + (item.prio?'<span style="font-size:.6rem;background:#fff0c0;color:#8c5a00;border-radius:10px;padding:1px 5px;margin-left:4px">⭐ mínima</span>':'')
     + '</span>'
     + linkBtn
+    + prioBtn
     + '<button class="ag-item-del" onclick="agClonarItem('+ci+','+siStr+','+ii+')" title="Clonar">⧉</button>'
     + '<button class="ag-item-del" onclick="agAbrirEditItem('+ci+','+siStr+','+ii+')" style="color:rgba(80,30,50,.4);">✏️</button>'
     + '<button class="ag-item-del" onclick="agDelItem('+ci+','+siStr+','+ii+')">🗑</button>'
@@ -3155,10 +3183,15 @@ function agItemRowHTML(item, ci, si, ii) {
     + '<span style="font-size:.75rem;color:rgba(80,30,50,.4);">×</span>'
     + '<span style="font-family:\'Crimson Pro\',serif;font-size:.82rem;color:rgba(80,30,50,.5);">'+agFmt(item.val)+'</span>'
     + '<span style="font-size:.75rem;color:rgba(80,30,50,.4);">=</span>'
-    + '<span style="font-family:\'Crimson Pro\',serif;font-size:.88rem;font-weight:600;color:'+(item.pago?'#2a7a60':'#2a1a22')+'" id="ag-item-total-'+ci+'-'+siStr+'-'+ii+'">'+agFmt(total)+'</span>'
+    + '<span style="font-family:\'Crimson Pro\',serif;font-size:.88rem;font-weight:600;color:'+(quitado?'#2a7a60':'#2a1a22')+'" id="ag-item-total-'+ci+'-'+siStr+'-'+ii+'">'+agFmt(total)+'</span>'
     + '<select onchange="agSetResp('+ci+','+siStr+','+ii+',this.value)" style="background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:5px;color:rgba(80,30,50,.6);font-family:\'DM Sans\',sans-serif;font-size:.72rem;padding:3px 5px;max-width:90px;-webkit-appearance:none;">'
     + '<option value="">Resp…</option>'+respOpts
     + '</select>'
+    + '</div>'
+    + '<div style="display:flex;align-items:center;gap:5px;padding-left:20px;width:100%;">'
+    + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);">Pago:</span>'
+    + '<input type="number" value="'+(valorPago||'')+'" min="0" step="0.01" placeholder="0,00" oninput="agSetValorPago('+ci+','+siStr+','+ii+',this.value)" style="width:70px;background:transparent;border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'Crimson Pro\',serif;font-size:.78rem;padding:3px 5px;-webkit-appearance:none;">'
+    + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.4);">/ '+agFmt(total)+(quitado?' ✅':'')+'</span>'
     + '</div>'
     + '</div>';
 }
@@ -3340,6 +3373,18 @@ function agSetQtd(ci, si, ii, val) {
 function agSetResp(ci, si, ii, val) {
   agGetItens(ci, si)[ii].resp = val;
   agSalvar();
+}
+
+function agSetValorPago(ci, si, ii, val) {
+  var item = agGetItens(ci, si)[ii];
+  item.valorPago = parseFloat(val) || 0;
+  agSalvar();
+  agRenderOrc();
+  agAtualizarSaldo();
+  setTimeout(function(){
+    document.getElementById('ag-cat-'+ci).classList.add('open');
+    if (si !== null && si !== 'null') { var el=document.getElementById('ag-subcat-'+ci+'-'+si); if(el) el.classList.add('open'); }
+  },10);
 }
 
 function agTogglePago(ci, si, ii, val) {
