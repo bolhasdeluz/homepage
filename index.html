@@ -2354,11 +2354,27 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="or-secao">
       <div class="or-secao-titulo">✦ Sobre a sessão</div>
       <div class="or-row">
+        <div class="or-campo" style="flex:1 1 100%">
+          <label>Tipo de sessão (define os emojis certos automaticamente)</label>
+          <select id="or-inp-tipo" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none">
+            <option value="quimbanda">Quimbanda</option>
+            <option value="pretosvelhos">Pretos Velhos</option>
+            <option value="ciganos">Ciganos</option>
+            <option value="caboclos">Caboclos</option>
+            <option value="cosmes">Cosmes e Caboclos</option>
+            <option value="desenvolvimento">Desenvolvimento</option>
+            <option value="cruzamento">Cruzamento</option>
+            <option value="obrigacao">Obrigação</option>
+            <option value="outro">Outro / genérico</option>
+          </select>
+        </div>
+      </div>
+      <div class="or-row">
         <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
       </div>
       <div class="or-row">
-        <div class="or-campo"><label>🧓 Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
-        <div class="or-campo"><label>🥂 Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
+        <div class="or-campo"><label><span id="or-emoji-chegada">🧑‍🦱</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
+        <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
       </div>
       <div class="or-row">
         <div class="or-campo" style="flex:1 1 100%">
@@ -2366,9 +2382,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div class="or-radio-group">
             <div class="or-radio-pill ativo" id="or-radio-aberta" data-val="aberta">🧑‍🤝‍🧑 Sessão aberta à assistência</div>
             <div class="or-radio-pill" id="or-radio-sem" data-val="sem">Sessão sem atendimentos</div>
+            <div class="or-radio-pill" id="or-radio-fechada" data-val="fechada">Sessão fechada</div>
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="or-secao">
+      <div class="or-secao-titulo">✦ Notas rápidas pra IA (opcional)</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">Escreve do seu jeito, solto mesmo — a IA transforma em linhas com emoji igual você costuma mandar. Ex: "tragam comidinha doce ou salgada, chapéu no cabideiro, identificar bebida na mesa"</p>
+      <textarea id="or-inp-notas-ia" placeholder="Ex: tragam ervas, banho tomado antes de sair de casa, quem não tem guia do caboclo vem com a do pai xangô..." style="width:100%;min-height:60px;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none;resize:vertical"></textarea>
+      <button class="or-btn-add-extra" id="or-btn-ia" style="background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;margin-top:8px">✨ Transformar com IA</button>
+      <div id="or-ia-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:6px"></div>
     </div>
 
     <div class="or-secao">
@@ -6646,6 +6671,20 @@ const auth = getAuth(app);
     let orAssistencia = 'aberta';
     let orProximaSessao = null;
 
+    // Emojis corretos por tipo de sessão — baseado no padrão real das mensagens que a Anna manda.
+    // 🧑‍🦱 (chegada) é sempre fixo. O emoji do "início dos trabalhos" muda conforme a entidade.
+    const OR_TIPOS = {
+      quimbanda:      { titulo: 'Sessão de Quimbanda',       tituloEmoji: '💃', inicioEmoji: '🍾' },
+      pretosvelhos:   { titulo: 'Sessão de Pretos Velhos',   tituloEmoji: '🧓🏾', inicioEmoji: '☕' },
+      ciganos:        { titulo: 'Sessão de Ciganos',         tituloEmoji: '💃', inicioEmoji: '🏹' },
+      caboclos:       { titulo: 'Sessão de Caboclos',        tituloEmoji: '💃', inicioEmoji: '🍷' },
+      cosmes:         { titulo: 'Sessão de Cosmes e Caboclos', tituloEmoji: '💃', inicioEmoji: '🦜' },
+      desenvolvimento:{ titulo: 'Sessão de Desenvolvimento', tituloEmoji: '🌿', inicioEmoji: '🦜' },
+      cruzamento:     { titulo: 'Cruzamento',                tituloEmoji: '🌿', inicioEmoji: '🦜' },
+      obrigacao:      { titulo: 'Obrigação',                 tituloEmoji: '🧎‍♀️', inicioEmoji: '🍾' },
+      outro:          { titulo: '',                          tituloEmoji: '✦', inicioEmoji: '🍾' }
+    };
+
     const OR_PADRAO = {
       horaChegada: '20:00',
       horaInicio: '21:00',
@@ -6753,17 +6792,30 @@ const auth = getAuth(app);
       orRenderItensExtras();
     });
 
-    // ── ASSISTÊNCIA (radio pill) ──
-    document.getElementById('or-radio-aberta')?.addEventListener('click', () => {
-      orAssistencia = 'aberta';
-      document.getElementById('or-radio-aberta').classList.add('ativo');
-      document.getElementById('or-radio-sem').classList.remove('ativo');
+    // ── ASSISTÊNCIA (radio pill, 3 estados) ──
+    const OR_RADIOS_ASSISTENCIA = ['or-radio-aberta', 'or-radio-sem', 'or-radio-fechada'];
+    function orSetAssistencia(valor, idAtivo) {
+      orAssistencia = valor;
+      OR_RADIOS_ASSISTENCIA.forEach(id => document.getElementById(id)?.classList.toggle('ativo', id === idAtivo));
+    }
+    document.getElementById('or-radio-aberta')?.addEventListener('click', () => orSetAssistencia('aberta', 'or-radio-aberta'));
+    document.getElementById('or-radio-sem')?.addEventListener('click', () => orSetAssistencia('sem', 'or-radio-sem'));
+    document.getElementById('or-radio-fechada')?.addEventListener('click', () => orSetAssistencia('fechada', 'or-radio-fechada'));
+
+    // ── TIPO DE SESSÃO (define emojis certos automaticamente) ──
+    document.getElementById('or-inp-tipo')?.addEventListener('change', e => {
+      orAplicarTipo(e.target.value);
     });
-    document.getElementById('or-radio-sem')?.addEventListener('click', () => {
-      orAssistencia = 'sem';
-      document.getElementById('or-radio-sem').classList.add('ativo');
-      document.getElementById('or-radio-aberta').classList.remove('ativo');
-    });
+    function orAplicarTipo(tipoKey) {
+      const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
+      document.getElementById('or-emoji-chegada').textContent = '🧑‍🦱';
+      document.getElementById('or-emoji-inicio').textContent = cfg.inicioEmoji;
+      const tituloEl = document.getElementById('or-inp-titulo');
+      // só substitui o título se estiver vazio ou ainda for uma sugestão automática anterior —
+      // preserva o que a Anna já tiver digitado/customizado
+      const eraSugestaoAutomatica = Object.values(OR_TIPOS).some(t => t.titulo === tituloEl.value);
+      if (!tituloEl.value.trim() || eraSugestaoAutomatica) tituloEl.value = cfg.titulo;
+    }
 
     // ── MODAL EDITAR ITENS FIXOS ──
     function orAbrirTplModal() {
@@ -6822,11 +6874,15 @@ const auth = getAuth(app);
       const inicio = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio;
       const obs = document.getElementById('or-inp-obs').value.trim();
       const incluirMens = document.getElementById('or-check-mensalidade').checked;
+      const tipoKey = document.getElementById('or-inp-tipo')?.value || 'quimbanda';
+      const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
+      const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
 
-      let txt = `💃 ${titulo}\n\n`;
-      txt += `🧓 Chegada da Corrente: ${chegada}\n`;
-      txt += `🥂 Início dos Trabalhos: ${inicio}\n\n`;
-      txt += orAssistencia === 'aberta' ? `🧑‍🤝‍🧑 Sessão aberta à assistência\n` : `🧑‍🤝‍🧑 Sessão sem atendimentos\n`;
+      let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
+      txt += `🧑‍🦱 Chegada da Corrente: ${chegada}\n`;
+      txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
+      const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
+      txt += `🧑‍🤝‍🧑 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
 
       const itensAtivos = orTemplate.itens.filter(it => it.ativo && it.texto.trim());
       const extrasValidos = orItensExtras.filter(it => it.texto.trim());
@@ -6846,6 +6902,46 @@ const auth = getAuth(app);
       return txt.trim();
     }
 
+    // ── ✨ TRANSFORMAR NOTAS COM IA ──
+    // Chama o Worker do Cloudflare (endpoint /api/orientacao-ia) que usa a API da Anthropic
+    // com o padrão real de emojis/estilo da Anna, e devolve os itens já formatados.
+    document.getElementById('or-btn-ia')?.addEventListener('click', async () => {
+      const notas = document.getElementById('or-inp-notas-ia').value.trim();
+      const statusEl = document.getElementById('or-ia-status');
+      if (!notas) { statusEl.textContent = 'Escreve algumas notas primeiro.'; return; }
+      const btn = document.getElementById('or-btn-ia');
+      const textoOriginal = btn.textContent;
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      statusEl.textContent = '';
+      try {
+        const tipoKey = document.getElementById('or-inp-tipo')?.value || 'quimbanda';
+        const res = await fetch('/api/orientacao-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: tipoKey,
+            titulo: document.getElementById('or-inp-titulo').value.trim(),
+            notas: notas
+          })
+        });
+        if (!res.ok) throw new Error('Worker retornou erro ' + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data.itens) || !data.itens.length) throw new Error('Resposta vazia');
+        // adiciona os itens gerados aos itens extras (não substitui o que já tinha)
+        data.itens.forEach(it => { if (it.texto) orItensExtras.push({ emoji: it.emoji || '✦', texto: it.texto }); });
+        orRenderItensExtras();
+        document.getElementById('or-inp-notas-ia').value = '';
+        statusEl.textContent = '✓ Itens adicionados abaixo — revise antes de gerar a mensagem.';
+      } catch(e) {
+        console.warn('orientacao-ia:', e);
+        statusEl.textContent = 'Não consegui falar com a IA agora. Você pode adicionar os itens manualmente em "Itens extras" abaixo.';
+      } finally {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+      }
+    });
+
     document.getElementById('or-btn-gerar')?.addEventListener('click', () => {
       document.getElementById('or-rel-texto').value = orGerarTexto();
       document.getElementById('or-rel-overlay').style.display = 'flex';
@@ -6862,6 +6958,7 @@ const auth = getAuth(app);
 
     // inicializa quando a página existir no DOM
     if (document.getElementById('or-proxima-titulo')) {
+      orAplicarTipo(document.getElementById('or-inp-tipo')?.value || 'quimbanda');
       orCarregarProximaSessao();
       orCarregarTemplate();
       orRenderItensExtras();
