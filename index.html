@@ -1259,17 +1259,20 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .or-item-texto{flex:1;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text)}
 .or-btn-add-extra{width:100%;background:none;border:1px dashed var(--rosa);border-radius:9px;color:var(--rosa);font-family:'Crimson Pro',serif;font-size:.85rem;padding:9px;cursor:pointer;margin-top:6px}
 .or-extra-linha{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.or-extra-linha input.or-emoji-inp{width:52px;flex-shrink:0;text-align:center}
 .or-extra-linha input.or-texto-inp{flex:1}
 .or-extra-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 6px;flex-shrink:0}
 .or-extra-del:hover{color:#c0392b}
+.or-emoji-btn{width:44px;height:38px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:var(--rosa-dim);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.or-emoji-btn:hover{border-color:var(--rosa)}
+.or-emoji-picker{position:absolute;z-index:400;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.15);padding:8px;display:grid;grid-template-columns:repeat(6,1fr);gap:3px;max-width:220px}
+.or-emoji-opcao{width:32px;height:32px;border:none;background:none;font-size:1.15rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.or-emoji-opcao:hover{background:var(--rosa-dim)}
 
 .or-btn-gerar{width:100%;background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Cinzel',serif;font-size:12.5px;letter-spacing:.08em;font-weight:700;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(196,57,107,.25);transition:transform .15s}
 .or-btn-gerar:hover{transform:translateY(-2px)}
 
 /* modal editar padrões */
 .or-tpl-item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
-.or-tpl-item-row input.or-emoji-inp{width:52px;flex-shrink:0;text-align:center}
 .or-tpl-item-row input.or-texto-inp{flex:1}
 
 @media(max-width:600px){
@@ -6770,6 +6773,27 @@ const auth = getAuth(app);
     }
 
     // ── ITENS EXTRAS (transientes, só desta sessão) ──
+    // ── SELETOR DE EMOJI (popover) ──
+    const OR_PALETA_EMOJI = ['🌿','🥻','🍅','🫓','🍬','🍎','🎩','📝','🕯️','🧹','🦟','🍷','🚌','🥁','💙','📧','🌐','🐷','🏠','🔪','🔥','🎪','🧎‍♀️','✦'];
+    function orAbrirEmojiPicker(botaoEl, onEscolher) {
+      document.querySelectorAll('.or-emoji-picker').forEach(p => p.remove());
+      const pop = document.createElement('div');
+      pop.className = 'or-emoji-picker';
+      pop.innerHTML = OR_PALETA_EMOJI.map(e => `<button type="button" class="or-emoji-opcao">${e}</button>`).join('');
+      document.body.appendChild(pop);
+      const rect = botaoEl.getBoundingClientRect();
+      pop.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+      pop.style.left = (window.scrollX + rect.left) + 'px';
+      pop.querySelectorAll('.or-emoji-opcao').forEach(btn => {
+        btn.addEventListener('click', ev => { ev.stopPropagation(); onEscolher(btn.textContent); pop.remove(); });
+      });
+      setTimeout(() => {
+        document.addEventListener('click', function fechar(e) {
+          if (!pop.contains(e.target) && e.target !== botaoEl) { pop.remove(); document.removeEventListener('click', fechar); }
+        });
+      }, 0);
+    }
+
     function orRenderItensExtras() {
       const wrap = document.getElementById('or-itens-extras');
       if (!orItensExtras.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum item extra adicionado.</div>'; return; }
@@ -6777,11 +6801,14 @@ const auth = getAuth(app);
       orItensExtras.forEach((it, i) => {
         const row = document.createElement('div'); row.className = 'or-extra-linha';
         row.innerHTML = `
-          <input type="text" class="or-emoji-inp" value="${it.emoji}" maxlength="4">
+          <button type="button" class="or-emoji-btn" title="Escolher emoji">${it.emoji}</button>
           <input type="text" class="or-texto-inp" value="${it.texto}" placeholder="Descreva o item...">
           <button class="or-extra-del" title="Remover">✕</button>
         `;
-        row.querySelector('.or-emoji-inp').addEventListener('input', e => { orItensExtras[i].emoji = e.target.value; });
+        const emojiBtn = row.querySelector('.or-emoji-btn');
+        emojiBtn.addEventListener('click', () => {
+          orAbrirEmojiPicker(emojiBtn, emoji => { orItensExtras[i].emoji = emoji; emojiBtn.textContent = emoji; });
+        });
         row.querySelector('.or-texto-inp').addEventListener('input', e => { orItensExtras[i].texto = e.target.value; });
         row.querySelector('.or-extra-del').addEventListener('click', () => { orItensExtras.splice(i,1); orRenderItensExtras(); });
         wrap.appendChild(row);
@@ -6828,11 +6855,14 @@ const auth = getAuth(app);
       orTemplate.itens.forEach((it, i) => {
         const row = document.createElement('div'); row.className = 'or-tpl-item-row';
         row.innerHTML = `
-          <input type="text" class="or-emoji-inp" value="${it.emoji}" maxlength="4">
+          <button type="button" class="or-emoji-btn" title="Escolher emoji">${it.emoji}</button>
           <input type="text" class="or-texto-inp" value="${it.texto}">
           <button class="or-extra-del" title="Remover">✕</button>
         `;
-        row.querySelector('.or-emoji-inp').addEventListener('input', e => { orTemplate.itens[i].emoji = e.target.value; });
+        const emojiBtn = row.querySelector('.or-emoji-btn');
+        emojiBtn.addEventListener('click', () => {
+          orAbrirEmojiPicker(emojiBtn, emoji => { orTemplate.itens[i].emoji = emoji; emojiBtn.textContent = emoji; });
+        });
         row.querySelector('.or-texto-inp').addEventListener('input', e => { orTemplate.itens[i].texto = e.target.value; });
         row.querySelector('.or-extra-del').addEventListener('click', () => { orTemplate.itens.splice(i,1); orRenderTplModalLista(); });
         wrap.appendChild(row);
