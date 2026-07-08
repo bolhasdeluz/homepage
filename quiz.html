@@ -68,11 +68,30 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-btn-comecar:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(196,57,107,.4)}
 .qz-btn-comecar:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
+.qz-progresso-geral{background:var(--rosa-dim);border-radius:12px;padding:10px 16px;margin-bottom:18px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
+.qz-progresso-geral strong{color:var(--rosa)}
+.qz-progresso-geral-barra{height:5px;background:rgba(196,57,107,.15);border-radius:10px;overflow:hidden;margin-top:7px}
+.qz-progresso-geral-fill{height:100%;background:var(--rosa);border-radius:10px;transition:width .3s ease}
+
+.qz-btn-revisar{background:none;border:none;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;text-decoration:underline;margin-top:14px}
+.qz-btn-revisar:hover{color:var(--rosa)}
+
+.qz-revisao-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;animation:cpEntra .2s ease both}
+.qz-revisao-cat{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);background:rgba(140,58,26,.08);padding:2px 9px;border-radius:20px;display:inline-block;margin-bottom:7px}
+.qz-revisao-pergunta{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.4}
+.qz-revisao-opcao{padding:8px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.qz-revisao-opcao.certa{background:var(--green-dim);color:var(--green);font-weight:600}
+.qz-revisao-opcao.escolha-errada{background:rgba(192,57,43,.08);color:#a5362a;font-weight:600}
+.qz-revisao-explicacao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.qz-revisao-vazio{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
 .qz-categoria-titulo{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
 .qz-categorias{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px}
 .qz-cat-chip{background:var(--rosa-dim);border:1.5px solid transparent;border-radius:20px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:6px;transition:all .15s}
 .qz-cat-chip:hover{border-color:var(--rosa)}
 .qz-cat-chip.ativo{background:var(--rosa);color:#fff;box-shadow:0 4px 14px rgba(196,57,107,.3)}
+.qz-cat-chip.completa{opacity:.55}
+.qz-cat-chip.completa .qtd{color:var(--green)}
 .qz-cat-chip .qtd{font-family:'Cinzel',serif;font-size:.62rem;opacity:.75}
 
 .qz-pergunta-categoria{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);background:rgba(140,58,26,.08);padding:3px 10px;border-radius:20px;margin-bottom:8px}
@@ -129,7 +148,20 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-ranking-nome{flex:1;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:var(--text)}
 .qz-ranking-nota{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa)}
 .qz-ranking-vazio{text-align:center;padding:20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.88rem}
+
+.qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
+
+/* cartão pra gerar imagem — fica fora da tela, só usado no momento de compartilhar */
+#qz-cartao-share{position:fixed;left:-9999px;top:0;width:420px;background:linear-gradient(160deg,#c4396b 0%,#8a1a40 100%);padding:44px 34px;text-align:center;font-family:'DM Sans',sans-serif;color:#fff}
+#qz-cs-eyebrow{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:10px}
+#qz-cs-icone{font-size:3.4rem;margin-bottom:10px}
+#qz-cs-titulo{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;margin-bottom:6px}
+#qz-cs-nome{font-family:'Crimson Pro',serif;font-size:1.05rem;font-style:italic;color:rgba(255,255,255,.85);margin-bottom:26px}
+#qz-cs-nota{font-family:'Cinzel',serif;font-size:3.6rem;font-weight:700;margin-bottom:4px}
+#qz-cs-cat{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:28px}
+#qz-cs-rodape{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.25);padding-top:16px}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -155,11 +187,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <span class="qz-icone-grande">🔮</span>
     <h2>Pronta pra jogar?</h2>
     <p>São perguntas rápidas sobre os fundamentos da casa. Erra sem dó, é só uma brincadeira ✦</p>
+    <div class="qz-progresso-geral" id="qz-progresso-geral" style="display:none"></div>
     <div class="qz-categoria-titulo">Escolha uma área</div>
     <div class="qz-categorias" id="qz-categorias"></div>
+    <p id="qz-saudacao-logada" style="display:none;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:10px">Jogando como <strong id="qz-saudacao-nome"></strong> ✦</p>
     <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
     <br>
     <button class="qz-btn-comecar" id="qz-btn-comecar">Começar ✦</button>
+    <br>
+    <button class="qz-btn-revisar" id="qz-btn-revisar" style="display:none">📖 Revisar minhas respostas</button>
+  </div>
+
+  <!-- TELA DE REVISÃO -->
+  <div id="qz-tela-revisao" style="display:none">
+    <button class="back-btn" id="qz-revisao-voltar" style="margin-bottom:16px">← Voltar</button>
+    <div id="qz-revisao-lista"></div>
   </div>
 
   <!-- TELA DE JOGO -->
@@ -186,6 +228,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div class="qz-resultado-sub" id="qz-resultado-sub"></div>
     <button class="qz-btn-refazer" id="qz-btn-refazer">↻ Jogar de novo</button>
     <button class="qz-btn-ranking" id="qz-btn-ver-ranking">🏆 Ver ranking</button>
+    <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
+  </div>
+
+  <!-- CARTÃO PRA GERAR IMAGEM (fica fora da tela, só usado no momento de compartilhar) -->
+  <div id="qz-cartao-share">
+    <div id="qz-cs-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+    <div id="qz-cs-icone">🔮</div>
+    <div id="qz-cs-titulo">Quiz de Fundamentos</div>
+    <div id="qz-cs-nome"></div>
+    <div id="qz-cs-nota">0/10</div>
+    <div id="qz-cs-cat">Todas as categorias</div>
+    <div id="qz-cs-rodape">bolhasdeluz.ong.br</div>
   </div>
 
   <!-- RANKING -->
@@ -199,7 +253,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -229,20 +283,31 @@ onAuthStateChanged(auth, (user) => {
   const avatarEl = document.getElementById('login-avatar');
   const loginBtn = document.getElementById('login-btn');
   const logoutBtn = document.getElementById('logout-btn');
+  const inpNome = document.getElementById('qz-inp-nome');
+  const saudacao = document.getElementById('qz-saudacao-logada');
+  const saudacaoNome = document.getElementById('qz-saudacao-nome');
   if (user) {
     statusEl.textContent = user.displayName || user.email;
     avatarEl.src = user.photoURL || '';
     avatarEl.style.display = user.photoURL ? 'block' : 'none';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
-    if (!document.getElementById('qz-inp-nome').value) {
-      document.getElementById('qz-inp-nome').value = (user.displayName || '').split(' ')[0] || '';
-    }
+    // já tá logada — usa o nome do login direto, sem pedir pra digitar
+    inpNome.style.display = 'none';
+    saudacaoNome.textContent = user.displayName || user.email;
+    saudacao.style.display = 'block';
+    qzCarregarProgresso();
   } else {
     statusEl.textContent = 'Não conectada';
     avatarEl.style.display = 'none';
     loginBtn.style.display = 'inline-block';
     logoutBtn.style.display = 'none';
+    inpNome.style.display = 'block';
+    saudacao.style.display = 'none';
+    document.getElementById('qz-progresso-geral').style.display = 'none';
+    document.getElementById('qz-btn-revisar').style.display = 'none';
+    qzProgresso = {};
+    qzRenderCategorias();
   }
 });
 
@@ -254,6 +319,7 @@ onAuthStateChanged(auth, (user) => {
 // ══════════════════════════════════════════════════════════════
 const QZ_PERGUNTAS = [
   {
+    "id": 1,
     "pergunta": "Quando é que rola de verdade dizer que algo foi \"confirmado\" na religião?",
     "opcoes": [
       "O médium sonhou com o guia usando aquele elemento — e acordou já sabendo",
@@ -266,6 +332,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 2,
     "pergunta": "No fundo no fundo, pra que serve a incorporação?",
     "opcoes": [
       "Pra mostrar que a mediunidade tá afiada",
@@ -278,6 +345,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 3,
     "pergunta": "O guia mandou alguém ir embora e a pessoa cravou o pé no chão. E agora?",
     "opcoes": [
       "Relaxa, o guia resolve isso sozinho, é questão espiritual dele",
@@ -290,6 +358,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 4,
     "pergunta": "Fio de conta pode rolar quando, afinal?",
     "opcoes": [
       "No dia a dia mesmo, tipo proteção e crachá religioso",
@@ -302,6 +371,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 5,
     "pergunta": "Assentamento de Exu tá precisando de uma geral — como se faz?",
     "opcoes": [
       "Água corrente e sabonete neutro, com todo carinho",
@@ -314,6 +384,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 6,
     "pergunta": "Existe aquela fase \"adolescência mediúnica\" — o que é isso?",
     "opcoes": [
       "A fase em que o médium ainda não incorporou nada",
@@ -326,6 +397,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 7,
     "pergunta": "Resguardo e preceito são a mesma coisa com nome diferente?",
     "opcoes": [
       "São, sim — é só sinônimo mesmo",
@@ -338,6 +410,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 8,
     "pergunta": "O que quer dizer aquele papo de \"a Umbanda se basta\"?",
     "opcoes": [
       "Que não pode ter elemento de outra religião no congá, nem pensar",
@@ -350,6 +423,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 9,
     "pergunta": "Chegou atrasada e a sessão já tá rolando. Qual a boa?",
     "opcoes": [
       "Entra reto na corrente, sem drama, pra não travar o fluxo",
@@ -362,6 +436,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 10,
     "pergunta": "Exu chegou novinho na casa — quando ele já pode beber e fumar?",
     "opcoes": [
       "Desde o primeiro atendimento, se ele pedir",
@@ -374,6 +449,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 11,
     "pergunta": "Por que não vale entregar cocar, espada e arco pro caboclo logo de cara?",
     "opcoes": [
       "Porque esses elementos precisam ser cruzados antes",
@@ -386,6 +462,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 12,
     "pergunta": "Como a gente entende a Quimbanda aqui na nossa casa?",
     "opcoes": [
       "Uma linha de trabalho dentro da Umbanda, debaixo da asa dos Orixás",
@@ -398,6 +475,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 13,
     "pergunta": "Sentiu que a energia de alguém tá pesada. O que fazer?",
     "opcoes": [
       "Corre avisar a mãe de santo pra ela resolver espiritualmente",
@@ -410,6 +488,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 14,
     "pergunta": "Pra que serve o Conselho do Oxé?",
     "opcoes": [
       "Toma decisão administrativa e financeira junto com a Diretoria",
@@ -422,6 +501,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Estrutura da Casa"
   },
   {
+    "id": 15,
     "pergunta": "Por que todo mundo paga a obrigação de agosto, até quem não vai cortar aves?",
     "opcoes": [
       "É regra administrativa mesmo, pra fechar a conta",
@@ -434,6 +514,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Estrutura da Casa"
   },
   {
+    "id": 16,
     "pergunta": "O que é o famoso cacicamento?",
     "opcoes": [
       "É a mesma coisa que coroação de caboclo, só muda o nome",
@@ -446,6 +527,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 17,
     "pergunta": "Vai contar algo pra mãe de santo — qual a postura certa?",
     "opcoes": [
       "Pode desembuchar tudo, sigilo garantido, é relação de confiança",
@@ -458,6 +540,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 18,
     "pergunta": "O que quer dizer \"tempo não é cargo\"?",
     "opcoes": [
       "Que quantidade de anos na religião sozinha não garante que você aprendeu mais ou que manda mais",
@@ -470,6 +553,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Estrutura da Casa"
   },
   {
+    "id": 19,
     "pergunta": "Qual a diferença entre quartinha de Umbanda e quartinha de Exu?",
     "opcoes": [
       "Uma é de barro, a outra é de ferro",
@@ -482,6 +566,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 20,
     "pergunta": "\"Pé não segura cabeça\" — o que isso quer dizer?",
     "opcoes": [
       "É sobre postura corporal na hora da incorporação",
@@ -494,6 +579,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 21,
     "pergunta": "Quem são os Ibeji, afinal?",
     "opcoes": [
       "O nome que dão pra todos os cosmes e erês juntos",
@@ -506,6 +592,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 22,
     "pergunta": "Por que ninguém pode cruzar na frente do tambor durante o trabalho?",
     "opcoes": [
       "Porque o tamboreiro precisa de espaço pra se mexer à vontade",
@@ -518,6 +605,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 23,
     "pergunta": "Na virada do ano, qual é a bebida do banho de Iansã?",
     "opcoes": [
       "Cidra branca",
@@ -530,6 +618,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 24,
     "pergunta": "Amaci — o que é isso, afinal?",
     "opcoes": [
       "O banho de descarrego que se toma antes de cada sessão",
@@ -542,6 +631,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 25,
     "pergunta": "Por que um médium incorporado não reage direito quando tem um perigo físico rolando?",
     "opcoes": [
       "Porque o guia simplesmente não liga pra questão terrena no meio do trabalho",
@@ -554,6 +644,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 26,
     "pergunta": "\"Mato é mato, e Oxóssi é rei\" — o que isso quer dizer?",
     "opcoes": [
       "Que qualquer folha de mato vira erva de Exu se apertar",
@@ -566,6 +657,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 27,
     "pergunta": "Elebó — o que é isso?",
     "opcoes": [
       "O ritual de levantar as obrigações feitas no corte dos Exus",
@@ -578,6 +670,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 28,
     "pergunta": "Por que imagem de resina não entra nas obrigações?",
     "opcoes": [
       "Porque a resina não absorve o axé direito nos rituais",
@@ -590,6 +683,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 29,
     "pergunta": "Qual é a boa postura com a assistência durante a sessão?",
     "opcoes": [
       "Ela se vira sozinha — a corrente tá focada nos guias e no trabalho",
@@ -602,6 +696,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 30,
     "pergunta": "Exu catiço — o que é isso na prática?",
     "opcoes": [
       "Um Exu que ainda não tem nome confirmado, meio instável",
@@ -614,6 +709,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 31,
     "pergunta": "Na nossa casa, qual a diferença entre Exu de Umbanda e Exu de Quimbanda?",
     "opcoes": [
       "O de Umbanda trabalha com erva, o de Quimbanda trabalha com axorô",
@@ -626,6 +722,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 32,
     "pergunta": "Como foi que o povo cigano entrou na Umbanda?",
     "opcoes": [
       "Pelo sincretismo com santo católico cultuado por imigrante europeu no Brasil",
@@ -638,6 +735,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 33,
     "pergunta": "Por que tambor nunca fica \"xoxo\" nem é deixado de pé à toa?",
     "opcoes": [
       "Porque isso desafina o couro e estraga o som na sessão",
@@ -650,6 +748,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 34,
     "pergunta": "Assistência Fixa — o que é isso?",
     "opcoes": [
       "A assistência que já frequenta o terreiro há mais de um ano",
@@ -662,6 +761,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 35,
     "pergunta": "Caiu erva no chão durante o banho. O que fazer?",
     "opcoes": [
       "Joga tudo junto no verde na hora do despacho",
@@ -674,6 +774,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 36,
     "pergunta": "Qual Orixá come em gamela de madeira, e por quê?",
     "opcoes": [
       "Ogum — porque é o Orixá do ferro e da terra, e a gamela representa o trabalho braçal",
@@ -686,6 +787,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 37,
     "pergunta": "Quando é que guia mais novo já pode dar passe ou consulta?",
     "opcoes": [
       "A partir do primeiro cruzamento, já libera geral",
@@ -698,6 +800,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 38,
     "pergunta": "Dendê, no contexto do assentamento de Exu — o que é?",
     "opcoes": [
       "Uma oferenda de agrado nos dias de sessão, pra fortalecer o vínculo",
@@ -710,6 +813,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Quimbanda & Exu"
   },
   {
+    "id": 39,
     "pergunta": "O que é o Adê, e pra quem serve?",
     "opcoes": [
       "A coroa ritual usada por todos os Orixás, sem exceção",
@@ -722,6 +826,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Orixás & Rituais"
   },
   {
+    "id": 40,
     "pergunta": "Por que a Umbanda não sai por aí convertendo gente?",
     "opcoes": [
       "Porque a doutrina proíbe qualquer tipo de evangelização",
@@ -734,6 +839,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 41,
     "pergunta": "O que é o tal ponto de força pessoal?",
     "opcoes": [
       "O congá que o médium monta em casa depois do primeiro cruzamento",
@@ -746,6 +852,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 42,
     "pergunta": "Apronte do Exu e coroação do caboclo — qual a diferença?",
     "opcoes": [
       "É o mesmo ritual, só muda o nome conforme a linha",
@@ -758,6 +865,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 43,
     "pergunta": "Como foi que a nossa casa se organizou legalmente?",
     "opcoes": [
       "Alvará direto da prefeitura e registro em cartório como associação independente",
@@ -770,6 +878,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Estrutura da Casa"
   },
   {
+    "id": 44,
     "pergunta": "Linha do Oriente, aqui na nossa casa — o que é?",
     "opcoes": [
       "A linha que junta todos os guias de origem africana da Umbanda",
@@ -782,6 +891,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 45,
     "pergunta": "Por que não é bom visitar outra casa sozinho logo no início do desenvolvimento?",
     "opcoes": [
       "Porque o médium ainda não conhece os fundamentos de outra casa e pode ser mal interpretado",
@@ -794,6 +904,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 46,
     "pergunta": "Preceito mínimo de um cruzamento — como funciona?",
     "opcoes": [
       "Um dia antes, o dia em si e um dia depois — sem álcool, sexo, comida pesada ou droga",
@@ -806,6 +917,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Desenvolvimento Mediúnico"
   },
   {
+    "id": 47,
     "pergunta": "E as oferendas dos guias — de quem é a responsabilidade de levantar?",
     "opcoes": [
       "Da mãe de santo — o médium só entra com a grana",
@@ -818,6 +930,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Postura & Conduta"
   },
   {
+    "id": 48,
     "pergunta": "Por que dizem que a Umbanda é a única religião genuinamente brasileira?",
     "opcoes": [
       "Porque nasceu no Brasil em 1908, com Zélio de Moraes e o Caboclo das Sete Encruzilhadas",
@@ -830,6 +943,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Fundamentos & Doutrina"
   },
   {
+    "id": 49,
     "pergunta": "Rolou conduta antiética comprovada de um membro. E aí, o que acontece?",
     "opcoes": [
       "Passa por advertência verbal e escrita antes de qualquer coisa mais séria",
@@ -842,6 +956,7 @@ const QZ_PERGUNTAS = [
     "categoria": "Estrutura da Casa"
   },
   {
+    "id": 50,
     "pergunta": "\"Sessão das Almas\", na obrigação de agosto — o que é isso?",
     "opcoes": [
       "A sessão de pretos velhos que abre o ciclo da obrigação dos Exus",
@@ -852,6 +967,656 @@ const QZ_PERGUNTAS = [
     "certa": 2,
     "explicacao": "A Sessão das Almas é a primeira etapa da obrigação de agosto — a frente de Umbanda antes do trabalho de Quimbanda.",
     "categoria": "Orixás & Rituais"
+  },
+  {
+    "pergunta": "Qual é o banho certo de Oxum na virada do ano?",
+    "opcoes": [
+      "Champagne branca",
+      "Água de canjica amarela",
+      "Guaraná",
+      "Vinho seco"
+    ],
+    "certa": 1,
+    "explicacao": "Água de canjica amarela é o banho certo de Oxum na virada do ano.",
+    "categoria": "Orixás & Rituais",
+    "id": 51
+  },
+  {
+    "pergunta": "O que é esse tal \"passe em roupa de ausente\"?",
+    "opcoes": [
+      "Um passe que a mãe de santo faz pra quem não pode ir ao terreiro por doença",
+      "Trazer uma roupa de outra pessoa pra receber o passe por ela na sessão — de preferência um pijama",
+      "Um ritual exclusivo das obrigações, pra filho que mora em outra cidade",
+      "O passe dado pra quem chegou atrasada e não entrou na corrente"
+    ],
+    "certa": 1,
+    "explicacao": "É trazer a roupa de outra pessoa (de preferência um pijama) pra receber o passe por ela na sessão.",
+    "categoria": "Postura & Conduta",
+    "id": 52
+  },
+  {
+    "pergunta": "Como se despacha a defumação depois de usar?",
+    "opcoes": [
+      "Guarda pra reaproveitar na próxima, se ainda sobrar carvão",
+      "Leva de volta pro terreiro pra descartar coletivamente",
+      "Joga no lixo comum mesmo, é só carvão queimado",
+      "Despacha no mato ou no cruzeiro mais perto — carvão usado nunca volta pra casa"
+    ],
+    "certa": 3,
+    "explicacao": "Despacha no mato ou no cruzeiro mais próximo — carvão usado nunca volta com você.",
+    "categoria": "Orixás & Rituais",
+    "id": 53
+  },
+  {
+    "pergunta": "Qual é o bicho sagrado de Oxum que representa o feminino e a construção paciente?",
+    "opcoes": [
+      "A abelha",
+      "A galinha",
+      "A aranha",
+      "A borboleta"
+    ],
+    "certa": 2,
+    "explicacao": "A aranha é o bicho sagrado de Oxum, ligado ao feminino e à construção paciente.",
+    "categoria": "Orixás & Rituais",
+    "id": 54
+  },
+  {
+    "pergunta": "Por que Oxalá usa saia e Adê, elementos femininos?",
+    "opcoes": [
+      "Porque Oxalá representa a neutralidade entre feminino e masculino",
+      "Foi punição de Nanã — ele se travestiu pra entrar no reino dos mortos e foi descoberto",
+      "Porque Oxalá é pai de todos os Orixás e carrega as características de todos",
+      "Por causa do sincretismo com Nossa Senhora, de onde veio o vestuário feminino"
+    ],
+    "certa": 1,
+    "explicacao": "Foi punição de Nanã — Oxalá se travestiu pra entrar no reino dos mortos e acabou descoberto.",
+    "categoria": "Orixás & Rituais",
+    "id": 55
+  },
+  {
+    "pergunta": "O que é o \"axé de visão\" ligado às cartas ciganas?",
+    "opcoes": [
+      "A capacidade de enxergar aura e energia que o médium cigano desenvolve",
+      "Um ritual de iniciação pra quem quer aprender a jogar baralho cigano",
+      "O axé feito junto ao Pai Oxalá e ao Povo Cigano, selando o compromisso com as cartas",
+      "O nome da primeira leitura de cartas que o médium faz depois do cruzamento"
+    ],
+    "certa": 2,
+    "explicacao": "É o axé feito junto ao Pai Oxalá e ao Povo Cigano, que sela o compromisso do médium com as cartas.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 56
+  },
+  {
+    "pergunta": "Qual é a bebida tradicional do caboclo no cruzamento de quem ainda não sabe qual é o Orixá de cabeça?",
+    "opcoes": [
+      "Guaraná",
+      "Vinho seco",
+      "Cerveja amarela",
+      "Cerveja preta"
+    ],
+    "certa": 3,
+    "explicacao": "Cerveja preta é a bebida tradicional nesse caso.",
+    "categoria": "Orixás & Rituais",
+    "id": 57
+  },
+  {
+    "pergunta": "O que é o \"ponto de força\" nos cruzamentos anuais?",
+    "opcoes": [
+      "O lugar dentro do salão onde o médium se posiciona na corrente",
+      "O lugar na natureza — pedreira, praia, mata, rio — onde se busca energia pra reforçar a espiritualidade",
+      "O momento de maior intensidade da incorporação",
+      "O congá montado em casa depois do primeiro cruzamento"
+    ],
+    "certa": 1,
+    "explicacao": "É o lugar na natureza — pedreira, praia, mata, rio — onde se busca energia pra reforçar a espiritualidade.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 58
+  },
+  {
+    "pergunta": "Viu um guia se aproximando de alguém da assistência numa situação de risco. Qual a postura?",
+    "opcoes": [
+      "Espera o guia chefe da casa tomar a iniciativa antes de qualquer coisa",
+      "Chama a mãe de santo na hora pra ela decidir como agir",
+      "Chega por trás da pessoa, se comunica visualmente com o guia, e fica por perto",
+      "Pede pra cambona avisar o guia chefe pra ele vir ajudar"
+    ],
+    "certa": 2,
+    "explicacao": "Chega por trás da pessoa, se comunica visualmente com o guia, e fica por perto — sem drama.",
+    "categoria": "Postura & Conduta",
+    "id": 59
+  },
+  {
+    "pergunta": "\"Pé não segura cabeça\" — o que isso quer dizer sobre as obrigações?",
+    "opcoes": [
+      "A obrigação dos Exus não pode ser antes da obrigação dos Orixás de cabeça",
+      "O apronte dos Exus não substitui o reforço de cabeça — os dois importam, e o de cabeça é essencial",
+      "O médium não pode fazer obrigação de Exu se o cruzamento de cabeça ainda não rolou",
+      "O assentamento de Exu fica no chão, nunca no mesmo nível do congá"
+    ],
+    "certa": 1,
+    "explicacao": "O apronte dos Exus não substitui o reforço de cabeça — os dois importam, e o de cabeça é essencial.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 60
+  },
+  {
+    "pergunta": "Por que não é bom repassar o que os guias falaram numa consulta de outra pessoa?",
+    "opcoes": [
+      "Porque a fala do guia tem axé e perde força quando repetida fora do contexto",
+      "Porque aquilo foi dito pra aquela pessoa, naquele momento, naquela energia — e a gente vai entender errado usando o próprio julgamento",
+      "Porque é questão de privacidade protegida por lei",
+      "Porque o guia pode se ofender se souber que a mensagem dele foi repassada"
+    ],
+    "certa": 1,
+    "explicacao": "Foi dito pra aquela pessoa, naquele momento — a gente sempre vai entender errado usando o próprio julgamento.",
+    "categoria": "Postura & Conduta",
+    "id": 61
+  },
+  {
+    "pergunta": "O que é o \"corte\" na obrigação de agosto?",
+    "opcoes": [
+      "O ritual anual de separação entre Umbanda e Quimbanda",
+      "O encerramento simbólico de ciclos negativos, feito com pemba e axorô",
+      "O sacrifício de aves pra alimentar os Exus, no ponto mais forte da obrigação",
+      "A cerimônia em que o médium recebe o nome definitivo do Exu"
+    ],
+    "certa": 2,
+    "explicacao": "É o sacrifício de aves pra alimentar os Exus, no ponto de maior força da obrigação.",
+    "categoria": "Quimbanda & Exu",
+    "id": 62
+  },
+  {
+    "pergunta": "Qual a diferença entre Exu Cigano e Cigano do Oriente?",
+    "opcoes": [
+      "Nenhuma — são nomes diferentes pra mesma entidade",
+      "O Exu Cigano é Exu antes de tudo, trabalha com magia cigana mas corta. O Cigano do Oriente é entidade própria, mais sutil",
+      "O Exu Cigano é de Quimbanda, o Cigano do Oriente é de Umbanda",
+      "O Cigano do Oriente só chega em sessão fechada; o Exu Cigano chega em qualquer uma"
+    ],
+    "certa": 1,
+    "explicacao": "O Exu Cigano é Exu antes de tudo — trabalha com magia cigana, mas corta. O Cigano do Oriente é entidade própria e mais sutil.",
+    "categoria": "Quimbanda & Exu",
+    "id": 63
+  },
+  {
+    "pergunta": "Como é o procedimento certo pra levantar a obrigação do ori depois do cruzamento?",
+    "opcoes": [
+      "A mãe de santo vai até a casa do médium fazer a levantação com toda a ritualística",
+      "O médium vai ao terreiro no dia seguinte e a corrente faz a levantação coletiva",
+      "O médium se ajoelha no congá, tira o pano com cuidado, lava a cabeça com as mãos em água morna, e despacha no verde — sem química depois",
+      "O médium tira o pano quando sentir que tá pronto, sem procedimento fixo"
+    ],
+    "certa": 2,
+    "explicacao": "Se ajoelha no congá, tira o pano com cuidado, lava a cabeça com as mãos em água morna, e despacha no verde — sem química nenhuma depois.",
+    "categoria": "Orixás & Rituais",
+    "id": 64
+  },
+  {
+    "pergunta": "Sessão de Almas — o que é e quando rola?",
+    "opcoes": [
+      "A sessão de pretos velhos feita todo mês pra atender a assistência",
+      "A sessão feita no cemitério em 1º de novembro, na virada de Finados",
+      "A primeira etapa da obrigação de agosto, feita no cruzeiro da casa",
+      "A sessão fechada anual pros filhos da casa receberem passe de descarrego"
+    ],
+    "certa": 1,
+    "explicacao": "É a sessão feita no cemitério em 1º de novembro, na virada de Finados.",
+    "categoria": "Orixás & Rituais",
+    "id": 65
+  },
+  {
+    "pergunta": "Como deve ser a roupa pra levantação da obrigação?",
+    "opcoes": [
+      "Roupa de trabalho completa — jaleco, saia, material dos guias",
+      "Roupa branca ritual, porque é encerramento sagrado",
+      "Roupa simples de terreiro — não é sessão, não precisa ser roupa de trabalho",
+      "Roupa preta, em respeito ao encerramento do ciclo dos Exus"
+    ],
+    "certa": 2,
+    "explicacao": "Roupa simples de terreiro serve — não é sessão, não precisa ser roupa de trabalho.",
+    "categoria": "Orixás & Rituais",
+    "id": 66
+  },
+  {
+    "pergunta": "Elebó — o que é e pra que serve?",
+    "opcoes": [
+      "A defumação coletiva feita no início de cada sessão",
+      "Um tipo de oferenda coletiva feita no fim da obrigação de agosto — momento de encerramento e agradecimento",
+      "O ritual de abertura do cruzeiro antes do dia do corte",
+      "O nome da comida ritualística feita coletivamente pros pretos velhos"
+    ],
+    "certa": 1,
+    "explicacao": "É uma oferenda coletiva feita no fim da obrigação de agosto — momento de encerramento e agradecimento.",
+    "categoria": "Orixás & Rituais",
+    "id": 67
+  },
+  {
+    "pergunta": "Qual Orixá é o único que leva dendê E mel junto?",
+    "opcoes": [
+      "Ogum",
+      "Oxum",
+      "Oxalá",
+      "Xangô"
+    ],
+    "certa": 3,
+    "explicacao": "Xangô é o único que leva dendê e mel juntos.",
+    "categoria": "Orixás & Rituais",
+    "id": 68
+  },
+  {
+    "pergunta": "Por que não é bom repassar orientação de guia sem autorização?",
+    "opcoes": [
+      "Porque os guias podem punir quem revela a mensagem sem permissão",
+      "Porque aquilo foi dito pra aquela pessoa — não cabe a gente interpretar, explicar, ou achar que ela entendeu errado",
+      "Porque é protegido por um sigilo religioso equiparado ao médico",
+      "Porque o médium pode ser responsabilizado se a orientação for mal interpretada"
+    ],
+    "certa": 1,
+    "explicacao": "Foi dito pra aquela pessoa — não cabe a gente interpretar, explicar ou achar que ela entendeu errado.",
+    "categoria": "Postura & Conduta",
+    "id": 69
+  },
+  {
+    "pergunta": "O que acontece com as quartinhas de Exu antes do apronte?",
+    "opcoes": [
+      "Ficam no terreiro — só vão pra casa do médium depois do apronte",
+      "O médium já pode levar assim que o Exu tiver nome confirmado",
+      "Ficam no terreiro até o primeiro corte, depois o médium decide",
+      "São despachadas a cada obrigação, e novas são preparadas no ciclo seguinte"
+    ],
+    "certa": 0,
+    "explicacao": "Ficam no terreiro — só vão pra casa do médium depois do apronte.",
+    "categoria": "Quimbanda & Exu",
+    "id": 70
+  },
+  {
+    "pergunta": "O tamboreiro chamou o guia e ele ainda não chegou. Qual a postura certa?",
+    "opcoes": [
+      "Avisa a cambona pra ela informar o tamboreiro que o guia ainda não chegou",
+      "Fica no lugar da corrente e aguarda — o guia chega no tempo dele",
+      "Sente a energia, fecha os olhos, deixa o guia chegar naturalmente — sem forçar",
+      "Pede licença à corrente, se retira um pouco pra se concentrar antes"
+    ],
+    "certa": 2,
+    "explicacao": "Sente a energia, fecha os olhos, e deixa o guia chegar no tempo dele — nunca forçando.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 71
+  },
+  {
+    "pergunta": "Quem é o Ogum Megê na Quimbanda?",
+    "opcoes": [
+      "O Exu chefe da nossa tronqueira, que guarda o assentamento do Sr. Tranca Ruas",
+      "O guardião dos Exus de Quimbanda — junto com Bará, rege os trabalhos dos Exus livres",
+      "O nome do Ogum que trabalha nos cruzeiros em dia de sessão de Exu",
+      "O Orixá que autoriza o trabalho dos Exus na rua durante as obrigações"
+    ],
+    "certa": 1,
+    "explicacao": "É o guardião dos Exus de Quimbanda — junto com Bará, rege os trabalhos dos Exus livres.",
+    "categoria": "Quimbanda & Exu",
+    "id": 72
+  },
+  {
+    "pergunta": "Por que não se usa roupa íntima qualquer nos trabalhos?",
+    "opcoes": [
+      "Porque a roupa íntima tem contato direto com o corpo que recebe o guia e precisa ser adequada",
+      "Porque tem hora que se levanta saia, vira, abaixa — a calça garante que ninguém passe vergonha nem se distraia",
+      "É norma de segurança, pra evitar acidente nas incorporações mais fortes",
+      "Porque roupa íntima errada atrapalha energeticamente a qualidade da incorporação"
+    ],
+    "certa": 1,
+    "explicacao": "Tem hora que se levanta saia, vira, abaixa — a calça garante que ninguém passe vergonha nem se distraia.",
+    "categoria": "Postura & Conduta",
+    "id": 73
+  },
+  {
+    "pergunta": "Qual é a bebida do banho de Oxalá na virada do ano?",
+    "opcoes": [
+      "Champagne branca",
+      "Água mineral",
+      "Água de canjica branca",
+      "Cidra branca"
+    ],
+    "certa": 2,
+    "explicacao": "Água de canjica branca é a bebida certa do banho de Oxalá na virada do ano.",
+    "categoria": "Orixás & Rituais",
+    "id": 74
+  },
+  {
+    "pergunta": "Quando dá pra usar saia de armação nos trabalhos?",
+    "opcoes": [
+      "Em qualquer sessão de Exu, desde que na cor certa da Pombagira",
+      "Só nas sessões ciganas, que permitem mais exuberância",
+      "No Elebó de Exu — aí sim, tecido bonito, renda, saia de armação, maquiagem mais pesada",
+      "Só depois da coroação, quando já tem autorização pra paramenta completa"
+    ],
+    "certa": 2,
+    "explicacao": "No Elebó de Exu vale tudo isso — tecido bonito, renda, saia de armação, maquiagem mais pesada.",
+    "categoria": "Orixás & Rituais",
+    "id": 75
+  },
+  {
+    "pergunta": "O Conselho do Oxé — até onde ele pode ir?",
+    "opcoes": [
+      "Toma decisão junto com a mãe de santo em questão religiosa",
+      "É consultivo e mediador — atua em ética, mediação e acolhimento, mas quem decide de fato é sempre a Liderança Espiritual",
+      "É o grupo de médiuns mais velhos que orienta o desenvolvimento das filhas",
+      "Administra as finanças e as obrigações coletivas da casa"
+    ],
+    "certa": 1,
+    "explicacao": "É consultivo e mediador — atua em ética, mediação e acolhimento, mas a palavra final é sempre da Liderança Espiritual.",
+    "categoria": "Estrutura da Casa",
+    "id": 76
+  },
+  {
+    "pergunta": "Qual a orientação sobre remédio no dia da sessão?",
+    "opcoes": [
+      "Todo remédio deve ser suspenso no dia da sessão pra não interferir na mediunidade",
+      "Remédio de uso contínuo e orientado por médico não se mexe — se precisar, avisa que o guia não vai beber",
+      "Só remédio pra dor e ansiedade deve ser evitado no dia",
+      "O médium tem que consultar a mãe de santo antes de tomar qualquer remédio no dia dos trabalhos"
+    ],
+    "certa": 1,
+    "explicacao": "Remédio de uso contínuo e orientado por médico não se mexe de jeito nenhum — se precisar, avisa que o guia não vai beber.",
+    "categoria": "Postura & Conduta",
+    "id": 77
+  },
+  {
+    "pergunta": "Por que não é legal levar como confirmado um elemento que o guia usou num sonho?",
+    "opcoes": [
+      "Porque sonho é manifestação do inconsciente do médium, não do guia",
+      "Porque a visão traz erro, interpretação e símbolo — o guia mostra de um jeito e às vezes usa diferente em terra",
+      "Porque o guia precisa autorizar verbalmente durante uma incorporação",
+      "Porque sonho de incorporação só vale quando a mãe de santo confirma"
+    ],
+    "certa": 1,
+    "explicacao": "A visão traz erro, interpretação e símbolo — o guia às vezes mostra de um jeito e usa diferente em terra.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 78
+  },
+  {
+    "pergunta": "Qual é o papel da cambona chefe com os guias mais novos da corrente?",
+    "opcoes": [
+      "Impedir que guia muito novo se manifeste até a mãe de santo autorizar",
+      "Ser a referência que conhece cada guia, orienta os mais novos na cambonagem, e tem autoridade dentro da sessão",
+      "Definir a ordem de chegada dos guias durante a sessão",
+      "Controlar o consumo de bebida e cigarro dos guias durante o trabalho"
+    ],
+    "certa": 1,
+    "explicacao": "É a referência que conhece cada guia, orienta os mais novos na cambonagem, e tem autoridade dentro da sessão.",
+    "categoria": "Postura & Conduta",
+    "id": 79
+  },
+  {
+    "pergunta": "O que é o \"Apete de Batata\" na frente de Bará?",
+    "opcoes": [
+      "Uma oferenda de batata frita, parte da frente de comida do Bará",
+      "Um purê de batata moldado em formato de chave ou pirâmide",
+      "Uma guarnição de batata cozida servida junto com a bebida do Bará",
+      "Um bolo de batata doce servido como oferenda nos dias de cruzeiro"
+    ],
+    "certa": 1,
+    "explicacao": "É um purê de batata moldado em formato de chave ou pirâmide.",
+    "categoria": "Orixás & Rituais",
+    "id": 80
+  },
+  {
+    "pergunta": "Por que a Umbanda não sai batendo de porta em porta convidando gente?",
+    "opcoes": [
+      "Porque a doutrina proíbe qualquer tipo de evangelização",
+      "Porque a Umbanda acredita que a espiritualidade vai buscar a pessoa — se for do caminho dela, ela vem sozinha",
+      "Porque médium não tem tempo disponível pra esse tipo de coisa",
+      "Porque o terreiro não tem capacidade de receber muita gente de uma vez"
+    ],
+    "certa": 1,
+    "explicacao": "A Umbanda acredita que a espiritualidade vai buscar a pessoa — se for do caminho dela, ela vem sozinha.",
+    "categoria": "Fundamentos & Doutrina",
+    "id": 81
+  },
+  {
+    "pergunta": "Quais ervas NÃO entram no amaci do cruzamento?",
+    "opcoes": [
+      "Espada de São Jorge e pitangueira",
+      "Guiné e hortelã",
+      "Arruda, quebra-tudo, espinheira e erva muito forte de Exu",
+      "Boldo e alfazema"
+    ],
+    "certa": 2,
+    "explicacao": "Arruda, quebra-tudo, espinheira e ervas muito fortes de Exu ficam de fora do amaci.",
+    "categoria": "Orixás & Rituais",
+    "id": 82
+  },
+  {
+    "pergunta": "O que diferencia o preceito de obrigação de Quimbanda do preceito de sessão comum?",
+    "opcoes": [
+      "São idênticos — o mesmo preceito vale pra sessão e pra obrigação",
+      "O de Quimbanda é mais longo — inclui preceito físico nos dias de trabalho e resguardo comportamental o mês de agosto inteiro",
+      "O de Quimbanda exige abstinência total de qualquer contato social no período",
+      "O de Quimbanda é mais brando — só no dia do corte se mantém o preceito completo"
+    ],
+    "certa": 1,
+    "explicacao": "O preceito de Quimbanda é bem mais longo — preceito físico nos dias de trabalho e resguardo comportamental o agosto inteiro.",
+    "categoria": "Quimbanda & Exu",
+    "id": 83
+  },
+  {
+    "pergunta": "Por que a mãe de santo da nossa casa não se autodeclarou mãe de santo?",
+    "opcoes": [
+      "Porque precisava terminar todos os cruzamentos antes de assumir a liderança",
+      "Porque na nossa doutrina coroação não é cacicamento — e ela não ia cobrar fundamento dos filhos se ela mesma ignorasse isso",
+      "Porque a legislação religiosa exige autorização formal de uma associação reconhecida",
+      "Porque os guias pediram pra ela esperar completar dez anos de religião"
+    ],
+    "certa": 1,
+    "explicacao": "Na nossa doutrina coroação não é cacicamento — e ela não ia cobrar dos filhos um fundamento que ela mesma ignorasse.",
+    "categoria": "Estrutura da Casa",
+    "id": 84
+  },
+  {
+    "pergunta": "Quem é o preto velho que acolheu a mãe de santo na casa da Betânia e a encaminhou pra Madrinha?",
+    "opcoes": [
+      "Vô Chico",
+      "Vô Benedito",
+      "Pai João",
+      "Vô Francisco"
+    ],
+    "certa": 1,
+    "explicacao": "Foi o Vô Benedito quem acolheu a mãe de santo na casa da Betânia e a encaminhou pra Madrinha.",
+    "categoria": "Estrutura da Casa",
+    "id": 85
+  },
+  {
+    "pergunta": "O que é o \"axé da língua\", e de qual Orixá é?",
+    "opcoes": [
+      "O axé da comunicação e da fala sagrada — é de Ogum, senhor das estradas",
+      "O axé da língua, da fala e da boa comida — é de Xangô",
+      "O axé das palavras de cura — é dos pretos velhos, que curam com a fala",
+      "O axé do canto e da música sagrada — é de Oxóssi, que conhece os pontos da floresta"
+    ],
+    "certa": 1,
+    "explicacao": "É o axé da língua, da fala e da boa comida — pertence a Xangô.",
+    "categoria": "Orixás & Rituais",
+    "id": 86
+  },
+  {
+    "pergunta": "O médium não levantou a oferenda no prazo que o guia orientou. E aí?",
+    "opcoes": [
+      "O guia orienta de novo em sessão, dando mais um prazo",
+      "A mãe de santo é avisada pelos guias e faz a levantação pra não apodrecer",
+      "Vai apodrecer lá — a entidade se vira do jeito dela, e o médium arca com as consequências",
+      "A cambona avisa antes de passar o prazo, pra dar chance de resolver"
+    ],
+    "certa": 2,
+    "explicacao": "Vai apodrecer lá — a entidade se vira do jeito dela, e o médium arca com as consequências.",
+    "categoria": "Postura & Conduta",
+    "id": 87
+  },
+  {
+    "pergunta": "Qual a orientação sobre bebida energética no dia da sessão?",
+    "opcoes": [
+      "Vale em pequena quantidade, pra ajudar quem tá cansada",
+      "Só é proibida pra médium em desenvolvimento — os mais velhos podem, com moderação",
+      "Altera quimicamente muito forte e prejudica o trabalho mediúnico — prefere café, com moderação",
+      "Vale só antes do início dos trabalhos, nunca durante"
+    ],
+    "certa": 2,
+    "explicacao": "Energético altera quimicamente muito forte e prejudica o trabalho — melhor ficar no café, com moderação.",
+    "categoria": "Postura & Conduta",
+    "id": 88
+  },
+  {
+    "pergunta": "O que é o cruzamento de conga, no fundo?",
+    "opcoes": [
+      "O ritual anual de firmeza do congá coletivo do terreiro",
+      "O primeiro cruzamento — onde se faz a primeira ligação ritualística com os guias, através das ervas na cabeça, no ponto mais sagrado",
+      "O ritual de instalação do congá em casa depois do primeiro ano de desenvolvimento",
+      "O cruzamento feito com pemba e axorô pra firmar as imagens do congá"
+    ],
+    "certa": 1,
+    "explicacao": "É o primeiro cruzamento — a primeira ligação ritualística com os guias, feita com ervas na cabeça, no ponto mais sagrado.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 89
+  },
+  {
+    "pergunta": "Por que não é legal \"reparar\" que alguém tá pesado e sair oferecendo diagnóstico espiritual sem pedir?",
+    "opcoes": [
+      "Porque o médium pode estar projetando a própria energia na outra pessoa",
+      "Porque esse tipo de avaliação acaba com relação, cria narrativa sobre quem nem se defendeu, e é perigoso",
+      "Porque só a mãe de santo tem autoridade pra avaliar energia alheia",
+      "Porque mediunidade em desenvolvimento ainda não é confiável pra esse tipo de leitura"
+    ],
+    "certa": 1,
+    "explicacao": "Esse tipo de avaliação acaba com relação, cria narrativa sobre quem nem se defendeu — é perigoso mesmo.",
+    "categoria": "Postura & Conduta",
+    "id": 90
+  },
+  {
+    "pergunta": "Qual a bebida do banho de Ogum na virada do ano?",
+    "opcoes": [
+      "Vinho seco",
+      "Cerveja preta",
+      "Cidra vermelha",
+      "Cerveja amarela"
+    ],
+    "certa": 3,
+    "explicacao": "Cerveja amarela é a bebida certa do banho de Ogum na virada do ano.",
+    "categoria": "Orixás & Rituais",
+    "id": 91
+  },
+  {
+    "pergunta": "Preceito de Cruzamento — qual é a duração mínima?",
+    "opcoes": [
+      "Sete dias — três antes, o dia em si e três depois",
+      "Cinco dias — dois antes, o dia em si e dois depois",
+      "Três dias — um antes, o dia em si e um depois, podendo estender se precisar",
+      "Só o dia do cruzamento e o seguinte são obrigatórios"
+    ],
+    "certa": 2,
+    "explicacao": "O mínimo é três dias — um antes, o dia em si, e um depois, podendo estender se precisar.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 92
+  },
+  {
+    "pergunta": "Qual a postura certa sobre relacionamento dentro do terreiro?",
+    "opcoes": [
+      "Relacionamento entre irmãos de santo é incentivado, fortalece a corrente",
+      "É totalmente proibido, pra preservar a harmonia dos trabalhos",
+      "Amor de verdade, construído com respeito, é bem-vindo — pegação e troca por troca não cabem no vínculo de irmão de santo",
+      "Precisa ser comunicado à mãe de santo pra ela avaliar o impacto nos trabalhos"
+    ],
+    "certa": 2,
+    "explicacao": "Amor de verdade e com respeito é bem-vindo — pegação e troca por troca não cabem no vínculo de irmão de santo.",
+    "categoria": "Postura & Conduta",
+    "id": 93
+  },
+  {
+    "pergunta": "Por que o tambor da sessão nunca fica \"xoxo\" ou de pé sem motivo? (essa aqui é repescagem, presta atenção!)",
+    "opcoes": [
+      "Porque o couro resseca e perde qualidade sonora sem guardar direito",
+      "Porque atrai alma desencarnada — o único momento que fica assim é quando o congá tá de luto",
+      "Porque é desrespeito com o tamboreiro, único com autoridade sobre o instrumento dele",
+      "Porque o tambor precisa de preparo energético antes de qualquer uso"
+    ],
+    "certa": 1,
+    "explicacao": "Atrai alma desencarnada — só fica assim quando o congá tá de luto mesmo.",
+    "categoria": "Postura & Conduta",
+    "id": 94
+  },
+  {
+    "pergunta": "O que é o \"axé do mel\" nas ritualísticas?",
+    "opcoes": [
+      "Uma oferenda exclusiva de Oxum, usada só nos trabalhos dela e dos filhos dela",
+      "Um axé tão abrangente que só quem usa sabe o motivo — aparece em quase toda ritualística, até no final da obrigação dos Exus",
+      "Mel usado só pra adoçar a língua do médium antes de incorporar",
+      "Uma oferta feita só em datas específicas do calendário umbandista"
+    ],
+    "certa": 1,
+    "explicacao": "É um axé tão abrangente que só quem usa sabe o motivo — aparece em quase toda ritualística, até no final da obrigação dos Exus.",
+    "categoria": "Orixás & Rituais",
+    "id": 95
+  },
+  {
+    "pergunta": "E aquele \"conta pra mãe de santo mas não fala que fui eu\"?",
+    "opcoes": [
+      "Vale, sim — ela sempre preserva a identidade de quem trouxe a informação",
+      "É pra evitar — isso é só transferência de carga, tira a preocupação de si sem dar ferramenta nenhuma pra resolver",
+      "É a forma certa de proteger quem tá sendo relatado",
+      "Só é problema quando o caso não precisa de intervenção mesmo"
+    ],
+    "certa": 1,
+    "explicacao": "É pra evitar — isso é só transferência de carga, tira a preocupação de si sem dar ferramenta nenhuma pra resolver.",
+    "categoria": "Postura & Conduta",
+    "id": 96
+  },
+  {
+    "pergunta": "O que é o \"ponteiro\", dentro da religião da casa?",
+    "opcoes": [
+      "O título de quem é responsável por puxar os pontos cantados no tambor",
+      "Um posto raro hoje em dia — quem puxa os pontos sem tambor nenhum",
+      "O nome do médium que faz papel de guia auxiliar durante as incorporações",
+      "O cargo na cambonagem que coordena entrada e saída dos guias"
+    ],
+    "certa": 1,
+    "explicacao": "É um posto raro hoje em dia — a pessoa responsável por puxar os pontos sem tambor nenhum.",
+    "categoria": "Desenvolvimento Mediúnico",
+    "id": 97
+  },
+  {
+    "pergunta": "Por que a primeira obrigação com assentamento custa mais que as seguintes?",
+    "opcoes": [
+      "Porque inclui tambor extra e os bichos dos guias chefes da casa",
+      "Porque na primeira vez tem que comprar tudo pra materializar o sagrado — depois, é só ave",
+      "Porque a mãe de santo cobra orientação individual no primeiro assentamento",
+      "Porque o Sr. Tranca Ruas exige mais elemento na primeira obrigação"
+    ],
+    "certa": 1,
+    "explicacao": "Na primeira vez tem que comprar todos os elementos pra materializar o sagrado — depois, é só ave.",
+    "categoria": "Quimbanda & Exu",
+    "id": 98
+  },
+  {
+    "pergunta": "\"Não existe erro tão grave que não possa ser cometido uma vez\" — o que isso quer dizer?",
+    "opcoes": [
+      "Que a Umbanda perdoa qualquer erro, não importa a gravidade",
+      "Que o primeiro erro nunca é culpa do médium — a responsabilidade é sempre do guia",
+      "Que se o erro é tão grave assim, ele vem de uma sucessão de erros — Umbanda é sobre aprender e crescer, não sobre ser perfeita",
+      "Que os guias aceitam qualquer erro uma vez, mas não toleram repetição"
+    ],
+    "certa": 2,
+    "explicacao": "Se o erro é grave assim, vem de uma sucessão de erros — Umbanda é sobre aprender e crescer, não sobre ser perfeita.",
+    "categoria": "Fundamentos & Doutrina",
+    "id": 99
+  },
+  {
+    "pergunta": "O que é o \"axé de Pombagira pra casa\", e o que ele representa?",
+    "opcoes": [
+      "Um ritual exclusivo das levantações, pra renovar a energia da tronqueira",
+      "Um axé de brilho, de caminho, de amor próprio, de conquista e liberdade — Pombagira é a mulher livre em essência, sem amarra da carne nem da sociedade",
+      "Uma oferenda coletiva feita pelas filhas da casa pra fortalecer a linha feminina da corrente",
+      "O ritual de firmeza das Pombagiras feito só no Elebó de agosto"
+    ],
+    "certa": 1,
+    "explicacao": "É um axé de brilho, caminho, amor próprio, conquista e liberdade — Pombagira é a mulher livre em essência.",
+    "categoria": "Orixás & Rituais",
+    "id": 100
   }
 ];
 
@@ -859,6 +1624,7 @@ let qzNome = '';
 let qzIndiceAtual = 0;
 let qzAcertos = 0;
 let qzRespondida = false;
+let qzProgresso = {}; // { [questionId]: { escolha, certa, data } }
 
 function qzEmbaralhar(arr) {
   const a = [...arr];
@@ -872,14 +1638,56 @@ function qzEmbaralhar(arr) {
 let qzPerguntasRodada = [];
 let qzCategoriaEscolhida = 'todas';
 
+// ── PROGRESSO INDIVIDUAL (por login) ──
+async function qzCarregarProgresso() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, 'quiz_fundamentos_progresso', currentUser.uid));
+    qzProgresso = snap.exists() ? (snap.data().respondidas || {}) : {};
+  } catch (e) {
+    console.warn('carregar progresso:', e);
+    qzProgresso = {};
+  }
+  qzRenderProgressoGeral();
+  qzRenderCategorias();
+  const btnRevisar = document.getElementById('qz-btn-revisar');
+  btnRevisar.style.display = Object.keys(qzProgresso).length ? 'inline-block' : 'none';
+}
+
+function qzRenderProgressoGeral() {
+  const wrap = document.getElementById('qz-progresso-geral');
+  const total = QZ_PERGUNTAS.length;
+  const respondidas = Object.keys(qzProgresso).length;
+  if (!respondidas) { wrap.style.display = 'none'; return; }
+  const acertos = Object.values(qzProgresso).filter(r => r.certa).length;
+  const pct = Math.round(respondidas / total * 100);
+  wrap.style.display = 'block';
+  wrap.innerHTML = `Você já respondeu <strong>${respondidas} de ${total}</strong> perguntas — <strong>${acertos}</strong> certas
+    <div class="qz-progresso-geral-barra"><div class="qz-progresso-geral-fill" style="width:${pct}%"></div></div>`;
+}
+
+async function qzSalvarProgresso(perguntaId, escolhaIdx, certa) {
+  qzProgresso[perguntaId] = { escolha: escolhaIdx, certa, data: Date.now() };
+  qzRenderProgressoGeral();
+  if (!currentUser) return; // só salva de verdade se estiver logada
+  try {
+    await setDoc(doc(db, 'quiz_fundamentos_progresso', currentUser.uid), {
+      nome: currentUser.displayName || currentUser.email,
+      respondidas: { [perguntaId]: { escolha: escolhaIdx, certa, data: serverTimestamp() } }
+    }, { merge: true });
+  } catch (e) { console.warn('salvar progresso:', e); }
+}
+
 function qzRenderCategorias() {
   const categorias = [...new Set(QZ_PERGUNTAS.map(p => p.categoria))];
   const wrap = document.getElementById('qz-categorias');
-  const contarTodas = QZ_PERGUNTAS.length;
-  wrap.innerHTML = `<button class="qz-cat-chip ativo" data-cat="todas">Todas <span class="qtd">${contarTodas}</span></button>`
+  const restantesTodas = QZ_PERGUNTAS.filter(p => !qzProgresso[p.id]).length;
+  wrap.innerHTML = `<button class="qz-cat-chip ativo" data-cat="todas">Todas <span class="qtd">${restantesTodas}</span></button>`
     + categorias.map(c => {
-        const qtd = QZ_PERGUNTAS.filter(p => p.categoria === c).length;
-        return `<button class="qz-cat-chip" data-cat="${c}">${c} <span class="qtd">${qtd}</span></button>`;
+        const doCategoria = QZ_PERGUNTAS.filter(p => p.categoria === c);
+        const restantes = doCategoria.filter(p => !qzProgresso[p.id]).length;
+        const completa = restantes === 0;
+        return `<button class="qz-cat-chip${completa ? ' completa' : ''}" data-cat="${c}">${c} <span class="qtd">${completa ? '✓' : restantes}</span></button>`;
       }).join('');
   wrap.querySelectorAll('.qz-cat-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -892,9 +1700,14 @@ function qzRenderCategorias() {
 qzRenderCategorias();
 
 document.getElementById('qz-btn-comecar').addEventListener('click', () => {
-  qzNome = document.getElementById('qz-inp-nome').value.trim();
+  qzNome = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
-  const base = qzCategoriaEscolhida === 'todas' ? QZ_PERGUNTAS : QZ_PERGUNTAS.filter(p => p.categoria === qzCategoriaEscolhida);
+  const daCategoria = qzCategoriaEscolhida === 'todas' ? QZ_PERGUNTAS : QZ_PERGUNTAS.filter(p => p.categoria === qzCategoriaEscolhida);
+  const base = daCategoria.filter(p => !qzProgresso[p.id]);
+  if (!base.length) {
+    alert('Você já respondeu todas as perguntas dessa área! Escolhe outra categoria, ou dá uma olhada em "Revisar minhas respostas" ✦');
+    return;
+  }
   qzPerguntasRodada = qzEmbaralhar(base);
   qzIndiceAtual = 0;
   qzAcertos = 0;
@@ -937,6 +1750,7 @@ function qzResponder(escolhaIdx) {
   const p = qzPerguntasRodada[qzIndiceAtual];
   const acertou = escolhaIdx === p.certa;
   if (acertou) qzAcertos++;
+  qzSalvarProgresso(p.id, escolhaIdx, acertou);
 
   document.querySelectorAll('.qz-opcao').forEach((btn, i) => {
     btn.disabled = true;
@@ -979,6 +1793,9 @@ async function qzFinalizar() {
   document.getElementById('qz-resultado-nota').textContent = `${qzAcertos}/${total}`;
   document.getElementById('qz-resultado-sub').textContent = `${qzNome}, você acertou ${qzAcertos} de ${total} perguntas.`;
 
+  // guarda pra usar na hora de gerar a imagem de compartilhamento
+  qzUltimoResultado = { icone, nome: qzNome, acertos: qzAcertos, total, categoria: qzCategoriaEscolhida };
+
   try {
     await addDoc(collection(db, 'quiz_fundamentos_resultados'), {
       nome: qzNome,
@@ -992,14 +1809,99 @@ async function qzFinalizar() {
   qzCarregarRanking();
 }
 
+// ── COMPARTILHAR RESULTADO (gera imagem e abre o menu de compartilhar nativo) ──
+let qzUltimoResultado = null;
+
+document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
+  if (!qzUltimoResultado) return;
+  const btn = document.getElementById('qz-btn-compartilhar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const r = qzUltimoResultado;
+    document.getElementById('qz-cs-icone').textContent = r.icone;
+    document.getElementById('qz-cs-nome').textContent = r.nome;
+    document.getElementById('qz-cs-nota').textContent = `${r.acertos}/${r.total}`;
+    document.getElementById('qz-cs-cat').textContent = r.categoria === 'todas' ? 'Todas as categorias' : r.categoria;
+
+    const cartao = document.getElementById('qz-cartao-share');
+    const canvas = await html2canvas(cartao, { scale: 2, backgroundColor: null, useCORS: true });
+
+    canvas.toBlob(async (blob) => {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+      const arquivo = new File([blob], 'quiz-fundamentos-resultado.png', { type: 'image/png' });
+      const texto = `🔮 Fiz o Quiz de Fundamentos do Bolhas de Luz e acertei ${r.acertos}/${r.total}! ✦`;
+
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+          await navigator.share({ files: [arquivo], title: 'Quiz de Fundamentos — Bolhas de Luz', text: texto });
+          return;
+        } catch (e) { /* cancelou o compartilhamento — segue pro download */ }
+      }
+      // fallback: baixa a imagem, pra postar manualmente
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'quiz-fundamentos-resultado.png'; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    console.warn('compartilhar resultado:', e);
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+    alert('Não deu pra gerar a imagem. Tenta de novo.');
+  }
+});
+
 document.getElementById('qz-btn-refazer').addEventListener('click', () => {
   document.getElementById('qz-tela-resultado').style.display = 'none';
   document.getElementById('qz-tela-inicio').style.display = 'block';
+  qzRenderCategorias();
 });
 
 document.getElementById('qz-btn-ver-ranking').addEventListener('click', () => {
   document.getElementById('qz-secao-ranking').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
+
+// ── REVISAR MINHAS RESPOSTAS ──
+document.getElementById('qz-btn-revisar').addEventListener('click', () => {
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-revisao').style.display = 'block';
+  qzRenderRevisao();
+});
+document.getElementById('qz-revisao-voltar').addEventListener('click', () => {
+  document.getElementById('qz-tela-revisao').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+});
+
+function qzRenderRevisao() {
+  const wrap = document.getElementById('qz-revisao-lista');
+  const idsRespondidos = Object.keys(qzProgresso).map(Number).sort((a, b) => a - b);
+  if (!idsRespondidos.length) {
+    wrap.innerHTML = '<div class="qz-revisao-vazio">Você ainda não respondeu nenhuma pergunta ✦</div>';
+    return;
+  }
+  const letras = ['A', 'B', 'C', 'D'];
+  wrap.innerHTML = idsRespondidos.map(id => {
+    const p = QZ_PERGUNTAS.find(q => q.id === id);
+    if (!p) return '';
+    const r = qzProgresso[id];
+    const opcoesHtml = p.opcoes.map((op, i) => {
+      let cls = '';
+      if (i === p.certa) cls = 'certa';
+      else if (i === r.escolha) cls = 'escolha-errada';
+      return `<div class="qz-revisao-opcao ${cls}">${cls ? (i === p.certa ? '✓' : '✗') : ''} ${letras[i]}) ${op}</div>`;
+    }).join('');
+    return `<div class="qz-revisao-item">
+      <span class="qz-revisao-cat">${p.categoria}</span>
+      <div class="qz-revisao-pergunta">${p.pergunta}</div>
+      ${opcoesHtml}
+      <div class="qz-revisao-explicacao">${p.explicacao}</div>
+    </div>`;
+  }).join('');
+}
 
 async function qzCarregarRanking() {
   const wrap = document.getElementById('qz-ranking-lista');
