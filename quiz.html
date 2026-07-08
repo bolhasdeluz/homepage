@@ -33,6 +33,31 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
     #fff5f7;}
 
+/* ── BOLHAS FLUTUANTES — a marca da casa, presente em toda a página ── */
+.bolhas-fundo{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.bolha{position:absolute;border-radius:50%;border:1.5px solid rgba(196,57,107,.18);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.5),rgba(196,57,107,.03));animation:bolhaSobe linear infinite}
+@keyframes bolhaSobe{
+  0%{transform:translateY(0) translateX(0) scale(1);opacity:0}
+  8%{opacity:.65}
+  92%{opacity:.5}
+  100%{transform:translateY(-115vh) translateX(var(--deriva,20px)) scale(1.15);opacity:0}
+}
+.bolha:nth-child(1){width:14px;height:14px;left:6%;bottom:-5%;animation-duration:16s;animation-delay:0s;--deriva:24px}
+.bolha:nth-child(2){width:22px;height:22px;left:18%;bottom:-5%;animation-duration:21s;animation-delay:2s;--deriva:-30px}
+.bolha:nth-child(3){width:10px;height:10px;left:32%;bottom:-5%;animation-duration:13s;animation-delay:5s;--deriva:16px}
+.bolha:nth-child(4){width:28px;height:28px;left:48%;bottom:-5%;animation-duration:24s;animation-delay:1s;--deriva:-20px}
+.bolha:nth-child(5){width:16px;height:16px;left:62%;bottom:-5%;animation-duration:18s;animation-delay:7s;--deriva:26px}
+.bolha:nth-child(6){width:24px;height:24px;left:76%;bottom:-5%;animation-duration:22s;animation-delay:3s;--deriva:-24px}
+.bolha:nth-child(7){width:12px;height:12px;left:88%;bottom:-5%;animation-duration:15s;animation-delay:9s;--deriva:18px}
+.bolha:nth-child(8){width:19px;height:19px;left:95%;bottom:-5%;animation-duration:19s;animation-delay:4.5s;--deriva:-16px}
+
+/* explosão de bolhas quando acerta uma pergunta */
+.bolha-comemora{position:fixed;border-radius:50%;pointer-events:none;z-index:500;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),rgba(196,57,107,.25));border:1.5px solid rgba(196,57,107,.35);animation:bolhaComemora .9s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes bolhaComemora{
+  0%{transform:translateY(0) scale(.4);opacity:1}
+  100%{transform:translateY(var(--sobe,-160px)) translateX(var(--lado,0px)) scale(1.1);opacity:0}
+}
+
 .section-wrap{max-width:640px;margin:0 auto;padding:32px 24px 120px}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
 .section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px;text-align:center}
@@ -103,7 +128,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-progresso-fill{height:100%;background:linear-gradient(90deg,var(--rosa),var(--rosa-l));border-radius:10px;transition:width .35s ease}
 .qz-progresso-txt{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.05em;color:var(--text-dim);white-space:nowrap}
 
-.qz-pergunta-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 24px;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
+.qz-pergunta-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 24px;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both;transition:border-color .3s}
+
+@keyframes qzPulseCerta{0%{transform:scale(1)}30%{transform:scale(1.035)}60%{transform:scale(.985)}100%{transform:scale(1)}}
+@keyframes qzPulseErrada{0%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}100%{transform:translateX(0)}}
+.qz-pergunta-card.pulse-certa{animation:qzPulseCerta .45s ease;border-color:var(--green)}
+.qz-pergunta-card.pulse-errada{animation:qzPulseErrada .45s ease;border-color:#c0392b}
+
+@keyframes qzSequenciaPop{
+  0%{opacity:0;transform:translate(-50%,-10px) scale(.7)}
+  15%{opacity:1;transform:translate(-50%,0) scale(1.08)}
+  25%{transform:translate(-50%,0) scale(1)}
+  80%{opacity:1;transform:translate(-50%,0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-14px) scale(.9)}
+}
+.qz-sequencia-popup{position:fixed;top:18%;left:50%;z-index:600;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.03em;padding:12px 24px;border-radius:30px;box-shadow:0 8px 28px rgba(196,57,107,.4);white-space:nowrap;animation:qzSequenciaPop 1.7s ease forwards}
 .qz-pergunta-num{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
 .qz-pergunta-txt{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:22px}
 
@@ -154,19 +193,27 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
 
-/* cartão pra gerar imagem — fica fora da tela, só usado no momento de compartilhar */
-#qz-cartao-share{position:fixed;left:-9999px;top:0;width:420px;background:linear-gradient(160deg,#c4396b 0%,#8a1a40 100%);padding:44px 34px;text-align:center;font-family:'DM Sans',sans-serif;color:#fff}
-#qz-cs-eyebrow{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:10px}
-#qz-cs-icone{font-size:3.4rem;margin-bottom:10px}
-#qz-cs-titulo{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;margin-bottom:6px}
-#qz-cs-nome{font-family:'Crimson Pro',serif;font-size:1.05rem;font-style:italic;color:rgba(255,255,255,.85);margin-bottom:26px}
-#qz-cs-nota{font-family:'Cinzel',serif;font-size:3.6rem;font-weight:700;margin-bottom:4px}
-#qz-cs-cat{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:28px}
-#qz-cs-rodape{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.6);border-top:1px solid rgba(255,255,255,.25);padding-top:16px}
+/* cartão pra gerar imagem — proporção exata do Instagram Stories (540x960 → 1080x1920 na imagem final) */
+#qz-cartao-share{position:fixed;left:-9999px;top:0;width:540px;height:960px;background:linear-gradient(165deg,#c4396b 0%,#a52c58 45%,#8a1a40 100%);text-align:center;font-family:'DM Sans',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 46px;overflow:hidden}
+.qz-cs-bolha{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.28);background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.35),rgba(255,255,255,.03));pointer-events:none}
+#qz-cs-eyebrow{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:26px}
+#qz-cs-icone{font-size:5.2rem;margin-bottom:18px}
+#qz-cs-titulo{font-family:'Playfair Display',serif;font-size:2.3rem;font-weight:600;margin-bottom:10px;line-height:1.2}
+#qz-cs-nome{font-family:'Crimson Pro',serif;font-size:1.4rem;font-style:italic;color:rgba(255,255,255,.88);margin-bottom:50px}
+#qz-cs-nota-wrap{background:rgba(255,255,255,.13);border:1.5px solid rgba(255,255,255,.3);border-radius:32px;padding:28px 50px;margin-bottom:22px}
+#qz-cs-nota{font-family:'Cinzel',serif;font-size:5.4rem;font-weight:700;line-height:1}
+#qz-cs-cat{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:60px}
+#qz-cs-rodape{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.65);border-top:1px solid rgba(255,255,255,.28);padding-top:20px;width:100%}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
+
+<div class="bolhas-fundo">
+  <span class="bolha"></span><span class="bolha"></span><span class="bolha"></span><span class="bolha"></span>
+  <span class="bolha"></span><span class="bolha"></span><span class="bolha"></span><span class="bolha"></span>
+</div>
+
 
 <div id="login-bar">
   <span id="login-status">Entrando...</span>
@@ -237,11 +284,30 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <!-- CARTÃO PRA GERAR IMAGEM (fica fora da tela, só usado no momento de compartilhar) -->
   <div id="qz-cartao-share">
+    <div class="qz-cs-bolha" style="width:50px;height:50px;left:5%;top:6%"></div>
+    <div class="qz-cs-bolha" style="width:20px;height:20px;left:22%;top:4%"></div>
+    <div class="qz-cs-bolha" style="width:14px;height:14px;left:78%;top:5%"></div>
+    <div class="qz-cs-bolha" style="width:30px;height:30px;left:88%;top:14%"></div>
+    <div class="qz-cs-bolha" style="width:12px;height:12px;left:8%;top:20%"></div>
+    <div class="qz-cs-bolha" style="width:22px;height:22px;left:92%;top:26%"></div>
+    <div class="qz-cs-bolha" style="width:16px;height:16px;left:4%;top:34%"></div>
+    <div class="qz-cs-bolha" style="width:60px;height:60px;left:82%;top:40%"></div>
+    <div class="qz-cs-bolha" style="width:26px;height:26px;left:2%;top:50%"></div>
+    <div class="qz-cs-bolha" style="width:14px;height:14px;left:14%;top:58%"></div>
+    <div class="qz-cs-bolha" style="width:38px;height:38px;left:86%;top:62%"></div>
+    <div class="qz-cs-bolha" style="width:18px;height:18px;left:6%;top:68%"></div>
+    <div class="qz-cs-bolha" style="width:24px;height:24px;left:92%;top:76%"></div>
+    <div class="qz-cs-bolha" style="width:44px;height:44px;left:3%;top:80%"></div>
+    <div class="qz-cs-bolha" style="width:16px;height:16px;left:80%;top:88%"></div>
+    <div class="qz-cs-bolha" style="width:28px;height:28px;left:18%;top:90%"></div>
+    <div class="qz-cs-bolha" style="width:12px;height:12px;left:60%;top:8%"></div>
+    <div class="qz-cs-bolha" style="width:20px;height:20px;left:50%;top:92%"></div>
+
     <div id="qz-cs-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
     <div id="qz-cs-icone">🔮</div>
-    <div id="qz-cs-titulo">Quiz de Fundamentos</div>
+    <div id="qz-cs-titulo">Quiz de<br>Fundamentos</div>
     <div id="qz-cs-nome"></div>
-    <div id="qz-cs-nota">0/10</div>
+    <div id="qz-cs-nota-wrap"><div id="qz-cs-nota">0/10</div></div>
     <div id="qz-cs-cat">Todas as categorias</div>
     <div id="qz-cs-rodape">bolhasdeluz.ong.br</div>
   </div>
@@ -1639,6 +1705,85 @@ function qzEmbaralhar(arr) {
   return a;
 }
 
+// dispara uma explosão de bolhinhas subindo da tela, tipo comemoração — usado ao acertar
+function qzDispararBolhas(qtd = 10) {
+  for (let i = 0; i < qtd; i++) {
+    const b = document.createElement('div');
+    b.className = 'bolha-comemora';
+    const tam = 8 + Math.random() * 16;
+    b.style.width = tam + 'px';
+    b.style.height = tam + 'px';
+    b.style.left = (30 + Math.random() * 40) + 'vw';
+    b.style.bottom = (10 + Math.random() * 15) + 'vh';
+    b.style.setProperty('--sobe', (-140 - Math.random() * 100) + 'px');
+    b.style.setProperty('--lado', (Math.random() * 80 - 40) + 'px');
+    b.style.animationDelay = (Math.random() * 0.3) + 's';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1400);
+  }
+}
+
+// ── SOM DE BOLHA ESTOURANDO (sintetizado, sem precisar de arquivo de áudio) ──
+let qzAudioCtx = null;
+function qzGetAudioCtx() {
+  if (!qzAudioCtx) qzAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (qzAudioCtx.state === 'suspended') qzAudioCtx.resume();
+  return qzAudioCtx;
+}
+function qzSomBolha(acertou) {
+  try {
+    const ctx = qzGetAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+    if (acertou) {
+      // "pop" de bolha subindo — agudo e rápido
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(650, now);
+      osc.frequency.exponentialRampToValueAtTime(1500, now + 0.09);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.16, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now); osc.stop(now + 0.23);
+    } else {
+      // "plop" mais grave e suave — sem soar punitivo
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(110, now + 0.16);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.11, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now); osc.stop(now + 0.23);
+    }
+  } catch (e) { /* áudio bloqueado pelo navegador — segue sem som */ }
+}
+
+// ── SEQUÊNCIA DE ACERTOS ──
+let qzSequencia = 0;
+const QZ_MARCOS_SEQUENCIA = { 2: '⚡ 2 seguidas!', 3: '🔥 3 seguidas!', 5: '🔥🔥 5 seguidas, arrasando!', 7: '🔥🔥🔥 7! Você tá on fire!', 10: '👑 10 seguidas?! Surreal!' };
+function qzRegistrarSequencia(acertou) {
+  if (!acertou) { qzSequencia = 0; return; }
+  qzSequencia++;
+  let msg = QZ_MARCOS_SEQUENCIA[qzSequencia];
+  if (!msg && qzSequencia > 10 && qzSequencia % 5 === 0) msg = `🔥 ${qzSequencia} seguidas! Impressionante!`;
+  if (!msg) return;
+  const el = document.createElement('div');
+  el.className = 'qz-sequencia-popup';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1700);
+}
+
+// ── FRASES DE REAÇÃO VARIADAS ──
+const QZ_FRASES_ACERTOU = ['✓ Isso mesmo! ', '✓ Na mosca! ', '✓ Mandou bem! ', '✓ Exatamente isso! ', '✓ Acertou em cheio! ', '✓ Isso aí! ', '✓ Boa, viu! ', '✓ Aí sim! '];
+const QZ_FRASES_ERROU = ['✗ Quase! ', '✗ Foi por pouco! ', '✗ Não foi dessa vez! ', '✗ Escapou essa! ', '✗ Essa pegou, hein! ', '✗ Ih, essa não! '];
+function qzFraseSorteada(acertou) {
+  const lista = acertou ? QZ_FRASES_ACERTOU : QZ_FRASES_ERROU;
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
 let qzPerguntasRodada = [];
 let qzCategoriaEscolhida = 'todas';
 
@@ -1712,6 +1857,8 @@ document.getElementById('qz-btn-comecar').addEventListener('click', () => {
     alert('Você já respondeu todas as perguntas dessa área! Escolhe outra categoria, ou dá uma olhada em "Revisar minhas respostas" ✦');
     return;
   }
+  qzGetAudioCtx(); // destrava o áudio no gesto de clique, evita bloqueio do navegador na primeira resposta
+  qzSequencia = 0;
   qzPerguntasRodada = qzEmbaralhar(base);
   qzIndiceAtual = 0;
   qzAcertos = 0;
@@ -1760,8 +1907,10 @@ function qzResponder(escolhaIdx) {
   qzRespondida = true;
   const p = qzPerguntasRodada[qzIndiceAtual];
   const acertou = escolhaIdx === p.certa;
-  if (acertou) qzAcertos++;
+  if (acertou) { qzAcertos++; qzDispararBolhas(); }
   qzSalvarProgresso(p.id, escolhaIdx, acertou);
+  qzSomBolha(acertou);
+  qzRegistrarSequencia(acertou);
 
   document.querySelectorAll('.qz-opcao').forEach((btn, i) => {
     btn.disabled = true;
@@ -1769,8 +1918,12 @@ function qzResponder(escolhaIdx) {
     else if (i === escolhaIdx) btn.classList.add('errada');
   });
 
+  const cartao = document.querySelector('.qz-pergunta-card');
+  cartao.classList.add(acertou ? 'pulse-certa' : 'pulse-errada');
+  setTimeout(() => cartao.classList.remove('pulse-certa', 'pulse-errada'), 500);
+
   const fb = document.getElementById('qz-feedback');
-  fb.textContent = (acertou ? '✓ Isso mesmo! ' : '✗ Quase! ') + p.explicacao;
+  fb.textContent = qzFraseSorteada(acertou) + p.explicacao;
   fb.className = 'qz-feedback show ' + (acertou ? 'acertou' : 'errou');
 
   const btnProx = document.getElementById('qz-btn-proxima');
@@ -1803,6 +1956,7 @@ async function qzFinalizar() {
   document.getElementById('qz-resultado-titulo').textContent = titulo;
   document.getElementById('qz-resultado-nota').textContent = `${qzAcertos}/${total}`;
   document.getElementById('qz-resultado-sub').textContent = `${qzNome}, você acertou ${qzAcertos} de ${total} perguntas.`;
+  qzDispararBolhas(pct >= 0.8 ? 22 : 12);
 
   // guarda pra usar na hora de gerar a imagem de compartilhamento
   qzUltimoResultado = { icone, nome: qzNome, acertos: qzAcertos, total, categoria: qzCategoriaEscolhida };
