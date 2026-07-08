@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Palavra do Dia — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Jogo da Palavra do Dia.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Palavra do Dia — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);
+  --gold:#8c5a00;--gold-dim:rgba(139,90,0,.08);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:560px;margin:0 auto;padding:28px 20px 100px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:22px;line-height:1.6;text-align:center}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:18px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+
+#login-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:560px;margin:0 auto;padding:16px 20px 0}
+#login-bar img{width:34px;height:34px;border-radius:50%;display:none}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+
+@keyframes cpEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes pdShake{0%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}100%{transform:translateX(0)}}
+@keyframes pdBrilha{0%,100%{opacity:.5}50%{opacity:1}}
+
+.pd-faixa{display:flex;justify-content:center;gap:22px;padding:12px 0 18px}
+.pd-faixa span{font-size:1.5rem;opacity:.6;animation:pdBrilha 2.6s ease-in-out infinite}
+.pd-faixa span:nth-child(2){animation-delay:.4s}
+.pd-faixa span:nth-child(3){animation-delay:.8s}
+
+/* ── NAVEGAÇÃO DE DIAS ── */
+.pd-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:10px 14px;margin-bottom:16px;box-shadow:0 4px 16px rgba(196,57,107,.07)}
+.pd-nav-btn{background:var(--rosa-dim);border:none;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:var(--rosa);transition:all .15s;flex-shrink:0}
+.pd-nav-btn:hover:not(:disabled){background:var(--rosa);color:#fff}
+.pd-nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.pd-nav-info{text-align:center;flex:1}
+.pd-nav-data{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)}
+.pd-nav-rotulo{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:1px}
+.pd-nav-hoje{background:none;border:1px solid var(--border);border-radius:20px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);padding:5px 10px;flex-shrink:0}
+.pd-nav-hoje:hover{border-color:var(--rosa);color:var(--rosa)}
+
+/* ── CARTA DO JOGO ── */
+.pd-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:26px 22px;box-shadow:0 8px 28px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
+.pd-tentativas{display:flex;justify-content:center;gap:6px;margin-bottom:18px}
+.pd-tentativa-dot{width:11px;height:11px;border-radius:50%;background:rgba(196,57,107,.15);transition:all .2s}
+.pd-tentativa-dot.usada{background:#c0392b}
+.pd-tentativa-dot.atual{background:var(--rosa);box-shadow:0 0 0 3px rgba(196,57,107,.2)}
+
+.pd-dicas{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+.pd-dica{border-radius:12px;padding:13px 15px;font-family:'Crimson Pro',Georgia,serif;font-size:.92rem;line-height:1.5;position:relative;transition:all .25s}
+.pd-dica.liberada{background:var(--rosa-dim);color:var(--text);animation:cpEntra .3s ease both}
+.pd-dica.bloqueada{background:rgba(46,26,14,.04);color:transparent;filter:blur(5px);user-select:none;pointer-events:none;min-height:44px}
+.pd-dica-num{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;font-weight:700;letter-spacing:.06em;color:var(--rosa);margin-right:6px}
+.pd-dica.bloqueada .pd-dica-num{color:transparent}
+
+.pd-input-row{display:flex;gap:8px;margin-bottom:10px}
+.pd-input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);background:var(--rosa-dim);outline:none;text-transform:uppercase;letter-spacing:.03em}
+.pd-input:focus{border-color:var(--rosa);background:#fff}
+.pd-input.errou{animation:pdShake .4s ease}
+.pd-btn-chutar{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:0 22px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+.pd-btn-chutar:disabled{opacity:.5;cursor:not-allowed}
+.pd-btn-revelar{width:100%;background:none;border:1.5px dashed rgba(196,57,107,.3);border-radius:10px;padding:10px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--rosa);transition:all .15s}
+.pd-btn-revelar:hover{background:var(--rosa-dim)}
+
+.pd-erro-msg{text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:#a5362a;margin-top:8px;min-height:20px}
+
+/* ── RESULTADO ── */
+.pd-resultado{text-align:center}
+.pd-resultado-icone{font-size:3rem;margin-bottom:8px}
+.pd-resultado-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;margin-bottom:6px}
+.pd-resultado-palavra{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:700;letter-spacing:.06em;color:var(--rosa);margin:12px 0;padding:14px;background:var(--rosa-dim);border-radius:12px}
+.pd-grid-emoji{font-size:1.5rem;letter-spacing:4px;margin:14px 0;text-align:center}
+.pd-explicacao{text-align:left;font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;line-height:1.65;color:var(--text);background:var(--rosa-dim);border-radius:12px;padding:16px 18px;margin:16px 0}
+.pd-explicacao-titulo{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:8px;display:block}
+.pd-btn-compartilhar{width:100%;background:linear-gradient(135deg,var(--gold),#c88c00);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.06em;font-weight:700;margin-top:8px;transition:transform .15s}
+.pd-btn-compartilhar:hover{transform:translateY(-2px)}
+.pd-copiado{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--green);text-align:center;margin-top:8px;display:none}
+.pd-copiado.show{display:block;animation:cpEntra .2s ease both}
+
+.pd-indisponivel{text-align:center;padding:30px 10px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+</style>
+</head>
+<body>
+
+<div id="login-bar">
+  <span id="login-status">Entrando...</span>
+  <img id="login-avatar">
+  <button id="login-btn" style="display:none">Entrar com Google</button>
+  <button id="logout-btn">Sair</button>
+</div>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🔤 Palavra do Dia</div>
+  <p class="section-sub">Cinco dicas, cinco chances. Vai revelando aos poucos ✦</p>
+
+  <div class="pd-faixa"><span>🕯️</span><span>🔤</span><span>🌿</span></div>
+
+  <div class="pd-nav">
+    <button class="pd-nav-btn" id="pd-nav-anterior" title="Dia anterior">←</button>
+    <div class="pd-nav-info">
+      <div class="pd-nav-data" id="pd-nav-data">—</div>
+      <div class="pd-nav-rotulo" id="pd-nav-rotulo">HOJE</div>
+    </div>
+    <button class="pd-nav-btn" id="pd-nav-proximo" title="Próximo dia">→</button>
+  </div>
+  <div style="text-align:center;margin-bottom:16px">
+    <button class="pd-nav-hoje" id="pd-nav-hoje">Voltar pra hoje</button>
+  </div>
+
+  <div id="pd-conteudo"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, (user) => {
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+  } else {
+    statusEl.textContent = 'Não conectada';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+  }
+});
+// login aqui é só cosmético — o jogo funciona igual pra todo mundo, logada ou não.
+
+// ══════════════════════════════════════════════════════════════
+// DADOS — mapa de data (YYYY-MM-DD) → palavra do dia.
+// Pra adicionar mais dias, só acrescenta novas entradas aqui,
+// no mesmo formato.
+// ══════════════════════════════════════════════════════════════
+const PALAVRAS_DATA = {
+  "2026-07-08": {
+    "palavra": "XANGÔ",
+    "dicas": [
+      "Seus filhos têm uma característica física curiosa — corpos grandes e fortes, o que os mais velhos chamam de \"paleta de carneiro\".",
+      "É o único que não é 7 nem 8 — é 6. E é o único que leva dois elementos aparentemente opostos: um amargo e um doce.",
+      "Seu Amalá deve ser feito com concentração e respeito absolutos — se não, entra em erupção como um vulcão e queima quem desrespeita o momento. A mão do pilão fica dentro, nunca fora.",
+      "Foi punido por Oxalá e passou a comer em gamela de madeira — como os escravos e os porcos — depois de matar todos em uma vila que não o reconheceu como Rei de Oyó.",
+      "Começa com X. É o Orixá chefe da nossa casa. Dono do tambor — todo tambor que toca pertence a Ele."
+    ],
+    "explicacao": "Xangô é o único Orixá Rei e um dos poucos que foram humanos. É o Orixá do fogo, do equilíbrio e da justiça implacável. Na nossa casa, é o chefe — e todo tambor que toca pertence a Ele. Não é descrito como misericordioso, apenas como justo. E como filha de Xangô, a mãe de santo diz: não há bondade maior que a garantia de justiça."
+  },
+  "2026-07-07": {
+    "palavra": "PEMBA",
+    "dicas": [
+      "O que o guia faz com ela na sessão é o único jeito de algo ser considerado confirmado — sonho não serve, intuição não serve.",
+      "Pode ser de carvão, de barro, de axorô ou de ervas — e muitas vezes eles mostram de um jeito nas visões e fazem diferente na sessão.",
+      "Não se traz para o cruzamento. Fica para a sessão. O que o guia faz com ela precisa acontecer com o ambiente firmado, com testemunhas de confiança.",
+      "É com ela que o guia risca o ponto. Ponto riscado confirmado é somente o que ela deixou marcado durante a ritualística — não o que apareceu em sonho.",
+      "Começa com P. É o giz ritual que os guias usam para riscar os pontos no chão durante a sessão."
+    ],
+    "explicacao": "A Pemba é o elemento ritual usado nos pontos riscados da Umbanda e da Quimbanda. Ponto riscado confirmado é somente o que o guia fez com ela na sessão — com o ambiente firmado, protegido, e com testemunhas de confiança. Muitas vezes eles mostram de um jeito nas visões e riscam diferente em terra. Por isso sonho não confirma — a confirmação é sempre na sessão."
+  },
+  "2026-07-06": {
+    "palavra": "OXUM",
+    "dicas": [
+      "Seus filhos têm fama de chorões, de manhosos, de melindrosos — mas vale o questionamento: até onde isso não é apenas a facilidade das águas de correrem livres?",
+      "Tem um animal sagrado que virou axé esquecido por puro preconceito — uma tecelã paciente, símbolo do feminino e da construção, cujas obras são arte da natureza.",
+      "Axés de saúde de coração são feitos para Ela. O mel é usado ao final da obrigação dos Exus justamente para trazer a Sua energia doce — aliviando o peso da sacralização com misericórdia.",
+      "Sua vaidade não é pecado — é amor-próprio. Quando uma pessoa busca se valorizar, se sentir bem, buscar um amor, é a Ela que se busca. Dona do ouro e protetora do ventre.",
+      "Começa com O. Seu banho na virada do ano é feito com água de canjica amarela."
+    ],
+    "explicacao": "Oxum é a Orixá das águas doces, da fertilidade, do amor e das riquezas. Cuida das crianças ainda no ventre e dos corações fisicamente. Seus animais são a abelha, a aranha — esquecida por preconceito, mas tão sagrada quanto qualquer outra — e a galinha. Sua vaidade é amor-próprio, não pecado. E Oxum é o amor em sua totalidade — puro, simples, livre, solto, completo."
+  },
+  "2026-07-05": {
+    "palavra": "QUARTINHA",
+    "dicas": [
+      "Representa em forma física um dos princípios mais fundamentais de uma linha inteira — a ideia de que parado não serve, que energia estagnada não trabalha.",
+      "A de Umbanda não vai para a rua e não se despacha — apenas se preenche. A de Exu vai para a rua — e é responsabilidade do filho esvaziar e encher a cada sessão.",
+      "Fica no terreiro e só vai para a casa do médium após o apronte. Ao chegar no terreiro, o filho vai direto até ela, troca as águas, firma as velas e segue para os trabalhos.",
+      "Água é quizila de Exu — então jamais entra no assentamento, apenas dentro dela. Cor e modelo são orientados pelo Sr. Tranca Ruas, não são escolha livre.",
+      "Começa com Q. É o recipiente sagrado que fica na tronqueira e precisa ser trocado toda sessão."
+    ],
+    "explicacao": "A Quartinha é o recipiente sagrado que guarda as águas do guia. É responsabilidade do filho esvaziar e encher a cada sessão — Exu é movimento, e a energia não pode ficar parada. A de Umbanda não se despacha, só se preenche. A de Exu vai pra rua para circular a energia. Cores e tipos são sempre orientados pelo guia chefe da casa — nunca escolha estética do médium."
+  },
+  "2026-07-04": {
+    "palavra": "AMACI",
+    "dicas": [
+      "É o único banho que vai onde nenhum outro vai — e justamente por isso exige que certas ervas fiquem completamente fora.",
+      "Não se usa arruda, quebra-tudo, espinheira, pimenta nem ervas muito fortes ou de Exu — porque é um momento de firmar, não de afastar ou cortar.",
+      "Feito com ervas maceradas com as próprias mãos, sempre frescas. Espada de São Jorge, pitangueira, goiabeira, laranjeira, alecrim, alfazema, guiné, hortelã estão entre as sugeridas.",
+      "É o banho do cruzamento — vai na cabeça, que é o ori, o ponto mais sagrado e sensível do médium. Todos os outros banhos de ervas vão dos ombros para baixo.",
+      "Começa com A. É o banho de ervas que vai na cabeça no dia do cruzamento para reforçar o ori."
+    ],
+    "explicacao": "O Amaci é o banho de ervas maceradas com as mãos, usado nos cruzamentos para reforçar o ori — a cabeça, ponto mais sagrado do médium. As ervas são escolhidas de acordo com a linha de trabalho e devem ser sempre frescas. É o único banho que vai na cabeça. Arruda, quebra-tudo, espinheira e ervas de Exu não entram — o momento é de reforço, não de corte."
+  },
+  "2026-07-03": {
+    "palavra": "CACICAMENTO",
+    "dicas": [
+      "Na nossa casa, aconteceu duas vezes para a mesma pessoa — porque doutrina muda, axé se aprofunda, e a segunda vez trouxe elementos que a primeira não tinha.",
+      "Não é o mesmo que coroação — essa confusão é perigosa. Coroação é do guia. Este é do médium.",
+      "Autoriza abrir casa, iniciar filhos na Umbanda e na Quimbanda e carregar o axé da própria bandeira em frente — com ou sem incorporação.",
+      "A mãe de santo não se autodeclarou porque, na nossa doutrina, ter a coroação não significa ter autorização. Ela esperou até que uma mais velha lhe desse a benção — porque não ia cobrar dos filhos que existe fundamento se ela mesma o ignorasse.",
+      "Começa com C. É o ritual que transforma o médium em mãe ou pai de santo — o axé do próprio médium, não do guia."
+    ],
+    "explicacao": "O Cacicamento é o axé do médium — a confirmação de que ele está pronto para carregar o axé da própria bandeira, iniciar filhos e abrir casa. Na nossa doutrina, coroação não é cacicamento. A mãe de santo recebeu o cacicamento duas vezes: uma pelo fundamento do Pai Ogum das Matas e outra pela doutrina da Mãe Jurema. O Preto Velho Benedito, na casa da Mãe Betânia, foi quem a direcionou para a Madrinha que lhe deu a benção."
+  },
+  "2026-07-02": {
+    "palavra": "OXÓSSI",
+    "dicas": [
+      "Pode não saber todos os caminhos como Exu sabe — mas nunca se perde, nem mesmo na mata mais escura.",
+      "Traz o segredo das folhas — conhece os maiores venenos e os maiores antídotos. É por isso que quando estamos sem ervas e sem dinheiro, é a Ele que pedimos licença na praça mais próxima.",
+      "Cultuar este Orixá é respeitar a comunidade — é saber que tem mais gente querendo se alimentar, é saber que o peixe filhote deve voltar ao rio. Irradia a força de Jandira, Iracema, Tupinambá, Sete Cachoeiras, Sete Flechas e Pena Branca.",
+      "Seus filhos têm encanto misterioso — leves, carismáticos. Muito se brinca que são namoradeiros. Para Ele e seus caboclos, o costume é servir frutas e vinhos.",
+      "Começa com O. \"Mato é mato, e Ele é rei!\" Rei das matas e chefe da linha dos caboclos."
+    ],
+    "explicacao": "Oxóssi é o Orixá rei das matas — símbolo de conhecimento, paciência e fartura. É o chefe da linha dos caboclos na Umbanda e carrega o segredo das folhas de Ossanha. Cultuar Oxóssi é respeitar a comunidade: é saber que tem mais gente querendo se alimentar. Como diz o texto da casa: o mundo mudou e hoje buscamos comida no mercado — mas ainda precisamos lutar por ela."
+  },
+  "2026-07-01": {
+    "palavra": "PRECEITO",
+    "dicas": [
+      "Não é para a mãe de santo — é para você, para o bem-estar de todos que estão na mesma corrente que você.",
+      "Difere do resguardo: este é comportamental e contínuo. O preceito tem data, contexto ritualístico específico e é mais rigoroso.",
+      "Na véspera, não é dia de open bar — mas a autonomia existe para quem se conhece e conhece seus guias. No dia da sessão, torna-se lei: em caso de quebra, não se vai aos trabalhos.",
+      "Remédio de uso contínuo não se altera — mas avisa-se que o guia não vai beber. Bebidas energéticas também prejudicam o trabalho mediúnico — prefere-se o café, axé dos pretos velhos.",
+      "Começa com P. Mínimo de 3 dias em cruzamento: um antes, o dia em si e um depois."
+    ],
+    "explicacao": "O Preceito é o período de cuidado corporal e energético que antecede e sucede rituais e sessões. Não é uma exigência da mãe de santo — é respeito com a própria espiritualidade e com a dos irmãos da corrente. Difere do resguardo, que é comportamental e contínuo. O preceito tem data, contexto e rigor específicos. Em caso de quebra no dia da sessão, não se vai aos trabalhos."
+  },
+  "2026-06-30": {
+    "palavra": "IBEJI",
+    "dicas": [
+      "São a única linha de Orixá que se manifesta como criança — mas não são a criança interior do médium. São outro ser, outra história.",
+      "No Batuque, só pega cabeça de quem é gêmeo — sempre um de Xangô e um de Oxum, sendo um só. São sincretizados com os únicos gêmeos da Igreja.",
+      "Todos os Orixás têm os seus. Ventania é de Iansã, Espadinha é de Ogum, Pedrinho é de Xangô, Laurinha é de Oxum. Identificam-se pelo comportamento e chamando o Orixá da linha de Paizinho ou Mãezinha.",
+      "Médium não briga, não xinga, não ameaça — apenas orienta. Quem cuida deles em terra são os caboclos e os pretos velhos. Feitiço de criança nem Exu desfaz.",
+      "Começa com I. É o Orixá dos gêmeos — em dois, mas um só. Irradia toda a linha dos cosmes, erês e encantados."
+    ],
+    "explicacao": "Ibeji é um único Orixá em duas forças — as únicas crianças entre os Orixás. Irradia toda a linha de trabalho dos cosmes, erês e encantados. Todos os Orixás têm seus Ibejis — identificados pelo comportamento e pela linha do Orixá a que pertencem. No Batuque, pega cabeça somente de quem é gêmeo: um de Xangô Ibeji e outro de Oxum Ibeji, sempre juntos."
+  },
+  "2026-06-29": {
+    "palavra": "DENDÊ",
+    "dicas": [
+      "É o que ativa o que já está plantado — o catalisador que dá força ao que foi firmado, entre um ciclo e outro.",
+      "Fora da época do corte, substitui o axorô nos assentamentos. Passa-se nos elementos, deixa escorrer — isso dá muita força aos Exus.",
+      "A limpeza do assentamento é feita com ele e com a bebida do Exu. Nos trabalhos de Umbanda, aparece também ao final da obrigação dos Exus para trazer energia de Oxum e aliviar o peso.",
+      "Xangô é o único Orixá que recebe tanto ele quanto mel — não porque é doce, mas porque precisa. Os assentamentos são limpos com ele em épocas específicas: pós-carnaval, antes do corte, final de ano.",
+      "Começa com D. É o azeite de cor laranja-avermelhada que se passa nos elementos do assentamento do Exu."
+    ],
+    "explicacao": "O Dendê é o azeite sagrado extraído da palmeira dendezeira. Na nossa casa, é o axorô fora da época do corte — o catalisador que dá força aos elementos do assentamento. Usado também ao final das obrigações dos Exus para trazer a energia doce de Oxum. Xangô é o único Orixá que leva tanto Dendê quanto Mel — não pela doçura, mas pela necessidade."
+  },
+  "2026-06-28": {
+    "palavra": "TRONQUEIRA",
+    "dicas": [
+      "Nada passa sem a sua permissão — é o primeiro axé e o último. É onde a segurança espiritual começa antes mesmo de qualquer trabalho.",
+      "Antes de ter casa própria, a obrigação precisava ser feita em outro lugar justamente porque ela ainda não existia. Ter ela pronta foi uma das prioridades da casa nova.",
+      "Os filhos chegam, vão até ela, trocam as águas das quartinhas, firmam as velas e seguem para os trabalhos. Em agosto, é em torno dela que todos encerram a obrigação juntos.",
+      "É a morada do Sr. Tranca Ruas na nossa casa. Como diz o texto: não é porque tem Exu que a gente deixa a porta do terreiro destrancada — e é justamente ela que guarda isso.",
+      "Começa com T. É o espaço do Exu chefe que fica na entrada do terreiro — a guardiã de tudo que entra e sai."
+    ],
+    "explicacao": "A Tronqueira é o espaço sagrado destinado ao Exu chefe da casa — na nossa casa, o Sr. Tranca Ruas. Fica na entrada do terreiro e representa a proteção de tudo que entra e sai. Antes da casa nova, a obrigação era feita em outro lugar porque a Tronqueira ainda não estava pronta. No Elebó de agosto, todos os filhos encerram juntos firmando a Tronqueira."
+  },
+  "2026-06-27": {
+    "palavra": "APRONTE",
+    "dicas": [
+      "A partir dele, médium e guia têm maior responsabilidade — porque passam a lidar diretamente com a espiritualidade dos outros e respondem por si mesmos.",
+      "Quem recebe as facas é o Exu. Quem recebe as ponteiras é o caboclo. São rituais distintos, com propósitos distintos.",
+      "Após ele, o Exu está apto a cortar sozinho, fazer limpezas, aberturas de caminhos e axés de Quimbanda. Os primeiros axés ainda são acompanhados e auxiliados se necessário.",
+      "Para chegar à coroação do caboclo, o apronte precisa ter sido feito com 7 aves. É uma das últimas etapas antes do cacicamento.",
+      "Começa com A. É quando o Exu recebe as ferramentas finais do assentamento e está apto a trabalhar com autonomia."
+    ],
+    "explicacao": "O Apronte é o ritual que entrega ao Exu as ferramentas finais do assentamento — completando o que ainda faltava. Significa que o Exu está apto a trabalhar de forma autônoma: cortar, fazer limpezas, abrir caminhos, fazer axés de Quimbanda. A partir do apronte, médium e Exu têm maior responsabilidade, pois passam a responder diretamente pela espiritualidade de quem buscam atender."
+  },
+  "2026-06-26": {
+    "palavra": "DEFUMAÇÃO",
+    "dicas": [
+      "Nunca se traz o que sobrou de volta. O que foi usado para limpar não retorna — vai para o mato ou para o cruzeiro mais próximo.",
+      "Nos rituais de limpeza da casa, vai do fundo para a porta. Nos rituais de encerramento de ano, faz parte do que prepara o ambiente antes de tudo mais.",
+      "É um dos primeiros cuidados ao chegar atrasado: se ainda estiver acesa, passa nela antes de entrar na corrente. Se não estiver, pega o defumador e passa sozinho.",
+      "Sentir o cheiro dela é descrito como um dos motivos pelos quais vale ir à sessão mesmo nos dias mais difíceis — uma das experiências sensoriais que marcam o terreiro.",
+      "Começa com D. É a fumaça das ervas e do carvão que limpa o ambiente e os médiuns antes dos trabalhos."
+    ],
+    "explicacao": "A Defumação é o ritual de limpeza pelo fogo e pela fumaça de ervas sagradas. Purifica o ambiente, os médiuns e a assistência antes dos trabalhos. O carvão usado nunca volta para o terreiro — é sempre despachado no verde ou no cruzeiro. Nos rituais de limpeza da casa, vai do fundo para a porta. Para quem chega atrasado, é o primeiro passo antes de entrar na corrente."
+  },
+  "2026-06-25": {
+    "palavra": "EGBÉ",
+    "dicas": [
+      "É a razão pela qual a obrigação de agosto é paga por todos — mesmo quem não vai cortar. O Exu do seu irmão é o que te dá o passe.",
+      "É a razão pela qual os irmãos se lembram uns dos outros sobre prazos de levantação. É a razão pela qual a sessão é descrita como um reencontro.",
+      "Sonhos solitários são projeções — sonhos acompanhados se tornam reais. Esse é o fundamento que sustenta a existência do terreiro como espaço coletivo.",
+      "É o que faz com que médiuns desincorporados estejam disponíveis para alcançar um fósforo, proteger um guia, estar com os olhos abertos. Ninguém está sozinho aqui.",
+      "Começa com E. É a palavra que representa a comunidade, a família de santo, a corrente — todos juntos."
+    ],
+    "explicacao": "Egbé é a família de santo — a corrente, a comunidade. Na nossa casa, é o fundamento que explica por que a obrigação é coletiva, por que os irmãos se cuidam mutuamente e por que ninguém caminha sozinho. Sonhos solitários são projeções — sonhos acompanhados se tornam reais. É a razão de existir do terreiro como espaço de trabalho e de vida compartilhados."
+  },
+  "2026-06-24": {
+    "palavra": "CAMBONA",
+    "dicas": [
+      "É os olhos de quem não pode ver — e os braços de quem está em outro mundo enquanto trabalha neste.",
+      "Suas decisões não precisam ser explicadas à corrente. Se não levou passe para um guia, se informou que uma entidade não vai beber mais — ela foi orientada, e isso basta.",
+      "Corre na frente para tirar um caco de vidro do chão, apaga a saia pegando fogo, para o carro. Facilitar a vida dos guias é o menor dos trabalhos dela — o trabalho espiritual e braçal vai muito além.",
+      "É um dos três pilares do terreiro — junto com a mãe de santo e o tamboreiro. Tem autoridade para reposicionar entidades, conduzir a assistência, orientar e ensinar.",
+      "Começa com C. É a pessoa que serve os guias na sessão — e muito mais do que isso."
+    ],
+    "explicacao": "A Cambona é um dos três pilares fundamentais do terreiro. Seu papel vai muito além de servir bebida e cigarro: cuida da matéria dos médiuns incorporados, que perdem noção de espaço e tempo durante o transe. Tem autoridade dentro da sessão e suas decisões não precisam ser explicadas à corrente. Quando a chefe da cambonagem é identificada numa visita a outra casa, é a primeira pessoa reconhecida depois do pai ou mãe de santo."
+  },
+  "2026-06-23": {
+    "palavra": "AXORÔ",
+    "dicas": [
+      "É o que transforma um assentamento em morada de verdade — sem ele, o que existe é firmeza, não feitura.",
+      "Exus catiços são feitos apenas em ervas. Exus de Quimbanda — como os da nossa casa — são feitos nele. Mas se governam sozinhos, sem subordinação a Orixá.",
+      "O Dendê substitui o seu papel fora da época do corte. Na obrigação de agosto, é o momento em que o assentamento recebe o que ainda faltava para completar a força do Exu.",
+      "Ogum Megê e Bará são as forças que regem os trabalhos feitos com ele — não os Orixás da linha de Umbanda do médium.",
+      "Começa com A. É o elemento central do corte de agosto — o que alimenta e fortalece o assentamento do Exu na obrigação."
+    ],
+    "explicacao": "O Axorô é o elemento sagrado que compõe os assentamentos de Exu de Quimbanda — é o que materializa a força do Exu em terra. Não se detalha publicamente além disso, pois é um fundamento de iniciação. O Dendê cumpre papel similar fora das épocas de obrigação. A cada corte o assentamento recebe novos elementos que aprofundam a relação entre o médium e seu Exu."
+  },
+  "2026-06-22": {
+    "palavra": "ELEBÓ",
+    "dicas": [
+      "É quando o que foi pedido se transforma em gratidão — e a gratidão se transforma em encerramento coletivo.",
+      "Na nossa casa, a levantação acontece no mesmo dia. É o momento em que todos firmam a tronqueira juntos — porque na religião, o que começa termina junto.",
+      "É a quarta e última etapa da obrigação de agosto. Vem depois da Sessão das Almas, da Firmeza de Cruzeiro e do Corte.",
+      "Inclui comidas coletivas, janta para todos, oferendas e o encerramento dos axés. Os Exus ainda estão de obrigação — os cuidados seguem.",
+      "Começa com E. É a última etapa da obrigação de agosto — o encerramento e o agradecimento coletivo."
+    ],
+    "explicacao": "O Elebó é a etapa de encerramento da obrigação de agosto. Na nossa casa, a levantação acontece no mesmo dia do Elebó para que todos encerrem juntos firmando a Tronqueira. Mesmo quem não cortou participa — porque na religião, o que a gente começa, a gente termina. Os cuidados de preceito seguem, pois os Exus ainda estão comendo nesse período."
+  },
+  "2026-06-21": {
+    "palavra": "CONGÁ",
+    "dicas": [
+      "O primeiro pedaço do bolo vai sempre para ele — antes de qualquer outra pessoa, antes de qualquer outra coisa.",
+      "É um ponto de força pessoal que se fortalece a cada reforço anual. Quanto mais firmezas você tem nele, maior a responsabilidade de manter tudo servido.",
+      "Já tem as 7 linhas da Umbanda — por isso o cruzamento de conga é o primeiro. O médium que cuida do seu em casa precisa manter quartinhas cheias, velas acesas, tudo organizado e bem servido.",
+      "Cuidar de quem cuida de você começa aqui. Passar um paninho perfumado de alfazema antes da virada, tirar o que for de despachar, renovar com perfumes — esses são os cuidados descritos nos textos da casa.",
+      "Começa com C. É o altar — tanto o do terreiro quanto o que o médium monta em casa para seus guias."
+    ],
+    "explicacao": "O Congá é o altar sagrado — coletivo no terreiro, pessoal na casa do médium. É um ponto de força que se fortalece a cada reforço anual. Já contém as 7 linhas da Umbanda em si mesmo, por isso o cruzamento de conga é o primeiro de todos. Manter o congá iluminado, as quartinhas cheias e tudo servido é responsabilidade espiritual diária. O primeiro pedaço do bolo vai sempre para ele."
+  },
+  "2026-06-20": {
+    "palavra": "ARRUDA",
+    "dicas": [
+      "Sua ausência num ritual específico é tão importante quanto a presença das outras — porque o que ela faz não é o que aquele momento pede.",
+      "Fica de fora do amaci junto com o quebra-tudo, a espinheira e as pimenteiras. São ervas muito fortes — e o momento do cruzamento pede firmeza, não corte.",
+      "Está entre as ervas de Exu listadas para a obrigação de agosto — ao lado de picão preto, aroeira, losna, dama da noite, vassourinha e quebra-tudo.",
+      "É fácil de achar na rua, em floras e em feiras. Faz parte da lista de ervas que podem ser buscadas fora quando o médium não tem acesso a outras mais específicas.",
+      "Começa com A. É a erva de proteção popular que não pode entrar no amaci do cruzamento."
+    ],
+    "explicacao": "A Arruda é uma erva de força, amarga e de natureza próxima aos Exus. Na nossa casa, está na lista de ervas para a obrigação de agosto — ao lado de outras ervas fortes. Mas não entra no amaci do cruzamento justamente por isso: o reforço do ori pede ervas que firmem e fortaleçam, não que cortem. Arruda, quebra-tudo, espinheira e ervas de Exu ficam de fora desse momento."
+  },
+  "2026-06-19": {
+    "palavra": "COROAÇÃO",
+    "dicas": [
+      "É o reconhecimento de uma caminhada — não do médium, mas da força que trabalhou através dele por anos. O médium recebe outro ritual, em outro momento.",
+      "Quem recebe as ponteiras é o caboclo. Quem recebe as facas é o Exu. Confundir os dois é um erro grave de fundamento.",
+      "Para que aconteça, dois critérios precisam estar completos: os cruzamentos básicos feitos pelo menos uma vez, e o apronte dos Exus com 7 aves.",
+      "A partir dela, o caboclo está autorizado a desenvolver, fazer limpezas de Umbanda, cruzamentos e iniciar futuros filhos. Seu ponto é bordado no jaleco.",
+      "Começa com C. É quando o caboclo borda o próprio ponto no jaleco e recebe as ponteiras para os pontos riscados."
+    ],
+    "explicacao": "A Coroação é o ritual de reconhecimento do caboclo — não do médium. O guia borda o ponto do pai ou mãe no jaleco e recebe as ponteiras, símbolo de que está apto a trabalhar com autonomia: desenvolver, fazer limpezas, axés de Umbanda e cruzamentos. Exige cruzamentos básicos feitos ao menos uma vez e apronte dos Exus com 7 aves. Não é o mesmo que o cacicamento — que é o axé do médium."
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// LÓGICA DO JOGO
+// ══════════════════════════════════════════════════════════════
+const PD_MAX_TENTATIVAS = 5;
+const PD_LINK_SITE = 'https://bolhasdeluz.ong.br/palavra.html';
+
+function pdNormalizar(str) {
+  return (str || '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // remove acentos
+    .replace(/\s+/g, ' '); // colapsa espaços extras
+}
+
+function pdDataHojeStr() {
+  const d = new Date();
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+function pdFormatarData(dataStr) {
+  const [ano, mes, dia] = dataStr.split('-');
+  return `${dia}/${mes}`;
+}
+
+function pdChaveStorage(dataStr) { return 'jogo-terreiro-' + dataStr; }
+
+function pdCarregarEstado(dataStr) {
+  try {
+    const raw = localStorage.getItem(pdChaveStorage(dataStr));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function pdSalvarEstado(dataStr, estado) {
+  try { localStorage.setItem(pdChaveStorage(dataStr), JSON.stringify(estado)); } catch (e) {}
+}
+
+function pdEstadoNovo() {
+  return { tentativas: [], dicaAtual: 1, finalizado: false, venceu: null };
+}
+
+// datas disponíveis, ordenadas (mais antiga primeiro)
+const PD_DATAS_DISPONIVEIS = Object.keys(PALAVRAS_DATA).sort();
+const PD_DATA_MAIS_ANTIGA = PD_DATAS_DISPONIVEIS[0];
+
+let pdDataAtual = pdDataHojeStr();
+// se por algum motivo a data de hoje ainda não tem palavra cadastrada,
+// cai pra data mais recente disponível que não seja futura
+if (!PALAVRAS_DATA[pdDataAtual]) {
+  const disponiveisAteHoje = PD_DATAS_DISPONIVEIS.filter(d => d <= pdDataAtual);
+  pdDataAtual = disponiveisAteHoje.length ? disponiveisAteHoje[disponiveisAteHoje.length - 1] : PD_DATAS_DISPONIVEIS[PD_DATAS_DISPONIVEIS.length - 1];
+}
+
+function pdIrPara(dataStr) {
+  pdDataAtual = dataStr;
+  pdRenderNav();
+  pdRenderJogo();
+}
+
+function pdNavegar(delta) {
+  const d = new Date(pdDataAtual + 'T12:00:00');
+  d.setDate(d.getDate() + delta);
+  const ano = d.getFullYear(), mes = String(d.getMonth() + 1).padStart(2, '0'), dia = String(d.getDate()).padStart(2, '0');
+  const novaData = `${ano}-${mes}-${dia}`;
+  const hoje = pdDataHojeStr();
+  if (novaData > hoje) return; // PROIBIDO ir pro futuro
+  pdIrPara(novaData);
+}
+
+function pdRenderNav() {
+  const hoje = pdDataHojeStr();
+  document.getElementById('pd-nav-data').textContent = pdFormatarData(pdDataAtual);
+  const rotuloEl = document.getElementById('pd-nav-rotulo');
+  if (pdDataAtual === hoje) rotuloEl.textContent = 'HOJE';
+  else {
+    const ontem = new Date(hoje + 'T12:00:00'); ontem.setDate(ontem.getDate() - 1);
+    const ontemStr = `${ontem.getFullYear()}-${String(ontem.getMonth()+1).padStart(2,'0')}-${String(ontem.getDate()).padStart(2,'0')}`;
+    rotuloEl.textContent = pdDataAtual === ontemStr ? 'ONTEM' : 'DIA ANTERIOR';
+  }
+  document.getElementById('pd-nav-proximo').disabled = (pdDataAtual >= hoje);
+  document.getElementById('pd-nav-anterior').disabled = (pdDataAtual <= PD_DATA_MAIS_ANTIGA);
+  document.getElementById('pd-nav-hoje').style.display = (pdDataAtual === hoje) ? 'none' : 'inline-block';
+}
+
+function pdRenderJogo() {
+  const wrap = document.getElementById('pd-conteudo');
+  const palavraObj = PALAVRAS_DATA[pdDataAtual];
+
+  if (!palavraObj) {
+    wrap.innerHTML = '<div class="pd-card"><div class="pd-indisponivel">🌙 Ainda não tem palavra cadastrada pra esse dia.</div></div>';
+    return;
+  }
+
+  const estado = pdCarregarEstado(pdDataAtual) || pdEstadoNovo();
+
+  if (estado.finalizado) {
+    pdRenderResultado(wrap, palavraObj, estado);
+  } else {
+    pdRenderAtivo(wrap, palavraObj, estado);
+  }
+}
+
+function pdRenderAtivo(wrap, palavraObj, estado) {
+  const dots = Array.from({ length: PD_MAX_TENTATIVAS }, (_, i) => {
+    let cls = 'pd-tentativa-dot';
+    if (i < estado.tentativas.length) cls += ' usada';
+    else if (i === estado.tentativas.length) cls += ' atual';
+    return `<span class="${cls}"></span>`;
+  }).join('');
+
+  const dicasHtml = palavraObj.dicas.map((d, i) => {
+    const num = i + 1;
+    if (num <= estado.dicaAtual) {
+      return `<div class="pd-dica liberada"><span class="pd-dica-num">DICA ${num}</span>${d}</div>`;
+    }
+    return `<div class="pd-dica bloqueada"><span class="pd-dica-num">DICA ${num}</span>${d}</div>`;
+  }).join('');
+
+  const tentativasRestantes = PD_MAX_TENTATIVAS - estado.tentativas.length;
+  const podeRevelar = estado.dicaAtual < 5;
+
+  wrap.innerHTML = `
+    <div class="pd-card">
+      <div class="pd-tentativas">${dots}</div>
+      <div class="pd-dicas">${dicasHtml}</div>
+      <div class="pd-input-row">
+        <input type="text" class="pd-input" id="pd-input" placeholder="Sua resposta..." maxlength="30" autocomplete="off">
+        <button class="pd-btn-chutar" id="pd-btn-chutar">Chutar</button>
+      </div>
+      <div class="pd-erro-msg" id="pd-erro-msg"></div>
+      ${podeRevelar ? `<button class="pd-btn-revelar" id="pd-btn-revelar">👁 Revelar próxima dica (${tentativasRestantes} tentativa${tentativasRestantes !== 1 ? 's' : ''} restante${tentativasRestantes !== 1 ? 's' : ''})</button>` : ''}
+    </div>`;
+
+  const input = document.getElementById('pd-input');
+  const btnChutar = document.getElementById('pd-btn-chutar');
+  btnChutar.addEventListener('click', () => pdChutar(palavraObj));
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') pdChutar(palavraObj); });
+  input.focus();
+
+  const btnRevelar = document.getElementById('pd-btn-revelar');
+  if (btnRevelar) btnRevelar.addEventListener('click', () => pdRevelarProximaDica(palavraObj));
+}
+
+function pdChutar(palavraObj) {
+  const input = document.getElementById('pd-input');
+  const palpite = input.value.trim();
+  if (!palpite) { input.focus(); return; }
+
+  const estado = pdCarregarEstado(pdDataAtual) || pdEstadoNovo();
+  const acertou = pdNormalizar(palpite) === pdNormalizar(palavraObj.palavra);
+
+  estado.tentativas.push({ palpite, acertou });
+
+  if (acertou) {
+    estado.finalizado = true;
+    estado.venceu = true;
+  } else {
+    input.classList.add('errou');
+    setTimeout(() => input.classList.remove('errou'), 400);
+    document.getElementById('pd-erro-msg').textContent = 'Não é essa... tenta de novo ✦';
+    if (estado.dicaAtual < 5) estado.dicaAtual++;
+    if (estado.tentativas.length >= PD_MAX_TENTATIVAS) {
+      estado.finalizado = true;
+      estado.venceu = false;
+    }
+  }
+
+  pdSalvarEstado(pdDataAtual, estado);
+  pdRenderJogo();
+}
+
+function pdRevelarProximaDica(palavraObj) {
+  const estado = pdCarregarEstado(pdDataAtual) || pdEstadoNovo();
+  if (estado.dicaAtual < 5) estado.dicaAtual++;
+  pdSalvarEstado(pdDataAtual, estado);
+  pdRenderJogo();
+}
+
+function pdRenderResultado(wrap, palavraObj, estado) {
+  const venceu = estado.venceu;
+  const numDicasUsadas = estado.dicaAtual;
+  const icone = venceu ? (numDicasUsadas <= 2 ? '🌟' : numDicasUsadas <= 3 ? '🎉' : '✨') : '🌙';
+  const titulo = venceu ? 'Você acertou!' : 'Não foi dessa vez';
+
+  const gridEmoji = venceu
+    ? '🟩'.repeat(numDicasUsadas) + '⬛'.repeat(5 - numDicasUsadas)
+    : '🟥'.repeat(5);
+
+  wrap.innerHTML = `
+    <div class="pd-card pd-resultado">
+      <div class="pd-resultado-icone">${icone}</div>
+      <div class="pd-resultado-titulo">${titulo}</div>
+      <div class="pd-resultado-palavra">${palavraObj.palavra}</div>
+      <div class="pd-grid-emoji">${gridEmoji}</div>
+      <div class="pd-explicacao">
+        <span class="pd-explicacao-titulo">✦ O que significa</span>
+        ${palavraObj.explicacao}
+      </div>
+      <button class="pd-btn-compartilhar" id="pd-btn-compartilhar">📤 Compartilhar resultado</button>
+      <div class="pd-copiado" id="pd-copiado">✓ Copiado! Cola no WhatsApp ✦</div>
+    </div>`;
+
+  document.getElementById('pd-btn-compartilhar').addEventListener('click', () => pdCompartilhar(gridEmoji));
+}
+
+async function pdCompartilhar(gridEmoji) {
+  const texto = `🔮 Palavra do Dia no Terreiro (${pdFormatarData(pdDataAtual)})\n${gridEmoji}\nJogue também: ${PD_LINK_SITE}`;
+  const aviso = document.getElementById('pd-copiado');
+  try {
+    if (navigator.share) {
+      await navigator.share({ text: texto });
+      return;
+    }
+    await navigator.clipboard.writeText(texto);
+    aviso.classList.add('show');
+    setTimeout(() => aviso.classList.remove('show'), 2500);
+  } catch (e) {
+    // usuária cancelou o compartilhamento nativo, ou clipboard falhou — tenta fallback simples
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      aviso.classList.add('show');
+      setTimeout(() => aviso.classList.remove('show'), 2500);
+    } catch (e2) { console.warn('compartilhar:', e2); }
+  }
+}
+
+// ── NAVEGAÇÃO ──
+document.getElementById('pd-nav-anterior').addEventListener('click', () => pdNavegar(-1));
+document.getElementById('pd-nav-proximo').addEventListener('click', () => pdNavegar(1));
+document.getElementById('pd-nav-hoje').addEventListener('click', () => pdIrPara(pdDataHojeStr()));
+
+// ── INICIALIZAÇÃO ──
+pdRenderNav();
+pdRenderJogo();
+</script>
+</body>
+</html>
