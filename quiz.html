@@ -125,6 +125,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .qz-btn-proxima{width:100%;margin-top:18px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700;display:none;transition:transform .15s}
 .qz-btn-proxima.show{display:block;animation:cpEntra .2s ease both}
+
+.qz-btn-sair{display:block;width:100%;margin-top:14px;background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.78rem;text-decoration:underline;text-align:center}
+.qz-btn-sair:hover{color:var(--rosa)}
 .qz-btn-proxima:hover{transform:translateY(-2px)}
 
 /* ── TELA DE RESULTADO ── */
@@ -218,6 +221,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <div class="qz-feedback" id="qz-feedback"></div>
       <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
     </div>
+    <button class="qz-btn-sair" id="qz-btn-sair">💾 Salvar e sair por aqui</button>
   </div>
 
   <!-- TELA DE RESULTADO -->
@@ -1715,6 +1719,13 @@ document.getElementById('qz-btn-comecar').addEventListener('click', () => {
   document.getElementById('qz-tela-resultado').style.display = 'none';
   document.getElementById('qz-tela-jogo').style.display = 'block';
   qzRenderPergunta();
+});
+
+document.getElementById('qz-btn-sair').addEventListener('click', () => {
+  // cada resposta já foi salva na hora — só volta pro início sem forçar terminar a rodada
+  document.getElementById('qz-tela-jogo').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+  qzRenderCategorias();
 });
 
 function qzRenderPergunta() {
