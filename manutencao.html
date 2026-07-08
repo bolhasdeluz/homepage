@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manutenção — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Manutenção da Casa.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Manutenção — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;--surface:rgba(255,255,255,.72);
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:1000px;margin:0 auto;padding:32px 24px 120px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:36px;line-height:1.6}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:28px;transition:color .2s;}
+.back-btn:hover{color:var(--rosa)}
+
+#login-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1000px;margin:0 auto;padding:16px 24px 0}
+#login-bar img{width:34px;height:34px;border-radius:50%;display:none}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+
+@keyframes cpEntra{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes mnBalanca{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+.cp-btn-cancelar{background:none;color:var(--text-dim);border:1px solid var(--border)}
+.cp-btn-confirmar{background:var(--rosa);color:#fff;border:none;transition:background .15s}
+.cp-toast{position:fixed;bottom:24px;right:24px;background:var(--rosa);color:#fff;padding:12px 20px;border-radius:10px;font-size:13px;font-family:'DM Sans',sans-serif;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1)}
+.cp-toast.erro{background:#c0392b}
+
+.es-rel-modal{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:14px;padding:26px;width:min(440px,92vw);box-shadow:0 8px 40px rgba(196,57,107,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1)}
+.es-rel-modal h3{font-family:'Playfair Display',serif;font-weight:600;font-size:1.1rem;margin-bottom:6px}
+.es-rel-modal p{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px}
+.es-rel-textarea{width:100%;min-height:220px;border:1px solid var(--border);border-radius:10px;padding:14px;font-family:'DM Sans',monospace;font-size:12.5px;line-height:1.6;color:var(--text);background:var(--rosa-dim);resize:vertical;outline:none;white-space:pre-wrap}
+.es-rel-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.es-btn-whats{background:#25D366;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:7px;transition:transform .12s}
+
+.mn-topo{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.mn-btn-relatorio{background:linear-gradient(135deg,var(--terra),#5c2a10);color:#fff;border:none;border-radius:11px;padding:12px 22px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.08em;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(140,58,26,.25);transition:transform .15s,box-shadow .15s}
+.mn-btn-relatorio:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(140,58,26,.35)}
+.mn-stats{display:flex;gap:10px;flex-wrap:wrap}
+.mn-stat{text-align:center;background:#fff;border:1px solid var(--border);padding:9px 16px;border-radius:12px;box-shadow:0 2px 10px rgba(196,57,107,.06);min-width:64px}
+.mn-stat-n{display:block;font-family:'Cinzel',serif;font-size:1.25rem;font-weight:700;line-height:1}
+.mn-stat-n.pendente{color:var(--terra)}
+.mn-stat-n.aguardando{color:var(--amber,#b45309)}
+.mn-stat-n.agendada{color:#4a6fa5}
+.mn-stat-n.concluida{color:var(--green)}
+.mn-stat-l{font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim)}
+
+.mn-faixa{display:flex;justify-content:center;gap:22px;padding:14px 0;margin-bottom:20px;background:linear-gradient(90deg,transparent,rgba(140,58,26,.06),transparent);border-radius:14px}
+.mn-faixa span{font-size:1.5rem;opacity:.7;animation:mnBalanca 3s ease-in-out infinite}
+.mn-faixa span:nth-child(2){animation-delay:.3s}
+.mn-faixa span:nth-child(3){animation-delay:.6s}
+.mn-faixa span:nth-child(4){animation-delay:.9s}
+
+.mn-proxima-card{background:linear-gradient(135deg,#fff,#fff8f4);border:1px solid var(--border);border-left:5px solid var(--terra);border-radius:14px;padding:18px 22px;margin-bottom:24px;box-shadow:0 4px 20px rgba(140,58,26,.08);display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.mn-proxima-icon{font-size:2.1rem;flex-shrink:0}
+.mn-proxima-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);font-weight:700;margin-bottom:3px}
+.mn-proxima-titulo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text)}
+.mn-proxima-sub{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic}
+
+.mn-form{background:#fff;border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:26px;box-shadow:0 4px 20px rgba(196,57,107,.07)}
+.mn-form-titulo{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--terra);font-weight:600;margin-bottom:14px}
+.mn-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.mn-campo{display:flex;flex-direction:column;gap:5px;flex:1 1 160px}
+.mn-campo.mn-full{flex-basis:100%}
+.mn-campo label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+.mn-campo input,.mn-campo select,.mn-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+.mn-campo textarea{min-height:70px;resize:vertical;font-family:'DM Sans',sans-serif;line-height:1.5}
+.mn-campo input:focus,.mn-campo select:focus,.mn-campo textarea:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(140,58,26,.1);background:#fff}
+.mn-btn-add{background:var(--terra);color:#fff;border:none;border-radius:10px;padding:10px 24px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.06em;white-space:nowrap;transition:transform .12s,box-shadow .15s,background .15s}
+.mn-btn-add:hover{background:#6b2c12;transform:translateY(-2px);box-shadow:0 4px 14px rgba(140,58,26,.3)}
+
+.mn-sec-label{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:22px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.mn-sec-label.pendente{color:var(--terra)}
+.mn-sec-label.aguardando{color:var(--amber,#b45309)}
+.mn-sec-label.agendada{color:#4a6fa5}
+.mn-sec-label.andamento{color:#8a5ec4}
+.mn-sec-label.concluida{color:var(--green)}
+
+.mn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:6px}
+.mn-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:17px 19px;box-shadow:0 2px 10px rgba(196,57,107,.06);transition:box-shadow .2s,transform .2s;animation:cpEntra .25s cubic-bezier(.2,.9,.3,1.2);position:relative}
+.mn-card:hover{box-shadow:0 8px 24px rgba(140,58,26,.12);transform:translateY(-2px)}
+.mn-card.pendente{border-left:4px solid var(--terra)}
+.mn-card.aguardando{border-left:4px solid var(--amber,#b45309)}
+.mn-card.agendada{border-left:4px solid #4a6fa5}
+.mn-card.andamento{border-left:4px solid #8a5ec4}
+.mn-card.concluida{border-left:4px solid var(--green);opacity:.72;background:linear-gradient(90deg,var(--green-dim) 0%,#fff 16%)}
+.mn-card-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.mn-card-titulo{font-family:'Playfair Display',serif;font-size:15.5px;font-weight:600;color:var(--text);line-height:1.3}
+.mn-card.concluida .mn-card-titulo{text-decoration:line-through;color:var(--green)}
+.mn-card-acoes{display:flex;gap:2px;flex-shrink:0}
+.mn-icon-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:3px 5px;border-radius:5px;transition:color .15s,background .15s}
+.mn-icon-btn:hover{color:var(--terra);background:var(--rosa-dim)}
+.mn-icon-btn.del:hover{color:#c0392b}
+.mn-card-desc{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;line-height:1.5;margin-bottom:10px;white-space:pre-wrap}
+.mn-card-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.mn-meta-pill{display:inline-flex;align-items:center;gap:4px;font-family:'DM Sans',sans-serif;font-size:11.5px;color:var(--text-dim);background:var(--rosa-dim);padding:3px 10px;border-radius:20px}
+.mn-badge-status{display:inline-flex;align-items:center;gap:4px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;font-weight:700;padding:4px 11px;border-radius:20px}
+.mn-badge-status.pendente{background:rgba(140,58,26,.08);color:var(--terra)}
+.mn-badge-status.aguardando{background:#fef3c7;color:var(--amber,#b45309)}
+.mn-badge-status.agendada{background:rgba(74,111,165,.1);color:#4a6fa5}
+.mn-badge-status.andamento{background:rgba(138,94,196,.1);color:#8a5ec4}
+.mn-badge-status.concluida{background:var(--green-dim);color:var(--green)}
+.mn-card-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.mn-btn-concluir{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border);border-radius:20px;padding:6px 14px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s}
+.mn-btn-concluir:hover{background:var(--green);color:#fff}
+
+.mn-vazio{text-align:center;padding:56px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+.mn-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
+.mn-modal-bg{position:fixed;inset:0;background:rgba(40,10,20,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;overflow-y:auto}
+.mn-modal{background:#fff;border:1px solid var(--border);border-top:4px solid var(--terra);border-radius:14px;padding:26px;width:380px;max-width:100%;box-shadow:0 8px 40px rgba(140,58,26,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1);margin:auto}
+.mn-modal h3{font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:16px}
+.mn-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.mn-modal-btns button{border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
+</style>
+</head>
+<body>
+
+<div id="login-bar">
+  <span id="login-status">Entrando...</span>
+  <img id="login-avatar">
+  <button id="login-btn" style="display:none">Entrar com Google</button>
+  <button id="logout-btn">Sair</button>
+</div>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🔧 Manutenção da Casa</div>
+  <p class="section-sub">O que precisa de reparo, quem cuida, e pra quando ✦</p>
+
+  <div class="mn-faixa">
+    <span>🔧</span><span>🪛</span><span>🧰</span><span>🔨</span>
+  </div>
+
+  <div class="mn-proxima-card" id="mn-proxima-card">
+    <div class="mn-proxima-icon" id="mn-proxima-icon">🔧</div>
+    <div>
+      <div class="mn-proxima-label" id="mn-proxima-label">Próxima Manutenção</div>
+      <div class="mn-proxima-titulo" id="mn-proxima-titulo">Tudo em dia por aqui ✦</div>
+      <div class="mn-proxima-sub" id="mn-proxima-sub">Nenhuma tarefa pendente no momento</div>
+    </div>
+  </div>
+
+  <div class="mn-topo">
+    <div class="mn-stats">
+      <div class="mn-stat"><span class="mn-stat-n pendente" id="mn-cnt-pendente">0</span><span class="mn-stat-l">pendente</span></div>
+      <div class="mn-stat"><span class="mn-stat-n aguardando" id="mn-cnt-aguardando">0</span><span class="mn-stat-l">aguardando</span></div>
+      <div class="mn-stat"><span class="mn-stat-n andamento" id="mn-cnt-andamento" style="color:#4a6fa5">0</span><span class="mn-stat-l">andamento</span></div>
+      <div class="mn-stat"><span class="mn-stat-n agendada" id="mn-cnt-agendada">0</span><span class="mn-stat-l">agendada</span></div>
+      <div class="mn-stat"><span class="mn-stat-n concluida" id="mn-cnt-concluida">0</span><span class="mn-stat-l">concluída</span></div>
+    </div>
+    <button class="mn-btn-relatorio" onclick="abrirRelatorioManutencao()">📋 Gerar Relatório</button>
+  </div>
+
+  <div class="mn-form">
+    <div class="mn-form-titulo">✦ Nova tarefa de manutenção</div>
+    <div class="mn-row">
+      <div class="mn-campo mn-full"><label>O que precisa ser feito?</label><input type="text" id="mn-inp-titulo" placeholder="Ex: Consertar vazamento do banheiro"></div>
+    </div>
+    <div class="mn-row">
+      <div class="mn-campo mn-full"><label>Descrição / detalhes / lista do que precisa</label><textarea id="mn-inp-descricao" placeholder="Descreva a tarefa, materiais necessários, passos..."></textarea></div>
+    </div>
+    <div class="mn-row">
+      <div class="mn-campo"><label>Status</label>
+        <select id="mn-inp-status">
+          <option value="pendente">🔧 Pendente</option>
+          <option value="aguardando">⏳ Aguardando</option>
+          <option value="andamento">🔄 Em Andamento</option>
+          <option value="agendada">📅 Agendada</option>
+        </select>
+      </div>
+      <div class="mn-campo"><label>Data limite</label><input type="date" id="mn-inp-data"></div>
+      <div class="mn-campo"><label>Responsável (opcional)</label><input type="text" id="mn-inp-responsavel" placeholder="Nome de quem vai cuidar"></div>
+      <button class="mn-btn-add" id="mn-btn-add">+ Adicionar tarefa</button>
+    </div>
+  </div>
+
+  <div id="mn-lista-pendente"></div>
+  <div id="mn-lista-aguardando"></div>
+  <div id="mn-lista-andamento"></div>
+  <div id="mn-lista-agendada"></div>
+  <div id="mn-lista-concluida"></div>
+  <div id="mn-carregando" class="mn-carregando">Carregando manutenções...</div>
+  <div id="mn-vazio" class="mn-vazio" style="display:none">Nenhuma tarefa de manutenção cadastrada. Adicione a primeira! 🔧</div>
+</div>
+
+<!-- MODAL EDITAR TAREFA DE MANUTENÇÃO -->
+<div class="mn-modal-bg" id="mn-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>✎ Editar tarefa</h3>
+    <div class="mn-campo mn-full" style="margin-bottom:10px"><label>O que precisa ser feito?</label><input type="text" id="mn-modal-titulo"></div>
+    <div class="mn-campo mn-full" style="margin-bottom:10px"><label>Descrição / detalhes</label><textarea id="mn-modal-descricao"></textarea></div>
+    <div class="mn-row">
+      <div class="mn-campo"><label>Status</label>
+        <select id="mn-modal-status">
+          <option value="pendente">🔧 Pendente</option>
+          <option value="aguardando">⏳ Aguardando</option>
+          <option value="andamento">🔄 Em Andamento</option>
+          <option value="agendada">📅 Agendada</option>
+          <option value="concluida">✅ Concluída</option>
+        </select>
+      </div>
+      <div class="mn-campo"><label>Data limite</label><input type="date" id="mn-modal-data"></div>
+    </div>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Responsável</label><input type="text" id="mn-modal-responsavel"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="mn-modal-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="mn-modal-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO WHATSAPP MANUTENÇÃO -->
+<div class="mn-modal-bg" id="mn-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📋 Relatório de Manutenção</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="mn-rel-texto"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="mn-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="mn-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+  } else {
+    statusEl.textContent = 'Não conectada';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+  }
+});
+
+// mesma lógica de normalização de status usada no Resumo Mensal do site principal —
+// se mudar aqui, replica lá também (index.html)
+const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', andamento: '🔄', concluida: '✅' };
+const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', andamento: '🔄 Em Andamento', concluida: '✅ Concluída' };
+function mnStatusReal(item) {
+  const s = (item.status || 'pendente').toLowerCase().trim();
+  if (['pendente','aguardando','agendada','andamento','concluida'].includes(s)) return s;
+  return 'pendente';
+}
+
+  // ══ MANUTENÇÃO ══
+  (function initManutencao() {
+    const colManutencao = collection(db, 'manutencao');
+    let mnItens = [];
+
+    function mnToast(msg, erro) {
+      const t = document.createElement('div');
+      t.className = 'cp-toast' + (erro ? ' erro' : '');
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2800);
+    }
+    function mnNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
+    function mnFmtData(dataStr) {
+      if (!dataStr) return '';
+      const d = new Date(dataStr + 'T12:00:00');
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // sem orderBy na query — orderBy excluiria silenciosamente qualquer tarefa
+    // que não tenha o campo "criadoEm" (era por isso que algumas apareciam no Resumo
+    // Mensal mas não na própria página de Manutenção). Ordena no cliente em vez disso.
+    onSnapshot(colManutencao, snap => {
+      mnItens = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.criadoEm?.seconds || 0) - (a.criadoEm?.seconds || 0));
+
+      const carregando = document.getElementById('mn-carregando');
+      if (carregando) carregando.style.display = 'none';
+      mnRenderizar();
+      mnAtualizarProxima();
+      mnAtualizarCard();
+    }, err => console.warn('manutencao onSnapshot:', err));
+
+    async function mnAdicionarItem() {
+      const tituloEl = document.getElementById('mn-inp-titulo');
+      const titulo = tituloEl.value.trim();
+      if (!titulo) { mnToast('Digite o que precisa ser feito', true); return; }
+      const descricao = document.getElementById('mn-inp-descricao').value.trim();
+      const status = document.getElementById('mn-inp-status').value;
+      const dataLimite = document.getElementById('mn-inp-data').value || '';
+      const responsavel = document.getElementById('mn-inp-responsavel').value.trim();
+      const btn = document.getElementById('mn-btn-add');
+      btn.disabled = true;
+      try {
+        await addDoc(colManutencao, {
+          titulo, descricao, status, dataLimite, responsavel,
+          criadoEm: serverTimestamp(), criadoPor: mnNomeAtual()
+        });
+        tituloEl.value = '';
+        document.getElementById('mn-inp-descricao').value = '';
+        document.getElementById('mn-inp-data').value = '';
+        document.getElementById('mn-inp-responsavel').value = '';
+        document.getElementById('mn-inp-status').value = 'pendente';
+        mnToast('Tarefa adicionada! ✦');
+      } catch (e) { mnToast('Erro ao adicionar', true); }
+      btn.disabled = false;
+    }
+
+    let mnEditandoId = null;
+    function mnAbrirEditar(id) {
+      const item = mnItens.find(i => i.id === id);
+      if (!item) return;
+      mnEditandoId = id;
+      document.getElementById('mn-modal-titulo').value = item.titulo || '';
+      document.getElementById('mn-modal-descricao').value = item.descricao || '';
+      document.getElementById('mn-modal-status').value = mnStatusReal(item);
+      document.getElementById('mn-modal-data').value = item.dataLimite || '';
+      document.getElementById('mn-modal-responsavel').value = item.responsavel || '';
+      document.getElementById('mn-modal').style.display = 'flex';
+    }
+    function mnFecharEditar() { document.getElementById('mn-modal').style.display = 'none'; mnEditandoId = null; }
+    async function mnSalvarEdicao() {
+      if (!mnEditandoId) return;
+      const titulo = document.getElementById('mn-modal-titulo').value.trim();
+      if (!titulo) { mnToast('Digite o que precisa ser feito', true); return; }
+      try {
+        await updateDoc(doc(db, 'manutencao', mnEditandoId), {
+          titulo,
+          descricao: document.getElementById('mn-modal-descricao').value.trim(),
+          status: document.getElementById('mn-modal-status').value,
+          dataLimite: document.getElementById('mn-modal-data').value || '',
+          responsavel: document.getElementById('mn-modal-responsavel').value.trim(),
+          atualizadoEm: serverTimestamp(), atualizadoPor: mnNomeAtual()
+        });
+        mnToast('Tarefa atualizada! ✦');
+        mnFecharEditar();
+      } catch (e) { mnToast('Erro ao salvar', true); }
+    }
+    async function mnExcluir(id) {
+      if (!confirm('Remover esta tarefa de manutenção?')) return;
+      try { await deleteDoc(doc(db, 'manutencao', id)); } catch (e) { mnToast('Erro ao remover', true); }
+    }
+    async function mnConcluir(id) {
+      try {
+        await updateDoc(doc(db, 'manutencao', id), { status: 'concluida', atualizadoEm: serverTimestamp(), atualizadoPor: mnNomeAtual() });
+        mnToast('Tarefa concluída! 🎉');
+      } catch (e) { mnToast('Erro ao concluir', true); }
+    }
+
+    function mnCardTarefa(item) {
+      const status = mnStatusReal(item);
+      const d = document.createElement('div');
+      d.className = 'mn-card ' + status;
+      const metaHtml = `
+        ${item.dataLimite ? `<span class="mn-meta-pill">📅 ${mnFmtData(item.dataLimite)}</span>` : ''}
+        ${item.responsavel ? `<span class="mn-meta-pill">👤 ${item.responsavel}</span>` : ''}
+      `;
+      d.innerHTML = `
+        <div class="mn-card-topo">
+          <div class="mn-card-titulo">${item.titulo}</div>
+          <div class="mn-card-acoes">
+            <button class="mn-icon-btn edit" title="Editar">✎</button>
+            <button class="mn-icon-btn del" title="Remover">✕</button>
+          </div>
+        </div>
+        ${item.descricao ? `<div class="mn-card-desc">${item.descricao}</div>` : ''}
+        <div class="mn-card-meta">${metaHtml}</div>
+        <div class="mn-card-footer">
+          <span class="mn-badge-status ${status}">${MN_LABEL_STATUS[status] || status}</span>
+          ${status !== 'concluida' ? `<button class="mn-btn-concluir">✓ Concluir</button>` : ''}
+        </div>
+      `;
+      d.querySelector('.mn-icon-btn.edit').addEventListener('click', () => mnAbrirEditar(item.id));
+      d.querySelector('.mn-icon-btn.del').addEventListener('click', () => mnExcluir(item.id));
+      const concluirBtn = d.querySelector('.mn-btn-concluir');
+      if (concluirBtn) concluirBtn.addEventListener('click', () => mnConcluir(item.id));
+      return d;
+    }
+
+    function mnRenderizar() {
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      const concluidas = mnItens.filter(i => mnStatusReal(i) === 'concluida');
+
+      const cP = document.getElementById('mn-cnt-pendente'), cA = document.getElementById('mn-cnt-aguardando'),
+            cG = document.getElementById('mn-cnt-agendada'), cAn = document.getElementById('mn-cnt-andamento'),
+            cC = document.getElementById('mn-cnt-concluida');
+      if (!cP) return;
+      cP.textContent = pendentes.length; cA.textContent = aguardando.length;
+      cG.textContent = agendadas.length; cC.textContent = concluidas.length;
+      if (cAn) cAn.textContent = andamento.length;
+
+      const lp = document.getElementById('mn-lista-pendente'); lp.innerHTML = '';
+      const la = document.getElementById('mn-lista-aguardando'); la.innerHTML = '';
+      const lg = document.getElementById('mn-lista-agendada'); lg.innerHTML = '';
+      const lan = document.getElementById('mn-lista-andamento'); if (lan) lan.innerHTML = '';
+      const lc = document.getElementById('mn-lista-concluida'); lc.innerHTML = '';
+
+      if (pendentes.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label pendente'; s.innerHTML = '🔧 Pendente';
+        lp.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        pendentes.forEach(i => grid.appendChild(mnCardTarefa(i))); lp.appendChild(grid);
+      }
+      if (aguardando.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label aguardando'; s.innerHTML = '⏳ Aguardando';
+        la.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        aguardando.forEach(i => grid.appendChild(mnCardTarefa(i))); la.appendChild(grid);
+      }
+      if (agendadas.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label agendada'; s.innerHTML = '📅 Agendada';
+        lg.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        agendadas.forEach(i => grid.appendChild(mnCardTarefa(i))); lg.appendChild(grid);
+      }
+      if (andamento.length && lan) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label andamento'; s.innerHTML = '🔄 Em Andamento';
+        lan.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        andamento.forEach(i => grid.appendChild(mnCardTarefa(i))); lan.appendChild(grid);
+      }
+      if (concluidas.length) {
+        const s = document.createElement('div'); s.className = 'mn-sec-label concluida'; s.innerHTML = '✅ Concluída';
+        lc.appendChild(s);
+        const grid = document.createElement('div'); grid.className = 'mn-grid';
+        concluidas.forEach(i => grid.appendChild(mnCardTarefa(i))); lc.appendChild(grid);
+      }
+      const vazio = document.getElementById('mn-vazio');
+      if (vazio) vazio.style.display = mnItens.length === 0 ? 'block' : 'none';
+    }
+
+    // ── "PRÓXIMA MANUTENÇÃO" (topo da página + card na home) ──
+    function mnProximaInfo() {
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada' && i.dataLimite)
+        .sort((a, b) => a.dataLimite.localeCompare(b.dataLimite));
+      if (agendadas.length) {
+        const prox = agendadas[0];
+        return { icone: '📅', label: 'Próxima Manutenção', titulo: prox.titulo, sub: mnFmtData(prox.dataLimite) + (prox.responsavel ? ' · ' + prox.responsavel : '') };
+      }
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      if (andamento.length) {
+        return { icone: '🔄', label: 'Em Andamento', titulo: andamento[0].titulo, sub: andamento.length > 1 ? `+ ${andamento.length - 1} outra(s) em andamento` : 'Sendo cuidada agora' };
+      }
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
+      if (aguardando.length) {
+        return { icone: '⏳', label: 'Aguardando', titulo: aguardando[0].titulo, sub: aguardando.length > 1 ? `+ ${aguardando.length - 1} outra(s) aguardando` : 'Sem data definida ainda' };
+      }
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
+      if (pendentes.length) {
+        return { icone: '🔧', label: 'Pendente', titulo: pendentes[0].titulo, sub: pendentes.length > 1 ? `+ ${pendentes.length - 1} outra(s) pendente(s)` : 'Ainda não começou' };
+      }
+      return null;
+    }
+
+    function mnAtualizarProxima() {
+      const info = mnProximaInfo();
+      const icone = document.getElementById('mn-proxima-icon');
+      const label = document.getElementById('mn-proxima-label');
+      const titulo = document.getElementById('mn-proxima-titulo');
+      const sub = document.getElementById('mn-proxima-sub');
+      if (!icone) return;
+      if (info) {
+        icone.textContent = info.icone;
+        label.textContent = info.label;
+        titulo.textContent = info.titulo;
+        sub.textContent = info.sub;
+      } else {
+        icone.textContent = '✦';
+        label.textContent = 'Próxima Manutenção';
+        titulo.textContent = 'Tudo em dia por aqui ✦';
+        sub.textContent = 'Nenhuma tarefa pendente no momento';
+      }
+    }
+
+    function mnAtualizarCard() {
+      const card = document.getElementById('proxima-manutencao-card');
+      const txt = document.getElementById('manutencao-card-txt');
+      const sub = document.getElementById('manutencao-card-sub');
+      if (!card) return;
+      const info = mnProximaInfo();
+      if (info) {
+        txt.textContent = info.titulo;
+        sub.textContent = info.sub;
+      } else {
+        txt.textContent = 'Tudo em dia ✦';
+        sub.textContent = 'Nenhuma manutenção pendente';
+      }
+      card.style.display = 'block';
+      sincronizarMiniCardsPerfil();
+    }
+
+    // ── RELATÓRIO WHATSAPP ──
+    function mnGerarTextoRelatorio() {
+      const pendentes = mnItens.filter(i => mnStatusReal(i) === 'pendente');
+      const aguardando = mnItens.filter(i => mnStatusReal(i) === 'aguardando');
+      const agendadas = mnItens.filter(i => mnStatusReal(i) === 'agendada').sort((a, b) => (a.dataLimite || '9999').localeCompare(b.dataLimite || '9999'));
+      const andamento = mnItens.filter(i => mnStatusReal(i) === 'andamento');
+      const concluidas = mnItens.filter(i => mnStatusReal(i) === 'concluida');
+      const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      let txt = `🔧 *Manutenção do Terreiro Bolhas de Luz*\n📅 ${hoje}\n\n`;
+      if (agendadas.length) {
+        txt += `📅 *Agendadas:*\n`;
+        agendadas.forEach(i => { txt += `• ${i.titulo} — ${mnFmtData(i.dataLimite)}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (andamento.length) {
+        txt += `🔄 *Em andamento:*\n`;
+        andamento.forEach(i => { txt += `• ${i.titulo}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (aguardando.length) {
+        txt += `⏳ *Aguardando:*\n`;
+        aguardando.forEach(i => { txt += `• ${i.titulo}${i.responsavel ? ' (' + i.responsavel + ')' : ''}\n`; });
+        txt += `\n`;
+      }
+      if (pendentes.length) {
+        txt += `🔧 *Pendentes:*\n`;
+        pendentes.forEach(i => { txt += `• ${i.titulo}\n`; });
+        txt += `\n`;
+      }
+      if (!agendadas.length && !andamento.length && !aguardando.length && !pendentes.length) {
+        txt += `✅ Nenhuma manutenção pendente — tudo em dia! 🎉\n\n`;
+      }
+      txt += `✅ Concluídas recentemente: ${concluidas.length}\n`;
+      if (agendadas.length || andamento.length || aguardando.length || pendentes.length) txt += `\n💌 Quem puder ajudar com alguma tarefa, é só falar na corrente ✦\n`;
+      txt += `\n_Atualizado por ${mnNomeAtual()} via bolhasdeluz.ong.br_`;
+      return txt;
+    }
+
+    function mnAbrirRelatorio() {
+      document.getElementById('mn-rel-texto').value = mnGerarTextoRelatorio();
+      document.getElementById('mn-rel-overlay').style.display = 'flex';
+    }
+    function mnFecharRelatorio() { document.getElementById('mn-rel-overlay').style.display = 'none'; }
+    function mnEnviarWhatsapp() {
+      const texto = document.getElementById('mn-rel-texto').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    }
+    window.abrirRelatorioManutencao = mnAbrirRelatorio;
+
+    document.getElementById('mn-btn-add')?.addEventListener('click', mnAdicionarItem);
+    document.getElementById('mn-inp-titulo')?.addEventListener('keydown', e => { if (e.key === 'Enter') mnAdicionarItem(); });
+    document.getElementById('mn-modal-cancelar')?.addEventListener('click', mnFecharEditar);
+    document.getElementById('mn-modal-salvar')?.addEventListener('click', mnSalvarEdicao);
+    document.getElementById('mn-rel-cancelar')?.addEventListener('click', mnFecharRelatorio);
+    document.getElementById('mn-rel-enviar')?.addEventListener('click', mnEnviarWhatsapp);
+  })();
+</script>
+</body>
+</html>
