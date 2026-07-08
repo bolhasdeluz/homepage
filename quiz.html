@@ -83,6 +83,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-faixa span:nth-child(4){animation-delay:1.2s}
 
 /* ── TELA INICIAL ── */
+
+.qz-leva-info{background:var(--rosa-dim);border-radius:12px;padding:11px 14px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text)}
+.qz-trilha{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.qz-trilha-no{font-size:1.3rem;opacity:.4;transition:all .2s}
+.qz-trilha-no.feita{opacity:1;transform:scale(1.05)}
+.qz-trilha-no.atual{opacity:1;transform:scale(1.25);animation:qzBrilha 2s ease-in-out infinite}
+
+.qz-contador-dia{background:linear-gradient(135deg,#fffbe8,#fff5f7);border:1px solid #e8d080;border-radius:12px;padding:11px 16px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);text-align:center}
+.qz-contador-dia strong{color:#8c5a00}
+.qz-contador-dia.cheio{border-color:var(--green);background:var(--green-dim)}
+.qz-contador-dia.cheio strong{color:var(--green)}
+
 #qz-tela-inicio{background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px 28px;text-align:center;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
 #qz-tela-inicio .qz-icone-grande{font-size:3rem;margin-bottom:14px;display:inline-block;animation:qzBrilha 2.4s ease-in-out infinite}
 #qz-tela-inicio h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;margin-bottom:10px}
@@ -240,6 +252,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div class="qz-progresso-geral" id="qz-progresso-geral" style="display:none"></div>
     <div class="qz-categoria-titulo">Escolha uma área</div>
     <div class="qz-categorias" id="qz-categorias"></div>
+    <div class="qz-contador-dia" id="qz-contador-dia"></div>
+    <div class="qz-leva-info" id="qz-leva-info" style="display:none"></div>
     <p id="qz-saudacao-logada" style="display:none;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:10px">Jogando como <strong id="qz-saudacao-nome"></strong> ✦</p>
     <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
     <br>
@@ -1827,6 +1841,63 @@ async function qzSalvarProgresso(perguntaId, escolhaIdx, certa) {
   } catch (e) { console.warn('salvar progresso:', e); }
 }
 
+const QZ_TAMANHO_LEVA = 7;
+const QZ_LIMITE_DIARIO = 7;
+
+// ── LIMITE DIÁRIO — no máximo 7 perguntas do modo normal por dia (pergunta do dia não conta) ──
+function qzChaveContadorDia() { return 'qz_contador_' + new Date().toISOString().slice(0, 10); }
+function qzRespostasHojeContagem() { return parseInt(localStorage.getItem(qzChaveContadorDia()) || '0', 10); }
+function qzIncrementarContadorDia() {
+  const n = qzRespostasHojeContagem() + 1;
+  try { localStorage.setItem(qzChaveContadorDia(), String(n)); } catch (e) {}
+  return n;
+}
+function qzRenderContadorDia() {
+  const feitas = qzRespostasHojeContagem();
+  const wrap = document.getElementById('qz-contador-dia');
+  const cheio = feitas >= QZ_LIMITE_DIARIO;
+  wrap.classList.toggle('cheio', cheio);
+  wrap.innerHTML = cheio
+    ? `✅ Você já fez suas <strong>${QZ_LIMITE_DIARIO} de hoje</strong>! Volta amanhã pra mais ✦`
+    : `📅 <strong>${feitas}/${QZ_LIMITE_DIARIO}</strong> perguntas hoje`;
+  const btn = document.getElementById('qz-btn-comecar');
+  btn.disabled = cheio;
+  btn.textContent = cheio ? 'Volte amanhã ✦' : 'Começar ✦';
+}
+
+
+function qzPoolCategoria(cat) {
+  return cat === 'todas' ? QZ_PERGUNTAS : QZ_PERGUNTAS.filter(p => p.categoria === cat);
+}
+// pega só a próxima leva de até 7 perguntas não respondidas (ordem fixa por id, garante que
+// sempre é a MESMA leva até ela ser concluída — desbloqueia a próxima assim que termina essa)
+function qzLevaAtual(cat) {
+  const pool = qzPoolCategoria(cat);
+  const naoRespondidas = pool.filter(p => !qzProgresso[p.id]).sort((a, b) => a.id - b.id);
+  return naoRespondidas.slice(0, QZ_TAMANHO_LEVA);
+}
+
+const QZ_BICHOS_TRILHA = ['🥚', '🐛', '🦋']; // travada, atual, feita — evolução visual da trilha
+function qzAtualizarLevaInfo() {
+  const wrap = document.getElementById('qz-leva-info');
+  const pool = qzPoolCategoria(qzCategoriaEscolhida);
+  const total = pool.length;
+  const respondidas = pool.filter(p => qzProgresso[p.id]).length;
+  if (respondidas >= total) { wrap.style.display = 'none'; return; }
+  const totalLevas = Math.ceil(total / QZ_TAMANHO_LEVA);
+  const levaAtualNum = Math.floor(respondidas / QZ_TAMANHO_LEVA) + 1;
+  const tamanhoLeva = Math.min(QZ_TAMANHO_LEVA, total - respondidas);
+  let bichos = '';
+  for (let i = 1; i <= totalLevas; i++) {
+    let cls = 'qz-trilha-no', bicho = QZ_BICHOS_TRILHA[0];
+    if (i < levaAtualNum) { cls += ' feita'; bicho = QZ_BICHOS_TRILHA[2]; }
+    else if (i === levaAtualNum) { cls += ' atual'; bicho = QZ_BICHOS_TRILHA[1]; }
+    bichos += `<span class="${cls}">${bicho}</span>`;
+  }
+  wrap.style.display = 'block';
+  wrap.innerHTML = `🧭 Leva ${levaAtualNum} de ${totalLevas} — ${tamanhoLeva} pergunta${tamanhoLeva > 1 ? 's' : ''} pra desbloquear a próxima<div class="qz-trilha">${bichos}</div>`;
+}
+
 function qzRenderCategorias() {
   const categorias = [...new Set(QZ_PERGUNTAS.map(p => p.categoria))];
   const wrap = document.getElementById('qz-categorias');
@@ -1843,16 +1914,23 @@ function qzRenderCategorias() {
       qzCategoriaEscolhida = chip.dataset.cat;
       wrap.querySelectorAll('.qz-cat-chip').forEach(c => c.classList.remove('ativo'));
       chip.classList.add('ativo');
+      qzAtualizarLevaInfo();
     });
   });
+  qzAtualizarLevaInfo();
 }
 qzRenderCategorias();
+qzRenderContadorDia();
 
 document.getElementById('qz-btn-comecar').addEventListener('click', () => {
   qzNome = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
-  const daCategoria = qzCategoriaEscolhida === 'todas' ? QZ_PERGUNTAS : QZ_PERGUNTAS.filter(p => p.categoria === qzCategoriaEscolhida);
-  const base = daCategoria.filter(p => !qzProgresso[p.id]);
+  const restanteHoje = QZ_LIMITE_DIARIO - qzRespostasHojeContagem();
+  if (restanteHoje <= 0) {
+    alert('Você já fez suas 7 perguntas de hoje! Volta amanhã pra continuar a trilha ✦');
+    return;
+  }
+  const base = qzLevaAtual(qzCategoriaEscolhida).slice(0, restanteHoje);
   if (!base.length) {
     alert('Você já respondeu todas as perguntas dessa área! Escolhe outra categoria, ou dá uma olhada em "Revisar minhas respostas" ✦');
     return;
@@ -1873,6 +1951,7 @@ document.getElementById('qz-btn-sair').addEventListener('click', () => {
   document.getElementById('qz-tela-jogo').style.display = 'none';
   document.getElementById('qz-tela-inicio').style.display = 'block';
   qzRenderCategorias();
+  qzRenderContadorDia();
 });
 
 function qzRenderPergunta() {
@@ -1911,6 +1990,7 @@ function qzResponder(escolhaIdx) {
   qzSalvarProgresso(p.id, escolhaIdx, acertou);
   qzSomBolha(acertou);
   qzRegistrarSequencia(acertou);
+  qzIncrementarContadorDia();
 
   document.querySelectorAll('.qz-opcao').forEach((btn, i) => {
     btn.disabled = true;
@@ -2024,6 +2104,7 @@ document.getElementById('qz-btn-refazer').addEventListener('click', () => {
   document.getElementById('qz-tela-resultado').style.display = 'none';
   document.getElementById('qz-tela-inicio').style.display = 'block';
   qzRenderCategorias();
+  qzRenderContadorDia();
 });
 
 document.getElementById('qz-btn-ver-ranking').addEventListener('click', () => {
