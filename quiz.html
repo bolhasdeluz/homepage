@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de Fundamentos — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Quiz de Fundamentos.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quiz — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);
+  --gold:#b8860b;--gold-dim:rgba(184,134,11,.1);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:640px;margin:0 auto;padding:32px 24px 120px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:22px;transition:color .2s;}
+.back-btn:hover{color:var(--rosa)}
+
+#login-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:640px;margin:0 auto;padding:16px 24px 0}
+#login-bar img{width:34px;height:34px;border-radius:50%;display:none}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+
+@keyframes cpEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes qzFlutua{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
+@keyframes qzBrilha{0%,100%{opacity:.55}50%{opacity:1}}
+
+.qz-faixa{display:flex;justify-content:center;gap:26px;padding:16px 0;margin-bottom:22px}
+.qz-faixa span{font-size:1.7rem;animation:qzFlutua 3.2s ease-in-out infinite}
+.qz-faixa span:nth-child(2){animation-delay:.4s}
+.qz-faixa span:nth-child(3){animation-delay:.8s}
+.qz-faixa span:nth-child(4){animation-delay:1.2s}
+
+/* ── TELA INICIAL ── */
+#qz-tela-inicio{background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px 28px;text-align:center;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
+#qz-tela-inicio .qz-icone-grande{font-size:3rem;margin-bottom:14px;display:inline-block;animation:qzBrilha 2.4s ease-in-out infinite}
+#qz-tela-inicio h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;margin-bottom:10px}
+#qz-tela-inicio p{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;line-height:1.6;margin-bottom:22px}
+.qz-inp-nome{width:100%;max-width:280px;border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--rosa-dim);outline:none;text-align:center;margin-bottom:16px}
+.qz-inp-nome:focus{border-color:var(--rosa);background:#fff}
+.qz-btn-comecar{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:14px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 6px 20px rgba(196,57,107,.3);transition:transform .15s,box-shadow .15s}
+.qz-btn-comecar:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(196,57,107,.4)}
+.qz-btn-comecar:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── TELA DE PERGUNTA ── */
+#qz-tela-jogo{display:none}
+.qz-progresso-wrap{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.qz-progresso-barra{flex:1;height:6px;background:var(--rosa-dim);border-radius:10px;overflow:hidden}
+.qz-progresso-fill{height:100%;background:linear-gradient(90deg,var(--rosa),var(--rosa-l));border-radius:10px;transition:width .35s ease}
+.qz-progresso-txt{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.05em;color:var(--text-dim);white-space:nowrap}
+
+.qz-pergunta-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 24px;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
+.qz-pergunta-num{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
+.qz-pergunta-txt{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:22px}
+
+.qz-opcoes{display:flex;flex-direction:column;gap:10px}
+.qz-opcao{text-align:left;background:var(--rosa-dim);border:1.5px solid transparent;border-radius:12px;padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);transition:all .15s;display:flex;align-items:center;gap:10px}
+.qz-opcao:hover:not(:disabled){border-color:var(--rosa);background:#fff}
+.qz-opcao .letra{width:24px;height:24px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:.66rem;font-weight:700;color:var(--text-dim);flex-shrink:0}
+.qz-opcao.certa{background:var(--green-dim);border-color:var(--green);animation:cpPop .25s ease}
+.qz-opcao.certa .letra{background:var(--green);border-color:var(--green);color:#fff}
+.qz-opcao.errada{background:rgba(192,57,43,.08);border-color:#c0392b}
+.qz-opcao.errada .letra{background:#c0392b;border-color:#c0392b;color:#fff}
+.qz-opcao:disabled{cursor:default}
+.qz-opcao:disabled:not(.certa):not(.errada){opacity:.5}
+
+.qz-feedback{margin-top:16px;padding:12px 16px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:.88rem;font-style:italic;line-height:1.5;display:none}
+.qz-feedback.show{display:block;animation:cpEntra .25s ease both}
+.qz-feedback.acertou{background:var(--green-dim);color:var(--green)}
+.qz-feedback.errou{background:rgba(192,57,43,.08);color:#a5362a}
+
+.qz-btn-proxima{width:100%;margin-top:18px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700;display:none;transition:transform .15s}
+.qz-btn-proxima.show{display:block;animation:cpEntra .2s ease both}
+.qz-btn-proxima:hover{transform:translateY(-2px)}
+
+/* ── TELA DE RESULTADO ── */
+#qz-tela-resultado{display:none;text-align:center;background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px 26px;box-shadow:0 8px 32px rgba(196,57,107,.12);animation:cpEntra .3s ease both}
+.qz-resultado-icone{font-size:3.2rem;margin-bottom:10px}
+.qz-resultado-titulo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;margin-bottom:6px}
+.qz-resultado-nota{font-family:'Cinzel',serif;font-size:2.4rem;font-weight:700;color:var(--rosa);margin:14px 0 4px}
+.qz-resultado-sub{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.qz-btn-refazer{background:none;border:1.5px solid var(--rosa);color:var(--rosa);border-radius:30px;padding:11px 26px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.07em;font-weight:700;margin-right:8px}
+.qz-btn-refazer:hover{background:var(--rosa-dim)}
+.qz-btn-ranking{background:var(--rosa);color:#fff;border:none;border-radius:30px;padding:11px 26px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.07em;font-weight:700}
+
+/* ── RANKING ── */
+#qz-secao-ranking{margin-top:36px}
+.qz-ranking-titulo{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;justify-content:center}
+.qz-ranking-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
+.qz-ranking-pos{font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:var(--text-dim);width:24px;flex-shrink:0;text-align:center}
+.qz-ranking-item:nth-child(1) .qz-ranking-pos{color:#c9971e}
+.qz-ranking-item:nth-child(2) .qz-ranking-pos{color:#9098a5}
+.qz-ranking-item:nth-child(3) .qz-ranking-pos{color:#a86a3e}
+.qz-ranking-nome{flex:1;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:var(--text)}
+.qz-ranking-nota{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa)}
+.qz-ranking-vazio{text-align:center;padding:20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.88rem}
+</style>
+</head>
+<body>
+
+<div id="login-bar">
+  <span id="login-status">Entrando...</span>
+  <img id="login-avatar">
+  <button id="login-btn" style="display:none">Entrar com Google</button>
+  <button id="logout-btn">Sair</button>
+</div>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🔮 Quiz de Fundamentos</div>
+  <p class="section-sub">Quanto você sabe sobre os fundamentos da casa? Bora testar ✦</p>
+
+  <div class="qz-faixa">
+    <span>🕯️</span><span>🌿</span><span>🪶</span><span>🔮</span>
+  </div>
+
+  <!-- TELA INICIAL -->
+  <div id="qz-tela-inicio">
+    <span class="qz-icone-grande">🔮</span>
+    <h2>Pronta pra jogar?</h2>
+    <p>São perguntas rápidas sobre os fundamentos da Umbanda e Quimbanda. Erra sem dó, é só uma brincadeira ✦</p>
+    <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
+    <br>
+    <button class="qz-btn-comecar" id="qz-btn-comecar">Começar ✦</button>
+  </div>
+
+  <!-- TELA DE JOGO -->
+  <div id="qz-tela-jogo">
+    <div class="qz-progresso-wrap">
+      <div class="qz-progresso-barra"><div class="qz-progresso-fill" id="qz-progresso-fill" style="width:0%"></div></div>
+      <div class="qz-progresso-txt" id="qz-progresso-txt">1/10</div>
+    </div>
+    <div class="qz-pergunta-card">
+      <div class="qz-pergunta-num" id="qz-pergunta-num">PERGUNTA 1</div>
+      <div class="qz-pergunta-txt" id="qz-pergunta-txt"></div>
+      <div class="qz-opcoes" id="qz-opcoes"></div>
+      <div class="qz-feedback" id="qz-feedback"></div>
+      <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
+    </div>
+  </div>
+
+  <!-- TELA DE RESULTADO -->
+  <div id="qz-tela-resultado">
+    <div class="qz-resultado-icone" id="qz-resultado-icone">🎉</div>
+    <div class="qz-resultado-titulo" id="qz-resultado-titulo">Mandou bem!</div>
+    <div class="qz-resultado-nota" id="qz-resultado-nota">0/10</div>
+    <div class="qz-resultado-sub" id="qz-resultado-sub"></div>
+    <button class="qz-btn-refazer" id="qz-btn-refazer">↻ Jogar de novo</button>
+    <button class="qz-btn-ranking" id="qz-btn-ver-ranking">🏆 Ver ranking</button>
+  </div>
+
+  <!-- RANKING -->
+  <div id="qz-secao-ranking">
+    <div class="qz-ranking-titulo">🏆 Ranking da Casa</div>
+    <div id="qz-ranking-lista"><div class="qz-ranking-vazio">Carregando...</div></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    if (!document.getElementById('qz-inp-nome').value) {
+      document.getElementById('qz-inp-nome').value = (user.displayName || '').split(' ')[0] || '';
+    }
+  } else {
+    statusEl.textContent = 'Não conectada';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+// PERGUNTAS — fixas por enquanto. São genéricas (terminologia
+// amplamente usada na Umbanda/Quimbanda), NÃO específicas da casa —
+// revise e ajusta como quiser antes de publicar pras filhas.
+// Formato: pergunta, 4 opções (a certa é sempre a de índice "certa"),
+// e uma explicação curta que aparece depois de responder.
+// ══════════════════════════════════════════════════════════════
+const QZ_PERGUNTAS = [
+  {
+    pergunta: "O que é um 'cambone' (ou cambono)?",
+    opcoes: ["A pessoa que auxilia o médium durante a incorporação", "O instrumento usado no tambor", "O local onde ficam as guias", "Um tipo de entidade"],
+    certa: 0,
+    explicacao: "O cambone é quem assiste e auxilia o médium incorporado durante os trabalhos."
+  },
+  {
+    pergunta: "O que significa 'firmar um ponto'?",
+    opcoes: ["Marcar a data da próxima sessão", "Fixar a presença de uma entidade/energia num local através de um objeto ou risco", "Pagar a mensalidade", "Registrar o nome de um novo médium"],
+    certa: 1,
+    explicacao: "Firmar é fixar, consolidar uma energia ou entidade — pode ser com vela, riscado, objeto etc."
+  },
+  {
+    pergunta: "Quimbanda trabalha principalmente com quais entidades?",
+    opcoes: ["Apenas Caboclos", "Apenas Pretos Velhos", "Exus e Pombagiras", "Apenas Crianças/Ibejis"],
+    certa: 2,
+    explicacao: "A Quimbanda tem como entidades centrais os Exus e as Pombagiras."
+  },
+  {
+    pergunta: "O que é 'resguardo' no contexto de uma sessão?",
+    opcoes: ["Um tipo de guia (colar)", "Cuidados que o médium/assistente deve manter antes e depois dos trabalhos", "O horário de chegada obrigatório", "Uma oferenda específica"],
+    certa: 1,
+    explicacao: "Resguardo é o conjunto de cuidados (alimentares, comportamentais, energéticos) mantidos em volta dos trabalhos espirituais."
+  },
+  {
+    pergunta: "O que representam os Pretos Velhos na Umbanda?",
+    opcoes: ["Entidades de guerra e proteção física", "Espíritos de sabedoria, paciência e cura, geralmente ligados à ancestralidade", "Crianças que já se desenvolveram", "Guias exclusivos da linha do mar"],
+    certa: 1,
+    explicacao: "Pretos Velhos trazem a sabedoria da vivência, calma e cura — muito ligados à ancestralidade."
+  },
+  {
+    pergunta: "O que é uma 'guia', no sentido do colar usado pelos médiums?",
+    opcoes: ["Um bastão ritual", "Um colar de contas que representa a conexão com uma entidade ou orixá", "O caderno de anotações da sessão", "A pessoa que guia o cortejo de entrada"],
+    certa: 1,
+    explicacao: "A guia é o colar de contas — cada cor/padrão pode representar uma entidade, orixá ou vínculo espiritual."
+  },
+  {
+    pergunta: "O que costuma significar 'chegada da corrente'?",
+    opcoes: ["O horário em que os médiums se reúnem antes do início oficial dos trabalhos", "O momento em que a entidade se despede", "A hora de pagar a mensalidade", "O início do tambor"],
+    certa: 0,
+    explicacao: "É o horário combinado pra reunião e preparo dos médiums e assistência antes do início formal da sessão."
+  },
+  {
+    pergunta: "O que é 'incorporação'?",
+    opcoes: ["Uma reunião administrativa da casa", "O processo em que o médium recebe/manifesta uma entidade espiritual", "A entrega de um cargo dentro do terreiro", "Uma cerimônia de batismo"],
+    certa: 1,
+    explicacao: "Incorporação é o processo mediúnico de receber uma entidade."
+  },
+  {
+    pergunta: "O que geralmente caracteriza um 'cruzamento' na vida espiritual de um médium?",
+    opcoes: ["A troca de terreiro", "Um marco/passagem espiritual importante no desenvolvimento do médium", "O dia de folga da casa", "Uma discussão entre médiuns"],
+    certa: 1,
+    explicacao: "Cruzamentos costumam marcar etapas importantes de desenvolvimento e compromisso espiritual."
+  },
+  {
+    pergunta: "Por que geralmente se pede silêncio e respeito durante a incorporação de outra pessoa?",
+    opcoes: ["É só uma regra sem motivo espiritual", "Pra preservar a concentração, segurança energética do médium e o respeito com a entidade presente", "Porque incorporação é sempre silenciosa por natureza", "Só se aplica a visitantes"],
+    certa: 1,
+    explicacao: "O silêncio e respeito ajudam a manter a segurança e a energia do processo, tanto pro médium quanto pra entidade."
+  }
+];
+
+let qzNome = '';
+let qzIndiceAtual = 0;
+let qzAcertos = 0;
+let qzRespondida = false;
+
+function qzEmbaralhar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let qzPerguntasRodada = [];
+
+document.getElementById('qz-btn-comecar').addEventListener('click', () => {
+  qzNome = document.getElementById('qz-inp-nome').value.trim();
+  if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
+  qzPerguntasRodada = qzEmbaralhar(QZ_PERGUNTAS);
+  qzIndiceAtual = 0;
+  qzAcertos = 0;
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-resultado').style.display = 'none';
+  document.getElementById('qz-tela-jogo').style.display = 'block';
+  qzRenderPergunta();
+});
+
+function qzRenderPergunta() {
+  qzRespondida = false;
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  const total = qzPerguntasRodada.length;
+  document.getElementById('qz-progresso-fill').style.width = ((qzIndiceAtual) / total * 100) + '%';
+  document.getElementById('qz-progresso-txt').textContent = `${qzIndiceAtual + 1}/${total}`;
+  document.getElementById('qz-pergunta-num').textContent = `PERGUNTA ${qzIndiceAtual + 1}`;
+  document.getElementById('qz-pergunta-txt').textContent = p.pergunta;
+
+  const letras = ['A', 'B', 'C', 'D'];
+  const opcoesWrap = document.getElementById('qz-opcoes');
+  opcoesWrap.innerHTML = p.opcoes.map((op, i) => `
+    <button class="qz-opcao" data-idx="${i}">
+      <span class="letra">${letras[i]}</span>
+      <span>${op}</span>
+    </button>
+  `).join('');
+  opcoesWrap.querySelectorAll('.qz-opcao').forEach(btn => {
+    btn.addEventListener('click', () => qzResponder(parseInt(btn.dataset.idx)));
+  });
+
+  document.getElementById('qz-feedback').className = 'qz-feedback';
+  document.getElementById('qz-feedback').textContent = '';
+  document.getElementById('qz-btn-proxima').classList.remove('show');
+}
+
+function qzResponder(escolhaIdx) {
+  if (qzRespondida) return;
+  qzRespondida = true;
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  const acertou = escolhaIdx === p.certa;
+  if (acertou) qzAcertos++;
+
+  document.querySelectorAll('.qz-opcao').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === p.certa) btn.classList.add('certa');
+    else if (i === escolhaIdx) btn.classList.add('errada');
+  });
+
+  const fb = document.getElementById('qz-feedback');
+  fb.textContent = (acertou ? '✓ Isso mesmo! ' : '✗ Quase! ') + p.explicacao;
+  fb.className = 'qz-feedback show ' + (acertou ? 'acertou' : 'errou');
+
+  const btnProx = document.getElementById('qz-btn-proxima');
+  btnProx.textContent = (qzIndiceAtual < qzPerguntasRodada.length - 1) ? 'Próxima →' : 'Ver resultado 🎉';
+  btnProx.classList.add('show');
+}
+
+document.getElementById('qz-btn-proxima').addEventListener('click', () => {
+  qzIndiceAtual++;
+  if (qzIndiceAtual < qzPerguntasRodada.length) {
+    qzRenderPergunta();
+  } else {
+    qzFinalizar();
+  }
+});
+
+async function qzFinalizar() {
+  document.getElementById('qz-progresso-fill').style.width = '100%';
+  const total = qzPerguntasRodada.length;
+  document.getElementById('qz-tela-jogo').style.display = 'none';
+  document.getElementById('qz-tela-resultado').style.display = 'block';
+
+  const pct = qzAcertos / total;
+  let icone = '🌱', titulo = 'Vale seguir estudando!';
+  if (pct === 1) { icone = '👑'; titulo = 'Gabaritou! Fundamento é com você!'; }
+  else if (pct >= 0.8) { icone = '🎉'; titulo = 'Mandou muito bem!'; }
+  else if (pct >= 0.5) { icone = '✨'; titulo = 'Bom caminho!'; }
+
+  document.getElementById('qz-resultado-icone').textContent = icone;
+  document.getElementById('qz-resultado-titulo').textContent = titulo;
+  document.getElementById('qz-resultado-nota').textContent = `${qzAcertos}/${total}`;
+  document.getElementById('qz-resultado-sub').textContent = `${qzNome}, você acertou ${qzAcertos} de ${total} perguntas.`;
+
+  try {
+    await addDoc(collection(db, 'quiz_fundamentos_resultados'), {
+      nome: qzNome,
+      acertos: qzAcertos,
+      total: total,
+      uid: currentUser ? currentUser.uid : null,
+      data: serverTimestamp()
+    });
+  } catch (e) { console.warn('salvar resultado quiz:', e); }
+
+  qzCarregarRanking();
+}
+
+document.getElementById('qz-btn-refazer').addEventListener('click', () => {
+  document.getElementById('qz-tela-resultado').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+});
+
+document.getElementById('qz-btn-ver-ranking').addEventListener('click', () => {
+  document.getElementById('qz-secao-ranking').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+async function qzCarregarRanking() {
+  const wrap = document.getElementById('qz-ranking-lista');
+  try {
+    const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('acertos', 'desc'), limit(10));
+    const snap = await getDocs(q);
+    if (snap.empty) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
+    const medalhas = ['🥇', '🥈', '🥉'];
+    wrap.innerHTML = snap.docs.map((d, i) => {
+      const r = d.data();
+      return `<div class="qz-ranking-item">
+        <span class="qz-ranking-pos">${medalhas[i] || (i + 1)}</span>
+        <span class="qz-ranking-nome">${r.nome || 'Anônimo'}</span>
+        <span class="qz-ranking-nota">${r.acertos}/${r.total}</span>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('ranking quiz:', e);
+    wrap.innerHTML = '<div class="qz-ranking-vazio">Não consegui carregar o ranking agora.</div>';
+  }
+}
+
+qzCarregarRanking();
+</script>
+</body>
+</html>
