@@ -226,7 +226,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp, doc, getDoc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -620,8 +620,30 @@ let palavraDoDiaObj = null;
 let tentativaAtual = 1;
 let nomeJogador = '';
 let historicoChutes = [];
-let diaJogando = 0; 
-let progressoDias = JSON.parse(localStorage.getItem('palavra_dia_progresso') || '{}');
+let diaJogando = 0;
+
+// Histórico separado por conta — cada e-mail/anônimo tem sua própria chave,
+// pra logar com uma conta diferente no mesmo aparelho não herdar o histórico de outra pessoa.
+function chaveProgresso() {
+  return currentUser ? `palavra_dia_progresso_${currentUser.uid}` : 'palavra_dia_progresso_anon';
+}
+
+function carregarProgressoDias() {
+  const chave = chaveProgresso();
+  let dados = localStorage.getItem(chave);
+  if (dados === null && !localStorage.getItem('palavra_dia_progresso_migrado')) {
+    // Migração única: aproveita o histórico antigo (não separado por conta), se existir.
+    const legado = localStorage.getItem('palavra_dia_progresso');
+    if (legado) {
+      localStorage.setItem(chave, legado);
+      dados = legado;
+    }
+    localStorage.setItem('palavra_dia_progresso_migrado', '1');
+  }
+  return JSON.parse(dados || '{}');
+}
+
+let progressoDias = carregarProgressoDias();
 
 function normalizar(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -668,6 +690,12 @@ onAuthStateChanged(auth, (user) => {
     carregarErrosAdmin();
     carregarChutesAdmin();
   }
+
+  // Troca de conta (ou login/logout) muda a chave do histórico — recarrega do lugar certo.
+  progressoDias = carregarProgressoDias();
+  renderizarCalendario();
+
+  sincronizarPendentes();
 });
 
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
@@ -721,6 +749,8 @@ function renderizarCalendario() {
 function iniciarJogo(indiceDia) {
   nomeJogador = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!nomeJogador) { document.getElementById('qz-inp-nome').focus(); return; }
+
+  sincronizarPendentes();
 
   if (progressoDias[indiceDia]) {
     alert('Você já jogou este dia! Escolha um dia pendente.');
@@ -799,14 +829,17 @@ async function finalizarJogo(venceu) {
   
   const pontos = venceu ? (VIDAS_TOTAL - (tentativaAtual - 1)) : 0;
 
-  // Salva no LocalStorage
+  // Salva no LocalStorage (com nome e chutes, pra dar pra sincronizar depois se a gravação no Firestore falhar)
   progressoDias[diaJogando] = {
     venceu: venceu,
     tentativas: venceu ? tentativaAtual : VIDAS_TOTAL,
     pontos: pontos,
-    palavra: palavraDoDiaObj.palavra
+    palavra: palavraDoDiaObj.palavra,
+    nome: nomeJogador,
+    chutes: historicoChutes,
+    sincronizado: false
   };
-  localStorage.setItem('palavra_dia_progresso', JSON.stringify(progressoDias));
+  localStorage.setItem(chaveProgresso(), JSON.stringify(progressoDias));
   renderizarCalendario();
 
   const titulo = venceu ? 'Você Acertou!' : 'Não foi dessa vez!';
@@ -827,20 +860,68 @@ async function finalizarJogo(venceu) {
   textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
   document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
 
-  try {
-    await addDoc(collection(db, 'palavra_dia_resultados'), {
-      nome: nomeJogador,
-      venceu: venceu,
-      tentativas: venceu ? tentativaAtual : VIDAS_TOTAL,
-      palavra: palavraDoDiaObj.palavra,
-      chutes: historicoChutes,
-      diaIndice: diaJogando,
-      uid: currentUser ? currentUser.uid : null,
-      data: serverTimestamp()
-    });
-  } catch (e) { console.error('salvar resultado:', e.code || '', e.message || e); }
+  await salvarResultadoFirestore(diaJogando);
 
   // Atualiza o ranking para incluir a nova pontuação, se houver
+  carregarRanking();
+}
+
+// ── SINCRONIZAÇÃO COM O FIRESTORE (com retomada automática) ──
+// ID fixo por dia+pessoa: reenviar o mesmo dia nunca duplica, só sobrescreve.
+function chaveResultado(diaIndice, nome, uid) {
+  const identificador = uid ? `uid_${uid}` : (normalizar(nome).replace(/[^a-z0-9]/gi, '_') || 'anonimo');
+  return `d${diaIndice}_${identificador}`;
+}
+
+async function salvarResultadoFirestore(diaIndice) {
+  const registro = progressoDias[diaIndice];
+  if (!registro || registro.sincronizado) return;
+  const nome = registro.nome || (currentUser ? (currentUser.displayName || currentUser.email) : null) || nomeJogador;
+  if (!nome) return;
+
+  try {
+    // Confere se já existe um resultado salvo pra esse dia+pessoa (com ID antigo aleatório)
+    // antes de gravar, pra não duplicar quem já tinha sido salvo com sucesso antes dessa mudança.
+    const qExistente = query(
+      collection(db, 'palavra_dia_resultados'),
+      where('diaIndice', '==', diaIndice),
+      where('nome', '==', nome)
+    );
+    const snapExistente = await getDocs(qExistente);
+    if (!snapExistente.empty) {
+      registro.sincronizado = true;
+      progressoDias[diaIndice] = registro;
+      localStorage.setItem(chaveProgresso(), JSON.stringify(progressoDias));
+      return;
+    }
+
+    const uidRegistro = currentUser ? currentUser.uid : null;
+    const id = chaveResultado(diaIndice, nome, uidRegistro);
+    await setDoc(doc(db, 'palavra_dia_resultados', id), {
+      nome: nome,
+      venceu: registro.venceu,
+      tentativas: registro.tentativas,
+      palavra: registro.palavra,
+      chutes: registro.chutes || [],
+      diaIndice: diaIndice,
+      uid: uidRegistro,
+      data: serverTimestamp()
+    });
+    registro.nome = nome;
+    registro.sincronizado = true;
+    progressoDias[diaIndice] = registro;
+    localStorage.setItem(chaveProgresso(), JSON.stringify(progressoDias));
+  } catch (e) {
+    console.error('salvar resultado:', e.code || '', e.message || e);
+  }
+}
+
+async function sincronizarPendentes() {
+  const pendentes = Object.keys(progressoDias).filter(dia => !progressoDias[dia].sincronizado);
+  if (pendentes.length === 0) return;
+  for (const dia of pendentes) {
+    await salvarResultadoFirestore(parseInt(dia));
+  }
   carregarRanking();
 }
 
@@ -1000,6 +1081,7 @@ async function carregarRanking() {
 // Inicializações da página
 renderizarCalendario();
 carregarRanking();
+sincronizarPendentes();
 
 </script>
 </body>
