@@ -124,7 +124,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-btn-voltar-cal:hover{background:var(--rosa-dim);}
 
 /* Admin Secao */
-#admin-secao-erros{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
+#admin-secao-erros, #admin-secao-chutes{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
+#admin-secao-chutes{margin-top:20px;}
 .admin-titulo{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px;text-align:center;}
 .admin-erro-item{background:var(--creme); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; font-family:'DM Sans', sans-serif; font-size:13px; color:var(--text);}
 </style>
@@ -214,13 +215,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="admin-lista-erros" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
+  <div id="admin-secao-chutes" style="display:none">
+    <div class="admin-titulo">📝 Relatório de Chutes (Acesso Admin)</div>
+    <div id="admin-lista-chutes" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
+  </div>
+
 </div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -657,7 +663,11 @@ onAuthStateChanged(auth, (user) => {
   
   const isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
   document.getElementById('admin-secao-erros').style.display = isAdmin ? 'block' : 'none';
-  if (isAdmin) carregarErrosAdmin();
+  document.getElementById('admin-secao-chutes').style.display = isAdmin ? 'block' : 'none';
+  if (isAdmin) {
+    carregarErrosAdmin();
+    carregarChutesAdmin();
+  }
 });
 
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
@@ -808,6 +818,12 @@ async function finalizarJogo(venceu) {
 
   let textoFinal = `Você usou ${venceu ? tentativaAtual : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
   textoFinal += venceu ? ` <strong>Pontuação: ${pontos} ponto${pontos === 1 ? '' : 's'}</strong><br><br>` : '<br><br>';
+
+  let todasDicasHtml = '';
+  for (let i = 1; i <= 5; i++) {
+    todasDicasHtml += `<div class="dica-anterior"><strong>Dica ${i}:</strong> ${palavraDoDiaObj['dica' + i]}</div>`;
+  }
+  textoFinal += `<strong>Todas as dicas:</strong><br>${todasDicasHtml}<br>`;
   textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
   document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
 
@@ -884,6 +900,38 @@ async function carregarErrosAdmin() {
   } catch (e) {
     console.error('Erro admin:', e);
     wrap.innerHTML = 'Erro ao carregar relatórios.';
+  }
+}
+
+// ── CARREGAR CHUTES ADMIN ──
+async function carregarChutesAdmin() {
+  const wrap = document.getElementById('admin-lista-chutes');
+  try {
+    const q = query(collection(db, 'palavra_dia_resultados'), orderBy('data', 'desc'), limit(200));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      wrap.innerHTML = 'Nenhum resultado registrado ainda.';
+      return;
+    }
+
+    wrap.innerHTML = snap.docs.map(doc => {
+      const r = doc.data();
+      const dataFormatada = r.data ? new Date(r.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
+      const chutesTxt = Array.isArray(r.chutes) && r.chutes.length ? r.chutes.join(' → ') : '—';
+      const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
+      return `
+        <div class="admin-erro-item">
+          <strong style="color:var(--rosa);">${r.nome || 'Anônimo'}</strong> — ${r.palavra || '?'} — ${resultadoTxt} <br>
+          <span style="color:#555;">Chutes:</span> ${chutesTxt} <br>
+          <em style="font-size:11px; color:#888;">${dataFormatada}</em>
+        </div>
+      `;
+    }).join('');
+
+  } catch (e) {
+    console.error('Erro chutes admin:', e.code || '', e.message || e);
+    wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
 
