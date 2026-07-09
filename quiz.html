@@ -1677,18 +1677,29 @@ async function qzCarregarRanking() {
     const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('data', 'desc'), limit(200));
     const snap = await getDocs(q);
     if (snap.empty) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
-    const ranking = snap.docs
-      .map(d => d.data())
-      .sort((a, b) => (b.pontos ?? b.acertos ?? 0) - (a.pontos ?? a.acertos ?? 0))
+
+    // agrupa por pessoa (uid quando logada, nome como fallback pra anônima) e soma os pontos
+    // de todas as tentativas — assim quem jogou várias vezes aparece uma vez só, com o total.
+    const porPessoa = new Map();
+    snap.docs.map(d => d.data()).forEach(r => {
+      const chave = r.uid ? `uid:${r.uid}` : `nome:${(r.nome || 'Anônimo').trim().toLowerCase()}`;
+      const pontos = r.pontos ?? r.acertos ?? 0;
+      const atual = porPessoa.get(chave);
+      if (atual) atual.pontos += pontos;
+      else porPessoa.set(chave, { nome: r.nome || 'Anônimo', pontos });
+    });
+    const ranking = [...porPessoa.values()]
+      .sort((a, b) => b.pontos - a.pontos)
       .slice(0, 10);
     const medalhas = ['🥇', '🥈', '🥉'];
     wrap.innerHTML = ranking.map((r, i) => {
       return `<div class="qz-ranking-item">
         <span class="qz-ranking-pos">${medalhas[i] || (i + 1)}</span>
-        <span class="qz-ranking-nome">${r.nome || 'Anônimo'}</span>
-        <span class="qz-ranking-nota">${r.pontos ?? r.acertos} pts</span>
+        <span class="qz-ranking-nome">${r.nome}</span>
+        <span class="qz-ranking-nota">${r.pontos} pts</span>
       </div>`;
     }).join('');
+    
   } catch (e) {
     console.warn('ranking quiz:', e);
     wrap.innerHTML = '<div class="qz-ranking-vazio">Não consegui carregar o ranking agora.</div>';
