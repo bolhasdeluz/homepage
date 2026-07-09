@@ -250,6 +250,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <input type="text" id="edit-palavra">
     <label>Variações aceitas (uma por linha, opcional)</label>
     <textarea id="edit-variacoes"></textarea>
+
+    <label id="edit-chutes-titulo" style="display:none">Chutes de quem reportou (clique em ✓ pra marcar como correto e recontar)</label>
+    <div id="edit-chutes-reporter"></div>
+
     <label>Dica 1</label>
     <textarea id="edit-dica1"></textarea>
     <label>Dica 2</label>
@@ -1161,12 +1165,13 @@ async function carregarErrosAdmin() {
       const erro = doc.data();
       const dataFormatada = erro.data ? new Date(erro.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
       const palavraEscapada = (erro.palavra || '').replace(/'/g, "\\'");
+      const nomeEscapado = (erro.relatadoPor || '').replace(/'/g, "\\'");
       return `
         <div class="admin-erro-item">
           <strong style="color:var(--rosa);">Palavra: ${erro.palavra}</strong> <br>
           <span style="color:#555;">Problema:</span> ${erro.motivo} <br>
           <em style="font-size:11px; color:#888;">Reportado por ${erro.relatadoPor} em ${dataFormatada}</em><br>
-          <button class="admin-btn-mini" onclick="abrirEdicaoPalavra('${palavraEscapada}')">✏️ Editar esta palavra</button>
+          <button class="admin-btn-mini" onclick="abrirEdicaoPalavra('${palavraEscapada}', '${nomeEscapado}')">✏️ Editar palavra e ver chutes de ${erro.relatadoPor}</button>
         </div>
       `;
     }).join('');
@@ -1179,12 +1184,58 @@ async function carregarErrosAdmin() {
 
 // ── EDITAR PALAVRA (ADMIN) ──
 let indiceEmEdicao = null;
+let reporterEmEdicao = null;
+let palavraTextoEmEdicao = null;
 
 function souAdmin() {
   return !!(currentUser && ADMIN_EMAILS.includes(currentUser.email));
 }
 
-window.abrirEdicaoPalavra = async function(palavraTexto) {
+async function carregarChutesDoReporte(palavraTexto, relatadoPor) {
+  const titulo = document.getElementById('edit-chutes-titulo');
+  const wrap = document.getElementById('edit-chutes-reporter');
+
+  if (!relatadoPor) {
+    titulo.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+
+  titulo.style.display = 'block';
+  wrap.innerHTML = 'Carregando chutes...';
+
+  try {
+    const q = query(
+      collection(db, 'palavra_dia_resultados'),
+      where('palavra', '==', palavraTexto),
+      where('nome', '==', relatadoPor)
+    );
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      wrap.innerHTML = `<div style="font-size:12px;color:var(--text-dim);">Nenhuma jogada de ${relatadoPor} encontrada pra essa palavra.</div>`;
+      return;
+    }
+
+    wrap.innerHTML = snap.docs.map(docSnap => {
+      const r = docSnap.data();
+      const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
+      const chutesHtml = Array.isArray(r.chutes) && r.chutes.length
+        ? r.chutes.map((c, i) => `
+            <span class="chute-chip">${i + 1}. ${c}
+              <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
+            </span>
+          `).join('')
+        : 'Sem chutes registrados.';
+      return `<div style="margin-bottom:8px; font-size:13px;"><strong>${resultadoTxt}</strong><br>${chutesHtml}</div>`;
+    }).join('');
+  } catch (e) {
+    console.error('chutes do reporte:', e.code || '', e.message || e);
+    wrap.innerHTML = 'Erro ao carregar chutes.';
+  }
+}
+
+window.abrirEdicaoPalavra = async function(palavraTexto, relatadoPor) {
   if (!souAdmin()) return;
   const idx = PALAVRAS_DO_DIA.findIndex(p => p.palavra === palavraTexto);
   if (idx === -1) { alert('Palavra não encontrada na lista original.'); return; }
@@ -1192,6 +1243,8 @@ window.abrirEdicaoPalavra = async function(palavraTexto) {
   await edicoesPalavrasProntas;
   const dados = obterPalavraEfetiva(idx);
   indiceEmEdicao = idx;
+  reporterEmEdicao = relatadoPor || null;
+  palavraTextoEmEdicao = palavraTexto;
 
   document.getElementById('edit-palavra').value = dados.palavra;
   document.getElementById('edit-variacoes').value = (dados.variacoes || []).join('\n');
@@ -1200,11 +1253,15 @@ window.abrirEdicaoPalavra = async function(palavraTexto) {
   }
   document.getElementById('edit-explicacao').value = dados.explicacao || '';
   document.getElementById('modal-editar-palavra').style.display = 'flex';
+
+  await carregarChutesDoReporte(palavraTexto, reporterEmEdicao);
 };
 
 document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
   document.getElementById('modal-editar-palavra').style.display = 'none';
   indiceEmEdicao = null;
+  reporterEmEdicao = null;
+  palavraTextoEmEdicao = null;
 });
 
 document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
@@ -1284,6 +1341,9 @@ window.marcarChuteCorreto = async function(docId, idx) {
     alert('Pontuação recontada! O ranking já foi atualizado — mas o calendário pessoal de quem jogou só se ajusta no aparelho dela.');
     carregarChutesAdmin();
     carregarRanking();
+    if (document.getElementById('modal-editar-palavra').style.display === 'flex' && reporterEmEdicao) {
+      carregarChutesDoReporte(palavraTextoEmEdicao, reporterEmEdicao);
+    }
   } catch (e) {
     console.error('marcar chute correto:', e.code || '', e.message || e);
     alert('Erro ao recontar. Veja o console pra detalhes.');
