@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Palavra do Dia — Bolhas de Luz</title>
-<meta name="description" content="Terreiro Bolhas de Luz — Palavra do Dia.">
+<title>Quiz de Fundamentos — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Quiz de Fundamentos.">
 <link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Quiz — Bolhas de Luz">
 <meta name="theme-color" content="#c4396b">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
@@ -30,6 +33,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
     #fff5f7;}
 
+/* ── BOLHAS FLUTUANTES — a marca da casa, presente em toda a página ── */
 .bolhas-fundo{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
 .bolha{position:absolute;border-radius:50%;border:1.5px solid rgba(196,57,107,.18);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.5),rgba(196,57,107,.03));animation:bolhaSobe linear infinite}
 @keyframes bolhaSobe{
@@ -47,6 +51,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .bolha:nth-child(7){width:12px;height:12px;left:88%;bottom:-5%;animation-duration:15s;animation-delay:9s;--deriva:18px}
 .bolha:nth-child(8){width:19px;height:19px;left:95%;bottom:-5%;animation-duration:19s;animation-delay:4.5s;--deriva:-16px}
 
+/* explosão de bolhas quando acerta uma pergunta */
+.bolha-comemora{position:fixed;border-radius:50%;pointer-events:none;z-index:500;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.9),rgba(196,57,107,.25));border:1.5px solid rgba(196,57,107,.35);animation:bolhaComemora .9s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes bolhaComemora{
+  0%{transform:translateY(0) scale(.4);opacity:1}
+  100%{transform:translateY(var(--sobe,-160px)) translateX(var(--lado,0px)) scale(1.1);opacity:0}
+}
+
 .section-wrap{max-width:640px;margin:0 auto;padding:32px 24px 120px}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
 .section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px;text-align:center}
@@ -61,6 +72,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 #logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
 
 @keyframes cpEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 @keyframes qzFlutua{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(4deg)}}
 @keyframes qzBrilha{0%,100%{opacity:.55}50%{opacity:1}}
 
@@ -70,64 +82,149 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-faixa span:nth-child(3){animation-delay:.8s}
 .qz-faixa span:nth-child(4){animation-delay:1.2s}
 
+/* ── TELA INICIAL ── */
+
+.qz-leva-info{background:var(--rosa-dim);border-radius:12px;padding:11px 14px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text)}
+.qz-trilha{display:flex;justify-content:center;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+.qz-trilha-no{font-size:1.3rem;opacity:.4;transition:all .2s}
+.qz-trilha-no.feita{opacity:1;transform:scale(1.05)}
+.qz-trilha-no.atual{opacity:1;transform:scale(1.25);animation:qzBrilha 2s ease-in-out infinite}
+
+.qz-contador-dia{background:linear-gradient(135deg,#fffbe8,#fff5f7);border:1px solid #e8d080;border-radius:12px;padding:11px 16px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);text-align:center}
+.qz-contador-dia strong{color:#8c5a00}
+.qz-contador-dia.cheio{border-color:var(--green);background:var(--green-dim)}
+.qz-contador-dia.cheio strong{color:var(--green)}
+
 #qz-tela-inicio{background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px 28px;text-align:center;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both}
+#qz-tela-inicio .qz-icone-grande{font-size:3rem;margin-bottom:14px;display:inline-block;animation:qzBrilha 2.4s ease-in-out infinite}
 #qz-tela-inicio h2{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;margin-bottom:10px}
 #qz-tela-inicio p{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;line-height:1.6;margin-bottom:22px}
 .qz-inp-nome{width:100%;max-width:280px;border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--rosa-dim);outline:none;text-align:center;margin-bottom:16px}
 .qz-inp-nome:focus{border-color:var(--rosa);background:#fff}
-.qz-btn-comecar{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:14px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 6px 20px rgba(196,57,107,.3);transition:transform .15s,box-shadow .15s; width:100%;}
+.qz-btn-comecar{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:14px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 6px 20px rgba(196,57,107,.3);transition:transform .15s,box-shadow .15s}
 .qz-btn-comecar:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(196,57,107,.4)}
 .qz-btn-comecar:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* Calendário CSS */
-.calendario-wrap { margin-top: 28px; text-align: left; background: var(--creme); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.calendario-titulo { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: bold; color: var(--rosa); text-align: center; margin-bottom: 16px; letter-spacing: 0.05em; }
-.calendario-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-.cal-dia { padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; font-weight: 600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;}
-.cal-dia.pending { background: #fff; color: var(--rosa); border-color: rgba(196,57,107,0.3); }
-.cal-dia.pending:hover { background: var(--rosa-dim); border-color: var(--rosa); transform:translateY(-2px); box-shadow: 0 4px 10px rgba(196,57,107,0.1); }
-.cal-dia.won { background: var(--green-dim); color: var(--green); border-color: rgba(42,122,96,0.3); cursor: default; }
-.cal-dia.lost { background: rgba(192,57,43,.08); color: #c0392b; border-color: rgba(192,57,43,0.3); cursor: default; }
-.cal-dia.today { box-shadow: 0 0 0 2px var(--rosa); position:relative; }
-.cal-dia.today::before { content:'HOJE'; position:absolute; top:-10px; background:var(--rosa); color:#fff; font-size:9px; padding:2px 8px; border-radius:10px; font-family:'Cinzel',serif; letter-spacing:0.05em;}
+.qz-progresso-geral{background:var(--rosa-dim);border-radius:12px;padding:10px 16px;margin-bottom:18px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
+.qz-progresso-geral strong{color:var(--rosa)}
+.qz-progresso-geral-barra{height:5px;background:rgba(196,57,107,.15);border-radius:10px;overflow:hidden;margin-top:7px}
+.qz-progresso-geral-fill{height:100%;background:var(--rosa);border-radius:10px;transition:width .3s ease}
 
+.qz-btn-revisar{background:none;border:none;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;text-decoration:underline;margin-top:14px}
+.qz-btn-revisar:hover{color:var(--rosa)}
+
+.qz-revisao-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;animation:cpEntra .2s ease both}
+.qz-revisao-cat{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);background:rgba(140,58,26,.08);padding:2px 9px;border-radius:20px;display:inline-block;margin-bottom:7px}
+.qz-revisao-pergunta{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.4}
+.qz-revisao-opcao{padding:8px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.qz-revisao-opcao.certa{background:var(--green-dim);color:var(--green);font-weight:600}
+.qz-revisao-opcao.escolha-errada{background:rgba(192,57,43,.08);color:#a5362a;font-weight:600}
+.qz-revisao-explicacao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.qz-revisao-vazio{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
+.qz-categoria-titulo{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+.qz-categorias{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:22px}
+.qz-cat-chip{background:var(--rosa-dim);border:1.5px solid transparent;border-radius:20px;padding:8px 16px;font-family:'DM Sans',sans-serif;font-size:12.5px;color:var(--text);display:flex;align-items:center;gap:6px;transition:all .15s}
+.qz-cat-chip:hover{border-color:var(--rosa)}
+.qz-cat-chip.ativo{background:var(--rosa);color:#fff;box-shadow:0 4px 14px rgba(196,57,107,.3)}
+.qz-cat-chip.completa{opacity:.55}
+.qz-cat-chip.completa .qtd{color:var(--green)}
+.qz-cat-chip .qtd{font-family:'Cinzel',serif;font-size:.62rem;opacity:.75}
+
+.qz-pergunta-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.qz-pergunta-categoria{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;text-transform:uppercase;color:var(--terra);background:rgba(140,58,26,.08);padding:3px 10px;border-radius:20px;margin-bottom:0}
+.qz-pontos-selo{font-family:'Cinzel',serif;font-size:.62rem;font-weight:700;letter-spacing:.02em;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.qz-pontos-selo.d1{background:var(--green-dim);color:var(--green)}
+.qz-pontos-selo.d2{background:#fffbe8;color:#8c5a00;border:1px solid #e8d080}
+.qz-pontos-selo.d3{background:rgba(192,57,43,.08);color:#a5362a}
+
+/* ── TELA DE PERGUNTA ── */
+#qz-tela-jogo{display:none}
 .qz-progresso-wrap{display:flex;align-items:center;gap:10px;margin-bottom:20px}
 .qz-progresso-barra{flex:1;height:6px;background:var(--rosa-dim);border-radius:10px;overflow:hidden}
 .qz-progresso-fill{height:100%;background:linear-gradient(90deg,var(--rosa),var(--rosa-l));border-radius:10px;transition:width .35s ease}
 .qz-progresso-txt{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.05em;color:var(--text-dim);white-space:nowrap}
 
 .qz-pergunta-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 24px;box-shadow:0 8px 32px rgba(196,57,107,.1);animation:cpEntra .3s ease both;transition:border-color .3s}
+
+@keyframes qzPulseCerta{0%{transform:scale(1)}30%{transform:scale(1.035)}60%{transform:scale(.985)}100%{transform:scale(1)}}
+@keyframes qzPulseErrada{0%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}100%{transform:translateX(0)}}
+.qz-pergunta-card.pulse-certa{animation:qzPulseCerta .45s ease;border-color:var(--green)}
+.qz-pergunta-card.pulse-errada{animation:qzPulseErrada .45s ease;border-color:#c0392b}
+
+@keyframes qzSequenciaPop{
+  0%{opacity:0;transform:translate(-50%,-10px) scale(.7)}
+  15%{opacity:1;transform:translate(-50%,0) scale(1.08)}
+  25%{transform:translate(-50%,0) scale(1)}
+  80%{opacity:1;transform:translate(-50%,0) scale(1)}
+  100%{opacity:0;transform:translate(-50%,-14px) scale(.9)}
+}
+.qz-sequencia-popup{position:fixed;top:18%;left:50%;z-index:600;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.03em;padding:12px 24px;border-radius:30px;box-shadow:0 8px 28px rgba(196,57,107,.4);white-space:nowrap;animation:qzSequenciaPop 1.7s ease forwards}
 .qz-pergunta-num{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
-.qz-pergunta-txt{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:12px}
+.qz-pergunta-txt{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:22px}
 
-.dica-anterior{background:var(--rosa-dim); padding:10px; border-radius:8px; margin-bottom:8px; font-family:'Crimson Pro',serif; font-size:.95rem; font-style:italic;}
+.qz-vf-opcoes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.qz-vf-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--rosa-dim);border:2px solid transparent;border-radius:16px;padding:26px 12px;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.03em;color:var(--text);transition:all .15s}
+.qz-vf-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 18px rgba(196,57,107,.15)}
+.qz-vf-icone{font-size:1.7rem;line-height:1}
+.qz-vf-v .qz-vf-icone{color:var(--green)}
+.qz-vf-f .qz-vf-icone{color:#c0392b}
+.qz-vf-btn.certa{background:var(--green-dim);border-color:var(--green);animation:cpPop .25s ease}
+.qz-vf-btn.certa .qz-vf-icone{color:var(--green)}
+.qz-vf-btn.errada{background:rgba(192,57,43,.08);border-color:#c0392b}
+.qz-vf-btn.errada .qz-vf-icone{color:#c0392b}
+.qz-vf-btn:disabled{cursor:default}
+.qz-vf-btn:disabled:not(.certa):not(.errada){opacity:.4}
 
-.qz-vf-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--rosa-dim);border:2px solid transparent;border-radius:16px;padding:14px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--text);transition:all .15s;}
-.qz-vf-btn:hover{border-color:var(--rosa);}
-
-.btn-erro{background:none; border:1px dashed var(--rosa); color:var(--rosa); border-radius:12px; padding:10px; width:100%; font-family:'DM Sans', sans-serif; font-size:12px; font-weight:bold; cursor:pointer; margin-top:20px; transition:all 0.2s;}
-.btn-erro:hover{background:var(--rosa-dim);}
-
-.qz-feedback{margin-top:16px;padding:12px 16px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:.95rem;font-style:italic;line-height:1.5;display:none}
+.qz-feedback{margin-top:16px;padding:12px 16px;border-radius:10px;font-family:'Crimson Pro',serif;font-size:.88rem;font-style:italic;line-height:1.5;display:none}
 .qz-feedback.show{display:block;animation:cpEntra .25s ease both}
-.qz-feedback.acertou{background:var(--green-dim);color:var(--green); border: 1px solid var(--green);}
-.qz-feedback.errou{background:rgba(192,57,43,.08);color:#a5362a; border: 1px solid #c0392b;}
+.qz-feedback.acertou{background:var(--green-dim);color:var(--green)}
+.qz-feedback.errou{background:rgba(192,57,43,.08);color:#a5362a}
 
+.qz-btn-proxima{width:100%;margin-top:18px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:12px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700;display:none;transition:transform .15s}
+.qz-btn-proxima.show{display:block;animation:cpEntra .2s ease both}
+
+.qz-btn-sair{display:block;width:100%;margin-top:14px;background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.78rem;text-decoration:underline;text-align:center}
+.qz-btn-sair:hover{color:var(--rosa)}
+.qz-btn-proxima:hover{transform:translateY(-2px)}
+
+/* ── TELA DE RESULTADO ── */
 #qz-tela-resultado{display:none;text-align:center;background:#fff;border:1px solid var(--border);border-radius:18px;padding:36px 26px;box-shadow:0 8px 32px rgba(196,57,107,.12);animation:cpEntra .3s ease both}
 .qz-resultado-icone{font-size:3.2rem;margin-bottom:10px}
 .qz-resultado-titulo{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:600;margin-bottom:6px}
-.qz-resultado-nota{font-family:'Cinzel',serif;font-size:1.8rem;font-weight:700;color:var(--rosa);margin:14px 0 14px}
-.qz-resultado-sub{font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--text);line-height:1.5;margin-bottom:24px;text-align:left; background:var(--creme); padding:16px; border-radius:12px; border:1px solid var(--border);}
+.qz-resultado-nota{font-family:'Cinzel',serif;font-size:2.4rem;font-weight:700;color:var(--rosa);margin:14px 0 4px}
+.qz-resultado-sub{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.qz-btn-refazer{background:none;border:1.5px solid var(--rosa);color:var(--rosa);border-radius:30px;padding:11px 26px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.07em;font-weight:700;margin-right:8px}
+.qz-btn-refazer:hover{background:var(--rosa-dim)}
+.qz-btn-ranking{background:var(--rosa);color:#fff;border:none;border-radius:30px;padding:11px 26px;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.07em;font-weight:700}
+
+/* ── RANKING ── */
+#qz-secao-ranking{margin-top:36px}
+.qz-ranking-titulo{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;justify-content:center}
+.qz-ranking-item{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
+.qz-ranking-pos{font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:var(--text-dim);width:24px;flex-shrink:0;text-align:center}
+.qz-ranking-item:nth-child(1) .qz-ranking-pos{color:#c9971e}
+.qz-ranking-item:nth-child(2) .qz-ranking-pos{color:#9098a5}
+.qz-ranking-item:nth-child(3) .qz-ranking-pos{color:#a86a3e}
+.qz-ranking-nome{flex:1;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:var(--text)}
+.qz-ranking-nota{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa)}
+.qz-ranking-vazio{text-align:center;padding:20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.88rem}
 
 .qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
-.qz-btn-voltar-cal{width:100%; margin-top:12px; border:1px solid var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
-.qz-btn-voltar-cal:hover{background:var(--rosa-dim);}
 
-/* Admin Secao */
-#admin-secao-erros{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
-.admin-titulo{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px;text-align:center;}
-.admin-erro-item{background:var(--creme); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; font-family:'DM Sans', sans-serif; font-size:13px; color:var(--text);}
+/* cartão pra gerar imagem — proporção exata do Instagram Stories (540x960 → 1080x1920 na imagem final) */
+#qz-cartao-share{position:fixed;left:-9999px;top:0;width:540px;height:960px;background:linear-gradient(165deg,#c4396b 0%,#a52c58 45%,#8a1a40 100%);text-align:center;font-family:'DM Sans',sans-serif;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 46px;overflow:hidden}
+.qz-cs-bolha{position:absolute;border-radius:50%;border:2px solid rgba(255,255,255,.28);background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.35),rgba(255,255,255,.03));pointer-events:none}
+#qz-cs-eyebrow{font-family:'Cinzel',serif;font-size:.82rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:26px}
+#qz-cs-icone{font-size:5.2rem;margin-bottom:18px}
+#qz-cs-titulo{font-family:'Playfair Display',serif;font-size:2.3rem;font-weight:600;margin-bottom:10px;line-height:1.2}
+#qz-cs-nome{font-family:'Crimson Pro',serif;font-size:1.4rem;font-style:italic;color:rgba(255,255,255,.88);margin-bottom:50px}
+#qz-cs-nota-wrap{background:rgba(255,255,255,.13);border:1.5px solid rgba(255,255,255,.3);border-radius:32px;padding:28px 50px;margin-bottom:22px}
+#qz-cs-nota{font-family:'Cinzel',serif;font-size:5.4rem;font-weight:700;line-height:1}
+#qz-cs-cat{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:60px}
+#qz-cs-rodape{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.65);border-top:1px solid rgba(255,255,255,.28);padding-top:20px;width:100%}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -135,6 +232,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <span class="bolha"></span><span class="bolha"></span><span class="bolha"></span><span class="bolha"></span>
   <span class="bolha"></span><span class="bolha"></span><span class="bolha"></span><span class="bolha"></span>
 </div>
+
 
 <div id="login-bar">
   <span id="login-status">Entrando...</span>
@@ -146,82 +244,113 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 <div class="section-wrap">
   <a class="back-btn" href="/">← Voltar pro site</a>
   <div class="eyebrow">Terreiro Bolhas de Luz</div>
-  <div class="section-title">🔮 Palavra do Dia</div>
-  <p class="section-sub">Descubra a palavra baseada nas dicas. Uma nova a cada dia ✦</p>
+  <div class="section-title">🔮 Quiz de Fundamentos</div>
+  <p class="section-sub">Quanto você sabe sobre os fundamentos da casa? Bora testar ✦</p>
 
   <div class="qz-faixa">
     <span>🕯️</span><span>🌿</span><span>🪶</span><span>🔮</span>
   </div>
 
-  <!-- TELA INICIAL COM CALENDÁRIO -->
+  <!-- TELA INICIAL -->
   <div id="qz-tela-inicio">
-    <h2>Preparada?</h2>
-    <p>Você tem 5 dicas para acertar o fundamento do dia. Se não souber, pode pular a dica!</p>
-    
+    <span class="qz-icone-grande">🔮</span>
+    <h2>Pronta pra jogar?</h2>
+    <p>São perguntas rápidas sobre os fundamentos da casa. Erra sem dó, é só uma brincadeira ✦</p>
+    <div class="qz-progresso-geral" id="qz-progresso-geral" style="display:none"></div>
+    <div class="qz-categoria-titulo">Escolha uma área</div>
+    <div class="qz-categorias" id="qz-categorias"></div>
+    <div class="qz-contador-dia" id="qz-contador-dia"></div>
+    <div class="qz-leva-info" id="qz-leva-info" style="display:none"></div>
     <p id="qz-saudacao-logada" style="display:none;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:10px">Jogando como <strong id="qz-saudacao-nome"></strong> ✦</p>
     <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
     <br>
-    <button class="qz-btn-comecar" id="qz-btn-comecar">Jogar a Palavra de Hoje ✦</button>
+    <button class="qz-btn-comecar" id="qz-btn-comecar">Começar ✦</button>
+    <br>
+    <button class="qz-btn-revisar" id="qz-btn-revisar" style="display:none">📖 Revisar minhas respostas</button>
+  </div>
 
-    <!-- CALENDÁRIO DE HISTÓRICO -->
-    <div class="calendario-wrap">
-      <div class="calendario-titulo">🗓️ Seu Histórico de Palavras</div>
-      <div class="calendario-grid" id="calendario-grid">
-        <!-- O JS preenche isso aqui -->
-      </div>
-    </div>
-
+  <!-- TELA DE REVISÃO -->
+  <div id="qz-tela-revisao" style="display:none">
+    <button class="back-btn" id="qz-revisao-voltar" style="margin-bottom:16px">← Voltar</button>
+    <div id="qz-revisao-lista"></div>
   </div>
 
   <!-- TELA DE JOGO -->
-  <div id="qz-tela-jogo" style="display:none">
+  <div id="qz-tela-jogo">
     <div class="qz-progresso-wrap">
-      <div class="qz-progresso-barra"><div class="qz-progresso-fill" id="qz-progresso-fill" style="width:20%"></div></div>
-      <div class="qz-progresso-txt" id="qz-progresso-txt">Dica 1/5</div>
+      <div class="qz-progresso-barra"><div class="qz-progresso-fill" id="qz-progresso-fill" style="width:0%"></div></div>
+      <div class="qz-progresso-txt" id="qz-progresso-txt">1/10</div>
     </div>
-    
     <div class="qz-pergunta-card">
-      <div id="dicas-anteriores"></div>
-      
-      <div class="qz-pergunta-num" id="qz-pergunta-num">DICA 1</div>
-      <div class="qz-pergunta-txt" id="qz-pergunta-txt"></div>
-      
-      <input type="text" class="qz-inp-nome" id="qz-inp-chute" placeholder="Qual é a palavra?" style="max-width:100%; margin-bottom:16px; margin-top:8px;">
-      
-      <div style="display:flex; gap:10px;">
-        <button class="qz-btn-comecar" id="qz-btn-chutar" style="flex:1;">Chutar</button>
-        <button class="qz-vf-btn" id="qz-btn-pular" style="flex:1;">Pular Dica →</button>
+      <div class="qz-pergunta-topo">
+        <div class="qz-pergunta-categoria" id="qz-pergunta-categoria"></div>
+        <div class="qz-pontos-selo" id="qz-pontos-selo"></div>
       </div>
-
-      <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na palavra ou dica? Avise aqui!</button>
+      <div class="qz-pergunta-num" id="qz-pergunta-num">AFIRMAÇÃO 1</div>
+      <div class="qz-pergunta-txt" id="qz-pergunta-txt"></div>
+      <div class="qz-vf-opcoes" id="qz-opcoes">
+        <button class="qz-vf-btn qz-vf-v" data-val="true"><span class="qz-vf-icone">✓</span> Verdadeiro</button>
+        <button class="qz-vf-btn qz-vf-f" data-val="false"><span class="qz-vf-icone">✗</span> Falso</button>
+      </div>
+      <div class="qz-feedback" id="qz-feedback"></div>
+      <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
     </div>
+    <button class="qz-btn-sair" id="qz-btn-sair">💾 Salvar e sair por aqui</button>
   </div>
 
   <!-- TELA DE RESULTADO -->
   <div id="qz-tela-resultado">
     <div class="qz-resultado-icone" id="qz-resultado-icone">🎉</div>
     <div class="qz-resultado-titulo" id="qz-resultado-titulo">Mandou bem!</div>
-    <div class="qz-resultado-nota" id="qz-resultado-palavra">PALAVRA</div>
+    <div class="qz-resultado-nota" id="qz-resultado-nota">0/10</div>
     <div class="qz-resultado-sub" id="qz-resultado-sub"></div>
-    
+    <button class="qz-btn-refazer" id="qz-btn-refazer">↻ Jogar de novo</button>
+    <button class="qz-btn-ranking" id="qz-btn-ver-ranking">🏆 Ver ranking</button>
     <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
-    <button class="qz-btn-voltar-cal" onclick="voltarAoInicio()">← Voltar ao Calendário</button>
-    <button class="btn-erro" onclick="reportarErro()">⚠️ Encontrou erro na explicação? Avise aqui!</button>
   </div>
 
-  <!-- ADMIN SEÇÃO DE ERROS -->
-  <div id="admin-secao-erros">
-    <div class="admin-titulo">⚠️ Relatórios de Erro (Acesso Admin)</div>
-    <div id="admin-lista-erros" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
+  <!-- CARTÃO PRA GERAR IMAGEM (fica fora da tela, só usado no momento de compartilhar) -->
+  <div id="qz-cartao-share">
+    <div class="qz-cs-bolha" style="width:50px;height:50px;left:5%;top:6%"></div>
+    <div class="qz-cs-bolha" style="width:20px;height:20px;left:22%;top:4%"></div>
+    <div class="qz-cs-bolha" style="width:14px;height:14px;left:78%;top:5%"></div>
+    <div class="qz-cs-bolha" style="width:30px;height:30px;left:88%;top:14%"></div>
+    <div class="qz-cs-bolha" style="width:12px;height:12px;left:8%;top:20%"></div>
+    <div class="qz-cs-bolha" style="width:22px;height:22px;left:92%;top:26%"></div>
+    <div class="qz-cs-bolha" style="width:16px;height:16px;left:4%;top:34%"></div>
+    <div class="qz-cs-bolha" style="width:60px;height:60px;left:82%;top:40%"></div>
+    <div class="qz-cs-bolha" style="width:26px;height:26px;left:2%;top:50%"></div>
+    <div class="qz-cs-bolha" style="width:14px;height:14px;left:14%;top:58%"></div>
+    <div class="qz-cs-bolha" style="width:38px;height:38px;left:86%;top:62%"></div>
+    <div class="qz-cs-bolha" style="width:18px;height:18px;left:6%;top:68%"></div>
+    <div class="qz-cs-bolha" style="width:24px;height:24px;left:92%;top:76%"></div>
+    <div class="qz-cs-bolha" style="width:44px;height:44px;left:3%;top:80%"></div>
+    <div class="qz-cs-bolha" style="width:16px;height:16px;left:80%;top:88%"></div>
+    <div class="qz-cs-bolha" style="width:28px;height:28px;left:18%;top:90%"></div>
+    <div class="qz-cs-bolha" style="width:12px;height:12px;left:60%;top:8%"></div>
+    <div class="qz-cs-bolha" style="width:20px;height:20px;left:50%;top:92%"></div>
+
+    <div id="qz-cs-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+    <div id="qz-cs-icone">🔮</div>
+    <div id="qz-cs-titulo">Quiz de<br>Fundamentos</div>
+    <div id="qz-cs-nome"></div>
+    <div id="qz-cs-nota-wrap"><div id="qz-cs-nota">0/10</div></div>
+    <div id="qz-cs-cat">Todas as categorias</div>
+    <div id="qz-cs-rodape">bolhasdeluz.ong.br</div>
   </div>
 
+  <!-- RANKING -->
+  <div id="qz-secao-ranking">
+    <div class="qz-ranking-titulo">🏆 Ranking da Casa</div>
+    <div id="qz-ranking-lista"><div class="qz-ranking-vazio">Carregando...</div></div>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp, doc, getDoc, setDoc }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -240,387 +369,6 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 
-// ══════════════════════════════════════════════════════════════
-// PALAVRAS DO DIA (40 palavras no total)
-// ══════════════════════════════════════════════════════════════
-const PALAVRAS_DO_DIA = [
-  {
-    "palavra": "IANSÃ",
-    "dica1": "Em algumas casas ela é cultuada apenas ao lado dos guerreiros — porque sua posição oscila entre Mãe e Guerreira. Na nossa casa, uma coisa não exclui a outra.",
-    "dica2": "É conhecida por ser impiedosa — fala de coragem, de forças avassaladoras, de avançar sobre inimigos e obstáculos. Revoluções e independência vêm de diversas formas, e é preciso confiar nela.",
-    "dica3": "Seu banho na virada do ano é de champagne vermelha. Seu erê Ventania é um Ibeji dela. Em algumas doutrinas, não se usa Adê para ela — na nossa casa, ela é cultuada como a Mãe e a Guerreira que é.",
-    "dica4": "Senhora dos raios e dos trovões. Pede devoção e entrega — quando se entrega a ela, deixa ela mudar, transformar. É avassaladora como suas águas.",
-    "dica5": "Começa com I. É a Orixá dos raios, dos ventos e das tempestades.",
-    "explicacao": "Iansã é a senhora dos raios e trovões — impiedosa e avassaladora. Na nossa casa, é cultuada como Mãe e Guerreira ao mesmo tempo, pois uma coisa não exclui a outra. Seu banho na virada do ano é de champagne vermelha. Em algumas doutrinas não se usa Adê para ela — na nossa, ela recebe como a Mãe que é. Seu erê Ventania é um Ibeji de Iansã."
-  },
-  {
-    "palavra": "OGUM",
-    "dica1": "É o senhor das batalhas — mas não guerras de ódio. Pedir pra ele travar as batalhas não é garantia de guerra vencida, porque ele pode não achar que vale a pena morrer por aquela luta.",
-    "dica2": "É o entrecruzamento da Umbanda com a Quimbanda — é a ele que se pede licença para ir à rua trabalhar com Exu. Junto com Bará, rege as estradas.",
-    "dica3": "É dono do ferro, do trabalho, da conquista, do suor, das estradas. Seu banho na virada do ano é de cerveja amarela. É um dos Orixás que foram humanos — como Xangô e Iansã — e não são conhecidos por doçura ou carinho.",
-    "dica4": "Peçam que ele escolha as batalhas, que mostre qual caminho seguir. Escolham as batalhas de Ogum — não qualquer batalha.",
-    "dica5": "Começa com O. Seu axé é a cerveja amarela e ele é o senhor do ferro e das estradas.",
-    "explicacao": "Ogum é o senhor das batalhas, do ferro, do trabalho e das estradas. Na Quimbanda, é a ele que se pede licença para sair à rua trabalhar com Exu — junto com Bará. Como Xangô e Iansã, foi humano, e não é conhecido por doçura. Pedir que ele travar uma batalha não é garantia de vitória — porque ele pode não achar que aquela luta vale a pena."
-  },
-  {
-    "palavra": "OXALÁ",
-    "dica1": "É o único Orixá masculino que usa saia e Adê — elementos das Orixás femininas. Essa não é uma escolha: é uma punição que dura para sempre.",
-    "dica2": "Foi descoberto travestido dentro do reino dos mortos, num lugar onde Nanã havia chamado apenas as mulheres. Sua punição foi que se vestiria e comeria com as mulheres para sempre.",
-    "dica3": "Seu banho na virada do ano é feito com água de canjica branca. É o pai de todas as cabeças ao lado de Iemanjá. Representa pureza, tranquilidade e compreensão. Seu dia é domingo.",
-    "dica4": "Foi ele quem puniu Xangô — proibindo-o de comer nas pratarias após o massacre na vila. Também come animais femininos no Batuque, por causa da mesma punição de Nanã.",
-    "dica5": "Começa com O. É o Orixá da paz e da pureza — e o único homem que usa saia e Adê.",
-    "explicacao": "Oxalá é conhecido pela pureza, tranquilidade e paz. É o pai de todas as cabeças ao lado de Iemanjá. É o único Orixá masculino que usa saia e Adê — como punição de Nanã, depois que ele se travestiu para entrar no reino dos mortos onde apenas mulheres foram chamadas. Também foi ele quem puniu Xangô com a gamela de madeira após o massacre na vila."
-  },
-  {
-    "palavra": "IEMANJÁ",
-    "dica1": "É ela quem traz à tona as angústias, as dores, as sensibilidades — para que possam ser tratadas. É um tsunami que limpa as dores.",
-    "dica2": "É a mãe de todas as cabeças — responde principalmente pelo nosso mental em saúde e firmeza. Por isso o reforço de cabeça feito na praia é essencial para o equilíbrio emocional da corrente.",
-    "dica3": "Seu banho na virada do ano é de champagne branca. A homenagem a ela na praia nunca havia sido feita no axé da nossa casa — foi feita pela primeira vez no cruzamento de praia como reforço de cabeça essencial.",
-    "dica4": "Seus filhos têm fama de chorões — mas assim como Oxum, vale questionar: até onde não é apenas a facilidade das águas de correrem livres? Senhora das emoções e dos pensamentos.",
-    "dica5": "Começa com I. É a Orixá do mar — mãe de todas as cabeças e senhora das emoções.",
-    "explicacao": "Iemanjá é a mãe de todas as cabeças — responde principalmente pelo mental em saúde e firmeza. Como o mar, é um tsunami que traz à tona as angústias e dores para que possam ser tratadas. O reforço de cabeça na praia é feito em homenagem a ela — e na nossa casa, esse ritual foi feito pela primeira vez no cruzamento de praia, por orientação do Pai Xangô."
-  },
-  {
-    "palavra": "TRANCA RUAS",
-    "dica1": "Foi ele quem, num dia de corte na rua, se ajoelhou, agradeceu e disse que só comeria novamente na casa de alguém quando o Pai da Justiça decidisse — mas que sempre se ajoelharia a quem estendeu a mão ao cavalo dele em momento de necessidade.",
-    "dica2": "Escolheu uma irmã de santo da mãe de santo para ser referência dos filhos da casa no dia do corte — por causa da doutrina que ela tem e porque sabia que os filhos seriam respeitados.",
-    "dica3": "Chefe da tronqueira da nossa casa. Foi ele quem expulsou fisicamente alguém do cruzeiro por causa de assédio — e depois entregou para D. Quitéria.",
-    "dica4": "Tem uma doutrina de calma e sem pressa — ensinou à mãe de santo que o tempo está a favor dele, e se o tempo está a favor do Exu, está a favor da casa.",
-    "dica5": "Começa com T. É o Exu chefe da nossa casa — o guardião da tronqueira do Terreiro Bolhas de Luz.",
-    "explicacao": "O Sr. Tranca Ruas é o Exu chefe da nossa casa — guardião da tronqueira e do axé do terreiro. Foi ele quem ensinou à mãe de santo que o tempo está a favor dele, e que portanto também está a favor da casa. É um Exu calmo, sem pressa — mas que age com firmeza quando necessário, como quando expulsou fisicamente alguém do cruzeiro por desrespeito."
-  },
-  {
-    "palavra": "ADÊ",
-    "dica1": "Sua presença em imagens de Orixás masculinos na internet é descrita como erro — não como diversidade religiosa. E existe uma diferença importante entre os dois.",
-    "dica2": "Oxalá é o único Orixá masculino que o usa — e não por escolha. É uma punição de Nanã que dura para sempre.",
-    "dica3": "Representa a realeza e o sagrado feminino. Está presente nas Yabas — as Orixás femininas. Iansã o usa na nossa casa porque ela é cultuada como Mãe e como Guerreira.",
-    "dica4": "A inteligência artificial errou muito ao colocar ele em todos os Orixás. A mãe de santo foi clara: até então desconhece e não encontra sentido em colocar em Xangô, Bará, Oxóssi e outros masculinos.",
-    "dica5": "Começa com A. É a coroa das Orixás femininas — das Yabas.",
-    "explicacao": "O Adê é a coroa das Yabas — as Orixás femininas da Umbanda e do Candomblé. Não se usa em Orixás masculinos, com exceção de Oxalá, que o usa como punição de Nanã. A propagação de imagens com Adê em todos os Orixás é considerada um erro de quem não conhece o fundamento — não diversidade religiosa. Na nossa casa, Iansã usa Adê porque é cultuada como Mãe e Guerreira."
-  },
-  {
-    "palavra": "AMALÁ",
-    "dica1": "Deve ser feito com concentração e respeito absolutos — se não, entra em erupção como um vulcão e queima aqueles que desrespeitam o momento do preparo.",
-    "dica2": "É a comida sagrada de um Orixá específico — e exige que quem cozinha esteja presente, atento e comprometido com cada etapa do preparo.",
-    "dica3": "Pertence ao Orixá do fogo, do equilíbrio e da justiça — aquele que come em gamela de madeira por punição e que é o único que não é 7 nem 8.",
-    "dica4": "O ato de cozinhá-lo sem respeito é suficiente para atrair a fúria do Orixá — que queima aqueles que desrespeitam o momento tal qual um vulcão em erupção.",
-    "dica5": "Começa com A. É a comida ritual de Xangô — preparada com concentração e respeito absolutos.",
-    "explicacao": "O Amalá é a comida sagrada de Xangô — e sua preparação exige concentração e respeito absolutos. Se feito sem cuidado, o Orixá entra em erupção como um vulcão e queima quem desrespeitou o momento. É um dos exemplos mais claros de que as oferendas na Umbanda não são apenas simbólicas — carregam axé real e exigem presença e reverência de quem as prepara."
-  },
-  {
-    "palavra": "RESGUARDO",
-    "dica1": "Não cancela aniversário, viagem nem date. É mais sobre se vigiar do que sobre se proibir.",
-    "dica2": "É comportamental e contínuo — diferente do preceito, que tem data, contexto ritualístico específico e é mais rigoroso.",
-    "dica3": "Pós-obrigação de agosto, dura 15 dias. Não buscar brigas, não se expor a situações de risco, não perder o controle, não ir para rolê duvidoso. O que na verdade é esperado de qualquer umbandista que leva a vida com seriedade.",
-    "dica4": "Um brinde no casamento da tia pode entrar nele — depende de quem você é e de quem é seu guia. Mas saber o próprio limite é parte do caminho.",
-    "dica5": "Começa com R. É o período de cuidado comportamental — mais brando que o preceito, mas igualmente importante.",
-    "explicacao": "O Resguardo é o período de cuidado comportamental — evitar brigas, exposição a riscos, perda de controle. Não é o mesmo que o preceito, que tem data e rigor específicos. O resguardo pós-obrigação de agosto dura 15 dias e é, na prática, o comportamento esperado de qualquer umbandista maduro no dia a dia. Não cancela a vida — apenas pede mais atenção naquele período."
-  },
-  {
-    "palavra": "FALANGE",
-    "dica1": "Não é o que você intuiu, não é o que apareceu em sonho, não é o que o irmão acha que é — é somente o que aconteceu na sessão.",
-    "dica2": "Assim como ponto cantado e ponto riscado, ela segue a mesma regra: confirmada é na sessão, com o ambiente firmado, com testemunhas de confiança.",
-    "dica3": "Representa a linha de trabalho do guia — com quem ele trabalha, de onde vem sua força. É algo determinante da espiritualidade do médium e por isso não se trata como confirmado antes da hora.",
-    "dica4": "O guia pode mostrar em sonho, ensinar, preparar — mas para ser algo confirmado, precisa acontecer na sessão, com os guias chefes da casa em terra.",
-    "dica5": "Começa com F. É a linha de trabalho do guia — e só é confirmada na sessão.",
-    "explicacao": "A Falange é a linha de trabalho do guia — de onde vem sua força e com quem ele trabalha. Assim como o ponto cantado e o ponto riscado, só é confirmada na sessão: com o ambiente firmado, protegido, e com testemunhas de confiança. Sonho não confirma, intuição não confirma. É algo determinante da espiritualidade do médium — e por isso o axé acontece na hora certa."
-  },
-  {
-    "palavra": "CALUNGA",
-    "dica1": "É o espaço onde os Exus de almas trabalham — e por isso as firmezas de cemitério são entregues separadas do cruzeiro, em data própria.",
-    "dica2": "Na nossa casa, foi separada do cruzeiro para que as energias não se misturem — dois trabalhos diferentes na mesma noite dissipam o axé e confundem as forças.",
-    "dica3": "A Sessão de Almas da nossa casa acontece no dia 1º de novembro, na virada de Finados. É nesse dia que os Exus de cemitério são visitados.",
-    "dica4": "Dona Mulambo trabalhou no lixo, a Cigana no cruzeiro, e o Sr. Tranca Ruas no axé do Bará — todos no mesmo dia de corte na rua, cada um no seu espaço sagrado.",
-    "dica5": "Começa com C. É o cemitério — o espaço sagrado dos Exus de almas na Quimbanda.",
-    "explicacao": "A Calunga é o cemitério — espaço sagrado dos Exus de almas na Quimbanda. Na nossa casa, as firmezas de cemitério são entregues em data separada do cruzeiro, para que as energias não se misturem. Dois trabalhos diferentes na mesma noite dissipam o axé. A Sessão de Almas acontece no dia 1º de novembro, na virada de Finados."
-  },
-  {
-    "palavra": "CRUZEIRO",
-    "dica1": "É diferente da Calunga — são dois espaços sagrados distintos, com trabalhos distintos, que não devem acontecer na mesma noite para não misturar as forças.",
-    "dica2": "É onde o padê dos Exus é entregue antes do corte. É o espaço de trabalho do povo de rua — voltado para movimento, prosperidade e bons caminhos.",
-    "dica3": "Na nossa casa, a sessão de cruzeiro é feita na encruzilhada na rua de trás. A firmeza de cruzeiro é a segunda etapa da obrigação de agosto — vem depois da Sessão das Almas.",
-    "dica4": "Maria Padilha não é 'falange de Oxum' — é Maria Padilha das Almas, do Cruzeiro, do Cabaret, das Sete Encruzilhadas. O Cruzeiro define de onde ela vem.",
-    "dica5": "Começa com C. É a encruzilhada — o ponto de força do povo de rua na Quimbanda.",
-    "explicacao": "O Cruzeiro é a encruzilhada — ponto de força do povo de rua na Quimbanda. É diferente da Calunga e não deve ser misturado na mesma noite. Na obrigação de agosto, a Firmeza de Cruzeiro é a segunda etapa — voltada para movimento, prosperidade e bons caminhos. Maria Padilha é das Almas, do Cruzeiro, do Cabaret — não 'falange de Oxum'. O Cruzeiro define de onde ela vem."
-  },
-  {
-    "palavra": "PASSE",
-    "dica1": "Pode ser recebido por uma roupa — a pessoa não precisa estar presente. A preferência é pelo pijama, que a pessoa usa para dormir ao recebê-lo de volta.",
-    "dica2": "Não se escolhe — a espiritualidade conduz o necessário. Orientar a assistência sobre isso é parte do trabalho da corrente.",
-    "dica3": "A corrente não toma passe enquanto a assistência está sendo atendida. Quando o atendimento da assistência estiver calmo ou no fim, os médiuns podem pedir — um de cada vez, sem tumultuar.",
-    "dica4": "É benéfico para o médium — mas a incorporação não é sobre isso. A incorporação é principalmente um atendimento para quem busca uma resposta, um colo, um puxão de orelha.",
-    "dica5": "Começa com P. É o atendimento espiritual dado pelos guias — e pode ser dado em roupa de quem não está presente.",
-    "explicacao": "O Passe é o atendimento espiritual dado pelos guias durante a sessão. Pode ser recebido por uma roupa — basta um irmão levar a peça ao terreiro, com preferência para pijama. Não se escolhe o guia que vai dar — a espiritualidade conduz o que é necessário. A corrente não toma passe enquanto a assistência está sendo atendida. A incorporação é principalmente um atendimento para o outro — não um benefício do médium."
-  },
-  {
-    "palavra": "ORI",
-    "dica1": "É o único lugar do corpo onde o Amaci vai. Todos os outros banhos de ervas ficam dos ombros para baixo — este é o único que vai até o ponto mais sagrado.",
-    "dica2": "A levantação da obrigação do cruzamento é feita por você mesmo, diante do seu congá — sem auxílio. Apenas seu dirigente e você podem encostar nele nesse momento.",
-    "dica3": "A primeira água após o cruzamento é morna, lavada com as mãos — e vai para o verde junto com as folhas. Jamais escoa no ralo. Química só depois da primeira lavagem.",
-    "dica4": "'Pé não segura cabeça' — o apronte dos Exus não substitui o reforço dele. Alimentá-lo com o sangue verde das ervas é tão importante quanto qualquer obrigação.",
-    "dica5": "Começa com O. É a cabeça — o ponto mais sagrado e sensível do médium.",
-    "explicacao": "O Ori é a cabeça — o ponto mais sagrado do médium. É onde o Amaci vai no cruzamento, onde as ervas ficam até o dia seguinte. A levantação da obrigação do ori é feita pelo próprio médium, diante do congá, sem auxílio — a primeira água vai para o verde, nunca para o ralo. 'Pé não segura cabeça' — cuidar do ori é tão essencial quanto qualquer obrigação dos Exus."
-  },
-  {
-    "palavra": "POMBAGIRA",
-    "dica1": "Não se a tranca quando ela reage a uma situação de desrespeito ou assédio — deixa ela reagir. Se a incorporação não der autonomia para isso, busca ajuda.",
-    "dica2": "É a mulher livre em essência — sem as amarras da carne e da sociedade. O brilho dela é também para os homens — um homem só vai chegar perto de entender uma mulher quando incorporar uma.",
-    "dica3": "Pode chegar em sessão de Ciganos — especialmente a Pombagira Cigana, que é primeiro Exu e depois Cigana, e consegue se adaptar melhor a energias mais sutis.",
-    "dica4": "No Elebó de Exu: tecidos mais bonitos, rendas, saia de armação, maquiagem mais pesada — tudo bem. Mas sem decotes profundos, bermudas ou transparências no lugar errado.",
-    "dica5": "Começa com P. É a linha feminina dos Exus — guardiã, trabalhadora e livre.",
-    "explicacao": "A Pombagira é a linha feminina dos Exus — livre em essência, sem as amarras da carne e da sociedade. Não se a tranca quando reage a desrespeito ou assédio: deixa ela agir. Seu brilho é também para os homens. No Elebó, permite-se mais exuberância no vestuário. A Pombagira Cigana é primeiro Exu e depois Cigana — consegue transitar entre as linhas com mais facilidade."
-  },
-  {
-    "palavra": "INCORPORAÇÃO",
-    "dica1": "É um limbo — o médium perde noção de espaço, tempo e reflexos físicos. Por isso a corrente existe: para cuidar da matéria enquanto o guia cuida do espiritual.",
-    "dica2": "É benéfica para o médium — mas não é sobre isso. É principalmente um atendimento. É um ato extremamente altruísta de doar tempo, energia, suor e corpo para que a ancestralidade cuide do seu povo.",
-    "dica3": "Não depende de elementos para acontecer — bebida e cigarro são conquistados com o tempo, não são condição para o transe. A incorporação é um transe que não depende de nada além da entrega.",
-    "dica4": "Estamos ali nos doando para os trabalhos que um dia recebemos — e hoje passamos adiante, com gratidão e dedicação para quem agora também precisa.",
-    "dica5": "Começa com I. É o transe mediúnico — quando o guia vem em terra através do médium.",
-    "explicacao": "A Incorporação é o transe mediúnico — quando a ancestralidade vem à terra através do médium. É um ato altruísta: doamos nosso corpo, nossa energia e nosso tempo para que os guias possam atender quem precisa. O médium em transe perde noção de espaço, tempo e reflexos físicos — por isso a corrente e a cambona existem, para cuidar da matéria. A incorporação não depende de elementos — é entrega."
-  },
-  {
-    "palavra": "FIRMEZA",
-    "dica1": "Quanto mais firmezas você tem em casa, maior a responsabilidade — porque todas precisam ser servidas, cuidadas e mantidas.",
-    "dica2": "Ter o assentamento em casa não é autorização para atendimento. É uma firmeza, um amparo — que pode ajudar quem está próximo, mas atender é diferente.",
-    "dica3": "No congá pessoal, as firmezas precisam de quartinhas cheias, velas acesas, tudo organizado e bem servido. Antes da virada, passa-se um pano perfumado, renova-se com perfumes — cuida de quem cuida de você.",
-    "dica4": "A tronqueira é a firmeza do Sr. Tranca Ruas. O congá tem as firmezas de todos os guias da casa. Guias cruas não são firmeza — são miçangas.",
-    "dica5": "Começa com F. É o elemento ou conjunto de elementos que materializa a presença do guia em terra — no terreiro ou em casa.",
-    "explicacao": "A Firmeza é o elemento ou conjunto de elementos que materializa a presença do guia em terra. Pode ser o congá, o assentamento, a tronqueira. Quanto mais firmezas, maior a responsabilidade de manutenção. Ter assentamento em casa não autoriza atendimento — é apenas amparo. Guias cruas não são firmeza — são miçangas. Cuidar das firmezas é cuidar de quem cuida de você."
-  },
-  {
-    "palavra": "PEDREIRA",
-    "dica1": "É um dos pontos de força da natureza onde se busca energia para o ori — junto com a praia, o rio e a mata. É onde Xangô fala mais alto.",
-    "dica2": "Foi na Pedreira que a Mãe Bê fez o cruzamento da mãe de santo com a própria mão, dando autonomia e a benção oficial para ter casa.",
-    "dica3": "O cruzamento de Pedreira é feito anualmente como reforço de cabeça. O preceito mínimo é de 3 dias. As ervas do Amaci vão na cabeça e ficam até o dia seguinte.",
-    "dica4": "É uma força da natureza. O preceito do cruzamento tem como objetivo preservar a energia do médium de forma estável — todos os itens proibidos causam instabilidade ou troca de energias.",
-    "dica5": "Começa com P. É o ponto de força na natureza onde se faz o cruzamento de reforço de cabeça — o espaço de Xangô.",
-    "explicacao": "A Pedreira é o ponto de força da natureza associado a Xangô — onde se busca a energia do Orixá para o reforço de cabeça. É um dos cruzamentos anuais da nossa casa. Foi na Pedreira da Mãe Betânia que a mãe de santo recebeu a benção oficial para ter casa — com o cruzamento feito pela Mãe Bê com a própria mão. A Pedreira é uma força da natureza, e o preceito existe para preservar o médium nesse contato."
-  },
-  {
-    "palavra": "ALFAZEMA",
-    "dica1": "Aparece antes da sessão, durante a sessão, e nas limpezas da casa. É um dos elementos de transição — de fora para dentro, do agitado para o concentrado.",
-    "dica2": "É uma das opções para o pano de limpeza da casa — junto com o perfume de Umbanda. No fim da limpeza física, passa-se o pano perfumado com ela do fundo até a porta.",
-    "dica3": "Quem chega atrasado passa ela na mão e na nuca antes de entrar na corrente — junto com a defumação, se ainda estiver acesa. Faz parte do ritual de chegada.",
-    "dica4": "Antes da virada do ano, passa-se um pano com ela no congá para tirar o pó e renovar com bom axé. É uma das ervas mais simples e mais presentes no dia a dia do terreiro.",
-    "dica5": "Começa com A. É a planta de cheiro suave usada nas chegadas, nas limpezas e nos cuidados do congá.",
-    "explicacao": "A Alfazema é uma das plantas mais presentes no dia a dia do terreiro — aparece na chegada, nas limpezas da casa e nos cuidados do congá. Quem chega atrasado passa na mão e na nuca antes de entrar na corrente. Nas limpezas físicas da casa, o pano perfumado com ela vai do fundo para a porta. No congá, renova o axé antes da virada do ano."
-  },
-  {
-    "palavra": "BENEDITO",
-    "dica1": "Foi ele quem disse que a mãe de santo não precisava de uma mãe de santo — precisava de uma Madrinha. E a direcionou para quem ela precisava encontrar.",
-    "dica2": "Estava na casa da Mãe Betânia numa quinta-feira — exatamente quando a mãe de santo não sabia mais o que fazer e foi chorar no colo de um preto velho.",
-    "dica3": "Foi ele que disse que as coisas dela estavam certas — que a espiritualidade estava a chamando pra ser mãe, e que ela podia sim seguir. Me disse que eu não precisava de uma mãe de santo, porque estes iriam refazer tudo.",
-    "dica4": "O Pai da Justiça chegou naquele dia, bateu cabeça confirmando a decisão. A Laurinha se jogou nos pés da Madrinha abraçando-a. E ele foi confirmado: o preto velho da casa da Betânia se chama Benedito.",
-    "dica5": "Começa com B. É o preto velho da casa da Mãe Betânia que acolheu e direcionou a mãe de santo quando ela não sabia mais o que fazer.",
-    "explicacao": "Vô Benedito é o preto velho da casa da Mãe Betânia — e foi ele quem acolheu a mãe de santo numa quinta-feira em que ela foi chorar no colo de um preto velho sem saber o que fazer. Foi ele quem disse que ela não precisava de uma mãe de santo, mas de uma Madrinha — e a direcionou para a Mãe Jurema. Sua identidade foi confirmada pela própria Mãe Betânia depois."
-  },
-  {
-    "palavra": "MADRINHA",
-    "dica1": "Não refaz tudo — orienta, guia, está ali quando precisa. É diferente de uma mãe de santo, que refaria todos os axés.",
-    "dica2": "Foi por orientação do Vô Benedito que a mãe de santo buscou uma. E o Pai da Justiça chegou, bateu cabeça, confirmando a decisão — e a Laurinha se jogou nos pés dela abraçando-a.",
-    "dica3": "É a Mãe Jurema da Pedreira. Trouxe para a nossa casa fundamentos que o Vô aprendeu lá — como a quartinha no topo da cabeça durante o cruzamento, e o preparo do fígado fresco.",
-    "dica4": "Por orientação do Pai Xangô, a mãe de santo foi até ela em 2025 buscar os axés de Cacicamento — a Mesa de Umbanda e o Cruzamento das 7 Bebidas. Bolhas de Luz é também da ancestralidade da Mãe Jurema.",
-    "dica5": "Começa com M. É a mais velha que guia e ampara — sem refazer os axés, mas estando ali quando precisa.",
-    "explicacao": "A Madrinha da nossa casa é a Mãe Jurema da Pedreira — quem acolheu e deu a benção para a mãe de santo ter casa, após orientação do Vô Benedito. Diferente de uma mãe de santo, não refaz todos os axés — mas guia, orienta e está presente quando precisa. Fundamentos que o Vô aprendeu lá chegaram à nossa casa através dela. Em 2025, por orientação do Pai Xangô, a mãe de santo foi até ela buscar os axés do Cacicamento."
-  },
-  {
-    "palavra": "XANGÔ",
-    "dica1": "Seus filhos têm uma característica física curiosa — corpos grandes e fortes, o que os mais velhos chamam de 'paleta de carneiro'.",
-    "dica2": "É o único que não é 7 nem 8 — é 6. E é o único que leva dois elementos aparentemente opostos: um amargo e um doce.",
-    "dica3": "Seu Amalá deve ser feito com concentração e respeito absolutos — se não, entra em erupção como um vulcão e queima quem desrespeita o momento. A mão do pilão fica dentro, nunca fora.",
-    "dica4": "Foi punido por Oxalá e passou a comer em gamela de madeira — como os escravos e os porcos — depois de matar todos em uma vila que não o reconheceu como Rei de Oyó.",
-    "dica5": "Começa com X. É o Orixá chefe da nossa casa. Dono do tambor — todo tambor que toca pertence a Ele.",
-    "explicacao": "Xangô é o único Orixá Rei e um dos poucos que foram humanos. É o Orixá do fogo, do equilíbrio e da justiça implacável. Na nossa casa, é o chefe — e todo tambor que toca pertence a Ele. Não é descrito como misericordioso, apenas como justo. E como filha de Xangô, a mãe de santo diz: não há bondade maior que a garantia de justiça."
-  },
-  {
-    "palavra": "PEMBA",
-    "dica1": "O que o guia faz com ela na sessão é o único jeito de algo ser considerado confirmado — sonho não serve, intuição não serve.",
-    "dica2": "Pode ser de carvão, de barro, de axorô ou de ervas — e muitas vezes eles mostram de um jeito nas visões e fazem diferente na sessão.",
-    "dica3": "Não se traz para o cruzamento. Fica para a sessão. O que o guia faz com ela precisa acontecer com o ambiente firmado, com testemunhas de confiança.",
-    "dica4": "É com ela que o guia risca o ponto. Ponto riscado confirmado é somente o que ela deixou marcado durante a ritualística — não o que apareceu em sonho.",
-    "dica5": "Começa com P. É o giz ritual que os guias usam para riscar os pontos no chão durante a sessão.",
-    "explicacao": "A Pemba é o elemento ritual usado nos pontos riscados da Umbanda e da Quimbanda. Ponto riscado confirmado é somente o que o guia fez com ela na sessão — com o ambiente firmado, protegido, e com testemunhas de confiança. Muitas vezes eles mostram de um jeito nas visões e riscam diferente em terra. Por isso sonho não confirma — a confirmação é sempre na sessão."
-  },
-  {
-    "palavra": "OXUM",
-    "dica1": "Seus filhos têm fama de chorões, de manhosos, de melindrosos — mas vale o questionamento: até onde isso não é apenas a facilidade das águas de correrem livres?",
-    "dica2": "Tem um animal sagrado que virou axé esquecido por puro preconceito — uma tecelã paciente, símbolo do feminino e da construção, cujas obras são arte da natureza.",
-    "dica3": "Axés de saúde de coração são feitos para Ela. O mel é usado ao final da obrigação dos Exus justamente para trazer a Sua energia doce — aliviando o peso da sacralização com misericórdia.",
-    "dica4": "Sua vaidade não é pecado — é amor-próprio. Quando uma pessoa busca se valorizar, se sentir bem, buscar um amor, é a Ela que se busca. Dona do ouro e protetora do ventre.",
-    "dica5": "Começa com O. Seu banho na virada do ano é feito com água de canjica amarela.",
-    "explicacao": "Oxum é a Orixá das águas doces, da fertilidade, do amor e das riquezas. Cuida das crianças ainda no ventre e dos corações fisicamente. Seus animais são a abelha, a aranha — esquecida por preconceito, mas tão sagrada quanto qualquer outra — e a galinha. Sua vaidade é amor-próprio, não pecado. E Oxum é o amor em sua totalidade — puro, simples, livre, solto, completo."
-  },
-  {
-    "palavra": "QUARTINHA",
-    "dica1": "Representa em forma física um dos princípios mais fundamentais de uma linha inteira — a ideia de que parado não serve, que energia estagnada não trabalha.",
-    "dica2": "A de Umbanda não vai para a rua e não se despacha — apenas se preenche. A de Exu vai para a rua — e é responsabilidade do filho esvaziar e encher a cada sessão.",
-    "dica3": "Fica no terreiro e só vai para a casa do médium após o apronte. Ao chegar no terreiro, o filho vai direto até ela, troca as águas, firma as velas e segue para os trabalhos.",
-    "dica4": "Água é quizila de Exu — então jamais entra no assentamento, apenas dentro dela. Cor e modelo são orientados pelo Sr. Tranca Ruas, não são escolha livre.",
-    "dica5": "Começa com Q. É o recipiente sagrado que fica na tronqueira e precisa ser trocado toda sessão.",
-    "explicacao": "A Quartinha é o recipiente sagrado que guarda as águas do guia. É responsabilidade do filho esvaziar e encher a cada sessão — Exu é movimento, e a energia não pode ficar parada. A de Umbanda não se despacha, só se preenche. A de Exu vai pra rua para circular a energia. Cores e tipos são sempre orientados pelo guia chefe da casa — nunca escolha estética do médium."
-  },
-  {
-    "palavra": "AMACI",
-    "dica1": "É o único banho que vai onde nenhum outro vai — e justamente por isso exige que certas ervas fiquem completamente fora.",
-    "dica2": "Não se usa arruda, quebra-tudo, espinheira, pimenta nem ervas muito fortes ou de Exu — porque é um momento de firmar, não de afastar ou cortar.",
-    "dica3": "Feito com ervas maceradas com as próprias mãos, sempre frescas. Espada de São Jorge, pitangueira, goiabeira, laranjeira, alecrim, alfazema, guiné, hortelã estão entre as sugeridas.",
-    "dica4": "É o banho do cruzamento — vai na cabeça, que é o ori, o ponto mais sagrado e sensível do médium. Todos os outros banhos de ervas vão dos ombros para baixo.",
-    "dica5": "Começa com A. É o banho de ervas que vai na cabeça no dia do cruzamento para reforçar o ori.",
-    "explicacao": "O Amaci é o banho de ervas maceradas com as mãos, usado nos cruzamentos para reforçar o ori — a cabeça, ponto mais sagrado do médium. As ervas são escolhidas de acordo com a linha de trabalho e devem ser sempre frescas. É o único banho que vai na cabeça. Arruda, quebra-tudo, espinheira e ervas de Exu não entram — o momento é de reforço, não de corte."
-  },
-  {
-    "palavra": "CACICAMENTO",
-    "dica1": "Na nossa casa, aconteceu duas vezes para a mesma pessoa — porque doutrina muda, axé se aprofunda, e a segunda vez trouxe elementos que a primeira não tinha.",
-    "dica2": "Não é o mesmo que coroação — essa confusão é perigosa. Coroação é do guia. Este é do médium.",
-    "dica3": "Autoriza abrir casa, iniciar filhos na Umbanda e na Quimbanda e carregar o axé da própria bandeira em frente — com ou sem incorporação.",
-    "dica4": "A mãe de santo não se autodeclarou porque, na nossa doutrina, ter a coroação não significa ter autorização. Ela esperou até que uma mais velha lhe desse a benção — porque não ia cobrar dos filhos que existe fundamento se ela mesma o ignorasse.",
-    "dica5": "Começa com C. É o ritual que transforma o médium em mãe ou pai de santo — o axé do próprio médium, não do guia.",
-    "explicacao": "O Cacicamento é o axé do médium — a confirmação de que ele está pronto para carregar o axé da própria bandeira, iniciar filhos e abrir casa. Na nossa doutrina, coroação não é cacicamento. A mãe de santo recebeu o cacicamento duas vezes: uma pelo fundamento do Pai Ogum das Matas e outra pela doutrina da Mãe Jurema. O Preto Velho Benedito, na casa da Mãe Betânia, foi quem a direcionou para a Madrinha que lhe deu a benção."
-  },
-  {
-    "palavra": "OXÓSSI",
-    "dica1": "Pode não saber todos os caminhos como Exu sabe — mas nunca se perde, nem mesmo na mata mais escura.",
-    "dica2": "Traz o segredo das folhas — conhece os maiores venenos e os maiores antídotos. É por isso que quando estamos sem ervas e sem dinheiro, é a Ele que pedimos licença na praça mais próxima.",
-    "dica3": "Cultuar este Orixá é respeitar a comunidade — é saber que tem mais gente querendo se alimentar, é saber que o peixe filhote deve voltar ao rio. Iradia a força de Jandira, Iracema, Tupinambá, Sete Cachoeiras, Sete Flechas e Pena Branca.",
-    "dica4": "Seus filhos têm encanto misterioso — leves, carismáticos. Muito se brinca que são namoradeiros. Para Ele e seus caboclos, o costume é servir frutas e vinhos.",
-    "dica5": "Começa com O. 'Mato é mato, e Ele é rei!' Rei das matas e chefe da linha dos caboclos.",
-    "explicacao": "Oxóssi é o Orixá rei das matas — símbolo de conhecimento, paciência e fartura. É o chefe da linha dos caboclos na Umbanda e carrega o segredo das folhas de Ossanha. Cultuar Oxóssi é respeitar a comunidade: é saber que tem mais gente querendo se alimentar. Como diz o texto da casa: o mundo mudou e hoje buscamos comida no mercado — mas ainda precisamos lutar por ela."
-  },
-  {
-    "palavra": "PRECEITO",
-    "dica1": "Não é para a mãe de santo — é para você, para o bem-estar de todos que estão na mesma corrente que você.",
-    "dica2": "Difere do resguardo: este é comportamental e contínuo. O preceito tem data, contexto ritualístico específico e é mais rigoroso.",
-    "dica3": "Na véspera, não é dia de open bar — mas a autonomia existe para quem se conhece e conhece seus guias. No dia da sessão, torna-se lei: em caso de quebra, não se vai aos trabalhos.",
-    "dica4": "Remédio de uso contínuo não se altera — mas avisa-se que o guia não vai beber. Bebidas energéticas também prejudicam o trabalho mediúnico — prefere-se o café, axé dos pretos velhos.",
-    "dica5": "Começa com P. Mínimo de 3 dias em cruzamento: um antes, o dia em si e um depois.",
-    "explicacao": "O Preceito é o período de cuidado corporal e energético que antecede e sucede rituais e sessões. Não é uma exigência da mãe de santo — é respeito com a própria espiritualidade e com a dos irmãos da corrente. Difere do resguardo, que é comportamental e contínuo. O preceito tem data, contexto e rigor específicos. Em caso de quebra no dia da sessão, não se vai aos trabalhos."
-  },
-  {
-    "palavra": "IBEJI",
-    "dica1": "São a única linha de Orixá que se manifesta como criança — mas não são a criança interior do médium. São outro ser, outra história.",
-    "dica2": "No Batuque, só pega cabeça de quem é gêmeo — sempre um de Xangô e um de Oxum, sendo um só. São sincretizados com os únicos gêmeos da Igreja.",
-    "dica3": "Todos os Orixás têm os seus. Ventania é de Iansã, Espadinha é de Ogum, Pedrinho é de Xangô, Laurinha é de Oxum. Identificam-se pelo comportamento e chamando o Orixá da linha de Paizinho ou Mãezinha.",
-    "dica4": "Médium não briga, não xinga, não ameaça — apenas orienta. Quem cuida deles em terra são os caboclos e os pretos velhos. Feitiço de criança nem Exu desfaz.",
-    "dica5": "Começa com I. É o Orixá dos gêmeos — em dois, mas um só. Irradia toda a linha dos cosmes, erês e encantados.",
-    "explicacao": "Ibeji é um único Orixá em duas forças — as únicas crianças entre os Orixás. Irradia toda a linha de trabalho dos cosmes, erês e encantados. Todos os Orixás têm seus Ibejis — identificados pelo comportamento e pela linha do Orixá a que pertencem. No Batuque, pega cabeça somente de quem é gêmeo: um de Xangô Ibeji e outro de Oxum Ibeji, sempre juntos."
-  },
-  {
-    "palavra": "DENDÊ",
-    "dica1": "É o que ativa o que já está plantado — o catalisador que dá força ao que foi firmado, entre um ciclo e outro.",
-    "dica2": "Fora da época do corte, substitui o axorô nos assentamentos. Passa-se nos elementos, deixa escorrer — isso dá muita força aos Exus.",
-    "dica3": "A limpeza do assentamento é feita com ele e com a bebida do Exu. Nos trabalhos de Umbanda, aparece também ao final da obrigação dos Exus para trazer energia de Oxum e aliviar o peso.",
-    "dica4": "Xangô é o único Orixá que recebe tanto ele quanto mel — não porque é doce, mas porque precisa. Os assentamentos são limpos com ele em épocas específicas: pós-carnaval, antes do corte, final de ano.",
-    "dica5": "Começa com D. É o azeite de cor laranja-avermelhada que se passa nos elementos do assentamento do Exu.",
-    "explicacao": "O Dendê é o azeite sagrado extraído da palmeira dendezeira. Na nossa casa, é o axorô fora da época do corte — o catalisador que dá força aos elementos do assentamento. Usado também ao final das obrigações dos Exus para trazer a energia doce de Oxum. Xangô é o único Orixá que leva tanto Dendê quanto Mel — não pela doçura, mas pela necessidade."
-  },
-  {
-    "palavra": "TRONQUEIRA",
-    "dica1": "Nada passa sem a sua permissão — é o primeiro axé e o último. É onde a segurança espiritual começa antes mesmo de qualquer trabalho.",
-    "dica2": "Antes de ter casa própria, a obrigação precisava ser feita em outro lugar justamente porque ela ainda não existia. Ter ela pronta foi uma das prioridades da casa nova.",
-    "dica3": "Os filhos chegam, vão até ela, trocam as águas das quartinhas, firmam as velas e seguem para os trabalhos. Em agosto, é em torno dela que todos encerram a obrigação juntos.",
-    "dica4": "É a morada do Sr. Tranca Ruas na nossa casa. Como diz o texto: não é porque tem Exu que a gente deixa a porta do terreiro destrancada — e é justamente ela que guarda isso.",
-    "dica5": "Começa com T. É o espaço do Exu chefe que fica na entrada do terreiro — a guardiã de tudo que entra e sai.",
-    "explicacao": "A Tronqueira é o espaço sagrado destinado ao Exu chefe da casa — na nossa casa, o Sr. Tranca Ruas. Fica na entrada do terreiro e representa a proteção de tudo que entra e sai. Antes da casa nova, a obrigação era feita em outro lugar porque a Tronqueira ainda não estava pronta. No Elebó de agosto, todos os filhos encerram juntos firmando a Tronqueira."
-  },
-  {
-    "palavra": "APRONTE",
-    "dica1": "A partir dele, médium e guia têm maior responsabilidade — porque passam a lidar diretamente com a espiritualidade dos outros e respondem por si mesmos.",
-    "dica2": "Quem recebe as facas é o Exu. Quem recebe as ponteiras é o caboclo. São rituais distintos, com propósitos distintos.",
-    "dica3": "Após ele, o Exu está apto a cortar sozinho, fazer limpezas, aberturas de caminhos e axés de Quimbanda. Os primeiros axés ainda são acompanhados e auxiliados se necessário.",
-    "dica4": "Para chegar à coroação do caboclo, o apronte precisa ter sido feito com 7 aves. É uma das últimas etapas antes do cacicamento.",
-    "dica5": "Começa com A. É quando o Exu recebe as ferramentas finais do assentamento e está apto a trabalhar com autonomia.",
-    "explicacao": "O Apronte é o ritual que entrega ao Exu as ferramentas finais do assentamento — completando o que ainda faltava. Significa que o Exu está apto a trabalhar de forma autônoma: cortar, fazer limpezas, abrir caminhos, fazer axés de Quimbanda. A partir do apronte, médium e Exu têm maior responsabilidade, pois passam a responder diretamente pela espiritualidade de quem buscam atender."
-  },
-  {
-    "palavra": "DEFUMAÇÃO",
-    "dica1": "Nunca se traz o que sobrou de volta. O que foi usado para limpar não retorna — vai para o mato ou para o cruzeiro mais próximo.",
-    "dica2": "Nos rituais de limpeza da casa, vai do fundo para a porta. Nos rituais de encerramento de ano, faz parte do que prepara o ambiente antes de tudo mais.",
-    "dica3": "É um dos primeiros cuidados ao chegar atrasado: se ainda estiver acesa, passa nela antes de entrar na corrente. Se não estiver, pega o defumador e passa sozinho.",
-    "dica4": "Sentir o cheiro dela é descrito como um dos motivos pelos quais vale ir à sessão mesmo nos dias mais difíceis — uma das experiências sensoriais que marcam o terreiro.",
-    "dica5": "Começa com D. É a fumaça das ervas e do carvão que limpa o ambiente e os médiuns antes dos trabalhos.",
-    "explicacao": "A Defumação é o ritual de limpeza pelo fogo e pela fumaça de ervas sagradas. Purifica o ambiente, os médiuns e a assistência antes dos trabalhos. O carvão usado nunca volta para o terreiro — é sempre despachado no verde ou no cruzeiro. Nos rituais de limpeza da casa, vai do fundo para a porta. Para quem chega atrasado, é o primeiro passo antes de entrar na corrente."
-  },
-  {
-    "palavra": "EGBÉ",
-    "dica1": "É a razão pela qual a obrigação de agosto é paga por todos — mesmo quem não vai cortar. O Exu do seu irmão é o que te dá o passe.",
-    "dica2": "É a razão pela qual os irmãos se lembram uns dos outros sobre prazos de levantação. É a razão pela qual a sessão é descrita como um reencontro.",
-    "dica3": "Sonhos solitários são projeções — sonhos acompanhados se tornam reais. Esse é o fundamento que sustenta a existência do terreiro como espaço coletivo.",
-    "dica4": "É o que faz com que médiuns desincorporados estejam disponíveis para alcançar um fósforo, proteger um guia, estar com os olhos abertos. Ninguém está sozinho aqui.",
-    "dica5": "Começa com E. É a palavra que representa a comunidade, a família de santo, a corrente — todos juntos.",
-    "explicacao": "Egbé é a família de santo — a corrente, a comunidade. Na nossa casa, é o fundamento que explica por que a obrigação é coletiva, por que os irmãos se cuidam mutuamente e por que ninguém caminha sozinho. Sonhos solitários são projeções — sonhos acompanhados se tornam reais. É a razão de existir do terreiro como espaço de trabalho e de vida compartilhados."
-  },
-  {
-    "palavra": "CAMBONA",
-    "dica1": "É os olhos de quem não pode ver — e os braços de quem está em outro mundo enquanto trabalha neste.",
-    "dica2": "Suas decisões não precisam ser explicadas à corrente. Se não levou passe para um guia, se informou que uma entidade não vai beber mais — ela foi orientada, e isso basta.",
-    "dica3": "Corre na frente para tirar um caco de vidro do chão, apaga a saia pegando fogo, para o carro. Facilitar a vida dos guias é o menor dos trabalhos dela — o trabalho espiritual e braçal vai muito além.",
-    "dica4": "É um dos três pilares do terreiro — junto com a mãe de santo e o tamboreiro. Tem autoridade para reposicionar entidades, conduzir a assistência, orientar e ensinar.",
-    "dica5": "Começa com C. É a pessoa que serve os guias na sessão — e muito mais do que isso.",
-    "explicacao": "A Cambona é um dos três pilares fundamentais do terreiro. Seu papel vai muito além de servir bebida e cigarro: cuida da matéria dos médiuns incorporados, que perdem noção de espaço e tempo durante o transe. Tem autoridade dentro da sessão e suas decisões não precisam ser explicadas à corrente. Quando a chefe da cambonagem é identificada numa visita a outra casa, é a primeira pessoa reconhecida depois do pai ou mãe de santo."
-  },
-  {
-    "palavra": "AXORÔ",
-    "dica1": "É o que transforma um assentamento em morada de verdade — sem ele, o que existe é firmeza, não feitura.",
-    "dica2": "Exus catiços são feitos apenas em ervas. Exus de Quimbanda — como os da nossa casa — são feitos nele. Mas se governam sozinhos, sem subordinação a Orixá.",
-    "dica3": "O Dendê substitui o seu papel fora da época do corte. Na obrigação de agosto, é o momento em que o assentamento recebe o que ainda faltava para completar a força do Exu.",
-    "dica4": "Ogum Megê e Bará são as forças que regem os trabalhos feitos com ele — não os Orixás da linha de Umbanda do médium.",
-    "dica5": "Começa com A. É o elemento central do corte de agosto — o que alimenta e fortalece o assentamento do Exu na obrigação.",
-    "explicacao": "O Axorô é o elemento sagrado que compõe os assentamentos de Exu de Quimbanda — é o que materializa a força do Exu em terra. Não se detalha publicamente além disso, pois é um fundamento de iniciação. O Dendê cumpre papel similar fora das épocas de obrigação. A cada corte o assentamento recebe novos elementos que aprofundam a relação entre o médium e seu Exu."
-  },
-  {
-    "palavra": "ELEBÓ",
-    "dica1": "É quando o que foi pedido se transforma em gratidão — e a gratidão se transforma em encerramento coletivo.",
-    "dica2": "Na nossa casa, a levantação acontece no mesmo dia. É o momento em que todos firmam a tronqueira juntos — porque na religião, o que começa termina junto.",
-    "dica3": "É a quarta e última etapa da obrigação de agosto. Vem depois da Sessão das Almas, da Firmeza de Cruzeiro e do Corte.",
-    "dica4": "Inclui comidas coletivas, janta para todos, oferendas e o encerramento dos axés. Os Exus ainda estão de obrigação — os cuidados seguem.",
-    "dica5": "Começa com E. É a última etapa da obrigação de agosto — o encerramento e o agradecimento coletivo.",
-    "explicacao": "O Elebó é a etapa de encerramento da obrigação de agosto. Na nossa casa, a levantação acontece no mesmo dia do Elebó para que todos encerrem juntos firmando a Tronqueira. Mesmo quem não cortou participa — porque na religião, o que a gente começa, a gente termina. Os cuidados de preceito seguem, pois os Exus ainda estão comendo nesse período."
-  },
-  {
-    "palavra": "CONGÁ",
-    "dica1": "O primeiro pedaço do bolo vai sempre para ele — antes de qualquer outra pessoa, antes de qualquer outra coisa.",
-    "dica2": "É um ponto de força pessoal que se fortalece a cada reforço anual. Quanto mais firmezas você tem nele, maior a responsabilidade de manter tudo servido.",
-    "dica3": "Já tem as 7 linhas da Umbanda — por isso o cruzamento de conga é o primeiro. O médium que cuida do seu em casa precisa manter quartinhas cheias, velas acesas, tudo organizado e bem servido.",
-    "dica4": "Cuidar de quem cuida de você começa aqui. Passar um paninho perfumado de alfazema antes da virada, tirar o que for de despachar, renovar com perfumes — esses são os cuidados descritos nos textos da casa.",
-    "dica5": "Começa com C. É o altar — tanto o do terreiro quanto o que o médium monta em casa para seus guias.",
-    "explicacao": "O Congá é o altar sagrado — coletivo no terreiro, pessoal na casa do médium. É um ponto de força que se fortalece a cada reforço anual. Já contém as 7 linhas da Umbanda em si mesmo, por isso o cruzamento de conga é o primeiro de todos. Manter o congá iluminado, as quartinhas cheias e tudo servido é responsabilidade espiritual diária. O primeiro pedaço do bolo vai sempre para ele."
-  },
-  {
-    "palavra": "ARRUDA",
-    "dica1": "Sua ausência num ritual específico é tão importante quanto a presença das outras — porque o que ela faz não é o que aquele momento pede.",
-    "dica2": "Fica de fora do amaci junto com o quebra-tudo, a espinheira e as pimenteiras. São ervas muito fortes — e o momento do cruzamento pede firmeza, não corte.",
-    "dica3": "Está entre as ervas de Exu listadas para a obrigação de agosto — ao lado de picão preto, aroeira, losna, dama da noite, vassourinha e quebra-tudo.",
-    "dica4": "É fácil de achar na rua, em floras e em feiras. Faz parte da lista de ervas que podem ser buscadas fora quando o médium não tem acesso a outras mais específicas.",
-    "dica5": "Começa com A. É a erva de proteção popular que não pode entrar no amaci do cruzamento.",
-    "explicacao": "A Arruda é uma erva de força, amarga e de natureza próxima aos Exus. Na nossa casa, está na lista de ervas para a obrigação de agosto — ao lado de outras ervas fortes. Mas não entra no amaci do cruzamento justamente por isso: o reforço do ori pede ervas que firmem e fortaleçam, não que cortem. Arruda, quebra-tudo, espinheira e ervas de Exu ficam de fora desse momento."
-  },
-  {
-    "palavra": "COROAÇÃO",
-    "dica1": "É o reconhecimento de uma caminhada — não do médium, mas da força que trabalhou através dele por anos. O médium recebe outro ritual, em outro momento.",
-    "dica2": "Quem recebe as ponteiras é o caboclo. Quem recebe as facas é o Exu. Confundir os dois é um erro grave de fundamento.",
-    "dica3": "Para que aconteça, dois critérios precisam estar completos: os cruzamentos básicos feitos pelo menos uma vez, e o apronte dos Exus com 7 aves.",
-    "dica4": "A partir dela, o caboclo está autorizado a desenvolver, fazer limpezas de Umbanda, cruzamentos e iniciar futuros filhos. Seu ponto é bordado no jaleco.",
-    "dica5": "Começa com C. É quando o caboclo borda o próprio ponto no jaleco e recebe as ponteiras para os pontos riscados.",
-    "explicacao": "A Coroação é o ritual de reconhecimento do caboclo — não do médium. O guia borda o ponto do pai ou mãe no jaleco e recebe as ponteiras, símbolo de que está apto a trabalhar com autonomia: desenvolver, fazer limpezas, axés de Umbanda e cruzamentos. Exige cruzamentos básicos feitos ao menos uma vez e apronte dos Exus com 7 aves. Não é o mesmo que o cacicamento — que é o axé do médium."
-  }
-];
-
-// DATA DE INÍCIO FIXADA EM 29 DE JUNHO DE 2026 (Para hoje, 9 de Julho, ser o Dia 11)
-const DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
-
-let palavraDoDiaObj = null;
-let tentativaAtual = 1;
-let nomeJogador = '';
-let historicoChutes = [];
-let diaJogando = 0; 
-let progressoDias = JSON.parse(localStorage.getItem('palavra_dia_progresso') || '{}');
-
-function normalizar(str) {
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
-}
-
-// ── FLUXO DE LOGIN ──
 document.getElementById('login-btn').addEventListener('click', () => {
   signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
 });
@@ -635,16 +383,17 @@ onAuthStateChanged(auth, (user) => {
   const inpNome = document.getElementById('qz-inp-nome');
   const saudacao = document.getElementById('qz-saudacao-logada');
   const saudacaoNome = document.getElementById('qz-saudacao-nome');
-  
   if (user) {
     statusEl.textContent = user.displayName || user.email;
     avatarEl.src = user.photoURL || '';
     avatarEl.style.display = user.photoURL ? 'block' : 'none';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
+    // já tá logada — usa o nome do login direto, sem pedir pra digitar
     inpNome.style.display = 'none';
     saudacaoNome.textContent = user.displayName || user.email;
     saudacao.style.display = 'block';
+    qzCarregarProgresso();
   } else {
     statusEl.textContent = 'Não conectada';
     avatarEl.style.display = 'none';
@@ -652,240 +401,1295 @@ onAuthStateChanged(auth, (user) => {
     logoutBtn.style.display = 'none';
     inpNome.style.display = 'block';
     saudacao.style.display = 'none';
+    document.getElementById('qz-progresso-geral').style.display = 'none';
+    document.getElementById('qz-btn-revisar').style.display = 'none';
+    qzProgresso = {};
+    qzRenderCategorias();
   }
-  
-  carregarErrosAdmin(); 
 });
 
-// ── RENDERIZAÇÃO DO CALENDÁRIO ──
-function renderizarCalendario() {
-  const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias);
-  
-  const grid = document.getElementById('calendario-grid');
-  let html = '';
-  
-  for (let i = 0; i <= indiceHoje; i++) {
-    if (i >= PALAVRAS_DO_DIA.length) break; 
-    
-    const status = progressoDias[i];
-    let classes = 'cal-dia';
-    let texto = `Dia ${i + 1}`;
-    let icone = '';
-    
-    if (i === indiceHoje) classes += ' today';
-    
-    if (status) {
-      classes += status.venceu ? ' won' : ' lost';
-      icone = status.venceu ? '✓ Acertou' : '✗ Errou';
-    } else {
-      classes += ' pending';
-      icone = 'Pendente';
-    }
-    
-    html += `<div class="${classes}" data-dia="${i}">${texto} <span style="font-size:10px">${icone}</span></div>`;
+// ══════════════════════════════════════════════════════════════
+// PERGUNTAS — 20 questões sobre os fundamentos e a doutrina
+// específica da nossa casa. Editável aqui, fixas por enquanto.
+// Formato: pergunta, 4 opções (a certa é sempre a de índice "certa"),
+// e uma explicação curta que aparece depois de responder.
+// ══════════════════════════════════════════════════════════════
+const QZ_PERGUNTAS = [
+  {
+    "id": 1,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "Uma coisa só é considerada \"confirmada\" na religião quando acontece na sessão, com o ambiente firmado e com testemunhas.",
+    "correta": true,
+    "explicacao": "Isso mesmo — confirmação de verdade exige sessão, ambiente firmado e testemunha. Sem atalho.",
+    "dificuldade": 1
+  },
+  {
+    "id": 2,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "A incorporação serve, no fundo, pra provar pra casa toda que o médium já tá desenvolvido.",
+    "correta": false,
+    "explicacao": "Não é sobre provar nada — é um atendimento, o médium empresta o corpo pra ancestralidade cuidar do povo dela.",
+    "dificuldade": 1
+  },
+  {
+    "id": 3,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Se um guia manda alguém ir embora e a pessoa não sai, é a corrente que entra em ação — isso é questão terrena, não do guia.",
+    "correta": true,
+    "explicacao": "Isso mesmo — assunto terreno se resolve com gente de carne e osso.",
+    "dificuldade": 1
+  },
+  {
+    "id": 4,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Fio de conta pode ser usado no dia a dia, tipo proteção e crachá religioso.",
+    "correta": false,
+    "explicacao": "Não — guia é pra sessão, incorporação e aperto de verdade, sempre com a seriedade do terreiro.",
+    "dificuldade": 1
+  },
+  {
+    "id": 5,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Assentamento de Exu nunca se limpa com água — é quizila pesada. A limpeza é com cachaça ou champagne, e defumação de cigarro ou charuto.",
+    "correta": true,
+    "explicacao": "Isso mesmo — água é quizila de Exu.",
+    "dificuldade": 2
+  },
+  {
+    "id": 6,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "\"Adolescência mediúnica\" é aquela fase em que a pessoa se acha o auge, acha que já sabe de tudo — e ainda tem muito chão pela frente.",
+    "correta": true,
+    "explicacao": "Isso mesmo — todo mundo passa por essa fase de achar que já sabe tudo cedo demais.",
+    "dificuldade": 1
+  },
+  {
+    "id": 7,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "Resguardo e preceito são a mesma coisa, só muda o nome.",
+    "correta": false,
+    "explicacao": "Não são — resguardo é o cuidado contínuo do dia a dia; preceito é mais rígido, com data e contexto ritual específicos.",
+    "dificuldade": 2
+  },
+  {
+    "id": 8,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "\"A Umbanda se basta\" quer dizer que ela tem começo, meio e fim — não precisa emprestar nada de outra religião pra se completar.",
+    "correta": true,
+    "explicacao": "Isso mesmo — a Umbanda é completa em si, do início ao fim.",
+    "dificuldade": 1
+  },
+  {
+    "id": 9,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Se você chega atrasada com a sessão já rolando, o certo é entrar reto na corrente, sem drama, pra não travar o fluxo.",
+    "correta": false,
+    "explicacao": "Não — o certo é se defumar, pedir licença com um gesto, entrar pelos cantos, sem cruzar a corrente.",
+    "dificuldade": 1
+  },
+  {
+    "id": 10,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Exu novo na casa só pode beber e fumar quando um guia mais velho oferece — antes disso, é só água.",
+    "correta": true,
+    "explicacao": "Isso mesmo — antes da liberação de um guia mais velho, é só água.",
+    "dificuldade": 1
+  },
+  {
+    "id": 11,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Cocar, espada e arco entregues cedo demais pro caboclo viram só enfeite — o médium não aprende a magia da dança de verdade.",
+    "correta": true,
+    "explicacao": "Isso mesmo — sem o elemento na hora certa, não rola aprender a dança de verdade.",
+    "dificuldade": 3
+  },
+  {
+    "id": 12,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "Na nossa casa, a Quimbanda é uma linha de trabalho dentro da Umbanda, debaixo da asa dos Orixás.",
+    "correta": false,
+    "explicacao": "Não — é um culto próprio, com Exus livres que se governam sozinhos, cultuado lado a lado com a Umbanda.",
+    "dificuldade": 2
+  },
+  {
+    "id": 13,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Se você sente que alguém tá com energia pesada, o certo é ir direto na pessoa e falar que ela precisa de uma limpeza.",
+    "correta": false,
+    "explicacao": "Não — o certo é se afastar, e se for gente próxima, perguntar como ela tá, sem ficar dando diagnóstico.",
+    "dificuldade": 1
+  },
+  {
+    "id": 14,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "O Conselho do Oxé toma decisão administrativa e financeira junto com a Diretoria.",
+    "correta": false,
+    "explicacao": "Não — ele é consultivo e mediador. Quem decide de fato é a Liderança Espiritual.",
+    "dificuldade": 2
+  },
+  {
+    "id": 15,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "Todo mundo paga a obrigação de agosto, mesmo quem não corta ave, porque ela é coletiva — o Exu do seu irmão de fé também te ampara.",
+    "correta": true,
+    "explicacao": "Isso mesmo — é comunidade, não conta individual.",
+    "dificuldade": 2
+  },
+  {
+    "id": 16,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Cacicamento é a mesma coisa que coroação de caboclo, só muda o nome.",
+    "correta": false,
+    "explicacao": "Não — cacicamento é o axé do médium, a confirmação de que ele já pode carregar sua própria bandeira.",
+    "dificuldade": 2
+  },
+  {
+    "id": 17,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Ao contar algo pra mãe de santo, o certo é saber que, se precisar de intervenção, ela vai agir — sem exigir que ela fique de boca fechada.",
+    "correta": true,
+    "explicacao": "Isso mesmo — não dá pra pedir sigilo absoluto quando o caso exige cuidado.",
+    "dificuldade": 1
+  },
+  {
+    "id": 18,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "\"Tempo não é cargo\" quer dizer que não existe hierarquia dentro de terreiro nenhum.",
+    "correta": false,
+    "explicacao": "Não é isso — quer dizer que anos de religião sozinhos não garantem que você aprendeu mais ou que manda mais. Hierarquia existe.",
+    "dificuldade": 2
+  },
+  {
+    "id": 19,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "A quartinha de Umbanda não vai pra rua nem se despacha, só se preenche. Já a de Exu vai pra rua pra movimentar a energia.",
+    "correta": true,
+    "explicacao": "Isso mesmo — cada uma tem seu jeito de ser cuidada.",
+    "dificuldade": 2
+  },
+  {
+    "id": 20,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "\"Pé não segura cabeça\" quer dizer que a Quimbanda tem que vir sempre antes da Umbanda.",
+    "correta": false,
+    "explicacao": "Não — quer dizer que o apronte de Exu não substitui o reforço de cabeça. Os dois importam, cada um na sua ordem.",
+    "dificuldade": 2
+  },
+  {
+    "id": 21,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Os Ibeji são um Orixá só, em duas forças — as únicas que são criança, e que irradiam toda a linha de trabalho.",
+    "correta": true,
+    "explicacao": "Isso mesmo — força única em duas, as crianças que irradiam a linha inteira.",
+    "dificuldade": 3
+  },
+  {
+    "id": 22,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Ninguém pode cruzar na frente do tambor durante o trabalho porque o tambor é de Xangô — todo tambor é consagrado a ele.",
+    "correta": true,
+    "explicacao": "Isso mesmo — passar na frente é desaforo com o Orixá.",
+    "dificuldade": 1
+  },
+  {
+    "id": 23,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "A bebida do banho de Iansã na virada do ano é vinho seco.",
+    "correta": false,
+    "explicacao": "Não — é champagne vermelha.",
+    "dificuldade": 2
+  },
+  {
+    "id": 24,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Amaci é o banho de ervas maceradas do cruzamento, feito pra reforçar a cabeça.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 25,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Um médium incorporado não reage direito a perigo físico porque o guia simplesmente não liga pra questão terrena.",
+    "correta": false,
+    "explicacao": "Não é desinteresse — a incorporação é um limbo, o médium perde noção de espaço, tempo e reflexo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 26,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "\"Mato é mato, e Oxóssi é rei\" quer dizer que, na hora do aperto, folha verde de qualquer árvore, pedindo ao Pai Oxóssi, já tem axé de sobra.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 27,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Elebó é o nome do primeiro corte de um médium recém-iniciado.",
+    "correta": false,
+    "explicacao": "Não — é uma das etapas da obrigação de agosto, momento de oferenda coletiva e fechamento.",
+    "dificuldade": 2
+  },
+  {
+    "id": 28,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Imagem de resina não entra nas obrigações porque o Sr. Tranca Ruas não aceita — só imagem tradicional, de gesso, vale.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 29,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "A assistência se vira sozinha durante a sessão — a corrente tá focada nos guias e no trabalho.",
+    "correta": false,
+    "explicacao": "Não — a corrente protege a assistência, ela é cuidada por todos, não é responsabilidade só de um.",
+    "dificuldade": 1
+  },
+  {
+    "id": 30,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Exu catiço é um Exu feito pra trabalhar e obedecer — controlado pelo Orixá, sem liberdade própria.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 31,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Na nossa casa, o Exu de Umbanda trabalha com erva e o de Quimbanda trabalha com axorô — essa é a diferença entre os dois.",
+    "correta": false,
+    "explicacao": "Não é essa a diferença — o de Umbanda é subordinado aos Orixás; o de Quimbanda é livre e se governa sozinho.",
+    "dificuldade": 2
+  },
+  {
+    "id": 32,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "O povo cigano entrou na Umbanda pelo sincretismo com santo católico cultuado por imigrante europeu no Brasil.",
+    "correta": false,
+    "explicacao": "Não — foi englobado pela Umbanda, que é religião de peito aberto pra ancestralidade de vários povos.",
+    "dificuldade": 3
+  },
+  {
+    "id": 33,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Tambor nunca fica \"xoxo\" nem é deixado de pé porque atrai alma desencarnada — só fica assim quando o congá tá de luto.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 34,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Assistência Fixa é o grupo que ajuda na cambonagem sem estar em desenvolvimento.",
+    "correta": false,
+    "explicacao": "Não — é o estágio antes de entrar na corrente, pra quem quer conhecer a casa antes de se iniciar.",
+    "dificuldade": 2
+  },
+  {
+    "id": 35,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Erva que cai no chão durante o banho pode ser guardada pra usar depois, se ainda tiver fresca.",
+    "correta": false,
+    "explicacao": "Não — despacha no verde. Erva que caiu no chão não volta pro banho de jeito nenhum.",
+    "dificuldade": 3
+  },
+  {
+    "id": 36,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Xangô come em gamela de madeira — punição de Oxalá, depois que ele matou todo mundo numa vila por não ser reconhecido Rei.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 37,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Guia mais novo já pode dar passe ou consulta a partir do primeiro cruzamento, já libera geral.",
+    "correta": false,
+    "explicacao": "Não — só quando a mãe de santo autorizar. Não tem prazo fixo, é caso a caso.",
+    "dificuldade": 3
+  },
+  {
+    "id": 38,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Dendê, no assentamento de Exu, é o catalisador da força dele — o axorô fora da época de corte, que turbina os elementos.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 39,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O Adê é a coroa ritual usada por todos os Orixás, sem exceção.",
+    "correta": false,
+    "explicacao": "Não — é a coroa das Yabás (Orixás femininas). Não entra em Xangô, Ogum, Oxóssi e outros masculinos.",
+    "dificuldade": 3
+  },
+  {
+    "id": 40,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "A Umbanda não sai convertendo gente porque o médium não salva ninguém — filho vem sozinho, a espiritualidade busca quem é do caminho dela.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 41,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Ponto de força pessoal é o congá que o médium monta em casa depois do primeiro cruzamento.",
+    "correta": false,
+    "explicacao": "Não — é o espaço onde convergem todas as forças buscadas ao longo dos anos (congá e assentamento), fortalecido a cada reforço.",
+    "dificuldade": 3
+  },
+  {
+    "id": 42,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Apronte é do Exu — ele ganha as ferramentas finais e já trabalha sozinho. Coroação é do caboclo — recebe as ponteiras e autorização pra desenvolver e cruzar.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 43,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "A nossa casa se organizou legalmente com alvará direto da prefeitura, como associação religiosa independente.",
+    "correta": false,
+    "explicacao": "Não — foi com filiação à Associação Pedra de Xangô como amparo legal. Alvará próprio fica pra quando tiver casa própria.",
+    "dificuldade": 2
+  },
+  {
+    "id": 44,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "A linha do Oriente, na nossa casa, é a linha dos Ciganos — povo com magia própria, englobado pela Umbanda.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 45,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Não é recomendado visitar outra casa sozinho no início do desenvolvimento porque precisa de autorização formal da mãe de santo pra isso.",
+    "correta": false,
+    "explicacao": "O motivo real é preservar o desenvolvimento — o médium precisa estar firme e maduro antes de levar os guias pra outro ambiente.",
+    "dificuldade": 2
+  },
+  {
+    "id": 46,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "O preceito mínimo de um cruzamento é um dia antes, o dia em si e um dia depois — sem álcool, sexo, comida pesada ou droga.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 47,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "As oferendas dos guias podem ficar indefinidamente até o médium ter condição de levantar.",
+    "correta": false,
+    "explicacao": "Não — o médium levanta no prazo orientado. Se passar, fica apodrecendo, e a entidade se vira do jeito dela.",
+    "dificuldade": 1
+  },
+  {
+    "id": 48,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "A Umbanda é a única religião genuinamente brasileira porque nasceu da miscigenação forçada de negro, indígena e europeu.",
+    "correta": true,
+    "explicacao": "Isso mesmo — é o respiro desses povos num país miscigenado.",
+    "dificuldade": 3
+  },
+  {
+    "id": 49,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "Em caso de conduta antiética comprovada, o membro passa só por advertência verbal e escrita antes de qualquer coisa mais séria.",
+    "correta": false,
+    "explicacao": "Não — a pessoa perde a condição de membro, e a Liderança Espiritual pode expulsar na hora, por orientação dos guias.",
+    "dificuldade": 2
+  },
+  {
+    "id": 50,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "\"Sessão das Almas\", na obrigação de agosto, é a primeira etapa dela — a frente de Umbanda, antes do trabalho de Quimbanda.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 51,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O banho certo de Oxum na virada do ano é feito com champagne branca.",
+    "correta": false,
+    "explicacao": "Não — é água de canjica amarela.",
+    "dificuldade": 2
+  },
+  {
+    "id": 52,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "\"Passe em roupa de ausente\" é trazer uma roupa de outra pessoa pra receber o passe por ela na sessão — de preferência um pijama.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 53,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O carvão da defumação pode ser guardado pra reaproveitar na próxima sessão, se ainda sobrar.",
+    "correta": false,
+    "explicacao": "Não — despacha no mato ou no cruzeiro mais perto. Carvão usado nunca volta pra casa.",
+    "dificuldade": 2
+  },
+  {
+    "id": 54,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O bicho sagrado de Oxum, que representa o feminino e a construção paciente, é a aranha.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 55,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Oxalá usa saia e Adê porque representa a neutralidade entre feminino e masculino.",
+    "correta": false,
+    "explicacao": "Não — foi punição de Nanã. Ele se travestiu pra entrar no reino dos mortos e foi descoberto.",
+    "dificuldade": 2
+  },
+  {
+    "id": 56,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "O \"axé de visão\" ligado às cartas ciganas é feito junto ao Pai Oxalá e ao Povo Cigano, selando o compromisso do médium com as cartas.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 57,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "A bebida tradicional do caboclo, no cruzamento de quem ainda não sabe seu Orixá de cabeça, é o guaraná.",
+    "correta": false,
+    "explicacao": "Não — é cerveja preta.",
+    "dificuldade": 2
+  },
+  {
+    "id": 58,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "\"Ponto de força\", nos cruzamentos anuais, é o lugar dentro do salão onde o médium se posiciona na corrente.",
+    "correta": false,
+    "explicacao": "Não — é o lugar na natureza (pedreira, praia, mata, rio) onde se busca energia pra reforçar a espiritualidade.",
+    "dificuldade": 2
+  },
+  {
+    "id": 59,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Ao ver um guia se aproximando de alguém da assistência em situação de risco, o certo é chegar por trás da pessoa, se comunicar visualmente com o guia, e ficar por perto.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 60,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "\"Pé não segura cabeça\", sobre as obrigações, quer dizer que a obrigação dos Exus não pode ser antes da obrigação dos Orixás de cabeça.",
+    "correta": false,
+    "explicacao": "Não é sobre ordem — é que o apronte dos Exus não substitui o reforço de cabeça. Os dois importam.",
+    "dificuldade": 2
+  },
+  {
+    "id": 61,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Não se deve repassar o que os guias falaram numa consulta de outra pessoa, porque aquilo foi dito pra ela, naquele momento — e a gente vai entender errado usando o próprio julgamento.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 62,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "\"Corte\", na obrigação de agosto, é o ritual anual de separação entre Umbanda e Quimbanda.",
+    "correta": false,
+    "explicacao": "Não — é o sacrifício de aves pra alimentar os Exus, no ponto mais forte da obrigação.",
+    "dificuldade": 2
+  },
+  {
+    "id": 63,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "O Exu Cigano e o Cigano do Oriente são nomes diferentes pra mesma entidade, sem diferença nenhuma.",
+    "correta": false,
+    "explicacao": "Não — o Exu Cigano é Exu antes de tudo e corta. O Cigano do Oriente é entidade própria, mais sutil.",
+    "dificuldade": 3
+  },
+  {
+    "id": 64,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Pra levantar a obrigação do ori depois do cruzamento, o médium se ajoelha no congá, tira o pano com cuidado, lava a cabeça com as mãos em água morna, e despacha no verde — sem química depois.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 65,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Sessão de Almas é feita no cemitério em 1º de novembro, na virada de Finados.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 66,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "A roupa pra levantação da obrigação é roupa de trabalho completa — jaleco, saia, material dos guias.",
+    "correta": false,
+    "explicacao": "Não — é roupa simples de terreiro. Não é sessão, não precisa ser roupa de trabalho.",
+    "dificuldade": 2
+  },
+  {
+    "id": 67,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Elebó é um tipo de oferenda coletiva feita no fim da obrigação de agosto — momento de encerramento e agradecimento.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 68,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O único Orixá que leva dendê e mel juntos é Ogum.",
+    "correta": false,
+    "explicacao": "Não — é Xangô.",
+    "dificuldade": 3
+  },
+  {
+    "id": 69,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Não se repassa orientação de guia sem autorização porque aquilo foi dito pra aquela pessoa — não cabe a gente interpretar ou achar que ela entendeu errado.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 70,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "O médium já pode levar as quartinhas de Exu pra casa assim que o Exu tiver nome confirmado, antes mesmo do apronte.",
+    "correta": false,
+    "explicacao": "Não — as quartinhas ficam no terreiro e só vão pra casa do médium depois do apronte.",
+    "dificuldade": 2
+  },
+  {
+    "id": 71,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Se o tamboreiro chama o guia e ele ainda não chegou, o certo é sentir a energia, fechar os olhos, e deixar o guia chegar naturalmente — sem forçar.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 72,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "Ogum Megê é o Exu chefe da nossa tronqueira, que guarda o assentamento do Sr. Tranca Ruas.",
+    "correta": false,
+    "explicacao": "Não — é o guardião dos Exus de Quimbanda, que junto com Bará rege os trabalhos dos Exus livres.",
+    "dificuldade": 3
+  },
+  {
+    "id": 73,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Não se usa roupa íntima qualquer nos trabalhos porque tem hora que se levanta saia, vira, abaixa — a calça garante que ninguém passe vergonha nem se distraia.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 74,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "A bebida do banho de Oxalá na virada do ano é água mineral.",
+    "correta": false,
+    "explicacao": "Não — é água de canjica branca.",
+    "dificuldade": 2
+  },
+  {
+    "id": 75,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Saia de armação, tecido bonito e maquiagem mais pesada valem no Elebó de Exu.",
+    "correta": true,
+    "explicacao": "Isso mesmo — o Elebó é a exceção onde vale caprichar mais no vestuário.",
+    "dificuldade": 2
+  },
+  {
+    "id": 76,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "O Conselho do Oxé toma decisão junto com a mãe de santo em questão religiosa.",
+    "correta": false,
+    "explicacao": "Não — ele é consultivo e mediador, atua em ética e acolhimento, mas quem decide de fato é sempre a Liderança Espiritual.",
+    "dificuldade": 2
+  },
+  {
+    "id": 77,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Remédio de uso contínuo e orientado por médico não se mexe no dia da sessão — se precisar, avisa que o guia não vai beber.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 78,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Não é legal levar como confirmado um elemento que o guia usou num sonho, porque a visão traz erro, interpretação e símbolo — o guia mostra de um jeito e às vezes usa diferente em terra.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 79,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "O papel da cambona chefe com os guias mais novos é impedir que eles se manifestem até a mãe de santo autorizar.",
+    "correta": false,
+    "explicacao": "Não — ela é a referência que conhece cada guia, orienta os mais novos na cambonagem, e tem autoridade dentro da sessão.",
+    "dificuldade": 2
+  },
+  {
+    "id": 80,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O \"Apete de Batata\", na frente de Bará, é um purê de batata moldado em formato de chave ou pirâmide.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 81,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "A Umbanda não sai batendo de porta em porta convidando gente porque a doutrina proíbe qualquer forma de evangelização.",
+    "correta": false,
+    "explicacao": "Não é proibição — é porque a Umbanda acredita que a espiritualidade vai buscar a pessoa, se for do caminho dela.",
+    "dificuldade": 1
+  },
+  {
+    "id": 82,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "Arruda, quebra-tudo, espinheira e ervas muito fortes de Exu não entram no amaci do cruzamento.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 83,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "O preceito de obrigação de Quimbanda é idêntico ao preceito de sessão comum.",
+    "correta": false,
+    "explicacao": "Não — o de Quimbanda é bem mais longo, com preceito físico nos dias de trabalho e resguardo comportamental o agosto inteiro.",
+    "dificuldade": 2
+  },
+  {
+    "id": 84,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "A mãe de santo da nossa casa não se autodeclarou porque, na nossa doutrina, coroação não é cacicamento — ela não ia cobrar dos filhos um fundamento que ela mesma ignorasse.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 85,
+    "categoria": "Estrutura da Casa",
+    "afirmacao": "O preto velho que acolheu a mãe de santo na casa da Betânia e a encaminhou pra Madrinha foi o Vô Chico.",
+    "correta": false,
+    "explicacao": "Não — foi o Vô Benedito.",
+    "dificuldade": 3
+  },
+  {
+    "id": 86,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O \"axé da língua\" — da fala e da boa comida — pertence a Xangô.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
+  },
+  {
+    "id": 87,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Se o médium não levantar a oferenda no prazo orientado pelo guia, a mãe de santo é avisada pelos guias e faz a levantação pra não apodrecer.",
+    "correta": false,
+    "explicacao": "Não — vai apodrecer lá mesmo. A entidade se vira do jeito dela, e o médium arca com as consequências.",
+    "dificuldade": 1
+  },
+  {
+    "id": 88,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Bebida energética vale em pequena quantidade no dia da sessão, pra ajudar quem tá cansada.",
+    "correta": false,
+    "explicacao": "Não — altera quimicamente muito forte e prejudica o trabalho mediúnico. Café, com moderação, é melhor.",
+    "dificuldade": 2
+  },
+  {
+    "id": 89,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "Cruzamento de conga é o primeiro cruzamento — a primeira ligação ritualística com os guias, feita com ervas na cabeça, no ponto mais sagrado.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 90,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Não é legal sair oferecendo diagnóstico espiritual sem pedir porque esse tipo de avaliação acaba com relação, cria narrativa sobre quem nem se defendeu, e é perigoso.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 91,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "A bebida do banho de Ogum na virada do ano é cerveja amarela.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 92,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "A duração mínima do Preceito de Cruzamento é sete dias — três antes, o dia em si e três depois.",
+    "correta": false,
+    "explicacao": "Não — o mínimo é três dias: um antes, o dia em si, e um depois, podendo estender se precisar.",
+    "dificuldade": 2
+  },
+  {
+    "id": 93,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "Relacionamento amoroso dentro do terreiro é totalmente proibido, pra preservar a harmonia dos trabalhos.",
+    "correta": false,
+    "explicacao": "Não é proibido — amor de verdade, com respeito, é bem-vindo. O que não cabe é pegação e troca por troca.",
+    "dificuldade": 1
+  },
+  {
+    "id": 94,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "O tambor da sessão nunca fica \"xoxo\" nem de pé sem motivo porque atrai alma desencarnada — só fica assim quando o congá tá de luto.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 1
+  },
+  {
+    "id": 95,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O \"axé do mel\" é uma oferenda exclusiva de Oxum, usada só nos trabalhos dela e dos filhos dela.",
+    "correta": false,
+    "explicacao": "Não — é um axé bem mais abrangente, que aparece em quase toda ritualística, até no final da obrigação dos Exus.",
+    "dificuldade": 3
+  },
+  {
+    "id": 96,
+    "categoria": "Postura & Conduta",
+    "afirmacao": "\"Conta pra mãe de santo mas não fala que fui eu\" é a forma certa de proteger quem tá sendo relatado.",
+    "correta": false,
+    "explicacao": "Não — isso é só transferência de carga, tira a preocupação de si sem dar ferramenta nenhuma pra resolver. Melhor evitar.",
+    "dificuldade": 1
+  },
+  {
+    "id": 97,
+    "categoria": "Desenvolvimento Mediúnico",
+    "afirmacao": "\"Ponteiro\", na religião da casa, é um posto raro hoje em dia — quem puxa os pontos sem tambor nenhum.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 98,
+    "categoria": "Quimbanda & Exu",
+    "afirmacao": "A primeira obrigação com assentamento custa mais que as seguintes porque, na primeira vez, tem que comprar tudo pra materializar o sagrado — depois, é só ave.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 2
+  },
+  {
+    "id": 99,
+    "categoria": "Fundamentos & Doutrina",
+    "afirmacao": "\"Não existe erro tão grave que não possa ser cometido uma vez\" quer dizer que a Umbanda perdoa qualquer erro, não importa a gravidade.",
+    "correta": false,
+    "explicacao": "Não é bem isso — quer dizer que um erro tão grave assim vem de uma sucessão de erros. Umbanda é sobre aprender e crescer, não ser perfeita.",
+    "dificuldade": 2
+  },
+  {
+    "id": 100,
+    "categoria": "Orixás & Rituais",
+    "afirmacao": "O \"axé de Pombagira pra casa\" é um axé de brilho, caminho, amor próprio, conquista e liberdade — Pombagira é a mulher livre em essência.",
+    "correta": true,
+    "explicacao": "Isso mesmo.",
+    "dificuldade": 3
   }
-  
-  grid.innerHTML = html;
-  
-  // Adiciona os cliques no calendário
-  grid.querySelectorAll('.cal-dia.pending').forEach(el => {
-    el.addEventListener('click', () => iniciarJogo(parseInt(el.dataset.dia)));
-  });
-  
-  grid.querySelectorAll('.cal-dia.won, .cal-dia.lost').forEach(el => {
-    el.addEventListener('click', () => {
-      const dia = parseInt(el.dataset.dia);
-      const palavra = PALAVRAS_DO_DIA[dia].palavra;
-      alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.`);
+];
+
+let qzNome = '';
+let qzIndiceAtual = 0;
+let qzAcertos = 0;
+let qzPontos = 0;
+const QZ_LABEL_DIFICULDADE = { 1: '⭐ vale 1 ponto', 2: '⭐⭐ vale 2 pontos', 3: '⭐⭐⭐ vale 3 pontos' };
+let qzRespondida = false;
+let qzProgresso = {}; // { [questionId]: { escolha, certa, data } }
+
+function qzEmbaralhar(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// dispara uma explosão de bolhinhas subindo da tela, tipo comemoração — usado ao acertar
+function qzDispararBolhas(qtd = 10) {
+  for (let i = 0; i < qtd; i++) {
+    const b = document.createElement('div');
+    b.className = 'bolha-comemora';
+    const tam = 8 + Math.random() * 16;
+    b.style.width = tam + 'px';
+    b.style.height = tam + 'px';
+    b.style.left = (30 + Math.random() * 40) + 'vw';
+    b.style.bottom = (10 + Math.random() * 15) + 'vh';
+    b.style.setProperty('--sobe', (-140 - Math.random() * 100) + 'px');
+    b.style.setProperty('--lado', (Math.random() * 80 - 40) + 'px');
+    b.style.animationDelay = (Math.random() * 0.3) + 's';
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1400);
+  }
+}
+
+// ── SOM DE BOLHA ESTOURANDO (sintetizado, sem precisar de arquivo de áudio) ──
+let qzAudioCtx = null;
+function qzGetAudioCtx() {
+  if (!qzAudioCtx) qzAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (qzAudioCtx.state === 'suspended') qzAudioCtx.resume();
+  return qzAudioCtx;
+}
+function qzSomBolha(acertou) {
+  try {
+    const ctx = qzGetAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    const now = ctx.currentTime;
+    if (acertou) {
+      // "pop" de bolha subindo — agudo e rápido
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(650, now);
+      osc.frequency.exponentialRampToValueAtTime(1500, now + 0.09);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.16, now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now); osc.stop(now + 0.23);
+    } else {
+      // "plop" mais grave e suave — sem soar punitivo
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(200, now);
+      osc.frequency.exponentialRampToValueAtTime(110, now + 0.16);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.11, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now); osc.stop(now + 0.23);
+    }
+  } catch (e) { /* áudio bloqueado pelo navegador — segue sem som */ }
+}
+
+// ── SEQUÊNCIA DE ACERTOS ──
+let qzSequencia = 0;
+const QZ_MARCOS_SEQUENCIA = { 2: '⚡ 2 seguidas!', 3: '🔥 3 seguidas!', 5: '🔥🔥 5 seguidas, arrasando!', 7: '🔥🔥🔥 7! Você tá on fire!', 10: '👑 10 seguidas?! Surreal!' };
+function qzRegistrarSequencia(acertou) {
+  if (!acertou) { qzSequencia = 0; return; }
+  qzSequencia++;
+  let msg = QZ_MARCOS_SEQUENCIA[qzSequencia];
+  if (!msg && qzSequencia > 10 && qzSequencia % 5 === 0) msg = `🔥 ${qzSequencia} seguidas! Impressionante!`;
+  if (!msg) return;
+  const el = document.createElement('div');
+  el.className = 'qz-sequencia-popup';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1700);
+}
+
+// ── FRASES DE REAÇÃO VARIADAS ──
+const QZ_FRASES_ACERTOU = ['✓ Isso mesmo! ', '✓ Na mosca! ', '✓ Mandou bem! ', '✓ Exatamente isso! ', '✓ Acertou em cheio! ', '✓ Isso aí! ', '✓ Boa, viu! ', '✓ Aí sim! '];
+const QZ_FRASES_ERROU = ['✗ Quase! ', '✗ Foi por pouco! ', '✗ Não foi dessa vez! ', '✗ Escapou essa! ', '✗ Essa pegou, hein! ', '✗ Ih, essa não! '];
+function qzFraseSorteada(acertou) {
+  const lista = acertou ? QZ_FRASES_ACERTOU : QZ_FRASES_ERROU;
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+let qzPerguntasRodada = [];
+let qzCategoriaEscolhida = 'todas';
+
+// ── PROGRESSO INDIVIDUAL (por login) ──
+async function qzCarregarProgresso() {
+  if (!currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, 'quiz_fundamentos_progresso', currentUser.uid));
+    qzProgresso = snap.exists() ? (snap.data().respondidas || {}) : {};
+  } catch (e) {
+    console.warn('carregar progresso:', e);
+    qzProgresso = {};
+  }
+  qzRenderProgressoGeral();
+  qzRenderCategorias();
+  const btnRevisar = document.getElementById('qz-btn-revisar');
+  btnRevisar.style.display = Object.keys(qzProgresso).length ? 'inline-block' : 'none';
+}
+
+function qzRenderProgressoGeral() {
+  const wrap = document.getElementById('qz-progresso-geral');
+  const total = QZ_PERGUNTAS.length;
+  const respondidas = Object.keys(qzProgresso).length;
+  if (!respondidas) { wrap.style.display = 'none'; return; }
+  const acertos = Object.values(qzProgresso).filter(r => r.certa).length;
+  const pct = Math.round(respondidas / total * 100);
+  wrap.style.display = 'block';
+  wrap.innerHTML = `Você já respondeu <strong>${respondidas} de ${total}</strong> perguntas — <strong>${acertos}</strong> certas
+    <div class="qz-progresso-geral-barra"><div class="qz-progresso-geral-fill" style="width:${pct}%"></div></div>`;
+}
+
+async function qzSalvarProgresso(perguntaId, escolhaIdx, certa) {
+  qzProgresso[perguntaId] = { escolha: escolhaIdx, certa, data: Date.now() };
+  qzRenderProgressoGeral();
+  if (!currentUser) return; // só salva de verdade se estiver logada
+  try {
+    await setDoc(doc(db, 'quiz_fundamentos_progresso', currentUser.uid), {
+      nome: currentUser.displayName || currentUser.email,
+      respondidas: { [perguntaId]: { escolha: escolhaIdx, certa, data: serverTimestamp() } }
+    }, { merge: true });
+  } catch (e) { console.warn('salvar progresso:', e); }
+}
+
+const QZ_TAMANHO_LEVA = 7;
+const QZ_LIMITE_DIARIO = 7;
+
+// ── LIMITE DIÁRIO — no máximo 7 perguntas do modo normal por dia (pergunta do dia não conta) ──
+function qzChaveContadorDia() { return 'qz_contador_' + new Date().toISOString().slice(0, 10); }
+function qzRespostasHojeContagem() { return parseInt(localStorage.getItem(qzChaveContadorDia()) || '0', 10); }
+function qzIncrementarContadorDia() {
+  const n = qzRespostasHojeContagem() + 1;
+  try { localStorage.setItem(qzChaveContadorDia(), String(n)); } catch (e) {}
+  return n;
+}
+function qzRenderContadorDia() {
+  const feitas = qzRespostasHojeContagem();
+  const wrap = document.getElementById('qz-contador-dia');
+  const cheio = feitas >= QZ_LIMITE_DIARIO;
+  wrap.classList.toggle('cheio', cheio);
+  wrap.innerHTML = cheio
+    ? `✅ Você já fez suas <strong>${QZ_LIMITE_DIARIO} de hoje</strong>! Volta amanhã pra mais ✦`
+    : `📅 <strong>${feitas}/${QZ_LIMITE_DIARIO}</strong> perguntas hoje`;
+  const btn = document.getElementById('qz-btn-comecar');
+  btn.disabled = cheio;
+  btn.textContent = cheio ? 'Volte amanhã ✦' : 'Começar ✦';
+}
+
+
+function qzPoolCategoria(cat) {
+  return cat === 'todas' ? QZ_PERGUNTAS : QZ_PERGUNTAS.filter(p => p.categoria === cat);
+}
+// pega só a próxima leva de até 7 perguntas não respondidas (ordem fixa por id, garante que
+// sempre é a MESMA leva até ela ser concluída — desbloqueia a próxima assim que termina essa)
+function qzLevaAtual(cat) {
+  const pool = qzPoolCategoria(cat);
+  const naoRespondidas = pool.filter(p => !qzProgresso[p.id]).sort((a, b) => a.id - b.id);
+  return naoRespondidas.slice(0, QZ_TAMANHO_LEVA);
+}
+
+const QZ_BICHOS_TRILHA = ['🥚', '🐛', '🦋']; // travada, atual, feita — evolução visual da trilha
+function qzAtualizarLevaInfo() {
+  const wrap = document.getElementById('qz-leva-info');
+  const pool = qzPoolCategoria(qzCategoriaEscolhida);
+  const total = pool.length;
+  const respondidas = pool.filter(p => qzProgresso[p.id]).length;
+  if (respondidas >= total) { wrap.style.display = 'none'; return; }
+  const totalLevas = Math.ceil(total / QZ_TAMANHO_LEVA);
+  const levaAtualNum = Math.floor(respondidas / QZ_TAMANHO_LEVA) + 1;
+  const tamanhoLeva = Math.min(QZ_TAMANHO_LEVA, total - respondidas);
+  let bichos = '';
+  for (let i = 1; i <= totalLevas; i++) {
+    let cls = 'qz-trilha-no', bicho = QZ_BICHOS_TRILHA[0];
+    if (i < levaAtualNum) { cls += ' feita'; bicho = QZ_BICHOS_TRILHA[2]; }
+    else if (i === levaAtualNum) { cls += ' atual'; bicho = QZ_BICHOS_TRILHA[1]; }
+    bichos += `<span class="${cls}">${bicho}</span>`;
+  }
+  wrap.style.display = 'block';
+  wrap.innerHTML = `🧭 Leva ${levaAtualNum} de ${totalLevas} — ${tamanhoLeva} pergunta${tamanhoLeva > 1 ? 's' : ''} pra desbloquear a próxima<div class="qz-trilha">${bichos}</div>`;
+}
+
+function qzRenderCategorias() {
+  const categorias = [...new Set(QZ_PERGUNTAS.map(p => p.categoria))];
+  const wrap = document.getElementById('qz-categorias');
+  const restantesTodas = QZ_PERGUNTAS.filter(p => !qzProgresso[p.id]).length;
+  wrap.innerHTML = `<button class="qz-cat-chip ativo" data-cat="todas">Todas <span class="qtd">${restantesTodas}</span></button>`
+    + categorias.map(c => {
+        const doCategoria = QZ_PERGUNTAS.filter(p => p.categoria === c);
+        const restantes = doCategoria.filter(p => !qzProgresso[p.id]).length;
+        const completa = restantes === 0;
+        return `<button class="qz-cat-chip${completa ? ' completa' : ''}" data-cat="${c}">${c} <span class="qtd">${completa ? '✓' : restantes}</span></button>`;
+      }).join('');
+  wrap.querySelectorAll('.qz-cat-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      qzCategoriaEscolhida = chip.dataset.cat;
+      wrap.querySelectorAll('.qz-cat-chip').forEach(c => c.classList.remove('ativo'));
+      chip.classList.add('ativo');
+      qzAtualizarLevaInfo();
     });
   });
+  qzAtualizarLevaInfo();
 }
-
-// ── INICIAR JOGO ──
-function iniciarJogo(indiceDia) {
-  nomeJogador = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
-  if (!nomeJogador) { document.getElementById('qz-inp-nome').focus(); return; }
-
-  if (progressoDias[indiceDia]) {
-    alert('Você já jogou este dia! Escolha um dia pendente.');
-    return;
-  }
-
-  diaJogando = indiceDia;
-  palavraDoDiaObj = PALAVRAS_DO_DIA[indiceDia];
-  tentativaAtual = 1;
-  historicoChutes = []; 
-  
-  document.getElementById('qz-tela-inicio').style.display = 'none';
-  document.getElementById('qz-tela-jogo').style.display = 'block';
-  document.getElementById('dicas-anteriores').innerHTML = ''; 
-  
-  renderizarDica();
-}
+qzRenderCategorias();
+qzRenderContadorDia();
 
 document.getElementById('qz-btn-comecar').addEventListener('click', () => {
-  const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias);
-  
-  if (progressoDias[indiceHoje]) {
-    alert('Você já jogou a palavra de hoje! Escolha um dia pendente no histórico ou volte amanhã ✦');
+  qzNome = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
+  if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
+  const restanteHoje = QZ_LIMITE_DIARIO - qzRespostasHojeContagem();
+  if (restanteHoje <= 0) {
+    alert('Você já fez suas 7 perguntas de hoje! Volta amanhã pra continuar a trilha ✦');
     return;
   }
-  iniciarJogo(indiceHoje);
+  const base = qzLevaAtual(qzCategoriaEscolhida).slice(0, restanteHoje);
+  if (!base.length) {
+    alert('Você já respondeu todas as perguntas dessa área! Escolhe outra categoria, ou dá uma olhada em "Revisar minhas respostas" ✦');
+    return;
+  }
+  qzGetAudioCtx(); // destrava o áudio no gesto de clique, evita bloqueio do navegador na primeira resposta
+  qzSequencia = 0;
+  qzPerguntasRodada = qzEmbaralhar(base);
+  qzIndiceAtual = 0;
+  qzAcertos = 0;
+  qzPontos = 0;
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-resultado').style.display = 'none';
+  document.getElementById('qz-tela-jogo').style.display = 'block';
+  qzRenderPergunta();
 });
 
-function renderizarDica() {
-  document.getElementById('qz-progresso-fill').style.width = (tentativaAtual / 5 * 100) + '%';
-  document.getElementById('qz-progresso-txt').textContent = `Dica ${tentativaAtual}/5`;
-  document.getElementById('qz-pergunta-num').textContent = `DICA ${tentativaAtual} DE 5`;
-  document.getElementById('qz-pergunta-txt').textContent = palavraDoDiaObj['dica' + tentativaAtual];
-  document.getElementById('qz-inp-chute').value = '';
-  document.getElementById('qz-inp-chute').focus();
-  
-  if (tentativaAtual === 5) {
-    document.getElementById('qz-btn-pular').textContent = 'Desistir 🏳️';
-  } else {
-    document.getElementById('qz-btn-pular').textContent = 'Pular Dica →';
-  }
+document.getElementById('qz-btn-sair').addEventListener('click', () => {
+  // cada resposta já foi salva na hora — só volta pro início sem forçar terminar a rodada
+  document.getElementById('qz-tela-jogo').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+  qzRenderCategorias();
+  qzRenderContadorDia();
+});
+
+function qzRenderPergunta() {
+  qzRespondida = false;
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  const total = qzPerguntasRodada.length;
+  document.getElementById('qz-progresso-fill').style.width = ((qzIndiceAtual) / total * 100) + '%';
+  document.getElementById('qz-progresso-txt').textContent = `${qzIndiceAtual + 1}/${total}`;
+  document.getElementById('qz-pergunta-num').textContent = `AFIRMAÇÃO ${qzIndiceAtual + 1}`;
+  document.getElementById('qz-pergunta-categoria').textContent = p.categoria;
+  document.getElementById('qz-pergunta-txt').textContent = p.afirmacao;
+  const dif = p.dificuldade || 1;
+  const seloDif = document.getElementById('qz-pontos-selo');
+  seloDif.textContent = QZ_LABEL_DIFICULDADE[dif] || QZ_LABEL_DIFICULDADE[1];
+  seloDif.className = 'qz-pontos-selo d' + dif;
+
+  document.querySelectorAll('.qz-vf-btn').forEach(btn => {
+    btn.disabled = false;
+    btn.classList.remove('certa', 'errada');
+  });
+
+  document.getElementById('qz-feedback').className = 'qz-feedback';
+  document.getElementById('qz-feedback').textContent = '';
+  document.getElementById('qz-btn-proxima').classList.remove('show');
 }
 
-document.getElementById('qz-btn-chutar').addEventListener('click', () => processarChute(false));
-document.getElementById('qz-btn-pular').addEventListener('click', () => processarChute(true));
+function qzResponder(escolhaBool) {
+  if (qzRespondida) return;
+  qzRespondida = true;
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  const acertou = escolhaBool === p.correta;
+  if (acertou) { qzAcertos++; qzPontos += (p.dificuldade || 1); qzDispararBolhas(); }
+  qzSalvarProgresso(p.id, escolhaBool, acertou);
+  qzSomBolha(acertou);
+  qzRegistrarSequencia(acertou);
+  qzIncrementarContadorDia();
 
-function processarChute(pular = false) {
-  const chute = document.getElementById('qz-inp-chute').value;
-  historicoChutes.push(pular ? '[Pulou a dica]' : chute || '[Em branco]');
-  
-  if (!pular && normalizar(chute) === normalizar(palavraDoDiaObj.palavra)) {
-    finalizarJogo(true);
-  } else {
-    const dicasAnteriores = document.getElementById('dicas-anteriores');
-    dicasAnteriores.innerHTML += `<div class="dica-anterior"><strong>Dica ${tentativaAtual}:</strong> ${palavraDoDiaObj['dica' + tentativaAtual]}</div>`;
-    
-    tentativaAtual++;
-    if (tentativaAtual > 5) {
-      finalizarJogo(false);
-    } else {
-      renderizarDica();
-    }
-  }
+  document.querySelectorAll('.qz-vf-btn').forEach(btn => {
+    btn.disabled = true;
+    const valBtn = btn.dataset.val === 'true';
+    if (valBtn === p.correta) btn.classList.add('certa');
+    else if (valBtn === escolhaBool) btn.classList.add('errada');
+  });
+
+  const cartao = document.querySelector('.qz-pergunta-card');
+  cartao.classList.add(acertou ? 'pulse-certa' : 'pulse-errada');
+  setTimeout(() => cartao.classList.remove('pulse-certa', 'pulse-errada'), 500);
+
+  const fb = document.getElementById('qz-feedback');
+  fb.textContent = qzFraseSorteada(acertou) + p.explicacao + (acertou ? ` (+${p.dificuldade || 1} pts)` : '');
+  fb.className = 'qz-feedback show ' + (acertou ? 'acertou' : 'errou');
+
+  const btnProx = document.getElementById('qz-btn-proxima');
+  btnProx.textContent = (qzIndiceAtual < qzPerguntasRodada.length - 1) ? 'Próxima →' : 'Ver resultado 🎉';
+  btnProx.classList.add('show');
 }
 
-async function finalizarJogo(venceu) {
+document.querySelectorAll('.qz-vf-btn').forEach(btn => {
+  btn.addEventListener('click', () => qzResponder(btn.dataset.val === 'true'));
+});
+
+document.getElementById('qz-btn-proxima').addEventListener('click', () => {
+  qzIndiceAtual++;
+  if (qzIndiceAtual < qzPerguntasRodada.length) {
+    qzRenderPergunta();
+  } else {
+    qzFinalizar();
+  }
+});
+
+async function qzFinalizar() {
+  document.getElementById('qz-progresso-fill').style.width = '100%';
+  const total = qzPerguntasRodada.length;
   document.getElementById('qz-tela-jogo').style.display = 'none';
   document.getElementById('qz-tela-resultado').style.display = 'block';
-  
-  // Salva no LocalStorage
-  progressoDias[diaJogando] = {
-    venceu: venceu,
-    tentativas: venceu ? tentativaAtual : 5,
-    palavra: palavraDoDiaObj.palavra
-  };
-  localStorage.setItem('palavra_dia_progresso', JSON.stringify(progressoDias));
-  renderizarCalendario();
-  
-  const titulo = venceu ? 'Você Acertou!' : 'Não foi dessa vez!';
-  const icone = venceu ? '🎉' : '💔';
-  
+
+  const pontosPossiveis = qzPerguntasRodada.reduce((s, p) => s + (p.dificuldade || 1), 0);
+  const pct = qzAcertos / total;
+  let icone = '🌱', titulo = 'Vale seguir estudando!';
+  if (pct === 1) { icone = '👑'; titulo = 'Gabaritou! Fundamento é com você!'; }
+  else if (pct >= 0.8) { icone = '🎉'; titulo = 'Mandou muito bem!'; }
+  else if (pct >= 0.5) { icone = '✨'; titulo = 'Bom caminho!'; }
+
   document.getElementById('qz-resultado-icone').textContent = icone;
   document.getElementById('qz-resultado-titulo').textContent = titulo;
-  document.getElementById('qz-resultado-palavra').textContent = palavraDoDiaObj.palavra;
-  
-  let textoFinal = `Você usou ${venceu ? tentativaAtual : 5} de 5 dicas.<br><br>`;
-  textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
-  document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
+  document.getElementById('qz-resultado-nota').textContent = `${qzPontos} pts`;
+  document.getElementById('qz-resultado-sub').textContent = `${qzNome}, você acertou ${qzAcertos} de ${total} — ${qzPontos} de ${pontosPossiveis} pontos possíveis nessa leva.`;
+  qzDispararBolhas(pct >= 0.8 ? 22 : 12);
+
+  // guarda pra usar na hora de gerar a imagem de compartilhamento
+  qzUltimoResultado = { icone, nome: qzNome, acertos: qzAcertos, total, pontos: qzPontos, categoria: qzCategoriaEscolhida };
 
   try {
-    await addDoc(collection(db, 'palavra_dia_resultados'), {
-      nome: nomeJogador,
-      venceu: venceu,
-      tentativas: venceu ? tentativaAtual : 5,
-      palavra: palavraDoDiaObj.palavra,
-      chutes: historicoChutes,
-      diaIndice: diaJogando,
+    await addDoc(collection(db, 'quiz_fundamentos_resultados'), {
+      nome: qzNome,
+      acertos: qzAcertos,
+      total: total,
+      pontos: qzPontos,
       uid: currentUser ? currentUser.uid : null,
       data: serverTimestamp()
     });
-  } catch (e) { console.warn('salvar resultado:', e); }
+  } catch (e) { console.warn('salvar resultado quiz:', e); }
+
+  qzCarregarRanking();
 }
 
-// ── VOLTAR AO CALENDÁRIO ──
-window.voltarAoInicio = function() {
-  document.getElementById('qz-tela-resultado').style.display = 'none';
-  document.getElementById('qz-tela-inicio').style.display = 'block';
-};
-
-// ── FUNÇÃO DE REPORTAR ERRO ──
-window.reportarErro = async function() {
-  const palavraAtual = palavraDoDiaObj ? palavraDoDiaObj.palavra : "Não iniciou o jogo ainda";
-  const motivo = prompt(`Relatando problema na palavra "${palavraAtual}"\nQual erro você encontrou nesta palavra ou nas dicas?`);
-  
-  if (!motivo || motivo.trim() === '') return;
-
-  try {
-    await addDoc(collection(db, 'relatorios_erros'), {
-      palavra: palavraAtual,
-      motivo: motivo,
-      relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador || 'Anônimo',
-      data: serverTimestamp(),
-      status: 'pendente'
-    });
-    alert("Obrigada por ajudar a revisar! Erro relatado com sucesso e enviado para a administração. ✦");
-    carregarErrosAdmin(); 
-  } catch (e) {
-    console.error("Erro ao salvar relatório:", e);
-    alert("Ops, não conseguimos enviar. Tente novamente mais tarde.");
-  }
-};
-
-// ── CARREGAR ERROS ADMIN ──
-async function carregarErrosAdmin() {
-  const wrap = document.getElementById('admin-lista-erros');
-  try {
-    const q = query(collection(db, 'relatorios_erros'), orderBy('data', 'desc'));
-    const snap = await getDocs(q);
-    
-    if (snap.empty) {
-      wrap.innerHTML = 'Nenhum erro relatado. Tudo perfeito por enquanto! ✨';
-      return;
-    }
-
-    wrap.innerHTML = snap.docs.map(doc => {
-      const erro = doc.data();
-      const dataFormatada = erro.data ? new Date(erro.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
-      return `
-        <div class="admin-erro-item">
-          <strong style="color:var(--rosa);">Palavra: ${erro.palavra}</strong> <br>
-          <span style="color:#555;">Problema:</span> ${erro.motivo} <br>
-          <em style="font-size:11px; color:#888;">Reportado por ${erro.relatadoPor} em ${dataFormatada}</em>
-        </div>
-      `;
-    }).join('');
-    
-  } catch (e) {
-    console.error('Erro admin:', e);
-    wrap.innerHTML = 'Erro ao carregar relatórios.';
-  }
-}
+// ── COMPARTILHAR RESULTADO (gera imagem e abre o menu de compartilhar nativo) ──
+let qzUltimoResultado = null;
 
 document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
-  const texto = `🔮 Joguei a Palavra do Dia (Dia ${diaJogando + 1}) do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nTentativas: ${tentativaAtual}/5 ✦`;
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: 'Palavra do Dia', text: texto });
-    } catch (e) {}
-  } else {
-    navigator.clipboard.writeText(texto);
-    alert('Resultado copiado para a área de transferência!');
+  if (!qzUltimoResultado) return;
+  const btn = document.getElementById('qz-btn-compartilhar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const r = qzUltimoResultado;
+    document.getElementById('qz-cs-icone').textContent = r.icone;
+    document.getElementById('qz-cs-nome').textContent = r.nome;
+    document.getElementById('qz-cs-nota').textContent = `${r.pontos} pts`;
+    document.getElementById('qz-cs-cat').textContent = r.categoria === 'todas' ? 'Todas as categorias' : r.categoria;
+
+    const cartao = document.getElementById('qz-cartao-share');
+    const canvas = await html2canvas(cartao, { scale: 2, backgroundColor: null, useCORS: true });
+
+    canvas.toBlob(async (blob) => {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+      const arquivo = new File([blob], 'quiz-fundamentos-resultado.png', { type: 'image/png' });
+      const texto = `🔮 Fiz o Quiz de Fundamentos do Bolhas de Luz e fiz ${r.pontos} pontos (${r.acertos}/${r.total} certas)! ✦`;
+
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+          await navigator.share({ files: [arquivo], title: 'Quiz de Fundamentos — Bolhas de Luz', text: texto });
+          return;
+        } catch (e) { /* cancelou o compartilhamento — segue pro download */ }
+      }
+      // fallback: baixa a imagem, pra postar manualmente
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'quiz-fundamentos-resultado.png'; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    console.warn('compartilhar resultado:', e);
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+    alert('Não deu pra gerar a imagem. Tenta de novo.');
   }
 });
 
-// Inicializa a tela com o calendário renderizado
-renderizarCalendario();
+document.getElementById('qz-btn-refazer').addEventListener('click', () => {
+  document.getElementById('qz-tela-resultado').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+  qzRenderCategorias();
+  qzRenderContadorDia();
+});
 
+document.getElementById('qz-btn-ver-ranking').addEventListener('click', () => {
+  document.getElementById('qz-secao-ranking').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+
+// ── REVISAR MINHAS RESPOSTAS ──
+document.getElementById('qz-btn-revisar').addEventListener('click', () => {
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-revisao').style.display = 'block';
+  qzRenderRevisao();
+});
+document.getElementById('qz-revisao-voltar').addEventListener('click', () => {
+  document.getElementById('qz-tela-revisao').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+});
+
+function qzRenderRevisao() {
+  const wrap = document.getElementById('qz-revisao-lista');
+  const idsRespondidos = Object.keys(qzProgresso).map(Number).sort((a, b) => a - b);
+  if (!idsRespondidos.length) {
+    wrap.innerHTML = '<div class="qz-revisao-vazio">Você ainda não respondeu nenhuma pergunta ✦</div>';
+    return;
+  }
+  wrap.innerHTML = idsRespondidos.map(id => {
+    const p = QZ_PERGUNTAS.find(q => q.id === id);
+    if (!p) return '';
+    const r = qzProgresso[id];
+    // r.escolha pode vir como boolean (novo formato V/F) ou número (formato antigo, dados legados)
+    const escolheu = typeof r.escolha === 'boolean' ? r.escolha : null;
+    const gabaritoTxt = p.correta ? '✓ Verdadeiro' : '✗ Falso';
+    const suaRespostaTxt = escolheu === null ? '' : (escolheu ? '✓ Verdadeiro' : '✗ Falso');
+    const acertouCls = r.certa ? 'certa' : 'escolha-errada';
+    return `<div class="qz-revisao-item">
+      <span class="qz-revisao-cat">${p.categoria}</span>
+      <div class="qz-revisao-pergunta">${p.afirmacao}</div>
+      <div class="qz-revisao-opcao certa">${gabaritoTxt} <span style="opacity:.7">(gabarito)</span></div>
+      ${!r.certa && suaRespostaTxt ? `<div class="qz-revisao-opcao escolha-errada">${suaRespostaTxt} <span style="opacity:.7">(sua resposta)</span></div>` : ''}
+      <div class="qz-revisao-explicacao">${p.explicacao}</div>
+    </div>`;
+  }).join('');
+}
+
+async function qzCarregarRanking() {
+  const wrap = document.getElementById('qz-ranking-lista');
+  try {
+    const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('pontos', 'desc'), limit(10));
+    const snap = await getDocs(q);
+    if (snap.empty) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
+    const medalhas = ['🥇', '🥈', '🥉'];
+    wrap.innerHTML = snap.docs.map((d, i) => {
+      const r = d.data();
+      return `<div class="qz-ranking-item">
+        <span class="qz-ranking-pos">${medalhas[i] || (i + 1)}</span>
+        <span class="qz-ranking-nome">${r.nome || 'Anônimo'}</span>
+        <span class="qz-ranking-nota">${r.pontos ?? r.acertos} pts</span>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn('ranking quiz:', e);
+    wrap.innerHTML = '<div class="qz-ranking-vazio">Não consegui carregar o ranking agora.</div>';
+  }
+}
+
+qzCarregarRanking();
 </script>
 </body>
 </html>
