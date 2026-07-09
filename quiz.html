@@ -75,9 +75,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 #qz-tela-inicio p{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;line-height:1.6;margin-bottom:22px}
 .qz-inp-nome{width:100%;max-width:280px;border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--rosa-dim);outline:none;text-align:center;margin-bottom:16px}
 .qz-inp-nome:focus{border-color:var(--rosa);background:#fff}
-.qz-btn-comecar{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:14px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 6px 20px rgba(196,57,107,.3);transition:transform .15s,box-shadow .15s}
+.qz-btn-comecar{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:14px 34px;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;font-weight:700;box-shadow:0 6px 20px rgba(196,57,107,.3);transition:transform .15s,box-shadow .15s; width:100%;}
 .qz-btn-comecar:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(196,57,107,.4)}
 .qz-btn-comecar:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Calendário CSS */
+.calendario-wrap { margin-top: 28px; text-align: left; background: var(--creme); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.calendario-titulo { font-family: 'Cinzel', serif; font-size: 0.9rem; font-weight: bold; color: var(--rosa); text-align: center; margin-bottom: 16px; letter-spacing: 0.05em; }
+.calendario-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.cal-dia { padding: 10px 4px; border-radius: 8px; border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 13px; text-align: center; cursor: pointer; transition: all 0.2s; font-weight: 600; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;}
+.cal-dia.pending { background: #fff; color: var(--rosa); border-color: rgba(196,57,107,0.3); }
+.cal-dia.pending:hover { background: var(--rosa-dim); border-color: var(--rosa); transform:translateY(-2px); box-shadow: 0 4px 10px rgba(196,57,107,0.1); }
+.cal-dia.won { background: var(--green-dim); color: var(--green); border-color: rgba(42,122,96,0.3); cursor: default; }
+.cal-dia.lost { background: rgba(192,57,43,.08); color: #c0392b; border-color: rgba(192,57,43,0.3); cursor: default; }
+.cal-dia.today { box-shadow: 0 0 0 2px var(--rosa); position:relative; }
+.cal-dia.today::before { content:'HOJE'; position:absolute; top:-10px; background:var(--rosa); color:#fff; font-size:9px; padding:2px 8px; border-radius:10px; font-family:'Cinzel',serif; letter-spacing:0.05em;}
 
 .qz-progresso-wrap{display:flex;align-items:center;gap:10px;margin-bottom:20px}
 .qz-progresso-barra{flex:1;height:6px;background:var(--rosa-dim);border-radius:10px;overflow:hidden}
@@ -108,6 +120,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-resultado-sub{font-family:'DM Sans',sans-serif;font-size:.95rem;color:var(--text);line-height:1.5;margin-bottom:24px;text-align:left; background:var(--creme); padding:16px; border-radius:12px; border:1px solid var(--border);}
 
 .qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
+.qz-btn-voltar-cal{width:100%; margin-top:12px; border:1px solid var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
+.qz-btn-voltar-cal:hover{background:var(--rosa-dim);}
 
 /* Admin Secao */
 #admin-secao-erros{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
@@ -139,7 +153,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <span>🕯️</span><span>🌿</span><span>🪶</span><span>🔮</span>
   </div>
 
-  <!-- TELA INICIAL -->
+  <!-- TELA INICIAL COM CALENDÁRIO -->
   <div id="qz-tela-inicio">
     <h2>Preparada?</h2>
     <p>Você tem 5 dicas para acertar o fundamento do dia. Se não souber, pode pular a dica!</p>
@@ -148,6 +162,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
     <br>
     <button class="qz-btn-comecar" id="qz-btn-comecar">Jogar a Palavra de Hoje ✦</button>
+
+    <!-- CALENDÁRIO DE HISTÓRICO -->
+    <div class="calendario-wrap">
+      <div class="calendario-titulo">🗓️ Seu Histórico de Palavras</div>
+      <div class="calendario-grid" id="calendario-grid">
+        <!-- O JS preenche isso aqui -->
+      </div>
+    </div>
+
   </div>
 
   <!-- TELA DE JOGO -->
@@ -182,6 +205,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div class="qz-resultado-sub" id="qz-resultado-sub"></div>
     
     <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
+    <button class="qz-btn-voltar-cal" onclick="voltarAoInicio()">← Voltar ao Calendário</button>
     <button class="btn-erro" onclick="reportarErro()">⚠️ Encontrou erro na explicação? Avise aqui!</button>
   </div>
 
@@ -218,7 +242,6 @@ let currentUser = null;
 
 // ══════════════════════════════════════════════════════════════
 // PALAVRAS DO DIA (40 palavras no total)
-// O índice 0 corresponde à DATA_INICIO. 
 // ══════════════════════════════════════════════════════════════
 const PALAVRAS_DO_DIA = [
   {
@@ -251,7 +274,7 @@ const PALAVRAS_DO_DIA = [
   {
     "palavra": "IEMANJÁ",
     "dica1": "É ela quem traz à tona as angústias, as dores, as sensibilidades — para que possam ser tratadas. É um tsunami que limpa as dores.",
-    "dica2": "É a mãe de todas as cabeças — responde mainly pelo nosso mental em saúde e firmeza. Por isso o reforço de cabeça feito na praia é essencial para o equilíbrio emocional da corrente.",
+    "dica2": "É a mãe de todas as cabeças — responde principalmente pelo nosso mental em saúde e firmeza. Por isso o reforço de cabeça feito na praia é essencial para o equilíbrio emocional da corrente.",
     "dica3": "Seu banho na virada do ano é de champagne branca. A homenagem a ela na praia nunca havia sido feita no axé da nossa casa — foi feita pela primeira vez no cruzamento de praia como reforço de cabeça essencial.",
     "dica4": "Seus filhos têm fama de chorões — mas assim como Oxum, vale questionar: até onde não é apenas a facilidade das águas de correrem livres? Senhora das emoções e dos pensamentos.",
     "dica5": "Começa com I. É a Orixá do mar — mãe de todas as cabeças e senhora das emoções.",
@@ -583,20 +606,15 @@ const PALAVRAS_DO_DIA = [
   }
 ];
 
-// LÓGICA DE DATA: Hoje (09/07/2026) é o dia 0. 
-const DATA_INICIO = new Date('2026-07-09T00:00:00-03:00').getTime();
+// DATA DE INÍCIO FIXADA EM 29 DE JUNHO DE 2026 (Para hoje, 9 de Julho, ser o Dia 11)
+const DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
 
 let palavraDoDiaObj = null;
 let tentativaAtual = 1;
 let nomeJogador = '';
-let historicoChutes = []; // NOVA VARIÁVEL PARA GUARDAR OS CHUTES
-
-function obterPalavraDoDia() {
-  const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indice = Math.max(0, diffDias) % PALAVRAS_DO_DIA.length;
-  return PALAVRAS_DO_DIA[indice];
-}
+let historicoChutes = [];
+let diaJogando = 0; 
+let progressoDias = JSON.parse(localStorage.getItem('palavra_dia_progresso') || '{}');
 
 function normalizar(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -636,29 +654,87 @@ onAuthStateChanged(auth, (user) => {
     saudacao.style.display = 'none';
   }
   
-  carregarErrosAdmin(); // Atualiza painel admin
+  carregarErrosAdmin(); 
 });
 
-// ── FLUXO DE JOGO ──
-document.getElementById('qz-btn-comecar').addEventListener('click', () => {
+// ── RENDERIZAÇÃO DO CALENDÁRIO ──
+function renderizarCalendario() {
+  const hoje = Date.now();
+  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
+  const indiceHoje = Math.max(0, diffDias);
+  
+  const grid = document.getElementById('calendario-grid');
+  let html = '';
+  
+  for (let i = 0; i <= indiceHoje; i++) {
+    if (i >= PALAVRAS_DO_DIA.length) break; 
+    
+    const status = progressoDias[i];
+    let classes = 'cal-dia';
+    let texto = `Dia ${i + 1}`;
+    let icone = '';
+    
+    if (i === indiceHoje) classes += ' today';
+    
+    if (status) {
+      classes += status.venceu ? ' won' : ' lost';
+      icone = status.venceu ? '✓ Acertou' : '✗ Errou';
+    } else {
+      classes += ' pending';
+      icone = 'Pendente';
+    }
+    
+    html += `<div class="${classes}" data-dia="${i}">${texto} <span style="font-size:10px">${icone}</span></div>`;
+  }
+  
+  grid.innerHTML = html;
+  
+  // Adiciona os cliques no calendário
+  grid.querySelectorAll('.cal-dia.pending').forEach(el => {
+    el.addEventListener('click', () => iniciarJogo(parseInt(el.dataset.dia)));
+  });
+  
+  grid.querySelectorAll('.cal-dia.won, .cal-dia.lost').forEach(el => {
+    el.addEventListener('click', () => {
+      const dia = parseInt(el.dataset.dia);
+      const palavra = PALAVRAS_DO_DIA[dia].palavra;
+      alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.`);
+    });
+  });
+}
+
+// ── INICIAR JOGO ──
+function iniciarJogo(indiceDia) {
   nomeJogador = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!nomeJogador) { document.getElementById('qz-inp-nome').focus(); return; }
-  
-  // Verifica se já jogou hoje
-  const jogouHoje = localStorage.getItem('palavra_dia_' + new Date().toLocaleDateString('pt-BR'));
-  if (jogouHoje) {
-    alert('Você já jogou a palavra de hoje! Volte amanhã ✦');
+
+  if (progressoDias[indiceDia]) {
+    alert('Você já jogou este dia! Escolha um dia pendente.');
     return;
   }
 
-  palavraDoDiaObj = obterPalavraDoDia();
+  diaJogando = indiceDia;
+  palavraDoDiaObj = PALAVRAS_DO_DIA[indiceDia];
   tentativaAtual = 1;
-  historicoChutes = []; // ZERA A LISTA DE CHUTES A CADA NOVA PARTIDA
+  historicoChutes = []; 
   
   document.getElementById('qz-tela-inicio').style.display = 'none';
   document.getElementById('qz-tela-jogo').style.display = 'block';
+  document.getElementById('dicas-anteriores').innerHTML = ''; 
   
   renderizarDica();
+}
+
+document.getElementById('qz-btn-comecar').addEventListener('click', () => {
+  const hoje = Date.now();
+  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
+  const indiceHoje = Math.max(0, diffDias);
+  
+  if (progressoDias[indiceHoje]) {
+    alert('Você já jogou a palavra de hoje! Escolha um dia pendente no histórico ou volte amanhã ✦');
+    return;
+  }
+  iniciarJogo(indiceHoje);
 });
 
 function renderizarDica() {
@@ -671,22 +747,21 @@ function renderizarDica() {
   
   if (tentativaAtual === 5) {
     document.getElementById('qz-btn-pular').textContent = 'Desistir 🏳️';
+  } else {
+    document.getElementById('qz-btn-pular').textContent = 'Pular Dica →';
   }
 }
 
-document.getElementById('qz-btn-chutar').addEventListener('click', processarChute);
+document.getElementById('qz-btn-chutar').addEventListener('click', () => processarChute(false));
 document.getElementById('qz-btn-pular').addEventListener('click', () => processarChute(true));
 
 function processarChute(pular = false) {
   const chute = document.getElementById('qz-inp-chute').value;
-  
-  // GUARDA O CHUTE NA LISTA (OU AVISA QUE PULOU)
   historicoChutes.push(pular ? '[Pulou a dica]' : chute || '[Em branco]');
   
   if (!pular && normalizar(chute) === normalizar(palavraDoDiaObj.palavra)) {
     finalizarJogo(true);
   } else {
-    // Errou ou pulou
     const dicasAnteriores = document.getElementById('dicas-anteriores');
     dicasAnteriores.innerHTML += `<div class="dica-anterior"><strong>Dica ${tentativaAtual}:</strong> ${palavraDoDiaObj['dica' + tentativaAtual]}</div>`;
     
@@ -703,8 +778,14 @@ async function finalizarJogo(venceu) {
   document.getElementById('qz-tela-jogo').style.display = 'none';
   document.getElementById('qz-tela-resultado').style.display = 'block';
   
-  // Marca localmente que jogou hoje
-  localStorage.setItem('palavra_dia_' + new Date().toLocaleDateString('pt-BR'), 'true');
+  // Salva no LocalStorage
+  progressoDias[diaJogando] = {
+    venceu: venceu,
+    tentativas: venceu ? tentativaAtual : 5,
+    palavra: palavraDoDiaObj.palavra
+  };
+  localStorage.setItem('palavra_dia_progresso', JSON.stringify(progressoDias));
+  renderizarCalendario();
   
   const titulo = venceu ? 'Você Acertou!' : 'Não foi dessa vez!';
   const icone = venceu ? '🎉' : '💔';
@@ -717,19 +798,25 @@ async function finalizarJogo(venceu) {
   textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
   document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
 
-  // Salvar no Firebase 
   try {
     await addDoc(collection(db, 'palavra_dia_resultados'), {
       nome: nomeJogador,
       venceu: venceu,
       tentativas: venceu ? tentativaAtual : 5,
       palavra: palavraDoDiaObj.palavra,
-      chutes: historicoChutes, // ENVIA O HISTÓRICO DE CHUTES
+      chutes: historicoChutes,
+      diaIndice: diaJogando,
       uid: currentUser ? currentUser.uid : null,
       data: serverTimestamp()
     });
   } catch (e) { console.warn('salvar resultado:', e); }
 }
+
+// ── VOLTAR AO CALENDÁRIO ──
+window.voltarAoInicio = function() {
+  document.getElementById('qz-tela-resultado').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+};
 
 // ── FUNÇÃO DE REPORTAR ERRO ──
 window.reportarErro = async function() {
@@ -747,7 +834,7 @@ window.reportarErro = async function() {
       status: 'pendente'
     });
     alert("Obrigada por ajudar a revisar! Erro relatado com sucesso e enviado para a administração. ✦");
-    carregarErrosAdmin(); // Atualiza a lista lá embaixo
+    carregarErrosAdmin(); 
   } catch (e) {
     console.error("Erro ao salvar relatório:", e);
     alert("Ops, não conseguimos enviar. Tente novamente mais tarde.");
@@ -783,11 +870,9 @@ async function carregarErrosAdmin() {
     wrap.innerHTML = 'Erro ao carregar relatórios.';
   }
 }
-carregarErrosAdmin();
 
-// Compartilhar Nativo (Simples)
 document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
-  const texto = `🔮 Joguei a Palavra do Dia do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nTentativas: ${tentativaAtual}/5 ✦`;
+  const texto = `🔮 Joguei a Palavra do Dia (Dia ${diaJogando + 1}) do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nTentativas: ${tentativaAtual}/5 ✦`;
   if (navigator.share) {
     try {
       await navigator.share({ title: 'Palavra do Dia', text: texto });
@@ -797,6 +882,9 @@ document.getElementById('qz-btn-compartilhar').addEventListener('click', async (
     alert('Resultado copiado para a área de transferência!');
   }
 });
+
+// Inicializa a tela com o calendário renderizado
+renderizarCalendario();
 
 </script>
 </body>
