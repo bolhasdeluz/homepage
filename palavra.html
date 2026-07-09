@@ -155,7 +155,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div id="qz-tela-inicio">
     <h2>Preparada?</h2>
-    <p>Você tem 5 dicas para acertar o fundamento do dia. Se não souber, pode pular a dica!</p>
+    <p>Você tem 7 vidas para acertar o fundamento do dia. Cada erro ou dica pedida custa uma vida — acerte com menos vidas perdidas pra pontuar mais!</p>
     
     <p id="qz-saudacao-logada" style="display:none;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:10px">Jogando como <strong id="qz-saudacao-nome"></strong> ✦</p>
     <input type="text" class="qz-inp-nome" id="qz-inp-nome" placeholder="Seu nome" maxlength="30">
@@ -172,8 +172,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div id="qz-tela-jogo" style="display:none">
     <div class="qz-progresso-wrap">
-      <div class="qz-progresso-barra"><div class="qz-progresso-fill" id="qz-progresso-fill" style="width:20%"></div></div>
-      <div class="qz-progresso-txt" id="qz-progresso-txt">Dica 1/5</div>
+      <div class="qz-progresso-barra"><div class="qz-progresso-fill" id="qz-progresso-fill" style="width:14%"></div></div>
+      <div class="qz-progresso-txt" id="qz-progresso-txt">Vida 1/7</div>
     </div>
     
     <div class="qz-pergunta-card">
@@ -205,7 +205,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="qz-secao-ranking" style="margin-top:36px; margin-bottom: 24px;">
-    <div class="calendario-titulo" style="font-size:1.1rem">🏆 Ranking de Acertos</div>
+    <div class="calendario-titulo" style="font-size:1.1rem">🏆 Ranking de Pontuação</div>
     <div id="qz-ranking-lista" style="text-align:center; color:var(--text-dim); font-size:14px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border);">Carregando ranking...</div>
   </div>
 
@@ -607,6 +607,7 @@ const PALAVRAS_DO_DIA = [
 
 // DATA DE INÍCIO FIXADA EM 29 DE JUNHO DE 2026
 const DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
+const VIDAS_TOTAL = 7;
 
 let palavraDoDiaObj = null;
 let tentativaAtual = 1;
@@ -677,7 +678,7 @@ function renderizarCalendario() {
     
     if (status) {
       classes += status.venceu ? ' won' : ' lost';
-      icone = status.venceu ? '✓ Acertou' : '✗ Errou';
+      icone = status.venceu ? `✓ ${typeof status.pontos === 'number' ? status.pontos + ' pts' : 'Acertou'}` : '✗ Errou';
     } else {
       classes += ' pending';
       icone = 'Pendente';
@@ -696,7 +697,9 @@ function renderizarCalendario() {
     el.addEventListener('click', () => {
       const dia = parseInt(el.dataset.dia);
       const palavra = PALAVRAS_DO_DIA[dia].palavra;
-      alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.`);
+      const status = progressoDias[dia];
+      const pontosTxt = status.venceu ? ` Você fez ${status.pontos ?? 0} ponto${(status.pontos ?? 0) === 1 ? '' : 's'}.` : '';
+      alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.${pontosTxt}`);
     });
   });
 }
@@ -736,14 +739,15 @@ document.getElementById('qz-btn-comecar').addEventListener('click', () => {
 });
 
 function renderizarDica() {
-  document.getElementById('qz-progresso-fill').style.width = (tentativaAtual / 5 * 100) + '%';
-  document.getElementById('qz-progresso-txt').textContent = `Dica ${tentativaAtual}/5`;
-  document.getElementById('qz-pergunta-num').textContent = `DICA ${tentativaAtual} DE 5`;
-  document.getElementById('qz-pergunta-txt').textContent = palavraDoDiaObj['dica' + tentativaAtual];
+  const dicaIndex = Math.min(tentativaAtual, 5);
+  document.getElementById('qz-progresso-fill').style.width = (tentativaAtual / VIDAS_TOTAL * 100) + '%';
+  document.getElementById('qz-progresso-txt').textContent = `Vida ${tentativaAtual}/${VIDAS_TOTAL}`;
+  document.getElementById('qz-pergunta-num').textContent = `DICA ${dicaIndex} DE 5 · VIDA ${tentativaAtual} DE ${VIDAS_TOTAL}`;
+  document.getElementById('qz-pergunta-txt').textContent = palavraDoDiaObj['dica' + dicaIndex];
   document.getElementById('qz-inp-chute').value = '';
   document.getElementById('qz-inp-chute').focus();
-  
-  if (tentativaAtual === 5) {
+
+  if (tentativaAtual === VIDAS_TOTAL) {
     document.getElementById('qz-btn-pular').textContent = 'Desistir 🏳️';
   } else {
     document.getElementById('qz-btn-pular').textContent = 'Pular Dica →';
@@ -761,10 +765,14 @@ function processarChute(pular = false) {
     finalizarJogo(true);
   } else {
     const dicasAnteriores = document.getElementById('dicas-anteriores');
-    dicasAnteriores.innerHTML += `<div class="dica-anterior"><strong>Dica ${tentativaAtual}:</strong> ${palavraDoDiaObj['dica' + tentativaAtual]}</div>`;
-    
+    if (tentativaAtual <= 5) {
+      dicasAnteriores.innerHTML += `<div class="dica-anterior"><strong>Dica ${tentativaAtual}:</strong> ${palavraDoDiaObj['dica' + tentativaAtual]}</div>`;
+    } else {
+      dicasAnteriores.innerHTML += `<div class="dica-anterior">💔 Vida perdida — sem dica nova.</div>`;
+    }
+
     tentativaAtual++;
-    if (tentativaAtual > 5) {
+    if (tentativaAtual > VIDAS_TOTAL) {
       finalizarJogo(false);
     } else {
       renderizarDica();
@@ -776,23 +784,27 @@ async function finalizarJogo(venceu) {
   document.getElementById('qz-tela-jogo').style.display = 'none';
   document.getElementById('qz-tela-resultado').style.display = 'block';
   
+  const pontos = venceu ? (VIDAS_TOTAL - (tentativaAtual - 1)) : 0;
+
   // Salva no LocalStorage
   progressoDias[diaJogando] = {
     venceu: venceu,
-    tentativas: venceu ? tentativaAtual : 5,
+    tentativas: venceu ? tentativaAtual : VIDAS_TOTAL,
+    pontos: pontos,
     palavra: palavraDoDiaObj.palavra
   };
   localStorage.setItem('palavra_dia_progresso', JSON.stringify(progressoDias));
   renderizarCalendario();
-  
+
   const titulo = venceu ? 'Você Acertou!' : 'Não foi dessa vez!';
   const icone = venceu ? '🎉' : '💔';
-  
+
   document.getElementById('qz-resultado-icone').textContent = icone;
   document.getElementById('qz-resultado-titulo').textContent = titulo;
   document.getElementById('qz-resultado-palavra').textContent = palavraDoDiaObj.palavra;
-  
-  let textoFinal = `Você usou ${venceu ? tentativaAtual : 5} de 5 dicas.<br><br>`;
+
+  let textoFinal = `Você usou ${venceu ? tentativaAtual : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
+  textoFinal += venceu ? ` <strong>Pontuação: ${pontos} ponto${pontos === 1 ? '' : 's'}</strong><br><br>` : '<br><br>';
   textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
   document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
 
@@ -800,7 +812,8 @@ async function finalizarJogo(venceu) {
     await addDoc(collection(db, 'palavra_dia_resultados'), {
       nome: nomeJogador,
       venceu: venceu,
-      tentativas: venceu ? tentativaAtual : 5,
+      tentativas: venceu ? tentativaAtual : VIDAS_TOTAL,
+      pontos: pontos,
       palavra: palavraDoDiaObj.palavra,
       chutes: historicoChutes,
       diaIndice: diaJogando,
@@ -808,8 +821,8 @@ async function finalizarJogo(venceu) {
       data: serverTimestamp()
     });
   } catch (e) { console.warn('salvar resultado:', e); }
-  
-  // Atualiza o ranking para incluir a nova vitória, se houver
+
+  // Atualiza o ranking para incluir a nova pontuação, se houver
   carregarRanking();
 }
 
@@ -873,7 +886,8 @@ async function carregarErrosAdmin() {
 }
 
 document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
-  const texto = `🔮 Joguei a Palavra do Dia (Dia ${diaJogando + 1}) do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nTentativas: ${tentativaAtual}/5 ✦`;
+  const pontosCompartilhar = progressoDias[diaJogando]?.pontos ?? 0;
+  const texto = `🔮 Joguei a Palavra do Dia (Dia ${diaJogando + 1}) do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nPontuação: ${pontosCompartilhar} ponto${pontosCompartilhar === 1 ? '' : 's'} (${tentativaAtual}/${VIDAS_TOTAL} vidas) ✦`;
   if (navigator.share) {
     try {
       await navigator.share({ title: 'Palavra do Dia', text: texto });
@@ -899,15 +913,14 @@ async function carregarRanking() {
     const pontuacoes = {};
     snap.forEach(doc => {
       const r = doc.data();
-      if (r.venceu && r.nome) {
-        if (!pontuacoes[r.nome]) pontuacoes[r.nome] = 0;
-        pontuacoes[r.nome]++;
-      }
+      if (!r.nome) return;
+      const pts = typeof r.pontos === 'number' ? r.pontos : (r.venceu ? 1 : 0);
+      pontuacoes[r.nome] = (pontuacoes[r.nome] || 0) + pts;
     });
 
     const rankingOrdenado = Object.keys(pontuacoes)
-      .map(nome => ({ nome, acertos: pontuacoes[nome] }))
-      .sort((a, b) => b.acertos - a.acertos)
+      .map(nome => ({ nome, pontos: pontuacoes[nome] }))
+      .sort((a, b) => b.pontos - a.pontos)
       .slice(0, 10);
 
     if (rankingOrdenado.length === 0) {
@@ -920,7 +933,7 @@ async function carregarRanking() {
       <div style="display:flex; align-items:center; gap:12px; background:#fff; border:1px solid rgba(196,57,107,0.15); border-radius:12px; padding:11px 16px; margin-bottom:8px; box-shadow:0 2px 10px rgba(196,57,107,.05);">
         <span style="font-family:'Cinzel',serif; font-size:0.95rem; font-weight:700; color:#8c3a1a; width:24px; text-align:center;">${medalhas[i] || (i + 1)}</span>
         <span style="flex:1; font-family:'DM Sans',sans-serif; font-size:13.5px; font-weight:500; color:var(--text); text-align:left;">${item.nome}</span>
-        <span style="font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; color:var(--rosa);">${item.acertos} vitórias</span>
+        <span style="font-family:'Cinzel',serif; font-size:0.85rem; font-weight:700; color:var(--rosa);">${item.pontos} ponto${item.pontos === 1 ? '' : 's'}</span>
       </div>
     `).join('');
     
