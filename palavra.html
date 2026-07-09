@@ -209,7 +209,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="qz-ranking-lista" style="text-align:center; color:var(--text-dim); font-size:14px; background: #fff; padding: 20px; border-radius: 12px; border: 1px solid var(--border);">Carregando ranking...</div>
   </div>
 
-  <div id="admin-secao-erros">
+  <div id="admin-secao-erros" style="display:none">
     <div class="admin-titulo">⚠️ Relatórios de Erro (Acesso Admin)</div>
     <div id="admin-lista-erros" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
@@ -238,6 +238,7 @@ const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 let currentUser = null;
+const ADMIN_EMAILS = ['annagomes.bdl@gmail.com'];
 
 // ══════════════════════════════════════════════════════════════
 // PALAVRAS DO DIA (40 palavras no total)
@@ -654,7 +655,9 @@ onAuthStateChanged(auth, (user) => {
     saudacao.style.display = 'none';
   }
   
-  carregarErrosAdmin(); 
+  const isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
+  document.getElementById('admin-secao-erros').style.display = isAdmin ? 'block' : 'none';
+  if (isAdmin) carregarErrosAdmin();
 });
 
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
@@ -813,14 +816,13 @@ async function finalizarJogo(venceu) {
       nome: nomeJogador,
       venceu: venceu,
       tentativas: venceu ? tentativaAtual : VIDAS_TOTAL,
-      pontos: pontos,
       palavra: palavraDoDiaObj.palavra,
       chutes: historicoChutes,
       diaIndice: diaJogando,
       uid: currentUser ? currentUser.uid : null,
       data: serverTimestamp()
     });
-  } catch (e) { console.warn('salvar resultado:', e); }
+  } catch (e) { console.error('salvar resultado:', e.code || '', e.message || e); }
 
   // Atualiza o ranking para incluir a nova pontuação, se houver
   carregarRanking();
@@ -848,7 +850,7 @@ window.reportarErro = async function() {
       status: 'pendente'
     });
     alert("Obrigada por ajudar a revisar! Erro relatado com sucesso e enviado para a administração. ✦");
-    carregarErrosAdmin(); 
+    if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) carregarErrosAdmin();
   } catch (e) {
     console.error("Erro ao salvar relatório:", e);
     alert("Ops, não conseguimos enviar. Tente novamente mais tarde.");
@@ -914,7 +916,7 @@ async function carregarRanking() {
     snap.forEach(doc => {
       const r = doc.data();
       if (!r.nome) return;
-      const pts = typeof r.pontos === 'number' ? r.pontos : (r.venceu ? 1 : 0);
+      const pts = r.venceu ? Math.max(1, VIDAS_TOTAL - ((r.tentativas || VIDAS_TOTAL) - 1)) : 0;
       pontuacoes[r.nome] = (pontuacoes[r.nome] || 0) + pts;
     });
 
