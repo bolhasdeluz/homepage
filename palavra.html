@@ -1042,8 +1042,23 @@ window.abrirRevisaoDia = async function(dia) {
   detalhesEl.classList.remove('show');
   document.getElementById('qz-btn-toggle-dicas').textContent = '📖 Ver todas as dicas e explicação';
 
-  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.classList.remove('selecionado'));
-  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.disabled = false);
+  document.querySelectorAll('.qz-btn-nivel').forEach(btn => {
+    btn.classList.remove('selecionado');
+    btn.disabled = false;
+  });
+
+  try {
+    const idAvaliacao = `${dia}_${chaveIdentidade()}`;
+    const avalSnap = await getDoc(doc(db, 'avaliacoes_dificuldade', idAvaliacao));
+    if (avalSnap.exists()) {
+      const nivelSalvo = avalSnap.data().dificuldade;
+      const btnSalvo = document.querySelector(`.qz-btn-nivel[data-nivel="${nivelSalvo}"]`);
+      if (btnSalvo) btnSalvo.classList.add('selecionado');
+      document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.disabled = true);
+    }
+  } catch (e) {
+    console.error('checar avaliacao existente:', e.code || '', e.message || e);
+  }
 };
 
 // ── INICIAR JOGO ──
