@@ -132,6 +132,19 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 #admin-secao-chutes{margin-top:20px;}
 .admin-titulo{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px;text-align:center;}
 .admin-erro-item{background:var(--creme); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; font-family:'DM Sans', sans-serif; font-size:13px; color:var(--text);}
+.admin-btn-mini{border:1px dashed var(--rosa); color:var(--rosa); background:none; border-radius:8px; padding:5px 10px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:bold; cursor:pointer; margin-top:6px;}
+.admin-btn-mini:hover{background:var(--rosa-dim);}
+.chute-chip{display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid var(--border); border-radius:6px; padding:3px 6px; margin:2px 4px 2px 0; font-size:12px;}
+.chute-chip button{border:none; background:none; color:var(--green); cursor:pointer; font-size:12px; font-weight:bold; padding:0;}
+.chute-chip button:hover{text-decoration:underline;}
+
+/* Modal de edição de palavra */
+.modal-overlay{position:fixed; inset:0; background:rgba(46,26,14,.55); z-index:200; display:flex; align-items:center; justify-content:center; padding:20px;}
+.modal-conteudo{background:#fff; border-radius:16px; padding:24px; max-width:520px; width:100%; max-height:85vh; overflow-y:auto; box-shadow:0 12px 40px rgba(0,0,0,.3);}
+.modal-conteudo h3{font-family:'Playfair Display',serif; font-size:1.15rem; margin-bottom:4px; color:var(--rosa);}
+.modal-conteudo label{display:block; font-family:'Cinzel',serif; font-size:.62rem; letter-spacing:.05em; text-transform:uppercase; color:var(--text-dim); margin:12px 0 4px;}
+.modal-conteudo input, .modal-conteudo textarea{width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; background:var(--creme);}
+.modal-conteudo textarea{min-height:52px;}
 </style>
 </head>
 <body>
@@ -194,7 +207,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
         <button class="qz-vf-btn" id="qz-btn-pular" style="flex:1;">Pular Dica →</button>
       </div>
 
-      <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na palavra ou dica? Avise aqui!</button>
+      <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na palavra, dica ou pontuação? Avise aqui!</button>
     </div>
   </div>
 
@@ -210,7 +223,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <button class="qz-btn-toggle-dicas" id="qz-btn-toggle-dicas">📖 Ver todas as dicas e explicação</button>
     <div class="qz-resultado-detalhes" id="qz-resultado-detalhes"></div>
 
-    <button class="btn-erro" onclick="reportarErro()">⚠️ Encontrou erro na explicação? Avise aqui!</button>
+    <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na explicação, resposta ou pontuação? Avise aqui!</button>
   </div>
 
   <div id="qz-secao-ranking" style="margin-top:36px; margin-bottom: 24px;">
@@ -228,6 +241,32 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="admin-lista-chutes" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
+</div>
+
+<div id="modal-editar-palavra" class="modal-overlay" style="display:none">
+  <div class="modal-conteudo">
+    <h3>✏️ Editar Palavra</h3>
+    <label>Palavra (resposta principal)</label>
+    <input type="text" id="edit-palavra">
+    <label>Variações aceitas (uma por linha, opcional)</label>
+    <textarea id="edit-variacoes"></textarea>
+    <label>Dica 1</label>
+    <textarea id="edit-dica1"></textarea>
+    <label>Dica 2</label>
+    <textarea id="edit-dica2"></textarea>
+    <label>Dica 3</label>
+    <textarea id="edit-dica3"></textarea>
+    <label>Dica 4</label>
+    <textarea id="edit-dica4"></textarea>
+    <label>Dica 5</label>
+    <textarea id="edit-dica5"></textarea>
+    <label>Explicação</label>
+    <textarea id="edit-explicacao" style="min-height:80px"></textarea>
+    <div style="display:flex; gap:10px; margin-top:16px;">
+      <button class="qz-btn-comecar" id="btn-salvar-edicao" style="flex:1;">Salvar</button>
+      <button class="qz-btn-voltar-cal" id="btn-cancelar-edicao" style="flex:1;">Cancelar</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -722,11 +761,32 @@ async function garantirOffsetPessoal() {
   }
 }
 
+// Correções feitas pelo admin (palavra, dicas, explicação, variações) ficam salvas
+// como sobreposição no Firestore — o conteúdo original em PALAVRAS_DO_DIA nunca muda,
+// só é "coberto" pelo que estiver em palavrasEditadas, indexado pela posição original.
+let palavrasEditadas = {};
+
+async function carregarEdicoesPalavras() {
+  try {
+    const snap = await getDocs(collection(db, 'palavras_do_dia_edicoes'));
+    snap.forEach(d => { palavrasEditadas[parseInt(d.id)] = d.data(); });
+  } catch (e) {
+    console.error('edicoes palavras:', e.code || '', e.message || e);
+  }
+}
+const edicoesPalavrasProntas = carregarEdicoesPalavras();
+
+function obterPalavraEfetiva(indice) {
+  const base = PALAVRAS_DO_DIA[indice];
+  const edicao = palavrasEditadas[indice];
+  return edicao ? { ...base, ...edicao } : base;
+}
+
 function obterPalavraDoDia(diaIndice) {
-  if (diaIndice < DIA_LIMITE_GLOBAL) return PALAVRAS_DO_DIA[diaIndice];
+  if (diaIndice < DIA_LIMITE_GLOBAL) return obterPalavraEfetiva(diaIndice);
   const N = PALAVRAS_DO_DIA.length;
   const offset = offsetPessoal ?? (seedPessoa() % N);
-  return PALAVRAS_DO_DIA[(diaIndice + offset) % N];
+  return obterPalavraEfetiva((diaIndice + offset) % N);
 }
 
 let palavraDoDiaObj = null;
@@ -874,6 +934,7 @@ async function iniciarJogo(indiceDia) {
   if (indiceDia >= DIA_LIMITE_GLOBAL && offsetPessoal === null) {
     await garantirOffsetPessoal();
   }
+  await edicoesPalavrasProntas;
 
   diaJogando = indiceDia;
   palavraDoDiaObj = obterPalavraDoDia(indiceDia);
@@ -918,11 +979,17 @@ function renderizarDica() {
 document.getElementById('qz-btn-chutar').addEventListener('click', () => processarChute(false));
 document.getElementById('qz-btn-pular').addEventListener('click', () => processarChute(true));
 
+function chuteEstaCorreto(chute) {
+  if (normalizar(chute) === normalizar(palavraDoDiaObj.palavra)) return true;
+  const variacoes = palavraDoDiaObj.variacoes || [];
+  return variacoes.some(v => normalizar(chute) === normalizar(v));
+}
+
 function processarChute(pular = false) {
   const chute = document.getElementById('qz-inp-chute').value;
   historicoChutes.push(pular ? '[Pulou a dica]' : chute || '[Em branco]');
-  
-  if (!pular && normalizar(chute) === normalizar(palavraDoDiaObj.palavra)) {
+
+  if (!pular && chuteEstaCorreto(chute)) {
     finalizarJogo(true);
   } else {
     const dicasAnteriores = document.getElementById('dicas-anteriores');
@@ -1058,7 +1125,7 @@ window.voltarAoInicio = function() {
 // ── FUNÇÃO DE REPORTAR ERRO ──
 window.reportarErro = async function() {
   const palavraAtual = palavraDoDiaObj ? palavraDoDiaObj.palavra : "Não iniciou o jogo ainda";
-  const motivo = prompt(`Relatando problema na palavra "${palavraAtual}"\nQual erro você encontrou nesta palavra ou nas dicas?`);
+  const motivo = prompt(`Relatando problema na palavra "${palavraAtual}"\n\nConte o que aconteceu — pode ser erro na dica/explicação, um chute seu que deveria ter sido aceito por causa de ortografia ou variação da resposta, ou pedido de revisão da sua pontuação nessa palavra:`);
   
   if (!motivo || motivo.trim() === '') return;
 
@@ -1093,11 +1160,13 @@ async function carregarErrosAdmin() {
     wrap.innerHTML = snap.docs.map(doc => {
       const erro = doc.data();
       const dataFormatada = erro.data ? new Date(erro.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
+      const palavraEscapada = (erro.palavra || '').replace(/'/g, "\\'");
       return `
         <div class="admin-erro-item">
           <strong style="color:var(--rosa);">Palavra: ${erro.palavra}</strong> <br>
           <span style="color:#555;">Problema:</span> ${erro.motivo} <br>
-          <em style="font-size:11px; color:#888;">Reportado por ${erro.relatadoPor} em ${dataFormatada}</em>
+          <em style="font-size:11px; color:#888;">Reportado por ${erro.relatadoPor} em ${dataFormatada}</em><br>
+          <button class="admin-btn-mini" onclick="abrirEdicaoPalavra('${palavraEscapada}')">✏️ Editar esta palavra</button>
         </div>
       `;
     }).join('');
@@ -1107,6 +1176,62 @@ async function carregarErrosAdmin() {
     wrap.innerHTML = 'Erro ao carregar relatórios.';
   }
 }
+
+// ── EDITAR PALAVRA (ADMIN) ──
+let indiceEmEdicao = null;
+
+function souAdmin() {
+  return !!(currentUser && ADMIN_EMAILS.includes(currentUser.email));
+}
+
+window.abrirEdicaoPalavra = async function(palavraTexto) {
+  if (!souAdmin()) return;
+  const idx = PALAVRAS_DO_DIA.findIndex(p => p.palavra === palavraTexto);
+  if (idx === -1) { alert('Palavra não encontrada na lista original.'); return; }
+
+  await edicoesPalavrasProntas;
+  const dados = obterPalavraEfetiva(idx);
+  indiceEmEdicao = idx;
+
+  document.getElementById('edit-palavra').value = dados.palavra;
+  document.getElementById('edit-variacoes').value = (dados.variacoes || []).join('\n');
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('edit-dica' + i).value = dados['dica' + i] || '';
+  }
+  document.getElementById('edit-explicacao').value = dados.explicacao || '';
+  document.getElementById('modal-editar-palavra').style.display = 'flex';
+};
+
+document.getElementById('btn-cancelar-edicao').addEventListener('click', () => {
+  document.getElementById('modal-editar-palavra').style.display = 'none';
+  indiceEmEdicao = null;
+});
+
+document.getElementById('btn-salvar-edicao').addEventListener('click', async () => {
+  if (indiceEmEdicao === null || !souAdmin()) return;
+
+  const dadosEditados = {
+    palavra: document.getElementById('edit-palavra').value.trim().toUpperCase(),
+    variacoes: document.getElementById('edit-variacoes').value.split('\n').map(v => v.trim()).filter(Boolean),
+    dica1: document.getElementById('edit-dica1').value.trim(),
+    dica2: document.getElementById('edit-dica2').value.trim(),
+    dica3: document.getElementById('edit-dica3').value.trim(),
+    dica4: document.getElementById('edit-dica4').value.trim(),
+    dica5: document.getElementById('edit-dica5').value.trim(),
+    explicacao: document.getElementById('edit-explicacao').value.trim()
+  };
+
+  try {
+    await setDoc(doc(db, 'palavras_do_dia_edicoes', String(indiceEmEdicao)), dadosEditados, { merge: true });
+    palavrasEditadas[indiceEmEdicao] = { ...palavrasEditadas[indiceEmEdicao], ...dadosEditados };
+    alert('Palavra atualizada! A correção já vale pra quem ainda não jogou esse dia.');
+    document.getElementById('modal-editar-palavra').style.display = 'none';
+    indiceEmEdicao = null;
+  } catch (e) {
+    console.error('salvar edicao palavra:', e.code || '', e.message || e);
+    alert('Erro ao salvar a edição. Veja o console pra detalhes.');
+  }
+});
 
 // ── CARREGAR CHUTES ADMIN ──
 async function carregarChutesAdmin() {
@@ -1120,15 +1245,21 @@ async function carregarChutesAdmin() {
       return;
     }
 
-    wrap.innerHTML = snap.docs.map(doc => {
-      const r = doc.data();
+    wrap.innerHTML = snap.docs.map(docSnap => {
+      const r = docSnap.data();
       const dataFormatada = r.data ? new Date(r.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
-      const chutesTxt = Array.isArray(r.chutes) && r.chutes.length ? r.chutes.join(' → ') : '—';
       const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
+      const chutesHtml = Array.isArray(r.chutes) && r.chutes.length
+        ? r.chutes.map((c, i) => `
+            <span class="chute-chip">${i + 1}. ${c}
+              <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
+            </span>
+          `).join('')
+        : '—';
       return `
         <div class="admin-erro-item">
           <strong style="color:var(--rosa);">${r.nome || 'Anônimo'}</strong> — ${r.palavra || '?'} — ${resultadoTxt} <br>
-          <span style="color:#555;">Chutes:</span> ${chutesTxt} <br>
+          <span style="color:#555;">Chutes:</span><br>${chutesHtml} <br>
           <em style="font-size:11px; color:#888;">${dataFormatada}</em>
         </div>
       `;
@@ -1139,6 +1270,25 @@ async function carregarChutesAdmin() {
     wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
+
+// ── MARCAR CHUTE COMO CORRETO E RECONTAR (ADMIN) ──
+window.marcarChuteCorreto = async function(docId, idx) {
+  if (!souAdmin()) return;
+  if (!confirm(`Marcar o chute #${idx + 1} como correto e recontar a pontuação dessa jogada?`)) return;
+
+  try {
+    await setDoc(doc(db, 'palavra_dia_resultados', docId), {
+      venceu: true,
+      tentativas: idx + 1
+    }, { merge: true });
+    alert('Pontuação recontada! O ranking já foi atualizado — mas o calendário pessoal de quem jogou só se ajusta no aparelho dela.');
+    carregarChutesAdmin();
+    carregarRanking();
+  } catch (e) {
+    console.error('marcar chute correto:', e.code || '', e.message || e);
+    alert('Erro ao recontar. Veja o console pra detalhes.');
+  }
+};
 
 document.getElementById('qz-btn-toggle-dicas').addEventListener('click', () => {
   const detalhesEl = document.getElementById('qz-resultado-detalhes');
