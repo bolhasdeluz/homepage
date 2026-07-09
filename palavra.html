@@ -995,14 +995,56 @@ function renderizarCalendario() {
   
   grid.querySelectorAll('.cal-dia.won, .cal-dia.lost').forEach(el => {
     el.addEventListener('click', () => {
-      const dia = parseInt(el.dataset.dia);
-      const status = progressoDias[dia];
-      const palavra = status.palavra || obterPalavraDoDia(dia).palavra;
-      const pontosTxt = status.venceu ? ` Você fez ${status.pontos ?? 0} ponto${(status.pontos ?? 0) === 1 ? '' : 's'}.` : '';
-      alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.${pontosTxt}`);
+      abrirRevisaoDia(parseInt(el.dataset.dia));
     });
   });
 }
+
+// ── REABRIR UM DIA JÁ JOGADO (pra ver dicas, explicação e votar na dificuldade) ──
+window.abrirRevisaoDia = async function(dia) {
+  const status = progressoDias[dia];
+  if (!status) return;
+
+  if (dia >= DIA_LIMITE_GLOBAL && offsetPessoal === null) {
+    await garantirOffsetPessoal();
+  }
+  await edicoesPalavrasProntas;
+  await mediasDificuldadeProntas;
+
+  diaJogando = dia;
+  indicePalavraAtual = obterIndicePalavraDoDia(dia);
+  palavraDoDiaObj = obterPalavraDoDia(dia);
+  tentativaAtual = status.venceu ? (status.tentativas || 1) : VIDAS_TOTAL;
+  historicoChutes = status.chutes || [];
+
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-jogo').style.display = 'none';
+  document.getElementById('qz-tela-resultado').style.display = 'block';
+
+  const titulo = status.venceu ? 'Você Acertou!' : 'Não foi dessa vez!';
+  const icone = status.venceu ? '🎉' : '💔';
+  document.getElementById('qz-resultado-icone').textContent = icone;
+  document.getElementById('qz-resultado-titulo').textContent = titulo;
+  document.getElementById('qz-resultado-palavra').textContent = status.palavra || palavraDoDiaObj.palavra;
+
+  let resumoFinal = `Dia ${dia + 1} · Você usou ${status.venceu ? status.tentativas : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
+  resumoFinal += status.venceu ? ` <strong>Pontuação: ${status.pontos ?? 0} ponto${(status.pontos ?? 0) === 1 ? '' : 's'}</strong>` : '';
+  document.getElementById('qz-resultado-sub').innerHTML = resumoFinal;
+
+  let todasDicasHtml = '';
+  for (let i = 1; i <= 5; i++) {
+    todasDicasHtml += `<div class="dica-anterior"><strong>Dica ${i}:</strong> ${palavraDoDiaObj['dica' + i]}</div>`;
+  }
+  let detalhesFinal = `<strong>Todas as dicas:</strong><br>${todasDicasHtml}<br>`;
+  detalhesFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
+  const detalhesEl = document.getElementById('qz-resultado-detalhes');
+  detalhesEl.innerHTML = detalhesFinal;
+  detalhesEl.classList.remove('show');
+  document.getElementById('qz-btn-toggle-dicas').textContent = '📖 Ver todas as dicas e explicação';
+
+  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.classList.remove('selecionado'));
+  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.disabled = false);
+};
 
 // ── INICIAR JOGO ──
 async function iniciarJogo(indiceDia) {
