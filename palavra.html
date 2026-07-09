@@ -127,9 +127,20 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-resultado-detalhes{display:none; font-family:'DM Sans',sans-serif; font-size:.95rem; color:var(--text); line-height:1.5; margin-top:12px; text-align:left; background:var(--creme); padding:16px; border-radius:12px; border:1px solid var(--border);}
 .qz-resultado-detalhes.show{display:block; animation:cpEntra .25s ease both;}
 
+/* Avaliação de dificuldade */
+.qz-avaliacao-dificuldade{margin-top:18px; padding-top:16px; border-top:1px dashed var(--border);}
+.qz-avaliacao-titulo{font-family:'Crimson Pro',serif; font-style:italic; font-size:.9rem; color:var(--text-dim); margin-bottom:10px;}
+.qz-avaliacao-botoes{display:flex; gap:8px;}
+.qz-btn-nivel{flex:1; border:2px solid var(--border); background:#fff; border-radius:14px; padding:10px 6px; font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s;}
+.qz-btn-nivel:hover{border-color:var(--rosa); background:var(--rosa-dim);}
+.qz-btn-nivel.selecionado{border-color:var(--rosa); background:var(--rosa-dim); color:var(--rosa);}
+.qz-badge-dificuldade{font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:var(--text-dim); margin-left:8px; white-space:nowrap;}
+
 /* Admin Secao */
-#admin-secao-erros, #admin-secao-chutes{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
-#admin-secao-chutes{margin-top:20px;}
+#admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
+#admin-secao-chutes, #admin-secao-dificuldade{margin-top:20px;}
+.admin-select{border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-family:'DM Sans',sans-serif; font-size:12px; background:var(--creme); margin-bottom:14px;}
+.admin-linha-dificuldade{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
 .admin-titulo{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px;text-align:center;}
 .admin-erro-item{background:var(--creme); border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px; font-family:'DM Sans', sans-serif; font-size:13px; color:var(--text);}
 .admin-btn-mini{border:1px dashed var(--rosa); color:var(--rosa); background:none; border-radius:8px; padding:5px 10px; font-family:'DM Sans',sans-serif; font-size:11px; font-weight:bold; cursor:pointer; margin-top:6px;}
@@ -216,7 +227,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div class="qz-resultado-titulo" id="qz-resultado-titulo">Mandou bem!</div>
     <div class="qz-resultado-nota" id="qz-resultado-palavra">PALAVRA</div>
     <div class="qz-resultado-sub" id="qz-resultado-sub"></div>
-    
+
+    <div class="qz-avaliacao-dificuldade">
+      <div class="qz-avaliacao-titulo">Como foi essa palavra pra você?</div>
+      <div class="qz-avaliacao-botoes">
+        <button class="qz-btn-nivel" data-nivel="facil">🟢 Fácil</button>
+        <button class="qz-btn-nivel" data-nivel="medio">🟡 Médio</button>
+        <button class="qz-btn-nivel" data-nivel="dificil">🔴 Difícil</button>
+      </div>
+    </div>
+
     <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
     <button class="qz-btn-voltar-cal" onclick="voltarAoInicio()">← Voltar ao Calendário</button>
 
@@ -239,6 +259,20 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <div id="admin-secao-chutes" style="display:none">
     <div class="admin-titulo">📝 Relatório de Chutes (Acesso Admin)</div>
     <div id="admin-lista-chutes" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
+  </div>
+
+  <div id="admin-secao-dificuldade" style="display:none">
+    <div class="admin-titulo">📊 Dificuldade das Palavras (Acesso Admin)</div>
+    <div style="text-align:center;">
+      <select id="filtro-dificuldade" class="admin-select">
+        <option value="todas">Todas</option>
+        <option value="facil">🟢 Fácil</option>
+        <option value="medio">🟡 Médio</option>
+        <option value="dificil">🔴 Difícil</option>
+        <option value="sem_avaliacao">Sem avaliação</option>
+      </select>
+    </div>
+    <div id="admin-lista-dificuldade" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
 </div>
@@ -786,14 +820,59 @@ function obterPalavraEfetiva(indice) {
   return edicao ? { ...base, ...edicao } : base;
 }
 
-function obterPalavraDoDia(diaIndice) {
-  if (diaIndice < DIA_LIMITE_GLOBAL) return obterPalavraEfetiva(diaIndice);
+// Índice real na lista original — usado pra guardar avaliação de dificuldade de forma
+// estável, mesmo que a palavra/dica tenha sido editada depois (texto pode mudar, índice não).
+function obterIndicePalavraDoDia(diaIndice) {
+  if (diaIndice < DIA_LIMITE_GLOBAL) return diaIndice;
   const N = PALAVRAS_DO_DIA.length;
   const offset = offsetPessoal ?? (seedPessoa() % N);
-  return obterPalavraEfetiva((diaIndice + offset) % N);
+  return (diaIndice + offset) % N;
+}
+
+function obterPalavraDoDia(diaIndice) {
+  return obterPalavraEfetiva(obterIndicePalavraDoDia(diaIndice));
+}
+
+// ── AVALIAÇÃO DE DIFICULDADE ──
+const PESOS_DIFICULDADE = { facil: 1, medio: 2, dificil: 3 };
+let mediasDificuldade = {}; // { indice: { media, contagem } }
+
+async function carregarMediasDificuldade() {
+  try {
+    const snap = await getDocs(collection(db, 'avaliacoes_dificuldade'));
+    const soma = {}, contagem = {};
+    snap.forEach(d => {
+      const r = d.data();
+      const peso = PESOS_DIFICULDADE[r.dificuldade];
+      if (typeof r.indicePalavra !== 'number' || !peso) return;
+      soma[r.indicePalavra] = (soma[r.indicePalavra] || 0) + peso;
+      contagem[r.indicePalavra] = (contagem[r.indicePalavra] || 0) + 1;
+    });
+    mediasDificuldade = {};
+    Object.keys(soma).forEach(idx => {
+      mediasDificuldade[idx] = { media: soma[idx] / contagem[idx], contagem: contagem[idx] };
+    });
+  } catch (e) {
+    console.error('medias dificuldade:', e.code || '', e.message || e);
+  }
+}
+const mediasDificuldadeProntas = carregarMediasDificuldade();
+
+function rotuloDificuldade(media) {
+  if (media < 1.67) return { emoji: '🟢', texto: 'Fácil', chave: 'facil' };
+  if (media < 2.34) return { emoji: '🟡', texto: 'Médio', chave: 'medio' };
+  return { emoji: '🔴', texto: 'Difícil', chave: 'dificil' };
+}
+
+function badgeDificuldadeHtml(indice) {
+  const info = mediasDificuldade[indice];
+  if (!info) return '';
+  const r = rotuloDificuldade(info.media);
+  return `<span class="qz-badge-dificuldade">${r.emoji} ${r.texto} <span style="opacity:.65">(${info.contagem})</span></span>`;
 }
 
 let palavraDoDiaObj = null;
+let indicePalavraAtual = null;
 let tentativaAtual = 1;
 let nomeJogador = '';
 let historicoChutes = [];
@@ -863,9 +942,11 @@ onAuthStateChanged(auth, (user) => {
   const isAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
   document.getElementById('admin-secao-erros').style.display = isAdmin ? 'block' : 'none';
   document.getElementById('admin-secao-chutes').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('admin-secao-dificuldade').style.display = isAdmin ? 'block' : 'none';
   if (isAdmin) {
     carregarErrosAdmin();
     carregarChutesAdmin();
+    carregarDificuldadeAdmin();
   }
 
   // Troca de conta (ou login/logout) muda a chave do histórico e do deslocamento pessoal.
@@ -939,9 +1020,11 @@ async function iniciarJogo(indiceDia) {
     await garantirOffsetPessoal();
   }
   await edicoesPalavrasProntas;
+  await mediasDificuldadeProntas;
 
   diaJogando = indiceDia;
-  palavraDoDiaObj = obterPalavraDoDia(indiceDia);
+  indicePalavraAtual = obterIndicePalavraDoDia(indiceDia);
+  palavraDoDiaObj = obterPalavraEfetiva(indicePalavraAtual);
   tentativaAtual = 1;
   historicoChutes = []; 
   
@@ -968,7 +1051,7 @@ function renderizarDica() {
   const dicaIndex = Math.min(tentativaAtual, 5);
   document.getElementById('qz-progresso-fill').style.width = (tentativaAtual / VIDAS_TOTAL * 100) + '%';
   document.getElementById('qz-progresso-txt').textContent = `Vida ${tentativaAtual}/${VIDAS_TOTAL}`;
-  document.getElementById('qz-pergunta-num').textContent = `DICA ${dicaIndex} DE 5 · VIDA ${tentativaAtual} DE ${VIDAS_TOTAL}`;
+  document.getElementById('qz-pergunta-num').innerHTML = `DICA ${dicaIndex} DE 5 · VIDA ${tentativaAtual} DE ${VIDAS_TOTAL}${badgeDificuldadeHtml(indicePalavraAtual)}`;
   document.getElementById('qz-pergunta-txt').textContent = palavraDoDiaObj['dica' + dicaIndex];
   document.getElementById('qz-inp-chute').value = '';
   document.getElementById('qz-inp-chute').focus();
@@ -1042,6 +1125,10 @@ async function finalizarJogo(venceu) {
   let resumoFinal = `Você usou ${venceu ? tentativaAtual : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
   resumoFinal += venceu ? ` <strong>Pontuação: ${pontos} ponto${pontos === 1 ? '' : 's'}</strong>` : '';
   document.getElementById('qz-resultado-sub').innerHTML = resumoFinal;
+
+  // Reseta o widget de avaliação de dificuldade pro novo resultado.
+  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.classList.remove('selecionado'));
+  document.querySelectorAll('.qz-btn-nivel').forEach(btn => btn.disabled = false);
 
   // Dicas e explicação ficam escondidas atrás do botão "Ver todas as dicas e explicação".
   let todasDicasHtml = '';
@@ -1350,6 +1437,48 @@ window.marcarChuteCorreto = async function(docId, idx) {
   }
 };
 
+// ── DIFICULDADE DAS PALAVRAS (ADMIN) ──
+async function carregarDificuldadeAdmin() {
+  await mediasDificuldadeProntas;
+  await edicoesPalavrasProntas;
+  renderizarListaDificuldade();
+}
+
+function renderizarListaDificuldade() {
+  const wrap = document.getElementById('admin-lista-dificuldade');
+  const filtro = document.getElementById('filtro-dificuldade').value;
+
+  const linhas = PALAVRAS_DO_DIA.map((base, idx) => {
+    const efetiva = obterPalavraEfetiva(idx);
+    const info = mediasDificuldade[idx];
+    const nivel = info ? rotuloDificuldade(info.media) : null;
+    return {
+      idx,
+      palavraOriginal: base.palavra,
+      palavraAtual: efetiva.palavra,
+      nivel,
+      nivelChave: nivel ? nivel.chave : 'sem_avaliacao',
+      contagem: info ? info.contagem : 0
+    };
+  }).filter(l => filtro === 'todas' || l.nivelChave === filtro);
+
+  if (linhas.length === 0) {
+    wrap.innerHTML = 'Nenhuma palavra nesse filtro.';
+    return;
+  }
+
+  wrap.innerHTML = linhas.map(l => `
+    <div class="admin-erro-item admin-linha-dificuldade">
+      <span>${l.nivel ? l.nivel.emoji : '⚪'} <strong>${l.palavraAtual}</strong>
+        <span style="color:#888; font-size:11px;">${l.contagem ? `(${l.contagem} avaliações)` : '(sem avaliação)'}</span>
+      </span>
+      <button class="admin-btn-mini" onclick="abrirEdicaoPalavra('${l.palavraOriginal.replace(/'/g, "\\'")}')">✏️ Editar</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('filtro-dificuldade').addEventListener('change', renderizarListaDificuldade);
+
 document.getElementById('qz-btn-toggle-dicas').addEventListener('click', () => {
   const detalhesEl = document.getElementById('qz-resultado-detalhes');
   const aberto = detalhesEl.classList.toggle('show');
@@ -1357,6 +1486,42 @@ document.getElementById('qz-btn-toggle-dicas').addEventListener('click', () => {
     ? '📖 Esconder dicas e explicação'
     : '📖 Ver todas as dicas e explicação';
 });
+
+document.querySelectorAll('.qz-btn-nivel').forEach(btn => {
+  btn.addEventListener('click', () => avaliarDificuldade(btn.dataset.nivel, btn));
+});
+
+async function avaliarDificuldade(nivel, btnClicado) {
+  if (indicePalavraAtual === null) return;
+
+  document.querySelectorAll('.qz-btn-nivel').forEach(b => b.classList.remove('selecionado'));
+  btnClicado.classList.add('selecionado');
+  document.querySelectorAll('.qz-btn-nivel').forEach(b => b.disabled = true);
+
+  const idDoc = `${diaJogando}_${chaveIdentidade()}`;
+  try {
+    await setDoc(doc(db, 'avaliacoes_dificuldade', idDoc), {
+      indicePalavra: indicePalavraAtual,
+      palavra: palavraDoDiaObj.palavra,
+      dificuldade: nivel,
+      nome: nomeJogador,
+      diaIndice: diaJogando,
+      data: serverTimestamp()
+    });
+
+    // Atualiza a média local na hora, sem precisar recarregar tudo do Firestore.
+    const atual = mediasDificuldade[indicePalavraAtual] || { media: 0, contagem: 0 };
+    const somaAtual = atual.media * atual.contagem;
+    const novaContagem = atual.contagem + 1;
+    mediasDificuldade[indicePalavraAtual] = {
+      media: (somaAtual + PESOS_DIFICULDADE[nivel]) / novaContagem,
+      contagem: novaContagem
+    };
+  } catch (e) {
+    console.error('avaliar dificuldade:', e.code || '', e.message || e);
+    document.querySelectorAll('.qz-btn-nivel').forEach(b => b.disabled = false);
+  }
+}
 
 document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
   const pontosCompartilhar = progressoDias[diaJogando]?.pontos ?? 0;
