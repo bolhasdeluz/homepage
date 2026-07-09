@@ -394,6 +394,7 @@ onAuthStateChanged(auth, (user) => {
     saudacaoNome.textContent = user.displayName || user.email;
     saudacao.style.display = 'block';
     qzCarregarProgresso();
+    qzCarregarRanking();
   } else {
     statusEl.textContent = 'Não conectada';
     avatarEl.style.display = 'none';
@@ -405,6 +406,7 @@ onAuthStateChanged(auth, (user) => {
     document.getElementById('qz-btn-revisar').style.display = 'none';
     qzProgresso = {};
     qzRenderCategorias();
+    qzCarregarRanking();
   }
 });
 
@@ -1668,6 +1670,11 @@ function qzRenderRevisao() {
   }).join('');
 }
 
+// nomes que só a admin (login abaixo) vê no ranking público — jogadas de teste da casa
+const QZ_RANKING_OCULTOS = ['anna', 'anna paula gomes', 'bolhas de luz'];
+const QZ_ADMIN_EMAIL = 'annagomes.bdl@gmail.com';
+function qzEhAdmin() { return !!currentUser && currentUser.email === QZ_ADMIN_EMAIL; }
+
 async function qzCarregarRanking() {
   const wrap = document.getElementById('qz-ranking-lista');
   try {
@@ -1688,7 +1695,10 @@ async function qzCarregarRanking() {
       if (atual) atual.pontos += pontos;
       else porPessoa.set(chave, { nome: r.nome || 'Anônimo', pontos });
     });
-    const ranking = [...porPessoa.values()]
+    let candidatos = [...porPessoa.values()];
+    if (!qzEhAdmin()) candidatos = candidatos.filter(r => !QZ_RANKING_OCULTOS.includes(r.nome.trim().toLowerCase()));
+    if (!candidatos.length) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
+    const ranking = candidatos
       .sort((a, b) => b.pontos - a.pontos)
       .slice(0, 10);
     const medalhas = ['🥇', '🥈', '🥉'];
@@ -1699,12 +1709,12 @@ async function qzCarregarRanking() {
         <span class="qz-ranking-nota">${r.pontos} pts</span>
       </div>`;
     }).join('');
-    
   } catch (e) {
     console.warn('ranking quiz:', e);
     wrap.innerHTML = '<div class="qz-ranking-vazio">Não consegui carregar o ranking agora.</div>';
   }
 }
+
 qzCarregarRanking();
 </script>
 </body>
