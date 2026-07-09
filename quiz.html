@@ -1671,12 +1671,18 @@ function qzRenderRevisao() {
 async function qzCarregarRanking() {
   const wrap = document.getElementById('qz-ranking-lista');
   try {
-    const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('pontos', 'desc'), limit(10));
+    // não dá pra ordenar no Firestore por "pontos" — resultados antigos (salvos antes desse
+    // campo existir) não têm essa propriedade, e orderBy exclui documentos sem o campo.
+    // Por isso busca por data e ordena/corta no cliente, usando "acertos" como fallback.
+    const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('data', 'desc'), limit(200));
     const snap = await getDocs(q);
     if (snap.empty) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
+    const ranking = snap.docs
+      .map(d => d.data())
+      .sort((a, b) => (b.pontos ?? b.acertos ?? 0) - (a.pontos ?? a.acertos ?? 0))
+      .slice(0, 10);
     const medalhas = ['🥇', '🥈', '🥉'];
-    wrap.innerHTML = snap.docs.map((d, i) => {
-      const r = d.data();
+    wrap.innerHTML = ranking.map((r, i) => {
       return `<div class="qz-ranking-item">
         <span class="qz-ranking-pos">${medalhas[i] || (i + 1)}</span>
         <span class="qz-ranking-nome">${r.nome || 'Anônimo'}</span>
@@ -1688,7 +1694,6 @@ async function qzCarregarRanking() {
     wrap.innerHTML = '<div class="qz-ranking-vazio">Não consegui carregar o ranking agora.</div>';
   }
 }
-
 qzCarregarRanking();
 </script>
 </body>
