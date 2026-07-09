@@ -251,7 +251,7 @@ const PALAVRAS_DO_DIA = [
   {
     "palavra": "IEMANJÁ",
     "dica1": "É ela quem traz à tona as angústias, as dores, as sensibilidades — para que possam ser tratadas. É um tsunami que limpa as dores.",
-    "dica2": "É a mãe de todas as cabeças — responde principalmente pelo nosso mental em saúde e firmeza. Por isso o reforço de cabeça feito na praia é essencial para o equilíbrio emocional da corrente.",
+    "dica2": "É a mãe de todas as cabeças — responde mainly pelo nosso mental em saúde e firmeza. Por isso o reforço de cabeça feito na praia é essencial para o equilíbrio emocional da corrente.",
     "dica3": "Seu banho na virada do ano é de champagne branca. A homenagem a ela na praia nunca havia sido feita no axé da nossa casa — foi feita pela primeira vez no cruzamento de praia como reforço de cabeça essencial.",
     "dica4": "Seus filhos têm fama de chorões — mas assim como Oxum, vale questionar: até onde não é apenas a facilidade das águas de correrem livres? Senhora das emoções e dos pensamentos.",
     "dica5": "Começa com I. É a Orixá do mar — mãe de todas as cabeças e senhora das emoções.",
@@ -589,6 +589,7 @@ const DATA_INICIO = new Date('2026-07-09T00:00:00-03:00').getTime();
 let palavraDoDiaObj = null;
 let tentativaAtual = 1;
 let nomeJogador = '';
+let historicoChutes = []; // NOVA VARIÁVEL PARA GUARDAR OS CHUTES
 
 function obterPalavraDoDia() {
   const hoje = Date.now();
@@ -652,6 +653,7 @@ document.getElementById('qz-btn-comecar').addEventListener('click', () => {
 
   palavraDoDiaObj = obterPalavraDoDia();
   tentativaAtual = 1;
+  historicoChutes = []; // ZERA A LISTA DE CHUTES A CADA NOVA PARTIDA
   
   document.getElementById('qz-tela-inicio').style.display = 'none';
   document.getElementById('qz-tela-jogo').style.display = 'block';
@@ -677,6 +679,9 @@ document.getElementById('qz-btn-pular').addEventListener('click', () => processa
 
 function processarChute(pular = false) {
   const chute = document.getElementById('qz-inp-chute').value;
+  
+  // GUARDA O CHUTE NA LISTA (OU AVISA QUE PULOU)
+  historicoChutes.push(pular ? '[Pulou a dica]' : chute || '[Em branco]');
   
   if (!pular && normalizar(chute) === normalizar(palavraDoDiaObj.palavra)) {
     finalizarJogo(true);
@@ -719,6 +724,7 @@ async function finalizarJogo(venceu) {
       venceu: venceu,
       tentativas: venceu ? tentativaAtual : 5,
       palavra: palavraDoDiaObj.palavra,
+      chutes: historicoChutes, // ENVIA O HISTÓRICO DE CHUTES
       uid: currentUser ? currentUser.uid : null,
       data: serverTimestamp()
     });
