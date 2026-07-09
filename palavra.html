@@ -122,6 +122,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
 .qz-btn-voltar-cal{width:100%; margin-top:12px; border:1px solid var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
 .qz-btn-voltar-cal:hover{background:var(--rosa-dim);}
+.qz-btn-toggle-dicas{width:100%; margin-top:12px; border:1px dashed var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
+.qz-btn-toggle-dicas:hover{background:var(--rosa-dim);}
+.qz-resultado-detalhes{display:none; font-family:'DM Sans',sans-serif; font-size:.95rem; color:var(--text); line-height:1.5; margin-top:12px; text-align:left; background:var(--creme); padding:16px; border-radius:12px; border:1px solid var(--border);}
+.qz-resultado-detalhes.show{display:block; animation:cpEntra .25s ease both;}
 
 /* Admin Secao */
 #admin-secao-erros, #admin-secao-chutes{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
@@ -202,6 +206,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     
     <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
     <button class="qz-btn-voltar-cal" onclick="voltarAoInicio()">← Voltar ao Calendário</button>
+
+    <button class="qz-btn-toggle-dicas" id="qz-btn-toggle-dicas">📖 Ver todas as dicas e explicação</button>
+    <div class="qz-resultado-detalhes" id="qz-resultado-detalhes"></div>
+
     <button class="btn-erro" onclick="reportarErro()">⚠️ Encontrou erro na explicação? Avise aqui!</button>
   </div>
 
@@ -226,7 +234,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp, doc, getDoc, setDoc }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp, doc, getDoc, setDoc, runTransaction }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -245,6 +253,8 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 const ADMIN_EMAILS = ['annagomes.bdl@gmail.com'];
+// Nomes de teste/admin escondidos do ranking público (continuam salvos e visíveis no painel admin).
+const NOMES_OCULTOS_RANKING = ['anna', 'bolhas de luz'];
 
 // ══════════════════════════════════════════════════════════════
 // PALAVRAS DO DIA (40 palavras no total)
@@ -623,6 +633,13 @@ const VIDAS_TOTAL = 7;
 const DIA_LIMITE_GLOBAL = 11;
 const DIAS_EXTRA_ABERTOS = 5;
 
+// Deslocamento pessoal garantido sem colisão: cada pessoa recebe um número sequencial
+// (0, 1, 2...) na primeira vez que chega num dia personalizado, atribuído via transação
+// no Firestore. A palavra do dia vira PALAVRAS_DO_DIA[(dia + deslocamento) % 44] — como
+// os deslocamentos nunca se repetem entre pessoas, o mesmo dia nunca cai na mesma palavra
+// pra duas pessoas diferentes, e cada pessoa passa pelas 44 palavras sem repetir nem pular.
+let offsetPessoal = null;
+
 function seedPessoa() {
   const chave = currentUser ? currentUser.uid : (nomeJogador || 'anonimo');
   let hash = 0;
@@ -632,21 +649,84 @@ function seedPessoa() {
   return hash || 1;
 }
 
-function permutacaoPessoal() {
-  const indices = PALAVRAS_DO_DIA.map((_, i) => i);
-  let s = seedPessoa();
-  for (let i = indices.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const j = s % (i + 1);
-    [indices[i], indices[j]] = [indices[j], indices[i]];
+function chaveIdentidade() {
+  return currentUser ? `uid_${currentUser.uid}` : `nome_${normalizar(nomeJogador || 'anonimo').replace(/[^a-z0-9]/gi, '_')}`;
+}
+
+// Escolhe, entre os deslocamentos livres, o mais distante (ciclicamente) de todos os já usados —
+// com poucas pessoas isso já nasce espaçado em ~10+ (44 dividido pela quantidade de gente), e só
+// vai encolhendo aos poucos conforme mais gente entra, em vez de vizinhos sequenciais (0,1,2...).
+function escolherOffsetMaisDistante(usados, N) {
+  if (usados.length === 0) return 0;
+  let melhor = 0;
+  let melhorDist = -1;
+  for (let c = 0; c < N; c++) {
+    if (usados.includes(c)) continue;
+    let distMin = Infinity;
+    for (const u of usados) {
+      const d = Math.min(Math.abs(c - u), N - Math.abs(c - u));
+      if (d < distMin) distMin = d;
+    }
+    if (distMin > melhorDist) { melhorDist = distMin; melhor = c; }
   }
-  return indices;
+  return melhor;
+}
+
+async function garantirOffsetPessoal() {
+  const chave = chaveIdentidade();
+  const cacheKey = `palavra_dia_offset_${chave}`;
+  const cacheado = localStorage.getItem(cacheKey);
+  if (cacheado !== null) {
+    offsetPessoal = parseInt(cacheado);
+    return offsetPessoal;
+  }
+
+  const N = PALAVRAS_DO_DIA.length;
+  try {
+    const pessoaRef = doc(db, 'palavra_dia_offsets', chave);
+
+    const existente = await getDoc(pessoaRef);
+    if (existente.exists()) {
+      offsetPessoal = existente.data().offset;
+      localStorage.setItem(cacheKey, String(offsetPessoal));
+      return offsetPessoal;
+    }
+
+    const todosSnap = await getDocs(collection(db, 'palavra_dia_offsets'));
+    const usados = [];
+    todosSnap.forEach(d => {
+      const dados = d.data();
+      if (typeof dados.offset === 'number') usados.push(dados.offset);
+    });
+    const melhorOffset = escolherOffsetMaisDistante(usados, N);
+
+    const offset = await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(pessoaRef);
+      if (snap.exists()) return snap.data().offset;
+      transaction.set(pessoaRef, {
+        offset: melhorOffset,
+        nome: nomeJogador || (currentUser ? (currentUser.displayName || currentUser.email) : ''),
+        criadoEm: serverTimestamp()
+      });
+      return melhorOffset;
+    });
+
+    offsetPessoal = offset;
+    localStorage.setItem(cacheKey, String(offset));
+    return offset;
+  } catch (e) {
+    console.error('offset pessoal:', e.code || '', e.message || e);
+    // Sem conexão/erro: usa um valor local só pra não travar o jogo (não garante espaçamento nesse caso).
+    offsetPessoal = seedPessoa() % N;
+    return offsetPessoal;
+  }
 }
 
 function obterPalavraDoDia(diaIndice) {
   if (diaIndice < DIA_LIMITE_GLOBAL) return PALAVRAS_DO_DIA[diaIndice];
-  const perm = permutacaoPessoal();
-  return PALAVRAS_DO_DIA[perm[diaIndice % perm.length]];
+  const N = PALAVRAS_DO_DIA.length;
+  const offset = offsetPessoal ?? (seedPessoa() % N);
+  return PALAVRAS_DO_DIA[(diaIndice + offset) % N];
 }
 
 let palavraDoDiaObj = null;
@@ -724,8 +804,9 @@ onAuthStateChanged(auth, (user) => {
     carregarChutesAdmin();
   }
 
-  // Troca de conta (ou login/logout) muda a chave do histórico — recarrega do lugar certo.
+  // Troca de conta (ou login/logout) muda a chave do histórico e do deslocamento pessoal.
   progressoDias = carregarProgressoDias();
+  offsetPessoal = null;
   renderizarCalendario();
 
   sincronizarPendentes();
@@ -779,7 +860,7 @@ function renderizarCalendario() {
 }
 
 // ── INICIAR JOGO ──
-function iniciarJogo(indiceDia) {
+async function iniciarJogo(indiceDia) {
   nomeJogador = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!nomeJogador) { document.getElementById('qz-inp-nome').focus(); return; }
 
@@ -788,6 +869,10 @@ function iniciarJogo(indiceDia) {
   if (progressoDias[indiceDia]) {
     alert('Você já jogou este dia! Escolha um dia pendente.');
     return;
+  }
+
+  if (indiceDia >= DIA_LIMITE_GLOBAL && offsetPessoal === null) {
+    await garantirOffsetPessoal();
   }
 
   diaJogando = indiceDia;
@@ -882,16 +967,22 @@ async function finalizarJogo(venceu) {
   document.getElementById('qz-resultado-titulo').textContent = titulo;
   document.getElementById('qz-resultado-palavra').textContent = palavraDoDiaObj.palavra;
 
-  let textoFinal = `Você usou ${venceu ? tentativaAtual : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
-  textoFinal += venceu ? ` <strong>Pontuação: ${pontos} ponto${pontos === 1 ? '' : 's'}</strong><br><br>` : '<br><br>';
+  // Resumo curto e seguro pra print — sem dicas nem explicação, pra não dar spoiler.
+  let resumoFinal = `Você usou ${venceu ? tentativaAtual : VIDAS_TOTAL} de ${VIDAS_TOTAL} vidas.`;
+  resumoFinal += venceu ? ` <strong>Pontuação: ${pontos} ponto${pontos === 1 ? '' : 's'}</strong>` : '';
+  document.getElementById('qz-resultado-sub').innerHTML = resumoFinal;
 
+  // Dicas e explicação ficam escondidas atrás do botão "Ver todas as dicas e explicação".
   let todasDicasHtml = '';
   for (let i = 1; i <= 5; i++) {
     todasDicasHtml += `<div class="dica-anterior"><strong>Dica ${i}:</strong> ${palavraDoDiaObj['dica' + i]}</div>`;
   }
-  textoFinal += `<strong>Todas as dicas:</strong><br>${todasDicasHtml}<br>`;
-  textoFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
-  document.getElementById('qz-resultado-sub').innerHTML = textoFinal;
+  let detalhesFinal = `<strong>Todas as dicas:</strong><br>${todasDicasHtml}<br>`;
+  detalhesFinal += `<strong>Explicação:</strong> ${palavraDoDiaObj.explicacao}`;
+  const detalhesEl = document.getElementById('qz-resultado-detalhes');
+  detalhesEl.innerHTML = detalhesFinal;
+  detalhesEl.classList.remove('show');
+  document.getElementById('qz-btn-toggle-dicas').textContent = '📖 Ver todas as dicas e explicação';
 
   await salvarResultadoFirestore(diaJogando);
 
@@ -1049,6 +1140,14 @@ async function carregarChutesAdmin() {
   }
 }
 
+document.getElementById('qz-btn-toggle-dicas').addEventListener('click', () => {
+  const detalhesEl = document.getElementById('qz-resultado-detalhes');
+  const aberto = detalhesEl.classList.toggle('show');
+  document.getElementById('qz-btn-toggle-dicas').textContent = aberto
+    ? '📖 Esconder dicas e explicação'
+    : '📖 Ver todas as dicas e explicação';
+});
+
 document.getElementById('qz-btn-compartilhar').addEventListener('click', async () => {
   const pontosCompartilhar = progressoDias[diaJogando]?.pontos ?? 0;
   const texto = `🔮 Joguei a Palavra do Dia (Dia ${diaJogando + 1}) do Terreiro Bolhas de Luz!\n\nPalavra: ${palavraDoDiaObj.palavra}\nPontuação: ${pontosCompartilhar} ponto${pontosCompartilhar === 1 ? '' : 's'} (${tentativaAtual}/${VIDAS_TOTAL} vidas) ✦`;
@@ -1078,6 +1177,8 @@ async function carregarRanking() {
     snap.forEach(doc => {
       const r = doc.data();
       if (!r.nome) return;
+      const nomeNormalizado = normalizar(r.nome);
+      if (NOMES_OCULTOS_RANKING.some(oculto => nomeNormalizado.startsWith(oculto))) return;
       const pts = r.venceu ? Math.max(1, VIDAS_TOTAL - ((r.tentativas || VIDAS_TOTAL) - 1)) : 0;
       pontuacoes[r.nome] = (pontuacoes[r.nome] || 0) + pts;
     });
