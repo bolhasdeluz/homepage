@@ -616,6 +616,39 @@ const PALAVRAS_DO_DIA = [
 const DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
 const VIDAS_TOTAL = 7;
 
+// Dias 0 a 10 (já abertos globalmente até 09/07/2026) continuam com a mesma palavra
+// pra todo mundo — preserva o que já foi jogado e contabilizado. A partir do dia 11
+// (inclusive os novos dias retroativos abertos hoje) cada pessoa recebe sua própria
+// ordem embaralhada das palavras, então ninguém repete nem pula nenhuma, só muda a ordem.
+const DIA_LIMITE_GLOBAL = 11;
+const DIAS_EXTRA_ABERTOS = 5;
+
+function seedPessoa() {
+  const chave = currentUser ? currentUser.uid : (nomeJogador || 'anonimo');
+  let hash = 0;
+  for (let i = 0; i < chave.length; i++) {
+    hash = (hash * 31 + chave.charCodeAt(i)) >>> 0;
+  }
+  return hash || 1;
+}
+
+function permutacaoPessoal() {
+  const indices = PALAVRAS_DO_DIA.map((_, i) => i);
+  let s = seedPessoa();
+  for (let i = indices.length - 1; i > 0; i--) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    const j = s % (i + 1);
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  return indices;
+}
+
+function obterPalavraDoDia(diaIndice) {
+  if (diaIndice < DIA_LIMITE_GLOBAL) return PALAVRAS_DO_DIA[diaIndice];
+  const perm = permutacaoPessoal();
+  return PALAVRAS_DO_DIA[perm[diaIndice % perm.length]];
+}
+
 let palavraDoDiaObj = null;
 let tentativaAtual = 1;
 let nomeJogador = '';
@@ -702,7 +735,7 @@ onAuthStateChanged(auth, (user) => {
 function renderizarCalendario() {
   const hoje = Date.now();
   const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias);
+  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
   
   const grid = document.getElementById('calendario-grid');
   let html = '';
@@ -737,8 +770,8 @@ function renderizarCalendario() {
   grid.querySelectorAll('.cal-dia.won, .cal-dia.lost').forEach(el => {
     el.addEventListener('click', () => {
       const dia = parseInt(el.dataset.dia);
-      const palavra = PALAVRAS_DO_DIA[dia].palavra;
       const status = progressoDias[dia];
+      const palavra = status.palavra || obterPalavraDoDia(dia).palavra;
       const pontosTxt = status.venceu ? ` Você fez ${status.pontos ?? 0} ponto${(status.pontos ?? 0) === 1 ? '' : 's'}.` : '';
       alert(`Você já jogou o Dia ${dia + 1}. A palavra era: ${palavra}.${pontosTxt}`);
     });
@@ -758,7 +791,7 @@ function iniciarJogo(indiceDia) {
   }
 
   diaJogando = indiceDia;
-  palavraDoDiaObj = PALAVRAS_DO_DIA[indiceDia];
+  palavraDoDiaObj = obterPalavraDoDia(indiceDia);
   tentativaAtual = 1;
   historicoChutes = []; 
   
@@ -772,7 +805,7 @@ function iniciarJogo(indiceDia) {
 document.getElementById('qz-btn-comecar').addEventListener('click', () => {
   const hoje = Date.now();
   const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias);
+  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
   
   if (progressoDias[indiceHoje]) {
     alert('Você já jogou a palavra de hoje! Escolha um dia pendente no histórico ou volte amanhã ✦');
