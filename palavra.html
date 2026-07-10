@@ -222,6 +222,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
 
       <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na palavra, dica ou pontuação? Avise aqui!</button>
+      <button class="btn-erro" onclick="marcarRepetidaEPular()">🔁 Essa palavra já apareceu antes? Marcar como repetida e pular</button>
     </div>
   </div>
 
@@ -1360,6 +1361,40 @@ window.reportarErro = async function() {
   } catch (e) {
     console.error("Erro ao salvar relatório:", e);
     alert("Ops, não conseguimos enviar. Tente novamente mais tarde.");
+  }
+};
+
+// ── MARCAR PALAVRA COMO REPETIDA E PULAR PRA PRÓXIMA PENDENTE ──
+function encontrarProximaDiaPendente(depoisDe) {
+  const hoje = Date.now();
+  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
+  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
+
+  for (let i = depoisDe + 1; i <= indiceHoje && i < PALAVRAS_DO_DIA.length; i++) {
+    if (!progressoDias[i]) return i;
+  }
+  return null;
+}
+
+window.marcarRepetidaEPular = async function() {
+  if (!palavraDoDiaObj) return;
+  if (!confirm(`Marcar "${palavraDoDiaObj.palavra}" como repetida e pular pra próxima palavra?`)) return;
+
+  addDoc(collection(db, 'relatorios_erros'), {
+    palavra: palavraDoDiaObj.palavra,
+    motivo: 'Repetida — jogador marcou que essa palavra já apareceu antes',
+    relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador || 'Anônimo',
+    data: serverTimestamp(),
+    status: 'pendente'
+  }).catch(e => console.error("Erro ao marcar repetida:", e));
+
+  const diaAtual = diaJogando;
+  document.getElementById('qz-tela-jogo').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+
+  const proximaDia = encontrarProximaDiaPendente(diaAtual);
+  if (proximaDia !== null) {
+    iniciarJogo(proximaDia);
   }
 };
 
