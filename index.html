@@ -5746,7 +5746,7 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // TERREIRINHO DIGITAL — ganha 1 objeto novo a cada 7 dias (configurável
 // pelo admin), monta no grid de 9 casas, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
-const TV_TOTAL_SLOTS = 9;
+const TV_TOTAL_SLOTS = 36;
 let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio }]
 let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: slotIndex } }
 let tvItemSelecionado = null;
@@ -5795,7 +5795,7 @@ const TV_CHAO = {
   esquerda: { x: 0.4,  y: 63.3 },
   frente:   { x: 44.2, y: 90.5 }, // ponta mais perto de quem olha
 };
-const TV_GRID_N = 3; // 3x3 = 9 casas
+const TV_GRID_N = 6; // 6x6 = 36 casas
 
 // interpola um ponto (i,j) da grade, i,j de 0 a TV_GRID_N, usando o losango como paralelogramo
 function tvPontoChao(i, j) {
@@ -5819,8 +5819,8 @@ function tvCasaChao(linha, coluna) {
     y: cantos.reduce((s, p) => s + p.y, 0) / 4
   };
   const encolhido = cantos.map(p => ({
-    x: p.x + (centro.x - p.x) * 0.12,
-    y: p.y + (centro.y - p.y) * 0.12
+    x: p.x + (centro.x - p.x) * 0.08,
+    y: p.y + (centro.y - p.y) * 0.08
   }));
   return { cantos: encolhido, centro };
 }
@@ -5852,7 +5852,7 @@ function tvRenderGrid() {
 
     if (item) {
       const profundidade = (linha + coluna) / (2 * (TV_GRID_N - 1)); // 0 = mais no fundo, 1 = mais na frente
-      const tamanho = 22 + profundidade * 20; // % da largura do container
+      const tamanho = 11 + profundidade * 10; // % da largura do container — casas menores no grid 6x6
       const img = document.createElement('img');
       img.className = 'tv-objeto-img';
       img.src = item.imagem;
