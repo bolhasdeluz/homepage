@@ -1754,10 +1754,19 @@ function qzRenderRevisao() {
   }).join('');
 }
 
-// nomes que só a admin (login abaixo) vê no ranking público — jogadas de teste da casa
-const QZ_RANKING_OCULTOS = ['anna', 'anna paula gomes', 'bolhas de luz'];
 const QZ_ADMIN_EMAIL = 'annagomes.bdl@gmail.com';
 function qzEhAdmin() { return !!currentUser && currentUser.email === QZ_ADMIN_EMAIL; }
+
+// perfis que o admin escolheu ocultar de um ranking específico ('geral', 'palavra', 'verdadeiro')
+// — configurado na tela de Jogos (index.html), não mais uma lista fixa de nomes aqui.
+async function qzCarregarOcultosRanking(jogo) {
+  const ocultos = new Set();
+  try {
+    const snap = await getDocs(collection(db, 'jogos_visibilidade_ranking'));
+    snap.forEach(d => { if (d.data()[jogo]) ocultos.add(d.id); });
+  } catch (e) { console.warn('visibilidade ranking quiz:', e); }
+  return ocultos;
+}
 
 async function qzCarregarRanking() {
   const wrap = document.getElementById('qz-ranking-lista');
@@ -1765,14 +1774,17 @@ async function qzCarregarRanking() {
     // não dá pra ordenar no Firestore por "pontos" — resultados antigos (salvos antes desse
     // campo existir) não têm essa propriedade, e orderBy exclui documentos sem o campo.
     // Por isso busca por data e ordena/corta no cliente, usando "acertos" como fallback.
-    const q = query(collection(db, 'quiz_fundamentos_resultados'), orderBy('data', 'desc'), limit(200));
-    const snap = await getDocs(q);
+    const [snap, ocultos] = await Promise.all([
+      getDocs(query(collection(db, 'quiz_fundamentos_resultados'), orderBy('data', 'desc'), limit(200))),
+      qzCarregarOcultosRanking('verdadeiro')
+    ]);
     if (snap.empty) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
 
     // agrupa por pessoa (uid quando logada, nome como fallback pra anônima) e soma os pontos
     // de todas as tentativas — assim quem jogou várias vezes aparece uma vez só, com o total.
     const porPessoa = new Map();
     snap.docs.map(d => d.data()).forEach(r => {
+      if (r.uid && ocultos.has(r.uid)) return;
       const chave = r.uid ? `uid:${r.uid}` : `nome:${(r.nome || 'Anônimo').trim().toLowerCase()}`;
       const pontos = r.pontos ?? r.acertos ?? 0;
       const atual = porPessoa.get(chave);
@@ -1780,7 +1792,6 @@ async function qzCarregarRanking() {
       else porPessoa.set(chave, { nome: r.nome || 'Anônimo', pontos });
     });
     let candidatos = [...porPessoa.values()];
-    if (!qzEhAdmin()) candidatos = candidatos.filter(r => !QZ_RANKING_OCULTOS.includes(r.nome.trim().toLowerCase()));
     if (!candidatos.length) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém jogou ainda — seja a primeira! ✦</div>'; return; }
     const ranking = candidatos
       .sort((a, b) => b.pontos - a.pontos)
