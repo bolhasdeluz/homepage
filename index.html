@@ -1303,9 +1303,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   background:linear-gradient(135deg,#c0405a,#d4607a 60%,#e07a90);
   border-radius:12px;padding:1.1rem;margin-bottom:1rem;
   box-shadow:0 2px 20px rgba(180,60,90,.25);
-  display:flex;gap:1rem;align-items:center;
+  display:flex;gap:1rem;align-items:center;position:relative;
 }
-.gp-peninha-container{width:76px;height:82px;flex-shrink:0}
+.gp-avatar-jogador{
+  position:absolute;top:-10px;left:-8px;width:42px;height:42px;border-radius:50%;
+  overflow:hidden;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);
+  background:var(--gp-bg);z-index:3;
+}
+.gp-avatar-jogador img{width:100%;height:100%;object-fit:cover;object-position:center 25%;image-rendering:pixelated}
+.gp-peninha-container{width:76px;height:82px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .gp-player-stats{color:#fff;flex:1}
 .gp-speech-bubble{
   font-size:12px;margin-bottom:8px;font-style:italic;opacity:.95;
@@ -1376,8 +1382,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .gp-streak-dot{width:6px;height:6px;border-radius:50%;background:var(--gp-border)}
 .gp-streak-dot.filled{background:var(--gp-gold)}
 .gp-trilha-peninha{
-  position:absolute;top:-25px;left:0;font-size:22px;z-index:2;
+  position:absolute;top:-30px;left:0;width:26px;z-index:2;
   transition:left .6s cubic-bezier(.34,1.56,.64,1);transform:translateX(-50%);
+  image-rendering:pixelated;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2));
 }
 @keyframes gpTrilhaPulo{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
 .gp-trilha-peninha.pulando{animation:gpTrilhaPulo .5s ease}
@@ -1397,6 +1404,57 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .gp-altar-text{font-size:11.5px;color:var(--gp-text-dim);line-height:1.55}
 
+/* ── TERREIRINHO DIGITAL ── */
+.tv-section{
+  background:var(--gp-surface);border-radius:12px;border:0.5px solid var(--gp-border);
+  padding:1.1rem 1rem 1.3rem;margin-top:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
+}
+.tv-login-aviso{font-size:11.5px;color:var(--gp-text-dim);font-style:italic;text-align:center;padding:1rem 0}
+
+.controles-construcao{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.controles-construcao label{font-size:10.5px;color:var(--gp-text-dim);font-family:'Cinzel',serif;letter-spacing:.05em}
+.controles-construcao input[type="color"]{
+  border:1px solid rgba(196,57,107,.3);border-radius:6px;width:36px;height:36px;cursor:pointer;background:none;padding:2px;
+}
+
+.terreira-virtual-container{
+  width:100%;max-width:320px;aspect-ratio:1/1;margin:0 auto;position:relative;
+  border:1px solid var(--gp-border);border-radius:12px;overflow:hidden;
+}
+.terreira-cor-fundo{width:100%;height:100%;background-color:#fff5f7;transition:background-color .3s ease;position:relative}
+/* paredes+chão em cinza — a cor escolhida na roda se mistura com esse cinza
+   (mix-blend-mode:multiply), tingindo a sala de verdade */
+.terreira-textura-cinza{
+  width:100%;height:100%;position:absolute;top:0;left:0;
+  background-image:url('assets/sala-isometrica-cinza.png');background-size:contain;background-repeat:no-repeat;background-position:center;
+  mix-blend-mode:multiply;image-rendering:pixelated;
+}
+.tv-grid{position:absolute;inset:0;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:5px;padding:12px}
+.tv-slot{border:1.5px dashed rgba(140,58,26,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
+.tv-slot:hover{background:rgba(255,255,255,.35)}
+.tv-slot.ocupado{border-style:solid;border-color:rgba(140,58,26,.4);cursor:pointer}
+.tv-slot img{width:78%;height:78%;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+
+.tv-proximo{font-size:10.5px;color:var(--gp-text-dim);text-align:center;margin:12px 0 4px}
+
+.tv-inventario-titulo{
+  font-family:'Cinzel',serif;font-size:10.5px;font-weight:600;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--gp-text-dim);margin:10px 0 8px;
+}
+.tv-inventario{display:flex;gap:10px;flex-wrap:wrap;padding-bottom:6px}
+.tv-item{
+  width:52px;height:52px;border-radius:10px;border:1.5px solid var(--gp-border);background:var(--gp-bg);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;
+  transition:transform .15s,box-shadow .15s,opacity .15s;
+}
+.tv-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(180,60,90,.15)}
+.tv-item.selecionado{border-color:var(--gp-gold);box-shadow:0 0 0 2px var(--gp-gold-dim)}
+.tv-item.colocado{opacity:.4;cursor:pointer}
+.tv-item.bloqueado{opacity:.5;cursor:default}
+.tv-item.bloqueado:hover{transform:none;box-shadow:none}
+.tv-item img{width:70%;height:70%;object-fit:contain;image-rendering:pixelated}
+.tv-item .tv-cadeado{font-size:16px;opacity:.6}
+
 .gp-admin-section{
   background:var(--gp-surface);border-radius:12px;border:0.5px dashed var(--gp-gold);
   padding:1.1rem;margin-top:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
@@ -1413,12 +1471,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .gp-admin-perfil-toggles{display:flex;gap:6px;flex-wrap:wrap}
 
 @keyframes peninhaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-@keyframes peninhaBlink{0%,93%,100%{transform:scaleY(1)}95%,98%{transform:scaleY(0.08)}}
-@keyframes peninhaWingBob{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-6deg)}}
-.peninha-body{animation:peninhaFloat 3s ease-in-out infinite}
-.peninha-eye{transform-origin:center;transform-box:fill-box;animation:peninhaBlink 4s ease-in-out infinite}
-.peninha-wing-l{transform-origin:78px 150px;animation:peninhaWingBob 3s ease-in-out infinite}
-.peninha-wing-r{transform-origin:162px 150px;animation:peninhaWingBob 3s ease-in-out infinite reverse}
+.gp-peninha-emoji{width:64px;height:auto;display:inline-block;animation:peninhaFloat 3s ease-in-out infinite;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18));image-rendering:pixelated}
 @keyframes gpCelebrate{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(-4deg)}}
 .gp-celebrating{animation:gpCelebrate .6s ease-in-out}
 
@@ -2399,47 +2452,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="gp-portal">
 
       <div class="gp-player-panel">
+        <div class="gp-avatar-jogador" title="Seu avatar">
+          <img src="assets/avatar-face.png" alt="Avatar do jogador">
+        </div>
         <div class="gp-peninha-container">
-          <svg viewBox="0 0 240 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%" id="gp-peninha" role="img" aria-label="Peninha, a arara mascote">
-            <g class="peninha-body">
-              <g>
-                <path d="M 108 210 Q 96 236 90 252" stroke="#2864b0" stroke-width="11" fill="none" stroke-linecap="round"/>
-                <path d="M 120 212 Q 120 238 120 254" stroke="#e04858" stroke-width="11" fill="none" stroke-linecap="round"/>
-                <path d="M 132 210 Q 144 236 150 252" stroke="#2864b0" stroke-width="11" fill="none" stroke-linecap="round"/>
-              </g>
-              <path d="M 120 60 C 165 60 185 100 185 150 C 185 195 158 218 120 218 C 82 218 55 195 55 150 C 55 100 75 60 120 60 Z" fill="#e04858"/>
-              <ellipse cx="120" cy="168" rx="38" ry="42" fill="#f7cdd2"/>
-              <g class="peninha-wing-l">
-                <path d="M 62 118 C 44 130 40 165 52 190 C 60 202 74 204 80 192 C 88 176 84 138 76 122 C 72 114 68 114 62 118 Z" fill="#2864b0"/>
-                <path d="M 58 140 Q 62 165 68 184" stroke="#4a86cc" stroke-width="3" fill="none" stroke-linecap="round"/>
-              </g>
-              <g class="peninha-wing-r">
-                <path d="M 178 118 C 196 130 200 165 188 190 C 180 202 166 204 160 192 C 152 176 156 138 164 122 C 168 114 172 114 178 118 Z" fill="#2864b0"/>
-                <path d="M 182 140 Q 178 165 172 184" stroke="#4a86cc" stroke-width="3" fill="none" stroke-linecap="round"/>
-              </g>
-              <g>
-                <circle cx="104" cy="52" r="10" fill="#2864b0"/>
-                <circle cx="120" cy="44" r="12" fill="#e04858"/>
-                <circle cx="136" cy="52" r="10" fill="#f0b429"/>
-              </g>
-              <ellipse cx="120" cy="108" rx="44" ry="34" fill="#fdf6f0"/>
-              <g class="peninha-eye">
-                <circle cx="102" cy="104" r="11" fill="#2c2226"/>
-                <circle cx="106" cy="100" r="4" fill="#fff"/>
-                <circle cx="99" cy="108" r="1.8" fill="#fff" opacity="0.7"/>
-              </g>
-              <g class="peninha-eye">
-                <circle cx="138" cy="104" r="11" fill="#2c2226"/>
-                <circle cx="142" cy="100" r="4" fill="#fff"/>
-                <circle cx="135" cy="108" r="1.8" fill="#fff" opacity="0.7"/>
-              </g>
-              <ellipse cx="90" cy="120" rx="8" ry="5" fill="#f5a3b0" opacity="0.7"/>
-              <ellipse cx="150" cy="120" rx="8" ry="5" fill="#f5a3b0" opacity="0.7"/>
-              <path d="M 120 116 C 132 116 136 124 133 133 C 130 141 124 144 120 144 C 116 144 110 141 107 133 C 104 124 108 116 120 116 Z" fill="#f0b429"/>
-              <path d="M 120 133 C 118 138 116 141 113 142 C 117 145 123 145 127 142 C 124 141 122 138 120 133 Z" fill="#d99a1b"/>
-              <g><ellipse cx="104" cy="220" rx="9" ry="6" fill="#f0b429"/><ellipse cx="136" cy="220" rx="9" ry="6" fill="#f0b429"/></g>
-            </g>
-          </svg>
+          <img class="gp-peninha-emoji" id="gp-peninha" src="assets/peninha.png" alt="Peninha, a arara mascote">
         </div>
         <div class="gp-player-stats">
           <div class="gp-speech-bubble" id="gp-speech">"Salve! Pronto para o Axé do dia?"</div>
@@ -2472,7 +2489,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
         <div class="gp-trilha" id="gp-trilha">
           <div class="gp-trilha-linha"></div>
-          <div class="gp-trilha-peninha" id="gp-trilha-peninha">🦜</div>
+          <img class="gp-trilha-peninha" id="gp-trilha-peninha" src="assets/peninha.png" alt="Peninha andando pela trilha">
 
           <div class="gp-trilha-passo destaque" id="gp-passo-palavra" data-jogo="palavra">
             <button class="gp-trilha-pedra" onclick="gpPlayGame('palavra')" title="Palavra do dia"><span>📖</span></button>
@@ -2507,11 +2524,55 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
       </div>
 
+      <!-- TERREIRINHO DIGITAL -->
+      <div class="tv-section">
+        <div class="gp-section-title" style="margin-top:0">🏠 Terreirinho Digital</div>
+        <p class="gp-trilha-sub">Ganhe um objeto novo a cada 7 dias e monte o seu terreirinho do seu jeito ✦</p>
+
+        <div id="tv-login-aviso" class="tv-login-aviso" style="display:none">
+          Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦
+        </div>
+
+        <div id="tv-corpo" style="display:none">
+          <div class="controles-construcao">
+            <label for="cor-parede">Cor do Salão:</label>
+            <input type="color" id="cor-parede" value="#fff5f7">
+          </div>
+
+          <div class="terreira-virtual-container">
+            <div class="terreira-cor-fundo" id="terreira-fundo">
+              <div class="terreira-textura-cinza"></div>
+              <div class="tv-grid" id="tv-grid"></div>
+            </div>
+          </div>
+
+          <div class="tv-proximo" id="tv-proximo">Carregando...</div>
+
+          <div class="tv-inventario-titulo">Seus objetos</div>
+          <div class="tv-inventario" id="tv-inventario"></div>
+        </div>
+      </div>
+
       <!-- ADMIN — visibilidade no ranking (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="gp-admin-visibilidade" style="display:none">
         <div class="gp-admin-title">⚙️ Visibilidade no ranking</div>
         <div class="gp-admin-sub">Escolha quem fica de fora do ranking geral ou do ranking de cada jogo.</div>
         <div id="gp-admin-visibilidade-lista">Carregando...</div>
+      </div>
+
+      <!-- ADMIN — catálogo da terreira (só aparece pra quem é admin) -->
+      <div class="gp-admin-section" id="tv-admin-catalogo" style="display:none">
+        <div class="gp-admin-title">🏠 Catálogo da Terreira</div>
+        <div class="gp-admin-sub">Cadastre os objetos e em que dia (a partir do início do terreirinho de cada pessoa) cada um é liberado.</div>
+        <div id="tv-admin-lista">Carregando...</div>
+        <div class="admin-add-form" style="margin-top:10px">
+          <div class="admin-row-inputs">
+            <input type="text" id="tv-admin-novo-nome" placeholder="Nome do objeto">
+            <input type="number" id="tv-admin-novo-dia" placeholder="Dia de liberação" min="1" value="7">
+          </div>
+          <input type="text" id="tv-admin-novo-imagem" placeholder="Caminho da imagem (ex: assets/objetos/banco.png)">
+          <button class="btn-add" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
+        </div>
       </div>
 
     </div>
@@ -5669,11 +5730,194 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
   gpCarregarRankingsReais(); // reflete a mudança na hora nos rankings desta tela
 }
 
+// ══════════════════════════════════════════════════════════════
+// TERREIRINHO DIGITAL — ganha 1 objeto novo a cada 7 dias (configurável
+// pelo admin), monta no grid de 9 casas, escolhe a cor do salão.
+// ══════════════════════════════════════════════════════════════
+const TV_TOTAL_SLOTS = 9;
+let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio }]
+let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: slotIndex } }
+let tvItemSelecionado = null;
+
+function tvDiaAtual() {
+  if (!tvProgresso) return 1;
+  const dias = Math.floor((Date.now() - tvProgresso.dataInicio) / 86400000) + 1;
+  return Math.max(1, dias);
+}
+
+async function tvAtualizar() {
+  const aviso = document.getElementById('tv-login-aviso');
+  const corpo = document.getElementById('tv-corpo');
+  if (!aviso || !corpo) return;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user) {
+    aviso.style.display = 'block';
+    corpo.style.display = 'none';
+    return;
+  }
+  aviso.style.display = 'none';
+  corpo.style.display = 'block';
+  if (!window._tvCarregarCatalogo || !window._tvCarregarProgresso) return;
+
+  const [catalogo, progresso] = await Promise.all([
+    window._tvCarregarCatalogo(),
+    window._tvCarregarProgresso(user.uid)
+  ]);
+  tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  tvProgresso = progresso;
+
+  const corInput = document.getElementById('cor-parede');
+  corInput.value = tvProgresso.corParede || '#fff5f7';
+  document.getElementById('terreira-fundo').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
+
+  tvRenderGrid();
+  tvRenderInventario();
+  tvRenderProximo();
+}
+
+function tvRenderGrid() {
+  const grid = document.getElementById('tv-grid');
+  if (!grid || !tvProgresso) return;
+  const colocados = tvProgresso.colocados || {};
+  grid.innerHTML = '';
+  for (let i = 0; i < TV_TOTAL_SLOTS; i++) {
+    const slotEl = document.createElement('div');
+    slotEl.className = 'tv-slot';
+    const itemId = Object.keys(colocados).find(id => colocados[id] === i);
+    if (itemId) {
+      const item = tvCatalogo.find(o => o.id === itemId);
+      slotEl.classList.add('ocupado');
+      if (item) slotEl.innerHTML = `<img src="${item.imagem}" alt="${item.nome}">`;
+    }
+    slotEl.addEventListener('click', () => tvClicarSlot(i));
+    grid.appendChild(slotEl);
+  }
+}
+
+function tvRenderInventario() {
+  const wrap = document.getElementById('tv-inventario');
+  if (!wrap || !tvProgresso) return;
+  const dia = tvDiaAtual();
+  const colocados = tvProgresso.colocados || {};
+  if (!tvCatalogo.length) { wrap.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda — volta em breve ✦</div>'; return; }
+  wrap.innerHTML = '';
+  tvCatalogo.forEach(item => {
+    const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+    const colocado = item.id in colocados;
+    const el = document.createElement('div');
+    el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (colocado ? ' colocado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
+    el.title = desbloqueado ? item.nome : `Libera no dia ${item.diaDesbloqueio}`;
+    el.innerHTML = desbloqueado ? `<img src="${item.imagem}" alt="${item.nome}">` : `<span class="tv-cadeado">🔒</span>`;
+    if (desbloqueado) el.addEventListener('click', () => colocado ? tvRemoverDoGrid(item.id) : tvSelecionarItem(item.id));
+    wrap.appendChild(el);
+  });
+}
+
+function tvSelecionarItem(itemId) {
+  tvItemSelecionado = (tvItemSelecionado === itemId) ? null : itemId;
+  tvRenderInventario();
+}
+
+async function tvClicarSlot(slot) {
+  if (!tvProgresso) return;
+  if (!tvProgresso.colocados) tvProgresso.colocados = {};
+  const ocupante = Object.keys(tvProgresso.colocados).find(id => tvProgresso.colocados[id] === slot);
+  if (ocupante) {
+    delete tvProgresso.colocados[ocupante];
+  } else if (tvItemSelecionado) {
+    tvProgresso.colocados[tvItemSelecionado] = slot;
+    tvItemSelecionado = null;
+  } else {
+    return;
+  }
+  tvRenderGrid();
+  tvRenderInventario();
+  await tvSalvarProgresso();
+}
+
+function tvRemoverDoGrid(itemId) {
+  if (!tvProgresso || !tvProgresso.colocados) return;
+  delete tvProgresso.colocados[itemId];
+  tvRenderGrid();
+  tvRenderInventario();
+  tvSalvarProgresso();
+}
+
+function tvRenderProximo() {
+  const el = document.getElementById('tv-proximo');
+  if (!el) return;
+  if (!tvCatalogo.length) { el.textContent = 'Nenhum objeto cadastrado ainda.'; return; }
+  const dia = tvDiaAtual();
+  const proximo = tvCatalogo.find(o => (o.diaDesbloqueio || 0) > dia);
+  if (!proximo) { el.textContent = '🎉 Você já desbloqueou todos os objetos!'; return; }
+  const faltam = proximo.diaDesbloqueio - dia;
+  el.textContent = `🎁 Próximo objeto em ${faltam} dia${faltam === 1 ? '' : 's'}`;
+}
+
+async function tvSalvarProgresso() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user || !tvProgresso || !window._tvSalvarProgresso) return;
+  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corParede: tvProgresso.corParede });
+}
+
+document.getElementById('cor-parede')?.addEventListener('input', (event) => {
+  document.getElementById('terreira-fundo').style.backgroundColor = event.target.value;
+  if (tvProgresso) tvProgresso.corParede = event.target.value;
+});
+document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
+
+// ── ADMIN — catálogo de objetos da terreira ──
+async function tvAtualizarAdminCatalogo() {
+  const secao = document.getElementById('tv-admin-catalogo');
+  if (!secao) return;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const emSimulacao = _modoSimulacao !== null;
+  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  secao.style.display = souAdmin ? 'block' : 'none';
+  if (!souAdmin || !window._tvCarregarCatalogo) return;
+
+  const lista = document.getElementById('tv-admin-lista');
+  lista.innerHTML = 'Carregando...';
+  const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
+  lista.innerHTML = catalogo.map(item => `
+    <div class="admin-item-row">
+      <span class="admin-item-label">${item.nome}</span>
+      <span class="admin-item-url">dia ${item.diaDesbloqueio} · ${item.imagem}</span>
+      <div class="admin-item-actions">
+        <button class="admin-del" data-id="${item.id}">✕</button>
+      </div>
+    </div>`).join('');
+  lista.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => tvAdminExcluir(btn.dataset.id));
+  });
+}
+
+async function tvAdminAdicionar() {
+  const nome = document.getElementById('tv-admin-novo-nome').value.trim();
+  const dia = parseInt(document.getElementById('tv-admin-novo-dia').value, 10);
+  const imagem = document.getElementById('tv-admin-novo-imagem').value.trim();
+  if (!nome || !dia || !imagem) { alert('Preenche nome, dia e caminho da imagem.'); return; }
+  const id = 'obj_' + Date.now();
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem });
+  document.getElementById('tv-admin-novo-nome').value = '';
+  document.getElementById('tv-admin-novo-dia').value = '7';
+  document.getElementById('tv-admin-novo-imagem').value = '';
+  tvAtualizarAdminCatalogo();
+}
+
+async function tvAdminExcluir(id) {
+  if (window._tvExcluirItemCatalogo) await window._tvExcluirItemCatalogo(id);
+  tvAtualizarAdminCatalogo();
+}
+
 function gpAtualizarPortal() {
   gpAtualizarTrilha(); // reposiciona já com o que estiver marcado no DOM agora
   gpVerificarStatusReal();
   gpCarregarRankingsReais();
   gpAtualizarSecaoAdmin();
+  tvAtualizar();
+  tvAtualizarAdminCatalogo();
 }
 // atualiza de novo se a pessoa voltar do palavra.html/quiz.html (abertos em outra aba)
 // enquanto a tela de Jogos ainda está ativa
@@ -5849,6 +6093,45 @@ const auth = getAuth(app);
         .map(([chave, nome]) => ({ chave, nome, vis: vis[chave] || {} }))
         .sort((a, b) => a.nome.localeCompare(b.nome));
     } catch (e) { console.warn('gp listar perfis:', e); return []; }
+  };
+
+  // ── TERREIRINHO DIGITAL ──
+  // terreira_catalogo/{itemId}: { nome, imagem, diaDesbloqueio } — gerenciado pelo admin
+  // terreira_jogadores/{uid}: { dataInicio, corParede, colocados: { itemId: slotIndex } }
+  window._tvCarregarCatalogo = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'terreira_catalogo'));
+      return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch (e) { console.warn('tv carregar catalogo:', e); return []; }
+  };
+
+  window._tvSalvarItemCatalogo = async (itemId, dados) => {
+    try { await setDoc(doc(db, 'terreira_catalogo', itemId), dados, { merge: true }); }
+    catch (e) { console.warn('tv salvar item catalogo:', e); }
+  };
+
+  window._tvExcluirItemCatalogo = async (itemId) => {
+    try { await deleteDoc(doc(db, 'terreira_catalogo', itemId)); }
+    catch (e) { console.warn('tv excluir item catalogo:', e); }
+  };
+
+  window._tvCarregarProgresso = async (uid) => {
+    try {
+      const ref = doc(db, 'terreira_jogadores', uid);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const dados = snap.data();
+        return { dataInicio: dados.dataInicio?.toMillis?.() || Date.now(), corParede: dados.corParede || '#fff5f7', colocados: dados.colocados || {} };
+      }
+      // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
+      await setDoc(ref, { dataInicio: serverTimestamp(), corParede: '#fff5f7', colocados: {} });
+      return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} };
+    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} }; }
+  };
+
+  window._tvSalvarProgresso = async (uid, dados) => {
+    try { await setDoc(doc(db, 'terreira_jogadores', uid), dados, { merge: true }); }
+    catch (e) { console.warn('tv salvar progresso:', e); }
   };
 
   // ══ LISTA DE COMPRAS ══
