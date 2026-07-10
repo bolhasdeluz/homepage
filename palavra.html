@@ -122,6 +122,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-btn-compartilhar{width:100%;margin-top:12px;background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;border-radius:30px;padding:13px;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.07em;font-weight:700}
 .qz-btn-voltar-cal{width:100%; margin-top:12px; border:1px solid var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
 .qz-btn-voltar-cal:hover{background:var(--rosa-dim);}
+.qz-btn-voltar-cal:disabled{opacity:.35; cursor:not-allowed; background:none;}
 .qz-btn-toggle-dicas{width:100%; margin-top:12px; border:1px dashed var(--rosa); color:var(--rosa); background:none; border-radius:30px; padding:13px; font-family:'Cinzel',serif; font-size:11px; font-weight:700; cursor:pointer;}
 .qz-btn-toggle-dicas:hover{background:var(--rosa-dim);}
 .qz-resultado-detalhes{display:none; font-family:'DM Sans',sans-serif; font-size:.95rem; color:var(--text); line-height:1.5; margin-top:12px; text-align:left; background:var(--creme); padding:16px; border-radius:12px; border:1px solid var(--border);}
@@ -239,6 +240,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
     <button class="qz-btn-compartilhar" id="qz-btn-compartilhar">📸 Compartilhar resultado</button>
     <button class="qz-btn-voltar-cal" onclick="voltarAoInicio()">← Voltar ao Calendário</button>
+
+    <div style="display:flex; gap:10px; margin-top:12px;">
+      <button class="qz-btn-voltar-cal" id="qz-btn-anterior" style="flex:1;">← Palavra Anterior</button>
+      <button class="qz-btn-voltar-cal" id="qz-btn-proximo" style="flex:1;">Próxima Palavra →</button>
+    </div>
 
     <button class="qz-btn-toggle-dicas" id="qz-btn-toggle-dicas">📖 Ver todas as dicas e explicação</button>
     <div class="qz-resultado-detalhes" id="qz-resultado-detalhes"></div>
@@ -708,7 +714,7 @@ const VIDAS_TOTAL = 7;
 // (inclusive os novos dias retroativos abertos hoje) cada pessoa recebe sua própria
 // ordem embaralhada das palavras, então ninguém repete nem pula nenhuma, só muda a ordem.
 const DIA_LIMITE_GLOBAL = 11;
-const DIAS_EXTRA_ABERTOS = 19;
+const DIAS_EXTRA_ABERTOS = 5;
 
 // Deslocamento pessoal garantido sem colisão: cada pessoa recebe um número sequencial
 // (0, 1, 2...) na primeira vez que chega num dia personalizado, atribuído via transação
@@ -1059,7 +1065,39 @@ window.abrirRevisaoDia = async function(dia) {
   } catch (e) {
     console.error('checar avaliacao existente:', e.code || '', e.message || e);
   }
+
+  atualizarNavegacaoResultado();
 };
+
+// ── NAVEGAÇÃO ENTRE PALAVRAS JÁ JOGADAS (tela de resultado) ──
+function encontrarDiaJogado(direcao) {
+  let dia = diaJogando + direcao;
+  while (dia >= 0 && dia < PALAVRAS_DO_DIA.length) {
+    if (progressoDias[dia]) return dia;
+    dia += direcao;
+  }
+  return null;
+}
+
+function atualizarNavegacaoResultado() {
+  const diaAnterior = encontrarDiaJogado(-1);
+  const diaProximo = encontrarDiaJogado(1);
+  const btnAnterior = document.getElementById('qz-btn-anterior');
+  const btnProximo = document.getElementById('qz-btn-proximo');
+  btnAnterior.disabled = diaAnterior === null;
+  btnProximo.disabled = diaProximo === null;
+  btnAnterior.dataset.dia = diaAnterior === null ? '' : diaAnterior;
+  btnProximo.dataset.dia = diaProximo === null ? '' : diaProximo;
+}
+
+document.getElementById('qz-btn-anterior').addEventListener('click', () => {
+  const dia = document.getElementById('qz-btn-anterior').dataset.dia;
+  if (dia !== '') abrirRevisaoDia(parseInt(dia));
+});
+document.getElementById('qz-btn-proximo').addEventListener('click', () => {
+  const dia = document.getElementById('qz-btn-proximo').dataset.dia;
+  if (dia !== '') abrirRevisaoDia(parseInt(dia));
+});
 
 // ── INICIAR JOGO ──
 async function iniciarJogo(indiceDia) {
@@ -1203,6 +1241,7 @@ async function finalizarJogo(venceu) {
 
   // Atualiza o ranking para incluir a nova pontuação, se houver
   carregarRanking();
+  atualizarNavegacaoResultado();
 }
 
 // ── SINCRONIZAÇÃO COM O FIRESTORE (com retomada automática) ──
