@@ -344,8 +344,6 @@ const provider = new GoogleAuthProvider();
 
 let currentUser = null;
 const ADMIN_EMAILS = ['annagomes.bdl@gmail.com'];
-// Nomes de teste/admin escondidos do ranking público (continuam salvos e visíveis no painel admin).
-const NOMES_OCULTOS_RANKING = ['anna', 'bolhas de luz', 'bre'];
 
 // ══════════════════════════════════════════════════════════════
 // PALAVRAS DO DIA (40 palavras no total)
@@ -1711,12 +1709,25 @@ document.getElementById('qz-btn-compartilhar').addEventListener('click', async (
 });
 
 // ── CARREGAR RANKING (Total de Palavras Acertadas) ──
+// perfis que o admin escolheu ocultar de um ranking específico ('geral', 'palavra', 'verdadeiro')
+// — configurado na tela de Jogos (index.html), não mais uma lista fixa de nomes aqui.
+async function carregarOcultosRanking(jogo) {
+  const ocultos = new Set();
+  try {
+    const snap = await getDocs(collection(db, 'jogos_visibilidade_ranking'));
+    snap.forEach(d => { if (d.data()[jogo]) ocultos.add(d.id); });
+  } catch (e) { console.warn('visibilidade ranking palavra:', e); }
+  return ocultos;
+}
+
 async function carregarRanking() {
   const wrap = document.getElementById('qz-ranking-lista');
   try {
-    const q = query(collection(db, 'palavra_dia_resultados'));
-    const snap = await getDocs(q);
-    
+    const [snap, ocultos] = await Promise.all([
+      getDocs(query(collection(db, 'palavra_dia_resultados'))),
+      carregarOcultosRanking('palavra')
+    ]);
+
     if (snap.empty) {
       wrap.innerHTML = '<div style="font-style:italic;">Ninguém jogou ainda — seja a primeira! ✦</div>';
       return;
@@ -1726,8 +1737,7 @@ async function carregarRanking() {
     snap.forEach(doc => {
       const r = doc.data();
       if (!r.nome) return;
-      const nomeNormalizado = normalizar(r.nome);
-      if (NOMES_OCULTOS_RANKING.some(oculto => nomeNormalizado.startsWith(oculto))) return;
+      if (r.uid && ocultos.has(r.uid)) return;
       const pts = r.venceu ? Math.max(1, VIDAS_TOTAL - ((r.tentativas || VIDAS_TOTAL) - 1)) : 0;
       pontuacoes[r.nome] = (pontuacoes[r.nome] || 0) + pts;
     });
