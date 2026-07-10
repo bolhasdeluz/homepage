@@ -5703,7 +5703,7 @@ const auth = getAuth(app);
       snap.forEach(d => {
         const r = d.data();
         const nomeNorm = (r.nome || '').trim().toLowerCase();
-        if (GP_NOMES_OCULTOS.some(oculto => nomeNorm.startsWith(oculto))) return;
+        if (GP_NOMES_OCULTOS.includes(nomeNorm)) return;
         const chave = r.uid || r.nome;
         if (!chave) return;
         if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
