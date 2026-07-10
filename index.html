@@ -1437,7 +1437,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-slot:hover{background:rgba(255,255,255,.34)}
 .tv-slot.ocupado{background:rgba(255,255,255,.4)}
 .tv-objetos{position:absolute;inset:0;z-index:3;pointer-events:none}
-.tv-objeto-img{position:absolute;object-fit:contain;image-rendering:pixelated;transform:translate(-50%,-78%)}
+.tv-objeto-img{position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer}
 
 .tv-proximo{font-size:10.5px;color:var(--gp-text-dim);text-align:center;margin:12px 0 4px}
 
@@ -1458,6 +1458,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-item.bloqueado:hover{transform:none;box-shadow:none}
 .tv-item img{width:70%;height:70%;object-fit:contain;image-rendering:pixelated}
 .tv-item .tv-cadeado{font-size:16px;opacity:.6}
+.tv-item .tv-tipo-badge{position:absolute;bottom:-3px;right:-3px;font-size:10px;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+
+.tv-acoes-objeto{
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gp-gold-fundo);
+  border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:8px 10px;margin-top:10px;
+}
+.tv-acoes-nome{font-size:11px;font-weight:600;color:var(--gp-text);flex:1;min-width:80px}
+.tv-acoes-objeto button{
+  background:#fff;border:1px solid var(--gp-border);border-radius:14px;padding:5px 10px;
+  font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;color:var(--gp-text-dim);cursor:pointer;
+}
+.tv-acoes-objeto button:hover{border-color:var(--gp-gold);color:var(--gp-gold)}
 
 .tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
@@ -2555,6 +2567,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </div>
           </div>
 
+          <div class="tv-acoes-objeto" id="tv-acoes-objeto" style="display:none">
+            <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
+            <button onclick="tvGirarSelecionado()">↻ Girar</button>
+            <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
+            <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
+          </div>
+
           <div class="tv-proximo" id="tv-proximo">Carregando...</div>
 
           <div class="tv-inventario-titulo">Seus objetos</div>
@@ -2582,6 +2601,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div class="admin-row-inputs">
             <input type="text" id="tv-admin-novo-nome" placeholder="Nome do objeto">
             <input type="number" id="tv-admin-novo-dia" placeholder="Dia de liberação" min="1" value="7">
+          </div>
+          <div class="admin-row-inputs">
+            <select id="tv-admin-novo-tipo">
+              <option value="chao">Objeto de chão</option>
+              <option value="parede">Objeto de parede</option>
+            </select>
           </div>
           <button class="btn-add" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
         </div>
@@ -5744,12 +5769,12 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 
 // ══════════════════════════════════════════════════════════════
 // TERREIRINHO DIGITAL — ganha 1 objeto novo a cada 7 dias (configurável
-// pelo admin), monta no grid de 9 casas, escolhe a cor do salão.
+// pelo admin), monta no chão ou nas paredes, gira/espelha, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
-const TV_TOTAL_SLOTS = 36;
-let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio }]
-let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: slotIndex } }
-let tvItemSelecionado = null;
+let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede' }]
+let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
+let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
+let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
 
 function tvDiaAtual() {
   if (!tvProgresso) return 1;
@@ -5785,34 +5810,50 @@ async function tvAtualizar() {
   tvRenderGrid();
   tvRenderInventario();
   tvRenderProximo();
+  tvRenderAcoesObjeto();
 }
 
-// ── GRADE ISOMÉTRICA — os 4 cantos do losango do chão em assets/sala-isometrica-cinza.png,
-// em % do container (calibrados olhando a imagem; se trocar a arte da sala, recalibrar aqui) ──
-const TV_CHAO = {
-  fundo:    { x: 44.2, y: 36.1 }, // onde as duas paredes encontram o chão (mais longe)
-  direita:  { x: 88.0, y: 63.3 },
-  esquerda: { x: 0.4,  y: 63.3 },
-  frente:   { x: 44.2, y: 90.5 }, // ponta mais perto de quem olha
+// ── GRADE ISOMÉTRICA — chão e as duas paredes de assets/sala-isometrica-cinza.png,
+// em % do container (calibrados olhando a imagem; se trocar a arte da sala, recalibrar aqui).
+// Cada superfície é descrita por uma origem + 2 eixos (como um paralelogramo). ──
+const TV_SUPERFICIES = {
+  chao: {
+    origem: { x: 44.2, y: 36.1 }, // onde as duas paredes encontram o chão
+    eixoA:  { x: 88.0, y: 63.3 }, // canto direito
+    eixoB:  { x: 0.4,  y: 63.3 }, // canto esquerdo
+    n: 6
+  },
+  paredeEsquerda: {
+    origem: { x: 44.0, y: 0 },    // pico do telhado
+    eixoA:  { x: 0.0,  y: 26.1 }, // canto superior esquerdo
+    eixoB:  { x: 44.2, y: 36.1 }, // onde encontra o chão
+    n: 4
+  },
+  paredeDireita: {
+    origem: { x: 44.0, y: 0 },
+    eixoA:  { x: 88.0, y: 26.1 }, // canto superior direito
+    eixoB:  { x: 44.2, y: 36.1 },
+    n: 4
+  }
 };
-const TV_GRID_N = 6; // 6x6 = 36 casas
 
-// interpola um ponto (i,j) da grade, i,j de 0 a TV_GRID_N, usando o losango como paralelogramo
-function tvPontoChao(i, j) {
-  const A = { x: TV_CHAO.direita.x - TV_CHAO.fundo.x, y: TV_CHAO.direita.y - TV_CHAO.fundo.y };
-  const B = { x: TV_CHAO.esquerda.x - TV_CHAO.fundo.x, y: TV_CHAO.esquerda.y - TV_CHAO.fundo.y };
+// interpola um ponto (i,j) da grade de uma superfície, i,j de 0 a n
+function tvPonto(superficie, i, j) {
+  const s = TV_SUPERFICIES[superficie];
+  const A = { x: s.eixoA.x - s.origem.x, y: s.eixoA.y - s.origem.y };
+  const B = { x: s.eixoB.x - s.origem.x, y: s.eixoB.y - s.origem.y };
   return {
-    x: TV_CHAO.fundo.x + A.x * (i / TV_GRID_N) + B.x * (j / TV_GRID_N),
-    y: TV_CHAO.fundo.y + A.y * (i / TV_GRID_N) + B.y * (j / TV_GRID_N),
+    x: s.origem.x + A.x * (i / s.n) + B.x * (j / s.n),
+    y: s.origem.y + A.y * (i / s.n) + B.y * (j / s.n),
   };
 }
 
-// os 4 cantos da casinha (linha,coluna), encolhidos um pouco em direção ao centro pra
-// sobrar uma friurinha entre as casas — e o centro dela, usado pra plantar o objeto
-function tvCasaChao(linha, coluna) {
+// os 4 cantos da casinha (linha,coluna) de uma superfície, encolhidos um pouco em
+// direção ao centro pra sobrar uma friurinha entre as casas — e o centro dela
+function tvCasa(superficie, linha, coluna) {
   const cantos = [
-    tvPontoChao(coluna, linha), tvPontoChao(coluna + 1, linha),
-    tvPontoChao(coluna + 1, linha + 1), tvPontoChao(coluna, linha + 1)
+    tvPonto(superficie, coluna, linha), tvPonto(superficie, coluna + 1, linha),
+    tvPonto(superficie, coluna + 1, linha + 1), tvPonto(superficie, coluna, linha + 1)
   ];
   const centro = {
     x: cantos.reduce((s, p) => s + p.x, 0) / 4,
@@ -5825,6 +5866,10 @@ function tvCasaChao(linha, coluna) {
   return { cantos: encolhido, centro };
 }
 
+function tvAcharColocado(colocados, superficie, slot) {
+  return Object.keys(colocados).find(id => colocados[id].superficie === superficie && colocados[id].slot === slot);
+}
+
 function tvRenderGrid() {
   const grid = document.getElementById('tv-grid');
   const objetos = document.getElementById('tv-objetos');
@@ -5832,38 +5877,49 @@ function tvRenderGrid() {
   const colocados = tvProgresso.colocados || {};
   grid.innerHTML = '';
   objetos.innerHTML = '';
-  for (let s = 0; s < TV_TOTAL_SLOTS; s++) {
-    const linha = Math.floor(s / TV_GRID_N);
-    const coluna = s % TV_GRID_N;
-    const { cantos, centro } = tvCasaChao(linha, coluna);
 
-    const slotEl = document.createElement('div');
-    slotEl.className = 'tv-slot';
-    slotEl.style.clipPath = `polygon(${cantos.map(p => `${p.x}% ${p.y}%`).join(',')})`;
+  Object.keys(TV_SUPERFICIES).forEach(superficie => {
+    const n = TV_SUPERFICIES[superficie].n;
+    for (let s = 0; s < n * n; s++) {
+      const linha = Math.floor(s / n);
+      const coluna = s % n;
+      const { cantos, centro } = tvCasa(superficie, linha, coluna);
 
-    const itemId = Object.keys(colocados).find(id => colocados[id] === s);
-    let item = null;
-    if (itemId) {
-      item = tvCatalogo.find(o => o.id === itemId);
-      slotEl.classList.add('ocupado');
+      const slotEl = document.createElement('div');
+      slotEl.className = 'tv-slot';
+      slotEl.style.clipPath = `polygon(${cantos.map(p => `${p.x}% ${p.y}%`).join(',')})`;
+
+      const itemId = tvAcharColocado(colocados, superficie, s);
+      let item = null;
+      if (itemId) {
+        item = tvCatalogo.find(o => o.id === itemId);
+        slotEl.classList.add('ocupado');
+      }
+      slotEl.addEventListener('click', () => tvClicarSlot(superficie, s));
+      grid.appendChild(slotEl);
+
+      if (item) {
+        const info = colocados[itemId];
+        const profundidade = (linha + coluna) / (2 * (n - 1)); // 0 = mais no fundo, 1 = mais na frente
+        const base = superficie === 'chao' ? [11, 21] : [16, 26]; // % da largura do container
+        const tamanho = base[0] + profundidade * (base[1] - base[0]);
+        const rot = info.rot || 0;
+        const espelho = info.espelhado ? -1 : 1;
+
+        const img = document.createElement('img');
+        img.className = 'tv-objeto-img';
+        img.src = item.imagem;
+        img.alt = item.nome;
+        img.style.left = centro.x + '%';
+        img.style.top = centro.y + '%';
+        img.style.width = tamanho + '%';
+        img.style.transform = `translate(-50%,-78%) rotate(${rot}deg) scaleX(${espelho})`;
+        img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
+        img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(itemId); });
+        objetos.appendChild(img);
+      }
     }
-    slotEl.addEventListener('click', () => tvClicarSlot(s));
-    grid.appendChild(slotEl);
-
-    if (item) {
-      const profundidade = (linha + coluna) / (2 * (TV_GRID_N - 1)); // 0 = mais no fundo, 1 = mais na frente
-      const tamanho = 11 + profundidade * 10; // % da largura do container — casas menores no grid 6x6
-      const img = document.createElement('img');
-      img.className = 'tv-objeto-img';
-      img.src = item.imagem;
-      img.alt = item.nome;
-      img.style.left = centro.x + '%';
-      img.style.top = centro.y + '%';
-      img.style.width = tamanho + '%';
-      img.style.zIndex = String(linha + coluna);
-      objetos.appendChild(img);
-    }
-  }
+  });
 }
 
 function tvRenderInventario() {
@@ -5876,43 +5932,90 @@ function tvRenderInventario() {
   tvCatalogo.forEach(item => {
     const desbloqueado = dia >= (item.diaDesbloqueio || 0);
     const colocado = item.id in colocados;
+    const ehParede = item.tipo === 'parede';
     const el = document.createElement('div');
     el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (colocado ? ' colocado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
-    el.title = desbloqueado ? item.nome : `Libera no dia ${item.diaDesbloqueio}`;
-    el.innerHTML = desbloqueado ? `<img src="${item.imagem}" alt="${item.nome}">` : `<span class="tv-cadeado">🔒</span>`;
-    if (desbloqueado) el.addEventListener('click', () => colocado ? tvRemoverDoGrid(item.id) : tvSelecionarItem(item.id));
+    el.title = desbloqueado ? `${item.nome} (${ehParede ? 'parede' : 'chão'})` : `Libera no dia ${item.diaDesbloqueio}`;
+    el.innerHTML = desbloqueado
+      ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>`
+      : `<span class="tv-cadeado">🔒</span>`;
+    if (desbloqueado) el.addEventListener('click', () => colocado ? tvSelecionarObjetoColocado(item.id) : tvSelecionarItem(item.id));
     wrap.appendChild(el);
   });
 }
 
 function tvSelecionarItem(itemId) {
+  tvObjetoSelecionadoId = null;
+  tvRenderAcoesObjeto();
   tvItemSelecionado = (tvItemSelecionado === itemId) ? null : itemId;
   tvRenderInventario();
 }
 
-async function tvClicarSlot(slot) {
+async function tvClicarSlot(superficie, slot) {
   if (!tvProgresso) return;
   if (!tvProgresso.colocados) tvProgresso.colocados = {};
-  const ocupante = Object.keys(tvProgresso.colocados).find(id => tvProgresso.colocados[id] === slot);
-  if (ocupante) {
-    delete tvProgresso.colocados[ocupante];
-  } else if (tvItemSelecionado) {
-    tvProgresso.colocados[tvItemSelecionado] = slot;
-    tvItemSelecionado = null;
-  } else {
+  const colocados = tvProgresso.colocados;
+  const ocupanteId = tvAcharColocado(colocados, superficie, slot);
+
+  if (ocupanteId) {
+    tvSelecionarObjetoColocado(ocupanteId);
     return;
   }
+  if (!tvItemSelecionado) return;
+  const item = tvCatalogo.find(o => o.id === tvItemSelecionado);
+  if (!item) return;
+  const tipoEsperado = superficie === 'chao' ? 'chao' : 'parede';
+  if ((item.tipo || 'chao') !== tipoEsperado) return; // objeto de parede não entra no chão e vice-versa
+
+  colocados[tvItemSelecionado] = { superficie, slot, rot: 0, espelhado: false };
+  tvItemSelecionado = null;
   tvRenderGrid();
   tvRenderInventario();
   await tvSalvarProgresso();
 }
 
-function tvRemoverDoGrid(itemId) {
-  if (!tvProgresso || !tvProgresso.colocados) return;
-  delete tvProgresso.colocados[itemId];
+// ── objeto já colocado: seleciona pra abrir a barrinha de girar/espelhar/remover ──
+function tvSelecionarObjetoColocado(itemId) {
+  tvItemSelecionado = null;
+  tvObjetoSelecionadoId = (tvObjetoSelecionadoId === itemId) ? null : itemId;
+  tvRenderAcoesObjeto();
+  tvRenderInventario();
+}
+
+function tvRenderAcoesObjeto() {
+  const barra = document.getElementById('tv-acoes-objeto');
+  const nomeEl = document.getElementById('tv-acoes-nome');
+  if (!barra || !nomeEl) return;
+  if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
+  const item = tvCatalogo.find(o => o.id === tvObjetoSelecionadoId);
+  nomeEl.textContent = item ? item.nome : '';
+  barra.style.display = 'flex';
+}
+
+async function tvGirarSelecionado() {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  info.rot = ((info.rot || 0) + 90) % 360;
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+async function tvEspelharSelecionado() {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  info.espelhado = !info.espelhado;
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+async function tvRemoverSelecionado() {
+  if (!tvObjetoSelecionadoId || !tvProgresso?.colocados) return;
+  delete tvProgresso.colocados[tvObjetoSelecionadoId];
+  tvObjetoSelecionadoId = null;
   tvRenderGrid();
   tvRenderInventario();
-  tvSalvarProgresso();
+  tvRenderAcoesObjeto();
+  await tvSalvarProgresso();
 }
 
 function tvRenderProximo() {
@@ -5939,36 +6042,49 @@ document.getElementById('cor-parede')?.addEventListener('input', (event) => {
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
 
 // ── ADMIN — catálogo de objetos da terreira ──
-// Lista dos arquivos já disponíveis em assets/objetos/ — como o site é estático (sem
-// servidor pra listar pastas sozinho), atualizar aqui manualmente sempre que novas
-// artes forem coladas nessa pasta. O admin escolhe da lista em vez de digitar o caminho.
-const TV_ARQUIVOS_DISPONIVEIS = [
-  'assets/objetos/vasobuxinho2.png',
-  'assets/objetos/vasofolhasaltas.png',
-  'assets/objetos/vasolavanda.png',
-  'assets/objetos/vasoalecrim.png',
-  'assets/objetos/vasoespadasaojorge.png',
-  'assets/objetos/vasoroseira.png',
-  'assets/objetos/bancodoislugares.png',
-  'assets/objetos/banquinho.png',
-  'assets/objetos/toco.png',
-  'assets/objetos/toco2.png',
-  'assets/objetos/cadeiradeplastico.png',
+// Busca a lista de arquivos direto no GitHub (pasta assets/objetos/) — o site é
+// estático, não tem servidor próprio, então usamos a API pública do GitHub pra ler
+// o conteúdo da pasta. Assim, qualquer PNG novo colado ali já aparece sozinho,
+// sem precisar mexer no código.
+const TV_GITHUB_REPO = 'bolhasdeluz/homepage';
+const TV_GITHUB_PASTA_OBJETOS = 'assets/objetos';
 
-
-
-
-];
-
-function tvNomeSugerido(caminho) {
-  const arquivo = caminho.split('/').pop().replace(/\.[^.]+$/, '');
-  return arquivo.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+async function tvBuscarArquivosGithub() {
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${TV_GITHUB_REPO}/contents/${TV_GITHUB_PASTA_OBJETOS}`);
+    if (!resp.ok) throw new Error('GitHub respondeu ' + resp.status);
+    const dados = await resp.json();
+    return dados
+      .filter(f => f.type === 'file' && /\.(png|jpe?g|gif|webp)$/i.test(f.name))
+      .map(f => `${TV_GITHUB_PASTA_OBJETOS}/${encodeURIComponent(f.name)}`)
+      .sort();
+  } catch (e) {
+    console.warn('tv buscar arquivos github:', e);
+    return null; // null = falhou de verdade (diferente de "pasta vazia")
+  }
 }
 
-function tvMontarSelectArquivos() {
+function tvNomeSugerido(caminho) {
+  const arquivo = decodeURIComponent(caminho.split('/').pop()).replace(/\.[^.]+$/, '');
+  return arquivo.split(/[-_\s]+/).filter(Boolean).map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
+async function tvMontarSelectArquivos() {
   const sel = document.getElementById('tv-admin-novo-arquivo');
-  if (!sel || sel.options.length) return; // já montado
-  TV_ARQUIVOS_DISPONIVEIS.forEach(caminho => {
+  if (!sel || sel.dataset.montado) return; // já buscou nessa sessão
+  sel.dataset.montado = '1';
+  sel.innerHTML = '<option value="">Buscando arquivos no GitHub...</option>';
+  const arquivos = await tvBuscarArquivosGithub();
+  if (arquivos === null) {
+    sel.innerHTML = '<option value="">Não consegui buscar no GitHub agora — tenta recarregar a página</option>';
+    return;
+  }
+  if (!arquivos.length) {
+    sel.innerHTML = '<option value="">Nenhum PNG encontrado em assets/objetos/</option>';
+    return;
+  }
+  sel.innerHTML = '';
+  arquivos.forEach(caminho => {
     const opt = document.createElement('option');
     opt.value = caminho;
     opt.textContent = tvNomeSugerido(caminho);
@@ -5997,7 +6113,7 @@ async function tvAtualizarAdminCatalogo() {
   secao.style.display = souAdmin ? 'block' : 'none';
   if (!souAdmin || !window._tvCarregarCatalogo) return;
 
-  tvMontarSelectArquivos();
+  tvMontarSelectArquivos(); // roda em paralelo, não precisa bloquear o resto do painel
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
   const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
@@ -6005,7 +6121,7 @@ async function tvAtualizarAdminCatalogo() {
   lista.innerHTML = catalogo.map(item => `
     <div class="admin-item-row">
       <span class="admin-item-label">${item.nome}</span>
-      <span class="admin-item-url">dia ${item.diaDesbloqueio} · ${item.imagem}</span>
+      <span class="admin-item-url">dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${item.imagem}</span>
       <div class="admin-item-actions">
         <button class="admin-del" data-id="${item.id}">✕</button>
       </div>
@@ -6019,9 +6135,10 @@ async function tvAdminAdicionar() {
   const nome = document.getElementById('tv-admin-novo-nome').value.trim();
   const dia = parseInt(document.getElementById('tv-admin-novo-dia').value, 10);
   const imagem = document.getElementById('tv-admin-novo-arquivo').value;
+  const tipo = document.getElementById('tv-admin-novo-tipo').value;
   if (!nome || !dia || !imagem) { alert('Escolhe o arquivo, preenche o nome e o dia.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem });
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo });
   document.getElementById('tv-admin-novo-nome').value = '';
   document.getElementById('tv-admin-novo-dia').value = '7';
   tvAtualizarAdminCatalogo();
