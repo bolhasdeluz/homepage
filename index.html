@@ -3934,6 +3934,7 @@ function showPage(name) {
     // uma vez, quando o site era aberto pela primeira vez, e ficava desatualizada
     window.orCarregarProximaSessao?.();
   }
+  if (name === 'jogos') { gpAtualizarPortal(); }
 }
 function toggleDrawer() {
   const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-hint-btn');
@@ -5435,15 +5436,14 @@ async function salvarAniversariosAdmin() {
 }
 
 // ── PORTAL DE JOGOS ──
-// TODO FIRESTORE: gpState espelha o documento /usuarios/{uid}:
-//   firmezaAtual, firmezaUltimoDia, amuletos, streaks{verdadeiro,complete,quem},
-//   pontosTotal, pontosPorJogo{palavra,verdadeiro,complete,quem}
+// TODO FIRESTORE: gpState espelha o documento /usuarios/{uid} pros jogos que ainda
+//   não têm implementação própria (complete, quem):
+//   amuletos, streaks{complete,quem}
 const gpState = {
-  firmezaAtual: 1,
   amuletos: 0,
   amuletosMax: 2,
-  streaks: { verdadeiro: 0, complete: 0, quem: 0 },
-  jogadoHoje: { palavra: false, verdadeiro: false, complete: false, quem: false }
+  streaks: { complete: 0, quem: 0 },
+  jogadoHoje: { complete: false, quem: false }
 };
 
 const gpCardIds = {
@@ -5453,13 +5453,30 @@ const gpCardIds = {
   quem: 'gp-card-quem'
 };
 
+// palavra.html e quiz.html abrem numa aba nova e cada um cuida do próprio jogo —
+// aqui a gente só reflete se a pessoa realmente jogou hoje, sem simular nada.
 function gpPlayGame(jogo) {
-  if (gpState.jogadoHoje[jogo]) return;
+  if (jogo === 'palavra') { window.open('/palavra.html', '_blank'); return; }
+  if (jogo === 'verdadeiro') { window.open('/quiz.html', '_blank'); return; }
 
-  // TODO FIRESTORE: abrir o jogo de verdade (navegar pra tela do jogo,
-  // ou abrir modal) e só chamar gpRegistrarResultado() quando o usuário terminar.
-  // Por ora, simula conclusão imediata pra fins de protótipo visual.
+  if (gpState.jogadoHoje[jogo]) return;
+  // TODO: 'complete' e 'quem' ainda não têm jogo implementado — protótipo visual.
   gpRegistrarResultado(jogo, { acertou: true, pontos: 10 });
+}
+
+function gpMarcarCartaoCompleto(jogo, statusTexto) {
+  const cardEl = document.getElementById(gpCardIds[jogo]);
+  if (!cardEl || cardEl.classList.contains('completed')) return;
+  const btn = cardEl.querySelector('.gp-card-button');
+  cardEl.classList.add('completed');
+  btn.classList.add('completed');
+  btn.textContent = 'Concluído';
+  if (statusTexto) {
+    const status = document.createElement('div');
+    status.className = 'gp-card-status';
+    status.textContent = statusTexto;
+    cardEl.querySelector('.gp-card-body').appendChild(status);
+  }
 }
 
 function gpRegistrarResultado(jogo, resultado) {
@@ -5477,31 +5494,24 @@ function gpRegistrarResultado(jogo, resultado) {
   const status = document.createElement('div');
   status.className = 'gp-card-status';
 
-  if (jogo === 'palavra') {
-    gpState.firmezaAtual += 1;
-    document.getElementById('gp-firmeza').textContent = 'Dia ' + gpState.firmezaAtual;
-    status.textContent = 'Firmeza mantida';
-  } else {
-    gpState.streaks[jogo] += 1;
-    const dots = cardEl.querySelectorAll('.gp-streak-dot');
-    const idx = Math.min(gpState.streaks[jogo], 3) - 1;
-    if (idx >= 0) dots[idx].classList.add('filled');
+  gpState.streaks[jogo] += 1;
+  const dots = cardEl.querySelectorAll('.gp-streak-dot');
+  const idx = Math.min(gpState.streaks[jogo], 3) - 1;
+  if (idx >= 0) dots[idx].classList.add('filled');
 
-    if (gpState.streaks[jogo] >= 3) {
-      gpState.amuletos = Math.min(gpState.amuletos + 1, gpState.amuletosMax);
-      document.getElementById('gp-amuletos').textContent = gpState.amuletos + '/' + gpState.amuletosMax;
-      gpState.streaks[jogo] = 0;
-      status.textContent = 'Amuleto ganho';
-    } else {
-      status.textContent = gpState.streaks[jogo] + '/3 dias seguidos';
-    }
+  if (gpState.streaks[jogo] >= 3) {
+    gpState.amuletos = Math.min(gpState.amuletos + 1, gpState.amuletosMax);
+    document.getElementById('gp-amuletos').textContent = gpState.amuletos + '/' + gpState.amuletosMax;
+    gpState.streaks[jogo] = 0;
+    status.textContent = 'Amuleto ganho';
+  } else {
+    status.textContent = gpState.streaks[jogo] + '/3 dias seguidos';
   }
 
   cardEl.querySelector('.gp-card-body').appendChild(status);
 
-  // TODO FIRESTORE: persistir gpState no documento do usuário e
-  // disparar a atualização de pontosTotal / pontosPorJogo pro ranking.
-  // Ex: updateDoc(doc(db, 'usuarios', uid), { ...gpState, [`pontosPorJogo.${jogo}`]: increment(resultado.pontos) })
+  // TODO: 'complete' e 'quem' ainda não existem de verdade — quando forem
+  // implementados, persistir isso no Firestore igual ao palavra/quiz.
 }
 
 function gpCelebrarPeninha() {
@@ -5525,30 +5535,71 @@ function gpRenderLeaderboard(lista, uidAtual) {
   const container = document.getElementById('gp-leaderboard-list');
   if (!container) return;
   container.innerHTML = '';
+  if (!lista.length) {
+    container.innerHTML = '<div class="gp-lb-title" style="margin:0">Ninguém jogou ainda hoje ✦</div>';
+    return;
+  }
   lista.forEach((item, i) => {
+    const souEu = !!uidAtual && item.uid === uidAtual;
     const row = document.createElement('div');
-    row.className = 'gp-lb-row' + (item.uid === uidAtual ? ' me' : '');
+    row.className = 'gp-lb-row' + (souEu ? ' me' : '');
     row.innerHTML = `
       <span class="gp-lb-pos">${i + 1}</span>
-      <span class="gp-lb-name">${item.uid === uidAtual ? 'Você' : item.nome}</span>
+      <span class="gp-lb-name">${souEu ? 'Você' : item.nome}</span>
       <span class="gp-lb-pts">${item.pontos} pts</span>
     `;
     container.appendChild(row);
   });
 }
 
-// TODO FIRESTORE: chamar isso com dados reais quando a página abrir.
-function gpInitDemo() {
-  gpRenderMiniRanks({ palavra: 4, verdadeiro: 7, complete: 2, quem: 5 });
-  gpRenderLeaderboard([
-    { uid: 'u1', nome: 'Márcia', pontos: 312 },
-    { uid: 'u2', nome: 'Juliana', pontos: 288 },
-    { uid: 'u3', nome: 'Brenda', pontos: 265 },
-    { uid: 'me', nome: 'Você', pontos: 240 },
-    { uid: 'u4', nome: 'Manu', pontos: 198 }
-  ], 'me');
+// ── carrega o status real de "jogou hoje" (Palavra do Dia / Verdadeiro ou Falso) ──
+async function gpVerificarStatusReal() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+
+  if (user && window._gpJogouPalavraHoje) {
+    try {
+      if (await window._gpJogouPalavraHoje(user.uid)) gpMarcarCartaoCompleto('palavra', 'Já jogou hoje');
+    } catch (e) { console.warn('gp status palavra:', e); }
+  }
+
+  if (window._gpJogouQuizHoje && window._gpJogouQuizHoje()) {
+    gpMarcarCartaoCompleto('verdadeiro', 'Já jogou hoje');
+  }
 }
-gpInitDemo();
+
+// ── carrega os rankings reais (palavra_dia_resultados + quiz_fundamentos_resultados) ──
+async function gpCarregarRankingsReais() {
+  if (!window._gpRankingPalavra || !window._gpRankingQuiz) return;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const uid = user ? user.uid : null;
+
+  const [rankPalavra, rankQuiz] = await Promise.all([
+    window._gpRankingPalavra(uid),
+    window._gpRankingQuiz(uid)
+  ]);
+
+  gpRenderMiniRanks({ palavra: rankPalavra.posicao, verdadeiro: rankQuiz.posicao });
+
+  const geral = {};
+  [...rankPalavra.lista, ...rankQuiz.lista].forEach(p => {
+    const chave = p.uid || p.nome;
+    if (!chave) return;
+    if (!geral[chave]) geral[chave] = { uid: p.uid, nome: p.nome, pontos: 0 };
+    geral[chave].pontos += p.pontos;
+  });
+  const listaGeral = Object.values(geral).sort((a, b) => b.pontos - a.pontos).slice(0, 10);
+  gpRenderLeaderboard(listaGeral, uid);
+}
+
+function gpAtualizarPortal() {
+  gpVerificarStatusReal();
+  gpCarregarRankingsReais();
+}
+// atualiza de novo se a pessoa voltar do palavra.html/quiz.html (abertos em outra aba)
+// enquanto a tela de Jogos ainda está ativa
+window.addEventListener('focus', () => {
+  if (document.getElementById('page-jogos')?.classList.contains('active')) gpAtualizarPortal();
+});
 </script>
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5613,6 +5664,75 @@ const auth = getAuth(app);
       if (salvos && Array.isArray(salvos) && salvos.length) window.setAniversarios?.(salvos);
     } catch(e) { console.warn('aniversarios load:', e); }
   })();
+
+  // ── Portal de Jogos — dados reais do palavra.html e do quiz.html ──
+  // (mesmas constantes/coleções que aqueles arquivos usam; se um deles mudar
+  // DATA_INICIO/DIAS_EXTRA_ABERTOS/VIDAS_TOTAL, atualizar aqui também)
+  const GP_PALAVRA_DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
+  const GP_PALAVRA_DIAS_EXTRA_ABERTOS = 19;
+  const GP_PALAVRA_VIDAS_TOTAL = 7;
+  const GP_NOMES_OCULTOS = ['anna', 'anna paula gomes', 'bolhas de luz', 'bre'];
+
+  function gpIndiceHojePalavra() {
+    const diffDias = Math.floor((Date.now() - GP_PALAVRA_DATA_INICIO) / 86400000);
+    return Math.max(0, diffDias) + GP_PALAVRA_DIAS_EXTRA_ABERTOS;
+  }
+
+  window._gpJogouPalavraHoje = async (uid) => {
+    if (!uid) return false;
+    try {
+      const id = `d${gpIndiceHojePalavra()}_uid_${uid}`;
+      const snap = await getDoc(doc(db, 'palavra_dia_resultados', id));
+      return snap.exists();
+    } catch (e) { console.warn('gp jogou palavra hoje:', e); return false; }
+  };
+
+  // quiz.html marca o dia com esse mesmo contador local (só é incrementado
+  // quando a pessoa realmente responde uma pergunta lá)
+  window._gpJogouQuizHoje = () => {
+    try {
+      const chave = 'qz_contador_' + new Date().toISOString().slice(0, 10);
+      return parseInt(localStorage.getItem(chave) || '0', 10) > 0;
+    } catch (e) { return false; }
+  };
+
+  window._gpRankingPalavra = async (uidAtual) => {
+    try {
+      const snap = await getDocs(collection(db, 'palavra_dia_resultados'));
+      const porPessoa = {};
+      snap.forEach(d => {
+        const r = d.data();
+        const nomeNorm = (r.nome || '').trim().toLowerCase();
+        if (GP_NOMES_OCULTOS.some(oculto => nomeNorm.startsWith(oculto))) return;
+        const chave = r.uid || r.nome;
+        if (!chave) return;
+        if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
+        if (r.venceu) porPessoa[chave].pontos += Math.max(1, GP_PALAVRA_VIDAS_TOTAL - ((r.tentativas || GP_PALAVRA_VIDAS_TOTAL) - 1));
+      });
+      const lista = Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos);
+      const posicao = lista.findIndex(p => p.uid === uidAtual) + 1;
+      return { lista, posicao: posicao || null };
+    } catch (e) { console.warn('gp ranking palavra:', e); return { lista: [], posicao: null }; }
+  };
+
+  window._gpRankingQuiz = async (uidAtual) => {
+    try {
+      const snap = await getDocs(collection(db, 'quiz_fundamentos_resultados'));
+      const porPessoa = {};
+      snap.forEach(d => {
+        const r = d.data();
+        const nomeNorm = (r.nome || '').trim().toLowerCase();
+        if (GP_NOMES_OCULTOS.includes(nomeNorm)) return;
+        const chave = r.uid || r.nome;
+        if (!chave) return;
+        if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
+        porPessoa[chave].pontos += (r.pontos || 0);
+      });
+      const lista = Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos);
+      const posicao = lista.findIndex(p => p.uid === uidAtual) + 1;
+      return { lista, posicao: posicao || null };
+    } catch (e) { console.warn('gp ranking quiz:', e); return { lista: [], posicao: null }; }
+  };
 
   // ══ LISTA DE COMPRAS ══
   (function initListaCompras() {
