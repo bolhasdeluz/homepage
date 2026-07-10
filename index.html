@@ -1377,6 +1377,21 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .gp-altar-text{font-size:11.5px;color:var(--gp-text-dim);line-height:1.55}
 
+.gp-admin-section{
+  background:var(--gp-surface);border-radius:12px;border:0.5px dashed var(--gp-gold);
+  padding:1.1rem;margin-top:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
+}
+.gp-admin-title{
+  font-family:'Cinzel',serif;font-size:11.5px;font-weight:600;letter-spacing:.08em;
+  color:var(--gp-gold);margin-bottom:4px;
+}
+.gp-admin-sub{font-size:10.5px;color:var(--gp-text-dim);margin-bottom:12px;line-height:1.4}
+.gp-admin-vazio{font-size:11.5px;color:var(--gp-text-dim);font-style:italic}
+.gp-admin-perfil-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:0.5px solid var(--gp-border)}
+.gp-admin-perfil-row:last-child{border-bottom:none}
+.gp-admin-perfil-nome{font-size:11.5px;font-weight:500;color:var(--gp-text)}
+.gp-admin-perfil-toggles{display:flex;gap:6px;flex-wrap:wrap}
+
 @keyframes peninhaFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes peninhaBlink{0%,93%,100%{transform:scaleY(1)}95%,98%{transform:scaleY(0.08)}}
 @keyframes peninhaWingBob{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-6deg)}}
@@ -2489,6 +2504,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="gp-altar-text">
           A Palavra do Dia é o jogo que mantém sua Firmeza. Os outros três jogos, se jogados 3 dias seguidos cada um, rendem 1 amuleto por jogo. Se você esquecer de jogar a Palavra do Dia um dia, a Peninha usa automaticamente um amuleto pra salvar sua ofensiva.
         </div>
+      </div>
+
+      <!-- ADMIN — visibilidade no ranking (só aparece pra quem é admin) -->
+      <div class="gp-admin-section" id="gp-admin-visibilidade" style="display:none">
+        <div class="gp-admin-title">⚙️ Visibilidade no ranking</div>
+        <div class="gp-admin-sub">Escolha quem fica de fora do ranking geral ou do ranking de cada jogo.</div>
+        <div id="gp-admin-visibilidade-lista">Carregando...</div>
       </div>
 
     </div>
@@ -5568,20 +5590,30 @@ async function gpVerificarStatusReal() {
 }
 
 // ── carrega os rankings reais (palavra_dia_resultados + quiz_fundamentos_resultados) ──
+// visibilidade é configurada pelo admin (seção "Visibilidade no ranking" logo abaixo) e
+// vale pros três lugares: ranking geral daqui, ranking de cada jogo aqui, e o ranking
+// que o próprio palavra.html/quiz.html mostra — todos leem a mesma coleção no Firestore.
 async function gpCarregarRankingsReais() {
-  if (!window._gpRankingPalavra || !window._gpRankingQuiz) return;
+  if (!window._gpBrutoPalavra || !window._gpBrutoQuiz || !window._gpVisibilidadeRanking) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   const uid = user ? user.uid : null;
 
-  const [rankPalavra, rankQuiz] = await Promise.all([
-    window._gpRankingPalavra(uid),
-    window._gpRankingQuiz(uid)
+  const [brutoPalavra, brutoQuiz, vis] = await Promise.all([
+    window._gpBrutoPalavra(),
+    window._gpBrutoQuiz(),
+    window._gpVisibilidadeRanking()
   ]);
 
-  gpRenderMiniRanks({ palavra: rankPalavra.posicao, verdadeiro: rankQuiz.posicao });
+  const oculto = (p, jogo) => !!(p.uid && vis[p.uid] && vis[p.uid][jogo]);
+
+  const listaPalavra = brutoPalavra.filter(p => !oculto(p, 'palavra')).sort((a, b) => b.pontos - a.pontos);
+  const listaQuiz = brutoQuiz.filter(p => !oculto(p, 'verdadeiro')).sort((a, b) => b.pontos - a.pontos);
+  const posPalavra = listaPalavra.findIndex(p => p.uid === uid) + 1;
+  const posQuiz = listaQuiz.findIndex(p => p.uid === uid) + 1;
+  gpRenderMiniRanks({ palavra: posPalavra || null, verdadeiro: posQuiz || null });
 
   const geral = {};
-  [...rankPalavra.lista, ...rankQuiz.lista].forEach(p => {
+  [...brutoPalavra.filter(p => !oculto(p, 'geral')), ...brutoQuiz.filter(p => !oculto(p, 'geral'))].forEach(p => {
     const chave = p.uid || p.nome;
     if (!chave) return;
     if (!geral[chave]) geral[chave] = { uid: p.uid, nome: p.nome, pontos: 0 };
@@ -5591,9 +5623,42 @@ async function gpCarregarRankingsReais() {
   gpRenderLeaderboard(listaGeral, uid);
 }
 
+// ── ADMIN — escolher quem fica oculto do ranking geral e/ou de cada jogo ──
+async function gpAtualizarSecaoAdmin() {
+  const secao = document.getElementById('gp-admin-visibilidade');
+  if (!secao) return;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const emSimulacao = _modoSimulacao !== null;
+  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  secao.style.display = souAdmin ? 'block' : 'none';
+  if (!souAdmin || !window._gpListarPerfisRanking) return;
+
+  const lista = document.getElementById('gp-admin-visibilidade-lista');
+  lista.innerHTML = 'Carregando...';
+  const perfis = await window._gpListarPerfisRanking();
+  if (!perfis.length) { lista.innerHTML = '<div class="gp-admin-vazio">Ninguém jogou ainda.</div>'; return; }
+  lista.innerHTML = perfis.map(p => `
+    <div class="gp-admin-perfil-row">
+      <span class="gp-admin-perfil-nome">${p.nome}</span>
+      <div class="gp-admin-perfil-toggles">
+        <button class="toggle-pill ${p.vis.geral ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','geral',this)">Ocultar do geral</button>
+        <button class="toggle-pill ${p.vis.palavra ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','palavra',this)">Ocultar de Palavra</button>
+        <button class="toggle-pill ${p.vis.verdadeiro ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','verdadeiro',this)">Ocultar de V ou F</button>
+      </div>
+    </div>`).join('');
+}
+
+async function gpAlternarVisibilidade(uid, campo, btn) {
+  const novoValor = !btn.classList.contains('on');
+  btn.classList.toggle('on', novoValor);
+  if (window._gpSalvarVisibilidade) await window._gpSalvarVisibilidade(uid, campo, novoValor);
+  gpCarregarRankingsReais(); // reflete a mudança na hora nos rankings desta tela
+}
+
 function gpAtualizarPortal() {
   gpVerificarStatusReal();
   gpCarregarRankingsReais();
+  gpAtualizarSecaoAdmin();
 }
 // atualiza de novo se a pessoa voltar do palavra.html/quiz.html (abertos em outra aba)
 // enquanto a tela de Jogos ainda está ativa
@@ -5671,7 +5736,6 @@ const auth = getAuth(app);
   const GP_PALAVRA_DATA_INICIO = new Date('2026-06-29T00:00:00-03:00').getTime();
   const GP_PALAVRA_DIAS_EXTRA_ABERTOS = 19;
   const GP_PALAVRA_VIDAS_TOTAL = 7;
-  const GP_NOMES_OCULTOS = ['anna', 'anna paula gomes', 'bolhas de luz', 'bre', 'quem'];
 
   function gpIndiceHojePalavra() {
     const diffDias = Math.floor((Date.now() - GP_PALAVRA_DATA_INICIO) / 86400000);
@@ -5696,42 +5760,67 @@ const auth = getAuth(app);
     } catch (e) { return false; }
   };
 
-  window._gpRankingPalavra = async (uidAtual) => {
+  // pontos brutos por pessoa, sem filtrar nada — quem filtra é gpCarregarRankingsReais(),
+  // usando a visibilidade configurada pelo admin (coleção jogos_visibilidade_ranking)
+  window._gpBrutoPalavra = async () => {
     try {
       const snap = await getDocs(collection(db, 'palavra_dia_resultados'));
       const porPessoa = {};
       snap.forEach(d => {
         const r = d.data();
-        const nomeNorm = (r.nome || '').trim().toLowerCase();
-        if (GP_NOMES_OCULTOS.includes(nomeNorm)) return;
         const chave = r.uid || r.nome;
         if (!chave) return;
         if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
         if (r.venceu) porPessoa[chave].pontos += Math.max(1, GP_PALAVRA_VIDAS_TOTAL - ((r.tentativas || GP_PALAVRA_VIDAS_TOTAL) - 1));
       });
-      const lista = Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos);
-      const posicao = lista.findIndex(p => p.uid === uidAtual) + 1;
-      return { lista, posicao: posicao || null };
-    } catch (e) { console.warn('gp ranking palavra:', e); return { lista: [], posicao: null }; }
+      return Object.values(porPessoa);
+    } catch (e) { console.warn('gp bruto palavra:', e); return []; }
   };
 
-  window._gpRankingQuiz = async (uidAtual) => {
+  window._gpBrutoQuiz = async () => {
     try {
       const snap = await getDocs(collection(db, 'quiz_fundamentos_resultados'));
       const porPessoa = {};
       snap.forEach(d => {
         const r = d.data();
-        const nomeNorm = (r.nome || '').trim().toLowerCase();
-        if (GP_NOMES_OCULTOS.includes(nomeNorm)) return;
         const chave = r.uid || r.nome;
         if (!chave) return;
         if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
         porPessoa[chave].pontos += (r.pontos || 0);
       });
-      const lista = Object.values(porPessoa).sort((a, b) => b.pontos - a.pontos);
-      const posicao = lista.findIndex(p => p.uid === uidAtual) + 1;
-      return { lista, posicao: posicao || null };
-    } catch (e) { console.warn('gp ranking quiz:', e); return { lista: [], posicao: null }; }
+      return Object.values(porPessoa);
+    } catch (e) { console.warn('gp bruto quiz:', e); return []; }
+  };
+
+  // { [uid]: { geral, palavra, verdadeiro } } — true = oculto daquele ranking.
+  // Configurado pela seção de admin da tela de Jogos; palavra.html e quiz.html
+  // leem a mesma coleção pros próprios rankings individuais.
+  window._gpVisibilidadeRanking = async () => {
+    const vis = {};
+    try {
+      const snap = await getDocs(collection(db, 'jogos_visibilidade_ranking'));
+      snap.forEach(d => { vis[d.id] = d.data(); });
+    } catch (e) { console.warn('gp visibilidade ranking:', e); }
+    return vis;
+  };
+
+  window._gpSalvarVisibilidade = async (uid, campo, oculto) => {
+    try { await setDoc(doc(db, 'jogos_visibilidade_ranking', uid), { [campo]: oculto }, { merge: true }); }
+    catch (e) { console.warn('gp salvar visibilidade:', e); }
+  };
+
+  // junta quem já jogou Palavra ou Quiz (uid + nome), pro admin escolher visibilidade
+  window._gpListarPerfisRanking = async () => {
+    try {
+      const [brutoPalavra, brutoQuiz, vis] = await Promise.all([
+        window._gpBrutoPalavra(), window._gpBrutoQuiz(), window._gpVisibilidadeRanking()
+      ]);
+      const pessoas = new Map();
+      [...brutoPalavra, ...brutoQuiz].forEach(p => { if (p.uid && p.nome) pessoas.set(p.uid, p.nome); });
+      return [...pessoas.entries()]
+        .map(([uid, nome]) => ({ uid, nome, vis: vis[uid] || {} }))
+        .sort((a, b) => a.nome.localeCompare(b.nome));
+    } catch (e) { console.warn('gp listar perfis:', e); return []; }
   };
 
   // ══ LISTA DE COMPRAS ══
