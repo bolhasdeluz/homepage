@@ -138,8 +138,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-badge-dificuldade{font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:var(--text-dim); margin-left:8px; white-space:nowrap;}
 
 /* Admin Secao */
-#admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
-#admin-secao-chutes, #admin-secao-dificuldade{margin-top:20px;}
+#admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade, #admin-secao-nova-palavra{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
+#admin-secao-chutes, #admin-secao-dificuldade, #admin-secao-nova-palavra{margin-top:20px;}
+#admin-secao-nova-palavra label{display:block;font-size:.72rem;font-weight:600;color:var(--text-dim);margin:12px 0 4px}
+#admin-secao-nova-palavra input,#admin-secao-nova-palavra textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.85rem}
+#admin-secao-nova-palavra textarea{min-height:50px;resize:vertical}
 .chute-chip.chute-suspeito{border-color:#e8a33d; background:#fff7e8;}
 .admin-input-busca{flex:1; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; background:var(--creme);}
 .admin-select{border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-family:'DM Sans',sans-serif; font-size:12px; background:var(--creme); margin-bottom:14px;}
@@ -159,6 +162,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .modal-conteudo label{display:block; font-family:'Cinzel',serif; font-size:.62rem; letter-spacing:.05em; text-transform:uppercase; color:var(--text-dim); margin:12px 0 4px;}
 .modal-conteudo input, .modal-conteudo textarea{width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; background:var(--creme);}
 .modal-conteudo textarea{min-height:52px;}
+.btn-dica-mover{display:inline-flex;align-items:center;justify-content:center;width:20px;height:16px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--rosa);font-size:9px;cursor:pointer;text-transform:none;letter-spacing:0;vertical-align:middle;margin-left:4px;}
+.btn-dica-mover:hover{background:var(--rosa);color:#fff;}
 </style>
 </head>
 <body>
@@ -222,7 +227,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
 
       <button class="btn-erro" onclick="reportarErro()">⚠️ Erro na palavra, dica ou pontuação? Avise aqui!</button>
-      <button class="btn-erro" onclick="marcarRepetidaEPular()">🔁 Essa palavra já apareceu antes? Marcar como repetida e pular</button>
     </div>
   </div>
 
@@ -290,6 +294,27 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="admin-lista-dificuldade" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
+  <div id="admin-secao-nova-palavra" style="display:none">
+    <div class="admin-titulo">➕ Nova Palavra (Acesso Admin)</div>
+    <label>Palavra (resposta principal)</label>
+    <input type="text" id="nova-palavra-texto">
+    <label>Variações aceitas (uma por linha, opcional)</label>
+    <textarea id="nova-palavra-variacoes"></textarea>
+    <label>Dica 1</label>
+    <textarea id="nova-palavra-dica1"></textarea>
+    <label>Dica 2</label>
+    <textarea id="nova-palavra-dica2"></textarea>
+    <label>Dica 3</label>
+    <textarea id="nova-palavra-dica3"></textarea>
+    <label>Dica 4</label>
+    <textarea id="nova-palavra-dica4"></textarea>
+    <label>Dica 5</label>
+    <textarea id="nova-palavra-dica5"></textarea>
+    <label>Explicação</label>
+    <textarea id="nova-palavra-explicacao" style="min-height:80px"></textarea>
+    <button class="qz-btn-comecar" onclick="adicionarNovaPalavra()" style="margin-top:12px">+ Adicionar Palavra</button>
+  </div>
+
 </div>
 
 <div id="modal-editar-palavra" class="modal-overlay" style="display:none">
@@ -303,15 +328,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <label id="edit-chutes-titulo" style="display:none">Chutes de quem reportou (clique em ✓ pra marcar como correto e recontar)</label>
     <div id="edit-chutes-reporter"></div>
 
-    <label>Dica 1</label>
+    <label>Dica 1 <button type="button" class="btn-dica-mover" onclick="moverDica(1,1)" title="Trocar com a Dica 2">▼</button></label>
     <textarea id="edit-dica1"></textarea>
-    <label>Dica 2</label>
+    <label>Dica 2 <button type="button" class="btn-dica-mover" onclick="moverDica(2,-1)" title="Trocar com a Dica 1">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(2,1)" title="Trocar com a Dica 3">▼</button></label>
     <textarea id="edit-dica2"></textarea>
-    <label>Dica 3</label>
+    <label>Dica 3 <button type="button" class="btn-dica-mover" onclick="moverDica(3,-1)" title="Trocar com a Dica 2">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(3,1)" title="Trocar com a Dica 4">▼</button></label>
     <textarea id="edit-dica3"></textarea>
-    <label>Dica 4</label>
+    <label>Dica 4 <button type="button" class="btn-dica-mover" onclick="moverDica(4,-1)" title="Trocar com a Dica 3">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(4,1)" title="Trocar com a Dica 5">▼</button></label>
     <textarea id="edit-dica4"></textarea>
-    <label>Dica 5</label>
+    <label>Dica 5 <button type="button" class="btn-dica-mover" onclick="moverDica(5,-1)" title="Trocar com a Dica 4">▲</button></label>
     <textarea id="edit-dica5"></textarea>
     <label>Explicação</label>
     <textarea id="edit-explicacao" style="min-height:80px"></textarea>
@@ -825,7 +850,25 @@ async function carregarEdicoesPalavras() {
     console.error('edicoes palavras:', e.code || '', e.message || e);
   }
 }
-const edicoesPalavrasProntas = carregarEdicoesPalavras();
+
+// Palavras novas cadastradas pelo admin direto no site (sem mexer no código) — ficam
+// guardadas à parte e são coladas no fim de PALAVRAS_DO_DIA quando o jogo carrega,
+// então entram naturalmente no rodízio (dias 0-10 nunca mudam, dias 11+ usam essas também).
+async function carregarPalavrasExtras() {
+  try {
+    const snap = await getDocs(query(collection(db, 'palavras_do_dia_extras'), orderBy('criadoEm', 'asc')));
+    snap.forEach(d => PALAVRAS_DO_DIA.push(d.data()));
+  } catch (e) {
+    console.error('extras palavras:', e.code || '', e.message || e);
+  }
+}
+
+async function prepararConteudoPalavras() {
+  await Promise.all([carregarEdicoesPalavras(), carregarPalavrasExtras()]);
+  // a contagem de palavras pode ter mudado (extras somadas) — recalendariza pra refletir
+  if (typeof renderizarCalendario === 'function') renderizarCalendario();
+}
+const edicoesPalavrasProntas = prepararConteudoPalavras();
 
 function obterPalavraEfetiva(indice) {
   const base = PALAVRAS_DO_DIA[indice];
@@ -980,6 +1023,7 @@ onAuthStateChanged(auth, (user) => {
   document.getElementById('admin-secao-erros').style.display = isAdmin ? 'block' : 'none';
   document.getElementById('admin-secao-chutes').style.display = isAdmin ? 'block' : 'none';
   document.getElementById('admin-secao-dificuldade').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('admin-secao-nova-palavra').style.display = isAdmin ? 'block' : 'none';
   if (isAdmin) {
     carregarErrosAdmin();
     carregarChutesAdmin();
@@ -998,9 +1042,16 @@ onAuthStateChanged(auth, (user) => {
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
 function renderizarCalendario() {
   const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
-  
+  // admin vê tudo liberado (palavras e dias) pra poder revisar/testar aos poucos, sem
+  // esperar o calendário abrir dia a dia — inclusive palavras novas recém-cadastradas
+  let indiceHoje;
+  if (typeof souAdmin === 'function' && souAdmin()) {
+    indiceHoje = PALAVRAS_DO_DIA.length - 1;
+  } else {
+    const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
+    indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
+  }
+
   const grid = document.getElementById('calendario-grid');
   let html = '';
   
@@ -1364,40 +1415,6 @@ window.reportarErro = async function() {
   }
 };
 
-// ── MARCAR PALAVRA COMO REPETIDA E PULAR PRA PRÓXIMA PENDENTE ──
-function encontrarProximaDiaPendente(depoisDe) {
-  const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
-
-  for (let i = depoisDe + 1; i <= indiceHoje && i < PALAVRAS_DO_DIA.length; i++) {
-    if (!progressoDias[i]) return i;
-  }
-  return null;
-}
-
-window.marcarRepetidaEPular = async function() {
-  if (!palavraDoDiaObj) return;
-  if (!confirm(`Marcar "${palavraDoDiaObj.palavra}" como repetida e pular pra próxima palavra?`)) return;
-
-  addDoc(collection(db, 'relatorios_erros'), {
-    palavra: palavraDoDiaObj.palavra,
-    motivo: 'Repetida — jogador marcou que essa palavra já apareceu antes',
-    relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador || 'Anônimo',
-    data: serverTimestamp(),
-    status: 'pendente'
-  }).catch(e => console.error("Erro ao marcar repetida:", e));
-
-  const diaAtual = diaJogando;
-  document.getElementById('qz-tela-jogo').style.display = 'none';
-  document.getElementById('qz-tela-inicio').style.display = 'block';
-
-  const proximaDia = encontrarProximaDiaPendente(diaAtual);
-  if (proximaDia !== null) {
-    iniciarJogo(proximaDia);
-  }
-};
-
 // ── CARREGAR ERROS ADMIN ──
 async function carregarErrosAdmin() {
   const wrap = document.getElementById('admin-lista-erros');
@@ -1439,6 +1456,39 @@ let palavraTextoEmEdicao = null;
 function souAdmin() {
   return !!(currentUser && ADMIN_EMAILS.includes(currentUser.email));
 }
+
+// ── NOVA PALAVRA (admin) — cadastra direto no Firestore, sem mexer no código.
+// Fica salva à parte e é colada no fim de PALAVRAS_DO_DIA no próximo carregamento. ──
+window.adicionarNovaPalavra = async function() {
+  if (!souAdmin()) return;
+  const palavra = document.getElementById('nova-palavra-texto').value.trim().toUpperCase();
+  const variacoes = document.getElementById('nova-palavra-variacoes').value.split('\n').map(v => v.trim()).filter(Boolean);
+  const dica1 = document.getElementById('nova-palavra-dica1').value.trim();
+  const dica2 = document.getElementById('nova-palavra-dica2').value.trim();
+  const dica3 = document.getElementById('nova-palavra-dica3').value.trim();
+  const dica4 = document.getElementById('nova-palavra-dica4').value.trim();
+  const dica5 = document.getElementById('nova-palavra-dica5').value.trim();
+  const explicacao = document.getElementById('nova-palavra-explicacao').value.trim();
+
+  if (!palavra || !dica1 || !dica5 || !explicacao) {
+    alert('Preenche pelo menos a palavra, a Dica 1, a Dica 5 e a explicação.');
+    return;
+  }
+
+  const novaPalavra = { palavra, variacoes, dica1, dica2, dica3, dica4, dica5, explicacao };
+  try {
+    await addDoc(collection(db, 'palavras_do_dia_extras'), { ...novaPalavra, criadoEm: serverTimestamp() });
+    PALAVRAS_DO_DIA.push(novaPalavra); // já entra no rodízio nessa mesma sessão, sem duplicar as outras extras
+    ['texto','variacoes','dica1','dica2','dica3','dica4','dica5','explicacao'].forEach(campo => {
+      document.getElementById('nova-palavra-' + campo).value = '';
+    });
+    alert('Palavra adicionada! Já aparece no seu calendário pra você revisar.');
+    renderizarCalendario();
+  } catch (e) {
+    console.error('adicionar palavra:', e.code || '', e.message || e);
+    alert('Não consegui salvar agora. Tenta de novo.');
+  }
+};
 
 async function carregarChutesDoReporte(palavraTexto, relatadoPor) {
   const titulo = document.getElementById('edit-chutes-titulo');
@@ -1483,6 +1533,19 @@ async function carregarChutesDoReporte(palavraTexto, relatadoPor) {
     wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
+
+// troca o texto da Dica N com a Dica N+direcao — só reordena o que já tá escrito no
+// formulário (não salva sozinho; precisa clicar em Salvar depois), pra corrigir dicas
+// que estão entregando demais cedo ou tarde demais.
+window.moverDica = function(indice, direcao) {
+  const alvo = indice + direcao;
+  if (alvo < 1 || alvo > 5) return;
+  const a = document.getElementById('edit-dica' + indice);
+  const b = document.getElementById('edit-dica' + alvo);
+  const tmp = a.value;
+  a.value = b.value;
+  b.value = tmp;
+};
 
 window.abrirEdicaoPalavra = async function(palavraTexto, relatadoPor) {
   if (!souAdmin()) return;
