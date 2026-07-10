@@ -311,6 +311,24 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <!-- TELA ADMIN — respostas de todo mundo, pergunta por pergunta, e edição das perguntas -->
   <div id="qz-tela-admin" style="display:none">
     <button class="back-btn" id="qz-admin-voltar" style="margin-bottom:16px">← Voltar</button>
+
+    <div class="qz-admin-edit-form" style="display:flex">
+      <strong style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.05em">➕ Nova pergunta</strong>
+      <input type="text" id="qz-nova-categoria" placeholder="Categoria (ex: Fundamentos & Doutrina)">
+      <textarea id="qz-nova-afirmacao" placeholder="Afirmação (a frase que a pessoa avalia como Verdadeiro ou Falso)"></textarea>
+      <select id="qz-nova-correta">
+        <option value="true">Verdadeiro</option>
+        <option value="false">Falso</option>
+      </select>
+      <textarea id="qz-nova-explicacao" placeholder="Explicação (aparece depois de responder)"></textarea>
+      <select id="qz-nova-dificuldade">
+        <option value="1">⭐ Fácil (1 ponto)</option>
+        <option value="2">⭐⭐ Médio (2 pontos)</option>
+        <option value="3">⭐⭐⭐ Difícil (3 pontos)</option>
+      </select>
+      <button onclick="qzAdminAdicionarPergunta()">+ Adicionar pergunta</button>
+    </div>
+
     <div class="qz-admin-topo">
       <input type="text" id="qz-admin-busca" placeholder="Buscar por texto da pergunta...">
       <select id="qz-admin-filtro-categoria"><option value="todas">Todas as categorias</option></select>
@@ -337,7 +355,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
       <div class="qz-feedback" id="qz-feedback"></div>
       <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
-      <button class="qz-btn-reportar-erro" id="qz-btn-repetida">🔁 Pergunta repetida? Marcar e pular</button>
       <button class="qz-btn-reportar-erro" id="qz-btn-reportar-erro">⚠️ Erro nessa pergunta? Avise aqui</button>
     </div>
     <button class="qz-btn-sair" id="qz-btn-sair">💾 Salvar e sair por aqui</button>
@@ -454,6 +471,7 @@ onAuthStateChanged(auth, (user) => {
     qzCarregarRanking();
   }
   document.getElementById('qz-admin-btn').style.display = qzEhAdmin() ? 'inline-block' : 'none';
+  qzRenderContadorDia(); // reflete o "sem limite" assim que o login de admin resolve
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -1275,9 +1293,16 @@ async function qzCarregarEdicoesPerguntas() {
       if (pergunta) Object.assign(pergunta, d.data());
     });
   } catch (e) { console.warn('carregar edições do quiz:', e); }
+
+  // perguntas novas cadastradas pelo admin direto no site (sem mexer no código) —
+  // ficam numa coleção à parte e são coladas no fim de QZ_PERGUNTAS quando carrega.
+  try {
+    const snapExtras = await getDocs(collection(db, 'quiz_perguntas_extras'));
+    snapExtras.docs.map(d => d.data()).sort((a, b) => a.id - b.id).forEach(p => QZ_PERGUNTAS.push(p));
+  } catch (e) { console.warn('carregar perguntas extras do quiz:', e); }
 }
 const qzEdicoesProntas = qzCarregarEdicoesPerguntas();
-qzEdicoesProntas.then(() => qzRenderCategorias());
+qzEdicoesProntas.then(() => { qzRenderCategorias(); qzRenderContadorDia(); });
 
 let qzNome = '';
 let qzIndiceAtual = 0;
@@ -1430,14 +1455,21 @@ function qzIncrementarContadorDia() {
   return n;
 }
 function qzRenderContadorDia() {
-  const feitas = qzRespostasHojeContagem();
   const wrap = document.getElementById('qz-contador-dia');
+  const btn = document.getElementById('qz-btn-comecar');
+  if (qzEhAdmin()) {
+    wrap.classList.remove('cheio');
+    wrap.innerHTML = '👑 <strong>Admin</strong> — sem limite diário, todas as perguntas liberadas';
+    btn.disabled = false;
+    btn.textContent = 'Começar ✦';
+    return;
+  }
+  const feitas = qzRespostasHojeContagem();
   const cheio = feitas >= QZ_LIMITE_DIARIO;
   wrap.classList.toggle('cheio', cheio);
   wrap.innerHTML = cheio
     ? `✅ Você já fez suas <strong>${QZ_LIMITE_DIARIO} de hoje</strong>! Volta amanhã pra mais ✦`
     : `📅 <strong>${feitas}/${QZ_LIMITE_DIARIO}</strong> perguntas hoje`;
-  const btn = document.getElementById('qz-btn-comecar');
   btn.disabled = cheio;
   btn.textContent = cheio ? 'Volte amanhã ✦' : 'Começar ✦';
 }
@@ -1503,12 +1535,16 @@ document.getElementById('qz-btn-comecar').addEventListener('click', async () => 
   await qzEdicoesProntas; // garante que a rodada usa o texto/gabarito já editado, se houver
   qzNome = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
-  const restanteHoje = QZ_LIMITE_DIARIO - qzRespostasHojeContagem();
+
+  // admin joga sem limite diário e vê todas as perguntas da categoria (não só a leva
+  // de 7 ainda não respondidas), pra poder revisar/testar tudo aos poucos
+  const admin = qzEhAdmin();
+  const restanteHoje = admin ? Infinity : (QZ_LIMITE_DIARIO - qzRespostasHojeContagem());
   if (restanteHoje <= 0) {
     alert('Você já fez suas 7 perguntas de hoje! Volta amanhã pra continuar a trilha ✦');
     return;
   }
-  const base = qzLevaAtual(qzCategoriaEscolhida).slice(0, restanteHoje);
+  const base = admin ? qzPoolCategoria(qzCategoriaEscolhida) : qzLevaAtual(qzCategoriaEscolhida).slice(0, restanteHoje);
   if (!base.length) {
     alert('Você já respondeu todas as perguntas dessa área! Escolhe outra categoria, ou dá uma olhada em "Revisar minhas respostas" ✦');
     return;
@@ -1611,31 +1647,6 @@ async function qzReportarErro() {
   }
 }
 document.getElementById('qz-btn-reportar-erro').addEventListener('click', qzReportarErro);
-
-// ── MARCAR PERGUNTA COMO REPETIDA E PULAR PRA PRÓXIMA ──
-function qzMarcarRepetida() {
-  const p = qzPerguntasRodada[qzIndiceAtual];
-  if (!p || qzRespondida) return;
-  qzRespondida = true;
-
-  addDoc(collection(db, 'quiz_relatorios_erros'), {
-    perguntaId: p.id,
-    afirmacao: p.afirmacao,
-    motivo: 'Repetida — jogador marcou que essa pergunta já apareceu antes',
-    relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : (qzNome || 'Anônimo'),
-    uid: currentUser ? currentUser.uid : null,
-    data: serverTimestamp(),
-    status: 'pendente'
-  }).catch(e => console.warn('marcar repetida quiz:', e));
-
-  qzIndiceAtual++;
-  if (qzIndiceAtual < qzPerguntasRodada.length) {
-    qzRenderPergunta();
-  } else {
-    qzFinalizar();
-  }
-}
-document.getElementById('qz-btn-repetida').addEventListener('click', qzMarcarRepetida);
 
 document.querySelectorAll('.qz-vf-btn').forEach(btn => {
   btn.addEventListener('click', () => qzResponder(btn.dataset.val === 'true'));
@@ -1867,12 +1878,42 @@ function qzAbrirAdmin() {
 
 function qzMontarFiltroCategoriaAdmin() {
   const sel = document.getElementById('qz-admin-filtro-categoria');
-  if (sel.options.length > 1) return; // já montado
+  const existentes = new Set([...sel.options].map(o => o.value));
   [...new Set(QZ_PERGUNTAS.map(p => p.categoria))].forEach(c => {
+    if (existentes.has(c)) return; // já tem essa opção — não duplica nem perde a seleção atual
     const opt = document.createElement('option');
     opt.value = c; opt.textContent = c;
     sel.appendChild(opt);
   });
+}
+
+// ── NOVA PERGUNTA (admin) — cadastra direto no Firestore, sem mexer no código.
+// Recebe um id numérico contínuo depois do maior já existente. ──
+async function qzAdminAdicionarPergunta() {
+  const categoria = document.getElementById('qz-nova-categoria').value.trim();
+  const afirmacao = document.getElementById('qz-nova-afirmacao').value.trim();
+  const correta = document.getElementById('qz-nova-correta').value === 'true';
+  const explicacao = document.getElementById('qz-nova-explicacao').value.trim();
+  const dificuldade = parseInt(document.getElementById('qz-nova-dificuldade').value, 10);
+  if (!categoria || !afirmacao || !explicacao) {
+    alert('Preenche categoria, afirmação e explicação.');
+    return;
+  }
+  const novoId = Math.max(0, ...QZ_PERGUNTAS.map(p => p.id)) + 1;
+  const novaPergunta = { id: novoId, categoria, afirmacao, correta, explicacao, dificuldade };
+  try {
+    await setDoc(doc(db, 'quiz_perguntas_extras', String(novoId)), novaPergunta);
+    QZ_PERGUNTAS.push(novaPergunta); // já entra na rodada nessa mesma sessão
+    document.getElementById('qz-nova-categoria').value = '';
+    document.getElementById('qz-nova-afirmacao').value = '';
+    document.getElementById('qz-nova-explicacao').value = '';
+    alert('Pergunta adicionada!');
+    qzMontarFiltroCategoriaAdmin();
+    qzRenderAdmin();
+  } catch (e) {
+    console.warn('adicionar pergunta:', e);
+    alert('Não consegui salvar agora.');
+  }
 }
 
 // carrega, de uma vez, as respostas de TODAS as pessoas (não só a logada) e os avisos de erro
