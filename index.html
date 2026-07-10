@@ -1455,6 +1455,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-item img{width:70%;height:70%;object-fit:contain;image-rendering:pixelated}
 .tv-item .tv-cadeado{font-size:16px;opacity:.6}
 
+.tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
+#tv-admin-preview{width:44px;height:44px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:var(--gp-bg);image-rendering:pixelated;flex-shrink:0}
+
 .gp-admin-section{
   background:var(--gp-surface);border-radius:12px;border:0.5px dashed var(--gp-gold);
   padding:1.1rem;margin-top:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
@@ -2566,11 +2570,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="gp-admin-sub">Cadastre os objetos e em que dia (a partir do início do terreirinho de cada pessoa) cada um é liberado.</div>
         <div id="tv-admin-lista">Carregando...</div>
         <div class="admin-add-form" style="margin-top:10px">
+          <div class="tv-admin-arquivo-linha">
+            <img id="tv-admin-preview" alt="" style="display:none">
+            <select id="tv-admin-novo-arquivo"></select>
+          </div>
           <div class="admin-row-inputs">
             <input type="text" id="tv-admin-novo-nome" placeholder="Nome do objeto">
             <input type="number" id="tv-admin-novo-dia" placeholder="Dia de liberação" min="1" value="7">
           </div>
-          <input type="text" id="tv-admin-novo-imagem" placeholder="Caminho da imagem (ex: assets/objetos/banco.png)">
           <button class="btn-add" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
         </div>
       </div>
@@ -5867,6 +5874,47 @@ document.getElementById('cor-parede')?.addEventListener('input', (event) => {
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
 
 // ── ADMIN — catálogo de objetos da terreira ──
+// Lista dos arquivos já disponíveis em assets/objetos/ — como o site é estático (sem
+// servidor pra listar pastas sozinho), atualizar aqui manualmente sempre que novas
+// artes forem coladas nessa pasta. O admin escolhe da lista em vez de digitar o caminho.
+const TV_ARQUIVOS_DISPONIVEIS = [
+  'assets/objetos/vaso-buxinho-1.png',
+  'assets/objetos/vaso-buxinho-2.png',
+  'assets/objetos/vaso-folhas-altas.png',
+  'assets/objetos/vaso-lavanda.png',
+  'assets/objetos/vaso-alecrim.png',
+  'assets/objetos/vaso-espada-sao-jorge.png',
+  'assets/objetos/vaso-roseira.png',
+];
+
+function tvNomeSugerido(caminho) {
+  const arquivo = caminho.split('/').pop().replace(/\.[^.]+$/, '');
+  return arquivo.split('-').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+}
+
+function tvMontarSelectArquivos() {
+  const sel = document.getElementById('tv-admin-novo-arquivo');
+  if (!sel || sel.options.length) return; // já montado
+  TV_ARQUIVOS_DISPONIVEIS.forEach(caminho => {
+    const opt = document.createElement('option');
+    opt.value = caminho;
+    opt.textContent = tvNomeSugerido(caminho);
+    sel.appendChild(opt);
+  });
+  tvAtualizarPreviewArquivo();
+  sel.addEventListener('change', tvAtualizarPreviewArquivo);
+}
+
+function tvAtualizarPreviewArquivo() {
+  const sel = document.getElementById('tv-admin-novo-arquivo');
+  const preview = document.getElementById('tv-admin-preview');
+  const nomeInput = document.getElementById('tv-admin-novo-nome');
+  if (!sel || !sel.value) return;
+  preview.src = sel.value;
+  preview.style.display = 'block';
+  if (!nomeInput.value.trim()) nomeInput.value = tvNomeSugerido(sel.value);
+}
+
 async function tvAtualizarAdminCatalogo() {
   const secao = document.getElementById('tv-admin-catalogo');
   if (!secao) return;
@@ -5876,6 +5924,7 @@ async function tvAtualizarAdminCatalogo() {
   secao.style.display = souAdmin ? 'block' : 'none';
   if (!souAdmin || !window._tvCarregarCatalogo) return;
 
+  tvMontarSelectArquivos();
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
   const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
@@ -5896,13 +5945,12 @@ async function tvAtualizarAdminCatalogo() {
 async function tvAdminAdicionar() {
   const nome = document.getElementById('tv-admin-novo-nome').value.trim();
   const dia = parseInt(document.getElementById('tv-admin-novo-dia').value, 10);
-  const imagem = document.getElementById('tv-admin-novo-imagem').value.trim();
-  if (!nome || !dia || !imagem) { alert('Preenche nome, dia e caminho da imagem.'); return; }
+  const imagem = document.getElementById('tv-admin-novo-arquivo').value;
+  if (!nome || !dia || !imagem) { alert('Escolhe o arquivo, preenche o nome e o dia.'); return; }
   const id = 'obj_' + Date.now();
   if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem });
   document.getElementById('tv-admin-novo-nome').value = '';
   document.getElementById('tv-admin-novo-dia').value = '7';
-  document.getElementById('tv-admin-novo-imagem').value = '';
   tvAtualizarAdminCatalogo();
 }
 
