@@ -140,6 +140,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 /* Admin Secao */
 #admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
 #admin-secao-chutes, #admin-secao-dificuldade{margin-top:20px;}
+.chute-chip.chute-suspeito{border-color:#e8a33d; background:#fff7e8;}
+.admin-input-busca{flex:1; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; background:var(--creme);}
 .admin-select{border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-family:'DM Sans',sans-serif; font-size:12px; background:var(--creme); margin-bottom:14px;}
 .admin-linha-dificuldade{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
 .admin-titulo{font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px;text-align:center;}
@@ -264,6 +266,12 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div id="admin-secao-chutes" style="display:none">
     <div class="admin-titulo">📝 Relatório de Chutes (Acesso Admin)</div>
+    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <input type="text" id="auditoria-nome" list="lista-nomes-auditoria" class="admin-input-busca" placeholder="Auditar por nome do jogador...">
+      <datalist id="lista-nomes-auditoria"></datalist>
+      <button class="admin-btn-mini" id="btn-auditar" style="margin-top:0;">🔍 Buscar tudo dessa pessoa</button>
+      <button class="admin-btn-mini" id="btn-limpar-auditoria" style="margin-top:0;">Ver recentes</button>
+    </div>
     <div id="admin-lista-chutes" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
@@ -911,6 +919,30 @@ function normalizar(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 }
 
+// Distancia de edicao (Levenshtein) - usada so pra sinalizar candidatos a erro de
+// digitacao no painel de auditoria do admin, nao afeta a checagem de acerto do jogo.
+function distanciaEdicao(a, b) {
+  a = normalizar(a); b = normalizar(b);
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function pareceTypo(chute, palavraCorreta) {
+  if (!chute || chute.startsWith('[') || !palavraCorreta) return false;
+  const d = distanciaEdicao(chute, palavraCorreta);
+  return d > 0 && d <= 2;
+}
+
 // ── FLUXO DE LOGIN ──
 document.getElementById('login-btn').addEventListener('click', () => {
   signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
@@ -952,6 +984,7 @@ onAuthStateChanged(auth, (user) => {
   if (isAdmin) {
     carregarErrosAdmin();
     carregarChutesAdmin();
+    carregarListaNomesAuditoria();
     carregarDificuldadeAdmin();
   }
 
@@ -1474,27 +1507,45 @@ document.getElementById('btn-salvar-edicao').addEventListener('click', async () 
 });
 
 // ── CARREGAR CHUTES ADMIN ──
-async function carregarChutesAdmin() {
+async function carregarChutesAdmin(filtroNome) {
   const wrap = document.getElementById('admin-lista-chutes');
+  wrap.innerHTML = 'Carregando...';
   try {
-    const q = query(collection(db, 'palavra_dia_resultados'), orderBy('data', 'desc'), limit(200));
-    const snap = await getDocs(q);
+    let docsChutes;
 
-    if (snap.empty) {
-      wrap.innerHTML = 'Nenhum resultado registrado ainda.';
+    if (filtroNome) {
+      // Auditoria por pessoa: busca em TODO o histórico (não só os 200 mais recentes),
+      // comparando nome normalizado pra não perder por causa de maiúscula/acento.
+      const snapTodos = await getDocs(collection(db, 'palavra_dia_resultados'));
+      const alvo = normalizar(filtroNome);
+      docsChutes = snapTodos.docs.filter(d => normalizar(d.data().nome || '') === alvo);
+      docsChutes.sort((a, b) => (b.data().data?.toMillis() || 0) - (a.data().data?.toMillis() || 0));
+    } else {
+      const q = query(collection(db, 'palavra_dia_resultados'), orderBy('data', 'desc'), limit(200));
+      const snap = await getDocs(q);
+      docsChutes = snap.docs;
+    }
+
+    if (docsChutes.length === 0) {
+      wrap.innerHTML = filtroNome
+        ? `Nenhuma jogada encontrada pra "${filtroNome}".`
+        : 'Nenhum resultado registrado ainda.';
       return;
     }
 
-    wrap.innerHTML = snap.docs.map(docSnap => {
+    wrap.innerHTML = docsChutes.map(docSnap => {
       const r = docSnap.data();
       const dataFormatada = r.data ? new Date(r.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
       const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
       const chutesHtml = Array.isArray(r.chutes) && r.chutes.length
-        ? r.chutes.map((c, i) => `
-            <span class="chute-chip">${i + 1}. ${c}
-              <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
-            </span>
-          `).join('')
+        ? r.chutes.map((c, i) => {
+            const suspeita = pareceTypo(c, r.palavra || '');
+            return `
+              <span class="chute-chip${suspeita ? ' chute-suspeito' : ''}">${i + 1}. ${c}${suspeita ? ' ⚠️' : ''}
+                <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
+              </span>
+            `;
+          }).join('')
         : '—';
       return `
         <div class="admin-erro-item">
@@ -1510,6 +1561,33 @@ async function carregarChutesAdmin() {
     wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
+
+async function carregarListaNomesAuditoria() {
+  try {
+    const snap = await getDocs(collection(db, 'palavra_dia_resultados'));
+    const nomes = new Set();
+    snap.forEach(d => { const n = d.data().nome; if (n) nomes.add(n); });
+    const datalist = document.getElementById('lista-nomes-auditoria');
+    datalist.innerHTML = [...nomes].sort().map(n => `<option value="${n}"></option>`).join('');
+  } catch (e) {
+    console.error('lista nomes auditoria:', e.code || '', e.message || e);
+  }
+}
+
+document.getElementById('btn-auditar').addEventListener('click', () => {
+  const nome = document.getElementById('auditoria-nome').value.trim();
+  if (nome) carregarChutesAdmin(nome);
+});
+document.getElementById('auditoria-nome').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const nome = document.getElementById('auditoria-nome').value.trim();
+    if (nome) carregarChutesAdmin(nome);
+  }
+});
+document.getElementById('btn-limpar-auditoria').addEventListener('click', () => {
+  document.getElementById('auditoria-nome').value = '';
+  carregarChutesAdmin();
+});
 
 // ── MARCAR CHUTE COMO CORRETO E RECONTAR (ADMIN) ──
 window.marcarChuteCorreto = async function(docId, idx) {
