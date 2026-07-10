@@ -70,6 +70,38 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 #login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
 #login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
 #logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+#qz-admin-btn{background:none;border:1px solid var(--terra);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--terra)}
+
+.qz-btn-reportar-erro{display:block;margin:14px auto 0;background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;text-decoration:underline;opacity:.7}
+.qz-btn-reportar-erro:hover{opacity:1;color:var(--rosa)}
+
+.qz-admin-topo{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.qz-admin-topo input,.qz-admin-topo select{flex:1;min-width:160px;padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem;background:#fff}
+.qz-admin-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:12px;animation:cpEntra .2s ease both}
+.qz-admin-card-topo{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.qz-admin-erro-badge{background:rgba(192,57,43,.1);color:#a5362a;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.05em;padding:3px 9px;border-radius:20px;font-weight:600}
+.qz-admin-pergunta-txt{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:6px;line-height:1.4}
+.qz-admin-gabarito{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:10px}
+.qz-admin-erros-lista{background:rgba(192,57,43,.05);border-radius:8px;padding:8px 12px;margin-bottom:10px}
+.qz-admin-erro-item{font-size:.8rem;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qz-admin-erro-resolver{background:none;border:1px solid var(--green);color:var(--green);border-radius:14px;padding:2px 10px;font-size:.68rem;cursor:pointer}
+.qz-admin-editar-btn{background:none;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.05em;color:var(--text-dim);margin-bottom:10px}
+.qz-admin-editar-btn:hover{color:var(--rosa);border-color:var(--rosa)}
+.qz-admin-edit-form{display:flex;flex-direction:column;gap:8px;background:var(--rosa-dim,rgba(196,57,107,.05));border-radius:8px;padding:12px;margin-bottom:12px}
+.qz-admin-edit-form.hidden{display:none}
+.qz-admin-edit-form input,.qz-admin-edit-form textarea,.qz-admin-edit-form select{padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem;width:100%}
+.qz-admin-edit-form textarea{min-height:60px;resize:vertical}
+.qz-admin-edit-form button{background:var(--rosa);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.05em;cursor:pointer}
+.qz-admin-edit-form button:last-child{background:var(--text-dim)}
+.qz-admin-respostas-titulo{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+.qz-admin-respostas{max-height:200px;overflow-y:auto}
+.qz-admin-resposta-row{display:flex;align-items:center;gap:10px;font-size:.8rem;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.04)}
+.qz-admin-resposta-row.certa .qz-admin-resposta-status{color:var(--green)}
+.qz-admin-resposta-row.errada .qz-admin-resposta-status{color:#a5362a}
+.qz-admin-resposta-nome{flex:1}
+.qz-admin-resposta-valor{color:var(--text-dim);font-size:.75rem}
+.qz-admin-resposta-status{font-weight:700;width:16px;text-align:center}
+.qz-admin-resposta-vazio{font-size:.8rem;color:var(--text-dim);font-style:italic}
 
 @keyframes cpEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
@@ -239,6 +271,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <img id="login-avatar">
   <button id="login-btn" style="display:none">Entrar com Google</button>
   <button id="logout-btn">Sair</button>
+  <button id="qz-admin-btn" style="display:none">⚙️ Admin</button>
 </div>
 
 <div class="section-wrap">
@@ -275,6 +308,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="qz-revisao-lista"></div>
   </div>
 
+  <!-- TELA ADMIN — respostas de todo mundo, pergunta por pergunta, e edição das perguntas -->
+  <div id="qz-tela-admin" style="display:none">
+    <button class="back-btn" id="qz-admin-voltar" style="margin-bottom:16px">← Voltar</button>
+    <div class="qz-admin-topo">
+      <input type="text" id="qz-admin-busca" placeholder="Buscar por texto da pergunta...">
+      <select id="qz-admin-filtro-categoria"><option value="todas">Todas as categorias</option></select>
+    </div>
+    <div id="qz-admin-lista"><div class="qz-ranking-vazio">Carregando...</div></div>
+  </div>
+
   <!-- TELA DE JOGO -->
   <div id="qz-tela-jogo">
     <div class="qz-progresso-wrap">
@@ -294,6 +337,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
       <div class="qz-feedback" id="qz-feedback"></div>
       <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
+      <button class="qz-btn-reportar-erro" id="qz-btn-reportar-erro">⚠️ Erro nessa pergunta? Avise aqui</button>
     </div>
     <button class="qz-btn-sair" id="qz-btn-sair">💾 Salvar e sair por aqui</button>
   </div>
@@ -408,6 +452,7 @@ onAuthStateChanged(auth, (user) => {
     qzRenderCategorias();
     qzCarregarRanking();
   }
+  document.getElementById('qz-admin-btn').style.display = qzEhAdmin() ? 'inline-block' : 'none';
 });
 
 // ══════════════════════════════════════════════════════════════
@@ -1219,6 +1264,20 @@ const QZ_PERGUNTAS = [
   }
 ];
 
+// ── EDIÇÕES DE PERGUNTAS (admin) — sobrescreve os campos direto nos objetos de
+// QZ_PERGUNTAS quando carrega, ao invés de reescrever o arquivo estático ──
+async function qzCarregarEdicoesPerguntas() {
+  try {
+    const snap = await getDocs(collection(db, 'quiz_perguntas_edicoes'));
+    snap.forEach(d => {
+      const pergunta = QZ_PERGUNTAS.find(p => p.id === parseInt(d.id, 10));
+      if (pergunta) Object.assign(pergunta, d.data());
+    });
+  } catch (e) { console.warn('carregar edições do quiz:', e); }
+}
+const qzEdicoesProntas = qzCarregarEdicoesPerguntas();
+qzEdicoesProntas.then(() => qzRenderCategorias());
+
 let qzNome = '';
 let qzIndiceAtual = 0;
 let qzAcertos = 0;
@@ -1439,7 +1498,8 @@ function qzRenderCategorias() {
 qzRenderCategorias();
 qzRenderContadorDia();
 
-document.getElementById('qz-btn-comecar').addEventListener('click', () => {
+document.getElementById('qz-btn-comecar').addEventListener('click', async () => {
+  await qzEdicoesProntas; // garante que a rodada usa o texto/gabarito já editado, se houver
   qzNome = currentUser ? (currentUser.displayName || currentUser.email) : document.getElementById('qz-inp-nome').value.trim();
   if (!qzNome) { document.getElementById('qz-inp-nome').focus(); return; }
   const restanteHoje = QZ_LIMITE_DIARIO - qzRespostasHojeContagem();
@@ -1526,6 +1586,30 @@ function qzResponder(escolhaBool) {
   btnProx.textContent = (qzIndiceAtual < qzPerguntasRodada.length - 1) ? 'Próxima →' : 'Ver resultado 🎉';
   btnProx.classList.add('show');
 }
+
+// ── AVISAR ERRO NUMA PERGUNTA (fica visível pro admin revisar/editar) ──
+async function qzReportarErro() {
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  if (!p) return;
+  const motivo = prompt('O que tá errado nessa pergunta? (afirmação, explicação ou gabarito)');
+  if (!motivo || !motivo.trim()) return;
+  try {
+    await addDoc(collection(db, 'quiz_relatorios_erros'), {
+      perguntaId: p.id,
+      afirmacao: p.afirmacao,
+      motivo: motivo.trim(),
+      relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : (qzNome || 'Anônimo'),
+      uid: currentUser ? currentUser.uid : null,
+      data: serverTimestamp(),
+      status: 'pendente'
+    });
+    alert('Aviso enviado! Obrigada por ajudar a manter o quiz certinho ✦');
+  } catch (e) {
+    console.warn('reportar erro quiz:', e);
+    alert('Não consegui enviar agora, tenta de novo mais tarde.');
+  }
+}
+document.getElementById('qz-btn-reportar-erro').addEventListener('click', qzReportarErro);
 
 document.querySelectorAll('.qz-vf-btn').forEach(btn => {
   btn.addEventListener('click', () => qzResponder(btn.dataset.val === 'true'));
@@ -1716,6 +1800,158 @@ async function qzCarregarRanking() {
 }
 
 qzCarregarRanking();
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN — tabela geral de respostas (pergunta por pergunta) e
+// edição do conteúdo das perguntas
+// ══════════════════════════════════════════════════════════════
+let qzAdminRespostasPorPergunta = null; // { [perguntaId]: [{ nome, escolha, certa }] }
+let qzAdminErrosPorPergunta = null;     // { [perguntaId]: [{ path, motivo, relatadoPor }] }
+
+document.getElementById('qz-admin-btn').addEventListener('click', qzAbrirAdmin);
+document.getElementById('qz-admin-voltar').addEventListener('click', () => {
+  document.getElementById('qz-tela-admin').style.display = 'none';
+  document.getElementById('qz-tela-inicio').style.display = 'block';
+});
+document.getElementById('qz-admin-busca').addEventListener('input', () => qzRenderAdmin());
+document.getElementById('qz-admin-filtro-categoria').addEventListener('change', () => qzRenderAdmin());
+
+function qzAbrirAdmin() {
+  if (!qzEhAdmin()) return;
+  document.getElementById('qz-tela-inicio').style.display = 'none';
+  document.getElementById('qz-tela-admin').style.display = 'block';
+  qzMontarFiltroCategoriaAdmin();
+  document.getElementById('qz-admin-lista').innerHTML = '<div class="qz-ranking-vazio">Carregando...</div>';
+  qzCarregarDadosAdmin().then(() => qzRenderAdmin());
+}
+
+function qzMontarFiltroCategoriaAdmin() {
+  const sel = document.getElementById('qz-admin-filtro-categoria');
+  if (sel.options.length > 1) return; // já montado
+  [...new Set(QZ_PERGUNTAS.map(p => p.categoria))].forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+// carrega, de uma vez, as respostas de TODAS as pessoas (não só a logada) e os avisos de erro
+async function qzCarregarDadosAdmin() {
+  qzAdminRespostasPorPergunta = {};
+  qzAdminErrosPorPergunta = {};
+  try {
+    const snap = await getDocs(collection(db, 'quiz_fundamentos_progresso'));
+    snap.forEach(d => {
+      const dados = d.data();
+      const nome = dados.nome || 'Anônimo';
+      Object.entries(dados.respondidas || {}).forEach(([perguntaId, r]) => {
+        if (!qzAdminRespostasPorPergunta[perguntaId]) qzAdminRespostasPorPergunta[perguntaId] = [];
+        qzAdminRespostasPorPergunta[perguntaId].push({ nome, escolha: r.escolha, certa: r.certa });
+      });
+    });
+  } catch (e) { console.warn('admin: carregar respostas:', e); }
+  try {
+    const snap = await getDocs(query(collection(db, 'quiz_relatorios_erros'), orderBy('data', 'desc')));
+    snap.forEach(d => {
+      const r = d.data();
+      if (r.status === 'resolvido') return;
+      if (!qzAdminErrosPorPergunta[r.perguntaId]) qzAdminErrosPorPergunta[r.perguntaId] = [];
+      qzAdminErrosPorPergunta[r.perguntaId].push({ path: d.ref.path, motivo: r.motivo, relatadoPor: r.relatadoPor });
+    });
+  } catch (e) { console.warn('admin: carregar erros:', e); }
+}
+
+function qzRenderAdmin() {
+  if (!qzAdminRespostasPorPergunta) return;
+  const wrap = document.getElementById('qz-admin-lista');
+  const termo = document.getElementById('qz-admin-busca').value.trim().toLowerCase();
+  const cat = document.getElementById('qz-admin-filtro-categoria').value;
+  let perguntas = QZ_PERGUNTAS.filter(p => cat === 'todas' || p.categoria === cat);
+  if (termo) perguntas = perguntas.filter(p => p.afirmacao.toLowerCase().includes(termo));
+  if (!perguntas.length) { wrap.innerHTML = '<div class="qz-ranking-vazio">Nenhuma pergunta encontrada.</div>'; return; }
+
+  wrap.innerHTML = perguntas.map(p => {
+    const respostas = (qzAdminRespostasPorPergunta[p.id] || []).slice().sort((a, b) => a.nome.localeCompare(b.nome));
+    const erros = qzAdminErrosPorPergunta[p.id] || [];
+    const linhasRespostas = respostas.length
+      ? respostas.map(r => `<div class="qz-admin-resposta-row ${r.certa ? 'certa' : 'errada'}">
+          <span class="qz-admin-resposta-nome">${r.nome}</span>
+          <span class="qz-admin-resposta-valor">${r.escolha ? 'Verdadeiro' : 'Falso'}</span>
+          <span class="qz-admin-resposta-status">${r.certa ? '✓' : '✗'}</span>
+        </div>`).join('')
+      : '<div class="qz-admin-resposta-vazio">Ninguém respondeu ainda.</div>';
+    const badgeErro = erros.length ? `<span class="qz-admin-erro-badge">⚠️ ${erros.length} aviso${erros.length > 1 ? 's' : ''}</span>` : '';
+    const listaErros = erros.length ? `<div class="qz-admin-erros-lista">${erros.map(e => `
+        <div class="qz-admin-erro-item">
+          <strong>${e.relatadoPor || 'Anônimo'}</strong>: ${e.motivo}
+          <button class="qz-admin-erro-resolver" onclick="qzResolverErro('${e.path}', ${p.id})">✓ Marcar resolvido</button>
+        </div>`).join('')}</div>` : '';
+
+    return `<div class="qz-admin-card" id="qz-admin-card-${p.id}">
+      <div class="qz-admin-card-topo">
+        <span class="qz-revisao-cat">${p.categoria}</span>
+        ${badgeErro}
+      </div>
+      <div class="qz-admin-pergunta-txt">#${p.id} — ${p.afirmacao}</div>
+      <div class="qz-admin-gabarito">Gabarito: <strong>${p.correta ? 'Verdadeiro' : 'Falso'}</strong> · ${p.explicacao}</div>
+      ${listaErros}
+      <button class="qz-admin-editar-btn" onclick="qzAbrirEdicaoPergunta(${p.id})">✏️ Editar pergunta</button>
+      <div class="qz-admin-edit-form hidden" id="qz-admin-edit-${p.id}"></div>
+      <div class="qz-admin-respostas-titulo">Respostas (${respostas.length})</div>
+      <div class="qz-admin-respostas">${linhasRespostas}</div>
+    </div>`;
+  }).join('');
+}
+
+async function qzResolverErro(refPath, perguntaId) {
+  try {
+    await setDoc(doc(db, refPath), { status: 'resolvido' }, { merge: true });
+    await qzCarregarDadosAdmin();
+    qzRenderAdmin();
+  } catch (e) { console.warn('resolver erro:', e); }
+}
+
+function qzAbrirEdicaoPergunta(id) {
+  const p = QZ_PERGUNTAS.find(q => q.id === id);
+  if (!p) return;
+  const el = document.getElementById('qz-admin-edit-' + id);
+  const jaAberto = !el.classList.contains('hidden');
+  document.querySelectorAll('.qz-admin-edit-form').forEach(f => f.classList.add('hidden'));
+  if (jaAberto) return; // já tava aberto — só fecha
+  el.innerHTML = `
+    <input type="text" id="qz-edit-categoria-${id}" value="${p.categoria}" placeholder="Categoria">
+    <textarea id="qz-edit-afirmacao-${id}" placeholder="Afirmação">${p.afirmacao}</textarea>
+    <select id="qz-edit-correta-${id}">
+      <option value="true" ${p.correta ? 'selected' : ''}>Verdadeiro</option>
+      <option value="false" ${!p.correta ? 'selected' : ''}>Falso</option>
+    </select>
+    <textarea id="qz-edit-explicacao-${id}" placeholder="Explicação">${p.explicacao}</textarea>
+    <input type="number" id="qz-edit-dificuldade-${id}" value="${p.dificuldade || 1}" min="1" max="3">
+    <div style="display:flex;gap:8px">
+      <button onclick="qzSalvarEdicaoPergunta(${id})">✓ Salvar</button>
+      <button onclick="document.getElementById('qz-admin-edit-${id}').classList.add('hidden')">Cancelar</button>
+    </div>
+  `;
+  el.classList.remove('hidden');
+}
+
+async function qzSalvarEdicaoPergunta(id) {
+  const dados = {
+    categoria: document.getElementById(`qz-edit-categoria-${id}`).value.trim(),
+    afirmacao: document.getElementById(`qz-edit-afirmacao-${id}`).value.trim(),
+    correta: document.getElementById(`qz-edit-correta-${id}`).value === 'true',
+    explicacao: document.getElementById(`qz-edit-explicacao-${id}`).value.trim(),
+    dificuldade: Math.min(3, Math.max(1, parseInt(document.getElementById(`qz-edit-dificuldade-${id}`).value, 10) || 1))
+  };
+  try {
+    await setDoc(doc(db, 'quiz_perguntas_edicoes', String(id)), dados, { merge: true });
+    const p = QZ_PERGUNTAS.find(q => q.id === id);
+    if (p) Object.assign(p, dados);
+    document.getElementById('qz-admin-edit-' + id).classList.add('hidden');
+    qzRenderAdmin();
+    qzRenderCategorias();
+  } catch (e) { console.warn('salvar edição pergunta:', e); alert('Não consegui salvar agora.'); }
+}
 </script>
 </body>
 </html>
