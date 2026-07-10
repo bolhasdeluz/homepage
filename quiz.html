@@ -337,6 +337,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
       <div class="qz-feedback" id="qz-feedback"></div>
       <button class="qz-btn-proxima" id="qz-btn-proxima">Próxima →</button>
+      <button class="qz-btn-reportar-erro" id="qz-btn-repetida">🔁 Pergunta repetida? Marcar e pular</button>
       <button class="qz-btn-reportar-erro" id="qz-btn-reportar-erro">⚠️ Erro nessa pergunta? Avise aqui</button>
     </div>
     <button class="qz-btn-sair" id="qz-btn-sair">💾 Salvar e sair por aqui</button>
@@ -1610,6 +1611,31 @@ async function qzReportarErro() {
   }
 }
 document.getElementById('qz-btn-reportar-erro').addEventListener('click', qzReportarErro);
+
+// ── MARCAR PERGUNTA COMO REPETIDA E PULAR PRA PRÓXIMA ──
+function qzMarcarRepetida() {
+  const p = qzPerguntasRodada[qzIndiceAtual];
+  if (!p || qzRespondida) return;
+  qzRespondida = true;
+
+  addDoc(collection(db, 'quiz_relatorios_erros'), {
+    perguntaId: p.id,
+    afirmacao: p.afirmacao,
+    motivo: 'Repetida — jogador marcou que essa pergunta já apareceu antes',
+    relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : (qzNome || 'Anônimo'),
+    uid: currentUser ? currentUser.uid : null,
+    data: serverTimestamp(),
+    status: 'pendente'
+  }).catch(e => console.warn('marcar repetida quiz:', e));
+
+  qzIndiceAtual++;
+  if (qzIndiceAtual < qzPerguntasRodada.length) {
+    qzRenderPergunta();
+  } else {
+    qzFinalizar();
+  }
+}
+document.getElementById('qz-btn-repetida').addEventListener('click', qzMarcarRepetida);
 
 document.querySelectorAll('.qz-vf-btn').forEach(btn => {
   btn.addEventListener('click', () => qzResponder(btn.dataset.val === 'true'));
