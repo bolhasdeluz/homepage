@@ -1343,29 +1343,49 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   font-family:'Cinzel',serif;font-size:11.5px;font-weight:600;letter-spacing:.08em;
   text-transform:uppercase;color:var(--gp-text-dim);margin:1.2rem 0 .7rem;
 }
-.gp-games-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:1rem}
-.gp-game-card{
-  background:var(--gp-surface);border-radius:12px;box-shadow:0 2px 16px rgba(180,60,90,.07);
-  overflow:hidden;transition:transform .22s,box-shadow .22s;border:0.5px solid var(--gp-border);
+
+/* ── TRILHA DE PROGRESSO — a Peninha anda pelo caminho conforme os jogos do dia são concluídos ── */
+.gp-trilha-section{
+  background:var(--gp-surface);border-radius:12px;border:0.5px solid var(--gp-border);
+  padding:1.1rem 1rem 1.4rem;margin-bottom:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
 }
-.gp-game-card:hover:not(.completed){transform:translateY(-2px);box-shadow:0 6px 24px rgba(180,60,90,.13)}
-.gp-game-card.completed{opacity:.55}
-.gp-card-top{height:3px;background:linear-gradient(135deg,#fde8ed,#fce8ef)}
-.gp-game-card.destaque .gp-card-top{background:linear-gradient(135deg,#8c5a00,#c88c00)}
-.gp-card-body{padding:.85rem}
-.gp-card-icon{font-size:24px;margin-bottom:6px}
-.gp-card-title{font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-.gp-card-subtitle{font-size:10.5px;color:var(--gp-text-dim);line-height:1.35;margin-bottom:8px}
-.gp-streak-dots{display:flex;gap:4px;margin-bottom:8px}
-.gp-streak-dot{width:8px;height:8px;border-radius:50%;background:var(--gp-border)}
+.gp-trilha-sub{font-size:10.5px;color:var(--gp-text-dim);line-height:1.4;margin:-4px 0 1.7rem}
+.gp-trilha{position:relative;display:flex;justify-content:space-between;padding:0 4px}
+.gp-trilha-linha{
+  position:absolute;left:8%;right:8%;top:19px;height:3px;z-index:0;
+  background:repeating-linear-gradient(90deg,var(--gp-border) 0 8px,transparent 8px 16px);
+}
+.gp-trilha-passo{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;max-width:76px}
+.gp-trilha-pedra{
+  width:40px;height:40px;border-radius:50%;border:2px solid var(--gp-border);
+  background:var(--gp-bg);display:flex;align-items:center;justify-content:center;
+  font-size:17px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s,background .2s;
+  position:relative;
+}
+.gp-trilha-pedra:hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(180,60,90,.18)}
+.gp-trilha-passo.destaque .gp-trilha-pedra{border-color:var(--gp-gold)}
+.gp-trilha-passo.feito .gp-trilha-pedra{background:var(--gp-green-terreiro);border-color:var(--gp-green-terreiro)}
+.gp-trilha-passo.feito .gp-trilha-pedra::after{
+  content:'✓';position:absolute;bottom:-3px;right:-3px;background:#fff;border-radius:50%;
+  font-size:9px;width:14px;height:14px;display:flex;align-items:center;justify-content:center;
+  color:var(--gp-green-terreiro);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.15);
+}
+.gp-trilha-legenda{font-size:9px;color:var(--gp-text-dim);text-align:center;line-height:1.25}
+.gp-trilha-passo .gp-streak-dots{margin:0}
+.gp-streak-dots{display:flex;gap:4px}
+.gp-streak-dot{width:6px;height:6px;border-radius:50%;background:var(--gp-border)}
 .gp-streak-dot.filled{background:var(--gp-gold)}
-.gp-card-button{
-  background:var(--gp-gold);border:none;border-radius:8px;color:#fff;
-  font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.06em;font-weight:700;
-  padding:7px 10px;width:100%;cursor:pointer;text-transform:uppercase;
+.gp-trilha-peninha{
+  position:absolute;top:-25px;left:0;font-size:22px;z-index:2;
+  transition:left .6s cubic-bezier(.34,1.56,.64,1);transform:translateX(-50%);
 }
-.gp-card-button.completed{background:var(--gp-green-terreiro)}
-.gp-card-status{font-size:9.5px;color:var(--gp-green-terreiro);font-weight:600;text-align:center;margin-top:6px}
+@keyframes gpTrilhaPulo{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-10px)}}
+.gp-trilha-peninha.pulando{animation:gpTrilhaPulo .5s ease}
+.gp-trilha-bonus{
+  margin-top:1.2rem;text-align:center;background:var(--gp-gold-fundo);border:1px solid var(--gp-gold-destaque);
+  border-radius:10px;padding:10px;font-size:11.5px;color:var(--gp-gold-destaque);font-weight:600;
+  animation:cpEntra .3s ease both;
+}
 
 .gp-altar-section{
   background:var(--gp-surface);border-radius:12px;border:0.5px solid var(--gp-border);
@@ -2446,63 +2466,44 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
       </div>
 
-      <div class="gp-section-title">📅 Firmeza — jogo do dia</div>
-      <div class="gp-games-grid">
-        <div class="gp-game-card destaque" id="gp-card-palavra" style="grid-column: span 2;">
-          <div class="gp-card-top"></div>
-          <div class="gp-card-body">
-            <div class="gp-card-icon">📖</div>
-            <div class="gp-card-title">Palavra do dia</div>
-            <div class="gp-card-subtitle">É este jogo que conta pra sua ofensiva. Jogue todo dia sem falhar.</div>
-            <button class="gp-card-button" onclick="gpPlayGame('palavra')">Descobrir palavra</button>
-          </div>
-        </div>
-      </div>
+      <div class="gp-trilha-section">
+        <div class="gp-section-title" style="margin-top:0">🌿 Trilha do dia</div>
+        <p class="gp-trilha-sub">Cada jogo concluído é uma casa a mais no caminho. Complete a trilha inteira e ganhe um bônus de pontos ✦</p>
 
-      <div class="gp-section-title">🥁 Jogos de curiosidade — 3 dias seguidos = 1 amuleto</div>
-      <div class="gp-games-grid">
-        <div class="gp-game-card" id="gp-card-verdadeiro">
-          <div class="gp-card-top"></div>
-          <div class="gp-card-body">
-            <div class="gp-card-icon">⚖️</div>
-            <div class="gp-card-title">Verdadeiro ou falso</div>
-            <div class="gp-card-subtitle">Jogue 3 dias seguidos e ganhe um amuleto</div>
-            <div class="gp-streak-dots">
-              <div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div>
-            </div>
-            <button class="gp-card-button" onclick="gpPlayGame('verdadeiro')">Testar</button>
+        <div class="gp-trilha" id="gp-trilha">
+          <div class="gp-trilha-linha"></div>
+          <div class="gp-trilha-peninha" id="gp-trilha-peninha">🦜</div>
+
+          <div class="gp-trilha-passo destaque" id="gp-passo-palavra" data-jogo="palavra">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('palavra')" title="Palavra do dia"><span>📖</span></button>
+            <span class="gp-trilha-legenda">Palavra<br>do dia</span>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-verdadeiro" data-jogo="verdadeiro">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('verdadeiro')" title="Verdadeiro ou falso"><span>⚖️</span></button>
+            <span class="gp-trilha-legenda">Verdadeiro<br>ou falso</span>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-complete" data-jogo="complete">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('complete')" title="Complete o ponto"><span>🎵</span></button>
+            <span class="gp-trilha-legenda">Complete<br>o ponto</span>
+            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-quem" data-jogo="quem">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('quem')" title="De quem é esse ponto?"><span>🎭</span></button>
+            <span class="gp-trilha-legenda">De quem<br>é?</span>
+            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
           </div>
         </div>
-        <div class="gp-game-card" id="gp-card-complete">
-          <div class="gp-card-top"></div>
-          <div class="gp-card-body">
-            <div class="gp-card-icon">🎵</div>
-            <div class="gp-card-title">Complete o ponto</div>
-            <div class="gp-card-subtitle">Jogue 3 dias seguidos e ganhe um amuleto</div>
-            <div class="gp-streak-dots">
-              <div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div>
-            </div>
-            <button class="gp-card-button" onclick="gpPlayGame('complete')">Cantar junto</button>
-          </div>
-        </div>
-        <div class="gp-game-card" id="gp-card-quem" style="grid-column: span 2;">
-          <div class="gp-card-top"></div>
-          <div class="gp-card-body">
-            <div class="gp-card-icon">🎭</div>
-            <div class="gp-card-title">De quem é esse ponto?</div>
-            <div class="gp-card-subtitle">Jogue 3 dias seguidos e ganhe um amuleto</div>
-            <div class="gp-streak-dots">
-              <div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div>
-            </div>
-            <button class="gp-card-button" onclick="gpPlayGame('quem')">Adivinhar</button>
-          </div>
-        </div>
+
+        <div class="gp-trilha-bonus" id="gp-trilha-bonus" style="display:none">🎉 Trilha completa hoje — bônus de pontos garantido!</div>
       </div>
 
       <div class="gp-altar-section">
         <div class="gp-altar-title"><span>🛡️</span><span>Seus amuletos da sorte</span></div>
         <div class="gp-altar-text">
-          A Palavra do Dia é o jogo que mantém sua Firmeza. Os outros três jogos, se jogados 3 dias seguidos cada um, rendem 1 amuleto por jogo. Se você esquecer de jogar a Palavra do Dia um dia, a Peninha usa automaticamente um amuleto pra salvar sua ofensiva.
+          A Palavra do Dia é o jogo que mantém sua Firmeza, e o Verdadeiro ou Falso testa seus fundamentos. Complete o Ponto e De Quem é Esse Ponto, se jogados 3 dias seguidos cada um, rendem 1 amuleto por jogo. Se você esquecer de jogar a Palavra do Dia um dia, a Peninha usa automaticamente um amuleto pra salvar sua ofensiva.
         </div>
       </div>
 
@@ -5469,10 +5470,10 @@ const gpState = {
 };
 
 const gpCardIds = {
-  palavra: 'gp-card-palavra',
-  verdadeiro: 'gp-card-verdadeiro',
-  complete: 'gp-card-complete',
-  quem: 'gp-card-quem'
+  palavra: 'gp-passo-palavra',
+  verdadeiro: 'gp-passo-verdadeiro',
+  complete: 'gp-passo-complete',
+  quem: 'gp-passo-quem'
 };
 
 // palavra.html e quiz.html abrem numa aba nova e cada um cuida do próprio jogo —
@@ -5487,37 +5488,23 @@ function gpPlayGame(jogo) {
 }
 
 function gpMarcarCartaoCompleto(jogo, statusTexto) {
-  const cardEl = document.getElementById(gpCardIds[jogo]);
-  if (!cardEl || cardEl.classList.contains('completed')) return;
-  const btn = cardEl.querySelector('.gp-card-button');
-  cardEl.classList.add('completed');
-  btn.classList.add('completed');
-  btn.textContent = 'Concluído';
-  if (statusTexto) {
-    const status = document.createElement('div');
-    status.className = 'gp-card-status';
-    status.textContent = statusTexto;
-    cardEl.querySelector('.gp-card-body').appendChild(status);
-  }
+  const passo = document.getElementById(gpCardIds[jogo]);
+  if (!passo || passo.classList.contains('feito')) return;
+  passo.classList.add('feito');
+  if (statusTexto) passo.querySelector('.gp-trilha-pedra').title = statusTexto;
+  gpAtualizarTrilha();
 }
 
 function gpRegistrarResultado(jogo, resultado) {
-  const cardEl = document.getElementById(gpCardIds[jogo]);
-  const btn = cardEl.querySelector('.gp-card-button');
-  if (cardEl.classList.contains('completed')) return;
+  const passo = document.getElementById(gpCardIds[jogo]);
+  if (!passo || passo.classList.contains('feito')) return;
 
   gpState.jogadoHoje[jogo] = true;
-  cardEl.classList.add('completed');
-  btn.classList.add('completed');
-  btn.textContent = 'Concluído';
-
+  passo.classList.add('feito');
   gpCelebrarPeninha();
 
-  const status = document.createElement('div');
-  status.className = 'gp-card-status';
-
   gpState.streaks[jogo] += 1;
-  const dots = cardEl.querySelectorAll('.gp-streak-dot');
+  const dots = passo.querySelectorAll('.gp-streak-dot');
   const idx = Math.min(gpState.streaks[jogo], 3) - 1;
   if (idx >= 0) dots[idx].classList.add('filled');
 
@@ -5525,15 +5512,38 @@ function gpRegistrarResultado(jogo, resultado) {
     gpState.amuletos = Math.min(gpState.amuletos + 1, gpState.amuletosMax);
     document.getElementById('gp-amuletos').textContent = gpState.amuletos + '/' + gpState.amuletosMax;
     gpState.streaks[jogo] = 0;
-    status.textContent = 'Amuleto ganho';
+    passo.querySelector('.gp-trilha-pedra').title = 'Amuleto ganho!';
   } else {
-    status.textContent = gpState.streaks[jogo] + '/3 dias seguidos';
+    passo.querySelector('.gp-trilha-pedra').title = gpState.streaks[jogo] + '/3 dias seguidos';
   }
 
-  cardEl.querySelector('.gp-card-body').appendChild(status);
+  gpAtualizarTrilha();
 
   // TODO: 'complete' e 'quem' ainda não existem de verdade — quando forem
   // implementados, persistir isso no Firestore igual ao palavra/quiz.
+}
+
+// posiciona a Peninha em cima da última casa concluída (0 = início da trilha) e
+// mostra o bônus quando os 4 jogos do dia estiverem feitos. Bônus é só visual por
+// enquanto — não existe ainda um total de pontos persistido pra somar de verdade.
+function gpAtualizarTrilha() {
+  const trilha = document.getElementById('gp-trilha');
+  const peninha = document.getElementById('gp-trilha-peninha');
+  if (!trilha || !peninha) return;
+  const passos = [...trilha.querySelectorAll('.gp-trilha-passo')];
+  if (!passos.length) return;
+  const completos = passos.filter(p => p.classList.contains('feito')).length;
+
+  const alvo = completos <= 0
+    ? passos[0]
+    : passos[Math.min(completos, passos.length) - 1];
+  const offset = completos <= 0 ? alvo.offsetWidth * 0.2 : alvo.offsetWidth / 2;
+  peninha.style.left = (alvo.offsetLeft + offset) + 'px';
+  peninha.classList.add('pulando');
+  setTimeout(() => peninha.classList.remove('pulando'), 500);
+
+  const bonus = document.getElementById('gp-trilha-bonus');
+  if (bonus) bonus.style.display = (completos === passos.length) ? 'block' : 'none';
 }
 
 function gpCelebrarPeninha() {
@@ -5660,6 +5670,7 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 }
 
 function gpAtualizarPortal() {
+  gpAtualizarTrilha(); // reposiciona já com o que estiver marcado no DOM agora
   gpVerificarStatusReal();
   gpCarregarRankingsReais();
   gpAtualizarSecaoAdmin();
@@ -5668,6 +5679,10 @@ function gpAtualizarPortal() {
 // enquanto a tela de Jogos ainda está ativa
 window.addEventListener('focus', () => {
   if (document.getElementById('page-jogos')?.classList.contains('active')) gpAtualizarPortal();
+});
+// reposiciona a Peninha na trilha se a tela redimensionar (rotação, resize da janela)
+window.addEventListener('resize', () => {
+  if (document.getElementById('page-jogos')?.classList.contains('active')) gpAtualizarTrilha();
 });
 </script>
 <!-- FIREBASE SDK -->
