@@ -5604,7 +5604,9 @@ async function gpCarregarRankingsReais() {
     window._gpVisibilidadeRanking()
   ]);
 
-  const oculto = (p, jogo) => !!(p.uid && vis[p.uid] && vis[p.uid][jogo]);
+  // chave: 'uid:xxx' pra quem logou, 'nome:yyy' pra quem jogou anônima — mesma
+  // regra usada pra gravar visibilidade, então cobre os dois casos
+  const oculto = (p, jogo) => !!(p.chave && vis[p.chave] && vis[p.chave][jogo]);
 
   const listaPalavra = brutoPalavra.filter(p => !oculto(p, 'palavra')).sort((a, b) => b.pontos - a.pontos);
   const listaQuiz = brutoQuiz.filter(p => !oculto(p, 'verdadeiro')).sort((a, b) => b.pontos - a.pontos);
@@ -5614,10 +5616,9 @@ async function gpCarregarRankingsReais() {
 
   const geral = {};
   [...brutoPalavra.filter(p => !oculto(p, 'geral')), ...brutoQuiz.filter(p => !oculto(p, 'geral'))].forEach(p => {
-    const chave = p.uid || p.nome;
-    if (!chave) return;
-    if (!geral[chave]) geral[chave] = { uid: p.uid, nome: p.nome, pontos: 0 };
-    geral[chave].pontos += p.pontos;
+    if (!p.chave) return;
+    if (!geral[p.chave]) geral[p.chave] = { uid: p.uid, nome: p.nome, pontos: 0 };
+    geral[p.chave].pontos += p.pontos;
   });
   const listaGeral = Object.values(geral).sort((a, b) => b.pontos - a.pontos).slice(0, 10);
   gpRenderLeaderboard(listaGeral, uid);
@@ -5641,17 +5642,20 @@ async function gpAtualizarSecaoAdmin() {
     <div class="gp-admin-perfil-row">
       <span class="gp-admin-perfil-nome">${p.nome}</span>
       <div class="gp-admin-perfil-toggles">
-        <button class="toggle-pill ${p.vis.geral ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','geral',this)">Ocultar do geral</button>
-        <button class="toggle-pill ${p.vis.palavra ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','palavra',this)">Ocultar de Palavra</button>
-        <button class="toggle-pill ${p.vis.verdadeiro ? 'on' : ''}" onclick="gpAlternarVisibilidade('${p.uid}','verdadeiro',this)">Ocultar de V ou F</button>
+        <button class="toggle-pill ${p.vis.geral ? 'on' : ''}" data-chave="${p.chave}" data-campo="geral">Ocultar do geral</button>
+        <button class="toggle-pill ${p.vis.palavra ? 'on' : ''}" data-chave="${p.chave}" data-campo="palavra">Ocultar de Palavra</button>
+        <button class="toggle-pill ${p.vis.verdadeiro ? 'on' : ''}" data-chave="${p.chave}" data-campo="verdadeiro">Ocultar de V ou F</button>
       </div>
     </div>`).join('');
+  lista.querySelectorAll('button[data-chave]').forEach(btn => {
+    btn.addEventListener('click', () => gpAlternarVisibilidade(btn.dataset.chave, btn.dataset.campo, btn));
+  });
 }
 
-async function gpAlternarVisibilidade(uid, campo, btn) {
+async function gpAlternarVisibilidade(chave, campo, btn) {
   const novoValor = !btn.classList.contains('on');
   btn.classList.toggle('on', novoValor);
-  if (window._gpSalvarVisibilidade) await window._gpSalvarVisibilidade(uid, campo, novoValor);
+  if (window._gpSalvarVisibilidade) await window._gpSalvarVisibilidade(chave, campo, novoValor);
   gpCarregarRankingsReais(); // reflete a mudança na hora nos rankings desta tela
 }
 
@@ -5760,6 +5764,15 @@ const auth = getAuth(app);
     } catch (e) { return false; }
   };
 
+  // identidade usada pra guardar/ler visibilidade — uid quando logada, nome
+  // normalizado quando anônima (quem joga sem login não tem uid nenhum,
+  // então precisa de uma chave estável baseada no nome digitado). Mesma
+  // normalização (remove acento, minúsculo, trim) usada no palavra.html/quiz.html.
+  function gpChaveVisibilidade(uid, nome) {
+    const norm = (nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    return uid ? 'uid:' + uid : 'nome:' + norm;
+  }
+
   // pontos brutos por pessoa, sem filtrar nada — quem filtra é gpCarregarRankingsReais(),
   // usando a visibilidade configurada pelo admin (coleção jogos_visibilidade_ranking)
   window._gpBrutoPalavra = async () => {
@@ -5768,9 +5781,9 @@ const auth = getAuth(app);
       const porPessoa = {};
       snap.forEach(d => {
         const r = d.data();
-        const chave = r.uid || r.nome;
-        if (!chave) return;
-        if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
+        if (!r.uid && !r.nome) return;
+        const chave = gpChaveVisibilidade(r.uid, r.nome);
+        if (!porPessoa[chave]) porPessoa[chave] = { chave, uid: r.uid || null, nome: r.nome, pontos: 0 };
         if (r.venceu) porPessoa[chave].pontos += Math.max(1, GP_PALAVRA_VIDAS_TOTAL - ((r.tentativas || GP_PALAVRA_VIDAS_TOTAL) - 1));
       });
       return Object.values(porPessoa);
@@ -5783,16 +5796,16 @@ const auth = getAuth(app);
       const porPessoa = {};
       snap.forEach(d => {
         const r = d.data();
-        const chave = r.uid || r.nome;
-        if (!chave) return;
-        if (!porPessoa[chave]) porPessoa[chave] = { uid: r.uid || null, nome: r.nome, pontos: 0 };
+        if (!r.uid && !r.nome) return;
+        const chave = gpChaveVisibilidade(r.uid, r.nome);
+        if (!porPessoa[chave]) porPessoa[chave] = { chave, uid: r.uid || null, nome: r.nome, pontos: 0 };
         porPessoa[chave].pontos += (r.pontos || 0);
       });
       return Object.values(porPessoa);
     } catch (e) { console.warn('gp bruto quiz:', e); return []; }
   };
 
-  // { [uid]: { geral, palavra, verdadeiro } } — true = oculto daquele ranking.
+  // { [chave]: { geral, palavra, verdadeiro } } — true = oculto daquele ranking.
   // Configurado pela seção de admin da tela de Jogos; palavra.html e quiz.html
   // leem a mesma coleção pros próprios rankings individuais.
   window._gpVisibilidadeRanking = async () => {
@@ -5804,21 +5817,21 @@ const auth = getAuth(app);
     return vis;
   };
 
-  window._gpSalvarVisibilidade = async (uid, campo, oculto) => {
-    try { await setDoc(doc(db, 'jogos_visibilidade_ranking', uid), { [campo]: oculto }, { merge: true }); }
+  window._gpSalvarVisibilidade = async (chave, campo, oculto) => {
+    try { await setDoc(doc(db, 'jogos_visibilidade_ranking', chave), { [campo]: oculto }, { merge: true }); }
     catch (e) { console.warn('gp salvar visibilidade:', e); }
   };
 
-  // junta quem já jogou Palavra ou Quiz (uid + nome), pro admin escolher visibilidade
+  // junta quem já jogou Palavra ou Quiz (logada ou anônima), pro admin escolher visibilidade
   window._gpListarPerfisRanking = async () => {
     try {
       const [brutoPalavra, brutoQuiz, vis] = await Promise.all([
         window._gpBrutoPalavra(), window._gpBrutoQuiz(), window._gpVisibilidadeRanking()
       ]);
       const pessoas = new Map();
-      [...brutoPalavra, ...brutoQuiz].forEach(p => { if (p.uid && p.nome) pessoas.set(p.uid, p.nome); });
+      [...brutoPalavra, ...brutoQuiz].forEach(p => { if (p.nome) pessoas.set(p.chave, p.nome); });
       return [...pessoas.entries()]
-        .map(([uid, nome]) => ({ uid, nome, vis: vis[uid] || {} }))
+        .map(([chave, nome]) => ({ chave, nome, vis: vis[chave] || {} }))
         .sort((a, b) => a.nome.localeCompare(b.nome));
     } catch (e) { console.warn('gp listar perfis:', e); return []; }
   };

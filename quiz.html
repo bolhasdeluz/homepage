@@ -1782,10 +1782,13 @@ async function qzCarregarRanking() {
 
     // agrupa por pessoa (uid quando logada, nome como fallback pra anônima) e soma os pontos
     // de todas as tentativas — assim quem jogou várias vezes aparece uma vez só, com o total.
+    // A chave é a mesma usada na tela de Jogos pra configurar visibilidade (nome sem
+    // acento/maiúscula pra quem jogou anônima), senão a ocultação não bate certo.
     const porPessoa = new Map();
     snap.docs.map(d => d.data()).forEach(r => {
-      if (r.uid && ocultos.has(r.uid)) return;
-      const chave = r.uid ? `uid:${r.uid}` : `nome:${(r.nome || 'Anônimo').trim().toLowerCase()}`;
+      const nomeNorm = (r.nome || 'Anônimo').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const chave = r.uid ? `uid:${r.uid}` : `nome:${nomeNorm}`;
+      if (ocultos.has(chave)) return;
       const pontos = r.pontos ?? r.acertos ?? 0;
       const atual = porPessoa.get(chave);
       if (atual) atual.pontos += pontos;

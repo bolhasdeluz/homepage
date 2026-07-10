@@ -1737,7 +1737,10 @@ async function carregarRanking() {
     snap.forEach(doc => {
       const r = doc.data();
       if (!r.nome) return;
-      if (r.uid && ocultos.has(r.uid)) return;
+      // 'uid:xxx' pra quem logou, 'nome:yyy' pra quem jogou anônima — mesma
+      // chave usada na tela de Jogos pra configurar essa visibilidade
+      const chave = r.uid ? 'uid:' + r.uid : 'nome:' + normalizar(r.nome);
+      if (ocultos.has(chave)) return;
       const pts = r.venceu ? Math.max(1, VIDAS_TOTAL - ((r.tentativas || VIDAS_TOTAL) - 1)) : 0;
       pontuacoes[r.nome] = (pontuacoes[r.nome] || 0) + pts;
     });
