@@ -1429,11 +1429,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   background-image:url('assets/sala-isometrica-cinza.png');background-size:contain;background-repeat:no-repeat;background-position:center;
   mix-blend-mode:multiply;image-rendering:pixelated;
 }
-.tv-grid{position:absolute;inset:0;z-index:2;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:5px;padding:12px}
-.tv-slot{border:1.5px dashed rgba(140,58,26,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s,border-color .15s}
-.tv-slot:hover{background:rgba(255,255,255,.35)}
-.tv-slot.ocupado{border-style:solid;border-color:rgba(140,58,26,.4);cursor:pointer}
-.tv-slot img{width:78%;height:78%;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+/* casas em losango acompanhando a perspectiva do chão (não o quadrado inteiro) —
+   cada .tv-slot ocupa o container todo mas só fica visível/clicável dentro do seu
+   próprio recorte (clip-path), calculado em JS a partir dos 4 cantos do chão */
+.tv-grid{position:absolute;inset:0;z-index:2}
+.tv-slot{position:absolute;inset:0;background:rgba(255,255,255,.16);cursor:pointer;transition:background .15s}
+.tv-slot:hover{background:rgba(255,255,255,.34)}
+.tv-slot.ocupado{background:rgba(255,255,255,.4)}
+.tv-objetos{position:absolute;inset:0;z-index:3;pointer-events:none}
+.tv-objeto-img{position:absolute;object-fit:contain;image-rendering:pixelated;transform:translate(-50%,-78%)}
 
 .tv-proximo{font-size:10.5px;color:var(--gp-text-dim);text-align:center;margin:12px 0 4px}
 
@@ -2547,6 +2551,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <div class="terreira-cor-fundo" id="terreira-fundo">
               <div class="terreira-textura-cinza"></div>
               <div class="tv-grid" id="tv-grid"></div>
+              <div class="tv-objetos" id="tv-objetos"></div>
             </div>
           </div>
 
@@ -5782,22 +5787,82 @@ async function tvAtualizar() {
   tvRenderProximo();
 }
 
+// ── GRADE ISOMÉTRICA — os 4 cantos do losango do chão em assets/sala-isometrica-cinza.png,
+// em % do container (calibrados olhando a imagem; se trocar a arte da sala, recalibrar aqui) ──
+const TV_CHAO = {
+  fundo:    { x: 44.2, y: 36.1 }, // onde as duas paredes encontram o chão (mais longe)
+  direita:  { x: 88.0, y: 63.3 },
+  esquerda: { x: 0.4,  y: 63.3 },
+  frente:   { x: 44.2, y: 90.5 }, // ponta mais perto de quem olha
+};
+const TV_GRID_N = 3; // 3x3 = 9 casas
+
+// interpola um ponto (i,j) da grade, i,j de 0 a TV_GRID_N, usando o losango como paralelogramo
+function tvPontoChao(i, j) {
+  const A = { x: TV_CHAO.direita.x - TV_CHAO.fundo.x, y: TV_CHAO.direita.y - TV_CHAO.fundo.y };
+  const B = { x: TV_CHAO.esquerda.x - TV_CHAO.fundo.x, y: TV_CHAO.esquerda.y - TV_CHAO.fundo.y };
+  return {
+    x: TV_CHAO.fundo.x + A.x * (i / TV_GRID_N) + B.x * (j / TV_GRID_N),
+    y: TV_CHAO.fundo.y + A.y * (i / TV_GRID_N) + B.y * (j / TV_GRID_N),
+  };
+}
+
+// os 4 cantos da casinha (linha,coluna), encolhidos um pouco em direção ao centro pra
+// sobrar uma friurinha entre as casas — e o centro dela, usado pra plantar o objeto
+function tvCasaChao(linha, coluna) {
+  const cantos = [
+    tvPontoChao(coluna, linha), tvPontoChao(coluna + 1, linha),
+    tvPontoChao(coluna + 1, linha + 1), tvPontoChao(coluna, linha + 1)
+  ];
+  const centro = {
+    x: cantos.reduce((s, p) => s + p.x, 0) / 4,
+    y: cantos.reduce((s, p) => s + p.y, 0) / 4
+  };
+  const encolhido = cantos.map(p => ({
+    x: p.x + (centro.x - p.x) * 0.12,
+    y: p.y + (centro.y - p.y) * 0.12
+  }));
+  return { cantos: encolhido, centro };
+}
+
 function tvRenderGrid() {
   const grid = document.getElementById('tv-grid');
-  if (!grid || !tvProgresso) return;
+  const objetos = document.getElementById('tv-objetos');
+  if (!grid || !objetos || !tvProgresso) return;
   const colocados = tvProgresso.colocados || {};
   grid.innerHTML = '';
-  for (let i = 0; i < TV_TOTAL_SLOTS; i++) {
+  objetos.innerHTML = '';
+  for (let s = 0; s < TV_TOTAL_SLOTS; s++) {
+    const linha = Math.floor(s / TV_GRID_N);
+    const coluna = s % TV_GRID_N;
+    const { cantos, centro } = tvCasaChao(linha, coluna);
+
     const slotEl = document.createElement('div');
     slotEl.className = 'tv-slot';
-    const itemId = Object.keys(colocados).find(id => colocados[id] === i);
+    slotEl.style.clipPath = `polygon(${cantos.map(p => `${p.x}% ${p.y}%`).join(',')})`;
+
+    const itemId = Object.keys(colocados).find(id => colocados[id] === s);
+    let item = null;
     if (itemId) {
-      const item = tvCatalogo.find(o => o.id === itemId);
+      item = tvCatalogo.find(o => o.id === itemId);
       slotEl.classList.add('ocupado');
-      if (item) slotEl.innerHTML = `<img src="${item.imagem}" alt="${item.nome}">`;
     }
-    slotEl.addEventListener('click', () => tvClicarSlot(i));
+    slotEl.addEventListener('click', () => tvClicarSlot(s));
     grid.appendChild(slotEl);
+
+    if (item) {
+      const profundidade = (linha + coluna) / (2 * (TV_GRID_N - 1)); // 0 = mais no fundo, 1 = mais na frente
+      const tamanho = 22 + profundidade * 20; // % da largura do container
+      const img = document.createElement('img');
+      img.className = 'tv-objeto-img';
+      img.src = item.imagem;
+      img.alt = item.nome;
+      img.style.left = centro.x + '%';
+      img.style.top = centro.y + '%';
+      img.style.width = tamanho + '%';
+      img.style.zIndex = String(linha + coluna);
+      objetos.appendChild(img);
+    }
   }
 }
 
