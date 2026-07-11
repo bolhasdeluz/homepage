@@ -3902,8 +3902,11 @@ function mudarSimulacao(valor) {
     fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
       .then(r => r.json())
       .then(p => {
+        // uid salvo no perfil (guardado no primeiro login real dessa pessoa depois desse
+        // recurso existir) — sem ele, a aba de Jogos/Terreirinho simulada não tem como
+        // saber de quem puxar os dados, e acaba não mostrando nada da pessoa certa
         aplicarSimulacao(
-          { email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
+          { uid: p.uid || null, email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
           p
         );
       });
@@ -6099,9 +6102,19 @@ async function tvAtualizar() {
     corpo.style.display = 'none';
     return;
   }
-  aviso.style.display = 'none';
-  corpo.style.display = 'block';
   if (!window._tvCarregarCatalogo || !window._tvCarregarProgresso) return;
+
+  // simulando alguém que ainda não logou de verdade desde que o uid passou a ser salvo
+  // no perfil — sem uid não tem como puxar o Terreirinho/Jogos de fato dessa pessoa
+  if (!user.uid) {
+    aviso.style.display = 'block';
+    aviso.textContent = 'Essa pessoa ainda não tem uid salvo no perfil — precisa logar de verdade pelo menos uma vez pra simulação conseguir puxar o Terreirinho dela.';
+    corpo.style.display = 'none';
+    return;
+  }
+  aviso.style.display = 'none';
+  aviso.textContent = 'Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦';
+  corpo.style.display = 'block';
 
   tvUidProprio = user.uid;
   tvNomeProprio = user.displayName || user.email || '';
@@ -9332,6 +9345,17 @@ async function carregarPerfil(email) {
       setTimeout(() => {
         document.getElementById('modal-boasvindas').style.display = 'flex';
       }, 800);
+    }
+    // guarda o uid no perfil (que é organizado por e-mail) — sem isso, a simulação de
+    // admin não tem como saber o uid de ninguém, e não consegue puxar os dados reais
+    // de Jogos/Terreirinho (que são organizados por uid do Firebase) de quem simula
+    if (currentUser?.uid && perfilData.uid !== currentUser.uid) {
+      perfilData.uid = currentUser.uid;
+      fetch('/api/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+        body: JSON.stringify({ ...perfilData, solicitacao: 'Vínculo automático de uid' })
+      }).catch(() => {});
     }
   } catch(e) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
