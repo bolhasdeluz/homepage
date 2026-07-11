@@ -1458,6 +1458,66 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-login-aviso{font-size:11.5px;color:var(--gp-text-dim);font-style:italic;text-align:center;padding:1rem 0}
 
 .controles-construcao{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+
+/* visitar outras terreiras — fica escondido tudo que é só de edição enquanto visita */
+#tv-corpo.visitando .tv-editor-only{display:none!important}
+.tv-visita-barra{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.tv-visita-barra select{
+  flex:1;min-width:140px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);
+  font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff;
+}
+.tv-visita-barra button{
+  background:var(--gp-gold);border:none;border-radius:14px;color:#fff;font-family:'Cinzel',serif;
+  font-size:9.5px;letter-spacing:.05em;padding:7px 14px;cursor:pointer;white-space:nowrap;
+}
+.tv-visitando-aviso{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
+  background:var(--gp-gold-fundo);border:1px solid var(--gp-gold-destaque);border-radius:10px;
+  padding:8px 12px;margin-bottom:10px;font-size:.75rem;color:var(--gp-text);
+}
+.tv-visitando-aviso button{
+  background:#fff;border:1px solid var(--gp-border);border-radius:14px;padding:5px 10px;
+  font-family:'Cinzel',serif;font-size:9px;letter-spacing:.04em;color:var(--gp-text-dim);cursor:pointer;
+}
+
+/* deixar cartinha — só aparece enquanto se está visitando alguém */
+.tv-cartinha-form{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.tv-cartinha-form input{
+  flex:1;min-width:140px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);
+  font-family:'DM Sans',sans-serif;font-size:.8rem;
+}
+.tv-cartinha-form button{
+  background:var(--gp-gold);border:none;border-radius:14px;color:#fff;font-family:'Cinzel',serif;
+  font-size:9.5px;letter-spacing:.05em;padding:7px 14px;cursor:pointer;white-space:nowrap;
+}
+.tv-cartinha-status{font-size:.72rem;color:var(--gp-gold);font-style:italic}
+
+/* cartinhas flutuando na sala — só aparecem no SEU próprio terreirinho */
+.tv-cartinhas{position:absolute;inset:0;z-index:5;pointer-events:none}
+.tv-cartinha-flutuante{
+  position:absolute;font-size:22px;cursor:pointer;pointer-events:auto;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  animation:tvCartinhaFlutuar 3.2s ease-in-out infinite;
+}
+@keyframes tvCartinhaFlutuar{
+  0%,100%{transform:translateY(0) rotate(-4deg)}
+  50%{transform:translateY(-12px) rotate(4deg)}
+}
+.tv-cartinha-modal-overlay{
+  position:fixed;inset:0;background:rgba(30,10,20,.55);z-index:910;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.tv-cartinha-modal{
+  background:#fff;border-radius:16px;padding:1.3rem;max-width:320px;width:100%;
+  text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+.tv-cartinha-modal-de{font-family:'Cinzel',serif;font-size:11px;color:var(--gp-gold);margin-bottom:10px}
+.tv-cartinha-modal-texto{font-size:.9rem;color:var(--gp-text);line-height:1.5;margin-bottom:16px;white-space:pre-wrap}
+.tv-cartinha-modal-acoes{display:flex;gap:8px;justify-content:center}
+.tv-cartinha-modal-acoes button{
+  border-radius:14px;padding:7px 14px;font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;
+  cursor:pointer;border:1px solid var(--gp-border);background:#fff;color:var(--gp-text-dim);
+}
 .controles-construcao label{font-size:10.5px;color:var(--gp-text-dim);font-family:'Cinzel',serif;letter-spacing:.05em}
 .controles-construcao input[type="color"]{
   border:1px solid rgba(196,57,107,.3);border-radius:6px;width:36px;height:36px;cursor:pointer;background:none;padding:2px;
@@ -2669,7 +2729,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
 
         <div id="tv-corpo" style="display:none">
-          <div class="controles-construcao">
+          <div class="tv-visita-barra">
+            <select id="tv-visita-select"><option value="">Visitar o terreirinho de...</option></select>
+            <button onclick="tvVisitarSelecionado()">Visitar</button>
+          </div>
+          <div class="tv-visitando-aviso" id="tv-visitando-aviso" style="display:none">
+            <span id="tv-visitando-nome"></span>
+            <button onclick="tvVoltarProprioTerreirinho()">🏠 Voltar pro meu terreirinho</button>
+          </div>
+
+          <div class="controles-construcao tv-editor-only">
             <label for="cor-chao">Cor do Chão:</label>
             <input type="color" id="cor-chao" value="#fff5f7">
             <label for="cor-parede">Cor da Parede:</label>
@@ -2684,10 +2753,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <div class="tv-camada-textura tv-textura-parede"></div>
               <div class="tv-grid" id="tv-grid"></div>
               <div class="tv-objetos" id="tv-objetos"></div>
+              <div class="tv-cartinhas" id="tv-cartinhas"></div>
             </div>
           </div>
 
-          <div class="tv-acoes-objeto" id="tv-acoes-objeto" style="display:none">
+          <div class="tv-cartinha-form" id="tv-cartinha-form" style="display:none">
+            <input type="text" id="tv-cartinha-texto" placeholder="Deixe uma mensagem carinhosa..." maxlength="200">
+            <button onclick="tvEnviarCartinha()">💌 Deixar cartinha</button>
+            <span class="tv-cartinha-status" id="tv-cartinha-status" style="display:none">💌 Cartinha deixada!</span>
+          </div>
+
+          <div class="tv-acoes-objeto tv-editor-only" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
             <div class="tv-acoes-grupo tv-acoes-mover">
               <button onclick="tvMoverSelecionado('y',-1)" title="Mover pra cima">▲</button>
@@ -2711,10 +2787,22 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
           </div>
 
-          <div class="tv-proximo" id="tv-proximo">Carregando...</div>
+          <div class="tv-proximo tv-editor-only" id="tv-proximo">Carregando...</div>
 
-          <div class="tv-inventario-titulo">Seus objetos</div>
-          <div class="tv-inventario" id="tv-inventario"></div>
+          <div class="tv-inventario-titulo tv-editor-only">Seus objetos</div>
+          <div class="tv-inventario tv-editor-only" id="tv-inventario"></div>
+        </div>
+
+        <!-- MODAL — LER CARTINHA -->
+        <div class="tv-cartinha-modal-overlay" id="tv-cartinha-modal-overlay" style="display:none" onclick="tvFecharCartinha(event)">
+          <div class="tv-cartinha-modal">
+            <div class="tv-cartinha-modal-de" id="tv-cartinha-modal-de"></div>
+            <div class="tv-cartinha-modal-texto" id="tv-cartinha-modal-texto"></div>
+            <div class="tv-cartinha-modal-acoes">
+              <button onclick="tvFecharCartinha()">Fechar</button>
+              <button onclick="tvApagarCartinhaAberta()">🗑 Apagar</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -5971,6 +6059,12 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // ══════════════════════════════════════════════════════════════
 let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede', categoria }]
 let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
+let tvMeuProgresso = null; // guarda o progresso de verdade da própria pessoa, enquanto visita outra
+let tvUidProprio = null;
+let tvNomeProprio = '';
+let tvVisitandoUid = null;  // null = vendo o próprio terreirinho; senão, uid de quem está visitando
+let tvVisitandoNome = '';
+let tvListaTerreiras = []; // cache da lista de gente pra visitar
 
 // categorias pra organizar e facilitar achar os objetos (tanto no inventário quanto no admin)
 const TV_CATEGORIAS = [
@@ -6009,24 +6103,160 @@ async function tvAtualizar() {
   corpo.style.display = 'block';
   if (!window._tvCarregarCatalogo || !window._tvCarregarProgresso) return;
 
+  tvUidProprio = user.uid;
+  tvNomeProprio = user.displayName || user.email || '';
+
   const [catalogo, progresso] = await Promise.all([
     window._tvCarregarCatalogo(),
-    window._tvCarregarProgresso(user.uid)
+    window._tvCarregarProgresso(user.uid, tvNomeProprio)
   ]);
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
-  tvProgresso = progresso;
+  tvMeuProgresso = progresso;
 
+  tvMontarSelectVisitas(); // roda em paralelo, não precisa bloquear o resto
+
+  // se estiver visitando alguém, não sobrescreve a tela com os próprios dados —
+  // só atualiza o que precisa (catálogo, cache do próprio progresso) por baixo
+  if (tvVisitandoUid) return;
+
+  tvProgresso = tvMeuProgresso;
+  tvAplicarCoresNaTela();
+  tvRenderGrid();
+  tvRenderInventario();
+  tvRenderProximo();
+  tvRenderAcoesObjeto();
+  tvRenderCartinhas();
+}
+
+function tvAplicarCoresNaTela() {
   const corChaoInput = document.getElementById('cor-chao');
   const corParedeInput = document.getElementById('cor-parede');
   corChaoInput.value = tvProgresso.corChao || '#fff5f7';
   corParedeInput.value = tvProgresso.corParede || '#fff5f7';
   document.getElementById('tv-cor-chao').style.backgroundColor = tvProgresso.corChao || '#fff5f7';
   document.getElementById('tv-cor-parede').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
+}
 
+// ══ VISITAR OUTRAS TERREIRAS ══
+async function tvMontarSelectVisitas() {
+  const sel = document.getElementById('tv-visita-select');
+  if (!sel || !window._tvListarTerreiras) return;
+  const lista = await window._tvListarTerreiras();
+  tvListaTerreiras = lista.filter(p => p.uid !== tvUidProprio).sort((a, b) => a.nome.localeCompare(b.nome));
+  const valorAtual = sel.value;
+  sel.innerHTML = '<option value="">Visitar o terreirinho de...</option>' +
+    tvListaTerreiras.map(p => `<option value="${p.uid}">${p.nome}</option>`).join('');
+  if (valorAtual && tvListaTerreiras.some(p => p.uid === valorAtual)) sel.value = valorAtual;
+}
+
+async function tvVisitarSelecionado() {
+  const sel = document.getElementById('tv-visita-select');
+  if (!sel || !sel.value) return;
+  const alvo = tvListaTerreiras.find(p => p.uid === sel.value);
+  if (!alvo || !window._tvCarregarTerreiraDe) return;
+  const dados = await window._tvCarregarTerreiraDe(alvo.uid);
+  if (!dados) { alert('Não consegui abrir esse terreirinho.'); return; }
+
+  tvVisitandoUid = alvo.uid;
+  tvVisitandoNome = alvo.nome;
+  tvItemSelecionado = null;
+  tvObjetoSelecionadoId = null;
+  tvProgresso = dados;
+
+  document.getElementById('tv-corpo').classList.add('visitando');
+  document.getElementById('tv-visitando-nome').textContent = `Você está no terreirinho de ${alvo.nome} ✦`;
+  document.getElementById('tv-visitando-aviso').style.display = 'flex';
+  document.getElementById('tv-cartinha-form').style.display = 'flex';
+  document.getElementById('tv-cartinha-texto').value = '';
+
+  tvAplicarCoresNaTela();
+  tvRenderGrid();
+  tvRenderAcoesObjeto();
+  tvRenderCartinhas(); // esconde qualquer cartinha antiga da própria sala enquanto visita
+}
+
+function tvVoltarProprioTerreirinho() {
+  tvVisitandoUid = null;
+  tvVisitandoNome = '';
+  tvItemSelecionado = null;
+  tvObjetoSelecionadoId = null;
+  tvProgresso = tvMeuProgresso;
+
+  document.getElementById('tv-corpo').classList.remove('visitando');
+  document.getElementById('tv-visitando-aviso').style.display = 'none';
+  document.getElementById('tv-cartinha-form').style.display = 'none';
+  document.getElementById('tv-visita-select').value = '';
+
+  tvAplicarCoresNaTela();
   tvRenderGrid();
   tvRenderInventario();
   tvRenderProximo();
   tvRenderAcoesObjeto();
+  tvRenderCartinhas();
+}
+
+// ══ CARTINHAS — mensagens que ficam flutuando na terreirinho de quem recebeu ══
+async function tvEnviarCartinha() {
+  const input = document.getElementById('tv-cartinha-texto');
+  const texto = input.value.trim();
+  if (!texto || !tvVisitandoUid || !window._tvEnviarCartinha) return;
+  await window._tvEnviarCartinha(tvVisitandoUid, tvNomeProprio || 'Alguém da casa', texto);
+  input.value = '';
+  const status = document.getElementById('tv-cartinha-status');
+  if (status) { status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+}
+
+// posições espalhadas pela sala pras cartinhas flutuarem — repete se tiver mais
+// cartinhas do que posições
+const TV_CARTINHA_POSICOES = [
+  { left: '20%', top: '25%' }, { left: '70%', top: '20%' }, { left: '45%', top: '14%' },
+  { left: '15%', top: '46%' }, { left: '75%', top: '43%' }, { left: '50%', top: '55%' },
+];
+let tvCartinhasAtuais = [];
+let tvCartinhaAbertaId = null;
+
+async function tvRenderCartinhas() {
+  const camada = document.getElementById('tv-cartinhas');
+  if (!camada) return;
+  // só mostra cartinhas no PRÓPRIO terreirinho — enquanto visita alguém, fica vazio
+  if (tvVisitandoUid || !tvUidProprio || !window._tvCarregarCartinhas) { camada.innerHTML = ''; return; }
+  tvCartinhasAtuais = await window._tvCarregarCartinhas(tvUidProprio);
+  camada.innerHTML = '';
+  tvCartinhasAtuais.forEach((c, i) => {
+    const pos = TV_CARTINHA_POSICOES[i % TV_CARTINHA_POSICOES.length];
+    const el = document.createElement('div');
+    el.className = 'tv-cartinha-flutuante';
+    el.style.left = pos.left;
+    el.style.top = pos.top;
+    el.style.animationDelay = (i * 0.4) + 's';
+    el.textContent = '💌';
+    el.title = `De ${c.deNome}`;
+    el.addEventListener('click', () => tvAbrirCartinha(c.id));
+    camada.appendChild(el);
+  });
+}
+
+function tvAbrirCartinha(id) {
+  const cartinha = tvCartinhasAtuais.find(c => c.id === id);
+  if (!cartinha) return;
+  tvCartinhaAbertaId = id;
+  document.getElementById('tv-cartinha-modal-de').textContent = `💌 De ${cartinha.deNome}`;
+  document.getElementById('tv-cartinha-modal-texto').textContent = cartinha.mensagem;
+  document.getElementById('tv-cartinha-modal-overlay').style.display = 'flex';
+}
+
+function tvFecharCartinha(event) {
+  if (event && event.target.id !== 'tv-cartinha-modal-overlay') return;
+  document.getElementById('tv-cartinha-modal-overlay').style.display = 'none';
+  tvCartinhaAbertaId = null;
+}
+
+async function tvApagarCartinhaAberta() {
+  if (!tvCartinhaAbertaId || !window._tvExcluirCartinha) return;
+  await window._tvExcluirCartinha(tvCartinhaAbertaId);
+  document.getElementById('tv-cartinha-modal-overlay').style.display = 'none';
+  tvCartinhaAbertaId = null;
+  tvRenderCartinhas();
 }
 
 // ── GRADE ISOMÉTRICA — chão (assets/chao-cinza.png) e as duas paredes (assets/parede-cinza.png),
@@ -6248,6 +6478,7 @@ function tvRenderInventario() {
 }
 
 function tvSelecionarItem(itemId) {
+  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
   tvObjetoSelecionadoId = null;
   tvRenderAcoesObjeto();
   tvItemSelecionado = (tvItemSelecionado === itemId) ? null : itemId;
@@ -6256,6 +6487,7 @@ function tvSelecionarItem(itemId) {
 }
 
 async function tvClicarSlot(superficie, slot) {
+  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
   if (!tvProgresso) return;
   if (!tvProgresso.colocados) tvProgresso.colocados = {};
   const colocados = tvProgresso.colocados;
@@ -6281,6 +6513,7 @@ async function tvClicarSlot(superficie, slot) {
 
 // ── objeto já colocado: seleciona pra abrir a barrinha de girar/espelhar/remover ──
 function tvSelecionarObjetoColocado(itemId) {
+  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
   tvItemSelecionado = null;
   tvObjetoSelecionadoId = (tvObjetoSelecionadoId === itemId) ? null : itemId;
   tvRenderAcoesObjeto();
@@ -6405,6 +6638,9 @@ function tvRenderProximo() {
 }
 
 async function tvSalvarProgresso() {
+  // nunca salva enquanto visita alguém — senão o terreirinho da visitante seria
+  // sobrescrito com os dados de quem ela está visitando
+  if (tvVisitandoUid) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user || !tvProgresso || !window._tvSalvarProgresso) return;
   await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corChao: tvProgresso.corChao, corParede: tvProgresso.corParede });
@@ -6928,13 +7164,16 @@ const auth = getAuth(app);
     catch (e) { console.warn('tv excluir item catalogo:', e); }
   };
 
-  window._tvCarregarProgresso = async (uid) => {
+  window._tvCarregarProgresso = async (uid, nome) => {
     try {
       const ref = doc(db, 'terreira_jogadores', uid);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const dados = snap.data();
+        // mantém o nome sempre atualizado, pra aparecer certinho na lista de visitas
+        if (nome && dados.nome !== nome) await setDoc(ref, { nome }, { merge: true });
         return {
+          nome: nome || dados.nome || '',
           dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
           corChao: dados.corChao || '#fff5f7',
           corParede: dados.corParede || '#fff5f7',
@@ -6942,14 +7181,60 @@ const auth = getAuth(app);
         };
       }
       // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
-      await setDoc(ref, { dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
-      return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} };
-    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} }; }
+      await setDoc(ref, { nome: nome || '', dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
+      return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} };
+    } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} }; }
   };
 
   window._tvSalvarProgresso = async (uid, dados) => {
     try { await setDoc(doc(db, 'terreira_jogadores', uid), dados, { merge: true }); }
     catch (e) { console.warn('tv salvar progresso:', e); }
+  };
+
+  // ── VISITAR OUTRAS TERREIRAS ──
+  window._tvListarTerreiras = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'terreira_jogadores'));
+      return snap.docs.map(d => ({ uid: d.id, nome: d.data().nome || '' })).filter(p => p.nome);
+    } catch (e) { console.warn('tv listar terreiras:', e); return []; }
+  };
+
+  window._tvCarregarTerreiraDe = async (uid) => {
+    try {
+      const snap = await getDoc(doc(db, 'terreira_jogadores', uid));
+      if (!snap.exists()) return null;
+      const dados = snap.data();
+      return {
+        nome: dados.nome || '',
+        dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
+        corChao: dados.corChao || '#fff5f7',
+        corParede: dados.corParede || '#fff5f7',
+        colocados: dados.colocados || {}
+      };
+    } catch (e) { console.warn('tv carregar terreira de:', e); return null; }
+  };
+
+  // ── CARTINHAS — mensagens que ficam flutuando na terreirinho de quem recebeu ──
+  // terreira_cartinhas/{id}: { paraUid, deNome, mensagem, criadoEm }
+  window._tvEnviarCartinha = async (paraUid, deNome, mensagem) => {
+    try {
+      await addDoc(collection(db, 'terreira_cartinhas'), { paraUid, deNome, mensagem, criadoEm: serverTimestamp() });
+    } catch (e) { console.warn('tv enviar cartinha:', e); }
+  };
+
+  window._tvCarregarCartinhas = async (uid) => {
+    try {
+      const q = query(collection(db, 'terreira_cartinhas'), where('paraUid', '==', uid));
+      const snap = await getDocs(q);
+      return snap.docs
+        .map(d => ({ id: d.id, ...d.data(), criadoEm: d.data().criadoEm?.toMillis?.() || 0 }))
+        .sort((a, b) => a.criadoEm - b.criadoEm);
+    } catch (e) { console.warn('tv carregar cartinhas:', e); return []; }
+  };
+
+  window._tvExcluirCartinha = async (id) => {
+    try { await deleteDoc(doc(db, 'terreira_cartinhas', id)); }
+    catch (e) { console.warn('tv excluir cartinha:', e); }
   };
 
   // ── PERSONALIZAÇÃO DE AVATAR ──
