@@ -1540,6 +1540,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-acoes-objeto button:disabled{opacity:.4;cursor:default;border-color:var(--gp-border);color:var(--gp-text-dim)}
 .tv-acoes-objeto button:disabled:hover{border-color:var(--gp-border);color:var(--gp-text-dim)}
 .tv-acoes-superficies{display:flex;gap:6px}
+.tv-acoes-grupo{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.5);border-radius:14px;padding:2px 4px 2px 8px}
+.tv-acoes-grupo-label{font-size:8.5px;letter-spacing:.03em;color:var(--gp-text-dim);white-space:nowrap}
 
 .tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
@@ -2655,8 +2657,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
           <div class="tv-acoes-objeto" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
-            <button onclick="tvEscalarSelecionado(-1)">－</button>
-            <button onclick="tvEscalarSelecionado(1)">＋</button>
+            <div class="tv-acoes-grupo">
+              <span class="tv-acoes-grupo-label">Tamanho</span>
+              <button onclick="tvEscalarSelecionado(-1)" title="Diminuir">－</button>
+              <button onclick="tvEscalarSelecionado(1)" title="Aumentar">＋</button>
+            </div>
+            <div class="tv-acoes-grupo">
+              <span class="tv-acoes-grupo-label">Inclinação</span>
+              <button onclick="tvInclinarSelecionado(-1)" title="Inclinar pra esquerda">◁</button>
+              <button onclick="tvInclinarSelecionado(1)" title="Inclinar pra direita">▷</button>
+            </div>
             <button onclick="tvGirarSelecionado()">↻ Girar</button>
             <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
             <div class="tv-acoes-superficies" id="tv-acoes-superficies"></div>
@@ -5972,8 +5982,9 @@ const TV_SUPERFICIES = {
 };
 
 // inclinação sutil pra objetos de parede acompanharem o caimento isométrico das paredes
-const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 };
+const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 }; // inclinação-base de cada superfície
 const TV_ESCALA_MIN = 0.5, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
+const TV_INCLINACAO_MIN = -30, TV_INCLINACAO_MAX = 30, TV_INCLINACAO_PASSO = 5; // ajuste manual, somado à inclinação-base
 
 // interpola um ponto (i,j) da grade de uma superfície, i,j de 0 a n
 function tvPonto(superficie, i, j) {
@@ -6101,7 +6112,7 @@ async function tvRenderGrid() {
         const rot = info.rot || 0;
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
-        const skew = TV_SKEW[superficie] || 0;
+        const skew = (TV_SKEW[superficie] || 0) + (info.inclinacao || 0);
         const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9 };
 
         const img = document.createElement('img');
@@ -6228,6 +6239,15 @@ async function tvEscalarSelecionado(direcao) {
   if (!info) return;
   const atual = info.escala || 1;
   info.escala = Math.min(TV_ESCALA_MAX, Math.max(TV_ESCALA_MIN, +(atual + direcao * TV_ESCALA_PASSO).toFixed(2)));
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+async function tvInclinarSelecionado(direcao) {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  const atual = info.inclinacao || 0;
+  info.inclinacao = Math.min(TV_INCLINACAO_MAX, Math.max(TV_INCLINACAO_MIN, atual + direcao * TV_INCLINACAO_PASSO));
   tvRenderGrid();
   await tvSalvarProgresso();
 }
@@ -8485,7 +8505,10 @@ function renderDashPessoal(p, user) {
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
   const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras;
+  // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
+  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
+  const totalCruzConga = hist.cruz_conga ? 1 : 0;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
 
   // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
   const totalAves =
@@ -9178,7 +9201,7 @@ function mhRenderGuiasExtras(extras, editavel) {
     if (editavel) {
       return `<div class="mh-corte-card">
         <button type="button" class="mh-corte-del" onclick="mhRemoverGuiaExtra(${i})" title="Remover este guia">✕</button>
-        <div class="mh-corte-num">Guia Extra</div>
+        <div class="mh-corte-num">${g.tipo || 'Novo Guia'}${g.nome ? ' — ' + g.nome : ''}</div>
         <div class="mh-corte-grid mh-corte-grid-2">
           <div>
             <label>Tipo</label>
