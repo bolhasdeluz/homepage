@@ -1308,9 +1308,55 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .gp-avatar-jogador{
   position:absolute;top:-10px;left:-8px;width:42px;height:42px;border-radius:50%;
   overflow:hidden;border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);
-  background:var(--gp-bg);z-index:3;
+  background:var(--gp-bg);z-index:3;cursor:pointer;
 }
-.gp-avatar-jogador img{width:100%;height:100%;object-fit:cover;object-position:center 25%;image-rendering:pixelated}
+.gp-avatar-jogador img{
+  position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 25%;image-rendering:pixelated;
+}
+.gp-avatar-jogador .gp-av-lapis{
+  position:absolute;bottom:-1px;right:-1px;font-size:9px;background:rgba(0,0,0,.55);color:#fff;
+  border-radius:50%;width:15px;height:15px;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── modal de personalização de avatar — boneca de papel ── */
+.av-modal-overlay{
+  position:fixed;inset:0;background:rgba(30,10,20,.55);z-index:900;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.av-modal{
+  background:var(--gp-bg,#fff);border-radius:16px;padding:1.3rem;max-width:320px;width:100%;
+  position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3);text-align:center;
+}
+.av-modal-fechar{
+  position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;
+  color:var(--gp-text-dim);cursor:pointer;
+}
+.av-modal-titulo{
+  font-family:'Cinzel',serif;font-size:14px;font-weight:600;letter-spacing:.05em;
+  color:var(--gp-gold);margin-bottom:6px;
+}
+.av-modal-aviso{font-size:10.5px;color:var(--gp-text-dim);font-style:italic;margin-bottom:8px}
+.av-boneca{
+  position:relative;width:180px;aspect-ratio:260/525;margin:10px auto;
+}
+.av-camada{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+.av-controles{display:flex;flex-direction:column;gap:6px;margin:14px 0 10px}
+.av-controle-linha{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:11px;color:var(--gp-text);
+}
+.av-controle-linha span{flex:1;font-weight:600}
+.av-controle-linha button{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--gp-border);background:#fff;
+  color:var(--gp-gold);font-size:13px;cursor:pointer;
+}
+.av-controle-linha button:hover{border-color:var(--gp-gold);background:var(--gp-gold-fundo)}
+.av-btn-salvar{
+  width:100%;padding:10px;border:none;border-radius:10px;background:var(--gp-gold);
+  color:#fff;font-family:'Cinzel',serif;font-size:11.5px;letter-spacing:.05em;cursor:pointer;
+}
+.av-btn-salvar:hover{opacity:.9}
 .gp-peninha-container{width:76px;height:82px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .gp-player-stats{color:#fff;flex:1}
 .gp-speech-bubble{
@@ -2478,8 +2524,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="gp-portal">
 
       <div class="gp-player-panel">
-        <div class="gp-avatar-jogador" title="Seu avatar">
-          <img src="assets/avatar-face.png" alt="Avatar do jogador">
+        <div class="gp-avatar-jogador" title="Personalizar avatar" onclick="avAbrirModal()">
+          <img class="av-camada" id="gp-av-badge-base" src="assets/avatar/base.png" alt=""
+            style="display:none" onerror="this.style.display='none'; document.getElementById('gp-av-badge-fallback').style.display='block'">
+          <img class="av-camada" id="gp-av-badge-baixo" alt="">
+          <img class="av-camada" id="gp-av-badge-sapato" alt="">
+          <img class="av-camada" id="gp-av-badge-blusa" alt="">
+          <img class="av-camada" id="gp-av-badge-cabelo" alt="">
+          <img class="av-camada" id="gp-av-badge-fallback" src="assets/avatar-face.png" alt="Avatar do jogador">
+          <span class="gp-av-lapis">✎</span>
         </div>
         <div class="gp-peninha-container">
           <img class="gp-peninha-emoji" id="gp-peninha" src="assets/peninha.png" alt="Peninha, a arara mascote">
@@ -2622,6 +2675,48 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- MODAL — PERSONALIZAÇÃO DE AVATAR (boneca de papel) -->
+<div class="av-modal-overlay" id="av-modal-overlay" style="display:none" onclick="avFecharModal(event)">
+  <div class="av-modal">
+    <button class="av-modal-fechar" onclick="avFecharModal()">✕</button>
+    <div class="av-modal-titulo">Personalize seu Avatar</div>
+    <div class="av-modal-aviso" id="av-modal-aviso" style="display:none">Faça login pra salvar suas escolhas ✦</div>
+
+    <div class="av-boneca">
+      <img class="av-camada" id="av-camada-base" src="assets/avatar/base.png" alt="">
+      <img class="av-camada" id="av-camada-baixo" alt="">
+      <img class="av-camada" id="av-camada-sapato" alt="">
+      <img class="av-camada" id="av-camada-blusa" alt="">
+      <img class="av-camada" id="av-camada-cabelo" alt="">
+    </div>
+
+    <div class="av-controles">
+      <div class="av-controle-linha">
+        <button onclick="avMudar('cabelo',-1)">◀</button>
+        <span>Cabelo</span>
+        <button onclick="avMudar('cabelo',1)">▶</button>
+      </div>
+      <div class="av-controle-linha">
+        <button onclick="avMudar('blusa',-1)">◀</button>
+        <span>Blusa</span>
+        <button onclick="avMudar('blusa',1)">▶</button>
+      </div>
+      <div class="av-controle-linha">
+        <button onclick="avMudar('baixo',-1)">◀</button>
+        <span>Parte de baixo</span>
+        <button onclick="avMudar('baixo',1)">▶</button>
+      </div>
+      <div class="av-controle-linha">
+        <button onclick="avMudar('sapato',-1)">◀</button>
+        <span>Sapato</span>
+        <button onclick="avMudar('sapato',1)">▶</button>
+      </div>
+    </div>
+
+    <button class="av-btn-salvar" onclick="avSalvarEscolhas()">Salvar avatar</button>
   </div>
 </div>
 
@@ -6210,6 +6305,101 @@ async function tvAdminExcluir(id) {
   tvAtualizarAdminCatalogo();
 }
 
+// ══════════════════════════════════════════════════════════════
+// PERSONALIZAÇÃO DE AVATAR — boneca de papel: a base (corpo/rosto) fica fixa,
+// e cabelo/blusa/parte de baixo/sapato são camadas trocáveis com as setinhas.
+// Cada categoria é uma pasta em assets/avatar/<categoria>/ — igual ao catálogo
+// da terreirinho, qualquer PNG novo colado lá já aparece sozinho, sem mexer
+// no código (basta ter o mesmo tamanho/posição da base pra encaixar certinho).
+// ══════════════════════════════════════════════════════════════
+const AV_GITHUB_REPO = 'bolhasdeluz/homepage';
+const AV_PASTA_AVATAR = 'assets/avatar';
+const AV_ORDEM_CAMADAS = ['baixo', 'sapato', 'blusa', 'cabelo']; // ordem de empilhamento sobre a base
+
+let avCatalogos = { cabelo: [], blusa: [], baixo: [], sapato: [] };
+let avEscolhas = { cabelo: 0, blusa: 0, baixo: 0, sapato: 0 };
+let avCatalogosProntos = false;
+
+async function avBuscarArquivosPasta(pasta) {
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${AV_GITHUB_REPO}/contents/${pasta}`);
+    if (!resp.ok) return [];
+    const dados = await resp.json();
+    return dados
+      .filter(f => f.type === 'file' && /\.(png|webp)$/i.test(f.name))
+      .map(f => `${pasta}/${encodeURIComponent(f.name)}`)
+      .sort();
+  } catch (e) { console.warn('av buscar arquivos', pasta, e); return []; }
+}
+
+async function avCarregarCatalogos() {
+  if (avCatalogosProntos) return;
+  const categorias = AV_ORDEM_CAMADAS;
+  const listas = await Promise.all(categorias.map(cat => avBuscarArquivosPasta(`${AV_PASTA_AVATAR}/${cat}`)));
+  categorias.forEach((cat, i) => avCatalogos[cat] = listas[i]);
+  avCatalogosProntos = true;
+}
+
+function avCaminhoCamada(categoria) {
+  const lista = avCatalogos[categoria];
+  if (!lista || !lista.length) return null;
+  const idx = ((avEscolhas[categoria] || 0) % lista.length + lista.length) % lista.length;
+  return lista[idx];
+}
+
+function avRenderCamadas(prefixo) {
+  AV_ORDEM_CAMADAS.forEach(categoria => {
+    const img = document.getElementById(`${prefixo}-${categoria}`);
+    if (!img) return;
+    const caminho = avCaminhoCamada(categoria);
+    if (caminho) { img.src = caminho; img.style.display = 'block'; }
+    else { img.style.display = 'none'; }
+  });
+}
+
+async function avCarregarEscolhasSalvas() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user || !window._avCarregarEscolhas) return;
+  const salvo = await window._avCarregarEscolhas(user.uid);
+  AV_ORDEM_CAMADAS.forEach(cat => { if (typeof salvo[cat] === 'number') avEscolhas[cat] = salvo[cat]; });
+}
+
+async function avAtualizarBadge() {
+  await avCarregarCatalogos();
+  await avCarregarEscolhasSalvas();
+  avRenderCamadas('gp-av-badge');
+}
+
+async function avAbrirModal() {
+  await avCarregarCatalogos();
+  await avCarregarEscolhasSalvas();
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const aviso = document.getElementById('av-modal-aviso');
+  if (aviso) aviso.style.display = user ? 'none' : 'block';
+  avRenderCamadas('av-camada');
+  document.getElementById('av-modal-overlay').style.display = 'flex';
+}
+
+function avFecharModal(event) {
+  if (event && event.target.id !== 'av-modal-overlay') return;
+  document.getElementById('av-modal-overlay').style.display = 'none';
+}
+
+function avMudar(categoria, direcao) {
+  const lista = avCatalogos[categoria];
+  if (!lista || !lista.length) return;
+  avEscolhas[categoria] = (((avEscolhas[categoria] || 0) + direcao) % lista.length + lista.length) % lista.length;
+  avRenderCamadas('av-camada');
+}
+
+async function avSalvarEscolhas() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user || !window._avSalvarEscolhas) { avFecharModal(); return; }
+  await window._avSalvarEscolhas(user.uid, avEscolhas);
+  avRenderCamadas('gp-av-badge');
+  avFecharModal();
+}
+
 function gpAtualizarPortal() {
   gpAtualizarTrilha(); // reposiciona já com o que estiver marcado no DOM agora
   gpVerificarStatusReal();
@@ -6217,6 +6407,7 @@ function gpAtualizarPortal() {
   gpAtualizarSecaoAdmin();
   tvAtualizar();
   tvAtualizarAdminCatalogo();
+  avAtualizarBadge();
 }
 // atualiza de novo se a pessoa voltar do palavra.html/quiz.html (abertos em outra aba)
 // enquanto a tela de Jogos ainda está ativa
@@ -6431,6 +6622,20 @@ const auth = getAuth(app);
   window._tvSalvarProgresso = async (uid, dados) => {
     try { await setDoc(doc(db, 'terreira_jogadores', uid), dados, { merge: true }); }
     catch (e) { console.warn('tv salvar progresso:', e); }
+  };
+
+  // ── PERSONALIZAÇÃO DE AVATAR ──
+  // avatares_jogadores/{uid}: { cabelo, blusa, baixo, sapato } — índices na lista de cada pasta
+  window._avCarregarEscolhas = async (uid) => {
+    try {
+      const snap = await getDoc(doc(db, 'avatares_jogadores', uid));
+      return snap.exists() ? snap.data() : {};
+    } catch (e) { console.warn('av carregar escolhas:', e); return {}; }
+  };
+
+  window._avSalvarEscolhas = async (uid, dados) => {
+    try { await setDoc(doc(db, 'avatares_jogadores', uid), dados, { merge: true }); }
+    catch (e) { console.warn('av salvar escolhas:', e); }
   };
 
   // ══ LISTA DE COMPRAS ══
