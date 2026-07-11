@@ -1558,6 +1558,22 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
 #tv-admin-preview{width:44px;height:44px;object-fit:contain;border:1px solid var(--border);border-radius:8px;background:var(--gp-bg);image-rendering:pixelated;flex-shrink:0}
 
+/* catálogo compacto — miniatura + nome + dia, em vez do texto longo de antes */
+.tv-catalogo-lista{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto;margin-bottom:10px}
+.tv-catalogo-item{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid rgba(196,90,30,.06)}
+.tv-catalogo-item:last-child{border-bottom:none}
+.tv-catalogo-item-thumb{width:32px;height:32px;object-fit:contain;border-radius:6px;background:var(--gp-bg);border:1px solid var(--gp-border);image-rendering:pixelated;flex-shrink:0}
+.tv-catalogo-item-info{flex:1;min-width:0;display:flex;flex-direction:column}
+.tv-catalogo-item-nome{font-family:'Cinzel',serif;font-size:10.5px;color:var(--gp-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv-catalogo-item-meta{font-size:9.5px;color:var(--gp-text-dim)}
+/* formulário de adicionar fica escondido atrás de um botão, só abre quando precisa */
+.tv-catalogo-btn-add{
+  width:100%;padding:8px;border:1px dashed var(--gp-gold);border-radius:8px;background:none;
+  color:var(--gp-gold);font-family:'Cinzel',serif;font-size:10px;letter-spacing:.05em;cursor:pointer;margin-bottom:8px;
+}
+.tv-catalogo-btn-add:hover{background:var(--gp-gold-fundo)}
+.tv-catalogo-form{padding-top:10px;border-top:1px dashed var(--gp-border)}
+
 .gp-admin-section{
   background:var(--gp-surface);border-radius:12px;border:0.5px dashed var(--gp-gold);
   padding:1.1rem;margin-top:1rem;box-shadow:0 2px 16px rgba(180,60,90,.07);
@@ -2707,16 +2723,27 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <!-- ADMIN — catálogo da terreira (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="tv-admin-catalogo" style="display:none">
         <div class="gp-admin-title">🏠 Catálogo da Terreira</div>
-        <div class="gp-admin-sub">Cadastre os objetos e em que dia (a partir do início do terreirinho de cada pessoa) cada um é liberado.</div>
-        <div id="tv-admin-lista">Carregando...</div>
-        <div class="admin-add-form" style="margin-top:10px">
+        <div class="gp-admin-sub">Objetos disponíveis pra colocar no terreirinho, liberados aos poucos a partir do início de cada pessoa.</div>
+        <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
+        <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
+        <div class="tv-catalogo-form" id="tv-admin-form" style="display:none">
           <div class="tv-admin-arquivo-linha">
             <img id="tv-admin-preview" alt="" style="display:none">
             <select id="tv-admin-novo-arquivo"></select>
           </div>
           <div class="admin-row-inputs">
             <input type="text" id="tv-admin-novo-nome" placeholder="Nome do objeto">
-            <input type="number" id="tv-admin-novo-dia" placeholder="Dia de liberação" min="1" value="7">
+            <select id="tv-admin-novo-dia">
+              <option value="1" selected>Dia 1</option>
+              <option value="3">Dia 3</option>
+              <option value="7">Dia 7</option>
+              <option value="14">Dia 14</option>
+              <option value="21">Dia 21</option>
+              <option value="30">Dia 30</option>
+              <option value="45">Dia 45</option>
+              <option value="60">Dia 60</option>
+              <option value="90">Dia 90</option>
+            </select>
           </div>
           <div class="admin-row-inputs">
             <select id="tv-admin-novo-tipo">
@@ -6423,22 +6450,34 @@ async function tvAtualizarAdminCatalogo() {
   secao.style.display = souAdmin ? 'block' : 'none';
   if (!souAdmin || !window._tvCarregarCatalogo) return;
 
-  tvMontarSelectArquivos(); // roda em paralelo, não precisa bloquear o resto do painel
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
   const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
   lista.innerHTML = catalogo.map(item => `
-    <div class="admin-item-row">
-      <span class="admin-item-label">${item.nome}</span>
-      <span class="admin-item-url">dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${item.imagem}</span>
-      <div class="admin-item-actions">
-        <button class="admin-del" data-id="${item.id}">✕</button>
+    <div class="tv-catalogo-item">
+      <img class="tv-catalogo-item-thumb" src="${item.imagem}" alt="">
+      <div class="tv-catalogo-item-info">
+        <span class="tv-catalogo-item-nome">${item.nome}</span>
+        <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'}</span>
       </div>
+      <button class="admin-del" data-id="${item.id}" title="Remover">✕</button>
     </div>`).join('');
   lista.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', () => tvAdminExcluir(btn.dataset.id));
   });
+}
+
+// o formulário de adicionar fica escondido até a pessoa clicar — só busca a lista de
+// arquivos do GitHub na primeira vez que abre, pra não pesar o carregamento do painel
+function tvAdminToggleForm() {
+  const form = document.getElementById('tv-admin-form');
+  const btn = document.getElementById('tv-admin-btn-form');
+  if (!form || !btn) return;
+  const abrindo = form.style.display === 'none';
+  form.style.display = abrindo ? 'block' : 'none';
+  btn.style.display = abrindo ? 'none' : '';
+  if (abrindo) tvMontarSelectArquivos();
 }
 
 async function tvAdminAdicionar() {
@@ -6450,7 +6489,8 @@ async function tvAdminAdicionar() {
   const id = 'obj_' + Date.now();
   if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo });
   document.getElementById('tv-admin-novo-nome').value = '';
-  document.getElementById('tv-admin-novo-dia').value = '7';
+  document.getElementById('tv-admin-novo-dia').value = '1';
+  tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
 }
 
