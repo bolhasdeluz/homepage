@@ -1515,6 +1515,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   text-transform:uppercase;color:var(--gp-text-dim);margin:10px 0 8px;
 }
 .tv-inventario{display:flex;gap:10px;flex-wrap:wrap;padding-bottom:6px}
+.tv-inventario-categoria{
+  flex-basis:100%;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gp-gold);margin:8px 0 2px;
+}
+.tv-inventario-categoria:first-child{margin-top:0}
 .tv-item{
   width:52px;height:52px;border-radius:10px;border:1.5px solid var(--gp-border);background:var(--gp-bg);
   display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;
@@ -2749,6 +2754,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <select id="tv-admin-novo-tipo">
               <option value="chao">Objeto de chão</option>
               <option value="parede">Objeto de parede</option>
+            </select>
+            <select id="tv-admin-novo-categoria">
+              <option value="plantas">🌿 Plantas</option>
+              <option value="moveis">🪑 Móveis</option>
+              <option value="utensilios">🏺 Utensílios</option>
+              <option value="armas">⚔️ Armas &amp; Emblemas</option>
+              <option value="natureza">🌾 Natureza</option>
+              <option value="outros">✦ Outros</option>
             </select>
           </div>
           <button class="btn-add" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
@@ -5956,8 +5969,23 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // TERREIRINHO DIGITAL — ganha 1 objeto novo a cada 7 dias (configurável
 // pelo admin), monta no chão ou nas paredes, gira/espelha, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
-let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede' }]
+let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede', categoria }]
 let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
+
+// categorias pra organizar e facilitar achar os objetos (tanto no inventário quanto no admin)
+const TV_CATEGORIAS = [
+  { chave: 'plantas',     label: '🌿 Plantas' },
+  { chave: 'moveis',      label: '🪑 Móveis' },
+  { chave: 'utensilios',  label: '🏺 Utensílios' },
+  { chave: 'armas',       label: '⚔️ Armas & Emblemas' },
+  { chave: 'natureza',    label: '🌾 Natureza' },
+  { chave: 'outros',      label: '✦ Outros' },
+];
+function tvCategoriaEfetiva(item) {
+  if (item.categoria) return item.categoria;
+  if ((item.nome || '').toLowerCase().includes('vaso')) return 'plantas'; // itens antigos sem categoria salva
+  return 'outros';
+}
 let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
 let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
 
@@ -6193,20 +6221,29 @@ function tvRenderInventario() {
   const colocados = tvProgresso.colocados || {};
   if (!tvCatalogo.length) { wrap.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda — volta em breve ✦</div>'; return; }
   wrap.innerHTML = '';
-  tvCatalogo.forEach(item => {
-    const desbloqueado = dia >= (item.diaDesbloqueio || 0);
-    const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
-    const ehParede = item.tipo === 'parede';
-    const el = document.createElement('div');
-    el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
-    el.title = desbloqueado ? `${item.nome} (${ehParede ? 'parede' : 'chão'})` : `Libera no dia ${item.diaDesbloqueio}`;
-    el.innerHTML = desbloqueado
-      ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`
-      : `<span class="tv-cadeado">🔒</span>`;
-    // clicar sempre inicia a colocação de uma nova cópia — pra mexer numa já colocada,
-    // é só clicar nela direto no cenário
-    if (desbloqueado) el.addEventListener('click', () => tvSelecionarItem(item.id));
-    wrap.appendChild(el);
+  // agrupa por categoria pra ficar mais fácil de achar, em vez de uma lista única
+  TV_CATEGORIAS.forEach(cat => {
+    const itensDaCategoria = tvCatalogo.filter(item => tvCategoriaEfetiva(item) === cat.chave);
+    if (!itensDaCategoria.length) return;
+    const header = document.createElement('div');
+    header.className = 'tv-inventario-categoria';
+    header.textContent = cat.label;
+    wrap.appendChild(header);
+    itensDaCategoria.forEach(item => {
+      const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+      const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
+      const ehParede = item.tipo === 'parede';
+      const el = document.createElement('div');
+      el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
+      el.title = desbloqueado ? `${item.nome} (${ehParede ? 'parede' : 'chão'})` : `Libera no dia ${item.diaDesbloqueio}`;
+      el.innerHTML = desbloqueado
+        ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`
+        : `<span class="tv-cadeado">🔒</span>`;
+      // clicar sempre inicia a colocação de uma nova cópia — pra mexer numa já colocada,
+      // é só clicar nela direto no cenário
+      if (desbloqueado) el.addEventListener('click', () => tvSelecionarItem(item.id));
+      wrap.appendChild(el);
+    });
   });
 }
 
@@ -6459,17 +6496,26 @@ async function tvAtualizarAdminCatalogo() {
 
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
+
+  if (!tvSementeRodada) {
+    tvSementeRodada = true;
+    await tvAdminSemearNovosObjetos();
+  }
+
   const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
-  lista.innerHTML = catalogo.map(item => `
+  lista.innerHTML = catalogo.map(item => {
+    const cat = TV_CATEGORIAS.find(c => c.chave === tvCategoriaEfetiva(item));
+    return `
     <div class="tv-catalogo-item">
       <img class="tv-catalogo-item-thumb" src="${item.imagem}" alt="">
       <div class="tv-catalogo-item-info">
         <span class="tv-catalogo-item-nome">${item.nome}</span>
-        <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'}</span>
+        <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${cat ? cat.label : ''}</span>
       </div>
       <button class="admin-del" data-id="${item.id}" title="Remover">✕</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
   lista.querySelectorAll('button[data-id]').forEach(btn => {
     btn.addEventListener('click', () => tvAdminExcluir(btn.dataset.id));
   });
@@ -6492,13 +6538,80 @@ async function tvAdminAdicionar() {
   const dia = parseInt(document.getElementById('tv-admin-novo-dia').value, 10);
   const imagem = document.getElementById('tv-admin-novo-arquivo').value;
   const tipo = document.getElementById('tv-admin-novo-tipo').value;
+  const categoria = document.getElementById('tv-admin-novo-categoria').value;
   if (!nome || !dia || !imagem) { alert('Escolhe o arquivo, preenche o nome e o dia.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo });
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria });
   document.getElementById('tv-admin-novo-nome').value = '';
   document.getElementById('tv-admin-novo-dia').value = '1';
   tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
+}
+
+// ── cadastro automático dos 45 objetos processados de uma vez, liberados desde já ──
+let tvSementeRodada = false;
+const TV_NOVOS_OBJETOS_SEED = [
+  { arquivo: 'adaga-bainha.png', nome: 'Adaga na Bainha', tipo: 'chao', categoria: 'armas' },
+  { arquivo: 'arco-indigena.png', nome: 'Arco Indígena', tipo: 'chao', categoria: 'armas' },
+  { arquivo: 'arco.png', nome: 'Arco', tipo: 'chao', categoria: 'armas' },
+  { arquivo: 'bancada-lamparina.png', nome: 'Bancada com Lamparina', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'bancada-pedra-vasinhos.png', nome: 'Bancada de Pedra com Vasinhos', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'banco-comprido.png', nome: 'Banco Comprido', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'banco-longo-1.png', nome: 'Banco Longo', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'banco-longo-gaveta.png', nome: 'Banco com Gaveta', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'banquinho-pano-branco.png', nome: 'Banquinho com Pano Branco', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'bau-madeira-1.png', nome: 'Baú de Madeira', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'bau-madeira-2.png', nome: 'Baú de Madeira Escura', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'bau-pedra.png', nome: 'Baú de Pedra', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'caldeirao-fervendo.png', nome: 'Caldeirão Fervendo', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'caveira-touro.png', nome: 'Caveira de Touro', tipo: 'parede', categoria: 'natureza' },
+  { arquivo: 'cesta-ervas.png', nome: 'Cesta de Ervas', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'cesta-limoes-1.png', nome: 'Cesta de Limões', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'cesta-limoes-2.png', nome: 'Cesta de Limões e Limas', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'corda-enrolada.png', nome: 'Corda Enrolada', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'cruz-gravetos.png', nome: 'Cruz de Gravetos', tipo: 'parede', categoria: 'natureza' },
+  { arquivo: 'escudo-redondo-1.png', nome: 'Escudo Redondo', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'escudo-redondo-2.png', nome: 'Escudo Redondo Dourado', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'espada-parede.png', nome: 'Espada de Parede', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'estante-potes.png', nome: 'Estante com Potes', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'feixe-palha.png', nome: 'Feixe de Palha', tipo: 'chao', categoria: 'natureza' },
+  { arquivo: 'garrafa-cachaca.png', nome: 'Garrafa de Cachaça', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'jarra-branca.png', nome: 'Jarra Branca', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'machado-duplo-parede.png', nome: 'Machado Duplo de Parede', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'machado-pedra.png', nome: 'Machado de Pedra', tipo: 'chao', categoria: 'armas' },
+  { arquivo: 'mao-orbe-parede.png', nome: 'Mão com Orbe', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'martelo-mistico-parede.png', nome: 'Martelo Místico', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'mesa-com-comida.png', nome: 'Mesa com Comida', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-longa-bancos.png', nome: 'Mesa Longa com Bancos', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-pequena-planta.png', nome: 'Mesa Pequena com Planta', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-redonda-pequena.png', nome: 'Mesa Redonda Pequena', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-redonda-toalha.png', nome: 'Mesa Redonda com Toalha', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-retangular-1.png', nome: 'Mesa Retangular', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-retangular-2.png', nome: 'Mesa Retangular Rústica', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'mesa-toalha-branca.png', nome: 'Mesa com Toalha Branca', tipo: 'chao', categoria: 'moveis' },
+  { arquivo: 'moringa-barro.png', nome: 'Moringa de Barro', tipo: 'chao', categoria: 'utensilios' },
+  { arquivo: 'pomba-branca.png', nome: 'Pomba Branca', tipo: 'chao', categoria: 'natureza' },
+  { arquivo: 'raio-parede-1.png', nome: 'Raio de Parede', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'raio-parede-2.png', nome: 'Raio de Parede Dourado', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'roda-cocar.png', nome: 'Roda com Cocar', tipo: 'parede', categoria: 'armas' },
+  { arquivo: 'tronco-barril.png', nome: 'Tronco/Barril', tipo: 'chao', categoria: 'natureza' },
+  { arquivo: 'vaso-folhagem-2.png', nome: 'Vaso com Folhagem', tipo: 'chao', categoria: 'plantas' },
+];
+
+async function tvAdminSemearNovosObjetos() {
+  if (!window._tvSalvarItemCatalogo || !window._tvCarregarCatalogo) return;
+  try {
+    const catalogoAtual = await window._tvCarregarCatalogo();
+    const imagensExistentes = new Set(catalogoAtual.map(i => i.imagem));
+    for (const item of TV_NOVOS_OBJETOS_SEED) {
+      const caminho = `assets/objetos/${item.arquivo}`;
+      if (imagensExistentes.has(caminho)) continue; // já cadastrado, não duplica
+      const id = 'obj_' + item.arquivo.replace(/\.[^.]+$/, '');
+      await window._tvSalvarItemCatalogo(id, {
+        nome: item.nome, imagem: caminho, diaDesbloqueio: 1, tipo: item.tipo, categoria: item.categoria
+      });
+    }
+  } catch (e) { console.warn('tv semear novos objetos:', e); }
 }
 
 async function tvAdminExcluir(id) {
