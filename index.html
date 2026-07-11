@@ -1467,14 +1467,28 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   width:100%;max-width:320px;aspect-ratio:1/1;margin:0 auto;position:relative;
   border:1px solid var(--gp-border);border-radius:12px;overflow:hidden;
 }
-.terreira-cor-fundo{width:100%;height:100%;background-color:#fff5f7;transition:background-color .3s ease;position:relative}
-/* paredes+chão em cinza — a cor escolhida na roda se mistura com esse cinza
-   (mix-blend-mode:multiply), tingindo a sala de verdade */
-.terreira-textura-cinza{
+.terreira-cor-fundo{width:100%;height:100%;position:relative}
+/* chão e parede agora são dois PNGs separados (cada um só com sua própria forma,
+   resto transparente) — assim dá pra colorir cada um individualmente. A camada de
+   cor fica "recortada" (mask-image) na mesma forma da textura, senão a cor vaza
+   pelos cantos do quadrado onde não tem chão/parede desenhado. A textura cinza
+   fica por cima com mix-blend-mode:multiply, tingindo a cor de verdade. */
+.tv-camada-cor, .tv-camada-textura{
   width:100%;height:100%;position:absolute;top:0;left:0;
-  background-image:url('assets/sala-isometrica-cinza.png');background-size:contain;background-repeat:no-repeat;background-position:center;
-  mix-blend-mode:multiply;image-rendering:pixelated;
+  background-size:contain;background-repeat:no-repeat;background-position:center;
 }
+.tv-camada-cor-chao{
+  -webkit-mask-image:url('assets/chao-cinza.png');mask-image:url('assets/chao-cinza.png');
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;transition:background-color .3s ease;
+}
+.tv-camada-cor-parede{
+  -webkit-mask-image:url('assets/parede-cinza.png');mask-image:url('assets/parede-cinza.png');
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;transition:background-color .3s ease;
+}
+.tv-textura-chao{background-image:url('assets/chao-cinza.png');mix-blend-mode:multiply;image-rendering:pixelated}
+.tv-textura-parede{background-image:url('assets/parede-cinza.png');mix-blend-mode:multiply;image-rendering:pixelated}
 /* casas em losango acompanhando a perspectiva do chão (não o quadrado inteiro) —
    cada .tv-slot ocupa o container todo mas só fica visível/clicável dentro do seu
    próprio recorte (clip-path), calculado em JS a partir dos 4 cantos do chão */
@@ -1502,11 +1516,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .tv-item:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(180,60,90,.15)}
 .tv-item.selecionado{border-color:var(--gp-gold);box-shadow:0 0 0 2px var(--gp-gold-dim)}
-.tv-item.colocado{opacity:.4;cursor:pointer}
 .tv-item.bloqueado{opacity:.5;cursor:default}
 .tv-item.bloqueado:hover{transform:none;box-shadow:none}
 .tv-item img{width:70%;height:70%;object-fit:contain;image-rendering:pixelated}
 .tv-item .tv-cadeado{font-size:16px;opacity:.6}
+.tv-item .tv-qtd-badge{
+  position:absolute;top:-4px;right:-4px;font-size:9.5px;font-weight:700;background:var(--gp-gold);color:#fff;
+  border-radius:50%;min-width:16px;height:16px;padding:0 3px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.25);
+}
 .tv-item .tv-tipo-badge{position:absolute;bottom:-3px;right:-3px;font-size:10px;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 
 .tv-acoes-objeto{
@@ -1856,8 +1874,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           <!-- Guias -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Guias e Guardiões</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Guias e Guardiões</div>
+              <button id="mh-guias-btn-add" onclick="mhAdicionarGuiaExtra()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar guia</button>
+            </div>
             <div class="perfil-grid" id="mh-grid-guias"></div>
+            <div id="mh-guias-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
           </div>
           <!-- Quimbanda — apronte e cortes, com contagem de aves -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -2614,13 +2636,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
         <div id="tv-corpo" style="display:none">
           <div class="controles-construcao">
-            <label for="cor-parede">Cor do Salão:</label>
+            <label for="cor-chao">Cor do Chão:</label>
+            <input type="color" id="cor-chao" value="#fff5f7">
+            <label for="cor-parede">Cor da Parede:</label>
             <input type="color" id="cor-parede" value="#fff5f7">
           </div>
 
           <div class="terreira-virtual-container">
             <div class="terreira-cor-fundo" id="terreira-fundo">
-              <div class="terreira-textura-cinza"></div>
+              <div class="tv-camada-cor tv-camada-cor-chao" id="tv-cor-chao"></div>
+              <div class="tv-camada-textura tv-textura-chao"></div>
+              <div class="tv-camada-cor tv-camada-cor-parede" id="tv-cor-parede"></div>
+              <div class="tv-camada-textura tv-textura-parede"></div>
               <div class="tv-grid" id="tv-grid"></div>
               <div class="tv-objetos" id="tv-objetos"></div>
             </div>
@@ -5876,7 +5903,7 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // pelo admin), monta no chão ou nas paredes, gira/espelha, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
 let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede' }]
-let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
+let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
 let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
 let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
 
@@ -5907,9 +5934,12 @@ async function tvAtualizar() {
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   tvProgresso = progresso;
 
-  const corInput = document.getElementById('cor-parede');
-  corInput.value = tvProgresso.corParede || '#fff5f7';
-  document.getElementById('terreira-fundo').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
+  const corChaoInput = document.getElementById('cor-chao');
+  const corParedeInput = document.getElementById('cor-parede');
+  corChaoInput.value = tvProgresso.corChao || '#fff5f7';
+  corParedeInput.value = tvProgresso.corParede || '#fff5f7';
+  document.getElementById('tv-cor-chao').style.backgroundColor = tvProgresso.corChao || '#fff5f7';
+  document.getElementById('tv-cor-parede').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
 
   tvRenderGrid();
   tvRenderInventario();
@@ -5917,7 +5947,7 @@ async function tvAtualizar() {
   tvRenderAcoesObjeto();
 }
 
-// ── GRADE ISOMÉTRICA — chão e as duas paredes de assets/sala-isometrica-cinza.png,
+// ── GRADE ISOMÉTRICA — chão (assets/chao-cinza.png) e as duas paredes (assets/parede-cinza.png),
 // em % do container (calibrados olhando a imagem; se trocar a arte da sala, recalibrar aqui).
 // Cada superfície é descrita por uma origem + 2 eixos (como um paralelogramo). ──
 const TV_SUPERFICIES = {
@@ -5978,13 +6008,69 @@ function tvAcharColocado(colocados, superficie, slot) {
   return Object.keys(colocados).find(id => colocados[id].superficie === superficie && colocados[id].slot === slot);
 }
 
-function tvRenderGrid() {
+// cada objeto colocado tem seu próprio id de instância — assim dá pra colocar
+// várias cópias do mesmo item do catálogo ao mesmo tempo (cada uma com sua
+// própria posição/rotação/escala), em vez de travar em "1 de cada"
+function tvNovaInstanciaId() {
+  return 'inst_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+// calcula, pra cada imagem do catálogo, onde fica o "pé" real do objeto (o ponto
+// onde ele encosta no chão/parede) como fração do próprio tamanho da imagem —
+// assim cada PNG se encaixa certinho na grade mesmo com bordas transparentes de
+// tamanhos diferentes, em vez de assumir uma margem igual pra todo mundo
+const tvAncoraCache = {};
+function tvCalcularAncora(src) {
+  if (tvAncoraCache[src]) return tvAncoraCache[src];
+  const promessa = new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const TAM = 120; // reduz a imagem antes de escanear, só pra não pesar
+        const escala = Math.min(1, TAM / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * escala));
+        const h = Math.max(1, Math.round(img.naturalHeight * escala));
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const { data } = ctx.getImageData(0, 0, w, h);
+        let minX = w, maxX = -1, minY = h, maxY = -1;
+        for (let y = 0; y < h; y++) {
+          for (let x = 0; x < w; x++) {
+            if (data[(y * w + x) * 4 + 3] > 10) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        if (maxX < 0) { resolve({ cx: 0.5, cy: 0.9 }); return; }
+        resolve({ cx: (minX + maxX) / 2 / w, cy: maxY / h });
+      } catch (e) { resolve({ cx: 0.5, cy: 0.9 }); }
+    };
+    img.onerror = () => resolve({ cx: 0.5, cy: 0.9 });
+    img.src = src;
+  });
+  tvAncoraCache[src] = promessa;
+  return promessa;
+}
+
+async function tvRenderGrid() {
   const grid = document.getElementById('tv-grid');
   const objetos = document.getElementById('tv-objetos');
   if (!grid || !objetos || !tvProgresso) return;
   const colocados = tvProgresso.colocados || {};
   grid.innerHTML = '';
   objetos.innerHTML = '';
+
+  // resolve a âncora de cada imagem em uso antes de desenhar, uma vez só (fica em cache)
+  const imagensUsadas = [...new Set(Object.values(colocados)
+    .map(info => tvCatalogo.find(o => o.id === info.catalogId)?.imagem)
+    .filter(Boolean))];
+  const ancoras = {};
+  await Promise.all(imagensUsadas.map(async src => { ancoras[src] = await tvCalcularAncora(src); }));
 
   Object.keys(TV_SUPERFICIES).forEach(superficie => {
     const n = TV_SUPERFICIES[superficie].n;
@@ -5997,17 +6083,18 @@ function tvRenderGrid() {
       slotEl.className = 'tv-slot';
       slotEl.style.clipPath = `polygon(${cantos.map(p => `${p.x}% ${p.y}%`).join(',')})`;
 
-      const itemId = tvAcharColocado(colocados, superficie, s);
+      const instanciaId = tvAcharColocado(colocados, superficie, s);
       let item = null;
-      if (itemId) {
-        item = tvCatalogo.find(o => o.id === itemId);
+      let info = null;
+      if (instanciaId) {
+        info = colocados[instanciaId];
+        item = tvCatalogo.find(o => o.id === info.catalogId);
         slotEl.classList.add('ocupado');
       }
       slotEl.addEventListener('click', () => tvClicarSlot(superficie, s));
       grid.appendChild(slotEl);
 
       if (item) {
-        const info = colocados[itemId];
         const profundidade = (linha + coluna) / (2 * (n - 1)); // 0 = mais no fundo, 1 = mais na frente
         const base = superficie === 'chao' ? [11, 21] : [16, 26]; // % da largura do container
         const tamanho = base[0] + profundidade * (base[1] - base[0]);
@@ -6015,6 +6102,7 @@ function tvRenderGrid() {
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
         const skew = TV_SKEW[superficie] || 0;
+        const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9 };
 
         const img = document.createElement('img');
         img.className = 'tv-objeto-img';
@@ -6023,9 +6111,9 @@ function tvRenderGrid() {
         img.style.left = centro.x + '%';
         img.style.top = centro.y + '%';
         img.style.width = tamanho + '%';
-        img.style.transform = `translate(-50%,-78%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
+        img.style.transform = `translate(${-ancora.cx * 100}%,${-ancora.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
-        img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(itemId); });
+        img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(instanciaId); });
         objetos.appendChild(img);
       }
     }
@@ -6041,15 +6129,17 @@ function tvRenderInventario() {
   wrap.innerHTML = '';
   tvCatalogo.forEach(item => {
     const desbloqueado = dia >= (item.diaDesbloqueio || 0);
-    const colocado = item.id in colocados;
+    const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
     const ehParede = item.tipo === 'parede';
     const el = document.createElement('div');
-    el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (colocado ? ' colocado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
+    el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
     el.title = desbloqueado ? `${item.nome} (${ehParede ? 'parede' : 'chão'})` : `Libera no dia ${item.diaDesbloqueio}`;
     el.innerHTML = desbloqueado
-      ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>`
+      ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`
       : `<span class="tv-cadeado">🔒</span>`;
-    if (desbloqueado) el.addEventListener('click', () => colocado ? tvSelecionarObjetoColocado(item.id) : tvSelecionarItem(item.id));
+    // clicar sempre inicia a colocação de uma nova cópia — pra mexer numa já colocada,
+    // é só clicar nela direto no cenário
+    if (desbloqueado) el.addEventListener('click', () => tvSelecionarItem(item.id));
     wrap.appendChild(el);
   });
 }
@@ -6077,7 +6167,8 @@ async function tvClicarSlot(superficie, slot) {
   const tipoEsperado = superficie === 'chao' ? 'chao' : 'parede';
   if ((item.tipo || 'chao') !== tipoEsperado) return; // objeto de parede não entra no chão e vice-versa
 
-  colocados[tvItemSelecionado] = { superficie, slot, rot: 0, espelhado: false, escala: 1 };
+  const instanciaId = tvNovaInstanciaId();
+  colocados[instanciaId] = { catalogId: tvItemSelecionado, superficie, slot, rot: 0, espelhado: false, escala: 1 };
   tvItemSelecionado = null;
   tvRenderGrid();
   tvRenderInventario();
@@ -6098,8 +6189,8 @@ function tvRenderAcoesObjeto() {
   const superficiesEl = document.getElementById('tv-acoes-superficies');
   if (!barra || !nomeEl || !superficiesEl) return;
   if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
-  const item = tvCatalogo.find(o => o.id === tvObjetoSelecionadoId);
   const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  const item = info ? tvCatalogo.find(o => o.id === info.catalogId) : null;
   nomeEl.textContent = item ? item.nome : '';
 
   // objetos de parede podem trocar de lado — objetos de chão ficam só no chão
@@ -6188,11 +6279,17 @@ function tvRenderProximo() {
 async function tvSalvarProgresso() {
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user || !tvProgresso || !window._tvSalvarProgresso) return;
-  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corParede: tvProgresso.corParede });
+  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corChao: tvProgresso.corChao, corParede: tvProgresso.corParede });
 }
 
+document.getElementById('cor-chao')?.addEventListener('input', (event) => {
+  document.getElementById('tv-cor-chao').style.backgroundColor = event.target.value;
+  if (tvProgresso) tvProgresso.corChao = event.target.value;
+});
+document.getElementById('cor-chao')?.addEventListener('change', () => { tvSalvarProgresso(); });
+
 document.getElementById('cor-parede')?.addEventListener('input', (event) => {
-  document.getElementById('terreira-fundo').style.backgroundColor = event.target.value;
+  document.getElementById('tv-cor-parede').style.backgroundColor = event.target.value;
   if (tvProgresso) tvProgresso.corParede = event.target.value;
 });
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
@@ -6611,12 +6708,17 @@ const auth = getAuth(app);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const dados = snap.data();
-        return { dataInicio: dados.dataInicio?.toMillis?.() || Date.now(), corParede: dados.corParede || '#fff5f7', colocados: dados.colocados || {} };
+        return {
+          dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
+          corChao: dados.corChao || '#fff5f7',
+          corParede: dados.corParede || '#fff5f7',
+          colocados: dados.colocados || {}
+        };
       }
       // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
-      await setDoc(ref, { dataInicio: serverTimestamp(), corParede: '#fff5f7', colocados: {} });
-      return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} };
-    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} }; }
+      await setDoc(ref, { dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
+      return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} };
+    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} }; }
   };
 
   window._tvSalvarProgresso = async (uid, dados) => {
@@ -7867,6 +7969,7 @@ function renderMinhaHistoria(p, user) {
   mhRenderQuimbanda(p.historia || {});
   mhRenderCortes(p.cortes || [], true);
   mhRenderCruzamentosExtras(p.cruzamentosExtras || [], true);
+  mhRenderGuiasExtras(p.guiasExtras || [], true);
 
   // descrição e observações — sempre visíveis e prontas pra editar
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -7954,6 +8057,16 @@ function renderTimeline(p, elId) {
       key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
       data: c.data, nome: '',
       oculto: ocultos.includes(`cruz_extra_${i}`)
+    });
+  });
+
+  // guias extras — vêm do array p.guiasExtras — grupo Guias
+  (p.guiasExtras || []).forEach((g, i) => {
+    if (!g.data || !g.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    eventos.push({
+      key: `guia_extra_${i}`, label: g.tipo || 'Guia', cor:'#6a9e6a', grupo:'guias',
+      data: g.data, nome: g.nome || '',
+      oculto: ocultos.includes(`guia_extra_${i}`)
     });
   });
 
@@ -8144,6 +8257,19 @@ function dashBadgesCruzamentosExtrasHtml(extras) {
       <div class="dash-badge-icon" style="background:#4a6fa522">✨</div>
       <div class="dash-badge-name">${c.nome || 'Cruzamento'}</div>
       <div class="dash-badge-data">${fmtData(c.data)}</div>
+    </div>`;
+  }).join('');
+}
+
+// gera badges para os guias extras, vindos do array p.guiasExtras
+function dashBadgesGuiasExtrasHtml(extras) {
+  if (!extras || !extras.length) return '';
+  return extras.map(g => {
+    if (!g.data) return '';
+    return `<div class="dash-badge unlocked">
+      <div class="dash-badge-icon" style="background:#6a9e6a22">🔮</div>
+      <div class="dash-badge-name">${g.tipo || 'Guia'}${g.nome ? ' — ' + g.nome : ''}</div>
+      <div class="dash-badge-data">${fmtData(g.data)}</div>
     </div>`;
   }).join('');
 }
@@ -8393,7 +8519,9 @@ function renderDashPessoal(p, user) {
   }
 
   // badges de conquista
-  document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
+  document.getElementById('dash-badges-guias').innerHTML =
+    DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('') +
+    dashBadgesGuiasExtrasHtml(p.guiasExtras || []);
   document.getElementById('dash-badges-cruz').innerHTML =
     DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
     dashBadgesCruzamentosExtrasHtml(p.cruzamentosExtras || []);
@@ -8611,6 +8739,8 @@ window.salvarSuaHistoria = async function() {
     cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos),
     // filtra cruzamentos extras vazios (sem nome nem data)
     cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
+    // filtra guias extras vazios (sem tipo, nome nem data)
+    guiasExtras: (_mhGuiasExtrasEditando || []).filter(g => g.tipo || g.nome || g.data),
     solicitacao: 'Edição direta pela filha'
   };
 
@@ -8743,11 +8873,18 @@ window.calcTempo = function calcTempo(dataStr) {
   const hoje = new Date();
   let anos = hoje.getFullYear() - inicio.getFullYear();
   let meses = hoje.getMonth() - inicio.getMonth();
+  let dias = hoje.getDate() - inicio.getDate();
+  if (dias < 0) {
+    meses--;
+    dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); // dias do mês anterior a hoje
+  }
   if (meses < 0) { anos--; meses += 12; }
   const p = [];
   if (anos > 0)  p.push(anos  + (anos  === 1 ? ' ano'  : ' anos'));
   if (meses > 0) p.push(meses + (meses === 1 ? ' mês'  : ' meses'));
-  return p.length ? p.join(' e ') : 'Recém chegada';
+  if (dias > 0)  p.push(dias  + (dias  === 1 ? ' dia'  : ' dias'));
+  if (!p.length) return 'Recém chegada';
+  return p.length === 1 ? p[0] : p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1];
 }
 
 // calcula o ciclo de caminhada atual: 7 anos até completar o primeiro ciclo,
@@ -9010,6 +9147,77 @@ window.mhRemoverCruzamentoExtra = function(i) {
 window.mhAtualizarCruzamentoExtra = function(i, campo, valor) {
   if (!_mhCruzExtrasEditando[i]) return;
   _mhCruzExtrasEditando[i][campo] = valor;
+};
+
+// tipos pré-definidos para o seletor de guias extras
+const MH_TIPOS_GUIA = ['Caboclo', 'Exu', 'Pomba Gira', 'Preto Velho', 'Cigana', 'Cosme', 'Erê', 'Outro'];
+
+let _mhGuiasExtrasEditando = [];
+
+function mhRenderGuiasExtras(extras, editavel) {
+  const lista = document.getElementById('mh-guias-extras-lista');
+  const btnAdd = document.getElementById('mh-guias-btn-add');
+  if (!lista) return;
+  extras = extras || [];
+
+  if (editavel) {
+    _mhGuiasExtrasEditando = extras.map(g => ({ ...g }));
+    if (btnAdd) btnAdd.style.display = '';
+  } else {
+    if (btnAdd) btnAdd.style.display = 'none';
+  }
+
+  const dadosParaExibir = editavel ? _mhGuiasExtrasEditando : extras;
+
+  if (!dadosParaExibir.length) {
+    lista.innerHTML = '';
+    return;
+  }
+
+  lista.innerHTML = dadosParaExibir.map((g, i) => {
+    if (editavel) {
+      return `<div class="mh-corte-card">
+        <button type="button" class="mh-corte-del" onclick="mhRemoverGuiaExtra(${i})" title="Remover este guia">✕</button>
+        <div class="mh-corte-num">Guia Extra</div>
+        <div class="mh-corte-grid mh-corte-grid-2">
+          <div>
+            <label>Tipo</label>
+            <select class="form-input" style="margin-bottom:0" onchange="mhAtualizarGuiaExtra(${i},'tipo',this.value)">
+              <option value="" ${!g.tipo?'selected':''}>— Selecionar —</option>
+              ${MH_TIPOS_GUIA.map(t => `<option value="${t}" ${t===g.tipo?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div><label>Nome</label><input type="text" class="form-input" style="margin-bottom:0" value="${g.nome||''}" placeholder="ex: Sete Flechas" oninput="mhAtualizarGuiaExtra(${i},'nome',this.value)"></div>
+        </div>
+        <div style="margin-top:8px">
+          <label class="form-label">Data de chegada</label>
+          <input type="date" class="form-input" style="margin-bottom:0" value="${g.data||''}" oninput="mhAtualizarGuiaExtra(${i},'data',this.value)">
+        </div>
+      </div>`;
+    }
+    return `<div class="mh-corte-card">
+      <div class="mh-corte-num">${g.tipo || 'Guia'}${g.nome ? ' — ' + g.nome : ''}</div>
+      <div class="mh-corte-grid mh-corte-grid-2">
+        <div><label>Nome</label><div class="valor">${g.nome || '—'}</div></div>
+        <div><label>Chegada</label><div class="valor">${g.data ? fmtData(g.data) : '—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.mhAdicionarGuiaExtra = function() {
+  _mhGuiasExtrasEditando.push({ tipo: '', nome: '', data: '' });
+  mhRenderGuiasExtras(_mhGuiasExtrasEditando, true);
+};
+
+window.mhRemoverGuiaExtra = function(i) {
+  _mhGuiasExtrasEditando.splice(i, 1);
+  mhRenderGuiasExtras(_mhGuiasExtrasEditando, true);
+};
+
+window.mhAtualizarGuiaExtra = function(i, campo, valor) {
+  if (!_mhGuiasExtrasEditando[i]) return;
+  _mhGuiasExtrasEditando[i][campo] = valor;
 };
 
 // ── SALVAR PERFIL ──
