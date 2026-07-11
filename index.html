@@ -2806,6 +2806,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
       </div>
 
+      <!-- ADMIN — vincular uid de contas antigas (só aparece pra quem é admin) -->
+      <div class="gp-admin-section" id="tv-admin-vincular-uids" style="display:none">
+        <div class="gp-admin-title">🔗 Vincular contas antigas</div>
+        <div class="gp-admin-sub">Liga o uid de quem já jogou ou já tinha terreirinho antes da simulação de admin existir — sem isso, simular essas contas não mostra os dados certos de Jogos. Só precisa rodar uma vez.</div>
+        <button class="tv-catalogo-btn-add" id="tv-admin-vincular-btn" onclick="tvAdminVincularUidsAntigos()">🔗 Vincular contas antigas</button>
+        <div class="gp-admin-sub" id="tv-admin-vincular-status" style="margin-top:8px"></div>
+      </div>
+
       <!-- ADMIN — visibilidade no ranking (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="gp-admin-visibilidade" style="display:none">
         <div class="gp-admin-title">⚙️ Visibilidade no ranking</div>
@@ -3902,8 +3910,11 @@ function mudarSimulacao(valor) {
     fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
       .then(r => r.json())
       .then(p => {
+        // uid salvo no perfil (guardado no primeiro login real dessa pessoa depois desse
+        // recurso existir) — sem ele, a aba de Jogos/Terreirinho simulada não tem como
+        // saber de quem puxar os dados, e acaba não mostrando nada da pessoa certa
         aplicarSimulacao(
-          { email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
+          { uid: p.uid || null, email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
           p
         );
       });
@@ -6099,9 +6110,19 @@ async function tvAtualizar() {
     corpo.style.display = 'none';
     return;
   }
-  aviso.style.display = 'none';
-  corpo.style.display = 'block';
   if (!window._tvCarregarCatalogo || !window._tvCarregarProgresso) return;
+
+  // simulando alguém que ainda não logou de verdade desde que o uid passou a ser salvo
+  // no perfil — sem uid não tem como puxar o Terreirinho/Jogos de fato dessa pessoa
+  if (!user.uid) {
+    aviso.style.display = 'block';
+    aviso.textContent = 'Essa pessoa ainda não tem uid salvo no perfil — precisa logar de verdade pelo menos uma vez pra simulação conseguir puxar o Terreirinho dela.';
+    corpo.style.display = 'none';
+    return;
+  }
+  aviso.style.display = 'none';
+  aviso.textContent = 'Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦';
+  corpo.style.display = 'block';
 
   tvUidProprio = user.uid;
   tvNomeProprio = user.displayName || user.email || '';
@@ -6728,6 +6749,8 @@ async function tvAtualizarAdminCatalogo() {
   const emSimulacao = _modoSimulacao !== null;
   const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
   secao.style.display = souAdmin ? 'block' : 'none';
+  const secaoVincular = document.getElementById('tv-admin-vincular-uids');
+  if (secaoVincular) secaoVincular.style.display = souAdmin ? 'block' : 'none';
   if (!souAdmin || !window._tvCarregarCatalogo) return;
 
   const lista = document.getElementById('tv-admin-lista');
@@ -6843,6 +6866,50 @@ async function tvAdminSemearNovosObjetos() {
       });
     }
   } catch (e) { console.warn('tv semear novos objetos:', e); }
+}
+
+// ── MIGRAÇÃO — vincula o uid de contas antigas que já jogaram ou já tinham
+// terreirinho antes do uid passar a ser salvo no perfil, sem precisar logar de novo ──
+async function tvAdminVincularUidsAntigos() {
+  const btn = document.getElementById('tv-admin-vincular-btn');
+  const status = document.getElementById('tv-admin-vincular-status');
+  if (btn) { btn.disabled = true; btn.textContent = 'Vinculando...'; }
+  if (status) status.textContent = '';
+  try {
+    const [perfis, mapaNomes] = await Promise.all([
+      fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }).then(r => r.json()),
+      window._buscarUidsPorNome ? window._buscarUidsPorNome() : {},
+    ]);
+    const normalizar = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    let vinculados = 0, ambiguos = 0, semMatch = 0;
+    const nomesAmbiguos = [];
+    for (const perfil of perfis) {
+      if (perfil.uid) continue; // já tem uid, não mexe
+      const candidatos = mapaNomes[normalizar(perfil.nome)] || [];
+      if (candidatos.length === 1) {
+        await fetch('/api/perfil', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+          body: JSON.stringify({ ...perfil, uid: candidatos[0], solicitacao: 'Vínculo automático de uid (migração admin)' })
+        });
+        vinculados++;
+      } else if (candidatos.length > 1) {
+        ambiguos++;
+        nomesAmbiguos.push(perfil.nome);
+      } else {
+        semMatch++;
+      }
+    }
+    if (status) {
+      status.textContent = `✔ ${vinculados} conta(s) vinculada(s).` +
+        (ambiguos ? ` ⚠ ${ambiguos} com nome repetido em mais de uma conta, não deu pra saber qual (${nomesAmbiguos.join(', ')}) — precisam logar de novo.` : '') +
+        ` ${semMatch} sem nenhum jogo/terreirinho registrado ainda pra vincular.`;
+    }
+  } catch (e) {
+    console.warn('vincular uids antigos:', e);
+    if (status) status.textContent = 'Erro ao vincular — tenta de novo.';
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔗 Vincular contas antigas'; }
 }
 
 // roda o cadastro automático 1x por sessão, ANTES de qualquer tela carregar o catálogo —
@@ -7253,6 +7320,32 @@ const auth = getAuth(app);
   window._tvExcluirCartinha = async (id) => {
     try { await deleteDoc(doc(db, 'terreira_cartinhas', id)); }
     catch (e) { console.warn('tv excluir cartinha:', e); }
+  };
+
+  // ── MIGRAÇÃO — junta uid+nome de quem já jogou ou já tinha terreirinho antes do
+  // uid passar a ser salvo no perfil, pra dar pra vincular contas antigas de uma vez ──
+  window._buscarUidsPorNome = async () => {
+    try {
+      const normalizar = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+      const [snapTerreira, snapPalavra, snapQuiz] = await Promise.all([
+        getDocs(collection(db, 'terreira_jogadores')),
+        getDocs(collection(db, 'palavra_dia_resultados')),
+        getDocs(collection(db, 'quiz_fundamentos_resultados')),
+      ]);
+      const mapa = {}; // nome normalizado -> Set de uids que já usaram esse nome
+      const registrar = (uid, nome) => {
+        const chave = normalizar(nome);
+        if (!uid || !chave) return;
+        if (!mapa[chave]) mapa[chave] = new Set();
+        mapa[chave].add(uid);
+      };
+      snapTerreira.forEach(d => registrar(d.id, d.data().nome));
+      snapPalavra.forEach(d => registrar(d.data().uid, d.data().nome));
+      snapQuiz.forEach(d => registrar(d.data().uid, d.data().nome));
+      const resultado = {};
+      Object.entries(mapa).forEach(([chave, uids]) => { resultado[chave] = [...uids]; });
+      return resultado;
+    } catch (e) { console.warn('buscar uids por nome:', e); return {}; }
   };
 
   // ── PERSONALIZAÇÃO DE AVATAR ──
@@ -9332,6 +9425,17 @@ async function carregarPerfil(email) {
       setTimeout(() => {
         document.getElementById('modal-boasvindas').style.display = 'flex';
       }, 800);
+    }
+    // guarda o uid no perfil (que é organizado por e-mail) — sem isso, a simulação de
+    // admin não tem como saber o uid de ninguém, e não consegue puxar os dados reais
+    // de Jogos/Terreirinho (que são organizados por uid do Firebase) de quem simula
+    if (currentUser?.uid && perfilData.uid !== currentUser.uid) {
+      perfilData.uid = currentUser.uid;
+      fetch('/api/perfil', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+        body: JSON.stringify({ ...perfilData, solicitacao: 'Vínculo automático de uid' })
+      }).catch(() => {});
     }
   } catch(e) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
