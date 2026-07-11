@@ -1341,6 +1341,33 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   position:relative;width:180px;aspect-ratio:260/525;margin:10px auto;
 }
 .av-camada{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
+/* roda de cor da pele/cabelo — mesma técnica do chão/parede da terreirinho: uma
+   camada de cor é recortada (mask-image) na forma da pele/cabelo, e por cima a
+   própria imagem (neutra nas partes coloríveis) entra com mix-blend-mode:multiply,
+   tingindo a cor de verdade e preservando sombra/linha do desenho. */
+.av-camada-cor{background-size:contain;background-repeat:no-repeat;background-position:center;transition:background-color .3s ease}
+.av-cor-pele{
+  -webkit-mask-image:url('assets/avatar/base-mascara-pele.png');mask-image:url('assets/avatar/base-mascara-pele.png');
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;
+}
+.av-camada-textura-pele{mix-blend-mode:multiply}
+.av-cor-cabelo{-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center}
+.av-camada-cabelo-tingida{mix-blend-mode:multiply}
+.av-controle-cor{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:11px;color:var(--gp-text);
+}
+.av-controle-cor span{flex:1;font-weight:600}
+.av-controle-cor input[type=color]{
+  width:34px;height:26px;border:1px solid var(--gp-border);border-radius:6px;padding:0;
+  cursor:pointer;background:none;
+}
+.av-cor-reset{
+  width:26px;height:26px;border-radius:50%;border:1px solid var(--gp-border);background:#fff;
+  color:var(--gp-gold);font-size:12px;cursor:pointer;
+}
+.av-cor-reset:hover{border-color:var(--gp-gold);background:var(--gp-gold-fundo)}
 .av-controles{display:flex;flex-direction:column;gap:6px;margin:14px 0 10px}
 .av-controle-linha{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
@@ -1493,6 +1520,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   font-family:'Cinzel',serif;font-size:9px;letter-spacing:.04em;color:var(--gp-text-dim);cursor:pointer;
 }
 
+/* compartilhar foto da terreirinho — sempre visível, mesmo fora do modo edição */
+.tv-compartilhar-barra{display:flex;justify-content:center;margin:10px 0}
+.tv-compartilhar-barra button{
+  background:#fff;border:1px solid var(--gp-gold);border-radius:14px;color:var(--gp-gold);
+  font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.05em;padding:8px 18px;cursor:pointer;
+}
+.tv-compartilhar-barra button:hover{background:var(--gp-gold-fundo)}
+.tv-compartilhar-barra button:disabled{opacity:.6;cursor:default}
+
 /* deixar cartinha — só aparece enquanto se está visitando alguém */
 .tv-cartinha-form{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
 .tv-cartinha-form input{
@@ -1524,6 +1560,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   background:#fff;border-radius:16px;padding:1.3rem;max-width:320px;width:100%;
   text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);
 }
+.tv-cartinha-modal-avatar{position:relative;width:90px;aspect-ratio:260/525;margin:0 auto 10px}
 .tv-cartinha-modal-de{font-family:'Cinzel',serif;font-size:11px;color:var(--gp-gold);margin-bottom:10px}
 .tv-cartinha-modal-texto{font-size:.9rem;color:var(--gp-text);line-height:1.5;margin-bottom:16px;white-space:pre-wrap}
 .tv-cartinha-modal-acoes{display:flex;gap:8px;justify-content:center}
@@ -1580,6 +1617,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer;
   transform-origin:bottom center;
 }
+/* avatar colocado dentro da própria terreirinho — mesma lógica de posicionamento
+   do .tv-objeto-img, mas é um wrapper com várias camadas empilhadas (boneca
+   inteira) em vez de uma única imagem */
+.tv-objeto-avatar{
+  position:absolute;pointer-events:auto;cursor:pointer;transform-origin:bottom center;aspect-ratio:260/525;
+}
+.tv-avatar-icone{font-size:26px}
 
 .tv-proximo{font-size:10.5px;color:var(--gp-text-dim);text-align:center;margin:12px 0 4px}
 
@@ -2774,6 +2818,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </div>
           </div>
 
+          <div class="tv-compartilhar-barra">
+            <button id="tv-btn-compartilhar" onclick="tvCompartilharImagem()">📸 Compartilhar no Instagram</button>
+          </div>
+
           <div class="tv-cartinha-form" id="tv-cartinha-form" style="display:none">
             <input type="text" id="tv-cartinha-texto" placeholder="Deixe uma mensagem carinhosa..." maxlength="200">
             <button onclick="tvEnviarCartinha()">💌 Deixar cartinha</button>
@@ -2813,6 +2861,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <!-- MODAL — LER CARTINHA -->
         <div class="tv-cartinha-modal-overlay" id="tv-cartinha-modal-overlay" style="display:none" onclick="tvFecharCartinha(event)">
           <div class="tv-cartinha-modal">
+            <div class="tv-cartinha-modal-avatar" id="tv-cartinha-modal-avatar" style="display:none"></div>
             <div class="tv-cartinha-modal-de" id="tv-cartinha-modal-de"></div>
             <div class="tv-cartinha-modal-texto" id="tv-cartinha-modal-texto"></div>
             <div class="tv-cartinha-modal-acoes">
@@ -2894,9 +2943,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <div class="av-boneca">
       <img class="av-camada" id="av-camada-base" src="assets/avatar/base.png" alt="">
+      <div class="av-camada av-camada-cor av-cor-pele" id="av-cor-pele" style="display:none"></div>
+      <img class="av-camada av-camada-textura-pele" id="av-camada-textura-pele" src="assets/avatar/base-mascara-pele.png" alt="" style="display:none">
       <img class="av-camada" id="av-camada-baixo" alt="">
       <img class="av-camada" id="av-camada-sapato" alt="">
       <img class="av-camada" id="av-camada-blusa" alt="">
+      <div class="av-camada av-camada-cor av-cor-cabelo" id="av-cor-cabelo" style="display:none"></div>
       <img class="av-camada" id="av-camada-cabelo" alt="">
     </div>
 
@@ -2920,6 +2972,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <button onclick="avMudar('sapato',-1)">◀</button>
         <span>Sapato</span>
         <button onclick="avMudar('sapato',1)">▶</button>
+      </div>
+      <div class="av-controle-cor" id="av-linha-cor-pele" style="display:none">
+        <span>Cor da pele</span>
+        <input type="color" id="av-cor-pele-input" value="#f2c49b" oninput="avMudarCor('Pele', this.value)">
+        <button type="button" class="av-cor-reset" title="Cor original" onclick="avResetarCor('Pele')">↺</button>
+      </div>
+      <div class="av-controle-cor" id="av-linha-cor-cabelo">
+        <span>Cor do cabelo</span>
+        <input type="color" id="av-cor-cabelo-input" value="#3a2318" oninput="avMudarCor('Cabelo', this.value)">
+        <button type="button" class="av-cor-reset" title="Cor original" onclick="avResetarCor('Cabelo')">↺</button>
       </div>
     </div>
 
@@ -6112,6 +6174,23 @@ function tvCategoriaEfetiva(item) {
 let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
 let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
 
+// ── avatar colocado dentro da terreirinho — não é um item do catálogo comum,
+// é a própria boneca de papel da dona daquele terreirinho (própria pessoa ou
+// quem está sendo visitada), sempre no chão, com id reservado 'meu-avatar' pra
+// só existir uma instância ──
+const TV_AVATAR_CATALOG_ID = '__avatar__';
+const TV_AVATAR_INSTANCIA_ID = 'meu-avatar';
+let tvAvatarEscolhasCache = {}; // uid -> receita de escolhas (cabelo/blusa/baixo/sapato/cores)
+async function tvCarregarEscolhasAvatarDono() {
+  const uidDono = tvVisitandoUid || tvUidProprio;
+  if (!uidDono) return null;
+  if (tvAvatarEscolhasCache[uidDono]) return tvAvatarEscolhasCache[uidDono];
+  if (!window._avCarregarEscolhas) return null;
+  const escolhas = await window._avCarregarEscolhas(uidDono);
+  tvAvatarEscolhasCache[uidDono] = escolhas;
+  return escolhas;
+}
+
 function tvDiaAtual() {
   if (!tvProgresso) return 1;
   const dias = Math.floor((Date.now() - tvProgresso.dataInicio) / 86400000) + 1;
@@ -6247,7 +6326,15 @@ async function tvEnviarCartinha() {
   const input = document.getElementById('tv-cartinha-texto');
   const texto = input.value.trim();
   if (!texto || !tvVisitandoUid || !window._tvEnviarCartinha) return;
-  await window._tvEnviarCartinha(tvVisitandoUid, tvNomeProprio || 'Alguém da casa', texto);
+  // manda junto a "receita" do avatar de quem visitou (roupas/cabelo/cores) — é a
+  // lembrancinha que fica na casa da pessoa visitada; guardar só os índices/cores
+  // (em vez de uma imagem de verdade) é bem mais leve pro Firestore
+  let avatarRecipe = null;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (user && window._avCarregarEscolhas) {
+    try { avatarRecipe = await window._avCarregarEscolhas(user.uid); } catch (e) { avatarRecipe = null; }
+  }
+  await window._tvEnviarCartinha(tvVisitandoUid, tvNomeProprio || 'Alguém da casa', texto, avatarRecipe);
   input.value = '';
   const status = document.getElementById('tv-cartinha-status');
   if (status) { status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
@@ -6289,6 +6376,18 @@ function tvAbrirCartinha(id) {
   tvCartinhaAbertaId = id;
   document.getElementById('tv-cartinha-modal-de').textContent = `💌 De ${cartinha.deNome}`;
   document.getElementById('tv-cartinha-modal-texto').textContent = cartinha.mensagem;
+  // lembrancinha: o avatar de quem deixou a cartinha, montado na hora a partir
+  // da receita salva (roupas/cabelo/cores), sem precisar guardar uma foto de verdade
+  const boneca = document.getElementById('tv-cartinha-modal-avatar');
+  if (boneca) {
+    if (cartinha.avatarRecipe && Object.keys(cartinha.avatarRecipe).length) {
+      boneca.style.display = 'block';
+      avMontarBonecaEm(boneca, cartinha.avatarRecipe);
+    } else {
+      boneca.style.display = 'none';
+      boneca.innerHTML = '';
+    }
+  }
   document.getElementById('tv-cartinha-modal-overlay').style.display = 'flex';
 }
 
@@ -6440,6 +6539,19 @@ async function tvRenderGrid() {
   const ancoras = {};
   await Promise.all(imagensUsadas.map(async src => { ancoras[src] = await tvCalcularAncora(src); }));
 
+  // se o avatar estiver colocado, resolve também a âncora da boneca (usa a
+  // mesma base.png de todo mundo) e busca a receita de escolhas da dona da sala
+  const AV_BASE_SRC = `${AV_PASTA_AVATAR}/base.png`;
+  let avatarEscolhas = null;
+  const usaAvatar = Object.values(colocados).some(info => info.catalogId === TV_AVATAR_CATALOG_ID);
+  if (usaAvatar) {
+    [avatarEscolhas] = await Promise.all([
+      tvCarregarEscolhasAvatarDono(),
+      avCarregarCatalogos(),
+      tvCalcularAncora(AV_BASE_SRC).then(a => { ancoras[AV_BASE_SRC] = a; }),
+    ]);
+  }
+
   Object.keys(TV_SUPERFICIES).forEach(superficie => {
     const n = TV_SUPERFICIES[superficie].n;
     for (let s = 0; s < n * n; s++) {
@@ -6454,9 +6566,11 @@ async function tvRenderGrid() {
       const instanciaId = tvAcharColocado(colocados, superficie, s);
       let item = null;
       let info = null;
+      let ehAvatar = false;
       if (instanciaId) {
         info = colocados[instanciaId];
-        item = tvCatalogo.find(o => o.id === info.catalogId);
+        ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
+        if (!ehAvatar) item = tvCatalogo.find(o => o.id === info.catalogId);
         slotEl.classList.add('ocupado');
       }
       slotEl.addEventListener('click', () => tvClicarSlot(superficie, s));
@@ -6486,6 +6600,27 @@ async function tvRenderGrid() {
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
         img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(instanciaId); });
         objetos.appendChild(img);
+      } else if (ehAvatar && avatarEscolhas) {
+        const profundidade = (linha + coluna) / (2 * (n - 1));
+        const base = [13, 24]; // avatar lê melhor um pouco maior que os objetos comuns
+        const tamanho = base[0] + profundidade * (base[1] - base[0]);
+        const rot = info.rot || 0;
+        const espelho = info.espelhado ? -1 : 1;
+        const escala = info.escala || 1;
+        const skew = (TV_SKEW[superficie] || 0) + (info.inclinacao || 0);
+        const ancora = ancoras[AV_BASE_SRC] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
+        const tamanhoTela = tamanho / (ancora.larguraFrac || 1);
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tv-objeto-avatar';
+        wrapper.style.left = (centro.x + (info.deslocX || 0)) + '%';
+        wrapper.style.top = (centro.y + (info.deslocY || 0)) + '%';
+        wrapper.style.width = tamanhoTela + '%';
+        wrapper.style.transform = `translate(${-ancora.cx * 100}%,${-ancora.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
+        wrapper.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
+        wrapper.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(instanciaId); });
+        avMontarBonecaEm(wrapper, avatarEscolhas);
+        objetos.appendChild(wrapper);
       }
     }
   });
@@ -6496,8 +6631,32 @@ function tvRenderInventario() {
   if (!wrap || !tvProgresso) return;
   const dia = tvDiaAtual();
   const colocados = tvProgresso.colocados || {};
-  if (!tvCatalogo.length) { wrap.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda — volta em breve ✦</div>'; return; }
   wrap.innerHTML = '';
+
+  // o próprio avatar da jogadora — sempre disponível, não é um item do catálogo
+  // comum (não tem dia de desbloqueio, só existe 1 instância por vez)
+  if (!tvVisitandoUid) {
+    const headerAv = document.createElement('div');
+    headerAv.className = 'tv-inventario-categoria';
+    headerAv.textContent = '🧍 Seu avatar';
+    wrap.appendChild(headerAv);
+    const jaColocado = !!colocados[TV_AVATAR_INSTANCIA_ID];
+    const elAv = document.createElement('div');
+    elAv.className = 'tv-item' + (tvItemSelecionado === TV_AVATAR_CATALOG_ID ? ' selecionado' : '');
+    elAv.title = jaColocado ? 'Seu avatar já está no terreirinho — clica nele lá na sala pra mover' : 'Colocar seu avatar no terreirinho';
+    elAv.innerHTML = `<span class="tv-avatar-icone">🧍</span>${jaColocado ? '<span class="tv-qtd-badge">1</span>' : ''}`;
+    if (!jaColocado) elAv.addEventListener('click', () => tvSelecionarItem(TV_AVATAR_CATALOG_ID));
+    else elAv.style.opacity = '.6';
+    wrap.appendChild(elAv);
+  }
+
+  if (!tvCatalogo.length) {
+    const vazio = document.createElement('div');
+    vazio.className = 'gp-admin-vazio';
+    vazio.textContent = 'Nenhum objeto cadastrado ainda — volta em breve ✦';
+    wrap.appendChild(vazio);
+    return;
+  }
   // agrupa por categoria pra ficar mais fácil de achar, em vez de uma lista única
   TV_CATEGORIAS.forEach(cat => {
     const itensDaCategoria = tvCatalogo.filter(item => tvCategoriaEfetiva(item) === cat.chave);
@@ -6545,6 +6704,17 @@ async function tvClicarSlot(superficie, slot) {
     return;
   }
   if (!tvItemSelecionado) return;
+
+  if (tvItemSelecionado === TV_AVATAR_CATALOG_ID) {
+    if (superficie !== 'chao' || colocados[TV_AVATAR_INSTANCIA_ID]) return;
+    colocados[TV_AVATAR_INSTANCIA_ID] = { catalogId: TV_AVATAR_CATALOG_ID, superficie, slot, rot: 0, espelhado: false, escala: 1 };
+    tvItemSelecionado = null;
+    tvRenderGrid();
+    tvRenderInventario();
+    await tvSalvarProgresso();
+    return;
+  }
+
   const item = tvCatalogo.find(o => o.id === tvItemSelecionado);
   if (!item) return;
   const tipoEsperado = superficie === 'chao' ? 'chao' : 'parede';
@@ -6593,8 +6763,9 @@ function tvRenderAcoesObjeto() {
   if (!barra || !nomeEl || !superficiesEl) return;
   if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
   const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
-  const item = info ? tvCatalogo.find(o => o.id === info.catalogId) : null;
-  nomeEl.textContent = item ? item.nome : '';
+  const ehAvatar = info?.catalogId === TV_AVATAR_CATALOG_ID;
+  const item = (info && !ehAvatar) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
+  nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : (item ? item.nome : '');
 
   // objetos de parede podem trocar de lado — objetos de chão ficam só no chão
   superficiesEl.innerHTML = '';
@@ -6722,6 +6893,84 @@ document.getElementById('cor-parede')?.addEventListener('input', (event) => {
   if (tvProgresso) tvProgresso.corParede = event.target.value;
 });
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
+
+// ── COMPARTILHAR FOTO DA TERREIRINHO — mesma técnica já usada no Resumo Mensal
+// (clona o cenário fora da tela em tamanho fixo, html2canvas tira o "print",
+// e por cima entra uma faixa com o nome e uma frase pra engajar quem vir no
+// Instagram). Funciona tanto no próprio terreirinho quanto visitando alguém ──
+async function tvCompartilharImagem() {
+  const btn = document.getElementById('tv-btn-compartilhar');
+  if (!btn) return;
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const fundo = document.getElementById('terreira-fundo');
+    const clone = fundo.cloneNode(true);
+    // a grade de casinhas e as cartinhas (privadas) não fazem parte da "foto" —
+    // some com elas mesmo que a pessoa tenha disparado o print em modo de edição
+    clone.querySelectorAll('.tv-grid, .tv-cartinhas').forEach(el => el.remove());
+    clone.style.width = '480px';
+    clone.style.height = '480px';
+    clone.style.margin = '0';
+
+    const palco = document.createElement('div');
+    palco.style.cssText = 'position:fixed;left:-9999px;top:0;width:480px;height:480px;';
+    palco.appendChild(clone);
+    document.body.appendChild(palco);
+
+    const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
+    document.body.removeChild(palco);
+
+    // canvas final: a sala + uma faixa de baixo com o convite, pra ficar bonito
+    // e chamativo já na própria imagem (funciona mesmo se o texto do post sumir)
+    const nomeDono = tvVisitandoNome || tvNomeProprio || 'meu';
+    const fator = canvasRoom.width / 480;
+    const FAIXA = 130 * fator;
+    const final = document.createElement('canvas');
+    final.width = canvasRoom.width;
+    final.height = canvasRoom.height + FAIXA;
+    const ctx = final.getContext('2d');
+    ctx.fillStyle = '#fff5f7';
+    ctx.fillRect(0, 0, final.width, final.height);
+    ctx.drawImage(canvasRoom, 0, 0);
+    ctx.fillStyle = '#c4396b';
+    ctx.fillRect(0, canvasRoom.height, final.width, FAIXA);
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = `600 ${22 * fator}px Georgia, serif`;
+    ctx.fillText(`🏠 Terreirinho de ${nomeDono}`, final.width / 2, canvasRoom.height + 45 * fator);
+    ctx.font = `${15 * fator}px Georgia, serif`;
+    ctx.fillText('Vem brincar comigo no Terreiro Bolhas de Luz ✦', final.width / 2, canvasRoom.height + 80 * fator);
+    ctx.font = `italic ${12.5 * fator}px Georgia, serif`;
+    ctx.fillText('homepage-3vx.pages.dev', final.width / 2, canvasRoom.height + 108 * fator);
+
+    final.toBlob(async (blob) => {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+      const nomeArquivo = `terreirinho-${(nomeDono || 'meu').toLowerCase().replace(/[^a-z0-9]+/g, '-')}.png`;
+      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+          await navigator.share({ files: [arquivo], title: 'Meu Terreirinho — Bolhas de Luz', text: 'Vem brincar comigo no Terreiro Bolhas de Luz 🌸' });
+          return;
+        } catch (e) { /* cancelou o compartilhamento — segue pro download */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      URL.revokeObjectURL(url);
+      alert('Imagem salva! Agora é só abrir o Instagram e postar ✦');
+    }, 'image/png');
+  } catch (e) {
+    console.warn('erro ao gerar imagem do terreirinho:', e);
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+    alert('Não deu pra gerar a imagem. Tenta de novo.');
+  }
+}
 
 // ── ADMIN — catálogo de objetos da terreira ──
 // Busca a lista de arquivos direto no GitHub (pasta assets/objetos/) — o site é
@@ -6986,8 +7235,21 @@ const AV_PASTA_AVATAR = 'assets/avatar';
 const AV_ORDEM_CAMADAS = ['baixo', 'sapato', 'blusa', 'cabelo']; // ordem de empilhamento sobre a base
 
 let avCatalogos = { cabelo: [], blusa: [], baixo: [], sapato: [] };
-let avEscolhas = { cabelo: 0, blusa: 0, baixo: 0, sapato: 0 };
+let avEscolhas = { cabelo: 0, blusa: 0, baixo: 0, sapato: 0, corPele: '', corCabelo: '' };
 let avCatalogosProntos = false;
+
+// a roda de cor da pele só funciona se existir assets/avatar/base-mascara-pele.png
+// (recorte só das áreas de pele, resto transparente, tom neutro) — enquanto esse
+// arquivo não existir, a linha de cor da pele fica escondida sem quebrar nada
+let avMascaraPeleDisponivel = false;
+function avChecarMascaraPele() {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = `${AV_PASTA_AVATAR}/base-mascara-pele.png`;
+  });
+}
 
 async function avBuscarArquivosPasta(pasta) {
   try {
@@ -7004,17 +7266,25 @@ async function avBuscarArquivosPasta(pasta) {
 async function avCarregarCatalogos() {
   if (avCatalogosProntos) return;
   const categorias = AV_ORDEM_CAMADAS;
-  const listas = await Promise.all(categorias.map(cat => avBuscarArquivosPasta(`${AV_PASTA_AVATAR}/${cat}`)));
+  const [listas] = await Promise.all([
+    Promise.all(categorias.map(cat => avBuscarArquivosPasta(`${AV_PASTA_AVATAR}/${cat}`))),
+    avChecarMascaraPele().then(disponivel => { avMascaraPeleDisponivel = disponivel; }),
+  ]);
   categorias.forEach((cat, i) => avCatalogos[cat] = listas[i]);
   avCatalogosProntos = true;
 }
 
-function avCaminhoCamada(categoria) {
+// variante que recebe as escolhas explicitamente — permite montar a boneca de
+// OUTRA pessoa (dono da terreirinho visitada, remetente de uma cartinha) sem
+// mexer nas escolhas da própria jogadora logada
+function avCaminhoCamadaPara(categoria, escolhas) {
   const lista = avCatalogos[categoria];
   if (!lista || !lista.length) return null;
-  const idx = ((avEscolhas[categoria] || 0) % lista.length + lista.length) % lista.length;
+  const idx = ((escolhas[categoria] || 0) % lista.length + lista.length) % lista.length;
   return lista[idx];
 }
+
+function avCaminhoCamada(categoria) { return avCaminhoCamadaPara(categoria, avEscolhas); }
 
 function avRenderCamadas(prefixo) {
   AV_ORDEM_CAMADAS.forEach(categoria => {
@@ -7024,6 +7294,49 @@ function avRenderCamadas(prefixo) {
     if (caminho) { img.src = caminho; img.style.display = 'block'; }
     else { img.style.display = 'none'; }
   });
+  if (prefixo === 'av-camada') avAplicarCores();
+}
+
+// aplica a cor da pele/cabelo escolhida nas camadas de cor do modal — feito à
+// parte do avRenderCamadas porque as duas camadas de cor (div mascarada + textura
+// em multiply) não seguem o mesmo padrão "1 imagem por categoria"
+function avAplicarCores() {
+  const divPele = document.getElementById('av-cor-pele');
+  const texturaPele = document.getElementById('av-camada-textura-pele');
+  const linhaPele = document.getElementById('av-linha-cor-pele');
+  if (linhaPele) linhaPele.style.display = avMascaraPeleDisponivel ? 'flex' : 'none';
+  if (texturaPele) texturaPele.style.display = avMascaraPeleDisponivel ? 'block' : 'none';
+  if (divPele) {
+    const tem = avMascaraPeleDisponivel && !!avEscolhas.corPele;
+    divPele.style.display = tem ? 'block' : 'none';
+    divPele.style.backgroundColor = avEscolhas.corPele || 'transparent';
+  }
+
+  const divCabelo = document.getElementById('av-cor-cabelo');
+  const imgCabelo = document.getElementById('av-camada-cabelo');
+  const caminhoCabelo = avCaminhoCamada('cabelo');
+  if (divCabelo) {
+    const tem = !!(caminhoCabelo && avEscolhas.corCabelo);
+    divCabelo.style.display = tem ? 'block' : 'none';
+    divCabelo.style.backgroundColor = avEscolhas.corCabelo || 'transparent';
+    if (caminhoCabelo) {
+      divCabelo.style.webkitMaskImage = `url('${caminhoCabelo}')`;
+      divCabelo.style.maskImage = `url('${caminhoCabelo}')`;
+    }
+  }
+  if (imgCabelo) imgCabelo.classList.toggle('av-camada-cabelo-tingida', !!(caminhoCabelo && avEscolhas.corCabelo));
+}
+
+function avMudarCor(campo, valor) {
+  avEscolhas['cor' + campo] = valor;
+  avAplicarCores();
+}
+
+function avResetarCor(campo) {
+  avEscolhas['cor' + campo] = '';
+  const input = document.getElementById(`av-cor-${campo.toLowerCase()}-input`);
+  if (input) input.value = campo === 'Pele' ? '#f2c49b' : '#3a2318';
+  avAplicarCores();
 }
 
 async function avCarregarEscolhasSalvas() {
@@ -7031,6 +7344,12 @@ async function avCarregarEscolhasSalvas() {
   if (!user || !window._avCarregarEscolhas) return;
   const salvo = await window._avCarregarEscolhas(user.uid);
   AV_ORDEM_CAMADAS.forEach(cat => { if (typeof salvo[cat] === 'number') avEscolhas[cat] = salvo[cat]; });
+  avEscolhas.corPele = salvo.corPele || '';
+  avEscolhas.corCabelo = salvo.corCabelo || '';
+  const inputPele = document.getElementById('av-cor-pele-input');
+  if (inputPele) inputPele.value = avEscolhas.corPele || '#f2c49b';
+  const inputCabelo = document.getElementById('av-cor-cabelo-input');
+  if (inputCabelo) inputCabelo.value = avEscolhas.corCabelo || '#3a2318';
 }
 
 async function avAtualizarBadge() {
@@ -7067,6 +7386,62 @@ async function avSalvarEscolhas() {
   await window._avSalvarEscolhas(user.uid, avEscolhas);
   avRenderCamadas('gp-av-badge');
   avFecharModal();
+  // se o avatar dela estiver colocado no terreirinho, o desenho lá dentro
+  // precisa refletir a roupa/cor nova assim que ela salva, sem precisar recarregar
+  if (typeof tvAvatarEscolhasCache === 'object') delete tvAvatarEscolhasCache[user.uid];
+  if (typeof tvRenderGrid === 'function' && document.getElementById('tv-corpo')?.style.display !== 'none') tvRenderGrid();
+}
+
+// monta a boneca completa (todas as camadas + cores) dentro de um container
+// qualquer, a partir de uma "receita" de escolhas alheia — usado pro avatar
+// colocado na terreirinho e pra prévia da cartinha. avCatalogos é compartilhado
+// (mesmas pastas pra todo mundo), só a receita de escolhas muda de pessoa pra pessoa
+async function avMontarBonecaEm(container, escolhas) {
+  await avCarregarCatalogos();
+  container.innerHTML = '';
+  const base = document.createElement('img');
+  base.className = 'av-camada';
+  base.src = `${AV_PASTA_AVATAR}/base.png`;
+  base.alt = '';
+  container.appendChild(base);
+
+  if (avMascaraPeleDisponivel && escolhas.corPele) {
+    const corPele = document.createElement('div');
+    corPele.className = 'av-camada av-camada-cor av-cor-pele';
+    corPele.style.backgroundColor = escolhas.corPele;
+    container.appendChild(corPele);
+    const texturaPele = document.createElement('img');
+    texturaPele.className = 'av-camada av-camada-textura-pele';
+    texturaPele.src = `${AV_PASTA_AVATAR}/base-mascara-pele.png`;
+    container.appendChild(texturaPele);
+  }
+
+  ['baixo', 'sapato', 'blusa'].forEach(cat => {
+    const caminho = avCaminhoCamadaPara(cat, escolhas);
+    if (!caminho) return;
+    const img = document.createElement('img');
+    img.className = 'av-camada';
+    img.src = caminho;
+    img.alt = '';
+    container.appendChild(img);
+  });
+
+  const caminhoCabelo = avCaminhoCamadaPara('cabelo', escolhas);
+  if (caminhoCabelo) {
+    if (escolhas.corCabelo) {
+      const corCabelo = document.createElement('div');
+      corCabelo.className = 'av-camada av-camada-cor av-cor-cabelo';
+      corCabelo.style.backgroundColor = escolhas.corCabelo;
+      corCabelo.style.webkitMaskImage = `url('${caminhoCabelo}')`;
+      corCabelo.style.maskImage = `url('${caminhoCabelo}')`;
+      container.appendChild(corCabelo);
+    }
+    const imgCabelo = document.createElement('img');
+    imgCabelo.className = 'av-camada' + (escolhas.corCabelo ? ' av-camada-cabelo-tingida' : '');
+    imgCabelo.src = caminhoCabelo;
+    imgCabelo.alt = '';
+    container.appendChild(imgCabelo);
+  }
 }
 
 async function gpAtualizarPortal() {
@@ -7345,9 +7720,11 @@ const auth = getAuth(app);
 
   // ── CARTINHAS — mensagens que ficam flutuando na terreirinho de quem recebeu ──
   // terreira_cartinhas/{id}: { paraUid, deNome, mensagem, criadoEm }
-  window._tvEnviarCartinha = async (paraUid, deNome, mensagem) => {
+  window._tvEnviarCartinha = async (paraUid, deNome, mensagem, avatarRecipe) => {
     try {
-      await addDoc(collection(db, 'terreira_cartinhas'), { paraUid, deNome, mensagem, criadoEm: serverTimestamp() });
+      const dados = { paraUid, deNome, mensagem, criadoEm: serverTimestamp() };
+      if (avatarRecipe) dados.avatarRecipe = avatarRecipe;
+      await addDoc(collection(db, 'terreira_cartinhas'), dados);
     } catch (e) { console.warn('tv enviar cartinha:', e); }
   };
 
