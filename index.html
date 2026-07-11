@@ -1437,7 +1437,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-slot:hover{background:rgba(255,255,255,.34)}
 .tv-slot.ocupado{background:rgba(255,255,255,.4)}
 .tv-objetos{position:absolute;inset:0;z-index:3;pointer-events:none}
-.tv-objeto-img{position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer}
+.tv-objeto-img{
+  position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer;
+  transform-origin:bottom center;
+}
 
 .tv-proximo{font-size:10.5px;color:var(--gp-text-dim);text-align:center;margin:12px 0 4px}
 
@@ -1470,6 +1473,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;color:var(--gp-text-dim);cursor:pointer;
 }
 .tv-acoes-objeto button:hover{border-color:var(--gp-gold);color:var(--gp-gold)}
+.tv-acoes-objeto button:disabled{opacity:.4;cursor:default;border-color:var(--gp-border);color:var(--gp-text-dim)}
+.tv-acoes-objeto button:disabled:hover{border-color:var(--gp-border);color:var(--gp-text-dim)}
+.tv-acoes-superficies{display:flex;gap:6px}
 
 .tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
@@ -2569,8 +2575,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
           <div class="tv-acoes-objeto" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
+            <button onclick="tvEscalarSelecionado(-1)">－</button>
+            <button onclick="tvEscalarSelecionado(1)">＋</button>
             <button onclick="tvGirarSelecionado()">↻ Girar</button>
             <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
+            <div class="tv-acoes-superficies" id="tv-acoes-superficies"></div>
             <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
           </div>
 
@@ -5837,6 +5846,10 @@ const TV_SUPERFICIES = {
   }
 };
 
+// inclinação sutil pra objetos de parede acompanharem o caimento isométrico das paredes
+const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 };
+const TV_ESCALA_MIN = 0.5, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
+
 // interpola um ponto (i,j) da grade de uma superfície, i,j de 0 a n
 function tvPonto(superficie, i, j) {
   const s = TV_SUPERFICIES[superficie];
@@ -5905,6 +5918,8 @@ function tvRenderGrid() {
         const tamanho = base[0] + profundidade * (base[1] - base[0]);
         const rot = info.rot || 0;
         const espelho = info.espelhado ? -1 : 1;
+        const escala = info.escala || 1;
+        const skew = TV_SKEW[superficie] || 0;
 
         const img = document.createElement('img');
         img.className = 'tv-objeto-img';
@@ -5913,7 +5928,7 @@ function tvRenderGrid() {
         img.style.left = centro.x + '%';
         img.style.top = centro.y + '%';
         img.style.width = tamanho + '%';
-        img.style.transform = `translate(-50%,-78%) rotate(${rot}deg) scaleX(${espelho})`;
+        img.style.transform = `translate(-50%,-78%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
         img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(itemId); });
         objetos.appendChild(img);
@@ -5967,7 +5982,7 @@ async function tvClicarSlot(superficie, slot) {
   const tipoEsperado = superficie === 'chao' ? 'chao' : 'parede';
   if ((item.tipo || 'chao') !== tipoEsperado) return; // objeto de parede não entra no chão e vice-versa
 
-  colocados[tvItemSelecionado] = { superficie, slot, rot: 0, espelhado: false };
+  colocados[tvItemSelecionado] = { superficie, slot, rot: 0, espelhado: false, escala: 1 };
   tvItemSelecionado = null;
   tvRenderGrid();
   tvRenderInventario();
@@ -5985,10 +6000,24 @@ function tvSelecionarObjetoColocado(itemId) {
 function tvRenderAcoesObjeto() {
   const barra = document.getElementById('tv-acoes-objeto');
   const nomeEl = document.getElementById('tv-acoes-nome');
-  if (!barra || !nomeEl) return;
+  const superficiesEl = document.getElementById('tv-acoes-superficies');
+  if (!barra || !nomeEl || !superficiesEl) return;
   if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
   const item = tvCatalogo.find(o => o.id === tvObjetoSelecionadoId);
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
   nomeEl.textContent = item ? item.nome : '';
+
+  // objetos de parede podem trocar de lado — objetos de chão ficam só no chão
+  superficiesEl.innerHTML = '';
+  if (item && item.tipo === 'parede' && info) {
+    [['paredeEsquerda', '◀ Parede Esq.'], ['paredeDireita', 'Parede Dir. ▶']].forEach(([superficie, rotulo]) => {
+      const btn = document.createElement('button');
+      btn.textContent = rotulo;
+      btn.disabled = info.superficie === superficie;
+      btn.onclick = () => tvMoverSelecionadoParaSuperficie(superficie);
+      superficiesEl.appendChild(btn);
+    });
+  }
   barra.style.display = 'flex';
 }
 
@@ -6005,6 +6034,38 @@ async function tvEspelharSelecionado() {
   if (!info) return;
   info.espelhado = !info.espelhado;
   tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+async function tvEscalarSelecionado(direcao) {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  const atual = info.escala || 1;
+  info.escala = Math.min(TV_ESCALA_MAX, Math.max(TV_ESCALA_MIN, +(atual + direcao * TV_ESCALA_PASSO).toFixed(2)));
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+// primeiro slot vago de uma superfície (ou o próprio slot do item, se ele já estiver ali)
+function tvPrimeiroSlotLivre(colocados, superficie, exceto) {
+  const n = TV_SUPERFICIES[superficie].n;
+  for (let s = 0; s < n * n; s++) {
+    const ocupanteId = tvAcharColocado(colocados, superficie, s);
+    if (!ocupanteId || ocupanteId === exceto) return s;
+  }
+  return null;
+}
+
+async function tvMoverSelecionadoParaSuperficie(novaSuperficie) {
+  const itemId = tvObjetoSelecionadoId;
+  const info = tvProgresso?.colocados?.[itemId];
+  if (!info || info.superficie === novaSuperficie) return;
+  const slotLivre = tvPrimeiroSlotLivre(tvProgresso.colocados, novaSuperficie, itemId);
+  if (slotLivre === null) { alert('Não há espaço livre nessa parede.'); return; }
+  info.superficie = novaSuperficie;
+  info.slot = slotLivre;
+  tvRenderGrid();
+  tvRenderAcoesObjeto();
   await tvSalvarProgresso();
 }
 
