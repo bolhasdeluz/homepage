@@ -1493,7 +1493,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
    cada .tv-slot ocupa o container todo mas só fica visível/clicável dentro do seu
    próprio recorte (clip-path), calculado em JS a partir dos 4 cantos do chão */
 .tv-grid{position:absolute;inset:0;z-index:2}
-.tv-slot{position:absolute;inset:0;background:rgba(255,255,255,.16);cursor:pointer;transition:background .15s}
+/* as casinhas só aparecem em modo de edição (item selecionado pra colocar, ou objeto
+   colocado selecionado pra mexer) — o resto do tempo ficam invisíveis e sem clique */
+.tv-slot{
+  position:absolute;inset:0;background:rgba(255,255,255,.16);cursor:pointer;
+  transition:background .15s,opacity .15s;opacity:0;pointer-events:none;
+}
+.tv-grid.tv-editando .tv-slot{opacity:1;pointer-events:auto}
 .tv-slot:hover{background:rgba(255,255,255,.34)}
 .tv-slot.ocupado{background:rgba(255,255,255,.4)}
 .tv-objetos{position:absolute;inset:0;z-index:3;pointer-events:none}
@@ -1541,6 +1547,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-acoes-objeto button:disabled:hover{border-color:var(--gp-border);color:var(--gp-text-dim)}
 .tv-acoes-superficies{display:flex;gap:6px}
 .tv-acoes-grupo{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.5);border-radius:14px;padding:2px 4px 2px 8px}
+.tv-acoes-mover{
+  display:grid;grid-template-columns:repeat(4,22px);grid-template-rows:22px;place-items:center;
+  background:rgba(255,255,255,.5);border-radius:14px;padding:2px 4px;gap:2px;
+}
+.tv-acoes-mover button{padding:0!important;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
 .tv-acoes-grupo-label{font-size:8.5px;letter-spacing:.03em;color:var(--gp-text-dim);white-space:nowrap}
 
 .tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
@@ -2657,6 +2668,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
           <div class="tv-acoes-objeto" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
+            <div class="tv-acoes-grupo tv-acoes-mover">
+              <button onclick="tvMoverSelecionado('y',-1)" title="Mover pra cima">▲</button>
+              <button onclick="tvMoverSelecionado('x',-1)" title="Mover pra esquerda">◀</button>
+              <button onclick="tvMoverSelecionado('x',1)" title="Mover pra direita">▶</button>
+              <button onclick="tvMoverSelecionado('y',1)" title="Mover pra baixo">▼</button>
+            </div>
             <div class="tv-acoes-grupo">
               <span class="tv-acoes-grupo-label">Tamanho</span>
               <button onclick="tvEscalarSelecionado(-1)" title="Diminuir">－</button>
@@ -6076,6 +6093,10 @@ async function tvRenderGrid() {
   grid.innerHTML = '';
   objetos.innerHTML = '';
 
+  // as casinhas só aparecem enquanto está colocando um item novo ou mexendo num já colocado —
+  // o resto do tempo ficam escondidas pra não poluir a visão da salinha
+  grid.classList.toggle('tv-editando', !!(tvItemSelecionado || tvObjetoSelecionadoId));
+
   // resolve a âncora de cada imagem em uso antes de desenhar, uma vez só (fica em cache)
   const imagensUsadas = [...new Set(Object.values(colocados)
     .map(info => tvCatalogo.find(o => o.id === info.catalogId)?.imagem)
@@ -6119,8 +6140,8 @@ async function tvRenderGrid() {
         img.className = 'tv-objeto-img';
         img.src = item.imagem;
         img.alt = item.nome;
-        img.style.left = centro.x + '%';
-        img.style.top = centro.y + '%';
+        img.style.left = (centro.x + (info.deslocX || 0)) + '%';
+        img.style.top = (centro.y + (info.deslocY || 0)) + '%';
         img.style.width = tamanho + '%';
         img.style.transform = `translate(${-ancora.cx * 100}%,${-ancora.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
@@ -6160,6 +6181,7 @@ function tvSelecionarItem(itemId) {
   tvRenderAcoesObjeto();
   tvItemSelecionado = (tvItemSelecionado === itemId) ? null : itemId;
   tvRenderInventario();
+  tvRenderGrid();
 }
 
 async function tvClicarSlot(superficie, slot) {
@@ -6192,6 +6214,7 @@ function tvSelecionarObjetoColocado(itemId) {
   tvObjetoSelecionadoId = (tvObjetoSelecionadoId === itemId) ? null : itemId;
   tvRenderAcoesObjeto();
   tvRenderInventario();
+  tvRenderGrid();
 }
 
 function tvRenderAcoesObjeto() {
@@ -6248,6 +6271,20 @@ async function tvInclinarSelecionado(direcao) {
   if (!info) return;
   const atual = info.inclinacao || 0;
   info.inclinacao = Math.min(TV_INCLINACAO_MAX, Math.max(TV_INCLINACAO_MIN, atual + direcao * TV_INCLINACAO_PASSO));
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+// pequeno ajuste manual de posição (cima/baixo/lados), em % do container — some com
+// a posição do centro da casinha, pra afinar onde o objeto cai sem trocar de slot
+const TV_DESLOC_LIMITE = 12, TV_DESLOC_PASSO = 1.5;
+
+async function tvMoverSelecionado(eixo, direcao) {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  const chave = eixo === 'x' ? 'deslocX' : 'deslocY';
+  const atual = info[chave] || 0;
+  info[chave] = Math.min(TV_DESLOC_LIMITE, Math.max(-TV_DESLOC_LIMITE, atual + direcao * TV_DESLOC_PASSO));
   tvRenderGrid();
   await tvSalvarProgresso();
 }
