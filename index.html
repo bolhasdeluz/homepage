@@ -2699,10 +2699,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="gp-player-panel">
         <div class="gp-avatar-jogador" title="Personalizar avatar" onclick="avAbrirModal()">
           <img class="av-camada" id="gp-av-badge-base" src="assets/avatar/base.png" alt=""
-            style="display:none" onerror="this.style.display='none'; document.getElementById('gp-av-badge-fallback').style.display='block'">
+            onload="document.getElementById('gp-av-badge-fallback').style.display='none'"
+            onerror="this.style.display='none'; document.getElementById('gp-av-badge-fallback').style.display='block'">
+          <div class="av-camada av-camada-cor av-cor-pele" id="gp-av-badge-cor-pele" style="display:none"></div>
+          <img class="av-camada av-camada-textura-pele" id="gp-av-badge-textura-pele" src="assets/avatar/base-mascara-pele.png" alt="" style="display:none">
           <img class="av-camada" id="gp-av-badge-baixo" alt="">
           <img class="av-camada" id="gp-av-badge-sapato" alt="">
           <img class="av-camada" id="gp-av-badge-blusa" alt="">
+          <div class="av-camada av-camada-cor av-cor-cabelo" id="gp-av-badge-cor-cabelo" style="display:none"></div>
           <img class="av-camada" id="gp-av-badge-cabelo" alt="">
           <img class="av-camada" id="gp-av-badge-fallback" src="assets/avatar-face.png" alt="Avatar do jogador">
           <span class="gp-av-lapis">✎</span>
@@ -2943,12 +2947,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <div class="av-boneca">
       <img class="av-camada" id="av-camada-base" src="assets/avatar/base.png" alt="">
-      <div class="av-camada av-camada-cor av-cor-pele" id="av-cor-pele" style="display:none"></div>
+      <div class="av-camada av-camada-cor av-cor-pele" id="av-camada-cor-pele" style="display:none"></div>
       <img class="av-camada av-camada-textura-pele" id="av-camada-textura-pele" src="assets/avatar/base-mascara-pele.png" alt="" style="display:none">
       <img class="av-camada" id="av-camada-baixo" alt="">
       <img class="av-camada" id="av-camada-sapato" alt="">
       <img class="av-camada" id="av-camada-blusa" alt="">
-      <div class="av-camada av-camada-cor av-cor-cabelo" id="av-cor-cabelo" style="display:none"></div>
+      <div class="av-camada av-camada-cor av-cor-cabelo" id="av-camada-cor-cabelo" style="display:none"></div>
       <img class="av-camada" id="av-camada-cabelo" alt="">
     </div>
 
@@ -6191,6 +6195,89 @@ async function tvCarregarEscolhasAvatarDono() {
   return escolhas;
 }
 
+// ── SEMENTE ESPECIAL — prêmio por visitar e voltar pra própria casinha. Planta
+// um vaso com 4 fases (1 fase = 1 dia). Se regada (visitar + voltar de novo)
+// antes da 4ª fase murchar, renova o prazo e soma 1 rodada; depois de 3 rodadas
+// (12 dias no total) a planta fica permanentemente florida e não murcha mais.
+// Se passar do prazo sem regar, a planta morre e a pessoa precisa visitar de
+// novo pra ganhar uma semente nova (volta pra rodada 0). ──
+const TV_SEMENTE_CATALOG_ID = '__semente_especial__';
+const TV_SEMENTE_INSTANCIA_ID = 'semente-especial';
+const TV_SEMENTE_DIAS_POR_RODADA = 4;
+const TV_SEMENTE_RODADAS_PRA_PERMANENTE = 3;
+const TV_SEMENTE_IMAGENS = [
+  'assets/objetos/vaso-especial-1-broto.png',
+  'assets/objetos/vaso-especial-2-arbusto.png',
+  'assets/objetos/vaso-especial-3-brotando-flor.png',
+  'assets/objetos/vaso-especial-4-florido.png',
+];
+let tvSementeAvisoPendente = '';
+
+// quantos dias (1-indexado) já se passaram desde que foi plantada/regada
+function tvSementeDiasDesde(marcoMs) {
+  return Math.floor((Date.now() - marcoMs) / 86400000) + 1;
+}
+
+// fase atual (1 a 4) pra escolher a imagem certa, ou null se já passou do
+// prazo sem ser regada (murchou)
+function tvSementeFase(semente) {
+  if (!semente) return null;
+  if (semente.permanente) return TV_SEMENTE_DIAS_POR_RODADA;
+  const dias = tvSementeDiasDesde(semente.plantadaEm);
+  if (dias > TV_SEMENTE_DIAS_POR_RODADA) return null;
+  return Math.max(1, Math.min(TV_SEMENTE_DIAS_POR_RODADA, dias));
+}
+
+// salva só os campos da semente especial (independe de estar visitando alguém
+// ou não — sempre grava no uid de verdade da própria pessoa)
+async function tvSalvarMeuProgressoSemente() {
+  if (!tvUidProprio || !tvMeuProgresso || !window._tvSalvarProgresso) return;
+  await window._tvSalvarProgresso(tvUidProprio, {
+    colocados: tvMeuProgresso.colocados,
+    sementeEspecial: tvMeuProgresso.sementeEspecial || null,
+    sementeUltimoGanhoData: tvMeuProgresso.sementeUltimoGanhoData || '',
+  });
+}
+
+// murcha e remove a planta se passou do prazo sem ser regada
+function tvChecarSementeMorreu() {
+  if (!tvMeuProgresso || !tvMeuProgresso.sementeEspecial) return;
+  const semente = tvMeuProgresso.sementeEspecial;
+  if (semente.permanente) return;
+  if (tvSementeFase(semente) === null) {
+    tvMeuProgresso.sementeEspecial = null;
+    if (tvMeuProgresso.colocados) delete tvMeuProgresso.colocados[TV_SEMENTE_INSTANCIA_ID];
+    tvSementeAvisoPendente = '🥀 Sua planta especial murchou por falta de visita — vá visitar alguém e voltar pra ganhar uma semente nova ✦';
+    tvSalvarMeuProgressoSemente();
+  }
+}
+
+// ganha uma semente nova (primeira vez) ou rega a que já existe (renova o
+// prazo e soma 1 rodada) — só 1x por dia, chamada ao voltar de uma visita
+function tvGanharOuRegarSemente() {
+  if (!tvMeuProgresso) return;
+  tvChecarSementeMorreu();
+  const hoje = new Date().toISOString().slice(0, 10);
+  if (tvMeuProgresso.sementeUltimoGanhoData === hoje) return;
+  tvMeuProgresso.sementeUltimoGanhoData = hoje;
+
+  const semente = tvMeuProgresso.sementeEspecial;
+  if (!semente) {
+    tvMeuProgresso.sementeEspecial = { plantadaEm: Date.now(), rodadas: 0, permanente: false };
+    tvSementeAvisoPendente = '🌱 Você ganhou uma semente especial! Vá em "Seus objetos" e coloque ela no seu terreirinho ✦';
+  } else if (!semente.permanente) {
+    semente.plantadaEm = Date.now();
+    semente.rodadas = Math.min(TV_SEMENTE_RODADAS_PRA_PERMANENTE, semente.rodadas + 1);
+    if (semente.rodadas >= TV_SEMENTE_RODADAS_PRA_PERMANENTE) {
+      semente.permanente = true;
+      tvSementeAvisoPendente = '🌸 Sua planta especial floresceu de vez — não precisa mais regar!';
+    } else {
+      tvSementeAvisoPendente = `💧 Sua planta especial foi regada — mais ${TV_SEMENTE_DIAS_POR_RODADA} dias de vida ✦`;
+    }
+  }
+  tvSalvarMeuProgressoSemente();
+}
+
 function tvDiaAtual() {
   if (!tvProgresso) return 1;
   const dias = Math.floor((Date.now() - tvProgresso.dataInicio) / 86400000) + 1;
@@ -6230,6 +6317,7 @@ async function tvAtualizar() {
   ]);
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   tvMeuProgresso = progresso;
+  tvChecarSementeMorreu(); // se a planta especial passou do prazo sem ser regada, murcha aqui
 
   tvMontarSelectVisitas(); // roda em paralelo, não precisa bloquear o resto
 
@@ -6243,6 +6331,7 @@ async function tvAtualizar() {
   tvRenderInventario();
   tvRenderProximo();
   tvRenderAcoesObjeto();
+  if (tvSementeAvisoPendente) { alert(tvSementeAvisoPendente); tvSementeAvisoPendente = ''; }
   tvRenderCartinhas();
 }
 
@@ -6298,6 +6387,7 @@ async function tvVisitarSelecionado() {
 }
 
 function tvVoltarProprioTerreirinho() {
+  const estavaVisitando = !!tvVisitandoUid;
   tvVisitandoUid = null;
   tvVisitandoNome = '';
   tvItemSelecionado = null;
@@ -6313,12 +6403,17 @@ function tvVoltarProprioTerreirinho() {
   document.getElementById('tv-cartinha-form').style.display = 'none';
   document.getElementById('tv-visita-select').value = '';
 
+  // prêmio por ter visitado e voltado: ganha uma semente especial nova, ou
+  // rega a que já tinha (renovando o prazo) — só uma vez por dia
+  if (estavaVisitando) tvGanharOuRegarSemente();
+
   tvAplicarCoresNaTela();
   tvRenderGrid();
   tvRenderInventario();
   tvRenderProximo();
   tvRenderAcoesObjeto();
   tvRenderCartinhas();
+  if (tvSementeAvisoPendente) { alert(tvSementeAvisoPendente); tvSementeAvisoPendente = ''; }
 }
 
 // ══ CARTINHAS — mensagens que ficam flutuando na terreirinho de quem recebeu ══
@@ -6532,9 +6627,17 @@ async function tvRenderGrid() {
   // pra não poluir a visão da salinha
   grid.classList.toggle('tv-editando', tvModoEdicao);
 
+  // fase atual da planta especial, se essa sala tiver uma colocada (usa o
+  // sementeEspecial de quem é dona da sala mostrada, não de quem está olhando)
+  const fasePlanta = tvSementeFase(tvProgresso.sementeEspecial);
+  const imagemPlantaAtual = TV_SEMENTE_IMAGENS[Math.max(0, (fasePlanta || TV_SEMENTE_DIAS_POR_RODADA) - 1)];
+
   // resolve a âncora de cada imagem em uso antes de desenhar, uma vez só (fica em cache)
   const imagensUsadas = [...new Set(Object.values(colocados)
-    .map(info => tvCatalogo.find(o => o.id === info.catalogId)?.imagem)
+    .map(info => {
+      if (info.catalogId === TV_SEMENTE_CATALOG_ID) return imagemPlantaAtual;
+      return tvCatalogo.find(o => o.id === info.catalogId)?.imagem;
+    })
     .filter(Boolean))];
   const ancoras = {};
   await Promise.all(imagensUsadas.map(async src => { ancoras[src] = await tvCalcularAncora(src); }));
@@ -6570,7 +6673,11 @@ async function tvRenderGrid() {
       if (instanciaId) {
         info = colocados[instanciaId];
         ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
-        if (!ehAvatar) item = tvCatalogo.find(o => o.id === info.catalogId);
+        if (info.catalogId === TV_SEMENTE_CATALOG_ID) {
+          item = { imagem: imagemPlantaAtual, nome: 'Planta especial' };
+        } else if (!ehAvatar) {
+          item = tvCatalogo.find(o => o.id === info.catalogId);
+        }
         slotEl.classList.add('ocupado');
       }
       slotEl.addEventListener('click', () => tvClicarSlot(superficie, s));
@@ -6650,6 +6757,27 @@ function tvRenderInventario() {
     wrap.appendChild(elAv);
   }
 
+  // planta especial ganha de prêmio por visitar e voltar — só aparece se ela
+  // já tiver ganhado uma (antes disso não tem nada pra mostrar aqui)
+  if (!tvVisitandoUid && tvProgresso.sementeEspecial) {
+    const semente = tvProgresso.sementeEspecial;
+    const fase = tvSementeFase(semente) || 1;
+    const jaColocada = !!colocados[TV_SEMENTE_INSTANCIA_ID];
+    const headerSem = document.createElement('div');
+    headerSem.className = 'tv-inventario-categoria';
+    headerSem.textContent = '🌱 Planta especial';
+    wrap.appendChild(headerSem);
+    const elSem = document.createElement('div');
+    elSem.className = 'tv-item' + (tvItemSelecionado === TV_SEMENTE_CATALOG_ID ? ' selecionado' : '');
+    elSem.title = jaColocada
+      ? (semente.permanente ? 'Sua planta especial já floresceu de vez ✦' : `Sua planta especial já está no terreirinho (fase ${fase}/${TV_SEMENTE_DIAS_POR_RODADA})`)
+      : 'Coloque sua planta especial no terreirinho';
+    elSem.innerHTML = `<img src="${TV_SEMENTE_IMAGENS[fase - 1]}" alt="Planta especial">`;
+    if (!jaColocada) elSem.addEventListener('click', () => tvSelecionarItem(TV_SEMENTE_CATALOG_ID));
+    else elSem.style.opacity = '.6';
+    wrap.appendChild(elSem);
+  }
+
   if (!tvCatalogo.length) {
     const vazio = document.createElement('div');
     vazio.className = 'gp-admin-vazio';
@@ -6715,6 +6843,16 @@ async function tvClicarSlot(superficie, slot) {
     return;
   }
 
+  if (tvItemSelecionado === TV_SEMENTE_CATALOG_ID) {
+    if (superficie !== 'chao' || colocados[TV_SEMENTE_INSTANCIA_ID]) return;
+    colocados[TV_SEMENTE_INSTANCIA_ID] = { catalogId: TV_SEMENTE_CATALOG_ID, superficie, slot, rot: 0, espelhado: false, escala: 1 };
+    tvItemSelecionado = null;
+    tvRenderGrid();
+    tvRenderInventario();
+    await tvSalvarProgresso();
+    return;
+  }
+
   const item = tvCatalogo.find(o => o.id === tvItemSelecionado);
   if (!item) return;
   const tipoEsperado = superficie === 'chao' ? 'chao' : 'parede';
@@ -6764,8 +6902,9 @@ function tvRenderAcoesObjeto() {
   if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
   const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
   const ehAvatar = info?.catalogId === TV_AVATAR_CATALOG_ID;
-  const item = (info && !ehAvatar) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
-  nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : (item ? item.nome : '');
+  const ehPlanta = info?.catalogId === TV_SEMENTE_CATALOG_ID;
+  const item = (info && !ehAvatar && !ehPlanta) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
+  nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : ehPlanta ? '🌱 Planta especial' : (item ? item.nome : '');
 
   // objetos de parede podem trocar de lado — objetos de chão ficam só no chão
   superficiesEl.innerHTML = '';
@@ -7294,16 +7433,17 @@ function avRenderCamadas(prefixo) {
     if (caminho) { img.src = caminho; img.style.display = 'block'; }
     else { img.style.display = 'none'; }
   });
-  if (prefixo === 'av-camada') avAplicarCores();
+  avAplicarCores(prefixo);
 }
 
-// aplica a cor da pele/cabelo escolhida nas camadas de cor do modal — feito à
-// parte do avRenderCamadas porque as duas camadas de cor (div mascarada + textura
-// em multiply) não seguem o mesmo padrão "1 imagem por categoria"
-function avAplicarCores() {
-  const divPele = document.getElementById('av-cor-pele');
-  const texturaPele = document.getElementById('av-camada-textura-pele');
-  const linhaPele = document.getElementById('av-linha-cor-pele');
+// aplica a cor da pele/cabelo escolhida nas camadas de cor — serve tanto pro
+// modal (prefixo 'av-camada') quanto pro emblema pequeno (prefixo 'gp-av-badge'),
+// feito à parte do avRenderCamadas porque as duas camadas de cor (div mascarada +
+// textura em multiply) não seguem o mesmo padrão "1 imagem por categoria"
+function avAplicarCores(prefixo) {
+  const divPele = document.getElementById(`${prefixo}-cor-pele`);
+  const texturaPele = document.getElementById(`${prefixo}-textura-pele`);
+  const linhaPele = document.getElementById('av-linha-cor-pele'); // só existe no modal
   if (linhaPele) linhaPele.style.display = avMascaraPeleDisponivel ? 'flex' : 'none';
   if (texturaPele) texturaPele.style.display = avMascaraPeleDisponivel ? 'block' : 'none';
   if (divPele) {
@@ -7312,8 +7452,8 @@ function avAplicarCores() {
     divPele.style.backgroundColor = avEscolhas.corPele || 'transparent';
   }
 
-  const divCabelo = document.getElementById('av-cor-cabelo');
-  const imgCabelo = document.getElementById('av-camada-cabelo');
+  const divCabelo = document.getElementById(`${prefixo}-cor-cabelo`);
+  const imgCabelo = document.getElementById(`${prefixo}-cabelo`);
   const caminhoCabelo = avCaminhoCamada('cabelo');
   if (divCabelo) {
     const tem = !!(caminhoCabelo && avEscolhas.corCabelo);
@@ -7329,14 +7469,14 @@ function avAplicarCores() {
 
 function avMudarCor(campo, valor) {
   avEscolhas['cor' + campo] = valor;
-  avAplicarCores();
+  avAplicarCores('av-camada');
 }
 
 function avResetarCor(campo) {
   avEscolhas['cor' + campo] = '';
   const input = document.getElementById(`av-cor-${campo.toLowerCase()}-input`);
   if (input) input.value = campo === 'Pele' ? '#f2c49b' : '#3a2318';
-  avAplicarCores();
+  avAplicarCores('av-camada');
 }
 
 async function avCarregarEscolhasSalvas() {
@@ -7663,13 +7803,15 @@ const auth = getAuth(app);
           dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
           corChao: dados.corChao || '#fff5f7',
           corParede: dados.corParede || '#fff5f7',
-          colocados: dados.colocados || {}
+          colocados: dados.colocados || {},
+          sementeEspecial: dados.sementeEspecial || null,
+          sementeUltimoGanhoData: dados.sementeUltimoGanhoData || ''
         };
       }
       // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
       await setDoc(ref, { nome: nome || '', dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
-      return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} };
-    } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} }; }
+      return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' };
+    } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' }; }
   };
 
   window._tvSalvarProgresso = async (uid, dados) => {
@@ -7713,7 +7855,8 @@ const auth = getAuth(app);
         dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
         corChao: dados.corChao || '#fff5f7',
         corParede: dados.corParede || '#fff5f7',
-        colocados: dados.colocados || {}
+        colocados: dados.colocados || {},
+        sementeEspecial: dados.sementeEspecial || null
       };
     } catch (e) { console.warn('tv carregar terreira de:', e); return null; }
   };
