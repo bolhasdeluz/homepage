@@ -1467,14 +1467,28 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   width:100%;max-width:320px;aspect-ratio:1/1;margin:0 auto;position:relative;
   border:1px solid var(--gp-border);border-radius:12px;overflow:hidden;
 }
-.terreira-cor-fundo{width:100%;height:100%;background-color:#fff5f7;transition:background-color .3s ease;position:relative}
-/* paredes+chão em cinza — a cor escolhida na roda se mistura com esse cinza
-   (mix-blend-mode:multiply), tingindo a sala de verdade */
-.terreira-textura-cinza{
+.terreira-cor-fundo{width:100%;height:100%;position:relative}
+/* chão e parede agora são dois PNGs separados (cada um só com sua própria forma,
+   resto transparente) — assim dá pra colorir cada um individualmente. A camada de
+   cor fica "recortada" (mask-image) na mesma forma da textura, senão a cor vaza
+   pelos cantos do quadrado onde não tem chão/parede desenhado. A textura cinza
+   fica por cima com mix-blend-mode:multiply, tingindo a cor de verdade. */
+.tv-camada-cor, .tv-camada-textura{
   width:100%;height:100%;position:absolute;top:0;left:0;
-  background-image:url('assets/sala-isometrica-cinza.png');background-size:contain;background-repeat:no-repeat;background-position:center;
-  mix-blend-mode:multiply;image-rendering:pixelated;
+  background-size:contain;background-repeat:no-repeat;background-position:center;
 }
+.tv-camada-cor-chao{
+  -webkit-mask-image:url('assets/chao-cinza.png');mask-image:url('assets/chao-cinza.png');
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;transition:background-color .3s ease;
+}
+.tv-camada-cor-parede{
+  -webkit-mask-image:url('assets/parede-cinza.png');mask-image:url('assets/parede-cinza.png');
+  -webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+  -webkit-mask-position:center;mask-position:center;transition:background-color .3s ease;
+}
+.tv-textura-chao{background-image:url('assets/chao-cinza.png');mix-blend-mode:multiply;image-rendering:pixelated}
+.tv-textura-parede{background-image:url('assets/parede-cinza.png');mix-blend-mode:multiply;image-rendering:pixelated}
 /* casas em losango acompanhando a perspectiva do chão (não o quadrado inteiro) —
    cada .tv-slot ocupa o container todo mas só fica visível/clicável dentro do seu
    próprio recorte (clip-path), calculado em JS a partir dos 4 cantos do chão */
@@ -2618,13 +2632,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
         <div id="tv-corpo" style="display:none">
           <div class="controles-construcao">
-            <label for="cor-parede">Cor do Salão:</label>
+            <label for="cor-chao">Cor do Chão:</label>
+            <input type="color" id="cor-chao" value="#fff5f7">
+            <label for="cor-parede">Cor da Parede:</label>
             <input type="color" id="cor-parede" value="#fff5f7">
           </div>
 
           <div class="terreira-virtual-container">
             <div class="terreira-cor-fundo" id="terreira-fundo">
-              <div class="terreira-textura-cinza"></div>
+              <div class="tv-camada-cor tv-camada-cor-chao" id="tv-cor-chao"></div>
+              <div class="tv-camada-textura tv-textura-chao"></div>
+              <div class="tv-camada-cor tv-camada-cor-parede" id="tv-cor-parede"></div>
+              <div class="tv-camada-textura tv-textura-parede"></div>
               <div class="tv-grid" id="tv-grid"></div>
               <div class="tv-objetos" id="tv-objetos"></div>
             </div>
@@ -5880,7 +5899,7 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // pelo admin), monta no chão ou nas paredes, gira/espelha, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
 let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede' }]
-let tvProgresso = null; // { dataInicio(ms), corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
+let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
 let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
 let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
 
@@ -5911,9 +5930,12 @@ async function tvAtualizar() {
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   tvProgresso = progresso;
 
-  const corInput = document.getElementById('cor-parede');
-  corInput.value = tvProgresso.corParede || '#fff5f7';
-  document.getElementById('terreira-fundo').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
+  const corChaoInput = document.getElementById('cor-chao');
+  const corParedeInput = document.getElementById('cor-parede');
+  corChaoInput.value = tvProgresso.corChao || '#fff5f7';
+  corParedeInput.value = tvProgresso.corParede || '#fff5f7';
+  document.getElementById('tv-cor-chao').style.backgroundColor = tvProgresso.corChao || '#fff5f7';
+  document.getElementById('tv-cor-parede').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
 
   tvRenderGrid();
   tvRenderInventario();
@@ -5921,7 +5943,7 @@ async function tvAtualizar() {
   tvRenderAcoesObjeto();
 }
 
-// ── GRADE ISOMÉTRICA — chão e as duas paredes de assets/sala-isometrica-cinza.png,
+// ── GRADE ISOMÉTRICA — chão (assets/chao-cinza.png) e as duas paredes (assets/parede-cinza.png),
 // em % do container (calibrados olhando a imagem; se trocar a arte da sala, recalibrar aqui).
 // Cada superfície é descrita por uma origem + 2 eixos (como um paralelogramo). ──
 const TV_SUPERFICIES = {
@@ -6253,11 +6275,17 @@ function tvRenderProximo() {
 async function tvSalvarProgresso() {
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user || !tvProgresso || !window._tvSalvarProgresso) return;
-  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corParede: tvProgresso.corParede });
+  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corChao: tvProgresso.corChao, corParede: tvProgresso.corParede });
 }
 
+document.getElementById('cor-chao')?.addEventListener('input', (event) => {
+  document.getElementById('tv-cor-chao').style.backgroundColor = event.target.value;
+  if (tvProgresso) tvProgresso.corChao = event.target.value;
+});
+document.getElementById('cor-chao')?.addEventListener('change', () => { tvSalvarProgresso(); });
+
 document.getElementById('cor-parede')?.addEventListener('input', (event) => {
-  document.getElementById('terreira-fundo').style.backgroundColor = event.target.value;
+  document.getElementById('tv-cor-parede').style.backgroundColor = event.target.value;
   if (tvProgresso) tvProgresso.corParede = event.target.value;
 });
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
@@ -6676,12 +6704,17 @@ const auth = getAuth(app);
       const snap = await getDoc(ref);
       if (snap.exists()) {
         const dados = snap.data();
-        return { dataInicio: dados.dataInicio?.toMillis?.() || Date.now(), corParede: dados.corParede || '#fff5f7', colocados: dados.colocados || {} };
+        return {
+          dataInicio: dados.dataInicio?.toMillis?.() || Date.now(),
+          corChao: dados.corChao || '#fff5f7',
+          corParede: dados.corParede || '#fff5f7',
+          colocados: dados.colocados || {}
+        };
       }
       // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
-      await setDoc(ref, { dataInicio: serverTimestamp(), corParede: '#fff5f7', colocados: {} });
-      return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} };
-    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corParede: '#fff5f7', colocados: {} }; }
+      await setDoc(ref, { dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
+      return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} };
+    } catch (e) { console.warn('tv carregar progresso:', e); return { dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} }; }
   };
 
   window._tvSalvarProgresso = async (uid, dados) => {
