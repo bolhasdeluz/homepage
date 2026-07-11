@@ -1461,6 +1461,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* visitar outras terreiras — fica escondido tudo que é só de edição enquanto visita */
 #tv-corpo.visitando .tv-editor-only{display:none!important}
+
+/* botão explícito de entrar/sair do modo edição — a grade, o inventário e o "próximo
+   objeto" só ficam visíveis/clicáveis enquanto esse modo está ligado, evitando ficar
+   "preso" aberto sem um jeito claro de fechar */
+.tv-modo-edicao-barra{margin-bottom:10px}
+.tv-modo-edicao-barra button{
+  background:#fff;border:1px solid var(--gp-gold);border-radius:14px;color:var(--gp-gold);
+  font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.05em;padding:7px 16px;cursor:pointer;
+}
+#tv-corpo.editando .tv-modo-edicao-barra button{background:var(--gp-gold);color:#fff}
+.tv-so-editando{display:none!important}
+#tv-corpo.editando .tv-so-editando{display:block!important}
+#tv-corpo.editando .tv-inventario.tv-so-editando{display:flex!important}
 .tv-visita-barra{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .tv-visita-barra select{
   flex:1;min-width:140px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);
@@ -2738,6 +2751,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button onclick="tvVoltarProprioTerreirinho()">🏠 Voltar pro meu terreirinho</button>
           </div>
 
+          <div class="tv-modo-edicao-barra tv-editor-only">
+            <button id="tv-btn-modo-edicao" onclick="tvAlternarModoEdicao()">✎ Editar Terreirinho</button>
+          </div>
+
           <div class="controles-construcao tv-editor-only">
             <label for="cor-chao">Cor do Chão:</label>
             <input type="color" id="cor-chao" value="#fff5f7">
@@ -2787,10 +2804,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
           </div>
 
-          <div class="tv-proximo tv-editor-only" id="tv-proximo">Carregando...</div>
+          <div class="tv-proximo tv-editor-only tv-so-editando" id="tv-proximo">Carregando...</div>
 
-          <div class="tv-inventario-titulo tv-editor-only">Seus objetos</div>
-          <div class="tv-inventario tv-editor-only" id="tv-inventario"></div>
+          <div class="tv-inventario-titulo tv-editor-only tv-so-editando">Seus objetos</div>
+          <div class="tv-inventario tv-editor-only tv-so-editando" id="tv-inventario"></div>
         </div>
 
         <!-- MODAL — LER CARTINHA -->
@@ -6076,6 +6093,7 @@ let tvNomeProprio = '';
 let tvVisitandoUid = null;  // null = vendo o próprio terreirinho; senão, uid de quem está visitando
 let tvVisitandoNome = '';
 let tvListaTerreiras = []; // cache da lista de gente pra visitar
+let tvModoEdicao = false; // true = grade, inventário e seleção de objetos ficam ativos
 
 // categorias pra organizar e facilitar achar os objetos (tanto no inventário quanto no admin)
 const TV_CATEGORIAS = [
@@ -6182,8 +6200,12 @@ async function tvVisitarSelecionado() {
   tvVisitandoNome = alvo.nome;
   tvItemSelecionado = null;
   tvObjetoSelecionadoId = null;
+  tvModoEdicao = false;
   tvProgresso = dados;
 
+  const btnEdicao = document.getElementById('tv-btn-modo-edicao');
+  if (btnEdicao) btnEdicao.textContent = '✎ Editar Terreirinho';
+  document.getElementById('tv-corpo').classList.remove('editando');
   document.getElementById('tv-corpo').classList.add('visitando');
   document.getElementById('tv-visitando-nome').textContent = `Você está no terreirinho de ${alvo.nome} ✦`;
   document.getElementById('tv-visitando-aviso').style.display = 'flex';
@@ -6201,8 +6223,12 @@ function tvVoltarProprioTerreirinho() {
   tvVisitandoNome = '';
   tvItemSelecionado = null;
   tvObjetoSelecionadoId = null;
+  tvModoEdicao = false;
   tvProgresso = tvMeuProgresso;
 
+  const btnEdicao = document.getElementById('tv-btn-modo-edicao');
+  if (btnEdicao) btnEdicao.textContent = '✎ Editar Terreirinho';
+  document.getElementById('tv-corpo').classList.remove('editando');
   document.getElementById('tv-corpo').classList.remove('visitando');
   document.getElementById('tv-visitando-aviso').style.display = 'none';
   document.getElementById('tv-cartinha-form').style.display = 'none';
@@ -6403,9 +6429,9 @@ async function tvRenderGrid() {
   grid.innerHTML = '';
   objetos.innerHTML = '';
 
-  // as casinhas só aparecem enquanto está colocando um item novo ou mexendo num já colocado —
-  // o resto do tempo ficam escondidas pra não poluir a visão da salinha
-  grid.classList.toggle('tv-editando', !!(tvItemSelecionado || tvObjetoSelecionadoId));
+  // as casinhas só aparecem no modo de edição — o resto do tempo ficam escondidas
+  // pra não poluir a visão da salinha
+  grid.classList.toggle('tv-editando', tvModoEdicao);
 
   // resolve a âncora de cada imagem em uso antes de desenhar, uma vez só (fica em cache)
   const imagensUsadas = [...new Set(Object.values(colocados)
@@ -6499,7 +6525,7 @@ function tvRenderInventario() {
 }
 
 function tvSelecionarItem(itemId) {
-  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
+  if (tvVisitandoUid || !tvModoEdicao) return; // terreirinho visitado é só de olhar, não edita
   tvObjetoSelecionadoId = null;
   tvRenderAcoesObjeto();
   tvItemSelecionado = (tvItemSelecionado === itemId) ? null : itemId;
@@ -6508,7 +6534,7 @@ function tvSelecionarItem(itemId) {
 }
 
 async function tvClicarSlot(superficie, slot) {
-  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
+  if (tvVisitandoUid || !tvModoEdicao) return; // terreirinho visitado é só de olhar, não edita
   if (!tvProgresso) return;
   if (!tvProgresso.colocados) tvProgresso.colocados = {};
   const colocados = tvProgresso.colocados;
@@ -6534,12 +6560,30 @@ async function tvClicarSlot(superficie, slot) {
 
 // ── objeto já colocado: seleciona pra abrir a barrinha de girar/espelhar/remover ──
 function tvSelecionarObjetoColocado(itemId) {
-  if (tvVisitandoUid) return; // terreirinho visitado é só de olhar, não edita
+  if (tvVisitandoUid || !tvModoEdicao) return; // só seleciona no modo de edição
   tvItemSelecionado = null;
   tvObjetoSelecionadoId = (tvObjetoSelecionadoId === itemId) ? null : itemId;
   tvRenderAcoesObjeto();
   tvRenderInventario();
   tvRenderGrid();
+}
+
+// liga/desliga o modo de edição — enquanto desligado, a grade, o inventário e a
+// seleção de objetos ficam escondidos; um botão claro pra sair, em vez de depender
+// de cliques incidentais que podiam deixar tudo "preso" aberto
+function tvAlternarModoEdicao() {
+  tvModoEdicao = !tvModoEdicao;
+  if (!tvModoEdicao) {
+    tvItemSelecionado = null;
+    tvObjetoSelecionadoId = null;
+  }
+  document.getElementById('tv-corpo')?.classList.toggle('editando', tvModoEdicao);
+  const btn = document.getElementById('tv-btn-modo-edicao');
+  if (btn) btn.textContent = tvModoEdicao ? '✕ Sair do modo edição' : '✎ Editar Terreirinho';
+  tvRenderGrid();
+  tvRenderInventario();
+  tvRenderProximo();
+  tvRenderAcoesObjeto();
 }
 
 function tvRenderAcoesObjeto() {
