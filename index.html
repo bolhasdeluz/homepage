@@ -6027,7 +6027,7 @@ const TV_SUPERFICIES = {
 
 // inclinação sutil pra objetos de parede acompanharem o caimento isométrico das paredes
 const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 }; // inclinação-base de cada superfície
-const TV_ESCALA_MIN = 0.5, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
+const TV_ESCALA_MIN = 0.25, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
 const TV_INCLINACAO_MIN = -30, TV_INCLINACAO_MAX = 30, TV_INCLINACAO_PASSO = 5; // ajuste manual, somado à inclinação-base
 
 // interpola um ponto (i,j) da grade de uma superfície, i,j de 0 a n
@@ -6101,11 +6101,15 @@ function tvCalcularAncora(src) {
             }
           }
         }
-        if (maxX < 0) { resolve({ cx: 0.5, cy: 0.9 }); return; }
-        resolve({ cx: (minX + maxX) / 2 / w, cy: maxY / h });
-      } catch (e) { resolve({ cx: 0.5, cy: 0.9 }); }
+        if (maxX < 0) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 }); return; }
+        // largura real do desenho (sem a borda transparente) como fração da tela toda —
+        // usado pra normalizar o tamanho: imagens com pouca borda não ficam maiores
+        // que imagens com bastante espaço vazio ao redor, só por causa do recorte
+        const larguraFrac = Math.max((maxX - minX) / w, 0.1);
+        resolve({ cx: (minX + maxX) / 2 / w, cy: maxY / h, larguraFrac });
+      } catch (e) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 }); }
     };
-    img.onerror = () => resolve({ cx: 0.5, cy: 0.9 });
+    img.onerror = () => resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 });
     img.src = src;
   });
   tvAncoraCache[src] = promessa;
@@ -6161,7 +6165,10 @@ async function tvRenderGrid() {
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
         const skew = (TV_SKEW[superficie] || 0) + (info.inclinacao || 0);
-        const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9 };
+        const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
+        // divide pela largura real do desenho (sem a borda transparente) — assim o
+        // objeto visível fica do tamanho pretendido, não a tela toda do PNG
+        const tamanhoTela = tamanho / (ancora.larguraFrac || 1);
 
         const img = document.createElement('img');
         img.className = 'tv-objeto-img';
@@ -6169,7 +6176,7 @@ async function tvRenderGrid() {
         img.alt = item.nome;
         img.style.left = (centro.x + (info.deslocX || 0)) + '%';
         img.style.top = (centro.y + (info.deslocY || 0)) + '%';
-        img.style.width = tamanho + '%';
+        img.style.width = tamanhoTela + '%';
         img.style.transform = `translate(${-ancora.cx * 100}%,${-ancora.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
         img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(instanciaId); });
