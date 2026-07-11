@@ -138,8 +138,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-badge-dificuldade{font-family:'DM Sans',sans-serif; font-size:11px; font-weight:600; color:var(--text-dim); margin-left:8px; white-space:nowrap;}
 
 /* Admin Secao */
-#admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
-#admin-secao-chutes, #admin-secao-dificuldade{margin-top:20px;}
+#admin-secao-erros, #admin-secao-chutes, #admin-secao-dificuldade, #admin-secao-nova-palavra{margin-top:40px; padding:20px; background:#fff; border-radius:18px; border:2px solid var(--rosa); box-shadow:0 8px 32px rgba(196,57,107,.12);}
+#admin-secao-chutes, #admin-secao-dificuldade, #admin-secao-nova-palavra{margin-top:20px;}
+#admin-secao-nova-palavra label{display:block;font-size:.72rem;font-weight:600;color:var(--text-dim);margin:12px 0 4px}
+#admin-secao-nova-palavra input,#admin-secao-nova-palavra textarea{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.85rem}
+#admin-secao-nova-palavra textarea{min-height:50px;resize:vertical}
 .chute-chip.chute-suspeito{border-color:#e8a33d; background:#fff7e8;}
 .admin-input-busca{flex:1; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; background:var(--creme);}
 .admin-select{border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-family:'DM Sans',sans-serif; font-size:12px; background:var(--creme); margin-bottom:14px;}
@@ -159,6 +162,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .modal-conteudo label{display:block; font-family:'Cinzel',serif; font-size:.62rem; letter-spacing:.05em; text-transform:uppercase; color:var(--text-dim); margin:12px 0 4px;}
 .modal-conteudo input, .modal-conteudo textarea{width:100%; border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-family:'DM Sans',sans-serif; font-size:13px; resize:vertical; background:var(--creme);}
 .modal-conteudo textarea{min-height:52px;}
+.btn-dica-mover{display:inline-flex;align-items:center;justify-content:center;width:20px;height:16px;border:1px solid var(--border);border-radius:4px;background:#fff;color:var(--rosa);font-size:9px;cursor:pointer;text-transform:none;letter-spacing:0;vertical-align:middle;margin-left:4px;}
+.btn-dica-mover:hover{background:var(--rosa);color:#fff;}
 </style>
 </head>
 <body>
@@ -289,6 +294,27 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="admin-lista-dificuldade" style="text-align:center; color:var(--text-dim); font-size:14px;">Carregando...</div>
   </div>
 
+  <div id="admin-secao-nova-palavra" style="display:none">
+    <div class="admin-titulo">➕ Nova Palavra (Acesso Admin)</div>
+    <label>Palavra (resposta principal)</label>
+    <input type="text" id="nova-palavra-texto">
+    <label>Variações aceitas (uma por linha, opcional)</label>
+    <textarea id="nova-palavra-variacoes"></textarea>
+    <label>Dica 1</label>
+    <textarea id="nova-palavra-dica1"></textarea>
+    <label>Dica 2</label>
+    <textarea id="nova-palavra-dica2"></textarea>
+    <label>Dica 3</label>
+    <textarea id="nova-palavra-dica3"></textarea>
+    <label>Dica 4</label>
+    <textarea id="nova-palavra-dica4"></textarea>
+    <label>Dica 5</label>
+    <textarea id="nova-palavra-dica5"></textarea>
+    <label>Explicação</label>
+    <textarea id="nova-palavra-explicacao" style="min-height:80px"></textarea>
+    <button class="qz-btn-comecar" onclick="adicionarNovaPalavra()" style="margin-top:12px">+ Adicionar Palavra</button>
+  </div>
+
 </div>
 
 <div id="modal-editar-palavra" class="modal-overlay" style="display:none">
@@ -302,15 +328,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <label id="edit-chutes-titulo" style="display:none">Chutes de quem reportou (clique em ✓ pra marcar como correto e recontar)</label>
     <div id="edit-chutes-reporter"></div>
 
-    <label>Dica 1</label>
+    <label>Dica 1 <button type="button" class="btn-dica-mover" onclick="moverDica(1,1)" title="Trocar com a Dica 2">▼</button></label>
     <textarea id="edit-dica1"></textarea>
-    <label>Dica 2</label>
+    <label>Dica 2 <button type="button" class="btn-dica-mover" onclick="moverDica(2,-1)" title="Trocar com a Dica 1">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(2,1)" title="Trocar com a Dica 3">▼</button></label>
     <textarea id="edit-dica2"></textarea>
-    <label>Dica 3</label>
+    <label>Dica 3 <button type="button" class="btn-dica-mover" onclick="moverDica(3,-1)" title="Trocar com a Dica 2">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(3,1)" title="Trocar com a Dica 4">▼</button></label>
     <textarea id="edit-dica3"></textarea>
-    <label>Dica 4</label>
+    <label>Dica 4 <button type="button" class="btn-dica-mover" onclick="moverDica(4,-1)" title="Trocar com a Dica 3">▲</button> <button type="button" class="btn-dica-mover" onclick="moverDica(4,1)" title="Trocar com a Dica 5">▼</button></label>
     <textarea id="edit-dica4"></textarea>
-    <label>Dica 5</label>
+    <label>Dica 5 <button type="button" class="btn-dica-mover" onclick="moverDica(5,-1)" title="Trocar com a Dica 4">▲</button></label>
     <textarea id="edit-dica5"></textarea>
     <label>Explicação</label>
     <textarea id="edit-explicacao" style="min-height:80px"></textarea>
@@ -708,6 +734,600 @@ const PALAVRAS_DO_DIA = [
     "dica4": "A partir dela, o caboclo está autorizado a desenvolver, fazer limpezas de Umbanda, cruzamentos e iniciar futuros filhos. Seu ponto é bordado no jaleco.",
     "dica5": "Começa com C. É quando o caboclo borda o próprio ponto no jaleco e recebe as ponteiras para os pontos riscados.",
     "explicacao": "A Coroação é o ritual de reconhecimento do caboclo — não do médium. O guia borda o ponto do pai ou mãe no jaleco e recebe as ponteiras, símbolo de que está apto a trabalhar com autonomia: desenvolver, fazer limpezas, axés de Umbanda e cruzamentos. Exige cruzamentos básicos feitos ao menos uma vez e apronte dos Exus com 7 aves. Não é o mesmo que o cacicamento — que é o axé do médium."
+  },
+  {
+    "palavra": "EXUVELUDO",
+    "dica1": "É dele a frase mais citada quando a mãe de santo fala sobre verdades absolutas e sobre quem as carrega.",
+    "dica2": "Não é o Exu chefe da nossa casa — mas foi com ele que a mãe de santo aprendeu a Quimbanda. Com ele aprendeu a respeitar o que funciona, que criatividade demais causa problema e que a espiritualidade está na simplicidade.",
+    "dica3": "Foi também ele quem mandou a mãe de santo ficar em casa numa noite que ela queria pegar a estrada. E ela ficou — porque precisava acreditar nele antes de entender.",
+    "dica4": "Deixou uma frase que encerra um dos textos mais importantes da casa: 'Não acredite em quem diz ter a verdade, pois a verdade não existe.'",
+    "dica5": "Começa com V. É o Exu de quem a mãe de santo aprendeu a Quimbanda.",
+    "explicacao": "O Exu Veludo é o Exu com quem a mãe de santo aprendeu a Quimbanda — e com ele aprendeu a respeitar o que funciona, que criatividade demais causa problema e que a espiritualidade está na simplicidade. Foi ele quem a mandou ficar em casa numa noite que ela queria pegar a estrada. E deixou a frase que encerra um dos textos mais importantes da casa: 'Não acredite em quem diz ter a verdade, pois a verdade não existe.'"
+  },
+  {
+    "palavra": "MARIAPADILHA",
+    "dica1": "Sua identificação na nossa casa não vem de nenhum Orixá — vem de onde ela está, de onde ela trabalha, do que ela é por si mesma.",
+    "dica2": "Não é 'falange de Oxum'. Textos da internet que a descrevem assim trazem uma interpretação que para a nossa casa não funciona.",
+    "dica3": "É das Almas, do Cruzeiro, do Cabaret, das Sete Encruzilhadas. É Exu de Quimbanda — livre e que se governa, regida por Bará e Ogum Megê.",
+    "dica4": "É uma Pombagira — da linha feminina dos Exus de Quimbanda. Sua força vem de onde ela trabalha, não de nenhuma hierarquia de Orixá.",
+    "dica5": "Começa com M e P. É a Pombagira das Almas — a mais conhecida da Quimbanda brasileira.",
+    "explicacao": "Maria Padilha é uma das Pombagiras mais conhecidas da Quimbanda. Na nossa casa, ela é identificada pelo lugar onde trabalha — das Almas, do Cruzeiro, do Cabaret, das Sete Encruzilhadas. Não é 'falange de Oxum' — essa interpretação pertence a outra tradição, não à nossa. Nossos Exus e Pombagiras são livres e se governam — sua força vem deles mesmos, não de Orixás que os subordinam."
+  },
+  {
+    "palavra": "DONAMULAMBO",
+    "dica1": "No dia de um corte na rua, foi para ela que uma ave foi oferecida com amor — e o Sr. Tranca Ruas se ajoelhou, agradeceu, e disse que só comeria novamente na casa de alguém quando o Pai da Justiça decidisse.",
+    "dica2": "Trabalhou no lixo no mesmo dia em que a Cigana trabalhou no cruzeiro e o Sr. Tranca Ruas trabalhou no axé do Bará — cada uma no seu espaço sagrado.",
+    "dica3": "Foi ela quem chegou nos guias logo que a mãe de santo começou a frequentar a casa da Mãe Jurema — para dizer que o guia podia se servir e ficar à vontade.",
+    "dica4": "A saia dela é mencionada como o que nunca se tira da Pombagira — 'tire tudo da minha pomba gira, mas não tirem a saia dela!'",
+    "dica5": "Começa com D e M. É a Pombagira da mãe de santo.",
+    "explicacao": "Dona Mulambo é a Pombagira da mãe de santo. Foi para ela que uma ave foi oferecida num corte — e o Sr. Tranca Ruas se ajoelhou e agradeceu, dizendo que só voltaria a comer na casa de alguém quando o Pai da Justiça decidisse. Ela trabalha no lixo — seu espaço sagrado. E foi ela quem, nas primeiras visitas da mãe de santo à casa da Mãe Jurema, foi até os guias para dizer que estavam à vontade."
+  },
+  {
+    "palavra": "MADALENA",
+    "dica1": "É ela quem tem os vinhos de pêssego que os ciganos da casa adoram — e que podem ser compartilhados com os ciganos de todos os filhos sem problema.",
+    "dica2": "É uma Cigana — não é Exu, não é Pombagira, mas pode chegar em sessão de Exu. Quando chegou, ficou 5 minutos — porque a energia dos Exus é muito densa para ela.",
+    "dica3": "Pertence à linha do Oriente — ciganos de energia muito mais sutil e leve. Como uma pluma a flutuar nas estradas. Consegue se adaptar a sessões de Oriente.",
+    "dica4": "Os vinhos de pêssego que ela ganhou ficam disponíveis na casa para os ciganos dos filhos beberem junto com ela em sessões ciganas.",
+    "dica5": "Começa com M. É a Cigana da mãe de santo — dona dos vinhos de pêssego da casa.",
+    "explicacao": "Madalena é a Cigana da mãe de santo — da linha do Oriente. Tem os vinhos de pêssego que ficam disponíveis na casa para os ciganos dos filhos beberem junto com ela quando não sabem a bebida do próprio guia. Já chegou numa sessão de Exu — mas ficou apenas 5 minutos, porque a energia dos Exus é muito densa para ela se manter no meio deles por muito tempo."
+  },
+  {
+    "palavra": "LAURINHA",
+    "dica1": "Disse que o outro nome dela é Bolhinha. E que odeia ursinhos — o negócio dela é bolha de sabão.",
+    "dica2": "É um Ibeji de Oxum — uma erê da linha de Oxum. O nome já trai sua linha: suave, doce, aquática como a Orixá de quem vem.",
+    "dica3": "É uma das crianças da casa — das mais conhecidas. Aparece num momento importante: foi ela quem se jogou nos pés da Madrinha, abraçando-a, no dia em que o Pai da Justiça chegou confirmando a decisão.",
+    "dica4": "É um dos exemplos de erê com nome terreno — como Pedrinho, Mariazinha, Joãozinho. Não gosta de ursinhos. O negócio dela é bolha de sabão.",
+    "dica5": "Começa com L. É a erê de Oxum da nossa casa — e seu outro nome é Bolhinha.",
+    "explicacao": "Laurinha é a erê de Oxum da nossa casa — um Ibeji de Oxum. Disse que seu outro nome é Bolhinha e que odeia ursinhos: o negócio dela é bolha de sabão. Foi ela quem, no dia em que o Vô Benedito direcionou a mãe de santo para a Madrinha e o Pai da Justiça chegou confirmando, se jogou nos pés da Madrinha abraçando-a. Pequenos gestos que confirmam grandes decisões."
+  },
+  {
+    "palavra": "BARÁ",
+    "dica1": "É começo, é movimento. Quando o ano começa numa segunda-feira, é ele quem rege — e de nada adianta ser por ser.",
+    "dica2": "Para ter um ano dele, é preciso estar à disposição, buscá-lo para que ele nos encontre. É uma tradição extremamente popular, realmente do povo.",
+    "dica3": "2024 foi o ano dele — ano de mudanças bruscas, decisões rápidas, movimento que a gente quer. Se descuidado, se torna um ano de perdas e oportunidades que ficam para trás.",
+    "dica4": "É junto com Ogum Megê que rege os trabalhos dos Exus livres de Quimbanda. É o Orixá definido pelo dia da semana em que o ano começa.",
+    "dica5": "Começa com B. É o Orixá do começo e do movimento — e 2024 foi o ano dele. Alupo, Bará!",
+    "explicacao": "Bará é o Orixá do começo e do movimento. O Orixá regente do ano é definido pelo dia da semana em que ele começa: 2024 começou numa segunda-feira, dia de Bará. Para ter um ano de Bará, é preciso estar à disposição e buscá-lo. Bem aproveitado: muito movimento e avanço. Descuidado: perdas e oportunidades que passam. Na Quimbanda, é Bará junto com Ogum Megê que rege os trabalhos dos Exus livres."
+  },
+  {
+    "palavra": "OSSANHA",
+    "dica1": "É ele quem guarda o segredo maior da floresta — e só quem é rei das matas tem acesso pleno ao que ele protege.",
+    "dica2": "Aparece nos textos não como guia que trabalha diretamente, mas como o guardião de um conhecimento que um Orixá específico domina inteiramente.",
+    "dica3": "Oxóssi é quem vai trazer o segredo das folhas dele — os maiores venenos e os maiores antídotos. Conhecer as folhas é conhecer parte do que ele guarda.",
+    "dica4": "É o Orixá das ervas e das folhas sagradas. Conhece o que cura e o que mata — e é por isso que o conhecimento das plantas exige doutrina e fundamento.",
+    "dica5": "Começa com O. É o Orixá das ervas e das folhas — e Oxóssi é quem conhece seus segredos.",
+    "explicacao": "Ossanha é o Orixá das ervas e das folhas sagradas — e é Oxóssi quem carrega o segredo das suas folhas: os maiores venenos e os maiores antídotos. Nos textos da casa, ele aparece não como guia de trabalho direto, mas como o guardião de um conhecimento que Oxóssi domina. Conhecer as ervas é conhecer uma parte do que Ossanha protege — e esse conhecimento exige doutrina e respeito."
+  },
+  {
+    "palavra": "NANÃ",
+    "dica1": "Não é qualquer um que entra no reino que ela guarda — e quando alguém tenta sem ser convidado, a punição dura para sempre.",
+    "dica2": "Chamou apenas as mulheres para uma reunião no reino dos mortos. Quando um Orixá masculino se disfarçou para entrar, ela descobriu — e a punição foi eterna.",
+    "dica3": "É por causa dela que Oxalá é o único Orixá masculino que usa saia e Adê — e que come animais femininos no Batuque.",
+    "dica4": "É a senhora do reino dos mortos — provavelmente a mais velha entre as Orixás. Seu axé envolve a morte, os ancestrais e os mistérios que não se revelam sem consequências.",
+    "dica5": "Começa com N. É a Orixá que puniu Oxalá — obrigando-o a usar saia e Adê para sempre.",
+    "explicacao": "Nanã aparece nos textos da nossa casa no Itã da punição de Oxalá: ela havia chamado apenas as mulheres ao Reino dos Mortos, e Oxalá se travestiu para entrar. Quando foi descoberto, sua punição foi se vestir e comer com as mulheres para sempre — por isso Oxalá é o único Orixá masculino que usa saia e Adê. É a senhora do que pertence à morte e ao que não se revela sem consequências."
+  },
+  {
+    "palavra": "CABOCLO",
+    "dica1": "A magia deles é muito corporal — é a dança, o brado, o estalar de dedos, os gestos, as batidas nos pés. Diferente dos outros, costumam falar bem menos em seus atendimentos.",
+    "dica2": "São chefes da linha — e Oxóssi é o Orixá que os irradia. Jandira, Iracema, Jurema, Tupinambá, Sete Cachoeiras, Sete Flechas, Pena Branca vêm da força dele.",
+    "dica3": "Quem cuida das crianças em terra são eles — junto com os pretos velhos — em primeiro lugar. São também os que assumem a postura de zelar pelo cavalo mais novo quando a cambona está ocupada.",
+    "dica4": "Cocares, arcos e espadas são conquistados com o tempo — entregues cedo, viram bengalas para a incorporação. A magia da dança sem o elemento físico precisa ser conhecida primeiro.",
+    "dica5": "Começa com C. É a linha dos espíritos indígenas na Umbanda — e a coroação é o ritual que reconhece o trabalho deles.",
+    "explicacao": "Os Caboclos são a linha dos espíritos indígenas na Umbanda — irradiados por Oxóssi. São conhecidos pela dança, pelo brado, pelos gestos corporais — falam pouco em comparação com outros guias. São os primeiros a cuidar das crianças em terra. Cocares, arcos e espadas são elementos conquistados com o tempo — entregues cedo, viram bengalas para a incorporação, impedindo o médium de conhecer a magia da dança sem depender do elemento físico."
+  },
+  {
+    "palavra": "PRETOVELHO",
+    "dica1": "São os maiores feiticeiros — mais que os Exus. E com o tempo, acumulam o baúzinho, a caixinha, a bolsinha com todas as coisinhas deles.",
+    "dica2": "Banco e bengala são o básico para a locomoção deles. Castiçalzinho, cinzeirinho, caneca, pratinho — além do fumo e da bebida individual de cada um.",
+    "dica3": "Bebem café — com mel, com açúcar, com cachaça, puro. Comem feijão mexido, feijoada, farofa, paçoca, bala de mel, pé de moleque. Mas cada um tem sua individualidade.",
+    "dica4": "Tem preto que segura a vela no pé, não quer castiçal. Tem preto que não quer caneca, quer copo de madeira. A individualidade do guia se mostra em cada detalhe.",
+    "dica5": "Começa com P e V. É a linha dos espíritos de velhos sábios — os maiores feiticeiros da Umbanda.",
+    "explicacao": "Os Pretos Velhos são a linha dos espíritos de velhos sábios na Umbanda — descritos como os maiores feiticeiros, mais que os próprios Exus. Seu material básico é banco e bengala para a locomoção, mais castiçal, cinzeiro, caneca e pratinho. Mas cada um tem sua individualidade: tem preto velho que segura a vela no pé, que prefere copo de madeira, que toma cachaça em vez de café. Essa individualidade se respeita."
+  },
+  {
+    "palavra": "CIGANO",
+    "dica1": "São como uma pluma a flutuar nas estradas — uma energia muito mais sutil e leve que os Exus de outras linhas. Mas não se engane: cigana não mente.",
+    "dica2": "São o povo que trouxe o axé de cartas para dentro da Umbanda. Outros guias podem falar pelas cartas — mas sempre se reverencia quem abriu esse caminho.",
+    "dica3": "Seu ponto de força são as praças, grandes árvores, clareiras nas florestas — onde podem descansar e fazer o acampamento. A magia deles é completamente diferente da Umbanda e da Quimbanda.",
+    "dica4": "Exu Cigano é primeiro Exu, depois Cigano — trabalha com magia cigana mas corta. O Cigano do Oriente é mais sutil — consegue se adaptar a sessões de linhas mais leves.",
+    "dica5": "Começa com C. É a linha do Oriente na nossa casa — o povo que trouxe as cartas para a Umbanda.",
+    "explicacao": "Os Ciganos são a linha do Oriente — um povo com magia própria, diferente da Umbanda e da Quimbanda, que foi englobado pela Umbanda. São a energia mais sutil e leve que trabalha na nossa casa. Foram eles que trouxeram o axé de cartas. Cigana não mente — quem mente é a pessoa que não aceita a verdade que ela entrega. Seu ponto de força são as praças, árvores grandes e clareiras."
+  },
+  {
+    "palavra": "CRUZAMENTO",
+    "dica1": "É um ciclo que se reforça anualmente — e recebe manutenção diária, pois a Umbanda está conosco todos os dias.",
+    "dica2": "Há vários ao longo do ano — de Conga, de Praia, de Rio, de Mata, de Pedreira. Cada um busca a força num ponto específico da natureza.",
+    "dica3": "O primeiro — o de Conga — é onde se faz a primeira ligação ritualística com os guias através das ervas na cabeça. As 7 linhas da Umbanda já estão no Congá — por isso é o ponto de força universal.",
+    "dica4": "Não é sobre falar com espíritos — é sobre crescimento, evolução, aprendizado, caridade. O que marca o início da caminhada religiosa e que deve ser uma lembrança carinhosa no coração.",
+    "dica5": "Começa com C. É o ritual de iniciação da Umbanda — o primeiro passo da caminhada religiosa.",
+    "explicacao": "O Cruzamento é o ritual de iniciação — o primeiro passo da caminhada religiosa. Há vários ao longo do ano: de Conga, Praia, Rio, Mata e Pedreira, cada um buscando força num ponto da natureza. O primeiro — o de Conga — faz a primeira ligação ritualística com os guias através das ervas na cabeça. É um ciclo que se renova todo ano. A Umbanda não é sobre falar com espíritos — é sobre crescimento, evolução e caridade."
+  },
+  {
+    "palavra": "LEVANTAÇÃO",
+    "dica1": "É a última etapa — quando parece que já acabou tudo, mas só acaba quando termina. Deve ser feita com o mesmo amor e respeito com que começou.",
+    "dica2": "Para a obrigação de agosto, todos participam — mesmo quem não cortou. O que começa, termina junto.",
+    "dica3": "A do ori após o cruzamento é feita pelo próprio médium, diante do congá, sem auxílio. A primeira água vai para o verde — jamais para o ralo. Química só depois.",
+    "dica4": "Cada médium é responsável por levantar o que seu guia fez em sessão — ponto, limpeza, ebó — no prazo orientado. Se passar, vai apodrecer lá.",
+    "dica5": "Começa com L. É o ritual de encerramento e recolhimento do que foi feito — das oferendas, dos pontos, das limpezas.",
+    "explicacao": "A Levantação é o ritual de encerramento e recolhimento do que foi feito — das oferendas, dos pontos, das limpezas. Para a obrigação do ori após o cruzamento, é feita pelo próprio médium, sem auxílio, diante do congá. Para a obrigação de agosto, todos participam — mesmo quem não cortou. O que começa, termina junto. E quando o guia orienta um prazo, o médium cumpre — ou arca com as consequências."
+  },
+  {
+    "palavra": "PADÊ",
+    "dica1": "É entregue antes do corte — uma das primeiras etapas da obrigação de agosto, dentro da Firmeza de Cruzeiro.",
+    "dica2": "É uma das categorias de gasto que compõe o valor total da obrigação de agosto — junto com as aves dos guias chefes, o tambor, o Elebó e os elementos do corte.",
+    "dica3": "Na nossa casa, os padês dos Exus são entregues na Firmeza de Cruzeiro. Os dos filhos de almas foram agrupados no dia do corte — para manter o trabalho organizado e bem direcionado.",
+    "dica4": "É uma oferenda entregue no cruzeiro — parte do protocolo de abertura dos trabalhos da Quimbanda antes do corte propriamente dito.",
+    "dica5": "Começa com P. É a oferenda entregue ao povo de rua antes do corte — parte da obrigação de agosto.",
+    "explicacao": "O Padê é a oferenda entregua ao povo de rua — parte essencial da abertura dos trabalhos da Quimbanda antes do corte. Na obrigação de agosto, os padês dos Exus são entregues na Firmeza de Cruzeiro. Na nossa casa, os padês dos filhos de almas foram agrupados no dia do corte para manter o trabalho organizado e bem direcionado. É uma das etapas que compõe o valor total da obrigação."
+  },
+  {
+    "palavra": "SESSÃO",
+    "dica1": "É quando estamos mal que mais precisamos dela. Às vezes a gente sai mais cansado do que entrou — mas com a paz de ter ido.",
+    "dica2": "É um momento de atendimento ancestral — para pessoas que buscam uma resposta, um colo, um puxão de orelha. Ninguém vai ao terreiro à toa.",
+    "dica3": "A concentração começa na chegada — não quando ela abre. É um reencontro com os irmãos, com os guias em terra, com o cheiro da defumação.",
+    "dica4": "Toda sessão vai ser linda — não precisa registrar tudo com celular. O momento de estar presente é mais importante do que o registro.",
+    "dica5": "Começa com S. É o trabalho espiritual coletivo — o momento principal da vida do terreiro.",
+    "explicacao": "A Sessão é o trabalho espiritual coletivo — o coração da vida do terreiro. É um momento de atendimento ancestral para quem busca uma resposta, um colo, um puxão de orelha. A concentração começa na chegada — não quando ela abre. É quando estamos mal que mais precisamos dela: às vezes a gente sai mais cansado, mas com a paz de ter ido. Ninguém vai ao terreiro à toa — alguém ou algo os levou até lá."
+  },
+  {
+    "palavra": "PONTOCANTADO",
+    "dica1": "Pode aprender 20 — e o guia nunca puxar nenhum. Mas um dia o tamboreiro puxa um e ele diz 'é esse.'",
+    "dica2": "Não é música de candomblé, não é reza, não é ponto musicado de outra tradição. É específico: ponto de Umbanda dos guias da casa — para firmeza de tambor e canto.",
+    "dica3": "Confirmado é o que o guia chega, canta e responde. Buscar fora não tem problema — mas o guia tem que puxar espontaneamente, firmar no tambor, ter vibração.",
+    "dica4": "A playlist da casa é exclusivamente para eles — para que todos aprendam e a corrente cante junto com firmeza.",
+    "dica5": "Começa com P e C. É a música ritual entoada durante a sessão para chamar e saudar os guias.",
+    "explicacao": "O Ponto Cantado é a música ritual da Umbanda — entoado durante a sessão para chamar e saudar os guias. Confirmado é o que o guia chegou, cantou e respondeu na sessão. Pode aprender 20 e o guia nunca puxar nenhum — mas um dia o tamboreiro puxa e ele diz 'é esse.' A playlist da casa é exclusiva para pontos de Umbanda dos guias da casa — não inclui rezas de Candomblé ou pontos musicados de outras tradições."
+  },
+  {
+    "palavra": "TRANSE",
+    "dica1": "É um limbo — não tem como comparar com estar de cara limpa. Espaço, tempo e reflexos físicos ficam em segundo plano.",
+    "dica2": "Não depende de elementos para acontecer. Bebida e cigarro são conquistados com o tempo — não são condição para ele. É entrega.",
+    "dica3": "O médium nele tem alto grau de comprometimento com o trabalho astral. Por isso a corrente existe — para cuidar da matéria enquanto o guia cuida do espiritual.",
+    "dica4": "Não é X-Men. Mediunidade exige responsabilidade. Em carnaval, em festas, longe do terreiro — não é hora de tentar sentir ou entender o que aparece nas ruas.",
+    "dica5": "Começa com T. É o estado alterado de consciência em que o guia trabalha através do médium.",
+    "explicacao": "O Transe é o estado alterado de consciência durante a incorporação. O médium perde noção de espaço, tempo e reflexos físicos — está trabalhando em outro plano enquanto o guia cuida do espiritual. Não depende de elementos para acontecer — bebida e cigarro são conquistados com o tempo. Mediunidade não é X-Men: exige responsabilidade, preparo e a corrente presente para cuidar da matéria."
+  },
+  {
+    "palavra": "CORRENTE",
+    "dica1": "Não existe 'não é comigo' aqui — está com todos. O que começa com um afeta todos.",
+    "dica2": "É composta por médiuns incorporados e desincorporados — e os desincorporados têm papel ativo: estão com os olhos abertos, disponíveis, cuidando da matéria e do andamento.",
+    "dica3": "A concentração começa na chegada. Conversas paralelas ainda acontecem além do tolerável. O senso de urgência precisa existir — se está falando e não deveria, já vai parar.",
+    "dica4": "Não se atravessa ela, não se passa na frente dos guias que estão dançando. Entra pelos cantos, pede licença com um gesto, se posiciona e entra no ritmo.",
+    "dica5": "Começa com C. É o círculo de médiuns que compõe o trabalho espiritual durante a sessão.",
+    "explicacao": "A Corrente é o círculo de médiuns que sustenta o trabalho espiritual durante a sessão. Incorporados e desincorporados têm papéis ativos — os desincorporados estão com os olhos abertos, disponíveis para ajudar, cuidar da matéria e manter o andamento. Não se atravessa ela, não se passa na frente dos guias em movimento. Entra pelos cantos, pede licença, se posiciona. A concentração começa na chegada — não quando a sessão abre."
+  },
+  {
+    "palavra": "DESENVOLVIMENTO",
+    "dica1": "Nunca acaba — e essa é a mais pura verdade. Tenham sempre isso em mente.",
+    "dica2": "Não é uma linha linear ao tempo, tampouco comparável entre cada pessoa. Cada um tem o seu — e nem toda espiritualidade vai se expor e se comportar da mesma forma.",
+    "dica3": "Quando começamos a sentir que entendemos tudo, que estamos no pico — é a adolescência mediúnica. É exatamente quando ainda temos mais a aprender.",
+    "dica4": "A preocupação de corrigir é da mãe de santo e dos guias chefes da casa. A função de quem está começando é sentir o terreiro até o mundo parar de girar sob os pés.",
+    "dica5": "Começa com D. É o processo de amadurecimento espiritual e mediúnico — que nunca termina.",
+    "explicacao": "O Desenvolvimento mediúnico é o processo de amadurecimento espiritual que nunca termina. Não é linear, não é comparável entre pessoas. Quando o médium sente que já entendeu tudo e está no pico — é a adolescência mediúnica: exatamente quando ainda tem muito a aprender. A preocupação de corrigir é da mãe de santo e dos guias chefes. A função de quem está começando é sentir — sentir até o mundo parar de girar sob os pés."
+  },
+  {
+    "palavra": "MEDIUNIDADE",
+    "dica1": "Não é X-Men. Não é brincadeira. Não é sobre sentir o que aparece nas ruas às três da manhã.",
+    "dica2": "É normal sentir presença, ouvir algo, ver algo, sonhar. O que faz de alguém um bom médium é saber lidar com o mundo espiritual com naturalidade e com maturidade.",
+    "dica3": "Nas ruas, em qualquer época do ano, não é lugar para falar com estranhos — por mais intrigante que pareça. O ponto mais seguro de contato é a casa e o terreiro.",
+    "dica4": "A irradiação de quem a desenvolve é algo nítido fisicamente — mesmo que a pessoa não perceba. O irmão pode ser um espelho para isso.",
+    "dica5": "Começa com M. É a capacidade de perceber e trabalhar com o mundo espiritual — que exige responsabilidade e maturidade.",
+    "explicacao": "A Mediunidade é a capacidade de perceber e trabalhar com o mundo espiritual — e exige responsabilidade, maturidade e preparo. Não é X-Men, não é brincadeira. É normal sentir presença, ouvir, ver, sonhar. Mas nas ruas não é lugar para tentar sentir ou entender o que aparece — por mais intrigante que pareça. O ponto mais seguro de contato é sempre a casa e o terreiro, onde ninguém entra sem a permissão dos Exus guardiões."
+  },
+  {
+    "palavra": "DOUTRINA",
+    "dica1": "O certo e o errado é o da casa em que se está. É ela que define o que pode e o que não pode — e a liberdade dos mais velhos vem de conhecê-la bem.",
+    "dica2": "Não se aprende pela internet. Não se aprende em livros. Textos ajudam a conhecer diferenças — mas macumba se aprende na macumba.",
+    "dica3": "É o fundamento que permite explorar com segurança. A liberdade conquistada pelos mais velhos vem de terem construído uma base sólida nela.",
+    "dica4": "Quando a mãe de santo foi cacicada na casa da Mãe Jurema, novos fundamentos dela vieram para a nossa casa. A quartinha no topo da cabeça durante o cruzamento é um deles.",
+    "dica5": "Começa com D. É o conjunto de ensinamentos e fundamentos que define como a casa trabalha.",
+    "explicacao": "A Doutrina é o conjunto de ensinamentos e fundamentos que define como a casa trabalha. O certo e o errado é o da casa em que se está — e a liberdade dos mais velhos vem de conhecê-la bem. Não se aprende pela internet ou em livros — macumba se aprende na macumba. Quando a mãe de santo foi cacicada pela Mãe Jurema, novos fundamentos vieram para a nossa casa — como a quartinha no topo da cabeça durante o cruzamento."
+  },
+  {
+    "palavra": "FUNDAMENTO",
+    "dica1": "É o que permite explorar com segurança. Sem ele firme, qualquer exploração se torna risco.",
+    "dica2": "É o que separa diversidade de erro. Quando a mãe de santo fala que Adê em Orixá masculino não é diversidade — é erro de quem não conhece o fundamento dos Adês.",
+    "dica3": "Confirmar algo sem que tenha acontecido na sessão é tratar como confirmado o que não foi — e é um axé importantíssimo que não se brinca. O fundamento é esse: confirmado é na sessão.",
+    "dica4": "A autonomia que a mãe de santo ensina e instiga exige cautela e respeito a ele. A liberdade conquistada pelos mais velhos é por construírem uma base sólida dele.",
+    "dica5": "Começa com F. É a base de qualquer prática religiosa — o que sustenta a liberdade de explorar.",
+    "explicacao": "O Fundamento é a base que sustenta qualquer prática religiosa. É o que separa diversidade de erro — e é ele que permite explorar com segurança. Sem fundamento firme, qualquer exploração se torna risco. A autonomia ensinada na nossa casa exige cautela e respeito ao fundamento. E a liberdade que os mais velhos conquistam vem justamente de terem construído essa base sólida ao longo do tempo."
+  },
+  {
+    "palavra": "CARIDADE",
+    "dica1": "A espiritual não tem limite — ela vai buscar ajudar. A carnal, a humana, tem. Quando um caso sai do que o corpo e a matéria aguentam, a ajuda vai para o plano espiritual somente.",
+    "dica2": "É um dos pilares do que é ser uma pessoa melhor dentro da religião — junto com a melhora em como lidar com a espiritualidade, com a comunidade e consigo mesmo.",
+    "dica3": "O terreiro é um lugar de acolhimento, de caridade, de disciplina, de alegrias, de respeito, de fé. Quem vem de fora busca axé, compreensão, uma palavra, um abraço.",
+    "dica4": "A Umbanda não salva porque ninguém precisa ser salvo. O Umbandista precisa de empatia, respeito à vida do próximo — e quando algo não serve, pede licença e vai embora.",
+    "dica5": "Começa com C. É o princípio de ajudar o próximo — um dos fundamentos da Umbanda.",
+    "explicacao": "A Caridade é um dos princípios fundamentais da Umbanda. O terreiro é um lugar de acolhimento e caridade — e quem vem de fora busca uma palavra, um abraço, um conforto. A caridade espiritual não tem limite — ela vai buscar ajudar. A carnal, humana, tem: quando um caso ultrapassa o que o corpo aguentar, a ajuda segue apenas no plano espiritual. A Umbanda não salva porque ninguém precisa ser salvo."
+  },
+  {
+    "palavra": "CAVALO",
+    "dica1": "É o que recebe a força — mas precisa ser cuidado justamente porque durante o trabalho não consegue cuidar de si mesmo.",
+    "dica2": "Perde noção de espaço, tempo e reflexos físicos durante o transe. Não é descuido — é entrega. Por isso a corrente e a cambona existem.",
+    "dica3": "Quem protege o corpo dele durante a incorporação é a corrente — corre na frente para tirar um caco de vidro do chão, apaga a saia pegando fogo.",
+    "dica4": "Cada guia se adapta ao novo corpo, à nova energia, a novos pensamentos e personalidades — mesmo aqueles que já trabalharam com outros médiuns antes.",
+    "dica5": "Começa com C. É como se chama o médium que incorpora — o corpo que recebe o guia.",
+    "explicacao": "O Cavalo é o médium que incorpora — o corpo que recebe o guia. Durante o transe, perde noção de espaço, tempo e reflexos físicos. Não é descuido — é entrega. Por isso a corrente e a cambona existem: para cuidar da matéria enquanto o guia trabalha. Cada guia se adapta ao novo cavalo — mesmo os mais experientes precisam aprender o novo corpo, a nova energia, a nova personalidade."
+  },
+  {
+    "palavra": "ANCESTRALIDADE",
+    "dica1": "Não são espíritos superiores dotados de conhecimento infinito. São os antepassados — a voz da experiência. Já sentiram o que a gente sente. Conhecem a vida.",
+    "dica2": "A Umbanda é um culto a ela em sua totalidade — nascida da fé miscigenada de povos negros, indígenas e europeus. É o respiro de todos esses povos.",
+    "dica3": "Os nomes que os guias apresentam carregam a história de inúmeros outros que vieram antes. Cada médium agora é: a nega do Oxóssi, o nego Xangô, a menina da Oxum.",
+    "dica4": "Vivem em comunhão diariamente com os filhos — sendo mais um braço da comunidade, mas 'do outro lado.' Mantê-los vivos nos congás é manter a história da humanidade viva.",
+    "dica5": "Começa com A. É o culto aos que vieram antes — a razão de existir da Umbanda.",
+    "explicacao": "A Ancestralidade é o culto aos que vieram antes — e é a razão de existir da Umbanda. Os guias não são espíritos superiores com conhecimento infinito: são os antepassados, a voz da experiência, que já sentiram o que a gente sente. A Umbanda nasceu da fé miscigenada de povos negros, indígenas e europeus — é o respiro de todos eles. Manter os congás vivos é manter a história da humanidade viva."
+  },
+  {
+    "palavra": "AXÉ",
+    "dica1": "É o que se busca na natureza, o que se planta no assentamento, o que se entrega no cruzamento, o que se recebe no passe. É força — não sorte, não magia, não segredo.",
+    "dica2": "Não se desperdiça. Quando dois trabalhos diferentes são feitos na mesma noite, a energia se mistura e ele se dissipa. Por isso o cruzeiro e a calunga são separados.",
+    "dica3": "É o que cada ponto de força da natureza carrega — e que se busca anualmente nos cruzamentos. Fortalece a cada ano que passa.",
+    "dica4": "'Que seja de um bom axé a todos' — a despedida que fecha os textos mais importantes da casa. É a palavra mais dita e mais sentida dentro do terreiro.",
+    "dica5": "Começa com A. É a força sagrada que move tudo na Umbanda.",
+    "explicacao": "O Axé é a força sagrada que move tudo na Umbanda — não é sorte, magia ou segredo. É o que se busca na natureza, planta no assentamento, entrega no cruzamento, recebe no passe. Não se desperdiça: dois trabalhos na mesma noite misturam as energias e dissipam o axé. Por isso o cruzeiro e a calunga são feitos em datas separadas. É a palavra que mais aparece nos textos da casa — e a que encerra os mais importantes deles."
+  },
+  {
+    "palavra": "TRADIÇÃOORAL",
+    "dica1": "A Umbanda é uma religião dela — mas as gerações mais novas de macumbeiros agora têm acesso a algo que as anteriores não tinham: dados históricos registrados.",
+    "dica2": "É ela que explica por que macumba se aprende na macumba — com pé no chão, com calor, com frio, cansado, ouvindo os guias falarem, ouvindo a mãe de santo e os irmãos.",
+    "dica3": "O conhecimento teórico e histórico não pode causar soberba em cima de um médium antigo — a religião continua sendo de vivência. A história pode ser contada, mas a experiência deve ser sentida.",
+    "dica4": "A história de Zélio de Moraes é a raiz branca da Umbanda — e uma das mais recentes. As raízes negras e indígenas são muito mais antigas do que 15 de novembro de 1908.",
+    "dica5": "Começa com T e O. É o modo como a Umbanda sempre transmitiu seus fundamentos — de boca em boca, de mais velho para mais novo.",
+    "explicacao": "A Tradição Oral é como a Umbanda sempre transmitiu seus fundamentos. Macumba se aprende na macumba — com pé no chão, cansado, ouvindo os guias, os mais velhos, os irmãos. As gerações mais novas de macumbeiros agora têm acesso a dados históricos registrados — mas o conhecimento teórico não pode causar soberba sobre um médium antigo. A história pode ser contada — mas a experiência só o tempo nos dá."
+  },
+  {
+    "palavra": "LINHA",
+    "dica1": "Cada guia pertence a uma — e é ela que define de onde vem sua força, com quem trabalha e como se apresenta em terra.",
+    "dica2": "Na Umbanda, temos: caboclos, pretos velhos, crianças, ciganos — cada uma com sua forma, seus elementos, seus fundamentos.",
+    "dica3": "Exu Cigano é primeiro Exu e depois Cigano — trabalha na linha cigana mas é de Quimbanda. Cigano do Oriente é de outra linha — mais sutil, mais leve.",
+    "dica4": "'Linhas cruzadas' — quando um guia carrega a força de mais de uma. Oxóssi irradia a linha dos caboclos. Cada Orixá irradia uma linha de trabalho.",
+    "dica5": "Começa com L. É a classificação que define de onde vem a força do guia — e com quem ele trabalha.",
+    "explicacao": "A Linha é a classificação que define de onde vem a força do guia e com quem ele trabalha. Na Umbanda: caboclos, pretos velhos, crianças, ciganos, entre outras. Cada Orixá irradia uma linha — Oxóssi irradia os caboclos, Iemanjá as águas, Ibeji as crianças. Exu Cigano é primeiro Exu e depois Cigano — trabalha na magia cigana mas é de Quimbanda. A linha de um guia só é confirmada na sessão."
+  },
+  {
+    "palavra": "ASSISTÊNCIA",
+    "dica1": "Ninguém vai ao terreiro à toa. Ninguém entra em solo sagrado por nada. Alguém os levou até ali — seus pais orixás, caboclos, pretos velhos, crianças, exus e pombagiras.",
+    "dica2": "Não conta com ela para segurança ou bom funcionamento da sessão — ela é protegida pela corrente. São pessoas cruas que muitas vezes nunca pisaram em um terreiro.",
+    "dica3": "Não se escolhe o guia que vai atender — a espiritualidade conduz o necessário. Orientar sobre isso é parte do trabalho da corrente.",
+    "dica4": "Pode ter qualquer tipo de reação: fica paralisada, fica inquieta, chora, dá risada, fica brava. A corrente protege, não julga.",
+    "dica5": "Começa com A. É quem vem de fora para receber atendimento — não faz parte da corrente e é cuidada por todos.",
+    "explicacao": "A Assistência é quem vem de fora para receber atendimento espiritual. Ninguém vai ao terreiro à toa — a espiritualidade os levou. Não conta com ela para o bom funcionamento da sessão — ela é protegida pela corrente. Pode ter qualquer reação. Não se escolhe o guia que atende — a espiritualidade conduz. E não se induz nem insiste para que alguém venha — filhos vêm."
+  },
+  {
+    "palavra": "SINCRETISMO",
+    "dica1": "A nossa casa não o traz para os trabalhos — mas é importante saber o motivo das datas que ele criou. Dia 20 de janeiro é de Oxóssi por causa dele — sincretizado com São Sebastião.",
+    "dica2": "A Umbanda nasceu num país onde ele foi uma forma de sobrevivência — negros e indígenas escondendo o culto aos Orixás e ancestrais sob nomes de santos católicos.",
+    "dica3": "Em Oxóssi, a imagem com penacho é de Umbanda — que traz os caboclos junto. A imagem com chapéu é costume do Candomblé — onde os caboclos não chegam da mesma forma.",
+    "dica4": "Oxalá e Nossa Senhora são um exemplo histórico dele. Xangô e São Jerônimo são outro. Mas na nossa casa, cada Orixá é cultuado pelo que é — sem sobreposição de santos.",
+    "dica5": "Começa com S. É a mistura religiosa que deu origem a datas e imagens misturadas — que a nossa casa conhece mas não pratica nos trabalhos.",
+    "explicacao": "O Sincretismo é a mistura religiosa entre o culto afro-brasileiro e o catolicismo — uma estratégia de sobrevivência dos povos escravizados. A nossa casa não o pratica nos trabalhos — mas é importante conhecê-lo para entender as datas e representações que circulam. Dia 20 de janeiro é associado a Oxóssi pelo sincretismo com São Sebastião. A imagem com penacho é de Umbanda; com chapéu, de Candomblé — e a diferença tem fundamento."
+  },
+  {
+    "palavra": "TAMBOR",
+    "dica1": "Todo o que toca pertence a Xangô — e por isso nunca se toca sem propósito, nunca se deixa de pé sem razão, nunca se usa sem respeito.",
+    "dica2": "Quando fica de pé ou é tocado 'xoxo', atrai almas desencarnadas — porque o único momento em que fica assim é quando o congá está em luto.",
+    "dica3": "É um dos três pilares do terreiro — junto com a mãe de santo e a cambona. Sem ele, a energia da sessão não é a mesma.",
+    "dica4": "A mão do pilão fica dentro, nunca fora — pelo mesmo motivo. Tudo que representa o luto de Xangô precisa ser tratado com cuidado fora do contexto do luto.",
+    "dica5": "Começa com T. É o instrumento sagrado da Umbanda — e todo o que toca pertence a Xangô.",
+    "explicacao": "O Tambor é um dos três pilares do terreiro — junto com a mãe de santo e a cambona. Todo tambor que toca pertence a Xangô — e por isso nunca se toca sem propósito, nunca se deixa de pé sem razão. Quando fica de pé ou é tocado sem propósito, atrai almas desencarnadas, pois o único momento em que fica assim é quando o congá está em luto. A mão do pilão fica dentro, nunca fora — pelo mesmo motivo."
+  },
+  {
+    "palavra": "ALABÊ",
+    "dica1": "É o primeiro que a mãe de santo pede para chegar mais cedo no dia da Sessão de Almas — às 8h30, porque o cemitério fica disputado nessa época do ano.",
+    "dica2": "Paga o Uber dele — e o mais que se conseguir juntar para dar a ele já é melhor para o guri não sair com menos do que veio para o final de semana.",
+    "dica3": "O tambor é a vaquinha da sessão — e o valor do deslocamento dele faz parte do que se arrecada. Em sessões sem tambor, usa-se pandeiro.",
+    "dica4": "O repertório de pontos ciganos da mãe de santo é curto — os filhos são convidados a compartilhar links dos que conhecem. O pandeiro entra quando o tambor não está.",
+    "dica5": "Começa com A. É o tamboreiro — quem toca o tambor sagrado nas sessões.",
+    "explicacao": "O Alabê é o tamboreiro — quem toca o tambor sagrado nas sessões. Na nossa casa, o tambor funciona por vaquinha, e o valor do deslocamento dele faz parte do que se arrecada. Em sessões sem tambor, usa-se pandeiro. No dia da Sessão de Almas, a mãe de santo pediu que ele chegasse às 8h30 — porque o cemitério fica disputado no dia de Finados."
+  },
+  {
+    "palavra": "JALECO",
+    "dica1": "É a roupa de trabalho da corrente. Com o tempo, conforme os guias vão se apresentando, pode receber um detalhe, um bordado, um acabamento na cor do guia.",
+    "dica2": "No cruzamento do caboclo, o ponto do pai ou mãe é bordado nele — é a marca da coroação, o reconhecimento do trabalho do guia.",
+    "dica3": "Não precisa sair comprando três — um branco serve para todas as linhas no começo. Primeiro a roupinha branca. Depois, quando o guia chegar e se apresentar, compra o específico.",
+    "dica4": "Em dias muito quentes, a flexibilização é para a camiseta — o jaleco pode ser tirado. Mas a calça branca e a saia com calça por baixo seguem.",
+    "dica5": "Começa com J. É o casaco branco usado na corrente — a roupa básica de trabalho da Umbanda.",
+    "explicacao": "O Jaleco é a roupa básica de trabalho da corrente — branco, simples, que com o tempo recebe detalhes na cor do guia. No cruzamento do caboclo, o ponto do pai ou mãe é bordado nele: é a marca da coroação. Não se sai comprando três — um branco serve para todas as linhas no começo. Em dias muito quentes, pode ser substituído pela camiseta, mas o resto da roupa segue."
+  },
+  {
+    "palavra": "PANODECABEÇA",
+    "dica1": "É o item mais esquecido da história da Umbanda. E por isso sempre vem na lista do cruzamento como um lembrete especial.",
+    "dica2": "Após o cruzamento, fica na cabeça até o dia seguinte — protegendo o ori enquanto as ervas fazem o trabalho. Quem for trabalhar no dia seguinte acorda mais cedo para a levantação.",
+    "dica3": "A levantação começa com ele: ajoelha-se no congá, retira com cuidado, permite que o excesso de ervas caia numa bacia. Só então vem a água morna e a primeira água vai para o verde.",
+    "dica4": "Deve dormir com ele em casa — sem exceção para quem não trabalha no dia seguinte. Quem trabalha, adapta a rotina.",
+    "dica5": "Começa com P e C. É o pano que cobre a cabeça após o cruzamento — o item mais esquecido da lista.",
+    "explicacao": "O Pano de Cabeça é o item que fica na cabeça após o cruzamento — protegendo o ori enquanto as ervas trabalham durante a noite. É descrito nos textos da casa como 'o item mais esquecido da história da Umbanda.' Quem não trabalha no dia seguinte dorme com ele sem exceção. A levantação começa com a retirada cuidadosa dele, diante do congá, com as ervas caindo numa bacia — a primeira água vai para o verde, jamais para o ralo."
+  },
+  {
+    "palavra": "BACIA",
+    "dica1": "É item da lista individual do cruzamento — junto com as guias, a quartinha, as imagens, a vela de 7 dias, o mel e as ervas.",
+    "dica2": "Na levantação do ori após o cruzamento, é nela que o excesso das ervas cai quando o pano de cabeça é retirado com cuidado.",
+    "dica3": "A bacia de ágata é especificada na lista — não qualquer bacia, mas a de ágata. Cada detalhe do cruzamento tem seu fundamento.",
+    "dica4": "Junto com o pano de cabeça, é um dos itens que o médium carrega para o cruzamento. Fica com ele na levantação da obrigação do ori no dia seguinte.",
+    "dica5": "Começa com B. É o recipiente que recebe o excesso das ervas do cruzamento na levantação do ori.",
+    "explicacao": "A Bacia é um dos itens individuais da lista do cruzamento — especificamente a de ágata. Na levantação do ori, é nela que o excesso das ervas cai quando o pano de cabeça é retirado com cuidado. A primeira água lavada nas mãos vai para o verde junto com as folhas — jamais para o ralo. É um dos itens práticos que o médium carrega e que tem papel específico no encerramento do ritual."
+  },
+  {
+    "palavra": "ALGUIDAR",
+    "dica1": "Sempre envernizado. Se for pintar ou alterar a cor, faz pelo menos dois ou três dias antes para dar tempo de secar — antes de qualquer trabalho.",
+    "dica2": "É o recipiente onde o Exu come durante o corte. Faz parte dos elementos do assentamento listados no custo da obrigação de agosto.",
+    "dica3": "A casa estava sem alguidares — e a necessidade de comprá-los foi listada como um dos itens que o valor da obrigação de 2026 precisa cobrir.",
+    "dica4": "Não se usa qualquer cor sem orientação. Assim como as imagens precisam ser de gesso, ele precisa estar adequado ao Exu que vai trabalhar nele.",
+    "dica5": "Começa com A. É o prato de barro onde o Exu come durante o corte — e precisa ser sempre envernizado.",
+    "explicacao": "O Alguidar é o recipiente de barro onde o Exu come durante o corte — e precisa ser sempre envernizado. Se for pintar ou alterar a cor, faz pelo menos dois ou três dias antes para secar completamente antes do trabalho. Faz parte dos elementos do assentamento e compõe o custo da obrigação de agosto. A cor não é escolha livre — segue orientação do guia chefe."
+  },
+  {
+    "palavra": "BANCO",
+    "dica1": "É o básico para a locomoção deles — junto com a bengala. Sem esses dois elementos, o trabalho deles fica comprometido no plano físico.",
+    "dica2": "Pertence à linha que é descrita como os maiores feiticeiros — mais que os próprios Exus. Eles usam muitos elementos, e com o tempo acumulam o baúzinho, a caixinha, a bolsinha.",
+    "dica3": "A mãe de santo já pediu para alguns filhos comprarem o banco dos seus guias — pois é uma necessidade física para o andamento dos trabalhos da casa.",
+    "dica4": "Junto com castiçalzinho, cinzeirinho, caneca e pratinho — além do fumo e da bebida individual de cada um — compõe o básico dos elementos de trabalho.",
+    "dica5": "Começa com B. É o assento dos pretos velhos — um dos seus elementos básicos de trabalho.",
+    "explicacao": "O Banco é o assento dos Pretos Velhos — um dos seus elementos básicos de trabalho, junto com a bengala. Sem esses dois, o trabalho deles fica comprometido no plano físico. Os Pretos Velhos são descritos como os maiores feiticeiros — mais que os Exus — e com o tempo acumulam muitos elementos. A mãe de santo já pediu para alguns filhos comprarem o banco dos seus pretos velhos, pois é uma necessidade real para o andamento dos trabalhos."
+  },
+  {
+    "palavra": "BENGALA",
+    "dica1": "Para os pretos velhos, é a locomoção — junto com o banco. Para os Exus, é um elemento que só se entrega depois de um tempo de trabalho — não logo de início.",
+    "dica2": "Entregue cedo demais para os Exus, perde seu significado — e isso jamais pode acontecer. Faz parte dos elementos conquistados com o tempo.",
+    "dica3": "Para as crianças, bolas muito barulhentas e brinquedos específicos seguem a mesma lógica: entregues cedo, podem machucar alguém em espasmos de energia.",
+    "dica4": "O Preto Velho chega e bate a bengala no chão — é parte da magia corporal deles, assim como os Exus têm o movimento, a gargalhada, a dança.",
+    "dica5": "Começa com B. É o cajado dos Pretos Velhos — e um dos elementos conquistados com o tempo pelos Exus.",
+    "explicacao": "A Bengala é o cajado dos Pretos Velhos — elemento básico de trabalho junto com o banco. Para os Exus, é um elemento conquistado com o tempo: entregue cedo demais, perde seu significado. Os textos são claros: alguns elementos não podem ser dados logo de início porque requerem doutrina e tempo de trabalho. A bengala dos Exus é um deles — junto com espartilhos, capas e bebidas além da cachaça e da champagne."
+  },
+  {
+    "palavra": "GAMELA",
+    "dica1": "É uma punição que dura para sempre — e que tem um Itã específico por trás dela, narrado nos textos da casa.",
+    "dica2": "Um Orixá específico a recebe porque matou todos em uma vila que não o reconheceu como Rei — e em punição, Oxalá lhe proibiu de comer nas pratarias.",
+    "dica3": "É de madeira. Representa a humilhação de comer como os escravos e os porcos — palavras da mãe de santo ao narrar o Itã.",
+    "dica4": "É o utensílio sagrado de Xangô. Mesmo sendo o Orixá Rei, come nela — e isso é parte do seu fundamento, não da sua fraqueza.",
+    "dica5": "Começa com G. É a tigela de madeira onde Xangô come — como punição de Oxalá.",
+    "explicacao": "A Gamela é a tigela de madeira onde Xangô come — como punição de Oxalá. O Itã conta: Xangô estava viajando e não foi reconhecido como Rei numa vila. No auge de sua fúria, matou a todos. Em punição, Oxalá o proibiu de comer nas pratarias — a partir daí, comeria como os escravos e os porcos, em gamela de madeira. Mesmo sendo o Orixá Rei, essa é a forma como é servido — e é parte do seu fundamento."
+  },
+  {
+    "palavra": "CASTIÇAL",
+    "dica1": "É um dos elementos básicos de trabalho — mas com toda a individualidade dos guias, tem Preto Velho que segura a vela no próprio pé e não quer um.",
+    "dica2": "Junto com cinzeirinho, caneca e pratinho, compõe o básico além do fumo e da bebida individual de cada Preto Velho.",
+    "dica3": "A individualidade do guia se mostra em cada detalhe — inclusive nesse. Tem Preto Velho que não quer castiçal, quer segurar a vela. Tudo bem — é o guia se apresentando do jeito dele.",
+    "dica4": "Faz parte do baúzinho, da caixinha, da bolsinha com todas as coisinhas dos Pretos Velhos que se acumula com o tempo.",
+    "dica5": "Começa com C. É o suporte de vela dos Pretos Velhos — um dos seus elementos básicos de trabalho.",
+    "explicacao": "O Castiçal é o suporte de vela dos Pretos Velhos — elemento básico de trabalho junto com o banco, a bengala, o cinzeiro, a caneca e o pratinho. Mas a individualidade do guia se mostra até aqui: tem Preto Velho que segura a vela no próprio pé e não quer castiçal. Tudo bem — é o guia se apresentando do jeito dele. Com o tempo, esses elementos se acumulam no baúzinho ou caixinha de cada um."
+  },
+  {
+    "palavra": "PITANGUEIRA",
+    "dica1": "Está entre as ervas sugeridas para o Amaci do cruzamento — e também aparece na lista de ervas fáceis de encontrar nas ruas e floras.",
+    "dica2": "Junto com espada de São Jorge, goiabeira, laranjeira, alecrim, alfazema, guiné e hortelã — compõe o exemplo de ervas que podem ir no Amaci.",
+    "dica3": "Não é uma erva de Exu — é uma erva suave, de banho e de reforço. Pode ser encontrada nas ruas e serve também para banhos do dia a dia.",
+    "dica4": "Quando não se tem dinheiro e não se acha nada — vai à praça mais próxima, pede licença aos guardiões e caboclos, pega folhas verdes e pede ao Pai Oxóssi. Mato é mato.",
+    "dica5": "Começa com P. É uma das ervas sugeridas para o Amaci do cruzamento — e fácil de encontrar nas ruas.",
+    "explicacao": "A Pitangueira é uma das ervas sugeridas para o Amaci do cruzamento — suave e de reforço. Aparece também na lista de ervas fáceis de encontrar nas ruas e floras. Não é uma erva de Exu — pode ir no Amaci, diferente da Arruda e do Quebra-tudo. É um dos exemplos de que macumba é força da natureza: mato é mato, e Oxóssi é rei."
+  },
+  {
+    "palavra": "MAMONEIRO",
+    "dica1": "Está entre as ervas de Exu listadas para a obrigação de agosto — e é uma das poucas que a mãe de santo indica que 'a gente pega lá' no ponto de força.",
+    "dica2": "Não entra no Amaci — faz parte das ervas fortes, amargas, de Exu. Junto com aroeira, espinheira santa, arruda, pimenteiras, losna, dama da noite e outras.",
+    "dica3": "A folha de mamoneiro é especificamente mencionada como parte das ervas de Exu para a obrigação de agosto — uma das que se busca nos pontos de força.",
+    "dica4": "É uma planta que pode ser encontrada em pontos de força e quintais. Faz parte das ervas que os filhos são convidados a buscar antes da obrigação de agosto.",
+    "dica5": "Começa com M. É uma das folhas de Exu pedidas para a obrigação de agosto.",
+    "explicacao": "O Mamoneiro é uma planta de Exu — suas folhas vão nas ervas de agosto. É especificamente mencionada nos textos da casa como uma das ervas que 'a gente pega lá' no ponto de força. Não entra no Amaci do cruzamento: faz parte das ervas fortes, amargas, associadas aos Exus. É um dos elementos que os filhos são convidados a buscar antes da obrigação de agosto."
+  },
+  {
+    "palavra": "GUINÉ",
+    "dica1": "Está entre as ervas sugeridas para o Amaci do cruzamento — do lado das que firmam e reforçam, não das que cortam ou afastam.",
+    "dica2": "Junto com espada de São Jorge, pitangueira, goiabeira, laranjeira, alecrim, alfazema, boldo e hortelã — compõe o exemplo de ervas que podem ir no Amaci.",
+    "dica3": "Diferente das ervas de Exu — não é amarga, não é forte, não corta. Pode ir no reforço de cabeça. Está no lado das ervas que firmam.",
+    "dica4": "É uma planta de presença forte no universo das religiões afro-brasileiras — associada à proteção espiritual na tradição popular.",
+    "dica5": "Começa com G. É uma das ervas sugeridas para o Amaci do cruzamento — conhecida por sua força de proteção.",
+    "explicacao": "A Guiné é uma das ervas sugeridas para o Amaci do cruzamento — e está no lado das ervas que firmam e reforçam, não das que cortam ou afastam. É mencionada junto com espada de São Jorge, pitangueira, goiabeira, laranjeira, alecrim, alfazema, boldo e hortelã. Diferente das ervas de Exu, pode ir no reforço de cabeça — o ori pede ervas que fortaleçam, não que desequilibrem."
+  },
+  {
+    "palavra": "BOLDO",
+    "dica1": "É uma das ervas dos Pretos Velhos — junto com manjericão e alecrim. E é uma das mais fáceis de encontrar em mercados comuns.",
+    "dica2": "Também pode ir no Amaci — está entre as ervas sugeridas para o cruzamento, no grupo das ervas suaves e de reforço.",
+    "dica3": "É fácil de encontrar na rua — junto com a espada de São Jorge e a pitangueira. Para banhos do dia a dia, quando a rotina não permite ir à flora.",
+    "dica4": "Ervas leves e suaves não têm contraindicação — são ótimas para reequilibrar energias no dia a dia. Quando sentir necessidade de um banho, não adiar.",
+    "dica5": "Começa com B. É uma das ervas dos Pretos Velhos — e uma das mais fáceis de encontrar em mercados e nas ruas.",
+    "explicacao": "O Boldo é uma das ervas dos Pretos Velhos — junto com manjericão e alecrim — e uma das mais fáceis de encontrar em mercados. Também pode ir no Amaci do cruzamento, pois é uma erva suave que firma e reforça. Fácil de achar na rua junto com espada de São Jorge e pitangueira. Para banhos do dia a dia, quando a rotina não permite ir à flora, o boldo é uma das primeiras opções."
+  },
+  {
+    "palavra": "ALECRIM",
+    "dica1": "É uma das ervas dos Pretos Velhos — e foi a primeira sugestão dada quando alguém disse que estava desesperado, sem dinheiro e sem achar nada.",
+    "dica2": "'Nem que seja apenas um galhinho de alecrim, ou folhas de uma bela árvore, antes de virem para o terreiro' — assim foi descrito no texto sobre o banho pré-cruzamento.",
+    "dica3": "Está entre as ervas sugeridas para o Amaci do cruzamento. É suave, de reforço — não é de Exu, não corta, não afasta.",
+    "dica4": "Pode ser encontrado em mercados comuns. É um dos exemplos de que banho de ervas não precisa ser complicado — um galhinho já tem axé se feito com concentração e pedido.",
+    "dica5": "Começa com A. É uma das ervas dos Pretos Velhos — e uma das mais simples e acessíveis para banhos.",
+    "explicacao": "O Alecrim é uma das ervas dos Pretos Velhos — suave, de reforço, fácil de encontrar em mercados. Aparece nos textos como a primeira sugestão para quem não tem nada: 'nem que seja apenas um galhinho de alecrim.' Também pode ir no Amaci do cruzamento. É um dos exemplos de que macumba é força da natureza: a intenção e o pedido ao Pai Oxóssi fazem a diferença mesmo com o mais simples dos elementos."
+  },
+  {
+    "palavra": "AROEIRA",
+    "dica1": "Está entre as ervas de Exu listadas para a obrigação de agosto — do lado das ervas fortes, amargas, que não entram no Amaci do cruzamento.",
+    "dica2": "Junto com espinheira santa, arruda, picão preto, pimenteiras, folha de gengibre, figueira, dama da noite, losna, tanaceto, vassourinha e quebra-tudo — compõe a lista de ervas pedidas para agosto.",
+    "dica3": "Algumas dessas ervas são difíceis de encontrar — a orientação é conversar com as floras e perguntar se conseguem por encomenda. Outras se acham na rua mesmo.",
+    "dica4": "Cada filho que conseguir uma erva da lista já ajuda bastante — a ideia é a responsabilidade coletiva de buscar o que cada um consegue.",
+    "dica5": "Começa com A. É uma das ervas de Exu pedidas para a obrigação de agosto.",
+    "explicacao": "A Aroeira é uma das ervas de Exu pedidas para a obrigação de agosto — do lado das ervas fortes e amargas. Compõe uma lista extensa que inclui espinheira santa, arruda, picão preto, pimenteiras, gengibre, figueira, dama da noite, losna, tanaceto, vassourinha e quebra-tudo. Algumas são difíceis de encontrar — a orientação é buscar nas floras por encomenda. Cada filho que consegue uma já ajuda."
+  },
+  {
+    "palavra": "MEL",
+    "dica1": "É um axé tão abrangente que só quem usa sabe o porquê — é difícil saber o seu intuito por simples padronização.",
+    "dica2": "Aparece em praticamente todas as ritualísticas. É usado ao final da obrigação dos Exus para aliviar o peso da sacralização das aves com a energia doce de Oxum.",
+    "dica3": "É usado para ajudar na incorporação e facilitar a fala dos guias — para 'adoçar a língua do filho' e aliviar suas dores.",
+    "dica4": "Xangô é o único Orixá que leva tanto Dendê quanto Mel — não porque é doce, mas porque precisa. É item da lista individual do cruzamento.",
+    "dica5": "Começa com M. É o alimento sagrado da Umbanda — presente em praticamente todas as ritualísticas.",
+    "explicacao": "O Mel é um dos axés mais abrangentes e presentes na Umbanda. Aparece em praticamente todas as ritualísticas: adoça a língua do filho, alivia dores, facilita a incorporação, alivia o peso da sacralização das aves no final da obrigação dos Exus. Xangô é o único Orixá que leva tanto Dendê quanto Mel — não pela doçura, mas porque precisa. É item obrigatório na lista do cruzamento."
+  },
+  {
+    "palavra": "CANJICA",
+    "dica1": "Aparece tanto para Iemanjá quanto para Oxum e Oxalá — mas com cores diferentes para cada um, revelando a qual linha pertence.",
+    "dica2": "A branca é de Oxalá e Iemanjá. A amarela é de Oxum. São também as bases dos banhos da virada do ano para esses Orixás.",
+    "dica3": "Para os cruzamentos de praia, a branca já cozida faz parte da mesa de Iemanjá — junto com cocada, uvas verdes, melancia, peras e flores brancas.",
+    "dica4": "'As canjicas podem fazer o doce e comer, ou ofertar no congá' — descrito nos textos sobre os banhos dos Orixás na virada do ano.",
+    "dica5": "Começa com C. É o milho cozido — oferenda de Iemanjá, Oxum e Oxalá, em cores diferentes.",
+    "explicacao": "A Canjica é uma das oferendas mais frequentes para as mães e os pais mais velhos da Umbanda. A branca é de Oxalá e Iemanjá — o banho da virada de Oxalá é de água de canjica branca. A amarela é de Oxum — seu banho da virada é de água de canjica amarela. Pode ser feita como doce para comer ou ofertada no congá."
+  },
+  {
+    "palavra": "CACHAÇA",
+    "dica1": "É a bebida básica de qualquer Exu — a primeira a ser oferecida antes de qualquer outra ser conquistada.",
+    "dica2": "Lava-se a casinha do assentamento com ela — junto com a champagne — e não com água, que é quizila de Exu.",
+    "dica3": "O material da casa tem ela disponível — e quando um filho esquece a bebida do Exu, pode pedir à cambone para usar a da casa, repondo na próxima sessão.",
+    "dica4": "Beber é um alterador de consciência — não é hora de ouvir intuição. Em carnaval e festas, beber não é momento de mediunidade.",
+    "dica5": "Começa com C. É a bebida básica dos Exus — e o que se usa para limpar os assentamentos.",
+    "explicacao": "A Cachaça é a bebida básica dos Exus — a primeira a ser oferecida antes de qualquer outra ser conquistada. Lava-se a casinha do assentamento com ela — nunca com água, que é quizila de Exu. A casa tem cachaça disponível para os guias dos filhos usarem quando o filho esquece de trazer — mas repõe na próxima. É também um alterador de consciência: beber não é momento de ouvir intuição mediúnica."
+  },
+  {
+    "palavra": "PIPOCA",
+    "dica1": "É mencionada no contexto das oferendas que não se deixam apodrecer no assentamento — junto com a champagne com bicho e as velas quebradas.",
+    "dica2": "Aparece como um dos elementos que se tira do assentamento de Exu na limpeza de fim de ano — as pipocas velhas saem, bebidas são renovadas.",
+    "dica3": "Faz parte das frentes descritas nos textos — junto com alguidar envernizado, cachaça e galo vermelho, velas vermelhas, para o trabalho de abertura de cruzeiro do Pai Bará.",
+    "dica4": "'Um pacote de pipoca estourada' — cada um trazendo um já é suficiente para a parte da abertura do cruzeiro. É uma das oferendas mais simples e presentes nos trabalhos de rua.",
+    "dica5": "Começa com P. É uma das oferendas para o povo de rua — especialmente para Bará nos trabalhos de abertura de cruzeiro.",
+    "explicacao": "A Pipoca é uma das oferendas mais simples e presentes nos trabalhos de rua e de abertura de cruzeiro — especialmente para Bará. Nos textos da casa, aparece como um dos elementos que cada filho traz para contribuir: um pacotinho já é suficiente. Também aparece nos cuidados do assentamento: pipocas velhas não se deixam apodrecer lá dentro — renovar é parte do cuidado com os Exus."
+  },
+  {
+    "palavra": "VINHO",
+    "dica1": "É a bebida de Oxóssi e dos caboclos. Para Ele e seus caboclos, o costume é servir frutas e vinhos.",
+    "dica2": "O seco é o banho de Oxóssi na virada do ano. E é a bebida do cruzamento para quem tem Oxóssi como Orixá de cabeça.",
+    "dica3": "Os Ciganos também o bebem — especialmente os mais doces e suaves. Os vinhos de pêssego da Madalena ficam disponíveis na casa para os ciganos dos filhos.",
+    "dica4": "Faz parte dos elementos que a Cigana usa no trabalho das cartas — o vinho, as frutas, as flores ao redor — enquanto o filho trabalha com corpo limpo, sem beber.",
+    "dica5": "Começa com V. É a bebida de Oxóssi e dos Ciganos — e o banho de Oxóssi na virada do ano.",
+    "explicacao": "O Vinho é a bebida de Oxóssi e dos Caboclos — e o banho de Oxóssi na virada do ano é de vinho seco. Para os Ciganos, especialmente os mais suaves e frutados. Os vinhos de pêssego da Madalena ficam disponíveis na casa para os Ciganos dos filhos beberem junto com ela. Nos trabalhos de cartas, é a Cigana que bebe — não o filho, que trabalha com corpo limpo."
+  },
+  {
+    "palavra": "GUARANÁ",
+    "dica1": "É a bebida de Oxum — e por isso é a bebida do cruzamento para quem tem Oxum como Orixá de cabeça.",
+    "dica2": "Também é a bebida das crianças — oferecida junto com água, chá e água com mel para os erês que chegam em terra.",
+    "dica3": "Aparece na lista de bebidas por Orixá dos cruzamentos: Ogum é cerveja amarela, Oxum é guaraná, Xangô é cerveja preta, Oxóssi é vinho seco, Iansã é cidra vermelha, Iemanjá é cidra branca.",
+    "dica4": "É uma das bebidas mais acessíveis para os trabalhos. Quando o filho não tem certeza da bebida do próprio Exu ou cigano, pode oferecer junto com a da Madalena.",
+    "dica5": "Começa com G. É a bebida de Oxum — e a do cruzamento para quem cruza nela.",
+    "explicacao": "O Guaraná é a bebida de Oxum — e por isso é a bebida do cruzamento para quem tem Oxum como Orixá de cabeça. Também é a bebida das crianças na sessão — junto com água, chá e água com mel. Aparece na lista de bebidas por Orixá dos cruzamentos, que vai de cerveja amarela (Ogum) a cidra branca (Iemanjá). É uma das bebidas mais acessíveis e presentes nos trabalhos."
+  },
+  {
+    "palavra": "CAFÉ",
+    "dica1": "É o axé dos Pretos Velhos — descrito assim explicitamente nos textos da casa. E por isso é preferível a bebidas energéticas em dias de sessão puxados.",
+    "dica2": "Preto Velho o toma de muitos jeitos — com mel, com açúcar, com cachaça, puro. Cada um tem a sua preferência. A individualidade do guia se mostra até na xícara.",
+    "dica3": "Em dias de sessão, bebidas energéticas alteram quimicamente de forma muito intensa — preferir o café. Com moderação, não é tão intenso quanto um Baly ou similares.",
+    "dica4": "É um dos itens que a casa fica sem estoque — junto com paçoquinha, balas, pé de moleque e amendoim. Um pacotinho não pesa o bolso e já ajuda a receber bem os guias.",
+    "dica5": "Começa com C. É o axé dos Pretos Velhos — e o preferido em dias de sessão quando o médium está cansado.",
+    "explicacao": "O Café é o axé dos Pretos Velhos — descrito assim nos textos da casa. Cada Preto Velho tem seu jeito de tomá-lo: com mel, com açúcar, com cachaça, puro. Em dias de sessão puxados, é preferível a bebidas energéticas, que alteram quimicamente de forma muito intensa. Com moderação, o café é o que a casa recomenda para quem está cansado mas precisa estar presente."
+  },
+  {
+    "palavra": "FLORES",
+    "dica1": "São mencionadas como prioridade em diversas sessões — especialmente nas ciganas e nas homenagens às mães como Iemanjá e Oxum.",
+    "dica2": "No encerramento de ano em Ipanema, a mãe de santo pediu flores — porque no trabalho na areia as frutas se perdem, mas as flores ficam. 'Tragam flores, muitas flores!'",
+    "dica3": "Para a homenagem de Iemanjá na praia, flores brancas. Para os Ciganos, flores coloridas. Para o axé de Pombagira, rosas vermelhas ou brancas.",
+    "dica4": "São um dos elementos que o filho pode trazer como contribuição sem gasto alto. 'A gente não precisa gastar muito para fazer algo bonito e com amor.'",
+    "dica5": "Começa com F. São uma das oferendas mais pedidas — especialmente em festas de Iemanjá, Oxum e Ciganos.",
+    "explicacao": "As Flores são uma das oferendas mais pedidas nos textos da casa — especialmente em festas de Iemanjá, Oxum e Ciganos. Na Sessão de encerramento em Ipanema, a mãe de santo pediu flores porque as frutas se perdem na areia. Para Iemanjá: flores brancas. Para Ciganos: flores coloridas. Para o axé de Pombagira: rosas vermelhas ou brancas. São uma forma acessível e bonita de contribuir."
+  },
+  {
+    "palavra": "MACHADO",
+    "dica1": "É de dois gumes — e não é por acaso. Representa a justiça que corta dos dois lados: para o culpado e para o inocente.",
+    "dica2": "É um dos símbolos de Xangô — junto com a balança, o pilão, a coroa do rei e as pedras, montanhas, vulcões, fogo e trovões.",
+    "dica3": "Na Umbanda, aparece como ferramenta conquistada com o tempo pelos caboclos — entregue cedo demais, pode machucar um irmão ou um consulente.",
+    "dica4": "Xangô carrega o machado de dois gumes como símbolo de que a justiça não tem lado — ela vai onde precisa ir, independente de ser conveniente ou não.",
+    "dica5": "Começa com M. É o machado de dois gumes — um dos símbolos de Xangô.",
+    "explicacao": "O Machado de dois gumes é um dos símbolos de Xangô — junto com a balança, o pilão e a coroa do rei. Representa a justiça que corta dos dois lados: para o culpado e para o inocente. Na Umbanda, também aparece como ferramenta dos caboclos — mas entregue cedo demais, pode machucar. Xangô não é bom nem misericordioso: é justo. E a justiça do machado de dois gumes não escolhe lados."
+  },
+  {
+    "palavra": "BALANÇA",
+    "dica1": "Está entre os símbolos do Orixá que carrega a fúria e a vingança no nome — mas cuja definição mais honesta não é bondade, e sim justiça.",
+    "dica2": "Junto com o pilão, o machado de dois gumes, a coroa do rei, as pedras, os vulcões e o fogo — compõe o universo simbólico de Xangô.",
+    "dica3": "'Que a balança de Xangô seja nosso berço e que nossa consciência seja honesta conosco mesmos' — palavras da mãe de santo na preparação para o cruzamento de Pedreira.",
+    "dica4": "Se ajoelha a Xangô não aquele que nunca errou — e sim aquele que respeita as consequências dos próprios erros. A balança não é sobre perfeição: é sobre responsabilidade.",
+    "dica5": "Começa com B. É um dos símbolos de Xangô — representa o equilíbrio e a justiça implacável.",
+    "explicacao": "A Balança é um dos símbolos de Xangô — junto com o machado de dois gumes, o pilão, a coroa do rei e os trovões. Representa a justiça implacável: não é sobre perfeição, mas sobre responsabilidade pelas próprias ações. 'Que a balança de Xangô seja nosso berço' — palavras da mãe de santo na preparação para o cruzamento de Pedreira. Se ajoelha a Xangô não quem nunca errou, mas quem respeita as consequências dos próprios erros."
+  },
+  {
+    "palavra": "LEÃO",
+    "dica1": "É um dos três animais de axé de um Orixá específico — junto com o jabuti e o carneiro. Os três falam de força, firmeza e nobreza.",
+    "dica2": "Pertence ao Orixá do fogo e da justiça — aquele que come em gamela de madeira, que é dono do tambor, que não é 7 nem 8, é 6.",
+    "dica3": "Aparece nos textos quando a mãe de santo lista os animais de axé de Xangô — junto com o jabuti e o carneiro.",
+    "dica4": "Para quem tem filhos de Xangô, a 'paleta de carneiro' é conhecida: corpos grandes e fortes. O leão faz parte da mesma força.",
+    "dica5": "Começa com L. É um dos animais sagrados de Xangô — junto com o jabuti e o carneiro.",
+    "explicacao": "O Leão é um dos animais de axé de Xangô — junto com o Jabuti e o Carneiro. Os três falam de força, firmeza e nobreza — características do Orixá Rei de Oyó. Xangô é o Orixá do fogo, do equilíbrio e da justiça implacável. Seus filhos têm a famosa 'paleta de carneiro' — corpos grandes e fortes — e são conhecidos por serem leais, incisivos e determinados."
+  },
+  {
+    "palavra": "ABELHA",
+    "dica1": "Tem relação direta com o mel — e através do mel, com um dos axés mais abrangentes de toda a Umbanda.",
+    "dica2": "É um dos três animais sagrados de Oxum — junto com a aranha e a galinha. A aranha é a mais esquecida por preconceito; ela é a mais conhecida.",
+    "dica3": "O mel é seu produto sagrado — e é usado em praticamente todas as ritualísticas: para adoçar a língua do filho, para facilitar a incorporação, para aliviar o peso do corte dos Exus.",
+    "dica4": "A galinha entra como símbolo materno — a galinha e seus pintinhos sob as asas, cuidando e nutrindo os seus. A abelha traz o mel; a galinha traz o acolhimento.",
+    "dica5": "Começa com A. É um dos animais sagrados de Oxum — e carrega o mel, axé presente em toda a ritualística.",
+    "explicacao": "A Abelha é um dos três animais sagrados de Oxum — junto com a aranha e a galinha. Carrega o mel, que é um dos axés mais abrangentes da Umbanda: adoça a língua, facilita a incorporação, alivia o peso do corte dos Exus. A aranha é descrita nos textos como um axé esquecido de Oxum por puro preconceito — tão sagrada quanto qualquer outro animal. A galinha representa o acolhimento materno."
+  },
+  {
+    "palavra": "PONTEIRO",
+    "dica1": "É um posto que dificilmente se vê nas casas hoje em dia — e por isso, quando aparece, merece ser apresentado.",
+    "dica2": "Foi Leonan quem veio de ponteiro no Cruzamento de Conga narrado nos textos da casa — e o nome já diz o que faz.",
+    "dica3": "É a pessoa responsável por puxar os pontos cantados sem o tambor. Uma função antiga, raramente vista, mas que tem nome e fundamento.",
+    "dica4": "Diferente do Alabê, que usa o tambor. O Ponteiro usa somente a voz — e a energia do canto sem percussão é outra experiência.",
+    "dica5": "Começa com P. É quem puxa os pontos cantados sem o tambor — um posto raro e antigo.",
+    "explicacao": "O Ponteiro é a pessoa responsável por puxar os pontos cantados sem o uso do tambor — um posto raro nos terreiros de hoje. Nos textos da casa, é mencionado quando Leonan veio de Ponteiro no Cruzamento de Conga: 'o nome já diz, é a pessoa responsável por puxar os pontos sem o tambor.' É uma função antiga, com nome e fundamento, diferente do Alabê que usa o instrumento percussivo."
+  },
+  {
+    "palavra": "PEDRAXANGÔ",
+    "dica1": "É o amparo legal da nossa casa — não porque seja a solução ideal, mas porque é o que funciona dentro da nossa realidade atual.",
+    "dica2": "A regularização completa com a prefeitura — alvará, corpo de bombeiros, acessibilidade — são coisas mais distantes da nossa realidade. Ficam para o futuro com casa própria.",
+    "dica3": "É uma associação — e é com ela que o terreiro tem a filiação legal que permite funcionar. O alvará direto, com tesouraria, diretoria e estatuto social próprios, vem depois.",
+    "dica4": "É a âncora atual de tudo — e o que garante que os trabalhos podem acontecer sem imprevistos legais no momento presente.",
+    "dica5": "Começa com P e X. É a Associação à qual o Terreiro Bolhas de Luz é filiado como amparo legal.",
+    "explicacao": "A Pedra de Xangô é a Associação à qual o Terreiro Bolhas de Luz é filiado como amparo legal. A regularização completa com a prefeitura — alvará, corpo de bombeiros, acessibilidade — são coisas mais distantes da realidade atual. O alvará próprio, com tesouraria, diretoria e estatuto social, fica para o futuro com casa própria. Por enquanto, é ela que funciona como o amparo e o apoio legal da casa."
+  },
+  {
+    "palavra": "PONTODEFORCA",
+    "dica1": "São lugares na natureza — não são construções, não são criações humanas. São onde a energia já está, e onde a gente vai buscar o que não consegue plantar sozinho.",
+    "dica2": "Pedreira, praia, rio, mata, cruzeiro, calunga, praça — cada um tem sua força específica, seu Orixá, sua linha. O cruzamento busca a força do ponto certo para o momento certo.",
+    "dica3": "O assentamento se torna um deles em casa — onde convergem todas as forças buscadas ao longo dos anos. Com o tempo, o Exu passa a precisar menos buscar energia fora.",
+    "dica4": "Ciganos têm os seus próprios: praças, grandes árvores, clareiras nas florestas — onde podem montar o acampamento, trabalhar e seguir em frente.",
+    "dica5": "Começa com P e F. É o lugar na natureza onde se busca axé — pedreira, praia, mata, rio, cruzeiro.",
+    "explicacao": "O Ponto de Força é o lugar na natureza onde se busca axé — pedreira, praia, mata, rio, cruzeiro, calunga, praça. Cada um carrega a força de um Orixá ou linha específica. Os cruzamentos anuais buscam a força do ponto certo para o momento certo. Com o tempo, o assentamento se torna um ponto de força pessoal — onde convergem todas as forças buscadas ao longo dos anos, e o Exu passa a precisar menos buscar energia fora."
+  },
+  {
+    "palavra": "LIVREARBÍTRIO",
+    "dica1": "É o que impede que a gente diga que sabe o que o outro precisa espiritualmente — porque arrogância é achar que sabemos.",
+    "dica2": "A moral é humana e muda para cada pessoa — como o Exu Tranca Ruas já disse. Diagnóstico espiritual não solicitado é falta de respeito com a espiritualidade e o livre arbítrio daquela pessoa.",
+    "dica3": "A Umbanda acredita em espíritos, em sonhos, em intuições, em sinais. Se for do caminho da pessoa, ela vai vir — não se arrasta ninguém para o terreiro.",
+    "dica4": "A relação com a espiritualidade é de causa e consequência — e é individual. Não existe fórmula igual para todo mundo. O peso de cada decisão é de quem a tomou.",
+    "dica5": "Começa com L e A. É o respeito à decisão do outro — um dos princípios fundamentais da nossa Umbanda.",
+    "explicacao": "O Livre Arbítrio é um dos princípios fundamentais da nossa Umbanda. A moral é humana e muda para cada pessoa — como o Exu Tranca Ruas já disse. Ninguém sabe o que o outro precisa espiritualmente: diagnóstico não solicitado é falta de respeito. A Umbanda acredita que se for do caminho da pessoa, ela vai vir — não se arrasta ninguém. E a relação com a espiritualidade é individual: o peso de cada decisão é de quem a tomou."
+  },
+  {
+    "palavra": "ITÃ",
+    "dica1": "É a história do Orixá — e é através dele que se entende por que Xangô come em gamela, por que Oxalá usa saia e Adê, por que o tambor nunca se coloca de pé.",
+    "dica2": "A mãe de santo narra o de Xangô nos textos: a vila que não o reconheceu, a fúria, os mortos, a punição de Oxalá. E o de Oxalá: a entrada disfarçada no reino de Nanã, a punição eterna.",
+    "dica3": "Cada um carrega um ensinamento sobre o fundamento — e por isso não é supérfluo saber as histórias. Sem ele, o fundamento vira regra sem explicação.",
+    "dica4": "'Não lembro o Itã completamente agora' — a mãe de santo é honesta ao narrar o de Oxalá. Tradição oral tem essas nuances: a história existe, mas a versão depende de quem a guarda.",
+    "dica5": "Começa com I. É a história sagrada dos Orixás — a narrativa que explica os fundamentos e os axés.",
+    "explicacao": "O Itã é a história sagrada dos Orixás — a narrativa que explica fundamentos e axés. Nos textos da casa, dois são narrados: o de Xangô — a vila, a fúria, os mortos, a gamela de madeira — e o de Oxalá — a entrada disfarçada no reino de Nanã, a punição de usar saia e Adê para sempre. Sem o Itã, o fundamento vira regra sem explicação. E como a mãe de santo reconhece: a tradição oral tem suas nuances — a história existe, mas a versão depende de quem a guarda."
+  },
+  {
+    "palavra": "ASSENTAMENTO",
+    "dica1": "É a materialização dos caminhos do médium — é o Exu de vocês sendo plantado ano a ano, a força dele em terra.",
+    "dica2": "A primeira obrigação com ele sai em torno de R$700 — porque a primeira vez tem que comprar todos os elementos para a materialização do sagrado. Depois, só as aves.",
+    "dica3": "Não se lava, não se leva nada dali para servir em outro lugar. O que está preso na terra não se força para tirar. Água é quizila de Exu — jamais entra nele, só dentro das quartinhas.",
+    "dica4": "Ter ele em casa não é autorização para atendimento ou incorporação para pessoas de fora. Guias cruas não são guias — são miçangas. É firmeza, não habilitação.",
+    "dica5": "Começa com A. É o ritual de materialização da força do Exu em terra — a casa do guia no plano físico.",
+    "explicacao": "O Assentamento é a materialização da força do Exu em terra — é o guia sendo plantado ano a ano. Não se lava — água é quizila de Exu. Nada se tira dali para servir em outro lugar. A terra, as imagens, as ponteiras e os garfos são o fundamento e ficam da forma que foram colocados. Ter o assentamento em casa não é autorização para atendimento: é firmeza, é amparo. A primeira obrigação com ele custa mais — porque é quando se compram todos os elementos pela primeira vez."
+  },
+  {
+    "palavra": "COSMEEDAMIÃO",
+    "dica1": "São os únicos gêmeos da Igreja Católica — e é por isso que o sincretismo os escolheu para representar o Orixá dos gêmeos.",
+    "dica2": "Ibeji é um único Orixá em duas forças — as únicas crianças entre os Orixás. No Batuque, pega cabeça somente de quem é gêmeo: sempre um de Xangô Ibeji e um de Oxum Ibeji.",
+    "dica3": "Na Umbanda, são o nome popular para toda a linha — cosmes, erês, ibejada, encantados. Mas o Orixá que irradia essa linha é o Ibeji, não eles.",
+    "dica4": "Feitiço de criança nem Exu desfaz. São cultuados com doces, guaraná, água com mel. E cada um tem sua individualidade — tem criança que prefere chocalho a chupeta.",
+    "dica5": "Começa com C e D. São os santos católicos que representam os Ibeji — os únicos gêmeos da Igreja.",
+    "explicacao": "Cosme e Damião são os santos católicos que representam o Ibeji no sincretismo — os únicos gêmeos da Igreja. Na Umbanda, são o nome popular para a linha das crianças — cosmes, erês, ibejada. Mas o Orixá que irradia essa linha é o Ibeji, não eles. No Batuque, Ibeji pega cabeça apenas de quem é gêmeo: um de Xangô Ibeji e um de Oxum Ibeji. Feitiço de criança nem Exu desfaz."
+  },
+  {
+    "palavra": "BANTU",
+    "dica1": "São a influência mais forte na história da Umbanda — e é por isso que a mãe de santo os destaca especificamente quando fala sobre as raízes da religião.",
+    "dica2": "São descritos como 'um povo nômade que quando se deslocava cultuava os ancestrais daquela nova terra' — e é dessa prática que vem parte do fundamento do culto afro-brasileiro.",
+    "dica3": "A história de Zélio de Moraes é a raiz branca da Umbanda — e uma das mais recentes. As raízes negras e indígenas são muito mais antigas — e eles são parte fundamental delas.",
+    "dica4": "A Umbanda nasceu de negros de diferentes nações escravizados e trazidos para o mesmo local. O culto ao ancestral da nova terra — prática desse povo — é parte do que deu origem ao que conhecemos.",
+    "dica5": "Começa com B. São o povo africano descrito como a influência mais forte na origem da Umbanda.",
+    "explicacao": "O Povo Bantu é descrito nos textos da casa como a influência mais forte na origem da Umbanda. São um povo nômade que cultuava os ancestrais da nova terra quando se deslocava — e é dessa prática que vem parte do fundamento do culto afro-brasileiro. A história de Zélio de Moraes é a raiz branca da Umbanda e uma das mais recentes. As raízes negras e indígenas são muito mais antigas — e os Bantu são parte essencial delas."
   }
 ];
 
@@ -824,7 +1444,25 @@ async function carregarEdicoesPalavras() {
     console.error('edicoes palavras:', e.code || '', e.message || e);
   }
 }
-const edicoesPalavrasProntas = carregarEdicoesPalavras();
+
+// Palavras novas cadastradas pelo admin direto no site (sem mexer no código) — ficam
+// guardadas à parte e são coladas no fim de PALAVRAS_DO_DIA quando o jogo carrega,
+// então entram naturalmente no rodízio (dias 0-10 nunca mudam, dias 11+ usam essas também).
+async function carregarPalavrasExtras() {
+  try {
+    const snap = await getDocs(query(collection(db, 'palavras_do_dia_extras'), orderBy('criadoEm', 'asc')));
+    snap.forEach(d => PALAVRAS_DO_DIA.push(d.data()));
+  } catch (e) {
+    console.error('extras palavras:', e.code || '', e.message || e);
+  }
+}
+
+async function prepararConteudoPalavras() {
+  await Promise.all([carregarEdicoesPalavras(), carregarPalavrasExtras()]);
+  // a contagem de palavras pode ter mudado (extras somadas) — recalendariza pra refletir
+  if (typeof renderizarCalendario === 'function') renderizarCalendario();
+}
+const edicoesPalavrasProntas = prepararConteudoPalavras();
 
 function obterPalavraEfetiva(indice) {
   const base = PALAVRAS_DO_DIA[indice];
@@ -979,6 +1617,7 @@ onAuthStateChanged(auth, (user) => {
   document.getElementById('admin-secao-erros').style.display = isAdmin ? 'block' : 'none';
   document.getElementById('admin-secao-chutes').style.display = isAdmin ? 'block' : 'none';
   document.getElementById('admin-secao-dificuldade').style.display = isAdmin ? 'block' : 'none';
+  document.getElementById('admin-secao-nova-palavra').style.display = isAdmin ? 'block' : 'none';
   if (isAdmin) {
     carregarErrosAdmin();
     carregarChutesAdmin();
@@ -997,9 +1636,16 @@ onAuthStateChanged(auth, (user) => {
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
 function renderizarCalendario() {
   const hoje = Date.now();
-  const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
-  const indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
-  
+  // admin vê tudo liberado (palavras e dias) pra poder revisar/testar aos poucos, sem
+  // esperar o calendário abrir dia a dia — inclusive palavras novas recém-cadastradas
+  let indiceHoje;
+  if (typeof souAdmin === 'function' && souAdmin()) {
+    indiceHoje = PALAVRAS_DO_DIA.length - 1;
+  } else {
+    const diffDias = Math.floor((hoje - DATA_INICIO) / 86400000);
+    indiceHoje = Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
+  }
+
   const grid = document.getElementById('calendario-grid');
   let html = '';
   
@@ -1405,6 +2051,39 @@ function souAdmin() {
   return !!(currentUser && ADMIN_EMAILS.includes(currentUser.email));
 }
 
+// ── NOVA PALAVRA (admin) — cadastra direto no Firestore, sem mexer no código.
+// Fica salva à parte e é colada no fim de PALAVRAS_DO_DIA no próximo carregamento. ──
+window.adicionarNovaPalavra = async function() {
+  if (!souAdmin()) return;
+  const palavra = document.getElementById('nova-palavra-texto').value.trim().toUpperCase();
+  const variacoes = document.getElementById('nova-palavra-variacoes').value.split('\n').map(v => v.trim()).filter(Boolean);
+  const dica1 = document.getElementById('nova-palavra-dica1').value.trim();
+  const dica2 = document.getElementById('nova-palavra-dica2').value.trim();
+  const dica3 = document.getElementById('nova-palavra-dica3').value.trim();
+  const dica4 = document.getElementById('nova-palavra-dica4').value.trim();
+  const dica5 = document.getElementById('nova-palavra-dica5').value.trim();
+  const explicacao = document.getElementById('nova-palavra-explicacao').value.trim();
+
+  if (!palavra || !dica1 || !dica5 || !explicacao) {
+    alert('Preenche pelo menos a palavra, a Dica 1, a Dica 5 e a explicação.');
+    return;
+  }
+
+  const novaPalavra = { palavra, variacoes, dica1, dica2, dica3, dica4, dica5, explicacao };
+  try {
+    await addDoc(collection(db, 'palavras_do_dia_extras'), { ...novaPalavra, criadoEm: serverTimestamp() });
+    PALAVRAS_DO_DIA.push(novaPalavra); // já entra no rodízio nessa mesma sessão, sem duplicar as outras extras
+    ['texto','variacoes','dica1','dica2','dica3','dica4','dica5','explicacao'].forEach(campo => {
+      document.getElementById('nova-palavra-' + campo).value = '';
+    });
+    alert('Palavra adicionada! Já aparece no seu calendário pra você revisar.');
+    renderizarCalendario();
+  } catch (e) {
+    console.error('adicionar palavra:', e.code || '', e.message || e);
+    alert('Não consegui salvar agora. Tenta de novo.');
+  }
+};
+
 async function carregarChutesDoReporte(palavraTexto, relatadoPor) {
   const titulo = document.getElementById('edit-chutes-titulo');
   const wrap = document.getElementById('edit-chutes-reporter');
@@ -1448,6 +2127,19 @@ async function carregarChutesDoReporte(palavraTexto, relatadoPor) {
     wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
+
+// troca o texto da Dica N com a Dica N+direcao — só reordena o que já tá escrito no
+// formulário (não salva sozinho; precisa clicar em Salvar depois), pra corrigir dicas
+// que estão entregando demais cedo ou tarde demais.
+window.moverDica = function(indice, direcao) {
+  const alvo = indice + direcao;
+  if (alvo < 1 || alvo > 5) return;
+  const a = document.getElementById('edit-dica' + indice);
+  const b = document.getElementById('edit-dica' + alvo);
+  const tmp = a.value;
+  a.value = b.value;
+  b.value = tmp;
+};
 
 window.abrirEdicaoPalavra = async function(palavraTexto, relatadoPor) {
   if (!souAdmin()) return;
