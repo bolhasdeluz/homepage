@@ -1874,8 +1874,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           <!-- Guias -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
-            <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— Guias e Guardiões</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Guias e Guardiões</div>
+              <button id="mh-guias-btn-add" onclick="mhAdicionarGuiaExtra()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar guia</button>
+            </div>
             <div class="perfil-grid" id="mh-grid-guias"></div>
+            <div id="mh-guias-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
           </div>
           <!-- Quimbanda — apronte e cortes, com contagem de aves -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -7965,6 +7969,7 @@ function renderMinhaHistoria(p, user) {
   mhRenderQuimbanda(p.historia || {});
   mhRenderCortes(p.cortes || [], true);
   mhRenderCruzamentosExtras(p.cruzamentosExtras || [], true);
+  mhRenderGuiasExtras(p.guiasExtras || [], true);
 
   // descrição e observações — sempre visíveis e prontas pra editar
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -8052,6 +8057,16 @@ function renderTimeline(p, elId) {
       key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
       data: c.data, nome: '',
       oculto: ocultos.includes(`cruz_extra_${i}`)
+    });
+  });
+
+  // guias extras — vêm do array p.guiasExtras — grupo Guias
+  (p.guiasExtras || []).forEach((g, i) => {
+    if (!g.data || !g.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+    eventos.push({
+      key: `guia_extra_${i}`, label: g.tipo || 'Guia', cor:'#6a9e6a', grupo:'guias',
+      data: g.data, nome: g.nome || '',
+      oculto: ocultos.includes(`guia_extra_${i}`)
     });
   });
 
@@ -8242,6 +8257,19 @@ function dashBadgesCruzamentosExtrasHtml(extras) {
       <div class="dash-badge-icon" style="background:#4a6fa522">✨</div>
       <div class="dash-badge-name">${c.nome || 'Cruzamento'}</div>
       <div class="dash-badge-data">${fmtData(c.data)}</div>
+    </div>`;
+  }).join('');
+}
+
+// gera badges para os guias extras, vindos do array p.guiasExtras
+function dashBadgesGuiasExtrasHtml(extras) {
+  if (!extras || !extras.length) return '';
+  return extras.map(g => {
+    if (!g.data) return '';
+    return `<div class="dash-badge unlocked">
+      <div class="dash-badge-icon" style="background:#6a9e6a22">🔮</div>
+      <div class="dash-badge-name">${g.tipo || 'Guia'}${g.nome ? ' — ' + g.nome : ''}</div>
+      <div class="dash-badge-data">${fmtData(g.data)}</div>
     </div>`;
   }).join('');
 }
@@ -8491,7 +8519,9 @@ function renderDashPessoal(p, user) {
   }
 
   // badges de conquista
-  document.getElementById('dash-badges-guias').innerHTML = DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('');
+  document.getElementById('dash-badges-guias').innerHTML =
+    DASH_BADGES_GUIAS.map(b => dashBadgeHtml(b, guias)).join('') +
+    dashBadgesGuiasExtrasHtml(p.guiasExtras || []);
   document.getElementById('dash-badges-cruz').innerHTML =
     DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
     dashBadgesCruzamentosExtrasHtml(p.cruzamentosExtras || []);
@@ -8709,6 +8739,8 @@ window.salvarSuaHistoria = async function() {
     cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos),
     // filtra cruzamentos extras vazios (sem nome nem data)
     cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
+    // filtra guias extras vazios (sem tipo, nome nem data)
+    guiasExtras: (_mhGuiasExtrasEditando || []).filter(g => g.tipo || g.nome || g.data),
     solicitacao: 'Edição direta pela filha'
   };
 
@@ -8841,11 +8873,18 @@ window.calcTempo = function calcTempo(dataStr) {
   const hoje = new Date();
   let anos = hoje.getFullYear() - inicio.getFullYear();
   let meses = hoje.getMonth() - inicio.getMonth();
+  let dias = hoje.getDate() - inicio.getDate();
+  if (dias < 0) {
+    meses--;
+    dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); // dias do mês anterior a hoje
+  }
   if (meses < 0) { anos--; meses += 12; }
   const p = [];
   if (anos > 0)  p.push(anos  + (anos  === 1 ? ' ano'  : ' anos'));
   if (meses > 0) p.push(meses + (meses === 1 ? ' mês'  : ' meses'));
-  return p.length ? p.join(' e ') : 'Recém chegada';
+  if (dias > 0)  p.push(dias  + (dias  === 1 ? ' dia'  : ' dias'));
+  if (!p.length) return 'Recém chegada';
+  return p.length === 1 ? p[0] : p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1];
 }
 
 // calcula o ciclo de caminhada atual: 7 anos até completar o primeiro ciclo,
@@ -9108,6 +9147,77 @@ window.mhRemoverCruzamentoExtra = function(i) {
 window.mhAtualizarCruzamentoExtra = function(i, campo, valor) {
   if (!_mhCruzExtrasEditando[i]) return;
   _mhCruzExtrasEditando[i][campo] = valor;
+};
+
+// tipos pré-definidos para o seletor de guias extras
+const MH_TIPOS_GUIA = ['Caboclo', 'Exu', 'Pomba Gira', 'Preto Velho', 'Cigana', 'Cosme', 'Erê', 'Outro'];
+
+let _mhGuiasExtrasEditando = [];
+
+function mhRenderGuiasExtras(extras, editavel) {
+  const lista = document.getElementById('mh-guias-extras-lista');
+  const btnAdd = document.getElementById('mh-guias-btn-add');
+  if (!lista) return;
+  extras = extras || [];
+
+  if (editavel) {
+    _mhGuiasExtrasEditando = extras.map(g => ({ ...g }));
+    if (btnAdd) btnAdd.style.display = '';
+  } else {
+    if (btnAdd) btnAdd.style.display = 'none';
+  }
+
+  const dadosParaExibir = editavel ? _mhGuiasExtrasEditando : extras;
+
+  if (!dadosParaExibir.length) {
+    lista.innerHTML = '';
+    return;
+  }
+
+  lista.innerHTML = dadosParaExibir.map((g, i) => {
+    if (editavel) {
+      return `<div class="mh-corte-card">
+        <button type="button" class="mh-corte-del" onclick="mhRemoverGuiaExtra(${i})" title="Remover este guia">✕</button>
+        <div class="mh-corte-num">Guia Extra</div>
+        <div class="mh-corte-grid mh-corte-grid-2">
+          <div>
+            <label>Tipo</label>
+            <select class="form-input" style="margin-bottom:0" onchange="mhAtualizarGuiaExtra(${i},'tipo',this.value)">
+              <option value="" ${!g.tipo?'selected':''}>— Selecionar —</option>
+              ${MH_TIPOS_GUIA.map(t => `<option value="${t}" ${t===g.tipo?'selected':''}>${t}</option>`).join('')}
+            </select>
+          </div>
+          <div><label>Nome</label><input type="text" class="form-input" style="margin-bottom:0" value="${g.nome||''}" placeholder="ex: Sete Flechas" oninput="mhAtualizarGuiaExtra(${i},'nome',this.value)"></div>
+        </div>
+        <div style="margin-top:8px">
+          <label class="form-label">Data de chegada</label>
+          <input type="date" class="form-input" style="margin-bottom:0" value="${g.data||''}" oninput="mhAtualizarGuiaExtra(${i},'data',this.value)">
+        </div>
+      </div>`;
+    }
+    return `<div class="mh-corte-card">
+      <div class="mh-corte-num">${g.tipo || 'Guia'}${g.nome ? ' — ' + g.nome : ''}</div>
+      <div class="mh-corte-grid mh-corte-grid-2">
+        <div><label>Nome</label><div class="valor">${g.nome || '—'}</div></div>
+        <div><label>Chegada</label><div class="valor">${g.data ? fmtData(g.data) : '—'}</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.mhAdicionarGuiaExtra = function() {
+  _mhGuiasExtrasEditando.push({ tipo: '', nome: '', data: '' });
+  mhRenderGuiasExtras(_mhGuiasExtrasEditando, true);
+};
+
+window.mhRemoverGuiaExtra = function(i) {
+  _mhGuiasExtrasEditando.splice(i, 1);
+  mhRenderGuiasExtras(_mhGuiasExtrasEditando, true);
+};
+
+window.mhAtualizarGuiaExtra = function(i, campo, valor) {
+  if (!_mhGuiasExtrasEditando[i]) return;
+  _mhGuiasExtrasEditando[i][campo] = valor;
 };
 
 // ── SALVAR PERFIL ──
