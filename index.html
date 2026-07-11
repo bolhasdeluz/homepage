@@ -8505,7 +8505,10 @@ function renderDashPessoal(p, user) {
   const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
   const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras;
+  // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
+  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
+  const totalCruzConga = hist.cruz_conga ? 1 : 0;
+  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
 
   // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
   const totalAves =
