@@ -7195,7 +7195,25 @@ const auth = getAuth(app);
   window._tvListarTerreiras = async () => {
     try {
       const snap = await getDocs(collection(db, 'terreira_jogadores'));
-      return snap.docs.map(d => ({ uid: d.id, nome: d.data().nome || '' })).filter(p => p.nome);
+      const pessoas = snap.docs.map(d => ({ uid: d.id, nome: d.data().nome || '' }));
+      const semNome = pessoas.filter(p => !p.nome);
+      if (semNome.length) {
+        // terreirinhos criados antes do nome ser salvo — tenta achar o nome pelos
+        // resultados dos jogos (mesmo uid), em vez de esconder a pessoa da lista
+        try {
+          const [snapPalavra, snapQuiz] = await Promise.all([
+            getDocs(collection(db, 'palavra_dia_resultados')),
+            getDocs(collection(db, 'quiz_fundamentos_resultados')),
+          ]);
+          const nomesPorUid = {};
+          [...snapPalavra.docs, ...snapQuiz.docs].forEach(d => {
+            const r = d.data();
+            if (r.uid && r.nome && !nomesPorUid[r.uid]) nomesPorUid[r.uid] = r.nome;
+          });
+          semNome.forEach(p => { p.nome = nomesPorUid[p.uid] || ''; });
+        } catch (e) { console.warn('tv listar terreiras (fallback nome):', e); }
+      }
+      return pessoas.map(p => ({ uid: p.uid, nome: p.nome || 'Jogadora sem nome salvo' }));
     } catch (e) { console.warn('tv listar terreiras:', e); return []; }
   };
 
