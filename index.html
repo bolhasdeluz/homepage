@@ -6497,11 +6497,6 @@ async function tvAtualizarAdminCatalogo() {
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
 
-  if (!tvSementeRodada) {
-    tvSementeRodada = true;
-    await tvAdminSemearNovosObjetos();
-  }
-
   const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
   if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
   lista.innerHTML = catalogo.map(item => {
@@ -6614,6 +6609,19 @@ async function tvAdminSemearNovosObjetos() {
   } catch (e) { console.warn('tv semear novos objetos:', e); }
 }
 
+// roda o cadastro automático 1x por sessão, ANTES de qualquer tela carregar o catálogo —
+// precisa terminar de escrever no Firestore antes do "Seus objetos" da jogadora ler a
+// lista, senão os itens novos não aparecem lá na primeira visita depois do cadastro
+async function tvGarantirSemente() {
+  if (tvSementeRodada) return;
+  tvSementeRodada = true;
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const emSimulacao = _modoSimulacao !== null;
+  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  if (!souAdmin) return;
+  await tvAdminSemearNovosObjetos();
+}
+
 async function tvAdminExcluir(id) {
   if (window._tvExcluirItemCatalogo) await window._tvExcluirItemCatalogo(id);
   tvAtualizarAdminCatalogo();
@@ -6714,11 +6722,12 @@ async function avSalvarEscolhas() {
   avFecharModal();
 }
 
-function gpAtualizarPortal() {
+async function gpAtualizarPortal() {
   gpAtualizarTrilha(); // reposiciona já com o que estiver marcado no DOM agora
   gpVerificarStatusReal();
   gpCarregarRankingsReais();
   gpAtualizarSecaoAdmin();
+  await tvGarantirSemente(); // precisa terminar antes de carregar o catálogo pra qualquer tela
   tvAtualizar();
   tvAtualizarAdminCatalogo();
   avAtualizarBadge();
