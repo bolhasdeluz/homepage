@@ -358,6 +358,13 @@ footer{
   position:absolute;left:50%;top:70%;object-fit:contain;transform-origin:center;
   image-rendering:pixelated;max-width:95%;
 }
+.tv-admin-preview-tampo{
+  position:absolute;left:6%;right:6%;border-top:2px dashed var(--gp-gold);z-index:5;display:none;
+}
+.tv-admin-preview-tampo::after{
+  content:'tampo';position:absolute;right:0;top:-13px;font-size:7.5px;color:var(--gp-gold);
+  font-family:'Cinzel',serif;letter-spacing:.03em;
+}
 .tv-admin-slider-linha{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;color:var(--gp-text-dim)}
 .tv-admin-slider-linha input[type=range]{flex:1}
 .tv-admin-slider-label{white-space:nowrap;min-width:88px}
@@ -1656,10 +1663,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
    entre navegadores/celulares, então a gente mesmo controla o arrasto */
 .tv-zoom-viewport{
   width:100%;max-width:960px;aspect-ratio:1/1;margin:0 auto;position:relative;
-  border-radius:12px;overflow:hidden;touch-action:none;
+  border-radius:12px;overflow:hidden;touch-action:pan-y;
 }
+/* só trava o touch (pra poder arrastar a sala) depois de um primeiro toque
+   "ativando" ela — antes disso, deixa o dedo passar batido e rolar a página
+   normalmente, senão a sala "sequestra" a rolagem da página inteira */
+.tv-zoom-viewport.tv-arrasto-ativo{touch-action:none}
 .tv-zoom-viewport.tv-arrastavel{cursor:grab}
 .tv-zoom-viewport.tv-arrastando{cursor:grabbing}
+.tv-zoom-dica{
+  text-align:center;font-size:9.5px;color:var(--gp-text-dim);font-style:italic;margin:-4px 0 8px;
+}
 .terreira-virtual-container{
   width:100%;height:100%;position:relative;transform-origin:center center;
   transition:transform .15s ease;
@@ -1807,6 +1821,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .tv-catalogo-btn-add:hover{background:var(--gp-gold-fundo)}
 .tv-catalogo-form{padding-top:10px;border-top:1px dashed var(--gp-border)}
+.tv-admin-form-topo{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.tv-admin-form-topo span{font-family:'Cinzel',serif;font-size:10.5px;letter-spacing:.05em;color:var(--gp-text-dim)}
+.tv-admin-form-fechar{background:none;border:none;font-size:15px;color:var(--gp-text-dim);cursor:pointer;line-height:1;padding:2px 4px}
+.tv-admin-form-fechar:hover{color:var(--gp-gold)}
 
 .gp-admin-section{
   background:var(--gp-surface);border-radius:12px;border:0.5px dashed var(--gp-gold);
@@ -2885,6 +2903,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="tv-zoom-valor" id="tv-zoom-valor">100%</span>
             <button onclick="tvAjustarZoom(0.1)" title="Aumentar zoom">＋</button>
           </div>
+          <div class="tv-zoom-dica" id="tv-zoom-dica" style="display:none">Toque na sala uma vez pra poder arrastar e ver as outras partes ✦</div>
           <div class="tv-sala-wrapper">
           <div class="tv-zoom-viewport" id="tv-zoom-viewport">
           <div class="terreira-virtual-container" id="tv-container-zoom">
@@ -2951,6 +2970,23 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div class="tv-proximo tv-editor-only tv-so-editando" id="tv-proximo">Carregando...</div>
 
           <div class="tv-inventario-titulo tv-editor-only tv-so-editando">Seus objetos</div>
+          <div class="tv-admin-filtros tv-editor-only tv-so-editando">
+            <input type="text" id="tv-inv-busca" placeholder="🔎 Buscar por nome..." oninput="tvRenderInventario()">
+            <select id="tv-inv-filtro-categoria" onchange="tvRenderInventario()">
+              <option value="">Todas categorias</option>
+              <option value="plantas">🌿 Plantas</option>
+              <option value="moveis">🪑 Móveis</option>
+              <option value="utensilios">🏺 Utensílios</option>
+              <option value="armas">⚔️ Armas &amp; Emblemas</option>
+              <option value="natureza">🌾 Natureza</option>
+              <option value="outros">✦ Outros</option>
+            </select>
+            <select id="tv-inv-filtro-tipo" onchange="tvRenderInventario()">
+              <option value="">Chão e parede</option>
+              <option value="chao">▦ Só chão</option>
+              <option value="parede">🧱 Só parede</option>
+            </select>
+          </div>
           <div class="tv-inventario tv-editor-only tv-so-editando" id="tv-inventario"></div>
         </div>
 
@@ -3100,6 +3136,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
         <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
         <div class="tv-catalogo-form" id="tv-admin-form" style="display:none">
+          <div class="tv-admin-form-topo">
+            <span id="tv-admin-form-titulo">Novo objeto</span>
+            <button class="tv-admin-form-fechar" onclick="tvAdminCancelarForm()" title="Fechar">✕</button>
+          </div>
           <div class="tv-admin-arquivo-linha" id="tv-admin-arquivo-linha">
             <img id="tv-admin-preview" alt="" style="display:none">
             <select id="tv-admin-novo-arquivo"></select>
@@ -3119,7 +3159,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </select>
           </div>
           <div class="admin-row-inputs">
-            <select id="tv-admin-novo-tipo" onchange="tvAdminAtualizarPreviewSala()">
+            <select id="tv-admin-novo-tipo" onchange="tvAdminAtualizarPreviewSala();tvAdminAtualizarVisibilidadeMesa()">
               <option value="chao">Objeto de chão</option>
               <option value="parede">Objeto de parede</option>
             </select>
@@ -3145,6 +3185,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="tv-admin-slider-label">Inclinação padrão</span>
             <input type="range" id="tv-admin-novo-inclinacao" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
             <span class="tv-admin-slider-valor" id="tv-admin-novo-inclinacao-valor">0°</span>
+          </div>
+          <div class="admin-row-inputs" id="tv-admin-mesa-linha">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--gp-text-dim);cursor:pointer">
+              <input type="checkbox" id="tv-admin-novo-mesa" onchange="tvAdminAlternarMesa()">
+              🪑 É uma mesa/superfície (dá pra colocar objetos em cima dela)
+            </label>
+          </div>
+          <div class="tv-admin-slider-linha" id="tv-admin-altura-tampo-linha" style="display:none">
+            <span class="tv-admin-slider-label">Altura do tampo</span>
+            <input type="range" id="tv-admin-novo-altura-tampo" min="0.15" max="0.9" step="0.05" value="0.5" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
+            <span class="tv-admin-slider-valor" id="tv-admin-novo-altura-tampo-valor">50%</span>
           </div>
           <div class="admin-row-inputs">
             <button class="btn-add" id="tv-admin-btn-salvar" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
@@ -6693,6 +6744,10 @@ const TV_ZOOM_MIN = 0.6, TV_ZOOM_MAX = 2, TV_ZOOM_PASSO = 0.1;
 let tvZoom = parseFloat(localStorage.getItem('tvZoom')) || 1;
 let tvPanX = 0, tvPanY = 0; // deslocamento do arrasto, em px de tela (não muda com o zoom)
 let tvArrastando = false, tvArrastoOrigemX = 0, tvArrastoOrigemY = 0, tvPanOrigemX = 0, tvPanOrigemY = 0;
+// só passa a "capturar" o toque (e poder arrastar) depois de um primeiro toque
+// na sala — antes disso o touch-action fica normal (rolando a página), senão
+// a sala roubava a rolagem da página inteira assim que aparecia na tela
+let tvArrastoAtivo = false;
 
 // transform: translate(...) vem ANTES do scale(...) de propósito — assim o
 // deslocamento do arrasto é em pixels finais de tela, direto, sem precisar
@@ -6703,9 +6758,11 @@ function tvAplicarZoom() {
   const container = document.getElementById('tv-container-zoom');
   const valor = document.getElementById('tv-zoom-valor');
   const viewport = document.getElementById('tv-zoom-viewport');
+  const dica = document.getElementById('tv-zoom-dica');
   if (container) container.style.transform = `translate(${tvPanX}px, ${tvPanY}px) scale(${tvZoom})`;
   if (valor) valor.textContent = Math.round(tvZoom * 100) + '%';
   if (viewport) viewport.classList.toggle('tv-arrastavel', tvZoom > 1);
+  if (dica) dica.style.display = (tvZoom > 1 && !tvArrastoAtivo) ? 'block' : 'none';
 }
 
 // o quanto dá pra arrastar pra cada lado antes de começar a mostrar "vazio"
@@ -6726,6 +6783,15 @@ function tvAjustarZoom(direcao) {
 }
 
 function tvIniciarArrasto(e) {
+  // primeiro toque na sala só "ativa" o arrasto (deixa de rolar a página junto),
+  // ainda não arrasta nada — assim esse mesmo toque, se for só rolar a página,
+  // continua rolando normal (o touch-action só vira "none" a partir do PRÓXIMO toque)
+  if (!tvArrastoAtivo) {
+    tvArrastoAtivo = true;
+    document.getElementById('tv-zoom-viewport')?.classList.add('tv-arrasto-ativo');
+    tvAplicarZoom(); // esconde a dica
+    return;
+  }
   if (tvZoom <= 1) return; // nada pra ver além da tela nesse zoom
   tvArrastando = true;
   const p = e.touches ? e.touches[0] : e;
@@ -7078,6 +7144,46 @@ function tvCalcularAncora(src) {
   return promessa;
 }
 
+// desenha um objeto "em cima da mesa" — usa o retângulo já renderizado da
+// própria mesa (getBoundingClientRect, depois que ela já foi desenhada) pra
+// achar o X/Y certo, em vez de tentar calcular tudo só com % (mais simples e
+// acompanha automaticamente escala/inclinação/posição da mesa, sejam quais forem)
+function tvRenderizarObjetoEmCimaDaMesa(topoInstanciaId, topoInfo, imgMesa, itemMesa, ancoras, objetosEl, superficie, linha, coluna) {
+  if (topoInfo.catalogId === TV_AVATAR_CATALOG_ID || topoInfo.catalogId === TV_SEMENTE_CATALOG_ID) return; // não faz sentido em cima da mesa
+  const itemTopo = tvCatalogo.find(o => o.id === topoInfo.catalogId);
+  if (!itemTopo) return;
+
+  const rectMesa = imgMesa.getBoundingClientRect();
+  const rectContainer = objetosEl.getBoundingClientRect();
+  if (!rectContainer.width || !rectContainer.height) return; // sala ainda não está visível pra medir
+
+  const alturaTampo = itemMesa.alturaTampo || 0.5;
+  const yTopoPx = rectMesa.bottom - rectMesa.height * alturaTampo;
+  const xTopoPercent = ((rectMesa.left + rectMesa.width / 2 - rectContainer.left) / rectContainer.width) * 100;
+  const yTopoPercent = ((yTopoPx - rectContainer.top) / rectContainer.height) * 100;
+
+  const ancoraTopo = ancoras[itemTopo.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
+  const TAMANHO_BASE_TOPO = 8; // % do container — objeto em cima de mesa fica pequeno, tipo um enfeite
+  const tamanhoTela = TAMANHO_BASE_TOPO / (ancoraTopo.larguraFrac || 1);
+  const escala = topoInfo.escala || 1;
+  const rot = topoInfo.rot || 0;
+  const espelho = topoInfo.espelhado ? -1 : 1;
+  const skew = tvSkewTotal(superficie, topoInfo.inclinacao);
+
+  const img = document.createElement('img');
+  img.className = 'tv-objeto-img';
+  img.src = itemTopo.imagem;
+  img.alt = itemTopo.nome;
+  img.style.left = (xTopoPercent + (topoInfo.deslocX || 0)) + '%';
+  img.style.top = (yTopoPercent + (topoInfo.deslocY || 0)) + '%';
+  img.style.width = tamanhoTela + '%';
+  img.style.transform = `translate(${-ancoraTopo.cx * 100}%,${-ancoraTopo.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
+  img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna + 1);
+  img.addEventListener('click', (e) => { e.stopPropagation(); tvCliqueEmObjetoColocado(topoInstanciaId); });
+  if (tvModoSelecaoMultipla && tvSelecaoMultipla.has(topoInstanciaId)) img.classList.add('tv-objeto-selecionado-multiplo');
+  objetosEl.appendChild(img);
+}
+
 async function tvRenderGrid() {
   const grid = document.getElementById('tv-grid');
   const objetos = document.getElementById('tv-objetos');
@@ -7195,6 +7301,15 @@ async function tvRenderGrid() {
         });
         if (tvModoSelecaoMultipla && tvSelecaoMultipla.has(instanciaId)) img.classList.add('tv-objeto-selecionado-multiplo');
         objetos.appendChild(img);
+
+        // se essa mesa tiver algo colocado em cima dela, desenha também —
+        // não usa a lógica normal de slot (divide a mesma casinha da mesa)
+        if (item.mesa) {
+          const topoId = Object.keys(colocados).find(id => colocados[id].emCimaDe === instanciaId);
+          if (topoId) {
+            tvRenderizarObjetoEmCimaDaMesa(topoId, colocados[topoId], img, item, ancoras, objetos, superficie, linha, coluna);
+          }
+        }
       } else if (ehAvatar && avatarEscolhas) {
         const profundidade = (linha + coluna) / (2 * (n - 1));
         const base = [13, 24]; // avatar lê melhor um pouco maior que os objetos comuns
@@ -7303,16 +7418,36 @@ function tvRenderInventario() {
     return;
   }
   // agrupa por categoria pra ficar mais fácil de achar, em vez de uma lista única
-  // (itens com "acao" já apareceram em Itens especiais, não repete aqui)
+  // (itens com "acao" já apareceram em Itens especiais, não repete aqui) — com
+  // busca por nome e filtro de categoria/tipo, igual o catálogo do admin
+  const busca = (document.getElementById('tv-inv-busca')?.value || '').trim().toLowerCase();
+  const filtroCategoria = document.getElementById('tv-inv-filtro-categoria')?.value || '';
+  const filtroTipo = document.getElementById('tv-inv-filtro-tipo')?.value || '';
+
+  let achouAlgo = false;
   TV_CATEGORIAS.forEach(cat => {
-    const itensDaCategoria = tvCatalogo.filter(item => tvCategoriaEfetiva(item) === cat.chave && !item.acao);
+    if (filtroCategoria && cat.chave !== filtroCategoria) return;
+    const itensDaCategoria = tvCatalogo.filter(item => {
+      if (tvCategoriaEfetiva(item) !== cat.chave || item.acao) return false;
+      if (busca && !item.nome.toLowerCase().includes(busca)) return false;
+      if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
+      return true;
+    });
     if (!itensDaCategoria.length) return;
+    achouAlgo = true;
     const header = document.createElement('div');
     header.className = 'tv-inventario-categoria';
     header.textContent = cat.label;
     wrap.appendChild(header);
     itensDaCategoria.forEach(item => wrap.appendChild(tvCriarTileInventario(item, dia, colocados)));
   });
+
+  if (!achouAlgo && (busca || filtroCategoria || filtroTipo)) {
+    const vazio = document.createElement('div');
+    vazio.className = 'gp-admin-vazio';
+    vazio.textContent = 'Nenhum objeto encontrado com esse filtro.';
+    wrap.appendChild(vazio);
+  }
 }
 
 function tvSelecionarItem(itemId) {
@@ -7332,6 +7467,16 @@ async function tvClicarSlot(superficie, slot) {
   const ocupanteId = tvAcharColocado(colocados, superficie, slot);
 
   if (ocupanteId) {
+    // se tiver um item do inventário pronto pra colocar e a casinha já tiver
+    // uma mesa (sem nada em cima ainda), oferece colocar em cima dela em vez
+    // de só selecionar a mesa
+    const ocupanteInfo = colocados[ocupanteId];
+    const ocupanteItem = tvCatalogo.find(o => o.id === ocupanteInfo?.catalogId);
+    const jaTemAlgoEmCima = Object.values(colocados).some(c => c.emCimaDe === ocupanteId);
+    if (tvItemSelecionado && ocupanteItem?.mesa && !jaTemAlgoEmCima) {
+      tvOferecerColocarEmCima(ocupanteId);
+      return;
+    }
     tvCliqueEmObjetoColocado(ocupanteId);
     return;
   }
@@ -7352,6 +7497,13 @@ async function tvClicarSlot(superficie, slot) {
     if (tipoDoObjeto !== tipoDoSlot) return; // objeto de parede não entra no chão e vice-versa
     info.superficie = superficie;
     info.slot = slot;
+    // se for uma mesa com algo em cima, o que tá em cima acompanha o
+    // movimento — atualiza a posição guardada dele também (só usada de
+    // referência se a mesa for removida depois; a renderização normal já
+    // acompanha a mesa sozinha)
+    Object.values(colocados).forEach(outroInfo => {
+      if (outroInfo.emCimaDe === tvObjetoSelecionadoId) { outroInfo.superficie = superficie; outroInfo.slot = slot; }
+    });
     tvRenderGrid();
     tvRenderAcoesObjeto();
     await tvSalvarProgresso();
@@ -7394,6 +7546,34 @@ async function tvClicarSlot(superficie, slot) {
   tvRenderGrid();
   tvRenderInventario();
   await tvSalvarProgresso();
+}
+
+// pergunta se quer colocar o item do inventário em cima de uma mesa já
+// colocada naquela casinha (em vez de recusar, já que a casinha "tá ocupada")
+function tvOferecerColocarEmCima(mesaInstanciaId) {
+  const item = tvCatalogo.find(o => o.id === tvItemSelecionado);
+  const mesaInfo = tvProgresso?.colocados?.[mesaInstanciaId];
+  const mesaItem = tvCatalogo.find(o => o.id === mesaInfo?.catalogId);
+  if (!item || !mesaInfo) return;
+  tvMostrarEscolha(
+    '🪑 Colocar em cima da mesa?',
+    `Essa casinha já tem "${mesaItem?.nome || 'uma mesa'}". Quer colocar "${item.nome}" em cima dela?`,
+    [
+      { label: 'Cancelar' },
+      { label: 'Colocar em cima', destaque: true, aoClicar: async () => {
+        const instanciaId = tvNovaInstanciaId();
+        tvProgresso.colocados[instanciaId] = {
+          catalogId: tvItemSelecionado, superficie: mesaInfo.superficie, slot: mesaInfo.slot,
+          rot: 0, espelhado: false, escala: item.escalaPadrao || 1, inclinacao: item.inclinacaoPadrao || 0,
+          emCimaDe: mesaInstanciaId,
+        };
+        tvItemSelecionado = null;
+        tvRenderGrid();
+        tvRenderInventario();
+        await tvSalvarProgresso();
+      } },
+    ]
+  );
 }
 
 // ── objeto já colocado: seleciona pra abrir a barrinha de girar/espelhar/remover ──
@@ -7445,6 +7625,15 @@ function tvRenderSelecaoMultiplaBarra() {
   if (contagem) contagem.textContent = `${tvSelecaoMultipla.size} selecionado${tvSelecaoMultipla.size === 1 ? '' : 's'}`;
 }
 
+// se remover uma mesa que tinha algo em cima, aquele algo não some junto —
+// só perde o vínculo e volta a ser um objeto de chão normal na mesma casinha
+function tvDesvincularItensDaMesa(mesaInstanciaId) {
+  if (!tvProgresso?.colocados) return;
+  Object.values(tvProgresso.colocados).forEach(info => {
+    if (info.emCimaDe === mesaInstanciaId) delete info.emCimaDe;
+  });
+}
+
 // remove só os objetos marcados no modo de seleção múltipla
 function tvRemoverSelecaoMultipla() {
   if (!tvSelecaoMultipla.size || !tvProgresso?.colocados) return;
@@ -7453,7 +7642,10 @@ function tvRemoverSelecaoMultipla() {
     '🗑 Remover selecionados?',
     `Isso remove os ${qtd} objeto${qtd === 1 ? '' : 's'} marcado${qtd === 1 ? '' : 's'} do seu terreirinho. Não dá pra desfazer.`,
     async () => {
-      tvSelecaoMultipla.forEach(id => delete tvProgresso.colocados[id]);
+      tvSelecaoMultipla.forEach(id => {
+        tvDesvincularItensDaMesa(id);
+        delete tvProgresso.colocados[id];
+      });
       tvSelecaoMultipla.clear();
       tvRenderGrid();
       tvRenderInventario();
@@ -7564,9 +7756,10 @@ function tvRenderAcoesObjeto() {
   const item = (info && !ehAvatar && !ehPlanta) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
   nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : ehPlanta ? '🌱 Planta especial' : (item ? item.nome : '');
 
-  // avatar e planta especial são únicos — não dá pra ter uma segunda cópia
+  // avatar e planta especial são únicos — não dá pra ter uma segunda cópia.
+  // Objeto em cima de mesa também não clona (por enquanto só 1 por mesa)
   const btnClonar = document.getElementById('tv-acoes-clonar');
-  if (btnClonar) btnClonar.style.display = (ehAvatar || ehPlanta) ? 'none' : '';
+  if (btnClonar) btnClonar.style.display = (ehAvatar || ehPlanta || info?.emCimaDe) ? 'none' : '';
 
   // mostra em qual casinha da grade o objeto selecionado está — ajuda a
   // entender/achar onde ele está enquanto edita
@@ -7681,6 +7874,7 @@ async function tvMoverSelecionadoParaSuperficie(novaSuperficie) {
 
 async function tvRemoverSelecionado() {
   if (!tvObjetoSelecionadoId || !tvProgresso?.colocados) return;
+  tvDesvincularItensDaMesa(tvObjetoSelecionadoId);
   delete tvProgresso.colocados[tvObjetoSelecionadoId];
   tvObjetoSelecionadoId = null;
   tvRenderGrid();
@@ -7699,6 +7893,7 @@ async function tvClonarSelecionado() {
   const ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
   const ehPlanta = info.catalogId === TV_SEMENTE_CATALOG_ID;
   if (ehAvatar || ehPlanta) return; // itens únicos não podem ser clonados
+  if (info.emCimaDe) return; // objeto em cima de mesa não clona (por enquanto só dá 1 por mesa)
 
   const catalogItem = tvCatalogo.find(o => o.id === info.catalogId);
   const superficiesTentar = catalogItem?.tipo === 'parede'
@@ -7944,6 +8139,31 @@ async function tvAdminAtualizarPreviewSala() {
   img.style.left = '50%';
   img.style.top = tipo === 'parede' ? '50%' : '68%';
   img.style.transform = `translate(-${ancora.cx * 100}%, -${ancora.cy * 100}%) scale(${escala}) skewY(${skew}deg)`;
+
+  // linha mostrando onde fica o "tampo" da mesa, só quando marcada como mesa —
+  // usa o retângulo já renderizado da imagem (depois do transform) pra saber
+  // onde desenhar, então acompanha certinho a escala/inclinação escolhidas
+  const ehMesa = tipo === 'chao' && !!document.getElementById('tv-admin-novo-mesa')?.checked;
+  let linhaTampo = document.getElementById('tv-admin-preview-tampo');
+  if (ehMesa) {
+    if (!linhaTampo) {
+      linhaTampo = document.createElement('div');
+      linhaTampo.id = 'tv-admin-preview-tampo';
+      linhaTampo.className = 'tv-admin-preview-tampo';
+      container.appendChild(linhaTampo);
+    }
+    const alturaTampo = parseFloat(document.getElementById('tv-admin-novo-altura-tampo')?.value) || 0.5;
+    requestAnimationFrame(() => {
+      const rectImg = img.getBoundingClientRect();
+      const rectContainer = container.getBoundingClientRect();
+      if (!rectImg.height || !rectContainer.height) return;
+      const yPx = rectImg.bottom - rectImg.height * alturaTampo;
+      linhaTampo.style.top = ((yPx - rectContainer.top) / rectContainer.height * 100) + '%';
+      linhaTampo.style.display = 'block';
+    });
+  } else if (linhaTampo) {
+    linhaTampo.style.display = 'none';
+  }
 }
 
 let tvAdminCatalogoCache = [];
@@ -8025,6 +8245,29 @@ function tvAdminAtualizarValoresSlider() {
   const inclinacaoValor = document.getElementById('tv-admin-novo-inclinacao-valor');
   if (escalaValor) escalaValor.textContent = parseFloat(escala.value).toFixed(2) + 'x';
   if (inclinacaoValor) inclinacaoValor.textContent = inclinacao.value + '°';
+  const alturaTampo = document.getElementById('tv-admin-novo-altura-tampo');
+  const alturaTampoValor = document.getElementById('tv-admin-novo-altura-tampo-valor');
+  if (alturaTampoValor && alturaTampo) alturaTampoValor.textContent = Math.round(parseFloat(alturaTampo.value) * 100) + '%';
+}
+
+// só objeto de chão pode ser mesa (parede não faz sentido ter "tampo") — some
+// e desmarca o checkbox se a pessoa trocar pra objeto de parede
+function tvAdminAtualizarVisibilidadeMesa() {
+  const tipo = document.getElementById('tv-admin-novo-tipo')?.value;
+  const linhaMesa = document.getElementById('tv-admin-mesa-linha');
+  if (linhaMesa) linhaMesa.style.display = tipo === 'chao' ? '' : 'none';
+  if (tipo !== 'chao') {
+    const checkbox = document.getElementById('tv-admin-novo-mesa');
+    if (checkbox) checkbox.checked = false;
+  }
+  tvAdminAlternarMesa();
+}
+
+function tvAdminAlternarMesa() {
+  const checked = document.getElementById('tv-admin-novo-mesa')?.checked;
+  const linha = document.getElementById('tv-admin-altura-tampo-linha');
+  if (linha) linha.style.display = checked ? '' : 'none';
+  tvAdminAtualizarPreviewSala();
 }
 
 function tvAdminLimparForm() {
@@ -8034,7 +8277,10 @@ function tvAdminLimparForm() {
   document.getElementById('tv-admin-novo-categoria').value = 'outros';
   document.getElementById('tv-admin-novo-escala').value = '1';
   document.getElementById('tv-admin-novo-inclinacao').value = '0';
+  document.getElementById('tv-admin-novo-mesa').checked = false;
+  document.getElementById('tv-admin-novo-altura-tampo').value = '0.5';
   tvAdminAtualizarValoresSlider();
+  tvAdminAtualizarVisibilidadeMesa();
 }
 
 // abre/fecha uma seção do painel admin do Jogos — começam todas fechadas, pra
@@ -8060,6 +8306,7 @@ function tvAdminToggleForm() {
     document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
     document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
     document.getElementById('tv-admin-btn-clonar').style.display = 'none';
+    document.getElementById('tv-admin-form-titulo').textContent = 'Novo objeto';
     tvAdminLimparForm();
     tvMontarSelectArquivos();
     document.getElementById('tv-admin-preview-objeto').style.display = 'none';
@@ -8087,6 +8334,7 @@ async function tvAdminClonarItem() {
   document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
   document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
   document.getElementById('tv-admin-btn-clonar').style.display = 'none';
+  document.getElementById('tv-admin-form-titulo').textContent = 'Novo objeto (clonado)';
   await tvMontarSelectArquivos();
   tvAtualizarPreviewArquivo();
   document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -8110,11 +8358,15 @@ async function tvAdminEditarItem(id) {
   document.getElementById('tv-admin-novo-categoria').value = tvCategoriaEfetiva(item);
   document.getElementById('tv-admin-novo-escala').value = String(item.escalaPadrao || 1);
   document.getElementById('tv-admin-novo-inclinacao').value = String(item.inclinacaoPadrao || 0);
+  document.getElementById('tv-admin-novo-mesa').checked = !!item.mesa;
+  document.getElementById('tv-admin-novo-altura-tampo').value = String(item.alturaTampo || 0.5);
   tvAdminAtualizarValoresSlider();
+  tvAdminAtualizarVisibilidadeMesa();
   tvAdminAtualizarPreviewSala();
   document.getElementById('tv-admin-btn-salvar').textContent = '💾 Salvar alterações';
   document.getElementById('tv-admin-btn-cancelar-edicao').style.display = '';
   document.getElementById('tv-admin-btn-clonar').style.display = '';
+  document.getElementById('tv-admin-form-titulo').textContent = 'Editando: ' + (item.nome || '');
   document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
@@ -8125,11 +8377,13 @@ async function tvAdminAdicionar() {
   const categoria = document.getElementById('tv-admin-novo-categoria').value;
   const escalaPadrao = parseFloat(document.getElementById('tv-admin-novo-escala').value);
   const inclinacaoPadrao = parseInt(document.getElementById('tv-admin-novo-inclinacao').value, 10);
+  const mesa = tipo === 'chao' && !!document.getElementById('tv-admin-novo-mesa')?.checked;
+  const alturaTampo = parseFloat(document.getElementById('tv-admin-novo-altura-tampo')?.value) || 0.5;
   if (!nome || !dia) { alert('Preenche o nome e o dia.'); return; }
 
   if (tvAdminEditandoId) {
     if (window._tvSalvarItemCatalogo) {
-      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao });
+      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo });
     }
     tvAdminCancelarForm();
     tvAtualizarAdminCatalogo();
@@ -8139,7 +8393,7 @@ async function tvAdminAdicionar() {
   const imagem = document.getElementById('tv-admin-novo-arquivo').value;
   if (!imagem) { alert('Escolhe o arquivo.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao });
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo });
   tvAdminLimparForm();
   tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
@@ -8257,6 +8511,48 @@ async function tvAdminSemearNovosObjetos() {
       await window._tvSalvarItemCatalogo(id, dados);
     }
   } catch (e) { console.warn('tv semear novos objetos:', e); }
+}
+
+// ── categorização automática via IA — roda sozinha (sem botão, sem UI) quando
+// a admin abre o terreirinho: acha arquivos novos em assets/objetos/ que ainda
+// não estão no catálogo e cadastra eles sozinha (nome/tipo/categoria/mesa),
+// perguntando pra Claude API o que é cada imagem
+async function tvAdminAutoCatalogar() {
+  if (!window._tvCarregarCatalogo || !window._tvSalvarItemCatalogo) return;
+  try {
+    const [catalogoAtual, arquivos] = await Promise.all([
+      window._tvCarregarCatalogo(),
+      tvBuscarArquivosGithub(),
+    ]);
+    if (!arquivos) return; // falhou buscar no github, tenta de novo na próxima
+    const jaCatalogados = new Set(catalogoAtual.map(i => i.imagem));
+    const novos = arquivos.filter(caminho => !jaCatalogados.has(caminho));
+    if (!novos.length) return;
+
+    console.log(`tv auto-catalogar: achou ${novos.length} arquivo(s) novo(s), classificando via IA...`);
+    for (const caminho of novos) {
+      try {
+        const imagemUrl = `https://raw.githubusercontent.com/${TV_GITHUB_REPO}/main/${caminho}`;
+        const resp = await fetch('/api/classificar-objeto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imagemUrl }),
+        });
+        if (!resp.ok) { console.warn('tv auto-catalogar: falhou classificar', caminho); continue; }
+        const classificacao = await resp.json();
+        if (classificacao.error) { console.warn('tv auto-catalogar:', caminho, classificacao.error); continue; }
+
+        const id = 'obj_ia_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+        await window._tvSalvarItemCatalogo(id, {
+          nome: classificacao.nome, imagem: caminho, diaDesbloqueio: 1,
+          tipo: classificacao.tipo, categoria: classificacao.categoria,
+          mesa: classificacao.mesa, alturaTampo: classificacao.alturaTampo,
+        });
+        console.log(`tv auto-catalogar: "${classificacao.nome}" cadastrado (${caminho})`);
+      } catch (e) { console.warn('tv auto-catalogar: erro num arquivo', caminho, e); }
+    }
+    tvAtualizarAdminCatalogo(); // recarrega a lista, já mostrando os novos
+  } catch (e) { console.warn('tv auto-catalogar geral:', e); }
 }
 
 // ── MIGRAÇÃO — vincula o uid de contas antigas que já jogaram ou já tinham
@@ -8388,6 +8684,7 @@ async function tvGarantirSemente() {
   const souAdmin = !emSimulacao && souAdminAtivo(user);
   if (!souAdmin) return;
   await tvAdminSemearNovosObjetos();
+  await tvAdminAutoCatalogar();
 }
 
 async function tvAdminExcluir(id) {
