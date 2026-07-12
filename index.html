@@ -6433,6 +6433,16 @@ async function tvEnviarCartinha() {
   input.value = '';
   const status = document.getElementById('tv-cartinha-status');
   if (status) { status.style.display = 'inline'; setTimeout(() => status.style.display = 'none', 3000); }
+
+  // avisa por e-mail quem recebeu a cartinha, no e-mail de login dela — não trava
+  // a tela por isso, só dispara e segue (se falhar, a cartinha já foi salva mesmo assim)
+  if (user && user.email) {
+    fetch('/api/cartinha-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': user.email },
+      body: JSON.stringify({ paraUid: tvVisitandoUid, deNome: tvNomeProprio || 'Alguém da casa', mensagem: texto })
+    }).catch(e => console.warn('aviso de cartinha por e-mail:', e));
+  }
 }
 
 // posições espalhadas pela sala pras cartinhas flutuarem — repete se tiver mais
