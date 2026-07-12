@@ -1541,13 +1541,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .tv-cartinha-status{font-size:.72rem;color:var(--gp-gold);font-style:italic}
 
-/* cartinhas flutuando na sala — só aparecem no SEU próprio terreirinho */
+/* cartinhas flutuando na sala — no próprio terreirinho dá pra abrir e ler;
+   visitando a casa de outra pessoa, aparecem do mesmo jeito (pra dar aquele
+   gostinho de "tem cartinha aqui"), mas só de enfeite, não abre nem revela nada */
 .tv-cartinhas{position:absolute;inset:0;z-index:5;pointer-events:none}
 .tv-cartinha-flutuante{
   position:absolute;font-size:22px;cursor:pointer;pointer-events:auto;
   filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
   animation:tvCartinhaFlutuar 3.2s ease-in-out infinite;
 }
+.tv-cartinha-flutuante.tv-cartinha-so-visual{cursor:default}
 @keyframes tvCartinhaFlutuar{
   0%,100%{transform:translateY(0) rotate(-4deg)}
   50%{transform:translateY(-12px) rotate(4deg)}
@@ -6394,7 +6397,7 @@ async function tvVisitarSelecionado() {
   tvAplicarCoresNaTela();
   tvRenderGrid();
   tvRenderAcoesObjeto();
-  tvRenderCartinhas(); // esconde qualquer cartinha antiga da própria sala enquanto visita
+  tvRenderCartinhas(); // mostra as cartinhas de quem está sendo visitada (só de enfeite, não abre)
 }
 
 function tvVoltarProprioTerreirinho() {
@@ -6468,20 +6471,28 @@ let tvCartinhaAbertaId = null;
 async function tvRenderCartinhas() {
   const camada = document.getElementById('tv-cartinhas');
   if (!camada) return;
-  // só mostra cartinhas no PRÓPRIO terreirinho — enquanto visita alguém, fica vazio
-  if (tvVisitandoUid || !tvUidProprio || !window._tvCarregarCartinhas) { camada.innerHTML = ''; return; }
-  tvCartinhasAtuais = await window._tvCarregarCartinhas(tvUidProprio);
+  // mostra as cartinhas da sala sendo exibida (a própria ou a de quem se visita) —
+  // só que visitando alguém elas ficam só de enfeite: dá pra ver que tem cartinha
+  // ali, mas não abre nem revela remetente/mensagem, isso é só de quem mora lá
+  const uidDono = tvVisitandoUid || tvUidProprio;
+  if (!uidDono || !window._tvCarregarCartinhas) { camada.innerHTML = ''; return; }
+  const souVisitante = !!tvVisitandoUid;
+  tvCartinhasAtuais = await window._tvCarregarCartinhas(uidDono);
   camada.innerHTML = '';
   tvCartinhasAtuais.forEach((c, i) => {
     const pos = TV_CARTINHA_POSICOES[i % TV_CARTINHA_POSICOES.length];
     const el = document.createElement('div');
-    el.className = 'tv-cartinha-flutuante';
+    el.className = 'tv-cartinha-flutuante' + (souVisitante ? ' tv-cartinha-so-visual' : '');
     el.style.left = pos.left;
     el.style.top = pos.top;
     el.style.animationDelay = (i * 0.4) + 's';
     el.textContent = '💌';
-    el.title = `De ${c.deNome}`;
-    el.addEventListener('click', () => tvAbrirCartinha(c.id));
+    if (souVisitante) {
+      el.title = 'Uma cartinha — só quem mora aqui pode abrir';
+    } else {
+      el.title = `De ${c.deNome}`;
+      el.addEventListener('click', () => tvAbrirCartinha(c.id));
+    }
     camada.appendChild(el);
   });
 }
