@@ -1347,7 +1347,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   color:var(--gp-gold);margin-bottom:10px;padding-right:20px;
 }
 .gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6;white-space:pre-wrap}
-.tv-confirm-acoes{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.tv-confirm-acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .tv-confirm-acoes button{
   border-radius:14px;padding:8px 18px;font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;
   cursor:pointer;border:1px solid var(--gp-border);
@@ -2997,10 +2997,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button class="gp-info-modal-fechar" onclick="tvFecharConfirmacao()">✕</button>
     <div class="gp-info-modal-titulo" id="tv-confirm-titulo"></div>
     <div class="gp-info-modal-texto" id="tv-confirm-texto" style="white-space:pre-wrap"></div>
-    <div class="tv-confirm-acoes">
-      <button class="tv-confirm-cancelar" onclick="tvFecharConfirmacao()">Cancelar</button>
-      <button class="tv-confirm-ir" id="tv-confirm-btn-ir">Ir</button>
-    </div>
+    <div class="tv-confirm-acoes" id="tv-confirm-acoes"></div>
   </div>
 </div>
 
@@ -6850,6 +6847,7 @@ async function tvRenderGrid() {
             return;
           }
           if (item.acao === 'ranking' && !tvModoEdicao) { tvMostrarRankingPopup(); return; }
+          if (item.acao === 'cidade' && !tvModoEdicao) { tvAbrirPortaCidade(); return; }
           tvSelecionarObjetoColocado(instanciaId);
         });
         objetos.appendChild(img);
@@ -7472,6 +7470,7 @@ const TV_NOVOS_OBJETOS_SEED = [
   // Sessões da casa, ver tvRenderGrid/tvRenderInventario pelo campo "acao"
   { arquivo: 'calendario-magico.png', nome: 'Calendário Mágico', tipo: 'parede', categoria: 'utensilios', acao: 'calendario' },
   { arquivo: 'quadro-medalhas.png', nome: 'Quadro de Medalhas', tipo: 'parede', categoria: 'utensilios', acao: 'ranking' },
+  { arquivo: 'porta-magica.png', nome: 'Porta da Cidade', tipo: 'parede', categoria: 'utensilios', acao: 'cidade' },
 ];
 
 async function tvAdminSemearNovosObjetos() {
@@ -7834,16 +7833,55 @@ function gpFecharInfo() {
   document.getElementById('gp-info-modal-overlay').style.display = 'none';
 }
 
-// confirmação genérica (ex: evitar sair sem querer da terreirinho num misclique)
-function tvConfirmarNavegacao(titulo, texto, aoConfirmar) {
+// modal de escolha genérico — recebe uma lista de botões (label + o que fazer
+// ao clicar); usado tanto pra confirmação simples (Cancelar/Ir) quanto pra
+// escolhas com mais opções (ex: a Porta da Cidade, visitar ou ir na Flora)
+function tvMostrarEscolha(titulo, texto, opcoes) {
   document.getElementById('tv-confirm-titulo').textContent = titulo;
   document.getElementById('tv-confirm-texto').textContent = texto;
-  const btnIr = document.getElementById('tv-confirm-btn-ir');
-  btnIr.onclick = () => { tvFecharConfirmacao(); aoConfirmar(); };
+  const acoesEl = document.getElementById('tv-confirm-acoes');
+  acoesEl.innerHTML = '';
+  opcoes.forEach(op => {
+    const btn = document.createElement('button');
+    btn.className = op.destaque ? 'tv-confirm-ir' : 'tv-confirm-cancelar';
+    btn.textContent = op.label;
+    btn.onclick = () => { tvFecharConfirmacao(); if (op.aoClicar) op.aoClicar(); };
+    acoesEl.appendChild(btn);
+  });
   document.getElementById('tv-confirm-overlay').style.display = 'flex';
+}
+// confirmação simples de sim/não (ex: evitar sair sem querer da terreirinho num misclique)
+function tvConfirmarNavegacao(titulo, texto, aoConfirmar) {
+  tvMostrarEscolha(titulo, texto, [
+    { label: 'Cancelar' },
+    { label: 'Ir', destaque: true, aoClicar: aoConfirmar },
+  ]);
 }
 function tvFecharConfirmacao() {
   document.getElementById('tv-confirm-overlay').style.display = 'none';
+}
+
+// a porta mágica leva pra "área da cidade" — visitar outra terreira, ou ir na Flora
+function tvAbrirPortaCidade() {
+  tvMostrarEscolha('🚪 Área da Cidade', 'Pra onde você quer ir?', [
+    { label: 'Cancelar' },
+    { label: '🏠 Visitar terreira', destaque: true, aoClicar: tvFocarListaVisitas },
+    { label: '🌸 Ir na Flora', destaque: true, aoClicar: tvIrParaLojas },
+  ]);
+}
+function tvFocarListaVisitas() {
+  const sel = document.getElementById('tv-visita-select');
+  if (!sel) return;
+  sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  sel.focus();
+}
+// acha o item "lojas" no menu já carregado, pra sempre abrir o link certo
+// mesmo se o admin trocar a URL da Guia de Lojas depois
+function tvIrParaLojas() {
+  const item = menuData?.sections?.flatMap(s => s.items).find(i => i.id === 'lojas');
+  if (item?.url) { window.open(item.url, '_blank'); return; }
+  if (item?.page) { showPage(item.page); return; }
+  window.open('https://floraselojas.pages.dev', '_blank');
 }
 
 // texto de status da planta especial de VERDADE (a da própria pessoa, não a de
@@ -7864,6 +7902,7 @@ const TV_OBJETOS_ESPECIAIS_INFO = {
   semente: { emoji: '🌱', texto: 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.' },
   calendario: { emoji: '📅', texto: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦' },
   ranking: { emoji: '🏅', texto: 'Esse é o Quadro de Medalhas! Coloque ele numa parede e, fora do modo edição, clique nele pra ver o ranking geral da casa e dos jogos.' },
+  cidade: { emoji: '🚪', texto: 'Essa é a Porta da Cidade! Coloque ela numa parede e, fora do modo edição, clique nela pra escolher entre visitar o terreirinho de alguém ou ir na Flora (a guia de lojas da casa).' },
 };
 function tvMostrarInfoObjetoEspecial(item) {
   const info = TV_OBJETOS_ESPECIAIS_INFO[item.acao] || { emoji: '✦', texto: 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.' };
