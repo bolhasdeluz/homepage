@@ -1645,10 +1645,27 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   border:1px solid rgba(196,57,107,.3);border-radius:6px;width:36px;height:36px;cursor:pointer;background:none;padding:2px;
 }
 
-.terreira-virtual-container{
-  width:100%;max-width:520px;aspect-ratio:1/1;margin:0 auto;position:relative;
-  border:1px solid var(--gp-border);border-radius:12px;overflow:hidden;
+/* a sala em si fica dentro de uma "janela" de tamanho fixo (a viewport) — o zoom
+   escala só a sala (não afeta o layout dela nem o clique nos objetos, porque
+   transform é só visual), e a viewport com scroll deixa dar zoom pra dentro
+   sem bagunçar o resto da página quando a sala fica visualmente maior que ela */
+.tv-zoom-viewport{
+  width:100%;max-width:900px;aspect-ratio:1/1;margin:0 auto;position:relative;
+  border:1px solid var(--gp-border);border-radius:12px;overflow:auto;
 }
+.terreira-virtual-container{
+  width:100%;height:100%;position:relative;transform-origin:center center;
+  transition:transform .15s ease;
+}
+.tv-zoom-barra{
+  display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 10px;
+}
+.tv-zoom-barra button{
+  width:30px;height:30px;border-radius:50%;border:1px solid var(--gp-border);background:#fff;
+  color:var(--gp-gold);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.tv-zoom-barra button:hover{background:var(--gp-gold-fundo)}
+.tv-zoom-valor{font-family:'Cinzel',serif;font-size:11px;color:var(--gp-text-dim);min-width:38px;text-align:center}
 .terreira-cor-fundo{width:100%;height:100%;position:relative}
 /* chão e parede agora são dois PNGs separados (cada um só com sua própria forma,
    resto transparente) — assim dá pra colorir cada um individualmente. A camada de
@@ -2779,8 +2796,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   <div class="section-wrap">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
-    <div class="section-title">🎮 Jogos</div>
-    <p class="section-sub">Desafios diários, ofensiva e ranking da casa ✦</p>
+    <div class="section-title">🏠 Sua Terreirinha</div>
+    <p class="section-sub">Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa ✦</p>
 
     <button id="btn-sair-padrao-senha" onclick="logoutSenhaPadrao()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:12px">
       🔑 Sair do Perfil Padrão
@@ -2815,60 +2832,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
       </div>
 
-      <div class="gp-ranking-section">
-        <div class="gp-ranking-title">Sua posição em cada jogo</div>
-        <div class="gp-mini-ranks" id="gp-mini-ranks">
-          <div class="gp-mini-rank"><span class="gp-mini-rank-label">📖 Palavra</span><span class="gp-mini-rank-pos" data-jogo="palavra">—</span></div>
-          <div class="gp-mini-rank"><span class="gp-mini-rank-label">⚖️ V ou F</span><span class="gp-mini-rank-pos" data-jogo="verdadeiro">—</span></div>
-          <div class="gp-mini-rank"><span class="gp-mini-rank-label">🎵 Complete</span><span class="gp-mini-rank-pos" data-jogo="complete">—</span></div>
-          <div class="gp-mini-rank"><span class="gp-mini-rank-label">🎭 De Quem</span><span class="gp-mini-rank-pos" data-jogo="quem">—</span></div>
-        </div>
-        <div class="gp-leaderboard">
-          <div class="gp-lb-title">Ranking geral do terreiro</div>
-          <div id="gp-leaderboard-list">
-            <!-- TODO FIRESTORE: preencher via gpRenderLeaderboard() -->
-          </div>
-        </div>
-      </div>
-
-      <div class="gp-trilha-section">
-        <div class="gp-section-title" style="margin-top:0">🌿 Trilha do dia</div>
-        <p class="gp-trilha-sub">Cada jogo concluído é uma casa a mais no caminho. Complete a trilha inteira e ganhe um bônus de pontos ✦</p>
-
-        <div class="gp-trilha" id="gp-trilha">
-          <div class="gp-trilha-linha"></div>
-          <img class="gp-trilha-peninha" id="gp-trilha-peninha" src="assets/peninha.png" alt="Peninha andando pela trilha">
-
-          <div class="gp-trilha-passo destaque" id="gp-passo-palavra" data-jogo="palavra">
-            <button class="gp-trilha-pedra" onclick="gpPlayGame('palavra')" title="Palavra do dia"><span>📖</span></button>
-            <span class="gp-trilha-legenda">Palavra<br>do dia</span>
-          </div>
-
-          <div class="gp-trilha-passo" id="gp-passo-verdadeiro" data-jogo="verdadeiro">
-            <button class="gp-trilha-pedra" onclick="gpPlayGame('verdadeiro')" title="Verdadeiro ou falso"><span>⚖️</span></button>
-            <span class="gp-trilha-legenda">Verdadeiro<br>ou falso</span>
-          </div>
-
-          <div class="gp-trilha-passo" id="gp-passo-complete" data-jogo="complete">
-            <button class="gp-trilha-pedra" onclick="gpPlayGame('complete')" title="Complete o ponto"><span>🎵</span></button>
-            <span class="gp-trilha-legenda">Complete<br>o ponto</span>
-            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
-          </div>
-
-          <div class="gp-trilha-passo" id="gp-passo-quem" data-jogo="quem">
-            <button class="gp-trilha-pedra" onclick="gpPlayGame('quem')" title="De quem é esse ponto?"><span>🎭</span></button>
-            <span class="gp-trilha-legenda">De quem<br>é?</span>
-            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
-          </div>
-        </div>
-
-        <div class="gp-trilha-bonus" id="gp-trilha-bonus" style="display:none">🎉 Trilha completa hoje — bônus de pontos garantido!</div>
-      </div>
-
       <!-- TERREIRINHO DIGITAL -->
       <div class="tv-section">
-        <div class="gp-section-title" style="margin-top:0">🏠 Terreirinho Digital</div>
-        <p class="gp-trilha-sub">Ganhe um objeto novo a cada 7 dias e monte o seu terreirinho do seu jeito ✦</p>
+        <p class="gp-trilha-sub" style="margin-top:0">Ganhe um objeto novo a cada 7 dias e monte o seu terreirinho do seu jeito ✦</p>
 
         <div id="tv-login-aviso" class="tv-login-aviso" style="display:none">
           Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦
@@ -2897,7 +2863,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <input type="color" id="cor-parede" value="#fff5f7">
           </div>
 
-          <div class="terreira-virtual-container">
+          <div class="tv-zoom-barra">
+            <button onclick="tvAjustarZoom(-0.1)" title="Diminuir zoom">－</button>
+            <span class="tv-zoom-valor" id="tv-zoom-valor">100%</span>
+            <button onclick="tvAjustarZoom(0.1)" title="Aumentar zoom">＋</button>
+          </div>
+          <div class="tv-zoom-viewport" id="tv-zoom-viewport">
+          <div class="terreira-virtual-container" id="tv-container-zoom">
             <div class="terreira-cor-fundo" id="terreira-fundo">
               <div class="tv-camada-cor tv-camada-cor-chao" id="tv-cor-chao"></div>
               <div class="tv-camada-textura tv-textura-chao"></div>
@@ -2907,6 +2879,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <div class="tv-objetos" id="tv-objetos"></div>
               <div class="tv-cartinhas" id="tv-cartinhas"></div>
             </div>
+          </div>
           </div>
 
           <div class="tv-compartilhar-barra">
@@ -2965,6 +2938,57 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
         </div>
       </div>
+
+      <div class="gp-ranking-section" style="display:none">
+        <div class="gp-ranking-title">Sua posição em cada jogo</div>
+        <div class="gp-mini-ranks" id="gp-mini-ranks">
+          <div class="gp-mini-rank"><span class="gp-mini-rank-label">📖 Palavra</span><span class="gp-mini-rank-pos" data-jogo="palavra">—</span></div>
+          <div class="gp-mini-rank"><span class="gp-mini-rank-label">⚖️ V ou F</span><span class="gp-mini-rank-pos" data-jogo="verdadeiro">—</span></div>
+          <div class="gp-mini-rank"><span class="gp-mini-rank-label">🎵 Complete</span><span class="gp-mini-rank-pos" data-jogo="complete">—</span></div>
+          <div class="gp-mini-rank"><span class="gp-mini-rank-label">🎭 De Quem</span><span class="gp-mini-rank-pos" data-jogo="quem">—</span></div>
+        </div>
+        <div class="gp-leaderboard">
+          <div class="gp-lb-title">Ranking geral do terreiro</div>
+          <div id="gp-leaderboard-list">
+            <!-- TODO FIRESTORE: preencher via gpRenderLeaderboard() -->
+          </div>
+        </div>
+      </div>
+
+      <div class="gp-trilha-section">
+        <div class="gp-section-title" style="margin-top:0">🌿 Trilha do dia</div>
+        <p class="gp-trilha-sub">Cada jogo concluído é uma casa a mais no caminho. Complete a trilha inteira e ganhe um bônus de pontos ✦</p>
+
+        <div class="gp-trilha" id="gp-trilha">
+          <div class="gp-trilha-linha"></div>
+          <img class="gp-trilha-peninha" id="gp-trilha-peninha" src="assets/peninha.png" alt="Peninha andando pela trilha">
+
+          <div class="gp-trilha-passo destaque" id="gp-passo-palavra" data-jogo="palavra">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('palavra')" title="Palavra do dia"><span>📖</span></button>
+            <span class="gp-trilha-legenda">Palavra<br>do dia</span>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-verdadeiro" data-jogo="verdadeiro">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('verdadeiro')" title="Verdadeiro ou falso"><span>⚖️</span></button>
+            <span class="gp-trilha-legenda">Verdadeiro<br>ou falso</span>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-complete" data-jogo="complete">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('complete')" title="Complete o ponto"><span>🎵</span></button>
+            <span class="gp-trilha-legenda">Complete<br>o ponto</span>
+            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
+          </div>
+
+          <div class="gp-trilha-passo" id="gp-passo-quem" data-jogo="quem">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('quem')" title="De quem é esse ponto?"><span>🎭</span></button>
+            <span class="gp-trilha-legenda">De quem<br>é?</span>
+            <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
+          </div>
+        </div>
+
+        <div class="gp-trilha-bonus" id="gp-trilha-bonus" style="display:none">🎉 Trilha completa hoje — bônus de pontos garantido!</div>
+      </div>
+
 
       <!-- ADMIN — vincular uid de contas antigas (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="tv-admin-vincular-uids" style="display:none">
@@ -3675,7 +3699,7 @@ function getDefaultMenu() {
         { id: 'estoque',  label: '📦 Estoque',          type: 'internal', page: 'estoque', desc: 'O que temos e o que está acabando', showCard: true, showMenu: true },
         { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
         { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
-        { id: 'jogos',      label: '🎮 Jogos',              type: 'internal', page: 'jogos', desc: 'Desafios diários, ofensiva e ranking da casa', showCard: true, showMenu: true },
+        { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa', showCard: true, showMenu: true },
         { id: 'resumo', label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
         { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
       ]},
@@ -6554,6 +6578,7 @@ async function tvAtualizar() {
   aviso.style.display = 'none';
   aviso.textContent = 'Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦';
   corpo.style.display = 'block';
+  tvAplicarZoom();
 
   // trocou de pessoa desde a última vez (conta real, admin por senha, Perfil
   // Padrão ou simulação de admin) — desliga o autosalvamento e sai do modo de
@@ -6609,6 +6634,25 @@ function tvAplicarCoresNaTela() {
   corParedeInput.value = tvProgresso.corParede || '#fff5f7';
   document.getElementById('tv-cor-chao').style.backgroundColor = tvProgresso.corChao || '#fff5f7';
   document.getElementById('tv-cor-parede').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
+}
+
+// ── ZOOM da sala — só visual (transform:scale), não muda o tamanho de verdade
+// nem a posição dos objetos (que são todos em %), então clicar neles continua
+// funcionando certinho mesmo com zoom aplicado. Fica salvo entre visitas.
+const TV_ZOOM_MIN = 0.6, TV_ZOOM_MAX = 2, TV_ZOOM_PASSO = 0.1;
+let tvZoom = parseFloat(localStorage.getItem('tvZoom')) || 1;
+
+function tvAplicarZoom() {
+  const container = document.getElementById('tv-container-zoom');
+  const valor = document.getElementById('tv-zoom-valor');
+  if (container) container.style.transform = `scale(${tvZoom})`;
+  if (valor) valor.textContent = Math.round(tvZoom * 100) + '%';
+}
+
+function tvAjustarZoom(direcao) {
+  tvZoom = Math.min(TV_ZOOM_MAX, Math.max(TV_ZOOM_MIN, +(tvZoom + direcao).toFixed(2)));
+  localStorage.setItem('tvZoom', String(tvZoom));
+  tvAplicarZoom();
 }
 
 // ══ VISITAR OUTRAS TERREIRAS ══
@@ -8472,6 +8516,7 @@ function tvMostrarRankingPopup() {
   if (!original) return;
   const clone = original.cloneNode(true);
   clone.removeAttribute('id');
+  clone.style.display = ''; // a seção original fica escondida da tela — o popup sempre mostra
   clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
   gpMostrarInfoHtml('🏅 Ranking da Casa', clone.outerHTML);
 }
