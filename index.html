@@ -1370,6 +1370,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   color:var(--gp-gold);margin-bottom:10px;padding-right:20px;
 }
 .gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6;white-space:pre-wrap}
+.tv-mural-item{padding:8px 0;border-bottom:1px solid var(--gp-border);cursor:pointer}
+.tv-mural-item:last-child{border-bottom:none}
+.tv-mural-item-de{font-family:'Cinzel',serif;font-size:11px;color:var(--gp-gold);margin-bottom:2px}
+.tv-mural-item-preview{font-size:12px;color:var(--gp-text-dim)}
+.tv-mural-item:hover .tv-mural-item-de{text-decoration:underline}
 #tv-confirm-extra:not(:empty){margin-top:10px}
 #tv-confirm-extra select{
   width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--gp-border);
@@ -2930,6 +2935,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button onclick="tvGirarSelecionado()">↻ Girar</button>
             <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
             <div class="tv-acoes-superficies" id="tv-acoes-superficies"></div>
+            <button onclick="tvClonarSelecionado()" id="tv-acoes-clonar">🧬 Clonar</button>
             <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
           </div>
 
@@ -2947,6 +2953,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <div class="tv-cartinha-modal-texto" id="tv-cartinha-modal-texto"></div>
             <div class="tv-cartinha-modal-acoes">
               <button onclick="tvFecharCartinha()">Fechar</button>
+              <button onclick="tvGuardarCartinhaNoMural()" id="tv-cartinha-btn-guardar">📌 Guardar no mural</button>
               <button onclick="tvApagarCartinhaAberta()">🗑 Apagar</button>
             </div>
           </div>
@@ -6684,7 +6691,9 @@ async function tvRenderCartinhas() {
   const souVisitante = !!tvVisitandoUid;
   tvCartinhasAtuais = await window._tvCarregarCartinhas(uidDono);
   camada.innerHTML = '';
-  tvCartinhasAtuais.forEach((c, i) => {
+  // cartinhas já guardadas no Mural de Recados saem de flutuar pela sala —
+  // continuam existindo (pra abrir a partir do mural), só não boiam mais aqui
+  tvCartinhasAtuais.filter(c => !c.salva).forEach((c, i) => {
     const pos = TV_CARTINHA_POSICOES[i % TV_CARTINHA_POSICOES.length];
     const el = document.createElement('div');
     el.className = 'tv-cartinha-flutuante' + (souVisitante ? ' tv-cartinha-so-visual' : '');
@@ -6720,6 +6729,11 @@ function tvAbrirCartinha(id) {
       boneca.innerHTML = '';
     }
   }
+  const btnGuardar = document.getElementById('tv-cartinha-btn-guardar');
+  if (btnGuardar) {
+    btnGuardar.textContent = cartinha.salva ? '★ Guardada no mural' : '📌 Guardar no mural';
+    btnGuardar.disabled = !!cartinha.salva;
+  }
   document.getElementById('tv-cartinha-modal-overlay').style.display = 'flex';
 }
 
@@ -6735,6 +6749,16 @@ async function tvApagarCartinhaAberta() {
   document.getElementById('tv-cartinha-modal-overlay').style.display = 'none';
   tvCartinhaAbertaId = null;
   tvRenderCartinhas();
+}
+
+// guarda a cartinha aberta no Mural de Recados — some da sala flutuante, mas
+// continua acessível dali em diante
+async function tvGuardarCartinhaNoMural() {
+  if (!tvCartinhaAbertaId || !window._tvSalvarCartinhaMural) return;
+  await window._tvSalvarCartinhaMural(tvCartinhaAbertaId);
+  const btnGuardar = document.getElementById('tv-cartinha-btn-guardar');
+  if (btnGuardar) { btnGuardar.textContent = '★ Guardada no mural'; btnGuardar.disabled = true; }
+  await tvRenderCartinhas();
 }
 
 // ── GRADE ISOMÉTRICA — chão (assets/chao-cinza.png) e as duas paredes (assets/parede-cinza.png),
@@ -6963,6 +6987,7 @@ async function tvRenderGrid() {
           }
           if (item.acao === 'ranking' && !tvModoEdicao) { tvMostrarRankingPopup(); return; }
           if (item.acao === 'cidade' && !tvModoEdicao) { tvAbrirPortaCidade(); return; }
+          if (item.acao === 'mural' && !tvModoEdicao) { tvAbrirMuralRecados(); return; }
           if (item.acao === 'semente' && !tvModoEdicao) { tvMostrarInfoObjetoEspecial(item); return; }
           tvSelecionarObjetoColocado(instanciaId);
         });
@@ -7234,6 +7259,10 @@ function tvRenderAcoesObjeto() {
   const item = (info && !ehAvatar && !ehPlanta) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
   nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : ehPlanta ? '🌱 Planta especial' : (item ? item.nome : '');
 
+  // avatar e planta especial são únicos — não dá pra ter uma segunda cópia
+  const btnClonar = document.getElementById('tv-acoes-clonar');
+  if (btnClonar) btnClonar.style.display = (ehAvatar || ehPlanta) ? 'none' : '';
+
   // mostra em qual casinha da grade o objeto selecionado está — ajuda a
   // entender/achar onde ele está enquanto edita
   if (slotEl) {
@@ -7339,6 +7368,37 @@ async function tvRemoverSelecionado() {
   tvObjetoSelecionadoId = null;
   tvRenderGrid();
   tvRenderInventario();
+  tvRenderAcoesObjeto();
+  await tvSalvarProgresso();
+}
+
+// coloca uma segunda cópia do objeto selecionado, com o mesmo tamanho/inclinação/
+// giro/espelho já ajustados, pra não ter que reajustar tudo de novo pra colocar
+// "mais do mesmo" — procura o primeiro espaço livre (de preferência na mesma
+// superfície; se for objeto de parede e não couber, tenta a outra parede)
+async function tvClonarSelecionado() {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  const ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
+  const ehPlanta = info.catalogId === TV_SEMENTE_CATALOG_ID;
+  if (ehAvatar || ehPlanta) return; // itens únicos não podem ser clonados
+
+  const catalogItem = tvCatalogo.find(o => o.id === info.catalogId);
+  const superficiesTentar = catalogItem?.tipo === 'parede'
+    ? [info.superficie, info.superficie === 'paredeEsquerda' ? 'paredeDireita' : 'paredeEsquerda']
+    : [info.superficie];
+
+  let superficieLivre = null, slotLivre = null;
+  for (const sup of superficiesTentar) {
+    const s = tvPrimeiroSlotLivre(tvProgresso.colocados, sup, null);
+    if (s !== null) { superficieLivre = sup; slotLivre = s; break; }
+  }
+  if (slotLivre === null) { alert('Não há espaço livre pra colocar outra cópia.'); return; }
+
+  const novaInstanciaId = tvNovaInstanciaId();
+  tvProgresso.colocados[novaInstanciaId] = { ...info, superficie: superficieLivre, slot: slotLivre };
+  tvObjetoSelecionadoId = novaInstanciaId;
+  tvRenderGrid();
   tvRenderAcoesObjeto();
   await tvSalvarProgresso();
 }
@@ -7801,6 +7861,7 @@ const TV_NOVOS_OBJETOS_SEED = [
   { arquivo: 'calendario-magico.png', nome: 'Calendário Mágico', tipo: 'parede', categoria: 'utensilios', acao: 'calendario' },
   { arquivo: 'quadro-medalhas.png', nome: 'Quadro de Medalhas', tipo: 'parede', categoria: 'utensilios', acao: 'ranking' },
   { arquivo: 'porta-magica.png', nome: 'Porta da Cidade', tipo: 'parede', categoria: 'utensilios', acao: 'cidade' },
+  { arquivo: 'mural-recados.png', nome: 'Mural de Recados', tipo: 'parede', categoria: 'utensilios', acao: 'mural' },
 ];
 
 async function tvAdminSemearNovosObjetos() {
@@ -8268,6 +8329,7 @@ const TV_OBJETOS_ESPECIAIS_INFO = {
   calendario: { emoji: '📅', texto: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦' },
   ranking: { emoji: '🏅', texto: 'Esse é o Quadro de Medalhas! Coloque ele numa parede e, fora do modo edição, clique nele pra ver o ranking geral da casa e dos jogos.' },
   cidade: { emoji: '🚪', texto: 'Essa é a Porta da Cidade! Coloque ela numa parede e, fora do modo edição, clique nela pra escolher entre visitar o terreirinho de alguém ou ir na Flora (a guia de lojas da casa).' },
+  mural: { emoji: '📌', texto: 'Esse é o Mural de Recados! Quando alguém deixar uma cartinha carinhosa pra você, abra ela e clique em "Guardar no mural" — ela sai de flutuar pela sala e fica guardadinha aqui pra sempre. Coloque o mural numa parede e, fora do modo edição, clique nele pra ver as cartinhas que você guardou.' },
 };
 function tvMostrarInfoObjetoEspecial(item) {
   const info = TV_OBJETOS_ESPECIAIS_INFO[item.acao] || { emoji: '✦', texto: 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.' };
@@ -8288,6 +8350,40 @@ function tvMostrarRankingPopup() {
   clone.removeAttribute('id');
   clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
   gpMostrarInfoHtml('🏅 Ranking da Casa', clone.outerHTML);
+}
+
+// escapa texto livre (nome/mensagem de cartinha, digitado por outras pessoas)
+// antes de jogar dentro de innerHTML, pra não abrir brecha de HTML/script injetado
+function tvEscapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// mostra as cartinhas guardadas no Mural de Recados — só de quem mora na
+// terreirinho; visitando alguém, o mural é só de enfeite (mesma régua de
+// privacidade das cartinhas flutuantes)
+function tvAbrirMuralRecados() {
+  if (tvVisitandoUid) {
+    gpMostrarInfo('📌 Mural de Recados', 'Esse é o mural de recados de quem mora aqui — só ela pode ver e guardar cartinhas nele.');
+    return;
+  }
+  const salvas = tvCartinhasAtuais.filter(c => c.salva);
+  if (!salvas.length) {
+    gpMostrarInfo('📌 Mural de Recados', 'Ainda não tem nenhuma cartinha guardada aqui. Quando alguém deixar uma cartinha carinhosa pra você, abra ela e clique em "Guardar no mural" pra manter ela sempre por perto.');
+    return;
+  }
+  const html = salvas.map(c => {
+    const preview = (c.mensagem || '').slice(0, 80) + ((c.mensagem || '').length > 80 ? '…' : '');
+    return `<div class="tv-mural-item" onclick="tvFecharInfoEAbrirCartinha('${c.id}')">
+      <div class="tv-mural-item-de">💌 De ${tvEscapeHtml(c.deNome)}</div>
+      <div class="tv-mural-item-preview">${tvEscapeHtml(preview)}</div>
+    </div>`;
+  }).join('');
+  gpMostrarInfoHtml('📌 Mural de Recados', html);
+}
+// fecha o popup do mural e abre a cartinha certinha, com a lembrancinha do avatar
+function tvFecharInfoEAbrirCartinha(id) {
+  gpFecharInfo();
+  tvAbrirCartinha(id);
 }
 
 async function gpAtualizarPortal() {
@@ -8542,6 +8638,19 @@ const auth = getAuth(app);
       }
       // marca o início da contagem dos 7 em 7 dias
       await setDoc(ref, { nome: nome || '', dataInicio: serverTimestamp(), corChao, corParede, colocados });
+      // carta de boas-vindas — explica os objetos especiais que já vêm prontos
+      // no layout padrão (a mesma pessoa que já viu essa carta antes não recebe
+      // de novo, porque esse trecho só roda na primeira vez que o doc é criado)
+      if (uid !== PADRAO_PERFIL_UID) {
+        try {
+          await addDoc(collection(db, 'terreira_cartinhas'), {
+            paraUid: uid,
+            deNome: 'Bolhas de Luz ✦',
+            mensagem: 'Seja muito bem-vinda(o) ao seu terreirinho! 🌸\n\nEsse é o seu cantinho aqui dentro do Jogos da nossa casa — vá desbloqueando e colocando objetos aos poucos, deixando tudo com a sua cara.\n\nSeu terreirinho já vem com alguns objetos especiais prontos, coloque-os numa parede e clique neles (fora do modo edição) pra ver o que fazem:\n\n🚪 Porta da Cidade — visita o terreirinho de quem você quiser, ou vai direto pra Flora (guia de lojas da casa)\n📅 Calendário Mágico — abre o Calendário de Sessões da casa\n🏅 Quadro de Medalhas — mostra o ranking geral\n📌 Mural de Recados — guarda as cartinhas mais especiais que você receber\n\nUma boa jornada por aqui 💌',
+            criadoEm: serverTimestamp()
+          });
+        } catch (e) { console.warn('tv carta de boas-vindas:', e); }
+      }
       return { nome: nome || '', dataInicio: Date.now(), corChao, corParede, colocados, sementeEspecial: null, sementeUltimoGanhoData: '' };
     } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' }; }
   };
@@ -8616,6 +8725,13 @@ const auth = getAuth(app);
   window._tvExcluirCartinha = async (id) => {
     try { await deleteDoc(doc(db, 'terreira_cartinhas', id)); }
     catch (e) { console.warn('tv excluir cartinha:', e); }
+  };
+
+  // marca a cartinha como guardada no Mural de Recados — some da sala flutuante
+  // (ver tvRenderCartinhas), mas continua existindo pra abrir a partir do mural
+  window._tvSalvarCartinhaMural = async (id) => {
+    try { await updateDoc(doc(db, 'terreira_cartinhas', id), { salva: true }); }
+    catch (e) { console.warn('tv salvar cartinha no mural:', e); }
   };
 
   // ── MIGRAÇÃO — junta uid+nome de quem já jogou ou já tinha terreirinho antes do
