@@ -1327,6 +1327,27 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 
 /* ── modal de personalização de avatar — boneca de papel ── */
+/* modal de info genérico — explicações (semente especial, amuletos etc.) que
+   só aparecem quando a pessoa clica pra saber mais, em vez de ficar sempre
+   ocupando espaço fixo na tela */
+.gp-info-modal-overlay{
+  position:fixed;inset:0;background:rgba(30,10,20,.55);z-index:920;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.gp-info-modal{
+  background:#fff;border-radius:16px;padding:1.3rem;max-width:340px;width:100%;
+  position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3);
+}
+.gp-info-modal-fechar{
+  position:absolute;top:10px;right:10px;background:none;border:none;font-size:16px;
+  color:var(--gp-text-dim);cursor:pointer;
+}
+.gp-info-modal-titulo{
+  font-family:'Cinzel',serif;font-size:13.5px;font-weight:600;letter-spacing:.05em;
+  color:var(--gp-gold);margin-bottom:10px;padding-right:20px;
+}
+.gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6}
+
 .av-modal-overlay{
   position:fixed;inset:0;background:rgba(30,10,20,.55);z-index:900;
   display:flex;align-items:center;justify-content:center;padding:16px;
@@ -2730,7 +2751,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div class="gp-speech-bubble" id="gp-speech">"Salve! Pronto para o Axé do dia?"</div>
           <div class="gp-stat-row">
             <div class="gp-stat"><span>🔥</span><span id="gp-firmeza">Dia 1</span></div>
-            <div class="gp-stat"><span>🛡️</span><span id="gp-amuletos">0/2</span></div>
+            <div class="gp-stat" style="cursor:pointer" onclick="gpMostrarInfo('🛡️ Amuletos da sorte', 'A Palavra do Dia é o jogo que mantém sua Firmeza, e o Verdadeiro ou Falso testa seus fundamentos. Complete o Ponto e De Quem é Esse Ponto, se jogados 3 dias seguidos cada um, rendem 1 amuleto por jogo. Se você esquecer de jogar a Palavra do Dia um dia, a Peninha usa automaticamente um amuleto pra salvar sua ofensiva.')"><span>🛡️</span><span id="gp-amuletos">0/2</span></div>
           </div>
         </div>
       </div>
@@ -2785,24 +2806,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="gp-trilha-bonus" id="gp-trilha-bonus" style="display:none">🎉 Trilha completa hoje — bônus de pontos garantido!</div>
       </div>
 
-      <div class="gp-altar-section">
-        <div class="gp-altar-title"><span>🛡️</span><span>Seus amuletos da sorte</span></div>
-        <div class="gp-altar-text">
-          A Palavra do Dia é o jogo que mantém sua Firmeza, e o Verdadeiro ou Falso testa seus fundamentos. Complete o Ponto e De Quem é Esse Ponto, se jogados 3 dias seguidos cada um, rendem 1 amuleto por jogo. Se você esquecer de jogar a Palavra do Dia um dia, a Peninha usa automaticamente um amuleto pra salvar sua ofensiva.
-        </div>
-      </div>
-
       <!-- TERREIRINHO DIGITAL -->
       <div class="tv-section">
         <div class="gp-section-title" style="margin-top:0">🏠 Terreirinho Digital</div>
         <p class="gp-trilha-sub">Ganhe um objeto novo a cada 7 dias e monte o seu terreirinho do seu jeito ✦</p>
-
-        <div class="gp-altar-section" style="margin-bottom:14px">
-          <div class="gp-altar-title"><span>🌱</span><span>Semente especial</span></div>
-          <div class="gp-altar-text">
-            Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.
-          </div>
-        </div>
 
         <div id="tv-login-aviso" class="tv-login-aviso" style="display:none">
           Entra com sua conta pra começar seu terreirinho e guardar seu progresso ✦
@@ -2965,6 +2972,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </div>
 
     </div>
+  </div>
+</div>
+
+<!-- MODAL — INFO GENÉRICO (explicações que só aparecem quando a pessoa clica pra saber mais) -->
+<div class="gp-info-modal-overlay" id="gp-info-modal-overlay" style="display:none" onclick="if(event.target===this)gpFecharInfo()">
+  <div class="gp-info-modal">
+    <button class="gp-info-modal-fechar" onclick="gpFecharInfo()">✕</button>
+    <div class="gp-info-modal-titulo" id="gp-info-modal-titulo"></div>
+    <div class="gp-info-modal-texto" id="gp-info-modal-texto"></div>
   </div>
 </div>
 
@@ -6857,7 +6873,10 @@ function tvRenderInventario() {
     const jaColocada = !!colocados[TV_SEMENTE_INSTANCIA_ID];
     const headerSem = document.createElement('div');
     headerSem.className = 'tv-inventario-categoria';
-    headerSem.textContent = '🌱 Planta especial';
+    headerSem.textContent = '🌱 Planta especial ℹ️';
+    headerSem.style.cursor = 'pointer';
+    headerSem.title = 'O que é isso?';
+    headerSem.addEventListener('click', tvMostrarInfoSemente);
     wrap.appendChild(headerSem);
     const elSem = document.createElement('div');
     elSem.className = 'tv-item' + (tvItemSelecionado === TV_SEMENTE_CATALOG_ID ? ' selecionado' : '');
@@ -6866,7 +6885,7 @@ function tvRenderInventario() {
       : 'Coloque sua planta especial no terreirinho';
     elSem.innerHTML = `<img src="${TV_SEMENTE_IMAGENS[fase - 1]}" alt="Planta especial">`;
     if (!jaColocada) elSem.addEventListener('click', () => tvSelecionarItem(TV_SEMENTE_CATALOG_ID));
-    else elSem.style.opacity = '.6';
+    else { elSem.style.opacity = '.6'; elSem.addEventListener('click', tvMostrarInfoSemente); }
     wrap.appendChild(elSem);
   }
 
@@ -7740,6 +7759,20 @@ async function avMontarBonecaEm(container, escolhas) {
     imgCabelo.alt = '';
     container.appendChild(imgCabelo);
   }
+}
+
+// modal de info genérico — usado pelos amuletos e pela semente especial, pra
+// explicação só aparecer quando a pessoa clica pra saber mais
+function gpMostrarInfo(titulo, texto) {
+  document.getElementById('gp-info-modal-titulo').textContent = titulo;
+  document.getElementById('gp-info-modal-texto').textContent = texto;
+  document.getElementById('gp-info-modal-overlay').style.display = 'flex';
+}
+function gpFecharInfo() {
+  document.getElementById('gp-info-modal-overlay').style.display = 'none';
+}
+function tvMostrarInfoSemente() {
+  gpMostrarInfo('🌱 Semente especial', 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.');
 }
 
 async function gpAtualizarPortal() {
