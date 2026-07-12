@@ -8702,7 +8702,14 @@ const auth = getAuth(app);
   };
 
   window._tvSalvarProgresso = async (uid, dados) => {
-    try { await setDoc(doc(db, 'terreira_jogadores', uid), dados, { merge: true }); }
+    // NÃO usar setDoc com merge:true aqui — o Firestore faz merge recursivo em
+    // campos de mapa (como "colocados"), então uma chave removida localmente
+    // nunca some de verdade no banco (o merge só adiciona/atualiza chaves,
+    // nunca apaga as que não vieram no payload). Isso fazia objetos removidos
+    // "voltarem": eles nunca tinham sido apagados de fato no Firestore.
+    // updateDoc substitui o campo inteiro pelo valor mandado, apagando de vez
+    // as chaves que não estão mais lá.
+    try { await updateDoc(doc(db, 'terreira_jogadores', uid), dados); }
     catch (e) { console.warn('tv salvar progresso:', e); }
   };
 
