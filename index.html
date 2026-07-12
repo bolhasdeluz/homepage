@@ -1728,6 +1728,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* catálogo compacto — miniatura + nome + dia, em vez do texto longo de antes */
 .tv-catalogo-lista{display:flex;flex-direction:column;gap:2px;max-height:280px;overflow-y:auto;margin-bottom:10px}
+.tv-admin-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.tv-admin-filtros input[type=text]{flex:2;min-width:120px}
+.tv-admin-filtros select{flex:1;min-width:100px}
+.tv-admin-filtros input,.tv-admin-filtros select{
+  padding:6px 8px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.75rem;background:#fff;
+}
 .tv-catalogo-item{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid rgba(196,90,30,.06)}
 .tv-catalogo-item:last-child{border-bottom:none}
 .tv-catalogo-item-thumb{width:32px;height:32px;object-fit:contain;border-radius:6px;background:var(--gp-bg);border:1px solid var(--gp-border);image-rendering:pixelated;flex-shrink:0}
@@ -2952,6 +2958,23 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="gp-admin-section" id="tv-admin-catalogo" style="display:none">
         <div class="gp-admin-title">🏠 Catálogo da Terreira</div>
         <div class="gp-admin-sub">Objetos disponíveis pra colocar no terreirinho, liberados aos poucos a partir do início de cada pessoa.</div>
+        <div class="tv-admin-filtros">
+          <input type="text" id="tv-admin-busca" placeholder="🔎 Buscar por nome..." oninput="tvAdminRenderLista()">
+          <select id="tv-admin-filtro-categoria" onchange="tvAdminRenderLista()">
+            <option value="">Todas categorias</option>
+            <option value="plantas">🌿 Plantas</option>
+            <option value="moveis">🪑 Móveis</option>
+            <option value="utensilios">🏺 Utensílios</option>
+            <option value="armas">⚔️ Armas &amp; Emblemas</option>
+            <option value="natureza">🌾 Natureza</option>
+            <option value="outros">✦ Outros</option>
+          </select>
+          <select id="tv-admin-filtro-tipo" onchange="tvAdminRenderLista()">
+            <option value="">Chão e parede</option>
+            <option value="chao">▦ Só chão</option>
+            <option value="parede">🧱 Só parede</option>
+          </select>
+        </div>
         <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
         <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
         <div class="tv-catalogo-form" id="tv-admin-form" style="display:none">
@@ -7435,6 +7458,8 @@ function tvAtualizarPreviewArquivo() {
   if (!nomeInput.value.trim()) nomeInput.value = tvNomeSugerido(sel.value);
 }
 
+let tvAdminCatalogoCache = [];
+
 async function tvAtualizarAdminCatalogo() {
   const secao = document.getElementById('tv-admin-catalogo');
   if (!secao) return;
@@ -7450,9 +7475,31 @@ async function tvAtualizarAdminCatalogo() {
   const lista = document.getElementById('tv-admin-lista');
   lista.innerHTML = 'Carregando...';
 
-  const catalogo = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
-  if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
-  lista.innerHTML = catalogo.map(item => {
+  tvAdminCatalogoCache = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  tvAdminRenderLista();
+}
+
+// filtra o que já foi buscado (sem precisar recarregar do Firestore a cada
+// letra digitada) por nome, categoria e tipo (chão/parede)
+function tvAdminRenderLista() {
+  const lista = document.getElementById('tv-admin-lista');
+  if (!lista) return;
+  if (!tvAdminCatalogoCache.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
+
+  const busca = (document.getElementById('tv-admin-busca')?.value || '').trim().toLowerCase();
+  const filtroCategoria = document.getElementById('tv-admin-filtro-categoria')?.value || '';
+  const filtroTipo = document.getElementById('tv-admin-filtro-tipo')?.value || '';
+
+  const filtrados = tvAdminCatalogoCache.filter(item => {
+    if (busca && !item.nome.toLowerCase().includes(busca)) return false;
+    if (filtroCategoria && tvCategoriaEfetiva(item) !== filtroCategoria) return false;
+    if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
+    return true;
+  });
+
+  if (!filtrados.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto encontrado com esse filtro.</div>'; return; }
+
+  lista.innerHTML = filtrados.map(item => {
     const cat = TV_CATEGORIAS.find(c => c.chave === tvCategoriaEfetiva(item));
     const escala = item.escalaPadrao || 1;
     const inclinacao = item.inclinacaoPadrao || 0;
