@@ -2829,7 +2829,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button id="tv-btn-modo-edicao" onclick="tvAlternarModoEdicao()">✎ Editar Terreirinho</button>
           </div>
 
-          <div class="controles-construcao tv-editor-only">
+          <div class="controles-construcao tv-editor-only tv-so-editando">
             <label for="cor-chao">Cor do Chão:</label>
             <input type="color" id="cor-chao" value="#fff5f7">
             <label for="cor-parede">Cor da Parede:</label>
@@ -6813,7 +6813,14 @@ async function tvRenderGrid() {
         img.style.width = tamanhoTela + '%';
         img.style.transform = `translate(${-ancora.cx * 100}%,${-ancora.cy * 100}%) scale(${escala}) rotate(${rot}deg) scaleX(${espelho}) skewY(${skew}deg)`;
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
-        img.addEventListener('click', (e) => { e.stopPropagation(); tvSelecionarObjetoColocado(instanciaId); });
+        img.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // objeto especial: fora do modo edição, clicar nele leva pra outra
+          // tela (ex: o Calendário Mágico abre o Calendário de Sessões) —
+          // no modo edição continua selecionando normal, pra dar pra posicionar
+          if (item.acao === 'calendario' && !tvModoEdicao) { showPage('calendario'); return; }
+          tvSelecionarObjetoColocado(instanciaId);
+        });
         objetos.appendChild(img);
       } else if (ehAvatar && avatarEscolhas) {
         const profundidade = (linha + coluna) / (2 * (n - 1));
@@ -6915,8 +6922,12 @@ function tvRenderInventario() {
         ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`
         : `<span class="tv-cadeado">🔒</span>`;
       // clicar sempre inicia a colocação de uma nova cópia — pra mexer numa já colocada,
-      // é só clicar nela direto no cenário
-      if (desbloqueado) el.addEventListener('click', () => tvSelecionarItem(item.id));
+      // é só clicar nela direto no cenário. Itens especiais (com "acao") também
+      // mostram uma explicação do que fazem antes de colocar
+      if (desbloqueado) el.addEventListener('click', () => {
+        if (item.acao) tvMostrarInfoObjetoEspecial(item);
+        tvSelecionarItem(item.id);
+      });
       wrap.appendChild(el);
     });
   });
@@ -7417,6 +7428,9 @@ const TV_NOVOS_OBJETOS_SEED = [
   { arquivo: 'roda-cocar.png', nome: 'Roda com Cocar', tipo: 'parede', categoria: 'armas' },
   { arquivo: 'tronco-barril.png', nome: 'Tronco/Barril', tipo: 'chao', categoria: 'natureza' },
   { arquivo: 'vaso-folhagem-2.png', nome: 'Vaso com Folhagem', tipo: 'chao', categoria: 'plantas' },
+  // objeto especial — clicar nele (fora do modo edição) leva pro Calendário de
+  // Sessões da casa, ver tvRenderGrid/tvRenderInventario pelo campo "acao"
+  { arquivo: 'calendario-magico.png', nome: 'Calendário Mágico', tipo: 'parede', categoria: 'utensilios', acao: 'calendario' },
 ];
 
 async function tvAdminSemearNovosObjetos() {
@@ -7428,9 +7442,9 @@ async function tvAdminSemearNovosObjetos() {
       const caminho = `assets/objetos/${item.arquivo}`;
       if (imagensExistentes.has(caminho)) continue; // já cadastrado, não duplica
       const id = 'obj_' + item.arquivo.replace(/\.[^.]+$/, '');
-      await window._tvSalvarItemCatalogo(id, {
-        nome: item.nome, imagem: caminho, diaDesbloqueio: 1, tipo: item.tipo, categoria: item.categoria
-      });
+      const dados = { nome: item.nome, imagem: caminho, diaDesbloqueio: 1, tipo: item.tipo, categoria: item.categoria };
+      if (item.acao) dados.acao = item.acao;
+      await window._tvSalvarItemCatalogo(id, dados);
     }
   } catch (e) { console.warn('tv semear novos objetos:', e); }
 }
@@ -7773,6 +7787,16 @@ function gpFecharInfo() {
 }
 function tvMostrarInfoSemente() {
   gpMostrarInfo('🌱 Semente especial', 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.');
+}
+
+// explicação dos objetos especiais do catálogo (têm um campo "acao" que muda
+// o que acontece ao clicar neles já colocados, fora do modo edição)
+const TV_OBJETOS_ESPECIAIS_TEXTO = {
+  calendario: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦',
+};
+function tvMostrarInfoObjetoEspecial(item) {
+  const texto = TV_OBJETOS_ESPECIAIS_TEXTO[item.acao] || 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.';
+  gpMostrarInfo(`📅 ${item.nome}`, texto);
 }
 
 async function gpAtualizarPortal() {
