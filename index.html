@@ -1769,14 +1769,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-item .tv-tipo-badge{position:absolute;bottom:-3px;right:-3px;font-size:10px;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 
 .tv-sala-wrapper{position:relative}
-/* flutua por cima da parte de baixo da sala em vez de empurrar o resto da
-   página — dá pra ver o objeto (mesmo lá no alto da sala) e mexer nos
-   controles ao mesmo tempo, sem ficar rolando a página pra lá e pra cá */
+/* fica logo abaixo da sala, no fluxo normal da página — não tapa nada nem
+   atrapalha arrastar/tocar nos objetos, mesmo com um objeto selecionado */
 .tv-acoes-objeto{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(255,251,232,.97);
-  border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:8px 10px;
-  position:absolute;left:6px;right:6px;bottom:6px;z-index:15;
-  max-height:50%;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.2);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:rgba(255,251,232,.97);
+  border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:6px 8px;
+  margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.08);
 }
 .tv-acoes-nome{font-size:11px;font-weight:600;color:var(--gp-text);flex:1;min-width:80px}
 .tv-acoes-slot{font-size:9.5px;color:var(--gp-text-dim);white-space:nowrap}
@@ -1794,7 +1792,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   background:rgba(255,255,255,.5);border-radius:14px;padding:2px 4px;gap:2px;
 }
 .tv-acoes-mover button{padding:0!important;width:22px;height:22px;display:flex;align-items:center;justify-content:center}
-.tv-acoes-grupo-label{font-size:8.5px;letter-spacing:.03em;color:var(--gp-text-dim);white-space:nowrap}
 
 .tv-admin-arquivo-linha{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .tv-admin-arquivo-linha select{flex:1;padding:8px 10px;border-radius:6px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;background:#fff}
@@ -2919,9 +2916,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           </div>
 
-          <!-- flutua por cima da sala (não empurra o resto da página) — assim dá
-               pra ver o objeto e mexer nos controles ao mesmo tempo, mesmo se ele
-               estiver no topo da sala e ela estiver bem alta -->
+          <!-- fica logo abaixo da sala (não tapa nada) quando um objeto está
+               selecionado — botões só com ícone pra ficar pequena e simples -->
           <div class="tv-acoes-objeto tv-editor-only" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
             <span class="tv-acoes-slot" id="tv-acoes-slot"></span>
@@ -2932,21 +2928,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <button onclick="tvMoverSelecionado('y',1)" title="Mover pra baixo">▼</button>
             </div>
             <div class="tv-acoes-grupo">
-              <span class="tv-acoes-grupo-label">Tamanho</span>
-              <button onclick="tvEscalarSelecionado(-1)" title="Diminuir">－</button>
-              <button onclick="tvEscalarSelecionado(1)" title="Aumentar">＋</button>
+              <button onclick="tvEscalarSelecionado(-1)" title="Diminuir tamanho">－</button>
+              <button onclick="tvEscalarSelecionado(1)" title="Aumentar tamanho">＋</button>
             </div>
             <div class="tv-acoes-grupo">
-              <span class="tv-acoes-grupo-label">Inclinação</span>
               <button onclick="tvInclinarSelecionado(-1)" title="Inclinar pra esquerda">◁</button>
               <button onclick="tvInclinarSelecionado(1)" title="Inclinar pra direita">▷</button>
               <button onclick="tvZerarInclinacaoSelecionado()" title="Zerar ajuste manual de inclinação">↺</button>
             </div>
-            <button onclick="tvGirarSelecionado()">↻ Girar</button>
-            <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
+            <button onclick="tvGirarSelecionado()" title="Girar">↻</button>
+            <button onclick="tvEspelharSelecionado()" title="Espelhar">⇋</button>
             <div class="tv-acoes-superficies" id="tv-acoes-superficies"></div>
-            <button onclick="tvClonarSelecionado()" id="tv-acoes-clonar">🧬 Clonar</button>
-            <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
+            <button onclick="tvClonarSelecionado()" id="tv-acoes-clonar" title="Clonar">🧬</button>
+            <button onclick="tvRemoverSelecionado()" title="Remover">🗑</button>
           </div>
 
           <!-- flutua junto com o resto, mas só quando o modo de seleção múltipla
