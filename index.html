@@ -3144,6 +3144,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <img id="tv-admin-preview" alt="" style="display:none">
             <select id="tv-admin-novo-arquivo"></select>
           </div>
+          <div class="admin-row-inputs" id="tv-admin-arquivo-acoes">
+            <button type="button" class="tv-catalogo-btn-add" onclick="tvAdminSugerirComIA()">🤖 Sugerir com IA</button>
+            <button type="button" class="tv-catalogo-btn-add" onclick="tvAdminRenomearArquivo()">✏️ Renomear arquivo</button>
+            <button type="button" class="tv-catalogo-btn-add" style="color:#b3364a" onclick="tvAdminExcluirArquivo()">🗑️ Excluir arquivo</button>
+          </div>
+          <div class="gp-admin-sub" id="tv-admin-arquivo-status"></div>
           <div class="admin-row-inputs">
             <input type="text" id="tv-admin-novo-nome" placeholder="Nome do objeto">
             <select id="tv-admin-novo-dia">
@@ -3171,6 +3177,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <option value="natureza">🌾 Natureza</option>
               <option value="outros">✦ Outros</option>
             </select>
+            <button type="button" class="tv-admin-form-fechar" style="font-size:.78rem;border:1px solid var(--gp-border);border-radius:6px;padding:6px 10px" onclick="tvAdminNovaCategoria()" title="Criar categoria nova">+ categoria</button>
           </div>
           <div class="tv-admin-preview-sala" id="tv-admin-preview-sala">
             <div class="tv-admin-preview-piso" id="tv-admin-preview-piso"></div>
@@ -6524,8 +6531,10 @@ let tvVisitandoNome = '';
 let tvListaTerreiras = []; // cache da lista de gente pra visitar
 let tvModoEdicao = false; // true = grade, inventário e seleção de objetos ficam ativos
 
-// categorias pra organizar e facilitar achar os objetos (tanto no inventário quanto no admin)
-const TV_CATEGORIAS = [
+// categorias pra organizar e facilitar achar os objetos (tanto no inventário quanto no admin) —
+// as 6 fixas abaixo sempre existem; o admin pode criar categorias extras, guardadas em
+// terreira_categorias/{chave} e coladas em TV_CATEGORIAS assim que o catálogo é carregado
+const TV_CATEGORIAS_BASE = [
   { chave: 'plantas',     label: '🌿 Plantas' },
   { chave: 'moveis',      label: '🪑 Móveis' },
   { chave: 'utensilios',  label: '🏺 Utensílios' },
@@ -6533,6 +6542,45 @@ const TV_CATEGORIAS = [
   { chave: 'natureza',    label: '🌾 Natureza' },
   { chave: 'outros',      label: '✦ Outros' },
 ];
+const TV_CATEGORIAS = [...TV_CATEGORIAS_BASE];
+
+// atualiza TV_CATEGORIAS com as categorias extras vindas do Firestore e cola
+// as opções que faltam nos 3 selects que listam categoria (sem mexer nas 6 fixas,
+// que já vêm prontas no HTML)
+function tvAplicarCategoriasExtras(extras) {
+  TV_CATEGORIAS.length = TV_CATEGORIAS_BASE.length;
+  extras.forEach(cat => { if (!TV_CATEGORIAS.some(c => c.chave === cat.chave)) TV_CATEGORIAS.push(cat); });
+  ['tv-admin-filtro-categoria', 'tv-admin-novo-categoria', 'tv-inv-filtro-categoria'].forEach(selId => {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.querySelectorAll('option[data-extra]').forEach(o => o.remove());
+    extras.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat.chave; opt.textContent = cat.label; opt.dataset.extra = '1';
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// cria uma categoria nova (só admin) — pede o nome numa janelinha simples, gera
+// uma chave a partir dele e já deixa selecionada no formulário de cadastro
+async function tvAdminNovaCategoria() {
+  if (!window._tvSalvarCategoria) return;
+  const nome = prompt('Nome da nova categoria (pode começar com um emoji, ex: "🎨 Arte"):');
+  if (!nome || !nome.trim()) return;
+  const label = nome.trim();
+  const chave = 'x_' + label.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  if (chave === 'x_' || TV_CATEGORIAS.some(c => c.chave === chave)) {
+    alert('Já existe uma categoria com esse nome (ou o nome ficou vazio depois de limpar os símbolos) — tenta outro.');
+    return;
+  }
+  await window._tvSalvarCategoria(chave, { label });
+  tvAplicarCategoriasExtras([...TV_CATEGORIAS.slice(TV_CATEGORIAS_BASE.length), { chave, label }]);
+  const sel = document.getElementById('tv-admin-novo-categoria');
+  if (sel) sel.value = chave;
+}
 function tvCategoriaEfetiva(item) {
   if (item.categoria) return item.categoria;
   if ((item.nome || '').toLowerCase().includes('vaso')) return 'plantas'; // itens antigos sem categoria salva
@@ -6697,6 +6745,7 @@ async function tvAtualizar() {
 
   const catalogo = await window._tvCarregarCatalogo();
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  if (window._tvCarregarCategorias) tvAplicarCategoriasExtras(await window._tvCarregarCategorias());
 
   // sempre busca o progresso de novo no Firestore, nunca confia só no que já
   // está na memória — trocar de conta (ou de pessoa simulada pelo admin) e
@@ -7961,6 +8010,18 @@ document.getElementById('cor-parede')?.addEventListener('input', (event) => {
 });
 document.getElementById('cor-parede')?.addEventListener('change', () => { tvSalvarProgresso(); });
 
+// caminho de retângulo com cantos arredondados — desenhado na mão com arcTo
+// em vez de ctx.roundRect() pra funcionar em navegadores mobile mais antigos
+function tvCanvasRoundRectPath(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 // ── COMPARTILHAR FOTO DA TERREIRINHO — mesma técnica já usada no Resumo Mensal
 // (clona o cenário fora da tela em tamanho fixo, html2canvas tira o "print",
 // e por cima entra uma faixa com o nome e uma frase pra engajar quem vir no
@@ -7989,28 +8050,84 @@ async function tvCompartilharImagem() {
     const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
     document.body.removeChild(palco);
 
-    // canvas final: a sala + uma faixa de baixo com o convite, pra ficar bonito
-    // e chamativo já na própria imagem (funciona mesmo se o texto do post sumir)
+    // canvas final: a sala + uma faixa de baixo com o convite, tudo dentro de um
+    // "cartão" com cantos arredondados, sombra e um degradê suave por trás — flutua
+    // sobre um fundo com degradê, com uma luz suave e uma vinheta na foto da sala,
+    // pra parecer menos uma captura de tela crua e mais uma imagem pronta pro Insta
     const nomeDono = tvVisitandoNome || tvNomeProprio || 'meu';
     const fator = canvasRoom.width / 480;
     const FAIXA = 130 * fator;
+    const PAD = 26 * fator;
+    const RAIO = 22 * fator;
     const final = document.createElement('canvas');
-    final.width = canvasRoom.width;
-    final.height = canvasRoom.height + FAIXA;
+    final.width = canvasRoom.width + PAD * 2;
+    final.height = canvasRoom.height + FAIXA + PAD * 2;
     const ctx = final.getContext('2d');
-    ctx.fillStyle = '#fff5f7';
+
+    const fundoGrad = ctx.createLinearGradient(0, 0, final.width, final.height);
+    fundoGrad.addColorStop(0, '#fff8f3');
+    fundoGrad.addColorStop(1, '#ffe9ef');
+    ctx.fillStyle = fundoGrad;
     ctx.fillRect(0, 0, final.width, final.height);
-    ctx.drawImage(canvasRoom, 0, 0);
-    ctx.fillStyle = '#c4396b';
-    ctx.fillRect(0, canvasRoom.height, final.width, FAIXA);
+
+    const cardX = PAD, cardY = PAD, cardW = canvasRoom.width, cardH = canvasRoom.height + FAIXA;
+
+    // sombra suave por baixo do cartão inteiro, pra dar profundidade
+    ctx.save();
+    ctx.shadowColor = 'rgba(120,40,70,.25)';
+    ctx.shadowBlur = 26 * fator;
+    ctx.shadowOffsetY = 10 * fator;
+    ctx.fillStyle = '#fff';
+    tvCanvasRoundRectPath(ctx, cardX, cardY, cardW, cardH, RAIO);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.save();
+    tvCanvasRoundRectPath(ctx, cardX, cardY, cardW, cardH, RAIO);
+    ctx.clip();
+    ctx.drawImage(canvasRoom, cardX, cardY);
+
+    // luz suave vindo de cima-esquerda, só pra dar uma sensação de profundidade
+    const luz = ctx.createRadialGradient(
+      cardX + cardW * 0.28, cardY + canvasRoom.height * 0.18, 0,
+      cardX + cardW * 0.28, cardY + canvasRoom.height * 0.18, canvasRoom.height * 0.8
+    );
+    luz.addColorStop(0, 'rgba(255,255,255,.22)');
+    luz.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = luz;
+    ctx.fillRect(cardX, cardY, cardW, canvasRoom.height);
+
+    // vinheta suave nas bordas da foto da sala
+    const vinheta = ctx.createRadialGradient(
+      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.35,
+      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.75
+    );
+    vinheta.addColorStop(0, 'rgba(0,0,0,0)');
+    vinheta.addColorStop(1, 'rgba(60,20,35,.16)');
+    ctx.fillStyle = vinheta;
+    ctx.fillRect(cardX, cardY, cardW, canvasRoom.height);
+
+    // faixa de baixo com o convite — degradê em vez de cor lisa, com uma linha
+    // dourada separando ela da foto
+    const faixaY = cardY + canvasRoom.height;
+    const faixaGrad = ctx.createLinearGradient(0, faixaY, 0, faixaY + FAIXA);
+    faixaGrad.addColorStop(0, '#d94e79');
+    faixaGrad.addColorStop(1, '#a52e56');
+    ctx.fillStyle = faixaGrad;
+    ctx.fillRect(cardX, faixaY, cardW, FAIXA);
+    ctx.fillStyle = 'rgba(255,214,153,.85)';
+    ctx.fillRect(cardX, faixaY, cardW, 2 * fator);
+
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.font = `600 ${22 * fator}px Georgia, serif`;
-    ctx.fillText(`🏠 Terreirinho de ${nomeDono}`, final.width / 2, canvasRoom.height + 45 * fator);
+    ctx.fillText(`✦ Terreirinho de ${nomeDono} ✦`, cardX + cardW / 2, faixaY + 45 * fator);
     ctx.font = `${15 * fator}px Georgia, serif`;
-    ctx.fillText('Vem brincar comigo no Terreiro Bolhas de Luz ✦', final.width / 2, canvasRoom.height + 80 * fator);
+    ctx.fillText('Vem brincar comigo no Terreiro Bolhas de Luz ✦', cardX + cardW / 2, faixaY + 80 * fator);
     ctx.font = `italic ${12.5 * fator}px Georgia, serif`;
-    ctx.fillText('homepage-3vx.pages.dev', final.width / 2, canvasRoom.height + 108 * fator);
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fillText('homepage-3vx.pages.dev', cardX + cardW / 2, faixaY + 108 * fator);
+    ctx.restore();
 
     final.toBlob(async (blob) => {
       btn.textContent = textoOriginal;
@@ -8103,6 +8220,131 @@ function tvAtualizarPreviewArquivo() {
   tvAdminAtualizarPreviewSala();
 }
 
+// caminho do arquivo relevante nesse momento no formulário — o que já está
+// cadastrado, se estiver editando, ou o que foi escolhido no select, se for novo
+function tvAdminArquivoAtual() {
+  if (tvAdminEditandoId) return tvAdminEditandoImagem;
+  return document.getElementById('tv-admin-novo-arquivo')?.value || null;
+}
+
+// pede pra Claude API classificar o arquivo escolhido e pré-preenche o
+// formulário — é só um atalho opcional: se falhar (API fora do ar, por
+// exemplo), o formulário continua do jeito que sempre foi, preenchido à mão
+async function tvAdminSugerirComIA() {
+  const status = document.getElementById('tv-admin-arquivo-status');
+  const caminho = tvAdminArquivoAtual();
+  if (!caminho) { if (status) status.textContent = 'Escolhe um arquivo primeiro.'; return; }
+  if (status) status.textContent = '🤖 Perguntando pra IA...';
+  try {
+    const imagemUrl = `https://raw.githubusercontent.com/${TV_GITHUB_REPO}/main/${caminho}`;
+    const resp = await fetch('/api/classificar-objeto', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imagemUrl }),
+    });
+    const dados = await resp.json();
+    if (!resp.ok || dados.error) {
+      if (status) status.textContent = '❌ Não consegui classificar agora — preenche à mão mesmo.';
+      return;
+    }
+    document.getElementById('tv-admin-novo-nome').value = dados.nome;
+    document.getElementById('tv-admin-novo-tipo').value = dados.tipo;
+    if (TV_CATEGORIAS.some(c => c.chave === dados.categoria)) {
+      document.getElementById('tv-admin-novo-categoria').value = dados.categoria;
+    }
+    document.getElementById('tv-admin-novo-mesa').checked = !!dados.mesa;
+    document.getElementById('tv-admin-novo-altura-tampo').value = dados.alturaTampo || 0.5;
+    tvAdminAtualizarValoresSlider();
+    tvAdminAtualizarVisibilidadeMesa();
+    if (status) status.textContent = '✔ Sugestão da IA preenchida — revisa e ajusta se precisar.';
+  } catch (e) {
+    console.warn('tv sugerir com ia:', e);
+    if (status) status.textContent = '❌ Não consegui classificar agora — preenche à mão mesmo.';
+  }
+}
+
+// renomeia o arquivo de verdade no repositório do GitHub (via Contents API) —
+// se o item que está sendo editado usa esse arquivo, já atualiza a referência
+async function tvAdminRenomearArquivo() {
+  const status = document.getElementById('tv-admin-arquivo-status');
+  const caminho = tvAdminArquivoAtual();
+  if (!caminho) { if (status) status.textContent = 'Escolhe um arquivo primeiro.'; return; }
+  const nomeAtual = decodeURIComponent(caminho.split('/').pop());
+  const novoNome = prompt('Novo nome do arquivo (com extensão):', nomeAtual);
+  if (!novoNome || !novoNome.trim() || novoNome.trim() === nomeAtual) return;
+
+  tvMostrarEscolha(
+    '✏️ Renomear arquivo?',
+    `Isso renomeia "${nomeAtual}" pra "${novoNome.trim()}" direto no repositório do site. Pode levar um minutinho pra valer em produção, e se esse arquivo já estiver cadastrado ou colocado em algum terreirinho, a referência à imagem é atualizada só aqui neste item que está sendo editado.`,
+    [
+      { label: 'Cancelar' },
+      { label: 'Sim, renomear', destaque: true, aoClicar: async () => {
+        if (status) status.textContent = '⏳ Renomeando no GitHub...';
+        try {
+          const resp = await fetch('/api/gerenciar-arquivo-github', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+            body: JSON.stringify({ acao: 'renomear', caminho, novoNome: novoNome.trim() }),
+          });
+          const dados = await resp.json();
+          if (!resp.ok || dados.error) { if (status) status.textContent = '❌ ' + (dados.error || 'Não consegui renomear.'); return; }
+          if (tvAdminEditandoId) {
+            tvAdminEditandoImagem = dados.novoCaminho;
+            await window._tvSalvarItemCatalogo(tvAdminEditandoId, { imagem: dados.novoCaminho });
+          }
+          if (status) status.textContent = '✔ Arquivo renomeado.';
+          document.getElementById('tv-admin-novo-arquivo').dataset.montado = '';
+          await tvMontarSelectArquivos();
+          tvAtualizarAdminCatalogo();
+        } catch (e) {
+          console.warn('tv renomear arquivo:', e);
+          if (status) status.textContent = '❌ Não consegui renomear agora.';
+        }
+      } },
+    ]
+  );
+}
+
+// exclui o arquivo de verdade do repositório do GitHub — some com a imagem
+// pra sempre, então avisa bem antes; se o item editado usava esse arquivo,
+// o item do catálogo é removido junto (senão ficaria com imagem quebrada)
+async function tvAdminExcluirArquivo() {
+  const status = document.getElementById('tv-admin-arquivo-status');
+  const caminho = tvAdminArquivoAtual();
+  if (!caminho) { if (status) status.textContent = 'Escolhe um arquivo primeiro.'; return; }
+  const nomeAtual = decodeURIComponent(caminho.split('/').pop());
+
+  tvMostrarEscolha(
+    '🗑️ Excluir arquivo?',
+    `Isso apaga "${nomeAtual}" pra sempre do repositório do site. Se esse arquivo já estiver cadastrado no catálogo ou colocado em algum terreirinho, a imagem vai ficar quebrada nesses lugares. Não dá pra desfazer.`,
+    [
+      { label: 'Cancelar' },
+      { label: 'Sim, excluir', destaque: true, aoClicar: async () => {
+        if (status) status.textContent = '⏳ Excluindo no GitHub...';
+        try {
+          const resp = await fetch('/api/gerenciar-arquivo-github', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+            body: JSON.stringify({ acao: 'excluir', caminho }),
+          });
+          const dados = await resp.json();
+          if (!resp.ok || dados.error) { if (status) status.textContent = '❌ ' + (dados.error || 'Não consegui excluir.'); return; }
+          if (tvAdminEditandoId) {
+            const idParaExcluir = tvAdminEditandoId;
+            tvAdminCancelarForm();
+            await tvAdminExcluir(idParaExcluir);
+          }
+          if (status) status.textContent = '✔ Arquivo excluído.';
+          document.getElementById('tv-admin-novo-arquivo').dataset.montado = '';
+          await tvMontarSelectArquivos();
+          tvAtualizarAdminCatalogo();
+        } catch (e) {
+          console.warn('tv excluir arquivo:', e);
+          if (status) status.textContent = '❌ Não consegui excluir agora.';
+        }
+      } },
+    ]
+  );
+}
+
 // mostra uma simulação (aproximada) de como o objeto fica na terreirinho de
 // verdade, usando o mesmo cálculo de âncora/escala do jogo — atualiza ao
 // mexer nos sliders de tamanho/inclinação, trocar o tipo ou escolher o arquivo
@@ -8187,6 +8429,7 @@ async function tvAtualizarAdminCatalogo() {
   lista.innerHTML = 'Carregando...';
 
   tvAdminCatalogoCache = (await window._tvCarregarCatalogo()).sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  if (window._tvCarregarCategorias) tvAplicarCategoriasExtras(await window._tvCarregarCategorias());
   tvAdminRenderLista();
 }
 
@@ -9308,6 +9551,20 @@ const auth = getAuth(app);
   window._tvExcluirItemCatalogo = async (itemId) => {
     try { await deleteDoc(doc(db, 'terreira_catalogo', itemId)); }
     catch (e) { console.warn('tv excluir item catalogo:', e); }
+  };
+
+  // terreira_categorias/{chave}: { label } — categorias extras criadas pelo
+  // admin, além das 6 fixas já embutidas no código
+  window._tvCarregarCategorias = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'terreira_categorias'));
+      return snap.docs.map(d => ({ chave: d.id, ...d.data() }));
+    } catch (e) { console.warn('tv carregar categorias:', e); return []; }
+  };
+
+  window._tvSalvarCategoria = async (chave, dados) => {
+    try { await setDoc(doc(db, 'terreira_categorias', chave), dados, { merge: true }); }
+    catch (e) { console.warn('tv salvar categoria:', e); }
   };
 
   window._tvCarregarProgresso = async (uid, nome) => {
