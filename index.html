@@ -1346,7 +1346,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   font-family:'Cinzel',serif;font-size:13.5px;font-weight:600;letter-spacing:.05em;
   color:var(--gp-gold);margin-bottom:10px;padding-right:20px;
 }
-.gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6}
+.gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6;white-space:pre-wrap}
+.tv-confirm-acoes{display:flex;gap:8px;justify-content:center;margin-top:16px}
+.tv-confirm-acoes button{
+  border-radius:14px;padding:8px 18px;font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;
+  cursor:pointer;border:1px solid var(--gp-border);
+}
+.tv-confirm-cancelar{background:#fff;color:var(--gp-text-dim)}
+.tv-confirm-ir{background:var(--gp-gold);color:#fff;border:none}
 
 .av-modal-overlay{
   position:fixed;inset:0;background:rgba(30,10,20,.55);z-index:900;
@@ -2981,6 +2988,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button class="gp-info-modal-fechar" onclick="gpFecharInfo()">✕</button>
     <div class="gp-info-modal-titulo" id="gp-info-modal-titulo"></div>
     <div class="gp-info-modal-texto" id="gp-info-modal-texto"></div>
+  </div>
+</div>
+
+<!-- MODAL — CONFIRMAÇÃO (evita sair sem querer, ex: clicar sem querer no Calendário Mágico) -->
+<div class="gp-info-modal-overlay" id="tv-confirm-overlay" style="display:none" onclick="if(event.target===this)tvFecharConfirmacao()">
+  <div class="gp-info-modal">
+    <button class="gp-info-modal-fechar" onclick="tvFecharConfirmacao()">✕</button>
+    <div class="gp-info-modal-titulo" id="tv-confirm-titulo"></div>
+    <div class="gp-info-modal-texto" id="tv-confirm-texto" style="white-space:pre-wrap"></div>
+    <div class="tv-confirm-acoes">
+      <button class="tv-confirm-cancelar" onclick="tvFecharConfirmacao()">Cancelar</button>
+      <button class="tv-confirm-ir" id="tv-confirm-btn-ir">Ir</button>
+    </div>
   </div>
 </div>
 
@@ -6815,10 +6835,21 @@ async function tvRenderGrid() {
         img.style.zIndex = String((superficie === 'chao' ? 100 : 0) + linha + coluna);
         img.addEventListener('click', (e) => {
           e.stopPropagation();
-          // objeto especial: fora do modo edição, clicar nele leva pra outra
-          // tela (ex: o Calendário Mágico abre o Calendário de Sessões) —
-          // no modo edição continua selecionando normal, pra dar pra posicionar
-          if (item.acao === 'calendario' && !tvModoEdicao) { showPage('calendario'); return; }
+          // objeto especial: fora do modo edição, clicar nele faz uma ação
+          // diferente (ex: o Calendário Mágico leva pro Calendário de Sessões,
+          // com uma confirmação antes pra evitar misclique; o Quadro de
+          // Medalhas mostra o ranking) — no modo edição continua selecionando
+          // normal, pra dar pra posicionar
+          if (item.acao === 'calendario' && !tvModoEdicao) {
+            const status = tvTextoStatusSemente();
+            tvConfirmarNavegacao(
+              '📅 Ir para o Calendário?',
+              `Você vai sair do seu terreirinho e abrir o Calendário de Sessões da casa.${status ? '\n\n' + status : ''}`,
+              () => showPage('calendario')
+            );
+            return;
+          }
+          if (item.acao === 'ranking' && !tvModoEdicao) { tvMostrarRankingPopup(); return; }
           tvSelecionarObjetoColocado(instanciaId);
         });
         objetos.appendChild(img);
@@ -7440,6 +7471,7 @@ const TV_NOVOS_OBJETOS_SEED = [
   // objeto especial — clicar nele (fora do modo edição) leva pro Calendário de
   // Sessões da casa, ver tvRenderGrid/tvRenderInventario pelo campo "acao"
   { arquivo: 'calendario-magico.png', nome: 'Calendário Mágico', tipo: 'parede', categoria: 'utensilios', acao: 'calendario' },
+  { arquivo: 'quadro-medalhas.png', nome: 'Quadro de Medalhas', tipo: 'parede', categoria: 'utensilios', acao: 'ranking' },
 ];
 
 async function tvAdminSemearNovosObjetos() {
@@ -7791,18 +7823,67 @@ function gpMostrarInfo(titulo, texto) {
   document.getElementById('gp-info-modal-texto').textContent = texto;
   document.getElementById('gp-info-modal-overlay').style.display = 'flex';
 }
+// variante que aceita HTML de verdade (ex: reaproveitar o ranking já renderizado
+// na própria tela, em vez de reconstruir tudo de novo)
+function gpMostrarInfoHtml(titulo, html) {
+  document.getElementById('gp-info-modal-titulo').textContent = titulo;
+  document.getElementById('gp-info-modal-texto').innerHTML = html;
+  document.getElementById('gp-info-modal-overlay').style.display = 'flex';
+}
 function gpFecharInfo() {
   document.getElementById('gp-info-modal-overlay').style.display = 'none';
 }
+
+// confirmação genérica (ex: evitar sair sem querer da terreirinho num misclique)
+function tvConfirmarNavegacao(titulo, texto, aoConfirmar) {
+  document.getElementById('tv-confirm-titulo').textContent = titulo;
+  document.getElementById('tv-confirm-texto').textContent = texto;
+  const btnIr = document.getElementById('tv-confirm-btn-ir');
+  btnIr.onclick = () => { tvFecharConfirmacao(); aoConfirmar(); };
+  document.getElementById('tv-confirm-overlay').style.display = 'flex';
+}
+function tvFecharConfirmacao() {
+  document.getElementById('tv-confirm-overlay').style.display = 'none';
+}
+
+// texto de status da planta especial de VERDADE (a da própria pessoa, não a de
+// quem estiver sendo visitada) — usado no aviso antes de sair pro calendário
+function tvTextoStatusSemente() {
+  const semente = tvMeuProgresso?.sementeEspecial;
+  if (!semente) return '';
+  if (semente.permanente) return '🌸 Sua planta especial já floresceu de vez, não precisa mais visitar ninguém pra mantê-la viva.';
+  const fase = tvSementeFase(semente);
+  if (fase === null) return ''; // já murchou — nada a contar aqui
+  const diasRestantes = TV_SEMENTE_DIAS_POR_RODADA - fase + 1;
+  return `🌱 Sua planta especial murcha em ${diasRestantes} dia${diasRestantes === 1 ? '' : 's'} se você não visitar mais ninguém.`;
+}
+
 // explicação dos itens especiais (semente e objetos do catálogo com "acao",
 // que mudam o que acontece ao clicar neles já colocados, fora do modo edição)
 const TV_OBJETOS_ESPECIAIS_INFO = {
   semente: { emoji: '🌱', texto: 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.' },
   calendario: { emoji: '📅', texto: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦' },
+  ranking: { emoji: '🏅', texto: 'Esse é o Quadro de Medalhas! Coloque ele numa parede e, fora do modo edição, clique nele pra ver o ranking geral da casa e dos jogos.' },
 };
 function tvMostrarInfoObjetoEspecial(item) {
   const info = TV_OBJETOS_ESPECIAIS_INFO[item.acao] || { emoji: '✦', texto: 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.' };
-  gpMostrarInfo(`${info.emoji} ${item.nome}`, info.texto);
+  let texto = info.texto;
+  if (item.acao === 'semente') {
+    const status = tvTextoStatusSemente();
+    if (status) texto += '\n\n' + status;
+  }
+  gpMostrarInfo(`${info.emoji} ${item.nome}`, texto);
+}
+
+// clona o ranking já renderizado na própria tela de Jogos (mini-ranks + ranking
+// geral) pra dentro do popup — evita ter que buscar tudo de novo separado
+function tvMostrarRankingPopup() {
+  const original = document.getElementById('gp-ranking-section');
+  if (!original) return;
+  const clone = original.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  gpMostrarInfoHtml('🏅 Ranking da Casa', clone.outerHTML);
 }
 
 async function gpAtualizarPortal() {
