@@ -165,6 +165,9 @@ body.logada{padding-top:62px}
 .page{display:none}.page.active{display:block}
 .section-wrap{max-width:1000px;margin:0 auto;padding:52px 24px 200px}
 .section-wrap.narrow{max-width:720px}
+/* na Terreirinha, a lateral da página só tira espaço de visualização da sala —
+   encolhe bem a margem lateral aqui (só nessa página) pra sala aproveitar mais tela */
+#page-jogos .section-wrap{padding-left:8px;padding-right:8px}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
 .section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:36px;line-height:1.6}
@@ -1650,8 +1653,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
    transform é só visual), e a viewport com scroll deixa dar zoom pra dentro
    sem bagunçar o resto da página quando a sala fica visualmente maior que ela */
 .tv-zoom-viewport{
-  width:100%;max-width:900px;aspect-ratio:1/1;margin:0 auto;position:relative;
-  border:1px solid var(--gp-border);border-radius:12px;overflow:auto;
+  width:100%;max-width:960px;aspect-ratio:1/1;margin:0 auto;position:relative;
+  border-radius:12px;overflow:auto;
 }
 .terreira-virtual-container{
   width:100%;height:100%;position:relative;transform-origin:center center;
@@ -1707,6 +1710,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer;
   transform-origin:bottom center;
 }
+.tv-objeto-selecionado-multiplo{filter:drop-shadow(0 0 0 var(--gp-gold)) brightness(1.08) saturate(1.3) drop-shadow(0 0 6px var(--gp-gold))}
 /* avatar colocado dentro da própria terreirinho — mesma lógica de posicionamento
    do .tv-objeto-img, mas é um wrapper com várias camadas empilhadas (boneca
    inteira) em vez de uma única imagem */
@@ -1745,9 +1749,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 .tv-item .tv-tipo-badge{position:absolute;bottom:-3px;right:-3px;font-size:10px;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 
+.tv-sala-wrapper{position:relative}
+/* flutua por cima da parte de baixo da sala em vez de empurrar o resto da
+   página — dá pra ver o objeto (mesmo lá no alto da sala) e mexer nos
+   controles ao mesmo tempo, sem ficar rolando a página pra lá e pra cá */
 .tv-acoes-objeto{
-  display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gp-gold-fundo);
-  border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:8px 10px;margin-top:10px;
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:rgba(255,251,232,.97);
+  border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:8px 10px;
+  position:absolute;left:6px;right:6px;bottom:6px;z-index:15;
+  max-height:50%;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.2);
 }
 .tv-acoes-nome{font-size:11px;font-weight:600;color:var(--gp-text);flex:1;min-width:80px}
 .tv-acoes-slot{font-size:9.5px;color:var(--gp-text-dim);white-space:nowrap}
@@ -2853,6 +2863,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div class="tv-modo-edicao-barra tv-editor-only">
             <button id="tv-btn-modo-edicao" onclick="tvAlternarModoEdicao()">✎ Editar Terreirinho</button>
             <button id="tv-btn-salvar-agora" onclick="tvSalvarAgora()" style="display:none">💾 Salvar agora</button>
+            <button id="tv-btn-selecionar-varios" onclick="tvAlternarSelecaoMultipla()" style="display:none">☑ Selecionar vários</button>
+            <button id="tv-btn-remover-todos" onclick="tvRemoverTodosOsItens()" style="display:none">🗑 Remover todos</button>
             <span class="tv-salvo-status" id="tv-salvo-status"></span>
           </div>
 
@@ -2868,6 +2880,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="tv-zoom-valor" id="tv-zoom-valor">100%</span>
             <button onclick="tvAjustarZoom(0.1)" title="Aumentar zoom">＋</button>
           </div>
+          <div class="tv-sala-wrapper">
           <div class="tv-zoom-viewport" id="tv-zoom-viewport">
           <div class="terreira-virtual-container" id="tv-container-zoom">
             <div class="terreira-cor-fundo" id="terreira-fundo">
@@ -2882,16 +2895,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           </div>
 
-          <div class="tv-compartilhar-barra">
-            <button id="tv-btn-compartilhar" onclick="tvCompartilharImagem()">📸 Compartilhar no Instagram</button>
-          </div>
-
-          <div class="tv-cartinha-form" id="tv-cartinha-form" style="display:none">
-            <input type="text" id="tv-cartinha-texto" placeholder="Deixe uma mensagem carinhosa..." maxlength="200">
-            <button onclick="tvEnviarCartinha()">💌 Deixar cartinha</button>
-            <span class="tv-cartinha-status" id="tv-cartinha-status" style="display:none">💌 Cartinha deixada!</span>
-          </div>
-
+          <!-- flutua por cima da sala (não empurra o resto da página) — assim dá
+               pra ver o objeto e mexer nos controles ao mesmo tempo, mesmo se ele
+               estiver no topo da sala e ela estiver bem alta -->
           <div class="tv-acoes-objeto tv-editor-only" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
             <span class="tv-acoes-slot" id="tv-acoes-slot"></span>
@@ -2916,6 +2922,24 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <div class="tv-acoes-superficies" id="tv-acoes-superficies"></div>
             <button onclick="tvClonarSelecionado()" id="tv-acoes-clonar">🧬 Clonar</button>
             <button onclick="tvRemoverSelecionado()">🗑 Remover</button>
+          </div>
+
+          <!-- flutua junto com o resto, mas só quando o modo de seleção múltipla
+               está ligado (marcar vários objetos pra remover de uma vez) -->
+          <div class="tv-acoes-objeto" id="tv-selecao-multipla-barra" style="display:none">
+            <span class="tv-acoes-nome" id="tv-selecao-multipla-contagem">0 selecionados</span>
+            <button onclick="tvRemoverSelecaoMultipla()">🗑 Remover selecionados</button>
+          </div>
+          </div>
+
+          <div class="tv-compartilhar-barra">
+            <button id="tv-btn-compartilhar" onclick="tvCompartilharImagem()">📸 Compartilhar no Instagram</button>
+          </div>
+
+          <div class="tv-cartinha-form" id="tv-cartinha-form" style="display:none">
+            <input type="text" id="tv-cartinha-texto" placeholder="Deixe uma mensagem carinhosa..." maxlength="200">
+            <button onclick="tvEnviarCartinha()">💌 Deixar cartinha</button>
+            <span class="tv-cartinha-status" id="tv-cartinha-status" style="display:none">💌 Cartinha deixada!</span>
           </div>
 
           <div class="tv-proximo tv-editor-only tv-so-editando" id="tv-proximo">Carregando...</div>
@@ -3011,6 +3035,22 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </select>
             <button class="tv-catalogo-btn-add" onclick="tvAdminVincularManual()">Vincular</button>
           </div>
+        </div>
+      </div>
+
+      <!-- ADMIN — resetar o terreirinho de alguém pro layout do Perfil Padrão -->
+      <div class="gp-admin-section" id="tv-admin-resetar" style="display:none">
+        <div class="gp-admin-title" onclick="tvAdminToggleSecao('tv-admin-resetar-body')">
+          <span>🔄 Resetar terreirinho de alguém</span>
+          <span class="gp-admin-chevron" id="tv-admin-resetar-body-chevron">▾</span>
+        </div>
+        <div class="gp-admin-body" id="tv-admin-resetar-body">
+          <div class="gp-admin-sub">Apaga o terreirinho de alguém e coloca o layout do Perfil Padrão no lugar (objetos, cor do chão e da parede). O avatar e a planta especial dela não são afetados. Não dá pra desfazer.</div>
+          <select id="tv-admin-resetar-sel" style="width:100%;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff;margin-bottom:8px">
+            <option value="">Carregando pessoas...</option>
+          </select>
+          <button class="tv-catalogo-btn-add" onclick="tvAdminResetarParaPadrao()">🔄 Resetar pro padrão</button>
+          <div class="gp-admin-sub" id="tv-admin-resetar-status" style="margin-top:8px"></div>
         </div>
       </div>
 
@@ -6443,6 +6483,8 @@ function tvCategoriaEfetiva(item) {
 }
 let tvItemSelecionado = null;     // item do inventário escolhido pra colocar
 let tvObjetoSelecionadoId = null; // objeto já colocado, com a barra de ações aberta
+let tvModoSelecaoMultipla = false; // marca vários objetos de uma vez, pra remover em lote
+let tvSelecaoMultipla = new Set(); // instanciaIds marcados enquanto tvModoSelecaoMultipla estiver ligado
 
 // ── avatar colocado dentro da terreirinho — não é um item do catálogo comum,
 // é a própria boneca de papel da dona daquele terreirinho (própria pessoa ou
@@ -6873,7 +6915,7 @@ const TV_SUPERFICIES = {
 };
 
 // inclinação sutil pra objetos de parede acompanharem o caimento isométrico das paredes
-const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 }; // inclinação-base de cada superfície
+const TV_SKEW = { chao: 0, paredeEsquerda: -20, paredeDireita: 20 }; // inclinação-base de cada superfície
 const TV_ESCALA_MIN = 0.25, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
 const TV_INCLINACAO_MIN = -30, TV_INCLINACAO_MAX = 30, TV_INCLINACAO_PASSO = 5; // ajuste manual, somado à inclinação-base
 
@@ -7087,8 +7129,9 @@ async function tvRenderGrid() {
           if (item.acao === 'cidade' && !tvModoEdicao) { tvAbrirPortaCidade(); return; }
           if (item.acao === 'mural' && !tvModoEdicao) { tvAbrirMuralRecados(); return; }
           if (item.acao === 'semente' && !tvModoEdicao) { tvMostrarInfoObjetoEspecial(item); return; }
-          tvSelecionarObjetoColocado(instanciaId);
+          tvCliqueEmObjetoColocado(instanciaId);
         });
+        if (tvModoSelecaoMultipla && tvSelecaoMultipla.has(instanciaId)) img.classList.add('tv-objeto-selecionado-multiplo');
         objetos.appendChild(img);
       } else if (ehAvatar && avatarEscolhas) {
         const profundidade = (linha + coluna) / (2 * (n - 1));
@@ -7227,7 +7270,7 @@ async function tvClicarSlot(superficie, slot) {
   const ocupanteId = tvAcharColocado(colocados, superficie, slot);
 
   if (ocupanteId) {
-    tvSelecionarObjetoColocado(ocupanteId);
+    tvCliqueEmObjetoColocado(ocupanteId);
     return;
   }
 
@@ -7301,26 +7344,117 @@ function tvSelecionarObjetoColocado(itemId) {
   tvRenderGrid();
 }
 
+// clicar num objeto já colocado: no modo de seleção múltipla, entra/sai da
+// seleção em vez de abrir a barrinha de um objeto só (avatar e planta especial
+// ficam de fora da seleção múltipla — não fazem sentido num "remover vários")
+function tvCliqueEmObjetoColocado(itemId) {
+  const info = tvProgresso?.colocados?.[itemId];
+  const ehEspecial = info && (info.catalogId === TV_AVATAR_CATALOG_ID || info.catalogId === TV_SEMENTE_CATALOG_ID);
+  if (tvModoSelecaoMultipla && !ehEspecial) {
+    if (tvSelecaoMultipla.has(itemId)) tvSelecaoMultipla.delete(itemId);
+    else tvSelecaoMultipla.add(itemId);
+    tvRenderGrid();
+    tvRenderSelecaoMultiplaBarra();
+    return;
+  }
+  tvSelecionarObjetoColocado(itemId);
+}
+
+// liga/desliga o modo de "marcar vários objetos de uma vez" — enquanto ligado,
+// clicar num objeto marca/desmarca ele (em vez de abrir a barrinha de um só)
+function tvAlternarSelecaoMultipla() {
+  tvModoSelecaoMultipla = !tvModoSelecaoMultipla;
+  tvSelecaoMultipla.clear();
+  tvObjetoSelecionadoId = null;
+  tvItemSelecionado = null;
+  const btn = document.getElementById('tv-btn-selecionar-varios');
+  if (btn) btn.textContent = tvModoSelecaoMultipla ? '✕ Sair da seleção' : '☑ Selecionar vários';
+  tvRenderAcoesObjeto();
+  tvRenderSelecaoMultiplaBarra();
+  tvRenderGrid();
+  tvRenderInventario();
+}
+
+function tvRenderSelecaoMultiplaBarra() {
+  const barra = document.getElementById('tv-selecao-multipla-barra');
+  if (!barra) return;
+  barra.style.display = tvModoSelecaoMultipla ? 'flex' : 'none';
+  const contagem = document.getElementById('tv-selecao-multipla-contagem');
+  if (contagem) contagem.textContent = `${tvSelecaoMultipla.size} selecionado${tvSelecaoMultipla.size === 1 ? '' : 's'}`;
+}
+
+// remove só os objetos marcados no modo de seleção múltipla
+function tvRemoverSelecaoMultipla() {
+  if (!tvSelecaoMultipla.size || !tvProgresso?.colocados) return;
+  const qtd = tvSelecaoMultipla.size;
+  tvConfirmarNavegacao(
+    '🗑 Remover selecionados?',
+    `Isso remove os ${qtd} objeto${qtd === 1 ? '' : 's'} marcado${qtd === 1 ? '' : 's'} do seu terreirinho. Não dá pra desfazer.`,
+    async () => {
+      tvSelecaoMultipla.forEach(id => delete tvProgresso.colocados[id]);
+      tvSelecaoMultipla.clear();
+      tvRenderGrid();
+      tvRenderInventario();
+      tvRenderSelecaoMultiplaBarra();
+      await tvSalvarProgresso();
+    }
+  );
+}
+
+// remove todos os objetos colocados de uma vez (avatar e planta especial ficam,
+// não fazem sentido num "remover tudo")
+function tvRemoverTodosOsItens() {
+  if (!tvProgresso?.colocados) return;
+  const idsRemover = Object.keys(tvProgresso.colocados).filter(id => {
+    const info = tvProgresso.colocados[id];
+    return info.catalogId !== TV_AVATAR_CATALOG_ID && info.catalogId !== TV_SEMENTE_CATALOG_ID;
+  });
+  if (!idsRemover.length) {
+    gpMostrarInfo('🗑 Remover todos', 'Já não tem nenhum objeto colocado (fora o avatar e a planta especial, que não somem por aqui).');
+    return;
+  }
+  tvConfirmarNavegacao(
+    '🗑 Remover todos os objetos?',
+    `Isso remove os ${idsRemover.length} objeto${idsRemover.length === 1 ? '' : 's'} colocado${idsRemover.length === 1 ? '' : 's'} no seu terreirinho (o avatar e a planta especial continuam). Não dá pra desfazer.`,
+    async () => {
+      idsRemover.forEach(id => delete tvProgresso.colocados[id]);
+      tvObjetoSelecionadoId = null;
+      tvRenderGrid();
+      tvRenderInventario();
+      tvRenderAcoesObjeto();
+      await tvSalvarProgresso();
+    }
+  );
+}
+
 // liga/desliga o modo de edição — enquanto desligado, a grade, o inventário e a
 // seleção de objetos ficam escondidos; um botão claro pra sair, em vez de depender
 // de cliques incidentais que podiam deixar tudo "preso" aberto
 function tvAlternarModoEdicao() {
   tvModoEdicao = !tvModoEdicao;
+  const btnSelecionar = document.getElementById('tv-btn-selecionar-varios');
   if (!tvModoEdicao) {
     tvItemSelecionado = null;
     tvObjetoSelecionadoId = null;
+    tvModoSelecaoMultipla = false;
+    tvSelecaoMultipla.clear();
+    if (btnSelecionar) btnSelecionar.textContent = '☑ Selecionar vários';
   }
   document.getElementById('tv-corpo')?.classList.toggle('editando', tvModoEdicao);
   const btn = document.getElementById('tv-btn-modo-edicao');
   if (btn) btn.textContent = tvModoEdicao ? '✕ Sair do modo edição' : '✎ Editar Terreirinho';
   const btnSalvar = document.getElementById('tv-btn-salvar-agora');
   if (btnSalvar) btnSalvar.style.display = tvModoEdicao ? '' : 'none';
+  if (btnSelecionar) btnSelecionar.style.display = tvModoEdicao ? '' : 'none';
+  const btnRemoverTodos = document.getElementById('tv-btn-remover-todos');
+  if (btnRemoverTodos) btnRemoverTodos.style.display = tvModoEdicao ? '' : 'none';
   tvControlarAutoSalvar(tvModoEdicao);
   if (!tvModoEdicao) tvSalvarProgresso(); // garante que a última mudança foi mesmo salva ao sair
   tvRenderGrid();
   tvRenderInventario();
   tvRenderProximo();
   tvRenderAcoesObjeto();
+  tvRenderSelecaoMultiplaBarra();
 }
 
 // salva explicitamente ao clicar (dá uma confirmação visual, pra quem
@@ -7725,7 +7859,7 @@ async function tvAdminAtualizarPreviewSala() {
 
   container.classList.toggle('parede', tipo === 'parede');
   const ancora = await tvCalcularAncora(src);
-  const skewBase = tipo === 'parede' ? 8 : 0; // aproximação — na sala de verdade cada parede tem um lado diferente
+  const skewBase = tipo === 'parede' ? 20 : 0; // aproximação — na sala de verdade cada parede tem um lado diferente
   const skew = skewBase + inclinacao;
   const TAMANHO_BASE = 40; // % do quadro de prévia, só pra dar uma referência de escala
   const tamanhoTela = TAMANHO_BASE / (ancora.larguraFrac || 1);
@@ -7749,7 +7883,10 @@ async function tvAtualizarAdminCatalogo() {
   secao.style.display = souAdmin ? 'block' : 'none';
   const secaoVincular = document.getElementById('tv-admin-vincular-uids');
   if (secaoVincular) secaoVincular.style.display = souAdmin ? 'block' : 'none';
+  const secaoResetar = document.getElementById('tv-admin-resetar');
+  if (secaoResetar) secaoResetar.style.display = souAdmin ? 'block' : 'none';
   if (souAdmin) tvAdminMontarSelectsVincular();
+  if (souAdmin) tvAdminMontarSelectResetar();
   if (!souAdmin || !window._tvCarregarCatalogo) return;
 
   const lista = document.getElementById('tv-admin-lista');
@@ -8132,6 +8269,38 @@ async function tvAdminVincularManual() {
     console.warn('vincular uid manual:', e);
     if (status) status.textContent = 'Erro ao vincular manualmente — tenta de novo.';
   }
+}
+
+// ── admin: resetar o terreirinho de alguém pro layout do Perfil Padrão ──
+async function tvAdminMontarSelectResetar() {
+  const sel = document.getElementById('tv-admin-resetar-sel');
+  if (!sel || !window._tvListarTerreiras || sel.dataset.montado) return;
+  sel.dataset.montado = '1';
+  const lista = await window._tvListarTerreiras();
+  // 'perfil-padrao' é o uid do Perfil Padrão (PADRAO_PERFIL_UID) — só existe
+  // como const dentro do <script type="module"> do Firebase, então repete o
+  // valor aqui direto em vez de referenciar (script clássico não enxerga o
+  // escopo de top-level do module)
+  const pessoas = lista.filter(p => p.uid !== 'perfil-padrao').sort((a, b) => a.nome.localeCompare(b.nome));
+  sel.innerHTML = pessoas.length
+    ? '<option value="">Escolher pessoa...</option>' + pessoas.map(p => `<option value="${p.uid}">${p.nome}</option>`).join('')
+    : '<option value="">Ninguém jogou ainda</option>';
+}
+
+function tvAdminResetarParaPadrao() {
+  const sel = document.getElementById('tv-admin-resetar-sel');
+  const status = document.getElementById('tv-admin-resetar-status');
+  if (!sel?.value) { if (status) status.textContent = 'Escolhe uma pessoa primeiro.'; return; }
+  const nomeEscolhido = sel.options[sel.selectedIndex].textContent;
+  tvConfirmarNavegacao(
+    '🔄 Resetar terreirinho?',
+    `Isso apaga o terreirinho de ${nomeEscolhido} e coloca o layout do Perfil Padrão no lugar (objetos, cor do chão e da parede). O avatar e a planta especial dela não são afetados. Não dá pra desfazer.`,
+    async () => {
+      if (status) status.textContent = 'Resetando...';
+      const ok = window._tvResetarParaPadrao ? await window._tvResetarParaPadrao(sel.value) : false;
+      if (status) status.textContent = ok ? `✔ Terreirinho de ${nomeEscolhido} resetado pro padrão.` : 'Não consegui resetar — tenta de novo.';
+    }
+  );
 }
 
 // roda o cadastro automático 1x por sessão, ANTES de qualquer tela carregar o catálogo —
@@ -8834,6 +9003,23 @@ const auth = getAuth(app);
     // as chaves que não estão mais lá.
     try { await updateDoc(doc(db, 'terreira_jogadores', uid), dados); }
     catch (e) { console.warn('tv salvar progresso:', e); }
+  };
+
+  // admin: substitui o terreirinho de alguém (colocados + cores) pelo layout
+  // atual do Perfil Padrão — não mexe em dataInicio, sementeEspecial etc.
+  window._tvResetarParaPadrao = async (uidAlvo) => {
+    try {
+      const padraoSnap = await getDoc(doc(db, 'terreira_jogadores', PADRAO_PERFIL_UID));
+      if (!padraoSnap.exists()) return false;
+      const p = padraoSnap.data();
+      const dados = {
+        colocados: p.colocados ? JSON.parse(JSON.stringify(p.colocados)) : {},
+        corChao: p.corChao || '#fff5f7',
+        corParede: p.corParede || '#fff5f7',
+      };
+      await updateDoc(doc(db, 'terreira_jogadores', uidAlvo), dados);
+      return true;
+    } catch (e) { console.warn('tv resetar pro padrão:', e); return false; }
   };
 
   // ── VISITAR OUTRAS TERREIRAS ──
