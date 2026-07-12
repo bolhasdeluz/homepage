@@ -1318,7 +1318,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 }
 
 /* ── PORTAL DE JOGOS ── */
-.gp-portal{
+/* as variáveis também vão pro :root porque alguns modais (confirmação, info
+   genérico) ficam fora da div .gp-portal no HTML e precisam delas mesmo assim */
+:root, .gp-portal{
   --gp-gold:#c4396b;--gp-gold-light:#e8688a;--gp-gold-dim:rgba(196,57,107,.08);
   --gp-bg:#fff5f7;--gp-surface:#ffffff;--gp-border:rgba(196,57,107,.15);
   --gp-text:#2a1a22;--gp-text-dim:rgba(80,30,50,.5);
@@ -1368,6 +1370,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   color:var(--gp-gold);margin-bottom:10px;padding-right:20px;
 }
 .gp-info-modal-texto{font-size:12.5px;color:var(--gp-text-dim);line-height:1.6;white-space:pre-wrap}
+#tv-confirm-extra:not(:empty){margin-top:10px}
+#tv-confirm-extra select{
+  width:100%;padding:9px 10px;border-radius:8px;border:1px solid var(--gp-border);
+  font-family:inherit;font-size:12.5px;color:var(--gp-text);background:#fff;
+}
 .tv-confirm-acoes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
 .tv-confirm-acoes button{
   border-radius:14px;padding:8px 18px;font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;
@@ -3068,6 +3075,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button class="gp-info-modal-fechar" onclick="tvFecharConfirmacao()">✕</button>
     <div class="gp-info-modal-titulo" id="tv-confirm-titulo"></div>
     <div class="gp-info-modal-texto" id="tv-confirm-texto" style="white-space:pre-wrap"></div>
+    <div id="tv-confirm-extra"></div>
     <div class="tv-confirm-acoes" id="tv-confirm-acoes"></div>
   </div>
 </div>
@@ -6564,13 +6572,15 @@ async function tvMontarSelectVisitas() {
   if (valorAtual && tvListaTerreiras.some(p => p.uid === valorAtual)) sel.value = valorAtual;
 }
 
-async function tvVisitarSelecionado() {
+async function tvVisitarSelecionado(uidForcado) {
   const sel = document.getElementById('tv-visita-select');
-  if (!sel || !sel.value) return;
-  const alvo = tvListaTerreiras.find(p => p.uid === sel.value);
+  const uidAlvo = uidForcado || (sel && sel.value);
+  if (!uidAlvo) return;
+  const alvo = tvListaTerreiras.find(p => p.uid === uidAlvo);
   if (!alvo || !window._tvCarregarTerreiraDe) return;
   const dados = await window._tvCarregarTerreiraDe(alvo.uid);
   if (!dados) { alert('Não consegui abrir esse terreirinho.'); return; }
+  if (sel) sel.value = alvo.uid; // mantém o seletor antigo em sincronia, se existir na tela
 
   tvVisitandoUid = alvo.uid;
   tvVisitandoNome = alvo.nome;
@@ -8139,13 +8149,17 @@ function gpFecharInfo() {
 function tvMostrarEscolha(titulo, texto, opcoes) {
   document.getElementById('tv-confirm-titulo').textContent = titulo;
   document.getElementById('tv-confirm-texto').textContent = texto;
+  const extraEl = document.getElementById('tv-confirm-extra');
+  if (extraEl) extraEl.innerHTML = '';
   const acoesEl = document.getElementById('tv-confirm-acoes');
   acoesEl.innerHTML = '';
   opcoes.forEach(op => {
     const btn = document.createElement('button');
     btn.className = op.destaque ? 'tv-confirm-ir' : 'tv-confirm-cancelar';
     btn.textContent = op.label;
-    btn.onclick = () => { tvFecharConfirmacao(); if (op.aoClicar) op.aoClicar(); };
+    // manterAberto: pra opções que trocam o conteúdo do próprio popup em vez de
+    // fechar (ex: "Visitar terreira" abre a lista de gente ali dentro)
+    btn.onclick = () => { if (!op.manterAberto) tvFecharConfirmacao(); if (op.aoClicar) op.aoClicar(); };
     acoesEl.appendChild(btn);
   });
   document.getElementById('tv-confirm-overlay').style.display = 'flex';
@@ -8165,15 +8179,46 @@ function tvFecharConfirmacao() {
 function tvAbrirPortaCidade() {
   tvMostrarEscolha('🚪 Área da Cidade', 'Pra onde você quer ir?', [
     { label: 'Cancelar' },
-    { label: '🏠 Visitar terreira', destaque: true, aoClicar: tvFocarListaVisitas },
+    { label: '🏠 Visitar terreira', destaque: true, manterAberto: true, aoClicar: tvAbrirEscolhaVisita },
     { label: '🌸 Ir na Flora', destaque: true, aoClicar: tvIrParaLojas },
   ]);
 }
-function tvFocarListaVisitas() {
-  const sel = document.getElementById('tv-visita-select');
-  if (!sel) return;
-  sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  sel.focus();
+// segundo passo, dentro do mesmo popup: escolher direto ali quem visitar, sem
+// precisar fechar e ir catar o seletor no resto da página
+async function tvAbrirEscolhaVisita() {
+  await tvMontarSelectVisitas(); // garante a lista mais atual de gente pra visitar
+  document.getElementById('tv-confirm-titulo').textContent = '🏠 Visitar terreira';
+  const extraEl = document.getElementById('tv-confirm-extra');
+  const acoesEl = document.getElementById('tv-confirm-acoes');
+  acoesEl.innerHTML = '';
+
+  const btnCancelar = document.createElement('button');
+  btnCancelar.className = 'tv-confirm-cancelar';
+  btnCancelar.textContent = 'Cancelar';
+  btnCancelar.onclick = tvFecharConfirmacao;
+  acoesEl.appendChild(btnCancelar);
+
+  if (!tvListaTerreiras.length) {
+    document.getElementById('tv-confirm-texto').textContent = 'Ainda não tem ninguém pra visitar.';
+    extraEl.innerHTML = '';
+    return;
+  }
+
+  document.getElementById('tv-confirm-texto').textContent = 'Escolha quem você quer visitar:';
+  extraEl.innerHTML = '<select id="tv-confirm-visita-select"><option value="">Visitar o terreirinho de...</option>' +
+    tvListaTerreiras.map(p => `<option value="${p.uid}">${p.nome}</option>`).join('') + '</select>';
+
+  const btnIr = document.createElement('button');
+  btnIr.className = 'tv-confirm-ir';
+  btnIr.textContent = 'Visitar';
+  btnIr.onclick = () => {
+    const sel = document.getElementById('tv-confirm-visita-select');
+    if (!sel || !sel.value) return;
+    const uidEscolhido = sel.value;
+    tvFecharConfirmacao();
+    tvVisitarSelecionado(uidEscolhido);
+  };
+  acoesEl.appendChild(btnIr);
 }
 // acha o item "lojas" no menu já carregado, pra sempre abrir o link certo
 // mesmo se o admin trocar a URL da Guia de Lojas depois
