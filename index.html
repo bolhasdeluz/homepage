@@ -334,10 +334,16 @@ footer{
 .toggle-pill.on-green{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
 .admin-del{background:none;border:none;color:rgba(184,64,64,.35);font-size:1rem;padding:2px 6px;transition:color .2s}
 .admin-del:hover{color:#b84040}
+.admin-edit{background:none;border:none;color:rgba(196,57,107,.4);font-size:.9rem;padding:2px 6px;cursor:pointer;transition:color .2s}
+.admin-edit:hover{color:var(--gp-gold,#c4396b)}
 .admin-add-form{padding:14px 16px;background:rgba(196,90,30,.03);border-top:1px solid var(--border)}
 .admin-add-form input,.admin-add-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
 .admin-add-form input:focus,.admin-add-form select:focus{border-color:var(--rosa)}
 .admin-row-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tv-admin-slider-linha{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;color:var(--gp-text-dim)}
+.tv-admin-slider-linha input[type=range]{flex:1}
+.tv-admin-slider-label{white-space:nowrap;min-width:88px}
+.tv-admin-slider-valor{min-width:36px;text-align:right;font-family:'Cinzel',serif;color:var(--gp-gold)}
 .btn-add{background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;font-weight:700;padding:9px 18px;transition:all .2s}
 .btn-add:hover{background:var(--rosa-l)}
 .btn-save-menu{width:100%;background:var(--terra);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;font-weight:700;padding:13px;margin-top:8px;transition:all .2s}
@@ -1650,6 +1656,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-grid.tv-editando .tv-slot{opacity:1;pointer-events:auto}
 .tv-slot:hover{background:rgba(255,255,255,.34)}
 .tv-slot.ocupado{background:rgba(255,255,255,.4)}
+.tv-slot.tv-slot-selecionado{background:rgba(196,57,107,.35);box-shadow:inset 0 0 0 2px var(--gp-gold)}
 .tv-objetos{position:absolute;inset:0;z-index:3;pointer-events:none}
 .tv-objeto-img{
   position:absolute;object-fit:contain;image-rendering:pixelated;pointer-events:auto;cursor:pointer;
@@ -1698,6 +1705,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   border:1px solid var(--gp-gold-destaque);border-radius:10px;padding:8px 10px;margin-top:10px;
 }
 .tv-acoes-nome{font-size:11px;font-weight:600;color:var(--gp-text);flex:1;min-width:80px}
+.tv-acoes-slot{font-size:9.5px;color:var(--gp-text-dim);white-space:nowrap}
 .tv-acoes-objeto button{
   background:#fff;border:1px solid var(--gp-border);border-radius:14px;padding:5px 10px;
   font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.04em;color:var(--gp-text-dim);cursor:pointer;
@@ -2871,6 +2879,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
           <div class="tv-acoes-objeto tv-editor-only" id="tv-acoes-objeto" style="display:none">
             <span class="tv-acoes-nome" id="tv-acoes-nome"></span>
+            <span class="tv-acoes-slot" id="tv-acoes-slot"></span>
             <div class="tv-acoes-grupo tv-acoes-mover">
               <button onclick="tvMoverSelecionado('y',-1)" title="Mover pra cima">▲</button>
               <button onclick="tvMoverSelecionado('x',-1)" title="Mover pra esquerda">◀</button>
@@ -2946,7 +2955,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
         <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
         <div class="tv-catalogo-form" id="tv-admin-form" style="display:none">
-          <div class="tv-admin-arquivo-linha">
+          <div class="tv-admin-arquivo-linha" id="tv-admin-arquivo-linha">
             <img id="tv-admin-preview" alt="" style="display:none">
             <select id="tv-admin-novo-arquivo"></select>
           </div>
@@ -2978,7 +2987,20 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <option value="outros">✦ Outros</option>
             </select>
           </div>
-          <button class="btn-add" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
+          <div class="tv-admin-slider-linha">
+            <span class="tv-admin-slider-label">Tamanho padrão</span>
+            <input type="range" id="tv-admin-novo-escala" min="0.25" max="1.8" step="0.05" value="1" oninput="tvAdminAtualizarValoresSlider()">
+            <span class="tv-admin-slider-valor" id="tv-admin-novo-escala-valor">1.0x</span>
+          </div>
+          <div class="tv-admin-slider-linha">
+            <span class="tv-admin-slider-label">Inclinação padrão</span>
+            <input type="range" id="tv-admin-novo-inclinacao" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider()">
+            <span class="tv-admin-slider-valor" id="tv-admin-novo-inclinacao-valor">0°</span>
+          </div>
+          <div class="admin-row-inputs">
+            <button class="btn-add" id="tv-admin-btn-salvar" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
+            <button class="tv-catalogo-btn-add" id="tv-admin-btn-cancelar-edicao" onclick="tvAdminCancelarForm()" style="display:none">Cancelar</button>
+          </div>
         </div>
       </div>
 
@@ -6838,6 +6860,9 @@ async function tvRenderGrid() {
           item = tvCatalogo.find(o => o.id === info.catalogId);
         }
         slotEl.classList.add('ocupado');
+        // destaca a casinha do objeto selecionado, pra ficar visível em qual
+        // slot da grade ele está enquanto edita
+        if (instanciaId === tvObjetoSelecionadoId) slotEl.classList.add('tv-slot-selecionado');
       }
       slotEl.addEventListener('click', () => tvClicarSlot(superficie, s));
       grid.appendChild(slotEl);
@@ -7077,7 +7102,10 @@ async function tvClicarSlot(superficie, slot) {
   if ((item.tipo || 'chao') !== tipoEsperado) return; // objeto de parede não entra no chão e vice-versa
 
   const instanciaId = tvNovaInstanciaId();
-  colocados[instanciaId] = { catalogId: tvItemSelecionado, superficie, slot, rot: 0, espelhado: false, escala: 1 };
+  colocados[instanciaId] = {
+    catalogId: tvItemSelecionado, superficie, slot, rot: 0, espelhado: false,
+    escala: item.escalaPadrao || 1, inclinacao: item.inclinacaoPadrao || 0
+  };
   tvItemSelecionado = null;
   tvRenderGrid();
   tvRenderInventario();
@@ -7115,6 +7143,7 @@ function tvAlternarModoEdicao() {
 function tvRenderAcoesObjeto() {
   const barra = document.getElementById('tv-acoes-objeto');
   const nomeEl = document.getElementById('tv-acoes-nome');
+  const slotEl = document.getElementById('tv-acoes-slot');
   const superficiesEl = document.getElementById('tv-acoes-superficies');
   if (!barra || !nomeEl || !superficiesEl) return;
   if (!tvObjetoSelecionadoId) { barra.style.display = 'none'; return; }
@@ -7123,6 +7152,20 @@ function tvRenderAcoesObjeto() {
   const ehPlanta = info?.catalogId === TV_SEMENTE_CATALOG_ID;
   const item = (info && !ehAvatar && !ehPlanta) ? tvCatalogo.find(o => o.id === info.catalogId) : null;
   nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : ehPlanta ? '🌱 Planta especial' : (item ? item.nome : '');
+
+  // mostra em qual casinha da grade o objeto selecionado está — ajuda a
+  // entender/achar onde ele está enquanto edita
+  if (slotEl) {
+    if (info) {
+      const n = TV_SUPERFICIES[info.superficie]?.n || 1;
+      const linha = Math.floor((info.slot || 0) / n);
+      const coluna = (info.slot || 0) % n;
+      const rotuloSuperficie = { chao: 'Chão', paredeEsquerda: 'Parede Esq.', paredeDireita: 'Parede Dir.' }[info.superficie] || info.superficie;
+      slotEl.textContent = `📍 ${rotuloSuperficie} · linha ${linha + 1}, coluna ${coluna + 1}`;
+    } else {
+      slotEl.textContent = '';
+    }
+  }
 
   // objetos de parede podem trocar de lado — objetos de chão ficam só no chão
   superficiesEl.innerHTML = '';
@@ -7411,44 +7454,119 @@ async function tvAtualizarAdminCatalogo() {
   if (!catalogo.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
   lista.innerHTML = catalogo.map(item => {
     const cat = TV_CATEGORIAS.find(c => c.chave === tvCategoriaEfetiva(item));
+    const escala = item.escalaPadrao || 1;
+    const inclinacao = item.inclinacaoPadrao || 0;
     return `
     <div class="tv-catalogo-item">
       <img class="tv-catalogo-item-thumb" src="${item.imagem}" alt="">
       <div class="tv-catalogo-item-info">
         <span class="tv-catalogo-item-nome">${item.nome}</span>
-        <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${cat ? cat.label : ''}</span>
+        <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${cat ? cat.label : ''} · ${escala.toFixed(2)}x · ${inclinacao}°</span>
       </div>
+      <button class="admin-edit" data-id="${item.id}" title="Editar">✎</button>
       <button class="admin-del" data-id="${item.id}" title="Remover">✕</button>
     </div>`;
   }).join('');
-  lista.querySelectorAll('button[data-id]').forEach(btn => {
+  lista.querySelectorAll('button.admin-edit[data-id]').forEach(btn => {
+    btn.addEventListener('click', () => tvAdminEditarItem(btn.dataset.id));
+  });
+  lista.querySelectorAll('button.admin-del[data-id]').forEach(btn => {
     btn.addEventListener('click', () => tvAdminExcluir(btn.dataset.id));
   });
 }
 
 // o formulário de adicionar fica escondido até a pessoa clicar — só busca a lista de
 // arquivos do GitHub na primeira vez que abre, pra não pesar o carregamento do painel
+let tvAdminEditandoId = null;
+
+function tvAdminAtualizarValoresSlider() {
+  const escala = document.getElementById('tv-admin-novo-escala');
+  const inclinacao = document.getElementById('tv-admin-novo-inclinacao');
+  const escalaValor = document.getElementById('tv-admin-novo-escala-valor');
+  const inclinacaoValor = document.getElementById('tv-admin-novo-inclinacao-valor');
+  if (escalaValor) escalaValor.textContent = parseFloat(escala.value).toFixed(2) + 'x';
+  if (inclinacaoValor) inclinacaoValor.textContent = inclinacao.value + '°';
+}
+
+function tvAdminLimparForm() {
+  document.getElementById('tv-admin-novo-nome').value = '';
+  document.getElementById('tv-admin-novo-dia').value = '1';
+  document.getElementById('tv-admin-novo-tipo').value = 'chao';
+  document.getElementById('tv-admin-novo-categoria').value = 'outros';
+  document.getElementById('tv-admin-novo-escala').value = '1';
+  document.getElementById('tv-admin-novo-inclinacao').value = '0';
+  tvAdminAtualizarValoresSlider();
+}
+
 function tvAdminToggleForm() {
   const form = document.getElementById('tv-admin-form');
   const btn = document.getElementById('tv-admin-btn-form');
   if (!form || !btn) return;
   const abrindo = form.style.display === 'none';
+  if (abrindo) {
+    tvAdminEditandoId = null;
+    document.getElementById('tv-admin-arquivo-linha').style.display = '';
+    document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
+    document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
+    tvAdminLimparForm();
+    tvMontarSelectArquivos();
+  }
   form.style.display = abrindo ? 'block' : 'none';
   btn.style.display = abrindo ? 'none' : '';
-  if (abrindo) tvMontarSelectArquivos();
+}
+
+function tvAdminCancelarForm() {
+  tvAdminEditandoId = null;
+  document.getElementById('tv-admin-form').style.display = 'none';
+  document.getElementById('tv-admin-btn-form').style.display = '';
+}
+
+// abre o formulário já preenchido com os dados de um objeto existente, pra
+// editar tipo/categoria/tamanho padrão/inclinação padrão sem precisar apagar
+// e recriar. A imagem em si não muda aqui, então o seletor de arquivo some
+async function tvAdminEditarItem(id) {
+  const catalogo = await window._tvCarregarCatalogo();
+  const item = catalogo.find(o => o.id === id);
+  if (!item) return;
+  tvAdminEditandoId = id;
+  document.getElementById('tv-admin-form').style.display = 'block';
+  document.getElementById('tv-admin-btn-form').style.display = 'none';
+  document.getElementById('tv-admin-arquivo-linha').style.display = 'none';
+  document.getElementById('tv-admin-novo-nome').value = item.nome || '';
+  document.getElementById('tv-admin-novo-dia').value = String(item.diaDesbloqueio || 1);
+  document.getElementById('tv-admin-novo-tipo').value = item.tipo === 'parede' ? 'parede' : 'chao';
+  document.getElementById('tv-admin-novo-categoria').value = tvCategoriaEfetiva(item);
+  document.getElementById('tv-admin-novo-escala').value = String(item.escalaPadrao || 1);
+  document.getElementById('tv-admin-novo-inclinacao').value = String(item.inclinacaoPadrao || 0);
+  tvAdminAtualizarValoresSlider();
+  document.getElementById('tv-admin-btn-salvar').textContent = '💾 Salvar alterações';
+  document.getElementById('tv-admin-btn-cancelar-edicao').style.display = '';
+  document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function tvAdminAdicionar() {
   const nome = document.getElementById('tv-admin-novo-nome').value.trim();
   const dia = parseInt(document.getElementById('tv-admin-novo-dia').value, 10);
-  const imagem = document.getElementById('tv-admin-novo-arquivo').value;
   const tipo = document.getElementById('tv-admin-novo-tipo').value;
   const categoria = document.getElementById('tv-admin-novo-categoria').value;
-  if (!nome || !dia || !imagem) { alert('Escolhe o arquivo, preenche o nome e o dia.'); return; }
+  const escalaPadrao = parseFloat(document.getElementById('tv-admin-novo-escala').value);
+  const inclinacaoPadrao = parseInt(document.getElementById('tv-admin-novo-inclinacao').value, 10);
+  if (!nome || !dia) { alert('Preenche o nome e o dia.'); return; }
+
+  if (tvAdminEditandoId) {
+    if (window._tvSalvarItemCatalogo) {
+      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao });
+    }
+    tvAdminCancelarForm();
+    tvAtualizarAdminCatalogo();
+    return;
+  }
+
+  const imagem = document.getElementById('tv-admin-novo-arquivo').value;
+  if (!imagem) { alert('Escolhe o arquivo.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria });
-  document.getElementById('tv-admin-novo-nome').value = '';
-  document.getElementById('tv-admin-novo-dia').value = '1';
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao });
+  tvAdminLimparForm();
   tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
 }
