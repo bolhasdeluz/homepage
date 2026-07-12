@@ -45,7 +45,7 @@ async function enviarEmailCartinha(env, { paraEmail, deNome, mensagem }) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.com>',
+      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
       to: [paraEmail],
       subject: `💌 Você recebeu uma cartinha de ${deNome}`,
       html

@@ -35,7 +35,7 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.com>',
+      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
       to: ['bolhasdeluz@gmail.com'],
       subject: assunto,
       html
