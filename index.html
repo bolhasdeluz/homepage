@@ -6833,7 +6833,7 @@ async function tvRenderGrid() {
         info = colocados[instanciaId];
         ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
         if (info.catalogId === TV_SEMENTE_CATALOG_ID) {
-          item = { imagem: imagemPlantaAtual, nome: 'Planta especial' };
+          item = { imagem: imagemPlantaAtual, nome: 'Planta especial', acao: 'semente' };
         } else if (!ehAvatar) {
           item = tvCatalogo.find(o => o.id === info.catalogId);
         }
@@ -6882,6 +6882,7 @@ async function tvRenderGrid() {
           }
           if (item.acao === 'ranking' && !tvModoEdicao) { tvMostrarRankingPopup(); return; }
           if (item.acao === 'cidade' && !tvModoEdicao) { tvAbrirPortaCidade(); return; }
+          if (item.acao === 'semente' && !tvModoEdicao) { tvMostrarInfoObjetoEspecial(item); return; }
           tvSelecionarObjetoColocado(instanciaId);
         });
         objetos.appendChild(img);
@@ -7951,7 +7952,7 @@ function tvMostrarInfoObjetoEspecial(item) {
 // clona o ranking já renderizado na própria tela de Jogos (mini-ranks + ranking
 // geral) pra dentro do popup — evita ter que buscar tudo de novo separado
 function tvMostrarRankingPopup() {
-  const original = document.getElementById('gp-ranking-section');
+  const original = document.querySelector('.gp-ranking-section');
   if (!original) return;
   const clone = original.cloneNode(true);
   clone.removeAttribute('id');
