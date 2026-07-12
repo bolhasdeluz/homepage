@@ -6369,7 +6369,6 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede', categoria }]
 let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
 let tvMeuProgresso = null; // guarda o progresso de verdade da própria pessoa, enquanto visita outra
-let tvMeuProgressoUid = null; // uid de quem é o tvMeuProgresso atual — busca de novo no Firestore só se mudar
 let tvUidProprio = null;
 let tvNomeProprio = '';
 let tvVisitandoUid = null;  // null = vendo o próprio terreirinho; senão, uid de quem está visitando
@@ -6530,17 +6529,16 @@ async function tvAtualizar() {
   const catalogo = await window._tvCarregarCatalogo();
   tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
 
-  // só busca o progresso de novo no Firestore na primeira vez (ou se trocou de uid,
-  // por exemplo trocando quem está sendo simulada) — nas próximas vezes que essa
-  // função rodar (ex: sair da tela de Jogos e voltar), o que já está na memória
-  // reflete certinho tudo que foi editado, sempre salvo antes de qualquer coisa.
-  // Recarregar de novo aqui sempre sobrescrevia edições recentes (tipo remoções)
-  // que ainda não tinham dado tempo de "assentar", fazendo objetos removidos
-  // reaparecerem quando a pessoa saía e voltava rápido pra essa tela
-  if (!tvMeuProgresso || tvMeuProgressoUid !== user.uid) {
-    tvMeuProgresso = await window._tvCarregarProgresso(user.uid, tvNomeProprio);
-    tvMeuProgressoUid = user.uid;
-  }
+  // sempre busca o progresso de novo no Firestore, nunca confia só no que já
+  // está na memória — trocar de conta (ou de pessoa simulada pelo admin) e
+  // voltar pra essa tela precisa refletir o que tem de verdade no banco, senão
+  // dados de uma conta "grudam" na tela mesmo depois de trocar pra outra.
+  // Pra não reabrir a mesma corrida que esse cache tentava evitar (um refetch
+  // "vencendo" um salvamento ainda em trânsito e trazendo uma versão de volta
+  // com o item que acabou de ser removido), espera qualquer salvamento
+  // pendente terminar antes de buscar
+  await tvSalvarProgressoFila;
+  tvMeuProgresso = await window._tvCarregarProgresso(user.uid, tvNomeProprio);
   tvChecarSementeMorreu(); // se a planta especial passou do prazo sem ser regada, murcha aqui
 
   tvMontarSelectVisitas(); // roda em paralelo, não precisa bloquear o resto
