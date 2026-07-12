@@ -2921,6 +2921,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <span class="tv-acoes-grupo-label">Inclinação</span>
               <button onclick="tvInclinarSelecionado(-1)" title="Inclinar pra esquerda">◁</button>
               <button onclick="tvInclinarSelecionado(1)" title="Inclinar pra direita">▷</button>
+              <button onclick="tvZerarInclinacaoSelecionado()" title="Zerar ajuste manual de inclinação">↺</button>
             </div>
             <button onclick="tvGirarSelecionado()">↻ Girar</button>
             <button onclick="tvEspelharSelecionado()">⇋ Espelhar</button>
@@ -7625,6 +7626,18 @@ async function tvInclinarSelecionado(direcao) {
   if (!info) return;
   const atual = info.inclinacao || 0;
   info.inclinacao = Math.min(TV_INCLINACAO_MAX, Math.max(TV_INCLINACAO_MIN, atual + direcao * TV_INCLINACAO_PASSO));
+  tvRenderGrid();
+  await tvSalvarProgresso();
+}
+
+// zera o ajuste manual de inclinação do objeto selecionado — volta a usar só a
+// inclinação-base da parede (TV_SKEW). Útil pra quem já tinha ajustado um
+// objeto na mão antes do ângulo-base mudar (fica "torto"/reto de mais depois),
+// sem precisar clicar várias vezes em ◁/▷ tentando descobrir o valor certo
+async function tvZerarInclinacaoSelecionado() {
+  const info = tvProgresso?.colocados?.[tvObjetoSelecionadoId];
+  if (!info) return;
+  info.inclinacao = 0;
   tvRenderGrid();
   await tvSalvarProgresso();
 }
