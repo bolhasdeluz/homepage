@@ -237,6 +237,13 @@ body.logada{padding-top:62px}
 .modal-close:hover{background:var(--rosa-dim);color:var(--rosa);border-color:rgba(196,57,107,.3)}
 .modal-close:hover{color:var(--rosa)}
 .modal-footer{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:16px}
+/* cantinho discreto pra logar como admin com senha, sem precisar do Google —
+   abre o modal "admin-senha-overlay" que já existia (só reaproveitado aqui) */
+.login-canto-admin-gatilho{
+  position:absolute;bottom:8px;left:10px;background:none;border:none;font-size:13px;
+  opacity:.35;cursor:pointer;padding:4px;
+}
+.login-canto-admin-gatilho:hover{opacity:.7}
 .form-label{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px}
 .form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;padding:10px 12px;width:100%;outline:none;margin-bottom:16px;transition:border-color .2s}
 .form-input:focus{border-color:var(--rosa)}
@@ -2252,6 +2259,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       Entrar com Google
     </button>
     <p class="modal-footer">Após entrar, aguarde aprovação da Mãe da Casa.</p>
+
+    <button class="login-canto-admin-gatilho" onclick="closeLogin();document.getElementById('admin-senha-overlay').classList.add('open')" title="Entrar como admin">🔑</button>
   </div>
 </div>
 
@@ -3297,6 +3306,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button onclick="iniciarSimulacao()" style="background:var(--green);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;font-weight:700;padding:10px 20px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:8px">
       👁 Simular visão de outra pessoa
     </button>
+    <button id="btn-sair-admin-senha" onclick="logoutSenhaAdmin()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:24px;margin-left:8px">
+      🔑 Sair do modo admin (senha)
+    </button>
     <div id="admin-sections-container"></div>
 
     <!-- VISIBILIDADE: SUA HISTÓRIA -->
@@ -3459,6 +3471,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <script>
 // ── CONFIG ──
 const API = '/api/menu';
+// login de admin por senha, sem precisar do Google — a senha em si só existe
+// no servidor (variável de ambiente), o cliente só guarda "entrou ou não"
+let adminSenhaAtiva = localStorage.getItem('adminSenhaAtiva') === '1';
+function souAdminAtivo(user) { return (!!user && isEmailAdmin(user.email)) || adminSenhaAtiva; }
+function logoutSenhaAdmin() {
+  adminSenhaAtiva = false;
+  localStorage.removeItem('adminSenhaAtiva');
+  showPage('inicio');
+}
+
 let menuData = null;
 
 // ── E-MAILS COM ACESSO ADMIN ──
@@ -3518,7 +3540,7 @@ function renderDrawer() {
   const userNow = window._getCurrentUser && window._getCurrentUser();
   const logada = !!userNow;
   const emSimulacao = _modoSimulacao !== null;
-  const ehAdmin = !emSimulacao && userNow && isEmailAdmin(userNow.email);
+  const ehAdmin = !emSimulacao && souAdminAtivo(userNow);
 
   // grupo do usuário atual (mesma lógica do renderCards)
   let grupoUsuario = 'publico';
@@ -3526,6 +3548,8 @@ function renderDrawer() {
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
     grupoUsuario = pd.grupo || 'visitante';
     if (!emSimulacao && isEmailAdmin(userNow.email)) grupoUsuario = 'admin';
+  } else if (ehAdmin) {
+    grupoUsuario = 'admin';
   }
 
   // card especial do Painel Admin, sempre no topo, fora das seções
@@ -3672,7 +3696,7 @@ function renderCards() {
   // em modo simulação, nunca mostra card admin
   const userNow = window._getCurrentUser && window._getCurrentUser();
   const emSimulacao = _modoSimulacao !== null;
-  const ehAdmin = !emSimulacao && userNow && isEmailAdmin(userNow.email);
+  const ehAdmin = !emSimulacao && souAdminAtivo(userNow);
 
   if (ehAdmin) {
     html += widgetTile({ id:'admin', label:'⚙ Painel Admin' }, `onclick="showPage('admin');return false"`, 'Gerencie menu, perfis e sessões');
@@ -3691,6 +3715,8 @@ function renderCards() {
         grupoUsuario = pd.grupo || 'visitante';
         // só é admin se NÃO estiver simulando
         if (!emSimulacao && isEmailAdmin(user.email)) grupoUsuario = 'admin';
+      } else if (ehAdmin) {
+        grupoUsuario = 'admin';
       }
 
       // verifica se o item é visível para o grupo
@@ -4450,6 +4476,10 @@ function showPage(name) {
     window.orCarregarProximaSessao?.();
   }
   if (name === 'jogos') { gpAtualizarPortal(); }
+  if (name === 'admin') {
+    const btn = document.getElementById('btn-sair-admin-senha');
+    if (btn) btn.style.display = adminSenhaAtiva ? 'inline-flex' : 'none';
+  }
 }
 function toggleDrawer() {
   const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-hint-btn');
@@ -4526,13 +4556,27 @@ function toggleFaq(btn){  const ch=btn.querySelector('.faq-chevron'),body=btn.cl
 function filterBlog(cat){
   document.querySelectorAll('.blog-card').forEach(c=>{c.style.display=(cat==='todos'||c.dataset.cat===cat)?'':'none'});
 }
-function checkAdminSenha(){
+async function checkAdminSenha(){
   const input=document.getElementById('admin-senha-input'),erro=document.getElementById('admin-senha-erro');
-  if(input.value==='admin'){
-    document.getElementById('admin-senha-overlay').classList.remove('open');
-    showPage('admin');
-    input.value='';erro.style.display='none';
-  } else {erro.style.display='block';input.value='';input.focus()}
+  const senha = input.value;
+  erro.style.display='none';
+  try {
+    const resp = await fetch('/api/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha })
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      adminSenhaAtiva = true;
+      localStorage.setItem('adminSenhaAtiva', '1');
+      document.getElementById('admin-senha-overlay').classList.remove('open');
+      input.value='';
+      showPage('admin');
+      return;
+    }
+  } catch (e) { console.warn('checar senha admin:', e); }
+  erro.style.display='block';input.value='';input.focus();
 }
 
 // jardim fixo
@@ -4613,8 +4657,8 @@ const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao
 
 function calGetGrupo() {
   const u = window._getCurrentUser && window._getCurrentUser();
+  if (souAdminAtivo(u)) return 'admin';
   if (!u) return 'publico';
-  if (isEmailAdmin(u.email)) return 'admin';
   return window._getPerfilData?.()?.grupo || 'visitante';
 }
 
@@ -5210,7 +5254,7 @@ function blogNormCat(s) { return String(s || '').trim().toLowerCase(); }
 
 function blogIsAdmin() {
   const u = window._getCurrentUser && window._getCurrentUser();
-  return u && isEmailAdmin(u.email);
+  return souAdminAtivo(u);
 }
 
 function blogInit() {
@@ -6132,7 +6176,7 @@ async function gpAtualizarSecaoAdmin() {
   if (!secao) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   const emSimulacao = _modoSimulacao !== null;
-  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  const souAdmin = !emSimulacao && souAdminAtivo(user);
   secao.style.display = souAdmin ? 'block' : 'none';
   if (!souAdmin || !window._gpListarPerfisRanking) return;
 
@@ -7211,7 +7255,7 @@ async function tvAtualizarAdminCatalogo() {
   if (!secao) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   const emSimulacao = _modoSimulacao !== null;
-  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  const souAdmin = !emSimulacao && souAdminAtivo(user);
   secao.style.display = souAdmin ? 'block' : 'none';
   const secaoVincular = document.getElementById('tv-admin-vincular-uids');
   if (secaoVincular) secaoVincular.style.display = souAdmin ? 'block' : 'none';
@@ -7427,7 +7471,7 @@ async function tvGarantirSemente() {
   tvSementeRodada = true;
   const user = window._getCurrentUser && window._getCurrentUser();
   const emSimulacao = _modoSimulacao !== null;
-  const souAdmin = !emSimulacao && user && isEmailAdmin(user.email);
+  const souAdmin = !emSimulacao && souAdminAtivo(user);
   if (!souAdmin) return;
   await tvAdminSemearNovosObjetos();
 }
@@ -9751,7 +9795,7 @@ function renderDashPessoal(p, user) {
   // botão de editar frase — visível só para o admin, mesmo vendo o perfil de outra pessoa
   const ehAdminAtual = (() => {
     const u = window._getCurrentUser && window._getCurrentUser();
-    return !!u && isEmailAdmin(u.email) && _modoSimulacao === null;
+    return souAdminAtivo(u) && _modoSimulacao === null;
   })();
   let btnEditarFrase = document.getElementById('dash-frase-edit-btn');
   if (ehAdminAtual) {
