@@ -1783,7 +1783,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .gp-admin-title{
   font-family:'Cinzel',serif;font-size:11.5px;font-weight:600;letter-spacing:.08em;
   color:var(--gp-gold);margin-bottom:4px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;
+  user-select:none;
 }
+.gp-admin-chevron{transition:transform .2s;flex-shrink:0;font-size:10px}
+.gp-admin-chevron.aberto{transform:rotate(180deg)}
+.gp-admin-body{display:none}
+.gp-admin-body.aberto{display:block}
 .gp-admin-sub{font-size:10.5px;color:var(--gp-text-dim);margin-bottom:12px;line-height:1.4}
 .gp-admin-vazio{font-size:11.5px;color:var(--gp-text-dim);font-style:italic}
 .gp-admin-perfil-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-bottom:0.5px solid var(--gp-border)}
@@ -2962,33 +2968,47 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
       <!-- ADMIN — vincular uid de contas antigas (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="tv-admin-vincular-uids" style="display:none">
-        <div class="gp-admin-title">🔗 Vincular contas antigas</div>
-        <div class="gp-admin-sub">Liga o uid de quem já jogou ou já tinha terreirinho antes da simulação de admin existir — sem isso, simular essas contas não mostra os dados certos de Jogos. Só precisa rodar uma vez.</div>
-        <button class="tv-catalogo-btn-add" id="tv-admin-vincular-btn" onclick="tvAdminVincularUidsAntigos()">🔗 Vincular contas antigas</button>
-        <div class="gp-admin-sub" id="tv-admin-vincular-status" style="margin-top:8px"></div>
+        <div class="gp-admin-title" onclick="tvAdminToggleSecao('tv-admin-vincular-uids-body')">
+          <span>🔗 Vincular contas antigas</span>
+          <span class="gp-admin-chevron" id="tv-admin-vincular-uids-body-chevron">▾</span>
+        </div>
+        <div class="gp-admin-body" id="tv-admin-vincular-uids-body">
+          <div class="gp-admin-sub">Liga o uid de quem já jogou ou já tinha terreirinho antes da simulação de admin existir — sem isso, simular essas contas não mostra os dados certos de Jogos. Só precisa rodar uma vez.</div>
+          <button class="tv-catalogo-btn-add" id="tv-admin-vincular-btn" onclick="tvAdminVincularUidsAntigos()">🔗 Vincular contas antigas</button>
+          <div class="gp-admin-sub" id="tv-admin-vincular-status" style="margin-top:8px"></div>
 
-        <div class="gp-admin-sub" style="margin-top:14px">Ou vincula uma conta específica na mão (útil quando o nome bate com mais de uma pessoa, ou não achou nada automático):</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
-          <select id="tv-admin-vincular-perfil-sel" style="flex:1;min-width:160px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff">
-            <option value="">Carregando contas...</option>
-          </select>
-          <select id="tv-admin-vincular-candidato-sel" style="flex:1;min-width:160px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff">
-            <option value="">Carregando registros...</option>
-          </select>
-          <button class="tv-catalogo-btn-add" onclick="tvAdminVincularManual()">Vincular</button>
+          <div class="gp-admin-sub" style="margin-top:14px">Ou vincula uma conta específica na mão (útil quando o nome bate com mais de uma pessoa, ou não achou nada automático):</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px">
+            <select id="tv-admin-vincular-perfil-sel" style="flex:1;min-width:160px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff">
+              <option value="">Carregando contas...</option>
+            </select>
+            <select id="tv-admin-vincular-candidato-sel" style="flex:1;min-width:160px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff">
+              <option value="">Carregando registros...</option>
+            </select>
+            <button class="tv-catalogo-btn-add" onclick="tvAdminVincularManual()">Vincular</button>
+          </div>
         </div>
       </div>
 
       <!-- ADMIN — visibilidade no ranking (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="gp-admin-visibilidade" style="display:none">
-        <div class="gp-admin-title">⚙️ Visibilidade no ranking</div>
-        <div class="gp-admin-sub">Escolha quem fica de fora do ranking geral ou do ranking de cada jogo.</div>
-        <div id="gp-admin-visibilidade-lista">Carregando...</div>
+        <div class="gp-admin-title" onclick="tvAdminToggleSecao('gp-admin-visibilidade-body')">
+          <span>⚙️ Visibilidade no ranking</span>
+          <span class="gp-admin-chevron" id="gp-admin-visibilidade-body-chevron">▾</span>
+        </div>
+        <div class="gp-admin-body" id="gp-admin-visibilidade-body">
+          <div class="gp-admin-sub">Escolha quem fica de fora do ranking geral ou do ranking de cada jogo.</div>
+          <div id="gp-admin-visibilidade-lista">Carregando...</div>
+        </div>
       </div>
 
       <!-- ADMIN — catálogo da terreira (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="tv-admin-catalogo" style="display:none">
-        <div class="gp-admin-title">🏠 Catálogo da Terreira</div>
+        <div class="gp-admin-title" onclick="tvAdminToggleSecao('tv-admin-catalogo-body')">
+          <span>🏠 Catálogo da Terreira</span>
+          <span class="gp-admin-chevron" id="tv-admin-catalogo-body-chevron">▾</span>
+        </div>
+        <div class="gp-admin-body" id="tv-admin-catalogo-body">
         <div class="gp-admin-sub">Objetos disponíveis pra colocar no terreirinho, liberados aos poucos a partir do início de cada pessoa.</div>
         <div class="tv-admin-filtros">
           <input type="text" id="tv-admin-busca" placeholder="🔎 Buscar por nome..." oninput="tvAdminRenderLista()">
@@ -3061,6 +3081,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <button class="tv-catalogo-btn-add" id="tv-admin-btn-clonar" onclick="tvAdminClonarItem()" style="display:none">🧬 Clonar como novo</button>
             <button class="tv-catalogo-btn-add" id="tv-admin-btn-cancelar-edicao" onclick="tvAdminCancelarForm()" style="display:none">Cancelar</button>
           </div>
+        </div>
         </div>
       </div>
 
@@ -7759,6 +7780,17 @@ function tvAdminLimparForm() {
   document.getElementById('tv-admin-novo-escala').value = '1';
   document.getElementById('tv-admin-novo-inclinacao').value = '0';
   tvAdminAtualizarValoresSlider();
+}
+
+// abre/fecha uma seção do painel admin do Jogos — começam todas fechadas, pra
+// não ficar tudo aberto e poluído de uma vez só
+function tvAdminToggleSecao(idCorpo) {
+  const corpo = document.getElementById(idCorpo);
+  const chevron = document.getElementById(idCorpo + '-chevron');
+  if (!corpo) return;
+  const abrir = !corpo.classList.contains('aberto');
+  corpo.classList.toggle('aberto', abrir);
+  if (chevron) chevron.classList.toggle('aberto', abrir);
 }
 
 function tvAdminToggleForm() {
