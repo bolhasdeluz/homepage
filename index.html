@@ -6907,6 +6907,29 @@ async function tvClicarSlot(superficie, slot) {
     tvSelecionarObjetoColocado(ocupanteId);
     return;
   }
+
+  // objeto já colocado e selecionado (não um item novo do inventário) — clicar
+  // numa casinha vazia MOVE ele pra lá, em vez de ficar só no ajuste fininho
+  if (tvObjetoSelecionadoId && !tvItemSelecionado) {
+    const info = colocados[tvObjetoSelecionadoId];
+    if (!info) return;
+    const ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
+    const ehPlanta = info.catalogId === TV_SEMENTE_CATALOG_ID;
+    let tipoDoObjeto = 'chao';
+    if (!ehAvatar && !ehPlanta) {
+      const item = tvCatalogo.find(o => o.id === info.catalogId);
+      tipoDoObjeto = (item?.tipo || 'chao') === 'parede' ? 'parede' : 'chao';
+    }
+    const tipoDoSlot = superficie === 'chao' ? 'chao' : 'parede';
+    if (tipoDoObjeto !== tipoDoSlot) return; // objeto de parede não entra no chão e vice-versa
+    info.superficie = superficie;
+    info.slot = slot;
+    tvRenderGrid();
+    tvRenderAcoesObjeto();
+    await tvSalvarProgresso();
+    return;
+  }
+
   if (!tvItemSelecionado) return;
 
   if (tvItemSelecionado === TV_AVATAR_CATALOG_ID) {
