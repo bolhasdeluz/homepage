@@ -41,7 +41,7 @@ async function enviarEmailCartinha(env, { paraEmail, deNome, mensagem }) {
       </div>
     </div>`;
 
-  await fetch('https://api.resend.com/emails', {
+  const resp = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -51,6 +51,13 @@ async function enviarEmailCartinha(env, { paraEmail, deNome, mensagem }) {
       html
     })
   });
+  // o envio roda dentro de waitUntil (não bloqueia a resposta pro cliente), então
+  // um erro aqui não aparece em lugar nenhum a não ser no log da função — melhor
+  // logar do que falhar calado feito antes
+  if (!resp.ok) {
+    const detalhe = await resp.text().catch(() => '');
+    console.error('cartinha-email: Resend recusou o envio', resp.status, detalhe);
+  }
 }
 
 export async function onRequest(context) {
@@ -79,6 +86,10 @@ export async function onRequest(context) {
       deNome: (deNome || 'Alguém da casa').slice(0, 80),
       mensagem: String(mensagem).slice(0, 500),
     }));
+  } else {
+    // não achou um perfil com esse uid — provavelmente essa conta ainda não fez
+    // um login de verdade desde que o vínculo de uid passou a ser salvo
+    console.warn('cartinha-email: nenhum perfil encontrado com uid', paraUid);
   }
 
   // sempre responde ok, mesmo se não achou o perfil — não revela pro cliente
