@@ -9274,9 +9274,19 @@ let perfilData  = {};
 let perfilAlteracoes = {};
 // expor globalmente para scripts fora do módulo
 // já nasce consciente do modo simulação (evita que a simulação de usuário fique "pela metade")
+// "Peninha das Matas" — a identidade de quem entra pela senha de admin (sem
+// Google), com nome/foto/uid fixos próprios, pra ter Jogos/Terreirinho dela
+// mesma, igual qualquer outra jogadora. Só entra em cena se não tiver login
+// de Google de verdade nem simulação ativa.
+const PENINHA_MATAS_UID = 'peninha-das-matas';
+function peninhaMatasUsuario() {
+  return { uid: PENINHA_MATAS_UID, displayName: 'Peninha das Matas', email: '', photoURL: 'assets/peninha.png' };
+}
 window._getCurrentUser = () => {
   if (typeof _modoSimulacao !== 'undefined' && _modoSimulacao !== null) return window._simUsuario || null;
-  return currentUser;
+  if (currentUser) return currentUser;
+  if (localStorage.getItem('adminSenhaAtiva') === '1') return peninhaMatasUsuario();
+  return null;
 };
 window._getPerfilData  = () => perfilData;
 window._getPerfilDataReal = () => perfilData; // referência fixa para restaurar após simulação
