@@ -360,11 +360,19 @@ footer{
 }
 .tv-admin-preview-tampo{
   position:absolute;left:6%;right:6%;border-top:2px dashed var(--gp-gold);z-index:5;display:none;
+  transform-origin:center;
 }
 .tv-admin-preview-tampo::after{
   content:'tampo';position:absolute;right:0;top:-13px;font-size:7.5px;color:var(--gp-gold);
   font-family:'Cinzel',serif;letter-spacing:.03em;
 }
+.tv-admin-preview-spot{
+  position:absolute;width:16px;height:16px;border-radius:50%;background:var(--gp-gold);color:#fff;
+  font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  transform:translate(-50%,-50%);cursor:pointer;z-index:6;box-shadow:0 1px 3px rgba(0,0,0,.35);
+}
+.tv-admin-preview-spot:hover{background:#b3364a}
+.tv-admin-preview-dica-spots{font-size:9px;color:var(--gp-text-dim);text-align:center;margin-top:2px}
 .tv-admin-slider-linha{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;color:var(--gp-text-dim)}
 .tv-admin-slider-linha input[type=range]{flex:1}
 .tv-admin-slider-label{white-space:nowrap;min-width:88px}
@@ -3175,8 +3183,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           <div class="tv-admin-preview-sala" id="tv-admin-preview-sala">
             <div class="tv-admin-preview-piso" id="tv-admin-preview-piso"></div>
-            <img class="tv-admin-preview-img" id="tv-admin-preview-objeto" alt="" style="display:none">
+            <img class="tv-admin-preview-img" id="tv-admin-preview-objeto" alt="" style="display:none" onclick="tvAdminCliquePreviewObjeto(event)">
           </div>
+          <div class="tv-admin-preview-dica-spots" id="tv-admin-preview-dica-spots" style="display:none">Clica na imagem pra marcar onde os objetos podem ficar em cima (clica de novo no ponto pra apagar)</div>
           <div class="tv-admin-slider-linha">
             <span class="tv-admin-slider-label">Tamanho padrão</span>
             <input type="range" id="tv-admin-novo-escala" min="0.25" max="1.8" step="0.05" value="1" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
@@ -3186,6 +3195,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="tv-admin-slider-label">Inclinação padrão</span>
             <input type="range" id="tv-admin-novo-inclinacao" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
             <span class="tv-admin-slider-valor" id="tv-admin-novo-inclinacao-valor">0°</span>
+          </div>
+          <div class="admin-row-inputs" id="tv-admin-pode-mesa-linha">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--gp-text-dim);cursor:pointer">
+              <input type="checkbox" id="tv-admin-novo-pode-mesa" checked>
+              🍽️ Pode ficar em cima de mesas
+            </label>
           </div>
           <div class="admin-row-inputs" id="tv-admin-mesa-linha">
             <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--gp-text-dim);cursor:pointer">
@@ -3197,6 +3212,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="tv-admin-slider-label">Altura do tampo</span>
             <input type="range" id="tv-admin-novo-altura-tampo" min="0.15" max="0.9" step="0.05" value="0.5" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
             <span class="tv-admin-slider-valor" id="tv-admin-novo-altura-tampo-valor">50%</span>
+          </div>
+          <div class="tv-admin-slider-linha" id="tv-admin-inclinacao-tampo-linha" style="display:none">
+            <span class="tv-admin-slider-label">Inclinação do tampo</span>
+            <input type="range" id="tv-admin-novo-inclinacao-tampo" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
+            <span class="tv-admin-slider-valor" id="tv-admin-novo-inclinacao-tampo-valor">0°</span>
+          </div>
+          <div class="admin-row-inputs" id="tv-admin-spots-linha" style="display:none">
+            <span class="gp-admin-sub" id="tv-admin-spots-contagem" style="margin:0">Nenhum ponto marcado (usa o centro da altura do tampo)</span>
+            <button type="button" class="tv-catalogo-btn-add" onclick="tvAdminLimparSpots()">🗑 Limpar pontos</button>
           </div>
           <div class="admin-row-inputs">
             <button class="btn-add" id="tv-admin-btn-salvar" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
@@ -7200,9 +7224,17 @@ function tvRenderizarObjetoEmCimaDaMesa(topoInstanciaId, topoInfo, imgMesa, item
   const rectContainer = objetosEl.getBoundingClientRect();
   if (!rectContainer.width || !rectContainer.height) return; // sala ainda não está visível pra medir
 
-  const alturaTampo = itemMesa.alturaTampo || 0.5;
-  const yTopoPx = rectMesa.bottom - rectMesa.height * alturaTampo;
-  const xTopoPercent = ((rectMesa.left + rectMesa.width / 2 - rectContainer.left) / rectContainer.width) * 100;
+  // se a mesa tem pontos marcados no cadastro, usa a posição exata do ponto
+  // escolhido; senão cai no comportamento antigo (um só ponto no centro, na
+  // altura do tampo) — assim itens cadastrados antes dessa opção continuam
+  // funcionando do mesmo jeito
+  const spots = itemMesa.tampoSpots && itemMesa.tampoSpots.length ? itemMesa.tampoSpots : null;
+  const spotEscolhido = spots ? (spots[topoInfo.spotMesa || 0] || spots[0]) : null;
+  const xTopoPx = spotEscolhido ? (rectMesa.left + rectMesa.width * spotEscolhido.x) : (rectMesa.left + rectMesa.width / 2);
+  const yTopoPx = spotEscolhido
+    ? (rectMesa.top + rectMesa.height * spotEscolhido.y)
+    : (rectMesa.bottom - rectMesa.height * (itemMesa.alturaTampo || 0.5));
+  const xTopoPercent = ((xTopoPx - rectContainer.left) / rectContainer.width) * 100;
   const yTopoPercent = ((yTopoPx - rectContainer.top) / rectContainer.height) * 100;
 
   const ancoraTopo = ancoras[itemTopo.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
@@ -7211,7 +7243,9 @@ function tvRenderizarObjetoEmCimaDaMesa(topoInstanciaId, topoInfo, imgMesa, item
   const escala = topoInfo.escala || 1;
   const rot = topoInfo.rot || 0;
   const espelho = topoInfo.espelhado ? -1 : 1;
-  const skew = tvSkewTotal(superficie, topoInfo.inclinacao);
+  // a inclinação do tampo da mesa (mesas diagonais) soma na inclinação do
+  // próprio objeto, pra ele ficar "deitado" no mesmo ângulo da superfície
+  const skew = tvSkewTotal(superficie, topoInfo.inclinacao) + (itemMesa.tampoInclinacao || 0);
 
   const img = document.createElement('img');
   img.className = 'tv-objeto-img';
@@ -7515,8 +7549,14 @@ async function tvClicarSlot(superficie, slot) {
     // de só selecionar a mesa
     const ocupanteInfo = colocados[ocupanteId];
     const ocupanteItem = tvCatalogo.find(o => o.id === ocupanteInfo?.catalogId);
-    const jaTemAlgoEmCima = Object.values(colocados).some(c => c.emCimaDe === ocupanteId);
-    if (tvItemSelecionado && ocupanteItem?.mesa && !jaTemAlgoEmCima) {
+    const itemSelecionadoCatalogo = tvItemSelecionado ? tvCatalogo.find(o => o.id === tvItemSelecionado) : null;
+    const podeEmCima = !!itemSelecionadoCatalogo && itemSelecionadoCatalogo.podeEmCimaDeMesa !== false;
+    // com pontos marcados, a mesa aceita um item por ponto; sem pontos marcados
+    // (cadastro antigo), só aceita 1 item, no centro
+    const totalSpotsNaMesa = ocupanteItem?.tampoSpots?.length || 1;
+    const spotsOcupados = new Set(Object.values(colocados).filter(c => c.emCimaDe === ocupanteId).map(c => c.spotMesa || 0));
+    const temSpotLivre = spotsOcupados.size < totalSpotsNaMesa;
+    if (tvItemSelecionado && ocupanteItem?.mesa && podeEmCima && temSpotLivre) {
       tvOferecerColocarEmCima(ocupanteId);
       return;
     }
@@ -7603,20 +7643,44 @@ function tvOferecerColocarEmCima(mesaInstanciaId) {
     `Essa casinha já tem "${mesaItem?.nome || 'uma mesa'}". Quer colocar "${item.nome}" em cima dela?`,
     [
       { label: 'Cancelar' },
-      { label: 'Colocar em cima', destaque: true, aoClicar: async () => {
-        const instanciaId = tvNovaInstanciaId();
-        tvProgresso.colocados[instanciaId] = {
-          catalogId: tvItemSelecionado, superficie: mesaInfo.superficie, slot: mesaInfo.slot,
-          rot: 0, espelhado: false, escala: item.escalaPadrao || 1, inclinacao: item.inclinacaoPadrao || 0,
-          emCimaDe: mesaInstanciaId,
-        };
-        tvItemSelecionado = null;
-        tvRenderGrid();
-        tvRenderInventario();
-        await tvSalvarProgresso();
-      } },
+      { label: 'Colocar em cima', destaque: true, aoClicar: () => tvEscolherSpotMesa(mesaInstanciaId, mesaInfo, mesaItem) },
     ]
   );
+}
+
+// se a mesa tem mais de um ponto livre marcado no cadastro, deixa escolher
+// qual; se só tem 1 ponto livre (ou nenhum ponto marcado — cadastro antigo),
+// coloca direto sem perguntar
+function tvEscolherSpotMesa(mesaInstanciaId, mesaInfo, mesaItem) {
+  const totalSpots = mesaItem?.tampoSpots?.length || 1;
+  const ocupados = new Set(Object.values(tvProgresso.colocados || {}).filter(c => c.emCimaDe === mesaInstanciaId).map(c => c.spotMesa || 0));
+  const livres = [];
+  for (let i = 0; i < totalSpots; i++) if (!ocupados.has(i)) livres.push(i);
+  if (livres.length <= 1) {
+    tvColocarEmCimaDaMesa(mesaInstanciaId, mesaInfo, livres[0] ?? 0);
+    return;
+  }
+  tvMostrarEscolha(
+    '📍 Qual posição?',
+    'Essa mesa tem mais de um lugar livre — escolhe onde colocar:',
+    livres.map(i => ({ label: `Posição ${i + 1}`, aoClicar: () => tvColocarEmCimaDaMesa(mesaInstanciaId, mesaInfo, i) }))
+      .concat([{ label: 'Cancelar' }])
+  );
+}
+
+async function tvColocarEmCimaDaMesa(mesaInstanciaId, mesaInfo, spotIdx) {
+  const item = tvCatalogo.find(o => o.id === tvItemSelecionado);
+  if (!item) return;
+  const instanciaId = tvNovaInstanciaId();
+  tvProgresso.colocados[instanciaId] = {
+    catalogId: tvItemSelecionado, superficie: mesaInfo.superficie, slot: mesaInfo.slot,
+    rot: 0, espelhado: false, escala: item.escalaPadrao || 1, inclinacao: item.inclinacaoPadrao || 0,
+    emCimaDe: mesaInstanciaId, spotMesa: spotIdx,
+  };
+  tvItemSelecionado = null;
+  tvRenderGrid();
+  tvRenderInventario();
+  await tvSalvarProgresso();
 }
 
 // ── objeto já colocado: seleciona pra abrir a barrinha de girar/espelhar/remover ──
@@ -7800,7 +7864,8 @@ function tvRenderAcoesObjeto() {
   nomeEl.textContent = ehAvatar ? '🧍 Seu avatar' : ehPlanta ? '🌱 Planta especial' : (item ? item.nome : '');
 
   // avatar e planta especial são únicos — não dá pra ter uma segunda cópia.
-  // Objeto em cima de mesa também não clona (por enquanto só 1 por mesa)
+  // Objeto em cima de mesa também não clona (senão os dois clones nasceriam no
+  // mesmo ponto, um em cima do outro)
   const btnClonar = document.getElementById('tv-acoes-clonar');
   if (btnClonar) btnClonar.style.display = (ehAvatar || ehPlanta || info?.emCimaDe) ? 'none' : '';
 
@@ -7936,7 +8001,7 @@ async function tvClonarSelecionado() {
   const ehAvatar = info.catalogId === TV_AVATAR_CATALOG_ID;
   const ehPlanta = info.catalogId === TV_SEMENTE_CATALOG_ID;
   if (ehAvatar || ehPlanta) return; // itens únicos não podem ser clonados
-  if (info.emCimaDe) return; // objeto em cima de mesa não clona (por enquanto só dá 1 por mesa)
+  if (info.emCimaDe) return; // objeto em cima de mesa não clona (nasceria no mesmo ponto)
 
   const catalogItem = tvCatalogo.find(o => o.id === info.catalogId);
   const superficiesTentar = catalogItem?.tipo === 'parede'
@@ -8183,13 +8248,21 @@ async function tvMontarSelectArquivos() {
   if (!sel || sel.dataset.montado) return; // já buscou nessa sessão
   sel.dataset.montado = '1';
   sel.innerHTML = '<option value="">Buscando arquivos no GitHub...</option>';
-  const arquivos = await tvBuscarArquivosGithub();
-  if (arquivos === null) {
+  const todos = await tvBuscarArquivosGithub();
+  if (todos === null) {
     sel.innerHTML = '<option value="">Não consegui buscar no GitHub agora — tenta recarregar a página</option>';
     return;
   }
-  if (!arquivos.length) {
+  // esconde arquivos que já estão cadastrados no catálogo — só mostra o que
+  // ainda não foi cadastrado, pra não repetir objeto sem querer
+  const jaCadastrados = new Set(tvAdminCatalogoCache.map(i => i.imagem));
+  const arquivos = todos.filter(caminho => !jaCadastrados.has(caminho));
+  if (!todos.length) {
     sel.innerHTML = '<option value="">Nenhum PNG encontrado em assets/objetos/</option>';
+    return;
+  }
+  if (!arquivos.length) {
+    sel.innerHTML = '<option value="">Todos os arquivos já estão cadastrados ✦</option>';
     return;
   }
   sel.innerHTML = '';
@@ -8381,6 +8454,7 @@ async function tvAdminAtualizarPreviewSala() {
   // onde desenhar, então acompanha certinho a escala/inclinação escolhidas
   const ehMesa = tipo === 'chao' && !!document.getElementById('tv-admin-novo-mesa')?.checked;
   let linhaTampo = document.getElementById('tv-admin-preview-tampo');
+  const dicaSpots = document.getElementById('tv-admin-preview-dica-spots');
   if (ehMesa) {
     if (!linhaTampo) {
       linhaTampo = document.createElement('div');
@@ -8389,16 +8463,22 @@ async function tvAdminAtualizarPreviewSala() {
       container.appendChild(linhaTampo);
     }
     const alturaTampo = parseFloat(document.getElementById('tv-admin-novo-altura-tampo')?.value) || 0.5;
+    const inclinacaoTampo = parseInt(document.getElementById('tv-admin-novo-inclinacao-tampo')?.value, 10) || 0;
     requestAnimationFrame(() => {
       const rectImg = img.getBoundingClientRect();
       const rectContainer = container.getBoundingClientRect();
       if (!rectImg.height || !rectContainer.height) return;
       const yPx = rectImg.bottom - rectImg.height * alturaTampo;
       linhaTampo.style.top = ((yPx - rectContainer.top) / rectContainer.height * 100) + '%';
+      linhaTampo.style.transform = `rotate(${inclinacaoTampo}deg)`;
       linhaTampo.style.display = 'block';
     });
-  } else if (linhaTampo) {
-    linhaTampo.style.display = 'none';
+    if (dicaSpots) dicaSpots.style.display = 'block';
+    tvAdminRenderSpotsMarcadores();
+  } else {
+    if (linhaTampo) linhaTampo.style.display = 'none';
+    if (dicaSpots) dicaSpots.style.display = 'none';
+    container.querySelectorAll('.tv-admin-preview-spot').forEach(el => el.remove());
   }
 }
 
@@ -8474,6 +8554,10 @@ function tvAdminRenderLista() {
 // arquivos do GitHub na primeira vez que abre, pra não pesar o carregamento do painel
 let tvAdminEditandoId = null;
 let tvAdminEditandoImagem = null;
+// pontos marcados na imagem pra onde os objetos podem ir em cima da mesa
+// (fração 0-1 da largura/altura da imagem renderizada) — se vazio, cai no
+// comportamento antigo de um só ponto no centro, na altura do tampo
+let tvAdminSpotsAtual = [];
 
 function tvAdminAtualizarValoresSlider() {
   const escala = document.getElementById('tv-admin-novo-escala');
@@ -8485,6 +8569,74 @@ function tvAdminAtualizarValoresSlider() {
   const alturaTampo = document.getElementById('tv-admin-novo-altura-tampo');
   const alturaTampoValor = document.getElementById('tv-admin-novo-altura-tampo-valor');
   if (alturaTampoValor && alturaTampo) alturaTampoValor.textContent = Math.round(parseFloat(alturaTampo.value) * 100) + '%';
+  const inclinacaoTampo = document.getElementById('tv-admin-novo-inclinacao-tampo');
+  const inclinacaoTampoValor = document.getElementById('tv-admin-novo-inclinacao-tampo-valor');
+  if (inclinacaoTampoValor && inclinacaoTampo) inclinacaoTampoValor.textContent = inclinacaoTampo.value + '°';
+}
+
+// apaga todos os pontos marcados (volta pro modo "um ponto no centro")
+function tvAdminLimparSpots() {
+  tvAdminSpotsAtual = [];
+  tvAdminAtualizarPreviewSala();
+}
+
+// clicar na imagem da prévia marca um ponto novo onde dá pra colocar objeto em
+// cima (só funciona quando "é mesa" está marcado); clicar num ponto já
+// existente apaga ele — assim dá pra corrigir sem precisar limpar tudo
+function tvAdminCliquePreviewObjeto(event) {
+  const ehMesa = document.getElementById('tv-admin-novo-tipo')?.value === 'chao' && !!document.getElementById('tv-admin-novo-mesa')?.checked;
+  if (!ehMesa) return;
+  if (event.target.classList.contains('tv-admin-preview-spot')) {
+    const idx = parseInt(event.target.dataset.idx, 10);
+    tvAdminSpotsAtual.splice(idx, 1);
+    tvAdminAtualizarPreviewSala();
+    return;
+  }
+  const img = document.getElementById('tv-admin-preview-objeto');
+  const rect = img.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const xFrac = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+  const yFrac = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+  tvAdminSpotsAtual.push({ x: xFrac, y: yFrac });
+  tvAdminAtualizarPreviewSala();
+}
+
+// desenha os pontos marcados por cima da prévia — usa o retângulo já
+// renderizado da imagem (depois do transform) igual a linha do tampo, pra
+// acompanhar certinho a escala/inclinação escolhidas
+let tvAdminSpotsRenderToken = 0;
+function tvAdminRenderSpotsMarcadores() {
+  const container = document.getElementById('tv-admin-preview-sala');
+  const img = document.getElementById('tv-admin-preview-objeto');
+  if (!container || !img) return;
+  container.querySelectorAll('.tv-admin-preview-spot').forEach(el => el.remove());
+  const contagemEl = document.getElementById('tv-admin-spots-contagem');
+  if (contagemEl) {
+    contagemEl.textContent = tvAdminSpotsAtual.length
+      ? `${tvAdminSpotsAtual.length} ponto(s) marcado(s)`
+      : 'Nenhum ponto marcado (usa o centro da altura do tampo)';
+  }
+  if (!tvAdminSpotsAtual.length) return;
+  // se essa função for chamada de novo antes do rAF anterior rodar (acontece
+  // fácil arrastando um slider, ou com chamadas em sequência), só a chamada
+  // mais recente desenha — senão os pontos duplicavam a cada chamada
+  const token = ++tvAdminSpotsRenderToken;
+  requestAnimationFrame(() => {
+    if (token !== tvAdminSpotsRenderToken) return;
+    container.querySelectorAll('.tv-admin-preview-spot').forEach(el => el.remove());
+    const rectImg = img.getBoundingClientRect();
+    const rectContainer = container.getBoundingClientRect();
+    if (!rectImg.width || !rectContainer.width) return;
+    tvAdminSpotsAtual.forEach((spot, idx) => {
+      const marcador = document.createElement('div');
+      marcador.className = 'tv-admin-preview-spot';
+      marcador.dataset.idx = String(idx);
+      marcador.textContent = String(idx + 1);
+      marcador.style.left = ((rectImg.left + rectImg.width * spot.x - rectContainer.left) / rectContainer.width * 100) + '%';
+      marcador.style.top = ((rectImg.top + rectImg.height * spot.y - rectContainer.top) / rectContainer.height * 100) + '%';
+      container.appendChild(marcador);
+    });
+  });
 }
 
 // só objeto de chão pode ser mesa (parede não faz sentido ter "tampo") — some
@@ -8502,8 +8654,11 @@ function tvAdminAtualizarVisibilidadeMesa() {
 
 function tvAdminAlternarMesa() {
   const checked = document.getElementById('tv-admin-novo-mesa')?.checked;
-  const linha = document.getElementById('tv-admin-altura-tampo-linha');
-  if (linha) linha.style.display = checked ? '' : 'none';
+  ['tv-admin-altura-tampo-linha', 'tv-admin-inclinacao-tampo-linha', 'tv-admin-spots-linha'].forEach(id => {
+    const linha = document.getElementById(id);
+    if (linha) linha.style.display = checked ? '' : 'none';
+  });
+  if (!checked) tvAdminSpotsAtual = [];
   tvAdminAtualizarPreviewSala();
 }
 
@@ -8514,8 +8669,11 @@ function tvAdminLimparForm() {
   document.getElementById('tv-admin-novo-categoria').value = 'outros';
   document.getElementById('tv-admin-novo-escala').value = '1';
   document.getElementById('tv-admin-novo-inclinacao').value = '0';
+  document.getElementById('tv-admin-novo-pode-mesa').checked = true;
   document.getElementById('tv-admin-novo-mesa').checked = false;
   document.getElementById('tv-admin-novo-altura-tampo').value = '0.5';
+  document.getElementById('tv-admin-novo-inclinacao-tampo').value = '0';
+  tvAdminSpotsAtual = [];
   tvAdminAtualizarValoresSlider();
   tvAdminAtualizarVisibilidadeMesa();
 }
@@ -8595,8 +8753,11 @@ async function tvAdminEditarItem(id) {
   document.getElementById('tv-admin-novo-categoria').value = tvCategoriaEfetiva(item);
   document.getElementById('tv-admin-novo-escala').value = String(item.escalaPadrao || 1);
   document.getElementById('tv-admin-novo-inclinacao').value = String(item.inclinacaoPadrao || 0);
+  document.getElementById('tv-admin-novo-pode-mesa').checked = item.podeEmCimaDeMesa !== false;
   document.getElementById('tv-admin-novo-mesa').checked = !!item.mesa;
   document.getElementById('tv-admin-novo-altura-tampo').value = String(item.alturaTampo || 0.5);
+  document.getElementById('tv-admin-novo-inclinacao-tampo').value = String(item.tampoInclinacao || 0);
+  tvAdminSpotsAtual = (item.tampoSpots || []).map(s => ({ ...s }));
   tvAdminAtualizarValoresSlider();
   tvAdminAtualizarVisibilidadeMesa();
   tvAdminAtualizarPreviewSala();
@@ -8616,11 +8777,14 @@ async function tvAdminAdicionar() {
   const inclinacaoPadrao = parseInt(document.getElementById('tv-admin-novo-inclinacao').value, 10);
   const mesa = tipo === 'chao' && !!document.getElementById('tv-admin-novo-mesa')?.checked;
   const alturaTampo = parseFloat(document.getElementById('tv-admin-novo-altura-tampo')?.value) || 0.5;
+  const tampoInclinacao = parseInt(document.getElementById('tv-admin-novo-inclinacao-tampo')?.value, 10) || 0;
+  const podeEmCimaDeMesa = !!document.getElementById('tv-admin-novo-pode-mesa')?.checked;
+  const tampoSpots = mesa ? tvAdminSpotsAtual.map(s => ({ ...s })) : [];
   if (!nome || !dia) { alert('Preenche o nome e o dia.'); return; }
 
   if (tvAdminEditandoId) {
     if (window._tvSalvarItemCatalogo) {
-      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo });
+      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa });
     }
     tvAdminCancelarForm();
     tvAtualizarAdminCatalogo();
@@ -8630,7 +8794,7 @@ async function tvAdminAdicionar() {
   const imagem = document.getElementById('tv-admin-novo-arquivo').value;
   if (!imagem) { alert('Escolhe o arquivo.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo });
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa });
   tvAdminLimparForm();
   tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
