@@ -6788,6 +6788,17 @@ const TV_SKEW = { chao: 0, paredeEsquerda: -8, paredeDireita: 8 }; // inclinaç�
 const TV_ESCALA_MIN = 0.25, TV_ESCALA_MAX = 1.8, TV_ESCALA_PASSO = 0.15;
 const TV_INCLINACAO_MIN = -30, TV_INCLINACAO_MAX = 30, TV_INCLINACAO_PASSO = 5; // ajuste manual, somado à inclinação-base
 
+// a inclinação extra (padrão do catálogo ou ajuste manual da pessoa) é sempre
+// pensada "olhando pra parede direita" — na parede esquerda, que é o espelho
+// da direita, essa mesma inclinação precisa ser espelhada também. Sem isso,
+// mover/colocar o mesmo objeto de uma parede pra outra não ficava simétrico:
+// uma parede ficava com a inclinação certa e a outra com uma torta, errada
+function tvSkewTotal(superficie, inclinacaoExtra) {
+  const base = TV_SKEW[superficie] || 0;
+  const espelho = superficie === 'paredeEsquerda' ? -1 : 1;
+  return base + espelho * (inclinacaoExtra || 0);
+}
+
 // interpola um ponto (i,j) da grade de uma superfície, i,j de 0 a n
 function tvPonto(superficie, i, j) {
   const s = TV_SUPERFICIES[superficie];
@@ -6952,7 +6963,7 @@ async function tvRenderGrid() {
         const rot = info.rot || 0;
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
-        const skew = (TV_SKEW[superficie] || 0) + (info.inclinacao || 0);
+        const skew = tvSkewTotal(superficie, info.inclinacao);
         const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
         // divide pela largura real do desenho (sem a borda transparente) — assim o
         // objeto visível fica do tamanho pretendido, não a tela toda do PNG
@@ -6997,7 +7008,7 @@ async function tvRenderGrid() {
         const rot = info.rot || 0;
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
-        const skew = (TV_SKEW[superficie] || 0) + (info.inclinacao || 0);
+        const skew = tvSkewTotal(superficie, info.inclinacao);
         const ancora = ancoras[AV_BASE_SRC] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
         const tamanhoTela = tamanho / (ancora.larguraFrac || 1);
 
