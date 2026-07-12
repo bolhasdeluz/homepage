@@ -340,6 +340,21 @@ footer{
 .admin-add-form input,.admin-add-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
 .admin-add-form input:focus,.admin-add-form select:focus{border-color:var(--rosa)}
 .admin-row-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tv-admin-preview-sala{
+  position:relative;width:150px;height:150px;margin:10px auto 4px;background:var(--gp-bg);
+  border:1px solid var(--gp-border);border-radius:10px;overflow:hidden;
+}
+.tv-admin-preview-piso{
+  position:absolute;left:8%;top:38%;width:84%;height:52%;background:rgba(196,57,107,.08);
+  clip-path:polygon(50% 0%,100% 32%,50% 64%,0% 32%);
+}
+.tv-admin-preview-sala.parede .tv-admin-preview-piso{
+  clip-path:none;left:14%;top:6%;width:72%;height:82%;
+}
+.tv-admin-preview-img{
+  position:absolute;left:50%;top:70%;object-fit:contain;transform-origin:center;
+  image-rendering:pixelated;max-width:95%;
+}
 .tv-admin-slider-linha{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;color:var(--gp-text-dim)}
 .tv-admin-slider-linha input[type=range]{flex:1}
 .tv-admin-slider-label{white-space:nowrap;min-width:88px}
@@ -1533,12 +1548,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 /* botão explícito de entrar/sair do modo edição — a grade, o inventário e o "próximo
    objeto" só ficam visíveis/clicáveis enquanto esse modo está ligado, evitando ficar
    "preso" aberto sem um jeito claro de fechar */
-.tv-modo-edicao-barra{margin-bottom:10px}
+.tv-modo-edicao-barra{margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .tv-modo-edicao-barra button{
   background:#fff;border:1px solid var(--gp-gold);border-radius:14px;color:var(--gp-gold);
   font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.05em;padding:7px 16px;cursor:pointer;
 }
-#tv-corpo.editando .tv-modo-edicao-barra button{background:var(--gp-gold);color:#fff}
+#tv-corpo.editando .tv-modo-edicao-barra button#tv-btn-modo-edicao{background:var(--gp-gold);color:#fff}
+.tv-salvo-status{font-size:10px;color:var(--gp-text-dim);font-style:italic}
 .tv-so-editando{display:none!important}
 #tv-corpo.editando .tv-so-editando{display:block!important}
 #tv-corpo.editando .tv-inventario.tv-so-editando{display:flex!important}
@@ -2852,6 +2868,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
           <div class="tv-modo-edicao-barra tv-editor-only">
             <button id="tv-btn-modo-edicao" onclick="tvAlternarModoEdicao()">✎ Editar Terreirinho</button>
+            <button id="tv-btn-salvar-agora" onclick="tvSalvarAgora()" style="display:none">💾 Salvar agora</button>
+            <span class="tv-salvo-status" id="tv-salvo-status"></span>
           </div>
 
           <div class="controles-construcao tv-editor-only tv-so-editando">
@@ -2997,7 +3015,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </select>
           </div>
           <div class="admin-row-inputs">
-            <select id="tv-admin-novo-tipo">
+            <select id="tv-admin-novo-tipo" onchange="tvAdminAtualizarPreviewSala()">
               <option value="chao">Objeto de chão</option>
               <option value="parede">Objeto de parede</option>
             </select>
@@ -3010,14 +3028,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <option value="outros">✦ Outros</option>
             </select>
           </div>
+          <div class="tv-admin-preview-sala" id="tv-admin-preview-sala">
+            <div class="tv-admin-preview-piso" id="tv-admin-preview-piso"></div>
+            <img class="tv-admin-preview-img" id="tv-admin-preview-objeto" alt="" style="display:none">
+          </div>
           <div class="tv-admin-slider-linha">
             <span class="tv-admin-slider-label">Tamanho padrão</span>
-            <input type="range" id="tv-admin-novo-escala" min="0.25" max="1.8" step="0.05" value="1" oninput="tvAdminAtualizarValoresSlider()">
+            <input type="range" id="tv-admin-novo-escala" min="0.25" max="1.8" step="0.05" value="1" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
             <span class="tv-admin-slider-valor" id="tv-admin-novo-escala-valor">1.0x</span>
           </div>
           <div class="tv-admin-slider-linha">
             <span class="tv-admin-slider-label">Inclinação padrão</span>
-            <input type="range" id="tv-admin-novo-inclinacao" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider()">
+            <input type="range" id="tv-admin-novo-inclinacao" min="-30" max="30" step="5" value="0" oninput="tvAdminAtualizarValoresSlider();tvAdminAtualizarPreviewSala()">
             <span class="tv-admin-slider-valor" id="tv-admin-novo-inclinacao-valor">0°</span>
           </div>
           <div class="admin-row-inputs">
@@ -7157,10 +7179,35 @@ function tvAlternarModoEdicao() {
   document.getElementById('tv-corpo')?.classList.toggle('editando', tvModoEdicao);
   const btn = document.getElementById('tv-btn-modo-edicao');
   if (btn) btn.textContent = tvModoEdicao ? '✕ Sair do modo edição' : '✎ Editar Terreirinho';
+  const btnSalvar = document.getElementById('tv-btn-salvar-agora');
+  if (btnSalvar) btnSalvar.style.display = tvModoEdicao ? '' : 'none';
+  tvControlarAutoSalvar(tvModoEdicao);
+  if (!tvModoEdicao) tvSalvarProgresso(); // garante que a última mudança foi mesmo salva ao sair
   tvRenderGrid();
   tvRenderInventario();
   tvRenderProximo();
   tvRenderAcoesObjeto();
+}
+
+// salva explicitamente ao clicar (dá uma confirmação visual, pra quem
+// ajustou tudo poder atualizar a página com tranquilidade)
+async function tvSalvarAgora() {
+  const status = document.getElementById('tv-salvo-status');
+  if (status) status.textContent = 'Salvando...';
+  await tvSalvarProgresso();
+  if (status) {
+    status.textContent = '✔ Salvo agora';
+    setTimeout(() => { if (status.textContent === '✔ Salvo agora') status.textContent = ''; }, 3000);
+  }
+}
+
+// enquanto estiver editando, salva de tempos em tempos por garantia — evita
+// perder ajustes recentes se a pessoa atualizar a página sem querer antes do
+// último salvamento de uma ação terminar
+let tvAutoSalvarInterval = null;
+function tvControlarAutoSalvar(ligar) {
+  if (tvAutoSalvarInterval) { clearInterval(tvAutoSalvarInterval); tvAutoSalvarInterval = null; }
+  if (ligar) tvAutoSalvarInterval = setInterval(() => tvSalvarProgresso(), 20000);
 }
 
 function tvRenderAcoesObjeto() {
@@ -7296,13 +7343,21 @@ function tvRenderProximo() {
   el.textContent = `🎁 Próximo objeto em ${faltam} dia${faltam === 1 ? '' : 's'}`;
 }
 
+// encadeia os salvamentos (nunca deixa dois rodarem ao mesmo tempo) — se duas
+// ações rápidas dispararem save quase juntas, a segunda espera a primeira
+// terminar antes de mandar a versão mais atual, evitando que uma resposta
+// mais lenta "chegue por último" e sobrescreva uma mudança mais nova
+let tvSalvarProgressoFila = Promise.resolve();
 async function tvSalvarProgresso() {
   // nunca salva enquanto visita alguém — senão o terreirinho da visitante seria
   // sobrescrito com os dados de quem ela está visitando
   if (tvVisitandoUid) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user || !tvProgresso || !window._tvSalvarProgresso) return;
-  await window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corChao: tvProgresso.corChao, corParede: tvProgresso.corParede });
+  tvSalvarProgressoFila = tvSalvarProgressoFila.then(() =>
+    window._tvSalvarProgresso(user.uid, { colocados: tvProgresso.colocados, corChao: tvProgresso.corChao, corParede: tvProgresso.corParede })
+  );
+  await tvSalvarProgressoFila;
 }
 
 document.getElementById('cor-chao')?.addEventListener('input', (event) => {
@@ -7456,6 +7511,45 @@ function tvAtualizarPreviewArquivo() {
   preview.src = sel.value;
   preview.style.display = 'block';
   if (!nomeInput.value.trim()) nomeInput.value = tvNomeSugerido(sel.value);
+  tvAdminAtualizarPreviewSala();
+}
+
+// mostra uma simulação (aproximada) de como o objeto fica na terreirinho de
+// verdade, usando o mesmo cálculo de âncora/escala do jogo — atualiza ao
+// mexer nos sliders de tamanho/inclinação, trocar o tipo ou escolher o arquivo
+async function tvAdminAtualizarPreviewSala() {
+  const container = document.getElementById('tv-admin-preview-sala');
+  const img = document.getElementById('tv-admin-preview-objeto');
+  if (!container || !img) return;
+  const tipoEl = document.getElementById('tv-admin-novo-tipo');
+  const escalaEl = document.getElementById('tv-admin-novo-escala');
+  const inclinacaoEl = document.getElementById('tv-admin-novo-inclinacao');
+  if (!tipoEl || !escalaEl || !inclinacaoEl) return;
+  const tipo = tipoEl.value;
+  const escala = parseFloat(escalaEl.value) || 1;
+  const inclinacao = parseInt(inclinacaoEl.value, 10) || 0;
+
+  let src = null;
+  if (tvAdminEditandoId) {
+    src = tvAdminEditandoImagem;
+  } else {
+    src = document.getElementById('tv-admin-novo-arquivo')?.value || null;
+  }
+  if (!src) { img.style.display = 'none'; return; }
+
+  container.classList.toggle('parede', tipo === 'parede');
+  const ancora = await tvCalcularAncora(src);
+  const skewBase = tipo === 'parede' ? 8 : 0; // aproximação — na sala de verdade cada parede tem um lado diferente
+  const skew = skewBase + inclinacao;
+  const TAMANHO_BASE = 40; // % do quadro de prévia, só pra dar uma referência de escala
+  const tamanhoTela = TAMANHO_BASE / (ancora.larguraFrac || 1);
+
+  img.src = src;
+  img.style.display = 'block';
+  img.style.width = tamanhoTela + '%';
+  img.style.left = '50%';
+  img.style.top = tipo === 'parede' ? '50%' : '68%';
+  img.style.transform = `translate(-${ancora.cx * 100}%, -${ancora.cy * 100}%) scale(${escala}) skewY(${skew}deg)`;
 }
 
 let tvAdminCatalogoCache = [];
@@ -7525,6 +7619,7 @@ function tvAdminRenderLista() {
 // o formulário de adicionar fica escondido até a pessoa clicar — só busca a lista de
 // arquivos do GitHub na primeira vez que abre, pra não pesar o carregamento do painel
 let tvAdminEditandoId = null;
+let tvAdminEditandoImagem = null;
 
 function tvAdminAtualizarValoresSlider() {
   const escala = document.getElementById('tv-admin-novo-escala');
@@ -7552,11 +7647,13 @@ function tvAdminToggleForm() {
   const abrindo = form.style.display === 'none';
   if (abrindo) {
     tvAdminEditandoId = null;
+    tvAdminEditandoImagem = null;
     document.getElementById('tv-admin-arquivo-linha').style.display = '';
     document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
     document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
     tvAdminLimparForm();
     tvMontarSelectArquivos();
+    document.getElementById('tv-admin-preview-objeto').style.display = 'none';
   }
   form.style.display = abrindo ? 'block' : 'none';
   btn.style.display = abrindo ? 'none' : '';
@@ -7564,6 +7661,7 @@ function tvAdminToggleForm() {
 
 function tvAdminCancelarForm() {
   tvAdminEditandoId = null;
+  tvAdminEditandoImagem = null;
   document.getElementById('tv-admin-form').style.display = 'none';
   document.getElementById('tv-admin-btn-form').style.display = '';
 }
@@ -7576,6 +7674,7 @@ async function tvAdminEditarItem(id) {
   const item = catalogo.find(o => o.id === id);
   if (!item) return;
   tvAdminEditandoId = id;
+  tvAdminEditandoImagem = item.imagem;
   document.getElementById('tv-admin-form').style.display = 'block';
   document.getElementById('tv-admin-btn-form').style.display = 'none';
   document.getElementById('tv-admin-arquivo-linha').style.display = 'none';
@@ -7586,6 +7685,7 @@ async function tvAdminEditarItem(id) {
   document.getElementById('tv-admin-novo-escala').value = String(item.escalaPadrao || 1);
   document.getElementById('tv-admin-novo-inclinacao').value = String(item.inclinacaoPadrao || 0);
   tvAdminAtualizarValoresSlider();
+  tvAdminAtualizarPreviewSala();
   document.getElementById('tv-admin-btn-salvar').textContent = '💾 Salvar alterações';
   document.getElementById('tv-admin-btn-cancelar-edicao').style.display = '';
   document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
