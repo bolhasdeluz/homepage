@@ -2734,6 +2734,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="section-title">🎮 Jogos</div>
     <p class="section-sub">Desafios diários, ofensiva e ranking da casa ✦</p>
 
+    <button id="btn-sair-padrao-senha" onclick="logoutSenhaPadrao()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:12px">
+      🔑 Sair do Perfil Padrão
+    </button>
+
     <div class="gp-portal">
 
       <div class="gp-player-panel">
@@ -3518,6 +3522,14 @@ function souAdminAtivo(user) { return (!!user && isEmailAdmin(user.email)) || ad
 function logoutSenhaAdmin() {
   adminSenhaAtiva = false;
   localStorage.removeItem('adminSenhaAtiva');
+  showPage('inicio');
+}
+// login do "Perfil Padrão" por senha — outra senha separada, pra montar o
+// terreirinho que serve de modelo pra quem ainda não personalizou o dela
+let padraoSenhaAtiva = localStorage.getItem('padraoSenhaAtiva') === '1';
+function logoutSenhaPadrao() {
+  padraoSenhaAtiva = false;
+  localStorage.removeItem('padraoSenhaAtiva');
   showPage('inicio');
 }
 
@@ -4515,7 +4527,11 @@ function showPage(name) {
     // uma vez, quando o site era aberto pela primeira vez, e ficava desatualizada
     window.orCarregarProximaSessao?.();
   }
-  if (name === 'jogos') { gpAtualizarPortal(); }
+  if (name === 'jogos') {
+    gpAtualizarPortal();
+    const btnPadrao = document.getElementById('btn-sair-padrao-senha');
+    if (btnPadrao) btnPadrao.style.display = padraoSenhaAtiva ? 'inline-flex' : 'none';
+  }
   if (name === 'admin') {
     const btn = document.getElementById('btn-sair-admin-senha');
     if (btn) btn.style.display = adminSenhaAtiva ? 'inline-flex' : 'none';
@@ -4610,9 +4626,27 @@ async function checkAdminSenha(){
     if (data.ok) {
       adminSenhaAtiva = true;
       localStorage.setItem('adminSenhaAtiva', '1');
+      padraoSenhaAtiva = false;
+      localStorage.removeItem('padraoSenhaAtiva');
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
       showPage('admin');
+      return;
+    }
+    const respPadrao = await fetch('/api/padrao-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha })
+    });
+    const dataPadrao = await respPadrao.json();
+    if (dataPadrao.ok) {
+      padraoSenhaAtiva = true;
+      localStorage.setItem('padraoSenhaAtiva', '1');
+      adminSenhaAtiva = false;
+      localStorage.removeItem('adminSenhaAtiva');
+      document.getElementById('admin-senha-overlay').classList.remove('open');
+      input.value='';
+      showPage('jogos');
       return;
     }
   } catch (e) { console.warn('checar senha admin:', e); }
@@ -8158,9 +8192,26 @@ const auth = getAuth(app);
           sementeUltimoGanhoData: dados.sementeUltimoGanhoData || ''
         };
       }
-      // primeira vez que essa pessoa abre o terreirinho — marca o início da contagem dos 7 em 7 dias
-      await setDoc(ref, { nome: nome || '', dataInicio: serverTimestamp(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {} });
-      return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' };
+      // primeira vez que essa pessoa abre o terreirinho — começa a partir do
+      // layout padrão (montado pela admin no Perfil Padrão), se existir, em
+      // vez de uma sala vazia. É uma cópia única feita agora: a partir daqui
+      // essa sala já é toda dela, edições dela não mexem no modelo, e futuras
+      // mudanças no modelo não afetam mais quem já começou
+      let corChao = '#fff5f7', corParede = '#fff5f7', colocados = {};
+      if (uid !== PADRAO_PERFIL_UID) {
+        try {
+          const padraoSnap = await getDoc(doc(db, 'terreira_jogadores', PADRAO_PERFIL_UID));
+          if (padraoSnap.exists()) {
+            const p = padraoSnap.data();
+            corChao = p.corChao || corChao;
+            corParede = p.corParede || corParede;
+            colocados = p.colocados ? JSON.parse(JSON.stringify(p.colocados)) : {};
+          }
+        } catch (e) { console.warn('tv carregar layout padrão:', e); }
+      }
+      // marca o início da contagem dos 7 em 7 dias
+      await setDoc(ref, { nome: nome || '', dataInicio: serverTimestamp(), corChao, corParede, colocados });
+      return { nome: nome || '', dataInicio: Date.now(), corChao, corParede, colocados, sementeEspecial: null, sementeUltimoGanhoData: '' };
     } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' }; }
   };
 
@@ -9472,10 +9523,18 @@ const PENINHA_MATAS_UID = 'peninha-das-matas';
 function peninhaMatasUsuario() {
   return { uid: PENINHA_MATAS_UID, displayName: 'Peninha das Matas', email: '', photoURL: 'assets/peninha.png' };
 }
+// "Perfil Padrão" — identidade de quem entra pela senha do perfil padrão, só
+// pra montar/editar o terreirinho-modelo (uid PADRAO_PERFIL_UID) que serve de
+// ponto de partida pra quem ainda não personalizou o terreirinho dela
+const PADRAO_PERFIL_UID = 'perfil-padrao';
+function perfilPadraoUsuario() {
+  return { uid: PADRAO_PERFIL_UID, displayName: 'Perfil Padrão', email: '', photoURL: '' };
+}
 window._getCurrentUser = () => {
   if (typeof _modoSimulacao !== 'undefined' && _modoSimulacao !== null) return window._simUsuario || null;
   if (currentUser) return currentUser;
   if (localStorage.getItem('adminSenhaAtiva') === '1') return peninhaMatasUsuario();
+  if (localStorage.getItem('padraoSenhaAtiva') === '1') return perfilPadraoUsuario();
   return null;
 };
 window._getPerfilData  = () => perfilData;
