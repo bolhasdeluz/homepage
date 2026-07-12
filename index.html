@@ -7605,9 +7605,18 @@ async function gpAtualizarPortal() {
   avAtualizarBadge();
 }
 // atualiza de novo se a pessoa voltar do palavra.html/quiz.html (abertos em outra aba)
-// enquanto a tela de Jogos ainda está ativa
+// enquanto a tela de Jogos ainda está ativa — só o status/ranking (o que pode ter
+// mudado jogando em outra aba). NÃO chama tvAtualizar()/avAtualizarBadge() aqui:
+// eles recarregam o progresso do Firestore e substituem o que está na memória,
+// o que desfazia colocações/remoções recentes na terreirinho (ou escolhas de
+// avatar) se a pessoa trocasse de aba/app enquanto ainda estava editando —
+// mesmo sem ter mexido em nada em outro lugar, só o "voltar" já revertia
 window.addEventListener('focus', () => {
-  if (document.getElementById('page-jogos')?.classList.contains('active')) gpAtualizarPortal();
+  if (document.getElementById('page-jogos')?.classList.contains('active')) {
+    gpAtualizarTrilha();
+    gpVerificarStatusReal();
+    gpCarregarRankingsReais();
+  }
 });
 // reposiciona a Peninha na trilha se a tela redimensionar (rotação, resize da janela)
 window.addEventListener('resize', () => {
