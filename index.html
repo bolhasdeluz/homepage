@@ -6848,6 +6848,34 @@ async function tvRenderGrid() {
   });
 }
 
+// monta o "quadradinho" de um item do inventário — usado tanto pros objetos
+// comuns do catálogo quanto pros especiais (semente, itens com "acao"). itens
+// "unico" (só pode ter 1 colocado, ex: a planta especial) ficam esmaecidos e
+// não iniciam nova colocação quando já tiver um no terreirinho
+function tvCriarTileInventario(item, dia, colocados) {
+  const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+  const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
+  const ehParede = item.tipo === 'parede';
+  const jaTemUm = item.unico && qtdColocada > 0;
+  const el = document.createElement('div');
+  el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
+  el.title = !desbloqueado ? `Libera no dia ${item.diaDesbloqueio}` : jaTemUm ? `${item.nome} já está no seu terreirinho` : `${item.nome}${item.unico ? '' : ` (${ehParede ? 'parede' : 'chão'})`}`;
+  if (!desbloqueado) {
+    el.innerHTML = `<span class="tv-cadeado">🔒</span>`;
+  } else {
+    const badges = item.unico
+      ? (jaTemUm ? '<span class="tv-qtd-badge">1</span>' : '')
+      : `<span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`;
+    el.innerHTML = `<img src="${item.imagem}" alt="${item.nome}">${badges}`;
+    if (jaTemUm) el.style.opacity = '.6';
+    el.addEventListener('click', () => {
+      if (item.acao) tvMostrarInfoObjetoEspecial(item);
+      if (!jaTemUm) tvSelecionarItem(item.id);
+    });
+  }
+  return el;
+}
+
 function tvRenderInventario() {
   const wrap = document.getElementById('tv-inventario');
   if (!wrap || !tvProgresso) return;
@@ -6872,28 +6900,26 @@ function tvRenderInventario() {
     wrap.appendChild(elAv);
   }
 
-  // planta especial ganha de prêmio por visitar e voltar — só aparece se ela
-  // já tiver ganhado uma (antes disso não tem nada pra mostrar aqui)
-  if (!tvVisitandoUid && tvProgresso.sementeEspecial) {
-    const semente = tvProgresso.sementeEspecial;
-    const fase = tvSementeFase(semente) || 1;
-    const jaColocada = !!colocados[TV_SEMENTE_INSTANCIA_ID];
-    const headerSem = document.createElement('div');
-    headerSem.className = 'tv-inventario-categoria';
-    headerSem.textContent = '🌱 Planta especial ℹ️';
-    headerSem.style.cursor = 'pointer';
-    headerSem.title = 'O que é isso?';
-    headerSem.addEventListener('click', tvMostrarInfoSemente);
-    wrap.appendChild(headerSem);
-    const elSem = document.createElement('div');
-    elSem.className = 'tv-item' + (tvItemSelecionado === TV_SEMENTE_CATALOG_ID ? ' selecionado' : '');
-    elSem.title = jaColocada
-      ? (semente.permanente ? 'Sua planta especial já floresceu de vez ✦' : `Sua planta especial já está no terreirinho (fase ${fase}/${TV_SEMENTE_DIAS_POR_RODADA})`)
-      : 'Coloque sua planta especial no terreirinho';
-    elSem.innerHTML = `<img src="${TV_SEMENTE_IMAGENS[fase - 1]}" alt="Planta especial">`;
-    if (!jaColocada) elSem.addEventListener('click', () => tvSelecionarItem(TV_SEMENTE_CATALOG_ID));
-    else { elSem.style.opacity = '.6'; elSem.addEventListener('click', tvMostrarInfoSemente); }
-    wrap.appendChild(elSem);
+  // itens especiais — a planta especial (ganha visitando) e os objetos do
+  // catálogo com "acao" (ex: Calendário Mágico), todos juntos numa categoria
+  // só, no topo, pra ficarem fáceis de achar
+  const itensEspeciaisCatalogo = !tvVisitandoUid ? tvCatalogo.filter(item => item.acao) : [];
+  const temSemente = !tvVisitandoUid && !!tvProgresso.sementeEspecial;
+  if (itensEspeciaisCatalogo.length || temSemente) {
+    const headerEsp = document.createElement('div');
+    headerEsp.className = 'tv-inventario-categoria';
+    headerEsp.textContent = '✦ Itens especiais';
+    wrap.appendChild(headerEsp);
+
+    if (temSemente) {
+      const semente = tvProgresso.sementeEspecial;
+      const fase = tvSementeFase(semente) || 1;
+      wrap.appendChild(tvCriarTileInventario({
+        id: TV_SEMENTE_CATALOG_ID, nome: 'Planta especial', imagem: TV_SEMENTE_IMAGENS[fase - 1],
+        tipo: 'chao', diaDesbloqueio: 0, acao: 'semente', unico: true
+      }, dia, colocados));
+    }
+    itensEspeciaisCatalogo.forEach(item => wrap.appendChild(tvCriarTileInventario(item, dia, colocados)));
   }
 
   if (!tvCatalogo.length) {
@@ -6904,32 +6930,15 @@ function tvRenderInventario() {
     return;
   }
   // agrupa por categoria pra ficar mais fácil de achar, em vez de uma lista única
+  // (itens com "acao" já apareceram em Itens especiais, não repete aqui)
   TV_CATEGORIAS.forEach(cat => {
-    const itensDaCategoria = tvCatalogo.filter(item => tvCategoriaEfetiva(item) === cat.chave);
+    const itensDaCategoria = tvCatalogo.filter(item => tvCategoriaEfetiva(item) === cat.chave && !item.acao);
     if (!itensDaCategoria.length) return;
     const header = document.createElement('div');
     header.className = 'tv-inventario-categoria';
     header.textContent = cat.label;
     wrap.appendChild(header);
-    itensDaCategoria.forEach(item => {
-      const desbloqueado = dia >= (item.diaDesbloqueio || 0);
-      const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
-      const ehParede = item.tipo === 'parede';
-      const el = document.createElement('div');
-      el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
-      el.title = desbloqueado ? `${item.nome} (${ehParede ? 'parede' : 'chão'})` : `Libera no dia ${item.diaDesbloqueio}`;
-      el.innerHTML = desbloqueado
-        ? `<img src="${item.imagem}" alt="${item.nome}"><span class="tv-tipo-badge">${ehParede ? '🧱' : '▦'}</span>${qtdColocada ? `<span class="tv-qtd-badge">${qtdColocada}</span>` : ''}`
-        : `<span class="tv-cadeado">🔒</span>`;
-      // clicar sempre inicia a colocação de uma nova cópia — pra mexer numa já colocada,
-      // é só clicar nela direto no cenário. Itens especiais (com "acao") também
-      // mostram uma explicação do que fazem antes de colocar
-      if (desbloqueado) el.addEventListener('click', () => {
-        if (item.acao) tvMostrarInfoObjetoEspecial(item);
-        tvSelecionarItem(item.id);
-      });
-      wrap.appendChild(el);
-    });
+    itensDaCategoria.forEach(item => wrap.appendChild(tvCriarTileInventario(item, dia, colocados)));
   });
 }
 
@@ -7785,18 +7794,15 @@ function gpMostrarInfo(titulo, texto) {
 function gpFecharInfo() {
   document.getElementById('gp-info-modal-overlay').style.display = 'none';
 }
-function tvMostrarInfoSemente() {
-  gpMostrarInfo('🌱 Semente especial', 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.');
-}
-
-// explicação dos objetos especiais do catálogo (têm um campo "acao" que muda
-// o que acontece ao clicar neles já colocados, fora do modo edição)
-const TV_OBJETOS_ESPECIAIS_TEXTO = {
-  calendario: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦',
+// explicação dos itens especiais (semente e objetos do catálogo com "acao",
+// que mudam o que acontece ao clicar neles já colocados, fora do modo edição)
+const TV_OBJETOS_ESPECIAIS_INFO = {
+  semente: { emoji: '🌱', texto: 'Toda vez que você visita o terreirinho de alguém e volta pro seu, ganha uma semente especial. Ela planta (ou rega, se já tiver uma) um vaso com 4 fases de crescimento — cada fase dura 1 dia, então depois de plantada você tem 4 dias sem precisar visitar ninguém antes dela murchar. Se você visitar alguém de novo dentro desse prazo, a planta é regada: ganha mais 4 dias e soma 1 rodada. Depois de 3 rodadas regadas (12 dias ao todo mantendo a visita em dia), ela fica florida pra sempre, sem precisar de mais cuidado. Se passar do prazo sem visitar ninguém, a planta murcha — aí é só visitar alguém de novo pra ganhar uma semente nova e recomeçar.' },
+  calendario: { emoji: '📅', texto: 'Esse é o Calendário Mágico! Coloque ele numa parede e, fora do modo edição, clique nele pra ir direto pro Calendário de Sessões da casa ✦' },
 };
 function tvMostrarInfoObjetoEspecial(item) {
-  const texto = TV_OBJETOS_ESPECIAIS_TEXTO[item.acao] || 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.';
-  gpMostrarInfo(`📅 ${item.nome}`, texto);
+  const info = TV_OBJETOS_ESPECIAIS_INFO[item.acao] || { emoji: '✦', texto: 'Um objeto especial da terreirinho — clique nele, fora do modo edição, pra ver o que ele faz.' };
+  gpMostrarInfo(`${info.emoji} ${item.nome}`, info.texto);
 }
 
 async function gpAtualizarPortal() {
