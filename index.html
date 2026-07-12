@@ -3051,6 +3051,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           </div>
           <div class="admin-row-inputs">
             <button class="btn-add" id="tv-admin-btn-salvar" onclick="tvAdminAdicionar()">+ Adicionar objeto</button>
+            <button class="tv-catalogo-btn-add" id="tv-admin-btn-clonar" onclick="tvAdminClonarItem()" style="display:none">🧬 Clonar como novo</button>
             <button class="tv-catalogo-btn-add" id="tv-admin-btn-cancelar-edicao" onclick="tvAdminCancelarForm()" style="display:none">Cancelar</button>
           </div>
         </div>
@@ -7661,6 +7662,7 @@ function tvAdminToggleForm() {
     document.getElementById('tv-admin-arquivo-linha').style.display = '';
     document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
     document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
+    document.getElementById('tv-admin-btn-clonar').style.display = 'none';
     tvAdminLimparForm();
     tvMontarSelectArquivos();
     document.getElementById('tv-admin-preview-objeto').style.display = 'none';
@@ -7674,6 +7676,23 @@ function tvAdminCancelarForm() {
   tvAdminEditandoImagem = null;
   document.getElementById('tv-admin-form').style.display = 'none';
   document.getElementById('tv-admin-btn-form').style.display = '';
+}
+
+// clona o objeto que estava sendo editado: mantém tipo/categoria/dia/tamanho/
+// inclinação já ajustados nessa sessão, mas volta a mostrar o seletor de
+// arquivo pra escolher uma imagem (e nome) diferentes, criando um objeto novo
+// em vez de sobrescrever o original
+async function tvAdminClonarItem() {
+  tvAdminEditandoId = null;
+  tvAdminEditandoImagem = null;
+  document.getElementById('tv-admin-novo-nome').value = '';
+  document.getElementById('tv-admin-arquivo-linha').style.display = '';
+  document.getElementById('tv-admin-btn-salvar').textContent = '+ Adicionar objeto';
+  document.getElementById('tv-admin-btn-cancelar-edicao').style.display = 'none';
+  document.getElementById('tv-admin-btn-clonar').style.display = 'none';
+  await tvMontarSelectArquivos();
+  tvAtualizarPreviewArquivo();
+  document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 // abre o formulário já preenchido com os dados de um objeto existente, pra
@@ -7698,6 +7717,7 @@ async function tvAdminEditarItem(id) {
   tvAdminAtualizarPreviewSala();
   document.getElementById('tv-admin-btn-salvar').textContent = '💾 Salvar alterações';
   document.getElementById('tv-admin-btn-cancelar-edicao').style.display = '';
+  document.getElementById('tv-admin-btn-clonar').style.display = '';
   document.getElementById('tv-admin-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
