@@ -167,7 +167,7 @@ body.logada{padding-top:62px}
 .section-wrap.narrow{max-width:720px}
 /* na Terreirinha, a lateral da página só tira espaço de visualização da sala —
    encolhe bem a margem lateral aqui (só nessa página) pra sala aproveitar mais tela */
-#page-jogos .section-wrap{padding-left:8px;padding-right:8px}
+#page-jogos .section-wrap{padding-left:2px;padding-right:2px}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
 .section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:36px;line-height:1.6}
@@ -1329,7 +1329,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   --gp-text:#2a1a22;--gp-text-dim:rgba(80,30,50,.5);
   --gp-green-terreiro:#2a7a60;--gp-green-bg:#e8f4f0;
   --gp-gold-destaque:#c8a000;--gp-gold-fundo:#fffbe8;
-  background:var(--gp-bg);font-family:'DM Sans',sans-serif;color:var(--gp-text);padding:1rem;border-radius:12px;
+  background:var(--gp-bg);font-family:'DM Sans',sans-serif;color:var(--gp-text);padding:1rem 0.3rem;border-radius:12px;
 }
 
 .gp-player-panel{
@@ -1650,16 +1650,21 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* a sala em si fica dentro de uma "janela" de tamanho fixo (a viewport) — o zoom
    escala só a sala (não afeta o layout dela nem o clique nos objetos, porque
-   transform é só visual), e a viewport com scroll deixa dar zoom pra dentro
-   sem bagunçar o resto da página quando a sala fica visualmente maior que ela */
+   transform é só visual). Arrastar pra ver as partes que passam da tela é
+   feito na mão (JS), não com scroll nativo — depender de overflow:auto pra
+   "rolar" um filho que só cresceu visualmente (via transform) é inconsistente
+   entre navegadores/celulares, então a gente mesmo controla o arrasto */
 .tv-zoom-viewport{
   width:100%;max-width:960px;aspect-ratio:1/1;margin:0 auto;position:relative;
-  border-radius:12px;overflow:auto;
+  border-radius:12px;overflow:hidden;touch-action:none;
 }
+.tv-zoom-viewport.tv-arrastavel{cursor:grab}
+.tv-zoom-viewport.tv-arrastando{cursor:grabbing}
 .terreira-virtual-container{
   width:100%;height:100%;position:relative;transform-origin:center center;
   transition:transform .15s ease;
 }
+.terreira-virtual-container.tv-sem-transicao{transition:none}
 .tv-zoom-barra{
   display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 10px;
 }
@@ -6678,24 +6683,80 @@ function tvAplicarCoresNaTela() {
   document.getElementById('tv-cor-parede').style.backgroundColor = tvProgresso.corParede || '#fff5f7';
 }
 
-// ── ZOOM da sala — só visual (transform:scale), não muda o tamanho de verdade
-// nem a posição dos objetos (que são todos em %), então clicar neles continua
-// funcionando certinho mesmo com zoom aplicado. Fica salvo entre visitas.
+// ── ZOOM (e arrasto) da sala — só visual (transform), não muda o tamanho de
+// verdade nem a posição dos objetos (que são todos em %), então clicar neles
+// continua funcionando certinho com zoom aplicado. Fica salvo entre visitas.
+// Acima de 100% a sala fica maior que a "janela" (viewport) — dá pra arrastar
+// com o dedo/mouse pra ver as partes que passaram da tela.
 const TV_ZOOM_MIN = 0.6, TV_ZOOM_MAX = 2, TV_ZOOM_PASSO = 0.1;
 let tvZoom = parseFloat(localStorage.getItem('tvZoom')) || 1;
+let tvPanX = 0, tvPanY = 0; // deslocamento do arrasto, em px de tela (não muda com o zoom)
+let tvArrastando = false, tvArrastoOrigemX = 0, tvArrastoOrigemY = 0, tvPanOrigemX = 0, tvPanOrigemY = 0;
 
+// transform: translate(...) vem ANTES do scale(...) de propósito — assim o
+// deslocamento do arrasto é em pixels finais de tela, direto, sem precisar
+// dividir/multiplicar pelo zoom (testado: se a ordem fosse invertida, o
+// mesmo arrasto em px andaria mais ou menos dependendo do zoom, ficando
+// "solto" da posição real do dedo/mouse)
 function tvAplicarZoom() {
   const container = document.getElementById('tv-container-zoom');
   const valor = document.getElementById('tv-zoom-valor');
-  if (container) container.style.transform = `scale(${tvZoom})`;
+  const viewport = document.getElementById('tv-zoom-viewport');
+  if (container) container.style.transform = `translate(${tvPanX}px, ${tvPanY}px) scale(${tvZoom})`;
   if (valor) valor.textContent = Math.round(tvZoom * 100) + '%';
+  if (viewport) viewport.classList.toggle('tv-arrastavel', tvZoom > 1);
+}
+
+// o quanto dá pra arrastar pra cada lado antes de começar a mostrar "vazio"
+// além do conteúdo — metade do quanto a sala cresceu além da viewport
+function tvLimitePan() {
+  const viewport = document.getElementById('tv-zoom-viewport');
+  const tamanho = viewport ? viewport.clientWidth : 300;
+  return Math.max(0, tamanho * (tvZoom - 1) / 2);
 }
 
 function tvAjustarZoom(direcao) {
   tvZoom = Math.min(TV_ZOOM_MAX, Math.max(TV_ZOOM_MIN, +(tvZoom + direcao).toFixed(2)));
   localStorage.setItem('tvZoom', String(tvZoom));
+  const limite = tvLimitePan();
+  tvPanX = Math.min(limite, Math.max(-limite, tvPanX));
+  tvPanY = Math.min(limite, Math.max(-limite, tvPanY));
   tvAplicarZoom();
 }
+
+function tvIniciarArrasto(e) {
+  if (tvZoom <= 1) return; // nada pra ver além da tela nesse zoom
+  tvArrastando = true;
+  const p = e.touches ? e.touches[0] : e;
+  tvArrastoOrigemX = p.clientX; tvArrastoOrigemY = p.clientY;
+  tvPanOrigemX = tvPanX; tvPanOrigemY = tvPanY;
+  document.getElementById('tv-zoom-viewport')?.classList.add('tv-arrastando');
+  document.getElementById('tv-container-zoom')?.classList.add('tv-sem-transicao');
+}
+function tvMoverArrasto(e) {
+  if (!tvArrastando) return;
+  const p = e.touches ? e.touches[0] : e;
+  const limite = tvLimitePan();
+  tvPanX = Math.min(limite, Math.max(-limite, tvPanOrigemX + (p.clientX - tvArrastoOrigemX)));
+  tvPanY = Math.min(limite, Math.max(-limite, tvPanOrigemY + (p.clientY - tvArrastoOrigemY)));
+  tvAplicarZoom();
+  if (e.cancelable) e.preventDefault();
+}
+function tvFinalizarArrasto() {
+  tvArrastando = false;
+  document.getElementById('tv-zoom-viewport')?.classList.remove('tv-arrastando');
+  document.getElementById('tv-container-zoom')?.classList.remove('tv-sem-transicao');
+}
+(function tvLigarArrastoDaSala() {
+  const viewport = document.getElementById('tv-zoom-viewport');
+  if (!viewport) return;
+  viewport.addEventListener('mousedown', tvIniciarArrasto);
+  window.addEventListener('mousemove', tvMoverArrasto);
+  window.addEventListener('mouseup', tvFinalizarArrasto);
+  viewport.addEventListener('touchstart', tvIniciarArrasto, { passive: true });
+  window.addEventListener('touchmove', tvMoverArrasto, { passive: false });
+  window.addEventListener('touchend', tvFinalizarArrasto);
+})();
 
 // ══ VISITAR OUTRAS TERREIRAS ══
 async function tvMontarSelectVisitas() {
