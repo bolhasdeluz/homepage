@@ -8332,19 +8332,28 @@ async function tvCompartilharImagem() {
 const TV_GITHUB_REPO = 'bolhasdeluz/homepage';
 const TV_GITHUB_PASTA_OBJETOS = 'assets/objetos';
 
+// desce em subpastas dentro de assets/objetos/ também (ex: assets/objetos/moveis/),
+// pra deixar organizar os arquivos em vez de jogar tudo solto numa pasta só
+async function tvBuscarArquivosGithubEm(pasta) {
+  // cache:'no-store' + um parâmetro único na URL evitam pegar uma resposta
+  // antiga guardada em cache (do navegador ou de algum proxy no meio do
+  // caminho) — sem isso, um arquivo recém-subido podia demorar pra aparecer
+  // como "novo" mesmo com o botão de forçar a busca
+  const resp = await fetch(`https://api.github.com/repos/${TV_GITHUB_REPO}/contents/${pasta}?_=${Date.now()}`, { cache: 'no-store' });
+  if (!resp.ok) throw new Error('GitHub respondeu ' + resp.status);
+  const dados = await resp.json();
+  const arquivos = dados
+    .filter(f => f.type === 'file' && /\.(png|jpe?g|gif|webp)$/i.test(f.name))
+    .map(f => `${pasta}/${encodeURIComponent(f.name)}`);
+  const subpastas = dados.filter(f => f.type === 'dir');
+  const doSubpastas = await Promise.all(subpastas.map(sub => tvBuscarArquivosGithubEm(`${pasta}/${encodeURIComponent(sub.name)}`)));
+  return arquivos.concat(...doSubpastas);
+}
+
 async function tvBuscarArquivosGithub() {
   try {
-    // cache:'no-store' + um parâmetro único na URL evitam pegar uma resposta
-    // antiga guardada em cache (do navegador ou de algum proxy no meio do
-    // caminho) — sem isso, um arquivo recém-subido podia demorar pra aparecer
-    // como "novo" mesmo com o botão de forçar a busca
-    const resp = await fetch(`https://api.github.com/repos/${TV_GITHUB_REPO}/contents/${TV_GITHUB_PASTA_OBJETOS}?_=${Date.now()}`, { cache: 'no-store' });
-    if (!resp.ok) throw new Error('GitHub respondeu ' + resp.status);
-    const dados = await resp.json();
-    return dados
-      .filter(f => f.type === 'file' && /\.(png|jpe?g|gif|webp)$/i.test(f.name))
-      .map(f => `${TV_GITHUB_PASTA_OBJETOS}/${encodeURIComponent(f.name)}`)
-      .sort();
+    const arquivos = await tvBuscarArquivosGithubEm(TV_GITHUB_PASTA_OBJETOS);
+    return arquivos.sort();
   } catch (e) {
     console.warn('tv buscar arquivos github:', e);
     return null; // null = falhou de verdade (diferente de "pasta vazia")
@@ -8385,7 +8394,11 @@ async function tvMontarSelectArquivos() {
   arquivos.forEach(caminho => {
     const opt = document.createElement('option');
     opt.value = caminho;
-    opt.textContent = tvNomeSugerido(caminho);
+    // mostra a subpasta entre parênteses, se o arquivo estiver organizado
+    // dentro de uma (ex: "Cadeira Nova (moveis/)"), pra ajudar a identificar
+    const partes = caminho.replace(TV_GITHUB_PASTA_OBJETOS + '/', '').split('/');
+    const subpasta = partes.length > 1 ? partes.slice(0, -1).map(decodeURIComponent).join('/') : '';
+    opt.textContent = tvNomeSugerido(caminho) + (subpasta ? ` (${subpasta}/)` : '');
     sel.appendChild(opt);
   });
   tvAtualizarPreviewArquivo();
