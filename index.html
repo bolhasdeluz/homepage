@@ -1588,15 +1588,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-so-editando{display:none!important}
 #tv-corpo.editando .tv-so-editando{display:block!important}
 #tv-corpo.editando .tv-inventario.tv-so-editando{display:flex!important}
-.tv-visita-barra{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
-.tv-visita-barra select{
-  flex:1;min-width:140px;padding:7px 10px;border-radius:6px;border:1px solid var(--gp-border);
-  font-family:'DM Sans',sans-serif;font-size:.78rem;background:#fff;
-}
-.tv-visita-barra button{
-  background:var(--gp-gold);border:none;border-radius:14px;color:#fff;font-family:'Cinzel',serif;
-  font-size:9.5px;letter-spacing:.05em;padding:7px 14px;cursor:pointer;white-space:nowrap;
-}
 .tv-visitando-aviso{
   display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;
   background:var(--gp-gold-fundo);border:1px solid var(--gp-gold-destaque);border-radius:10px;
@@ -2893,10 +2884,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         </div>
 
         <div id="tv-corpo" style="display:none">
-          <div class="tv-visita-barra">
-            <select id="tv-visita-select"><option value="">Visitar o terreirinho de...</option></select>
-            <button onclick="tvVisitarSelecionado()">Visitar</button>
-          </div>
           <div class="tv-visitando-aviso" id="tv-visitando-aviso" style="display:none">
             <span id="tv-visitando-nome"></span>
             <button onclick="tvVoltarProprioTerreirinho()">🏠 Voltar pro meu terreirinho</button>
@@ -6951,26 +6938,21 @@ function tvFinalizarArrasto() {
 })();
 
 // ══ VISITAR OUTRAS TERREIRAS ══
+// atualiza a lista de gente pra visitar (usada só pelo seletor de dentro da
+// Porta da Cidade agora — o seletor solto no topo da tela foi removido)
 async function tvMontarSelectVisitas() {
-  const sel = document.getElementById('tv-visita-select');
-  if (!sel || !window._tvListarTerreiras) return;
+  if (!window._tvListarTerreiras) return;
   const lista = await window._tvListarTerreiras();
   tvListaTerreiras = lista.filter(p => p.uid !== tvUidProprio).sort((a, b) => a.nome.localeCompare(b.nome));
-  const valorAtual = sel.value;
-  sel.innerHTML = '<option value="">Visitar o terreirinho de...</option>' +
-    tvListaTerreiras.map(p => `<option value="${p.uid}">${p.nome}</option>`).join('');
-  if (valorAtual && tvListaTerreiras.some(p => p.uid === valorAtual)) sel.value = valorAtual;
 }
 
 async function tvVisitarSelecionado(uidForcado) {
-  const sel = document.getElementById('tv-visita-select');
-  const uidAlvo = uidForcado || (sel && sel.value);
+  const uidAlvo = uidForcado;
   if (!uidAlvo) return;
   const alvo = tvListaTerreiras.find(p => p.uid === uidAlvo);
   if (!alvo || !window._tvCarregarTerreiraDe) return;
   const dados = await window._tvCarregarTerreiraDe(alvo.uid);
   if (!dados) { alert('Não consegui abrir esse terreirinho.'); return; }
-  if (sel) sel.value = alvo.uid; // mantém o seletor antigo em sincronia, se existir na tela
 
   tvVisitandoUid = alvo.uid;
   tvVisitandoNome = alvo.nome;
@@ -7009,7 +6991,6 @@ function tvVoltarProprioTerreirinho() {
   document.getElementById('tv-corpo').classList.remove('visitando');
   document.getElementById('tv-visitando-aviso').style.display = 'none';
   document.getElementById('tv-cartinha-form').style.display = 'none';
-  document.getElementById('tv-visita-select').value = '';
 
   // prêmio por ter visitado e voltado: ganha uma semente especial nova, ou
   // rega a que já tinha (renovando o prazo) — só uma vez por dia
