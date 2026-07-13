@@ -7253,8 +7253,14 @@ function tvCasa(superficie, linha, coluna) {
   return { cantos: encolhido, centro };
 }
 
+// acha o objeto "dono" de uma casinha (chão/parede) — objetos em cima de uma
+// mesa (emCimaDe definido) guardam a MESMA superficie/slot da mesa só de
+// referência (pra acompanhar se a mesa for movida), então não contam aqui,
+// senão a ordem de leitura do Firestore podia trazer o item de cima antes da
+// mesa e ele "roubava" a casinha dela — a mesa sumia (escondida pelo item em
+// cima) depois de recarregar a página, mesmo continuando lá por baixo
 function tvAcharColocado(colocados, superficie, slot) {
-  return Object.keys(colocados).find(id => colocados[id].superficie === superficie && colocados[id].slot === slot);
+  return Object.keys(colocados).find(id => colocados[id].superficie === superficie && colocados[id].slot === slot && !colocados[id].emCimaDe);
 }
 
 // cada objeto colocado tem seu próprio id de instância — assim dá pra colocar
@@ -8487,7 +8493,7 @@ async function tvCompartilharImagem() {
     ctx.fillText(`🌿 Dia ${diaAtual} ✦ ${qtdObjetos} objeto${qtdObjetos === 1 ? '' : 's'} escolhido${qtdObjetos === 1 ? '' : 's'} a dedo`, cardX + cardW / 2, faixaY + 98 * fator);
     ctx.font = `italic ${12 * fator}px Georgia, serif`;
     ctx.fillStyle = 'rgba(255,255,255,.8)';
-    ctx.fillText('homepage-3vx.pages.dev', cardX + cardW / 2, faixaY + 128 * fator);
+    ctx.fillText('bolhasdeluz.ong.br', cardX + cardW / 2, faixaY + 128 * fator);
     ctx.restore();
 
     final.toBlob(async (blob) => {
