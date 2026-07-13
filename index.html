@@ -8351,7 +8351,11 @@ const TV_GITHUB_PASTA_OBJETOS = 'assets/objetos';
 
 async function tvBuscarArquivosGithub() {
   try {
-    const resp = await fetch(`https://api.github.com/repos/${TV_GITHUB_REPO}/contents/${TV_GITHUB_PASTA_OBJETOS}`);
+    // cache:'no-store' + um parâmetro único na URL evitam pegar uma resposta
+    // antiga guardada em cache (do navegador ou de algum proxy no meio do
+    // caminho) — sem isso, um arquivo recém-subido podia demorar pra aparecer
+    // como "novo" mesmo com o botão de forçar a busca
+    const resp = await fetch(`https://api.github.com/repos/${TV_GITHUB_REPO}/contents/${TV_GITHUB_PASTA_OBJETOS}?_=${Date.now()}`, { cache: 'no-store' });
     if (!resp.ok) throw new Error('GitHub respondeu ' + resp.status);
     const dados = await resp.json();
     return dados
