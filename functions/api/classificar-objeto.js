@@ -3,8 +3,9 @@
  * ------------------------------------------------------------
  * Recebe a URL pública de uma imagem de objeto (assets/objetos/xxx.png) e
  * devolve como ela deve ser cadastrada no catálogo da Terreirinha: nome,
- * tipo (chão/parede), categoria, e se é uma "mesa" (superfície onde dá pra
- * colocar outro objeto em cima) — usando a Claude API com visão.
+ * tipo (chão/parede), categoria, se é uma "mesa" (superfície onde dá pra
+ * colocar outro objeto em cima), tamanho e inclinação padrão — usando a
+ * Claude API com visão.
  *
  * Usa a mesma variável de ambiente ANTHROPIC_API_KEY já configurada pra
  * functions/api/orientacao-ia.js (Cloudflare Pages → Settings →
@@ -28,7 +29,7 @@ Você vai ver a imagem de UM objeto só e devolver como ele deve ser cadastrado 
 
 FORMATO DE SAÍDA: responda APENAS com um JSON válido, sem markdown, sem texto antes ou depois,
 no formato exato:
-{"nome":"Nome Curto e Descritivo","tipo":"chao ou parede","categoria":"uma das categorias","mesa":true ou false,"alturaTampo":0.0}
+{"nome":"Nome Curto e Descritivo","tipo":"chao ou parede","categoria":"uma das categorias","mesa":true ou false,"alturaTampo":0.0,"escalaPadrao":1.0,"inclinacaoPadrao":0}
 
 REGRAS:
 - "nome": nome curto em português, primeira letra de cada palavra maiúscula (ex: "Mesa Redonda com Toalha").
@@ -43,6 +44,15 @@ REGRAS:
 - "alturaTampo": só importa se "mesa" for true — fração (0 a 1) da ALTURA da imagem, medida de baixo
   pra cima, de onde fica a superfície plana de cima. Mesa baixa e larga: perto de 0.4. Mesa alta e
   estreita: perto de 0.7. Se "mesa" for false, pode mandar 0.5.
+- "escalaPadrao": tamanho relativo do objeto comparado aos outros do catálogo (1.0 é o padrão/médio).
+  Móveis grandes, estátuas ou objetos que na vida real são bem maiores que uma pessoa sentada podem ir
+  até uns 1.3-1.5. Objetos pequenos (moedas, potinhos, itens de mão) podem ir até uns 0.6-0.8. Também
+  serve pra compensar imagens com desenho bem menor que a área da tela: se o objeto parecer "perdido"
+  num canto pequeno da imagem, pode aumentar um pouco. Na dúvida, usa 1.0.
+- "inclinacaoPadrao": ajuste fino de inclinação em graus (de -30 a 30) — só usa um valor diferente de 0
+  se o PRÓPRIO DESENHO do objeto já parecer visualmente torto/inclinado de um jeito que vai destoar
+  quando ele for desenhado reto na parede ou no chão (ex: um quadro desenhado em perspectiva torta).
+  Na grande maioria dos casos (desenho reto, sem inclinação aparente) o certo é usar 0.
 
 Use o bom senso olhando a imagem. Sempre responda, mesmo sem certeza absoluta — escolha a opção mais provável.`;
 
@@ -126,6 +136,8 @@ export async function onRequestPost(context) {
       categoria: CATEGORIAS_VALIDAS.includes(parsed.categoria) ? parsed.categoria : 'outros',
       mesa: tipo === 'chao' && !!parsed.mesa,
       alturaTampo: Math.min(0.9, Math.max(0.1, parseFloat(parsed.alturaTampo) || 0.5)),
+      escalaPadrao: Math.min(1.8, Math.max(0.25, parseFloat(parsed.escalaPadrao) || 1)),
+      inclinacaoPadrao: Math.min(30, Math.max(-30, Math.round(parseFloat(parsed.inclinacaoPadrao)) || 0)),
     };
 
     return new Response(JSON.stringify(resultado), { headers: CORS });

@@ -8451,10 +8451,13 @@ async function tvAdminSugerirComIA() {
     if (TV_CATEGORIAS.some(c => c.chave === dados.categoria)) {
       document.getElementById('tv-admin-novo-categoria').value = dados.categoria;
     }
+    document.getElementById('tv-admin-novo-escala').value = dados.escalaPadrao || 1;
+    document.getElementById('tv-admin-novo-inclinacao').value = dados.inclinacaoPadrao || 0;
     document.getElementById('tv-admin-novo-mesa').checked = !!dados.mesa;
     document.getElementById('tv-admin-novo-altura-tampo').value = dados.alturaTampo || 0.5;
     tvAdminAtualizarValoresSlider();
     tvAdminAtualizarVisibilidadeMesa();
+    tvAdminAtualizarPreviewSala();
     if (status) status.textContent = '✔ Sugestão da IA preenchida — revisa e ajusta se precisar.';
   } catch (e) {
     console.warn('tv sugerir com ia:', e);
@@ -9195,6 +9198,7 @@ async function tvAdminAutoCatalogar(statusElId) {
           nome: classificacao.nome, imagem: caminho, diaDesbloqueio: 1,
           tipo: classificacao.tipo, categoria: classificacao.categoria,
           mesa: classificacao.mesa, alturaTampo: classificacao.alturaTampo,
+          escalaPadrao: classificacao.escalaPadrao, inclinacaoPadrao: classificacao.inclinacaoPadrao,
         });
         console.log(`tv auto-catalogar: "${classificacao.nome}" cadastrado (${caminho})`);
         feitos++;
