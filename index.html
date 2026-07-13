@@ -3216,6 +3216,16 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <option value="90">Dia 90</option>
             </select>
           </div>
+          <div class="admin-row-inputs" style="align-items:center">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.78rem">
+              <input type="checkbox" id="tv-admin-lote-novos-mesa" onchange="tvAdminLoteNovosAlternarMesa()"> 📐 São mesas (dá pra colocar objeto em cima)
+            </label>
+          </div>
+          <div class="admin-row-inputs" id="tv-admin-lote-novos-altura-tampo-linha" style="display:none;align-items:center">
+            <span class="gp-admin-sub">Altura do tampo:</span>
+            <input type="range" id="tv-admin-lote-novos-altura-tampo" min="0.15" max="0.9" step="0.05" value="0.5" oninput="document.getElementById('tv-admin-lote-novos-altura-tampo-valor').textContent = Math.round(this.value*100)+'%'">
+            <span class="tv-admin-slider-valor" id="tv-admin-lote-novos-altura-tampo-valor">50%</span>
+          </div>
           <div class="admin-row-inputs">
             <button class="tv-catalogo-btn-add" onclick="tvAdminLoteNovosCadastrarManual()">➕ Cadastrar selecionados com estes campos</button>
           </div>
@@ -8824,9 +8834,20 @@ async function tvAdminLoteNovosCadastrarComIA() {
   await tvAdminLoteNovosCarregar(); // atualiza a lista, tirando quem já foi cadastrado
 }
 
+// mostra/esconde o slider de altura do tampo — só faz sentido perguntar isso
+// se os arquivos marcados forem mesmo mesas
+function tvAdminLoteNovosAlternarMesa() {
+  const linha = document.getElementById('tv-admin-lote-novos-altura-tampo-linha');
+  if (linha) linha.style.display = document.getElementById('tv-admin-lote-novos-mesa')?.checked ? 'flex' : 'none';
+}
+
 // cadastra cada arquivo marcado com os MESMOS tipo/categoria/dia escolhidos no
 // painel (o nome de cada um continua vindo do nome do arquivo) — sem IA, pra
-// quando ela já sabe que um grupo de arquivos é tudo igual (ex: 5 velas novas)
+// quando ela já sabe que um grupo de arquivos é tudo igual (ex: 5 velas novas).
+// Sem o campo "mesa" aqui, um objeto cadastrado em lote como mesa nunca era
+// reconhecido como mesa de verdade (nada podia ser colocado em cima) — por
+// isso agora, se marcado, salva mesa/alturaTampo igual ao formulário de 1 item
+// (os pontos de posição exatos ainda ficam pra ajustar depois, editando o item)
 async function tvAdminLoteNovosCadastrarManual() {
   const status = document.getElementById('tv-admin-lote-novos-status');
   const selecionados = [...tvAdminLoteNovosSelecionados];
@@ -8834,9 +8855,13 @@ async function tvAdminLoteNovosCadastrarManual() {
   const tipo = document.getElementById('tv-admin-lote-novos-tipo').value;
   const categoria = document.getElementById('tv-admin-lote-novos-categoria').value;
   const dia = parseInt(document.getElementById('tv-admin-lote-novos-dia').value, 10);
+  const mesa = tipo === 'chao' && !!document.getElementById('tv-admin-lote-novos-mesa')?.checked;
+  const alturaTampo = parseFloat(document.getElementById('tv-admin-lote-novos-altura-tampo')?.value) || 0.5;
   for (const caminho of selecionados) {
     const id = 'obj_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
-    await window._tvSalvarItemCatalogo(id, { nome: tvNomeSugerido(caminho), imagem: caminho, diaDesbloqueio: dia, tipo, categoria });
+    const dados = { nome: tvNomeSugerido(caminho), imagem: caminho, diaDesbloqueio: dia, tipo, categoria };
+    if (mesa) { dados.mesa = true; dados.alturaTampo = alturaTampo; }
+    await window._tvSalvarItemCatalogo(id, dados);
   }
   if (status) status.textContent = `✔ ${selecionados.length} cadastrado(s) com os campos escolhidos.`;
   tvAtualizarAdminCatalogo();
