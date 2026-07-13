@@ -8728,7 +8728,13 @@ function tvAdminItensFiltrados() {
   const filtroCategoria = document.getElementById('tv-admin-filtro-categoria')?.value || '';
   const filtroTipo = document.getElementById('tv-admin-filtro-tipo')?.value || '';
   return tvAdminCatalogoCache.filter(item => {
-    if (busca && !item.nome.toLowerCase().includes(busca)) return false;
+    // busca pelo nome cadastrado OU pelo nome do arquivo original — útil pra achar
+    // um item que a IA cadastrou com um nome diferente do arquivo (ex: procurar
+    // "camada" acha o item mesmo se a IA batizou ele de "Vaso Decorativo")
+    if (busca) {
+      const nomeArquivo = decodeURIComponent((item.imagem || '').split('/').pop() || '').toLowerCase();
+      if (!item.nome.toLowerCase().includes(busca) && !nomeArquivo.includes(busca)) return false;
+    }
     if (filtroCategoria && tvCategoriaEfetiva(item) !== filtroCategoria) return false;
     if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
     return true;
@@ -8750,6 +8756,7 @@ function tvAdminRenderLista() {
     const escala = item.escalaPadrao || 1;
     const inclinacao = item.inclinacaoPadrao || 0;
     const selecionado = tvAdminSelecaoMultipla.has(item.id);
+    const nomeArquivo = tvEscapeHtml(decodeURIComponent((item.imagem || '').split('/').pop() || ''));
     return `
     <div class="tv-catalogo-item${selecionado ? ' tv-catalogo-item-selecionado' : ''}">
       ${tvAdminModoSelecaoMultipla ? `<input type="checkbox" class="tv-admin-item-checkbox" data-id="${item.id}" ${selecionado ? 'checked' : ''}>` : ''}
@@ -8757,6 +8764,7 @@ function tvAdminRenderLista() {
       <div class="tv-catalogo-item-info">
         <span class="tv-catalogo-item-nome">${item.nome}</span>
         <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${cat ? cat.label : ''} · ${escala.toFixed(2)}x · ${inclinacao}°</span>
+        <span class="tv-catalogo-item-meta" title="Arquivo original">📄 ${nomeArquivo}</span>
       </div>
       ${tvAdminModoSelecaoMultipla ? '' : `
       <button class="admin-edit" data-id="${item.id}" title="Editar">✎</button>
