@@ -8311,8 +8311,8 @@ async function tvCompartilharImagem() {
     const ctx = final.getContext('2d');
 
     const fundoGrad = ctx.createLinearGradient(0, 0, final.width, final.height);
-    fundoGrad.addColorStop(0, '#fff8f3');
-    fundoGrad.addColorStop(1, '#ffe9ef');
+    fundoGrad.addColorStop(0, '#ffe3ce');
+    fundoGrad.addColorStop(1, '#f9c3d6');
     ctx.fillStyle = fundoGrad;
     ctx.fillRect(0, 0, final.width, final.height);
 
@@ -8320,9 +8320,9 @@ async function tvCompartilharImagem() {
 
     // sombra suave por baixo do cartão inteiro, pra dar profundidade
     ctx.save();
-    ctx.shadowColor = 'rgba(120,40,70,.25)';
-    ctx.shadowBlur = 26 * fator;
-    ctx.shadowOffsetY = 10 * fator;
+    ctx.shadowColor = 'rgba(120,40,70,.35)';
+    ctx.shadowBlur = 30 * fator;
+    ctx.shadowOffsetY = 12 * fator;
     ctx.fillStyle = '#fff';
     tvCanvasRoundRectPath(ctx, cardX, cardY, cardW, cardH, RAIO);
     ctx.fill();
@@ -8331,38 +8331,45 @@ async function tvCompartilharImagem() {
     ctx.save();
     tvCanvasRoundRectPath(ctx, cardX, cardY, cardW, cardH, RAIO);
     ctx.clip();
+    // satura e realça o contraste da sala em si antes de desenhar — as cores
+    // pastel do jogo já são suaves, então sem isso a foto saía "lavada" mesmo
+    // antes da luz/vinheta por cima (era o principal motivo da imagem ficar
+    // fraca/sem graça)
+    ctx.filter = 'saturate(1.35) contrast(1.08)';
     ctx.drawImage(canvasRoom, cardX, cardY);
+    ctx.filter = 'none';
 
-    // luz suave vindo de cima-esquerda, só pra dar uma sensação de profundidade
+    // brilho pontual pequeno num canto, só de leve — antes cobria quase a sala
+    // inteira e lavava as cores junto
     const luz = ctx.createRadialGradient(
-      cardX + cardW * 0.28, cardY + canvasRoom.height * 0.18, 0,
-      cardX + cardW * 0.28, cardY + canvasRoom.height * 0.18, canvasRoom.height * 0.8
+      cardX + cardW * 0.24, cardY + canvasRoom.height * 0.14, 0,
+      cardX + cardW * 0.24, cardY + canvasRoom.height * 0.14, canvasRoom.height * 0.42
     );
-    luz.addColorStop(0, 'rgba(255,255,255,.22)');
+    luz.addColorStop(0, 'rgba(255,255,255,.16)');
     luz.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = luz;
     ctx.fillRect(cardX, cardY, cardW, canvasRoom.height);
 
-    // vinheta suave nas bordas da foto da sala
+    // vinheta mais forte nas bordas da foto, pra dar profundidade e moldura de verdade
     const vinheta = ctx.createRadialGradient(
-      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.35,
-      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.75
+      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.32,
+      cardX + cardW / 2, cardY + canvasRoom.height / 2, canvasRoom.height * 0.72
     );
     vinheta.addColorStop(0, 'rgba(0,0,0,0)');
-    vinheta.addColorStop(1, 'rgba(60,20,35,.16)');
+    vinheta.addColorStop(1, 'rgba(50,10,25,.32)');
     ctx.fillStyle = vinheta;
     ctx.fillRect(cardX, cardY, cardW, canvasRoom.height);
 
-    // faixa de baixo com o convite — degradê em vez de cor lisa, com uma linha
+    // faixa de baixo com o convite — degradê mais vivo, com uma linha
     // dourada separando ela da foto
     const faixaY = cardY + canvasRoom.height;
     const faixaGrad = ctx.createLinearGradient(0, faixaY, 0, faixaY + FAIXA);
-    faixaGrad.addColorStop(0, '#d94e79');
-    faixaGrad.addColorStop(1, '#a52e56');
+    faixaGrad.addColorStop(0, '#e0356e');
+    faixaGrad.addColorStop(1, '#8a1f45');
     ctx.fillStyle = faixaGrad;
     ctx.fillRect(cardX, faixaY, cardW, FAIXA);
-    ctx.fillStyle = 'rgba(255,214,153,.85)';
-    ctx.fillRect(cardX, faixaY, cardW, 2 * fator);
+    ctx.fillStyle = 'rgba(255,214,153,.9)';
+    ctx.fillRect(cardX, faixaY, cardW, 3 * fator);
 
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
