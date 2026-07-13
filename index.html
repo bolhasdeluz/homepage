@@ -6761,10 +6761,6 @@ async function tvAtualizar() {
   tvUidProprio = user.uid;
   tvNomeProprio = user.displayName || user.email || '';
 
-  const catalogo = await window._tvCarregarCatalogo();
-  tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
-  if (window._tvCarregarCategorias) tvAplicarCategoriasExtras(await window._tvCarregarCategorias());
-
   // sempre busca o progresso de novo no Firestore, nunca confia só no que já
   // está na memória — trocar de conta (ou de pessoa simulada pelo admin) e
   // voltar pra essa tela precisa refletir o que tem de verdade no banco, senão
@@ -6772,9 +6768,18 @@ async function tvAtualizar() {
   // Pra não reabrir a mesma corrida que esse cache tentava evitar (um refetch
   // "vencendo" um salvamento ainda em trânsito e trazendo uma versão de volta
   // com o item que acabou de ser removido), espera qualquer salvamento
-  // pendente terminar antes de buscar
+  // pendente terminar ANTES de disparar a leitura do progresso
   await tvSalvarProgressoFila;
-  tvMeuProgresso = await window._tvCarregarProgresso(user.uid, tvNomeProprio);
+  // catálogo, categorias extras e progresso não dependem um do outro — busca
+  // os três ao mesmo tempo em vez de um de cada vez, pra sala carregar mais rápido
+  const [catalogo, categoriasExtras, meuProgresso] = await Promise.all([
+    window._tvCarregarCatalogo(),
+    window._tvCarregarCategorias ? window._tvCarregarCategorias() : Promise.resolve([]),
+    window._tvCarregarProgresso(user.uid, tvNomeProprio),
+  ]);
+  tvCatalogo = catalogo.sort((a, b) => (a.diaDesbloqueio || 0) - (b.diaDesbloqueio || 0));
+  tvAplicarCategoriasExtras(categoriasExtras);
+  tvMeuProgresso = meuProgresso;
   tvChecarSementeMorreu(); // se a planta especial passou do prazo sem ser regada, murcha aqui
 
   tvMontarSelectVisitas(); // roda em paralelo, não precisa bloquear o resto
@@ -8106,7 +8111,11 @@ async function tvCompartilharImagem() {
     palco.appendChild(clone);
     document.body.appendChild(palco);
 
-    const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
+    // foreignObjectRendering:true usa o motor de verdade do navegador pra desenhar
+    // o clone (em vez do html2canvas reimplementar CSS na mão) — sem isso, o chão
+    // e a parede (que usam mask-image + mix-blend-mode pra colorir e texturizar)
+    // ficavam sem recorte nenhum, mostrando um fundo estranho em vez da sala
+    const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true, foreignObjectRendering: true });
     document.body.removeChild(palco);
 
     // canvas final: a sala + uma faixa de baixo com o convite, tudo dentro de um
@@ -9085,7 +9094,11 @@ async function tvGarantirSemente() {
   const souAdmin = !emSimulacao && souAdminAtivo(user);
   if (!souAdmin) return;
   await tvAdminSemearNovosObjetos();
-  await tvAdminAutoCatalogar();
+  // a categorização por IA busca a lista de arquivos no GitHub e, se achar
+  // algo novo, ainda chama a IA pra cada arquivo (um de cada vez) — pode
+  // demorar vários segundos. Não trava a sala esperando isso: roda sozinha
+  // por trás e atualiza a lista do admin quando terminar
+  tvAdminAutoCatalogar();
 }
 
 async function tvAdminExcluir(id) {
