@@ -1738,6 +1738,18 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   transform-origin:bottom center;
 }
 .tv-objeto-selecionado-multiplo{filter:drop-shadow(0 0 0 var(--gp-gold)) brightness(1.08) saturate(1.3) drop-shadow(0 0 6px var(--gp-gold))}
+/* marcador piscando em cima do ponto livre de uma mesa, enquanto a pessoa tem
+   um item do inventário selecionado — sinaliza bem onde dá pra clicar pra
+   colocar o item em cima (sem isso, não tinha nenhum indício visual) */
+.tv-spot-clicavel{
+  position:absolute;width:20px;height:20px;border-radius:50%;
+  background:rgba(196,57,107,.4);border:2px solid #fff;box-shadow:0 0 0 2px var(--gp-gold,#c4396b);
+  transform:translate(-50%,-50%);cursor:pointer;animation:tvSpotPulse 1.3s ease-in-out infinite;
+}
+@keyframes tvSpotPulse{
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8}
+  50%{transform:translate(-50%,-50%) scale(1.25);opacity:1}
+}
 /* avatar colocado dentro da própria terreirinho — mesma lógica de posicionamento
    do .tv-objeto-img, mas é um wrapper com várias camadas empilhadas (boneca
    inteira) em vez de uma única imagem */
@@ -7305,6 +7317,40 @@ function tvRenderizarObjetoEmCimaDaMesa(topoInstanciaId, topoInfo, imgMesa, item
   objetosEl.appendChild(img);
 }
 
+// mostra um marcador piscando em cima dos pontos livres da mesa quando a
+// pessoa já tem um item do inventário selecionado — sem isso, não tinha
+// nenhum sinal visual de onde clicar pra colocar algo em cima de uma mesa
+function tvRenderizarSpotsClicaveis(mesaInstanciaId, mesaInfo, itemMesa, imgMesa, objetosEl, superficie, linha, coluna) {
+  if (!tvItemSelecionado || tvItemSelecionado === TV_AVATAR_CATALOG_ID || tvItemSelecionado === TV_SEMENTE_CATALOG_ID) return;
+  const itemSelecionado = tvCatalogo.find(o => o.id === tvItemSelecionado);
+  if (!itemSelecionado || itemSelecionado.podeEmCimaDeMesa === false) return;
+
+  const livres = tvSpotsLivresDaMesa(mesaInstanciaId, itemMesa);
+  if (!livres.length) return;
+
+  const rectMesa = imgMesa.getBoundingClientRect();
+  const rectContainer = objetosEl.getBoundingClientRect();
+  if (!rectContainer.width || !rectContainer.height) return;
+
+  const spots = itemMesa.tampoSpots && itemMesa.tampoSpots.length ? itemMesa.tampoSpots : null;
+  livres.forEach(idx => {
+    const spot = spots ? spots[idx] : null;
+    const xPx = spot ? (rectMesa.left + rectMesa.width * spot.x) : (rectMesa.left + rectMesa.width / 2);
+    const yPx = spot ? (rectMesa.top + rectMesa.height * spot.y) : (rectMesa.bottom - rectMesa.height * (itemMesa.alturaTampo || 0.5));
+    const marcador = document.createElement('div');
+    marcador.className = 'tv-spot-clicavel';
+    marcador.title = 'Colocar aqui';
+    marcador.style.left = (((xPx - rectContainer.left) / rectContainer.width) * 100) + '%';
+    marcador.style.top = (((yPx - rectContainer.top) / rectContainer.height) * 100) + '%';
+    marcador.style.zIndex = String(300 + linha + coluna);
+    marcador.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tvColocarEmCimaDaMesa(mesaInstanciaId, mesaInfo, idx);
+    });
+    objetosEl.appendChild(marcador);
+  });
+}
+
 async function tvRenderGrid() {
   const grid = document.getElementById('tv-grid');
   const objetos = document.getElementById('tv-objetos');
@@ -7430,6 +7476,7 @@ async function tvRenderGrid() {
           if (topoId) {
             tvRenderizarObjetoEmCimaDaMesa(topoId, colocados[topoId], img, item, ancoras, objetos, superficie, linha, coluna);
           }
+          tvRenderizarSpotsClicaveis(instanciaId, info, item, img, objetos, superficie, linha, coluna);
         }
       } else if (ehAvatar && avatarEscolhas) {
         const profundidade = (linha + coluna) / (2 * (n - 1));
@@ -7695,11 +7742,18 @@ function tvOferecerColocarEmCima(mesaInstanciaId) {
 // se a mesa tem mais de um ponto livre marcado no cadastro, deixa escolher
 // qual; se só tem 1 ponto livre (ou nenhum ponto marcado — cadastro antigo),
 // coloca direto sem perguntar
-function tvEscolherSpotMesa(mesaInstanciaId, mesaInfo, mesaItem) {
+// lista os índices de ponto (spot) ainda livres numa mesa — usado tanto pra
+// perguntar qual posição usar quanto pra desenhar os marcadores clicáveis
+function tvSpotsLivresDaMesa(mesaInstanciaId, mesaItem) {
   const totalSpots = mesaItem?.tampoSpots?.length || 1;
-  const ocupados = new Set(Object.values(tvProgresso.colocados || {}).filter(c => c.emCimaDe === mesaInstanciaId).map(c => c.spotMesa || 0));
+  const ocupados = new Set(Object.values(tvProgresso?.colocados || {}).filter(c => c.emCimaDe === mesaInstanciaId).map(c => c.spotMesa || 0));
   const livres = [];
   for (let i = 0; i < totalSpots; i++) if (!ocupados.has(i)) livres.push(i);
+  return livres;
+}
+
+function tvEscolherSpotMesa(mesaInstanciaId, mesaInfo, mesaItem) {
+  const livres = tvSpotsLivresDaMesa(mesaInstanciaId, mesaItem);
   if (livres.length <= 1) {
     tvColocarEmCimaDaMesa(mesaInstanciaId, mesaInfo, livres[0] ?? 0);
     return;
