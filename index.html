@@ -1627,8 +1627,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
    gostinho de "tem cartinha aqui"), mas só de enfeite, não abre nem revela nada */
 .tv-cartinhas{position:absolute;inset:0;z-index:5;pointer-events:none}
 .tv-cartinha-flutuante{
-  position:absolute;font-size:22px;cursor:pointer;pointer-events:auto;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  /* usa vw (que acompanha a largura da tela) em vez de um px fixo — a sala
+     cresceu (width:100% até max-width:960px) mas a cartinha continuava do
+     mesmo tamanho de antes, ficando pequena e difícil de notar/clicar */
+  position:absolute;font-size:clamp(28px, 6vw, 46px);cursor:pointer;pointer-events:auto;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.3));
   animation:tvCartinhaFlutuar 3.2s ease-in-out infinite;
 }
 .tv-cartinha-flutuante.tv-cartinha-so-visual{cursor:default}
@@ -9709,7 +9712,15 @@ function tvAdminResetarParaPadrao() {
     async () => {
       if (status) status.textContent = 'Resetando...';
       const ok = window._tvResetarParaPadrao ? await window._tvResetarParaPadrao(sel.value) : false;
-      if (status) status.textContent = ok ? `✔ Terreirinho de ${nomeEscolhido} resetado pro padrão.` : 'Não consegui resetar — tenta de novo.';
+      // depois de resetar, deixa uma cartinha de boas-vindas na sala da pessoa —
+      // senão ela abre o terreirinho do zero sem nenhum aviso do que aconteceu
+      if (ok && window._tvEnviarCartinha) {
+        await window._tvEnviarCartinha(
+          sel.value, 'Terreiro Bolhas de Luz',
+          '🌸 Seu terreirinho foi renovado! Vem decorar do seu jeitinho de novo — cada cantinho que você monta é uma alegria pra gente ver crescer. Um beijo da Casa ✦'
+        );
+      }
+      if (status) status.textContent = ok ? `✔ Terreirinho de ${nomeEscolhido} resetado pro padrão (e uma cartinha de boas-vindas foi deixada lá).` : 'Não consegui resetar — tenta de novo.';
     }
   );
 }
