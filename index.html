@@ -7254,19 +7254,39 @@ function tvCalcularAncora(src) {
             }
           }
         }
-        if (maxX < 0) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 }); return; }
-        // largura real do desenho (sem a borda transparente) como fração da tela toda —
-        // usado pra normalizar o tamanho: imagens com pouca borda não ficam maiores
-        // que imagens com bastante espaço vazio ao redor, só por causa do recorte
+        if (maxX < 0) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 }); return; }
+        // largura e altura reais do desenho (sem a borda transparente) como fração
+        // da tela toda — usado pra normalizar o tamanho: imagens com pouca borda
+        // não ficam maiores que imagens com bastante espaço vazio ao redor, só por
+        // causa do recorte. Guarda as duas frações (não só a largura) e a proporção
+        // original da imagem, porque objetos bem altos e finos (ex: vela) precisam
+        // ser dimensionados pela altura, senão ficam gigantes (ver tvTamanhoEfetivo)
         const larguraFrac = Math.max((maxX - minX) / w, 0.1);
-        resolve({ cx: (minX + maxX) / 2 / w, cy: maxY / h, larguraFrac });
-      } catch (e) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 }); }
+        const alturaFrac = Math.max((maxY - minY) / h, 0.1);
+        resolve({ cx: (minX + maxX) / 2 / w, cy: maxY / h, larguraFrac, alturaFrac, aspectoNatural: img.naturalWidth / img.naturalHeight });
+      } catch (e) { resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 }); }
     };
-    img.onerror = () => resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1 });
+    img.onerror = () => resolve({ cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 });
     img.src = src;
   });
   tvAncoraCache[src] = promessa;
   return promessa;
+}
+
+// tamanho (%, pra usar em img.style.width) que faz o DESENHO de verdade (sem a
+// borda transparente) ficar do tamanho "tamanho" pedido — normalmente isso é
+// controlado pela largura, mas objetos bem altos e finos (velas, por exemplo)
+// ficavam gigantescos porque a altura deles não tinha limite nenhum: aqui a
+// gente usa a altura como referência sempre que o desenho for mais alto que
+// largo, então uma vela de verdade fica do tamanho de uma vela, não do
+// tamanho da parede inteira
+function tvTamanhoEfetivo(tamanho, ancora) {
+  const larguraFrac = ancora.larguraFrac || 1;
+  const alturaFrac = ancora.alturaFrac || 1;
+  const aspecto = ancora.aspectoNatural || 1; // largura/altura da imagem original
+  const desenhoMaisAltoQueLargo = (larguraFrac * aspecto) < alturaFrac;
+  if (desenhoMaisAltoQueLargo) return (tamanho * aspecto) / alturaFrac;
+  return tamanho / larguraFrac;
 }
 
 // desenha um objeto "em cima da mesa" — usa o retângulo já renderizado da
@@ -7295,9 +7315,9 @@ function tvRenderizarObjetoEmCimaDaMesa(topoInstanciaId, topoInfo, imgMesa, item
   const xTopoPercent = ((xTopoPx - rectContainer.left) / rectContainer.width) * 100;
   const yTopoPercent = ((yTopoPx - rectContainer.top) / rectContainer.height) * 100;
 
-  const ancoraTopo = ancoras[itemTopo.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
+  const ancoraTopo = ancoras[itemTopo.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 };
   const TAMANHO_BASE_TOPO = 8; // % do container — objeto em cima de mesa fica pequeno, tipo um enfeite
-  const tamanhoTela = TAMANHO_BASE_TOPO / (ancoraTopo.larguraFrac || 1);
+  const tamanhoTela = tvTamanhoEfetivo(TAMANHO_BASE_TOPO, ancoraTopo);
   const escala = topoInfo.escala || 1;
   const rot = topoInfo.rot || 0;
   const espelho = topoInfo.espelhado ? -1 : 1;
@@ -7432,10 +7452,12 @@ async function tvRenderGrid() {
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
         const skew = tvSkewTotal(superficie, info.inclinacao);
-        const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
-        // divide pela largura real do desenho (sem a borda transparente) — assim o
-        // objeto visível fica do tamanho pretendido, não a tela toda do PNG
-        const tamanhoTela = tamanho / (ancora.larguraFrac || 1);
+        const ancora = ancoras[item.imagem] || { cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 };
+        // ajusta pelo desenho de verdade (sem a borda transparente), usando a
+        // altura como referência quando o desenho é mais alto que largo (ex: vela)
+        // — senão o objeto visível ficava do tamanho pretendido só na largura, e
+        // podia sair bem maior que a sala inteira na altura
+        const tamanhoTela = tvTamanhoEfetivo(tamanho, ancora);
 
         const img = document.createElement('img');
         img.className = 'tv-objeto-img';
@@ -7488,8 +7510,8 @@ async function tvRenderGrid() {
         const espelho = info.espelhado ? -1 : 1;
         const escala = info.escala || 1;
         const skew = tvSkewTotal(superficie, info.inclinacao);
-        const ancora = ancoras[AV_BASE_SRC] || { cx: 0.5, cy: 0.9, larguraFrac: 1 };
-        const tamanhoTela = tamanho / (ancora.larguraFrac || 1);
+        const ancora = ancoras[AV_BASE_SRC] || { cx: 0.5, cy: 0.9, larguraFrac: 1, alturaFrac: 1, aspectoNatural: 1 };
+        const tamanhoTela = tvTamanhoEfetivo(tamanho, ancora);
 
         const wrapper = document.createElement('div');
         wrapper.className = 'tv-objeto-avatar';
@@ -8550,7 +8572,7 @@ async function tvAdminAtualizarPreviewSala() {
   const skewBase = tipo === 'parede' ? 20 : 0; // aproximação — na sala de verdade cada parede tem um lado diferente
   const skew = skewBase + inclinacao;
   const TAMANHO_BASE = 40; // % do quadro de prévia, só pra dar uma referência de escala
-  const tamanhoTela = TAMANHO_BASE / (ancora.larguraFrac || 1);
+  const tamanhoTela = tvTamanhoEfetivo(TAMANHO_BASE, ancora);
 
   img.src = src;
   img.style.display = 'block';
