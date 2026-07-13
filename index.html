@@ -8359,8 +8359,23 @@ async function tvCompartilharImagem() {
     // sobre um fundo com degradê, com uma luz suave e uma vinheta na foto da sala,
     // pra parecer menos uma captura de tela crua e mais uma imagem pronta pro Insta
     const nomeDono = tvVisitandoNome || tvNomeProprio || 'meu';
+    // uma legenda diferente a cada vez, pra não ficar sempre a mesma frase —
+    // e uma linha com um número de verdade (dia + quantos objetos), pra parecer
+    // menos genérico e mais "essa pessoa realmente construiu isso"
+    const TV_FRASES_CONVITE = [
+      'Vem brincar comigo no Terreiro Bolhas de Luz ✦',
+      'Bora montar seu cantinho também? ✦',
+      'Meu terreirinho tá crescendo ✦ vem ver o seu',
+      'Um pedacinho de axé só meu ✦ cadê o seu?',
+      'Feito com carinho, casinha por casinha ✦',
+      'Vem espiar meu terreirinho e monta o seu também ✦',
+    ];
+    const fraseConvite = TV_FRASES_CONVITE[Math.floor(Math.random() * TV_FRASES_CONVITE.length)];
+    const qtdObjetos = Object.values(tvProgresso?.colocados || {})
+      .filter(c => c.catalogId !== TV_AVATAR_CATALOG_ID && c.catalogId !== TV_SEMENTE_CATALOG_ID).length;
+    const diaAtual = tvDiaAtual();
     const fator = canvasRoom.width / 480;
-    const FAIXA = 130 * fator;
+    const FAIXA = 158 * fator;
     const PAD = 26 * fator;
     const RAIO = 22 * fator;
     const final = document.createElement('canvas');
@@ -8418,6 +8433,38 @@ async function tvCompartilharImagem() {
     ctx.fillStyle = vinheta;
     ctx.fillRect(cardX, cardY, cardW, canvasRoom.height);
 
+    // moldura pontilhada por dentro da foto, tipo adesivo de álbum — só um
+    // toque de "enfeite" pra não parecer uma captura de tela crua
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,.55)';
+    ctx.lineWidth = 3 * fator;
+    ctx.setLineDash([9 * fator, 7 * fator]);
+    tvCanvasRoundRectPath(ctx, cardX + 9 * fator, cardY + 9 * fator, cardW - 18 * fator, canvasRoom.height - 18 * fator, RAIO * 0.6);
+    ctx.stroke();
+    ctx.restore();
+
+    // adesivinhos de flor/brilho nos cantos de cima da foto, torto que nem
+    // sticker colado à mão — dá aquele ar de "álbum de figurinhas" no Instagram
+    const desenharAdesivo = (x, y, emoji, anguloGraus, tamanho) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(anguloGraus * Math.PI / 180);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${tamanho}px serif`;
+      // fillStyle explícito, mesmo pra emoji — o ✦ sozinho (sem ser um emoji
+      // colorido de verdade) herdava a cor/gradiente anterior e saía quase
+      // invisível; com um emoji colorido de verdade (✨) isso não muda nada,
+      // mas evita o mesmo problema se um dia trocar por outro símbolo
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = 'rgba(80,20,40,.35)';
+      ctx.shadowBlur = 5 * fator;
+      ctx.fillText(emoji, 0, 0);
+      ctx.restore();
+    };
+    desenharAdesivo(cardX + 10 * fator, cardY + 12 * fator, '🌸', -16, 32 * fator);
+    desenharAdesivo(cardX + cardW - 10 * fator, cardY + 10 * fator, '✨', 14, 28 * fator);
+
     // faixa de baixo com o convite — degradê mais vivo, com uma linha
     // dourada separando ela da foto
     const faixaY = cardY + canvasRoom.height;
@@ -8432,12 +8479,15 @@ async function tvCompartilharImagem() {
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.font = `600 ${22 * fator}px Georgia, serif`;
-    ctx.fillText(`✦ Terreirinho de ${nomeDono} ✦`, cardX + cardW / 2, faixaY + 45 * fator);
-    ctx.font = `${15 * fator}px Georgia, serif`;
-    ctx.fillText('Vem brincar comigo no Terreiro Bolhas de Luz ✦', cardX + cardW / 2, faixaY + 80 * fator);
-    ctx.font = `italic ${12.5 * fator}px Georgia, serif`;
-    ctx.fillStyle = 'rgba(255,255,255,.85)';
-    ctx.fillText('homepage-3vx.pages.dev', cardX + cardW / 2, faixaY + 108 * fator);
+    ctx.fillText(`✦ Terreirinho de ${nomeDono} ✦`, cardX + cardW / 2, faixaY + 38 * fator);
+    ctx.font = `${14.5 * fator}px Georgia, serif`;
+    ctx.fillText(fraseConvite, cardX + cardW / 2, faixaY + 68 * fator);
+    ctx.font = `600 ${13.5 * fator}px Georgia, serif`;
+    ctx.fillStyle = 'rgba(255,224,163,.95)';
+    ctx.fillText(`🌿 Dia ${diaAtual} ✦ ${qtdObjetos} objeto${qtdObjetos === 1 ? '' : 's'} escolhido${qtdObjetos === 1 ? '' : 's'} a dedo`, cardX + cardW / 2, faixaY + 98 * fator);
+    ctx.font = `italic ${12 * fator}px Georgia, serif`;
+    ctx.fillStyle = 'rgba(255,255,255,.8)';
+    ctx.fillText('homepage-3vx.pages.dev', cardX + cardW / 2, faixaY + 128 * fator);
     ctx.restore();
 
     final.toBlob(async (blob) => {
