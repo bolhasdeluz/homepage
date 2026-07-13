@@ -45,6 +45,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   background:url('assets/bolhas.png') center/90% no-repeat;opacity:.04;pointer-events:none;}
 canvas#jardim{position:fixed;bottom:0;left:0;width:100%;z-index:1;height:140px;pointer-events:none}
 #bolhas-container{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+/* a Terreirinha já tem bastante coisa na tela (grade, inventário, filtros) —
+   as bolhas flutuantes por cima só acrescentavam poluição visual ali */
+#bolhas-container.tv-pausar-bolhas{display:none}
 
 @keyframes subir-bolha{
   0%{transform:translateY(0) translateX(0);opacity:0}
@@ -4865,6 +4868,7 @@ function showPage(name) {
     p.classList.add('active');
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
+  document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
   if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
