@@ -3176,7 +3176,51 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <button onclick="tvAdminExcluirLote()" style="color:#b3364a">🗑️ Excluir selecionados</button>
         </div>
         <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
-        <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
+        <div class="admin-row-inputs">
+          <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
+          <button class="tv-catalogo-btn-add" onclick="tvAdminAlternarLoteNovos()">📦 Cadastrar vários de uma vez</button>
+        </div>
+        <div id="tv-admin-lote-novos" style="display:none">
+          <div class="gp-admin-sub" id="tv-admin-lote-novos-info">Carregando arquivos...</div>
+          <div id="tv-admin-lote-novos-lista" style="max-height:220px;overflow-y:auto;margin:6px 0"></div>
+          <div class="admin-row-inputs">
+            <button onclick="tvAdminLoteNovosSelecionarTodos()">Selecionar todos</button>
+          </div>
+          <div class="gp-admin-sub" style="margin-top:8px">🤖 Deixa a IA decidir tudo pros arquivos marcados:</div>
+          <div class="admin-row-inputs">
+            <button class="tv-catalogo-btn-add" onclick="tvAdminLoteNovosCadastrarComIA()">🤖 Cadastrar selecionados com IA</button>
+          </div>
+          <div class="gp-admin-sub" style="margin-top:8px">Ou escolhe os campos na mão pra usar nos arquivos marcados (o nome de cada um continua vindo do nome do arquivo):</div>
+          <div class="admin-row-inputs">
+            <select id="tv-admin-lote-novos-tipo">
+              <option value="chao">Objeto de chão</option>
+              <option value="parede">Objeto de parede</option>
+            </select>
+            <select id="tv-admin-lote-novos-categoria">
+              <option value="plantas">🌿 Plantas</option>
+              <option value="moveis">🪑 Móveis</option>
+              <option value="utensilios">🏺 Utensílios</option>
+              <option value="armas">⚔️ Armas &amp; Emblemas</option>
+              <option value="natureza">🌾 Natureza</option>
+              <option value="outros">✦ Outros</option>
+            </select>
+            <select id="tv-admin-lote-novos-dia">
+              <option value="1">Dia 1</option>
+              <option value="3">Dia 3</option>
+              <option value="7">Dia 7</option>
+              <option value="14">Dia 14</option>
+              <option value="21">Dia 21</option>
+              <option value="30">Dia 30</option>
+              <option value="45">Dia 45</option>
+              <option value="60">Dia 60</option>
+              <option value="90">Dia 90</option>
+            </select>
+          </div>
+          <div class="admin-row-inputs">
+            <button class="tv-catalogo-btn-add" onclick="tvAdminLoteNovosCadastrarManual()">➕ Cadastrar selecionados com estes campos</button>
+          </div>
+          <div class="gp-admin-sub" id="tv-admin-lote-novos-status"></div>
+        </div>
         <div class="tv-catalogo-form" id="tv-admin-form" style="display:none">
           <div class="tv-admin-form-topo">
             <span id="tv-admin-form-titulo">Novo objeto</span>
@@ -6608,7 +6652,7 @@ const TV_CATEGORIAS = [...TV_CATEGORIAS_BASE];
 function tvAplicarCategoriasExtras(extras) {
   TV_CATEGORIAS.length = TV_CATEGORIAS_BASE.length;
   extras.forEach(cat => { if (!TV_CATEGORIAS.some(c => c.chave === cat.chave)) TV_CATEGORIAS.push(cat); });
-  ['tv-admin-filtro-categoria', 'tv-admin-novo-categoria', 'tv-inv-filtro-categoria', 'tv-admin-lote-categoria'].forEach(selId => {
+  ['tv-admin-filtro-categoria', 'tv-admin-novo-categoria', 'tv-inv-filtro-categoria', 'tv-admin-lote-categoria', 'tv-admin-lote-novos-categoria'].forEach(selId => {
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.querySelectorAll('option[data-extra]').forEach(o => o.remove());
@@ -8699,6 +8743,104 @@ function tvAdminExcluirLote() {
       } },
     ]
   );
+}
+
+// ── cadastro em lote de arquivos AINDA NÃO cadastrados — bem diferente do
+// "Selecionar vários" acima (que edita itens já cadastrados): aqui é uma lista
+// de arquivos crus do GitHub, marcados com checkbox, pra cadastrar vários de
+// uma vez (com IA ou com campos escolhidos na mão, iguais pra todos) ──
+let tvAdminLoteNovosArquivos = [];
+let tvAdminLoteNovosSelecionados = new Set();
+
+async function tvAdminAlternarLoteNovos() {
+  const painel = document.getElementById('tv-admin-lote-novos');
+  if (!painel) return;
+  const vaiAbrir = painel.style.display === 'none';
+  painel.style.display = vaiAbrir ? 'block' : 'none';
+  if (vaiAbrir) await tvAdminLoteNovosCarregar();
+}
+
+async function tvAdminLoteNovosCarregar() {
+  const info = document.getElementById('tv-admin-lote-novos-info');
+  const lista = document.getElementById('tv-admin-lote-novos-lista');
+  if (!info || !lista) return;
+  info.textContent = 'Buscando arquivos no GitHub...';
+  lista.innerHTML = '';
+  tvAdminLoteNovosSelecionados.clear();
+  const todos = await tvBuscarArquivosGithub();
+  if (todos === null) { info.textContent = '❌ Não consegui buscar no GitHub agora — tenta de novo daqui a pouco.'; return; }
+  const jaCadastrados = new Set(tvAdminCatalogoCache.map(i => i.imagem));
+  tvAdminLoteNovosArquivos = todos.filter(caminho => !jaCadastrados.has(caminho));
+  if (!tvAdminLoteNovosArquivos.length) { info.textContent = '✔ Nenhum arquivo novo — tudo já está cadastrado.'; return; }
+  info.textContent = `${tvAdminLoteNovosArquivos.length} arquivo(s) ainda não cadastrado(s) — marca os que quiser cadastrar:`;
+  lista.innerHTML = tvAdminLoteNovosArquivos.map(caminho => `
+    <label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.78rem;cursor:pointer">
+      <input type="checkbox" class="tv-lote-novo-checkbox" data-caminho="${tvEscapeHtml(caminho)}">
+      <img src="${caminho}" alt="" style="width:28px;height:28px;object-fit:contain;image-rendering:pixelated;border-radius:4px;background:var(--gp-bg);border:1px solid var(--gp-border)">
+      ${tvEscapeHtml(tvNomeSugerido(caminho))}
+    </label>`).join('');
+  lista.querySelectorAll('.tv-lote-novo-checkbox').forEach(chk => {
+    chk.addEventListener('change', () => {
+      if (chk.checked) tvAdminLoteNovosSelecionados.add(chk.dataset.caminho);
+      else tvAdminLoteNovosSelecionados.delete(chk.dataset.caminho);
+    });
+  });
+}
+
+function tvAdminLoteNovosSelecionarTodos() {
+  document.querySelectorAll('.tv-lote-novo-checkbox').forEach(chk => {
+    chk.checked = true;
+    tvAdminLoteNovosSelecionados.add(chk.dataset.caminho);
+  });
+}
+
+// cadastra cada arquivo marcado perguntando pra IA nome/tipo/categoria/mesa/
+// tamanho/inclinação — igual a categorização automática, mas só nos marcados
+async function tvAdminLoteNovosCadastrarComIA() {
+  const status = document.getElementById('tv-admin-lote-novos-status');
+  const selecionados = [...tvAdminLoteNovosSelecionados];
+  if (!selecionados.length) { if (status) status.textContent = 'Marca pelo menos um arquivo.'; return; }
+  let feitos = 0, falhas = 0;
+  for (const caminho of selecionados) {
+    if (status) status.textContent = `🤖 Classificando ${feitos + falhas + 1} de ${selecionados.length}: ${decodeURIComponent(caminho.split('/').pop())}...`;
+    try {
+      const imagemUrl = `https://raw.githubusercontent.com/${TV_GITHUB_REPO}/main/${caminho}`;
+      const resp = await fetch('/api/classificar-objeto', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imagemUrl }),
+      });
+      const dados = await resp.json();
+      if (!resp.ok || dados.error) { falhas++; continue; }
+      const id = 'obj_ia_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+      await window._tvSalvarItemCatalogo(id, {
+        nome: dados.nome, imagem: caminho, diaDesbloqueio: 1,
+        tipo: dados.tipo, categoria: dados.categoria, mesa: dados.mesa, alturaTampo: dados.alturaTampo,
+        escalaPadrao: dados.escalaPadrao, inclinacaoPadrao: dados.inclinacaoPadrao,
+      });
+      feitos++;
+    } catch (e) { console.warn('tv lote novos com ia:', caminho, e); falhas++; }
+  }
+  if (status) status.textContent = `✔ ${feitos} cadastrado(s)${falhas ? ` — ${falhas} falharam` : ''}.`;
+  tvAtualizarAdminCatalogo();
+  await tvAdminLoteNovosCarregar(); // atualiza a lista, tirando quem já foi cadastrado
+}
+
+// cadastra cada arquivo marcado com os MESMOS tipo/categoria/dia escolhidos no
+// painel (o nome de cada um continua vindo do nome do arquivo) — sem IA, pra
+// quando ela já sabe que um grupo de arquivos é tudo igual (ex: 5 velas novas)
+async function tvAdminLoteNovosCadastrarManual() {
+  const status = document.getElementById('tv-admin-lote-novos-status');
+  const selecionados = [...tvAdminLoteNovosSelecionados];
+  if (!selecionados.length) { if (status) status.textContent = 'Marca pelo menos um arquivo.'; return; }
+  const tipo = document.getElementById('tv-admin-lote-novos-tipo').value;
+  const categoria = document.getElementById('tv-admin-lote-novos-categoria').value;
+  const dia = parseInt(document.getElementById('tv-admin-lote-novos-dia').value, 10);
+  for (const caminho of selecionados) {
+    const id = 'obj_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+    await window._tvSalvarItemCatalogo(id, { nome: tvNomeSugerido(caminho), imagem: caminho, diaDesbloqueio: dia, tipo, categoria });
+  }
+  if (status) status.textContent = `✔ ${selecionados.length} cadastrado(s) com os campos escolhidos.`;
+  tvAtualizarAdminCatalogo();
+  await tvAdminLoteNovosCarregar();
 }
 
 async function tvAtualizarAdminCatalogo() {
