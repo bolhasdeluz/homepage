@@ -3149,9 +3149,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <option value="parede">🧱 Só parede</option>
           </select>
         </div>
-        <div class="admin-row-inputs" style="margin-bottom:8px">
+        <div class="admin-row-inputs" style="margin-bottom:4px">
+          <button class="tv-catalogo-btn-add" onclick="tvAdminForcarBuscaNovos()">🔄 Buscar arquivos novos</button>
           <button class="tv-catalogo-btn-add" id="tv-admin-btn-selecionar-varios" onclick="tvAdminAlternarSelecaoMultipla()">☑ Selecionar vários</button>
         </div>
+        <div class="gp-admin-sub" id="tv-admin-forcar-busca-status" style="margin-bottom:8px"></div>
         <div class="tv-acoes-objeto" id="tv-admin-selecao-barra" style="display:none">
           <span class="tv-acoes-nome" id="tv-admin-selecao-contagem">0 selecionados</span>
           <button onclick="tvAdminSelecionarTodosFiltrados()">Marcar todos filtrados</button>
@@ -9117,24 +9119,36 @@ async function tvAdminSemearNovosObjetos() {
   } catch (e) { console.warn('tv semear novos objetos:', e); }
 }
 
-// ── categorização automática via IA — roda sozinha (sem botão, sem UI) quando
-// a admin abre o terreirinho: acha arquivos novos em assets/objetos/ que ainda
-// não estão no catálogo e cadastra eles sozinha (nome/tipo/categoria/mesa),
-// perguntando pra Claude API o que é cada imagem
-async function tvAdminAutoCatalogar() {
-  if (!window._tvCarregarCatalogo || !window._tvSalvarItemCatalogo) return;
+// ── categorização automática via IA — roda sozinha (sem botão) quando a admin
+// abre o terreirinho: acha arquivos novos em assets/objetos/ que ainda não
+// estão no catálogo e cadastra eles sozinha (nome/tipo/categoria/mesa),
+// perguntando pra Claude API o que é cada imagem. Quando chamada a partir do
+// botão "Buscar arquivos novos", statusElId aponta pra um elemento onde mostra
+// o progresso — nas chamadas automáticas (sem botão) fica silenciosa, só console
+async function tvAdminAutoCatalogar(statusElId) {
+  const status = statusElId ? document.getElementById(statusElId) : null;
+  if (!window._tvCarregarCatalogo || !window._tvSalvarItemCatalogo) { if (status) status.textContent = '❌ Catálogo não disponível agora.'; return; }
+  if (status) status.textContent = '🔄 Buscando arquivos novos no GitHub...';
   try {
     const [catalogoAtual, arquivos] = await Promise.all([
       window._tvCarregarCatalogo(),
       tvBuscarArquivosGithub(),
     ]);
-    if (!arquivos) return; // falhou buscar no github, tenta de novo na próxima
+    if (!arquivos) {
+      if (status) status.textContent = '❌ Não consegui buscar no GitHub agora (pode ser limite de requisições) — tenta de novo daqui a pouco.';
+      return;
+    }
     const jaCatalogados = new Set(catalogoAtual.map(i => i.imagem));
     const novos = arquivos.filter(caminho => !jaCatalogados.has(caminho));
-    if (!novos.length) return;
+    if (!novos.length) {
+      if (status) status.textContent = '✔ Nenhum arquivo novo — tudo que tem em assets/objetos/ já está cadastrado.';
+      return;
+    }
 
     console.log(`tv auto-catalogar: achou ${novos.length} arquivo(s) novo(s), classificando via IA...`);
+    let feitos = 0, falhas = 0;
     for (const caminho of novos) {
+      if (status) status.textContent = `🤖 Classificando ${feitos + falhas + 1} de ${novos.length}: ${decodeURIComponent(caminho.split('/').pop())}...`;
       try {
         const imagemUrl = `https://raw.githubusercontent.com/${TV_GITHUB_REPO}/main/${caminho}`;
         const resp = await fetch('/api/classificar-objeto', {
@@ -9142,9 +9156,9 @@ async function tvAdminAutoCatalogar() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imagemUrl }),
         });
-        if (!resp.ok) { console.warn('tv auto-catalogar: falhou classificar', caminho); continue; }
+        if (!resp.ok) { console.warn('tv auto-catalogar: falhou classificar', caminho); falhas++; continue; }
         const classificacao = await resp.json();
-        if (classificacao.error) { console.warn('tv auto-catalogar:', caminho, classificacao.error); continue; }
+        if (classificacao.error) { console.warn('tv auto-catalogar:', caminho, classificacao.error); falhas++; continue; }
 
         const id = 'obj_ia_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
         await window._tvSalvarItemCatalogo(id, {
@@ -9153,10 +9167,15 @@ async function tvAdminAutoCatalogar() {
           mesa: classificacao.mesa, alturaTampo: classificacao.alturaTampo,
         });
         console.log(`tv auto-catalogar: "${classificacao.nome}" cadastrado (${caminho})`);
-      } catch (e) { console.warn('tv auto-catalogar: erro num arquivo', caminho, e); }
+        feitos++;
+      } catch (e) { console.warn('tv auto-catalogar: erro num arquivo', caminho, e); falhas++; }
     }
     tvAtualizarAdminCatalogo(); // recarrega a lista, já mostrando os novos
-  } catch (e) { console.warn('tv auto-catalogar geral:', e); }
+    if (status) status.textContent = `✔ ${feitos} ite${feitos === 1 ? 'm' : 'ns'} novo${feitos === 1 ? '' : 's'} cadastrado${feitos === 1 ? '' : 's'}${falhas ? ` — ${falhas} falharam, tenta de novo` : ''}.`;
+  } catch (e) {
+    console.warn('tv auto-catalogar geral:', e);
+    if (status) status.textContent = '❌ Deu erro buscando/classificando — tenta de novo.';
+  }
 }
 
 // a categorização automática (tvAdminAutoCatalogar) só roda 1x sozinha quando a
@@ -9173,6 +9192,13 @@ function tvAdminAbrirCatalogo() {
   if (agora - tvAutoCatalogarUltimaChecagem < 60000) return;
   tvAutoCatalogarUltimaChecagem = agora;
   tvAdminAutoCatalogar();
+}
+
+// botão "🔄 Buscar arquivos novos" — força a checagem na hora, sem esperar o
+// intervalo mínimo, e mostra o progresso (a checagem automática é silenciosa)
+function tvAdminForcarBuscaNovos() {
+  tvAutoCatalogarUltimaChecagem = Date.now();
+  tvAdminAutoCatalogar('tv-admin-forcar-busca-status');
 }
 
 // ── MIGRAÇÃO — vincula o uid de contas antigas que já jogaram ou já tinham
