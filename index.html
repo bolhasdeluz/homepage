@@ -7474,13 +7474,15 @@ async function tvRenderGrid() {
         if (tvModoSelecaoMultipla && tvSelecaoMultipla.has(instanciaId)) img.classList.add('tv-objeto-selecionado-multiplo');
         objetos.appendChild(img);
 
-        // se essa mesa tiver algo colocado em cima dela, desenha também —
-        // não usa a lógica normal de slot (divide a mesma casinha da mesa)
+        // se essa mesa tiver algo colocado em cima dela, desenha também — uma
+        // mesa com vários pontos marcados pode ter mais de um item em cima ao
+        // mesmo tempo, então desenha TODOS que apontam pra ela (antes só
+        // desenhava o primeiro que achava, e os outros ficavam invisíveis)
         if (item.mesa) {
-          const topoId = Object.keys(colocados).find(id => colocados[id].emCimaDe === instanciaId);
-          if (topoId) {
+          const topoIds = Object.keys(colocados).filter(id => colocados[id].emCimaDe === instanciaId);
+          topoIds.forEach(topoId => {
             tvRenderizarObjetoEmCimaDaMesa(topoId, colocados[topoId], img, item, ancoras, objetos, superficie, linha, coluna);
-          }
+          });
           tvRenderizarSpotsClicaveis(instanciaId, info, item, img, objetos, superficie, linha, coluna);
         }
       } else if (ehAvatar && avatarEscolhas) {
