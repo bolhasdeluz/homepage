@@ -3139,6 +3139,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div class="admin-row-inputs" style="margin-bottom:4px">
           <button class="tv-catalogo-btn-add" onclick="tvAdminForcarBuscaNovos()">🔄 Buscar arquivos novos</button>
           <button class="tv-catalogo-btn-add" id="tv-admin-btn-selecionar-varios" onclick="tvAdminAlternarSelecaoMultipla()">☑ Selecionar vários</button>
+          <button class="tv-catalogo-btn-add" onclick="tvAdminRemoverDuplicatas()">🧹 Remover duplicatas</button>
         </div>
         <div class="gp-admin-sub" id="tv-admin-forcar-busca-status" style="margin-bottom:8px"></div>
         <div class="tv-acoes-objeto" id="tv-admin-selecao-barra" style="display:none">
@@ -9325,9 +9326,19 @@ async function tvAdminSemearNovosObjetos() {
 // perguntando pra Claude API o que é cada imagem. Quando chamada a partir do
 // botão "Buscar arquivos novos", statusElId aponta pra um elemento onde mostra
 // o progresso — nas chamadas automáticas (sem botão) fica silenciosa, só console
+//
+// tvAutoCatalogarRodando trava pra só rodar uma checagem por vez: recarregar a
+// página (tvGarantirSemente) e abrir a seção do catálogo (tvAdminAbrirCatalogo)
+// podiam disparar uma checagem cada, quase ao mesmo tempo — como as duas liam o
+// catálogo ANTES de qualquer uma terminar de salvar, as duas achavam os mesmos
+// arquivos "novos" e cadastravam cada imagem duas vezes (um objeto duplicado
+// pra cada arquivo, um por checagem que rodou em paralelo)
+let tvAutoCatalogarRodando = false;
 async function tvAdminAutoCatalogar(statusElId) {
   const status = statusElId ? document.getElementById(statusElId) : null;
   if (!window._tvCarregarCatalogo || !window._tvSalvarItemCatalogo) { if (status) status.textContent = '❌ Catálogo não disponível agora.'; return; }
+  if (tvAutoCatalogarRodando) { if (status) status.textContent = '⏳ Já tem uma busca rodando — espera ela terminar.'; return; }
+  tvAutoCatalogarRodando = true;
   if (status) status.textContent = '🔄 Buscando arquivos novos no GitHub...';
   try {
     const [catalogoAtual, arquivos] = await Promise.all([
@@ -9376,6 +9387,8 @@ async function tvAdminAutoCatalogar(statusElId) {
   } catch (e) {
     console.warn('tv auto-catalogar geral:', e);
     if (status) status.textContent = '❌ Deu erro buscando/classificando — tenta de novo.';
+  } finally {
+    tvAutoCatalogarRodando = false;
   }
 }
 
@@ -9400,6 +9413,38 @@ function tvAdminAbrirCatalogo() {
 function tvAdminForcarBuscaNovos() {
   tvAutoCatalogarUltimaChecagem = Date.now();
   tvAdminAutoCatalogar('tv-admin-forcar-busca-status');
+}
+
+// limpa objetos do catálogo duplicados (mesma imagem cadastrada mais de uma
+// vez) — a corrida entre a categorização automática do carregamento da página
+// e a de reabrir a seção do catálogo (corrigida acima com tvAutoCatalogarRodando)
+// já cadastrou a mesma imagem várias vezes antes dessa trava existir; mantém
+// só o primeiro cadastro de cada imagem e apaga o resto
+async function tvAdminRemoverDuplicatas() {
+  const status = document.getElementById('tv-admin-forcar-busca-status');
+  const porImagem = new Map();
+  tvAdminCatalogoCache.forEach(item => {
+    if (!item.imagem) return;
+    if (!porImagem.has(item.imagem)) porImagem.set(item.imagem, []);
+    porImagem.get(item.imagem).push(item);
+  });
+  const duplicatas = [...porImagem.values()].filter(grupo => grupo.length > 1).flatMap(grupo => grupo.slice(1));
+  if (!duplicatas.length) {
+    if (status) status.textContent = '✔ Não achei nenhum objeto duplicado no catálogo.';
+    return;
+  }
+  tvConfirmarNavegacao(
+    '🧹 Remover duplicatas?',
+    `Achei ${duplicatas.length} objeto${duplicatas.length === 1 ? '' : 's'} do catálogo repetido${duplicatas.length === 1 ? '' : 's'} (mesma imagem cadastrada mais de uma vez). Isso remove as cópias extras e mantém só a primeira de cada uma. Não dá pra desfazer.`,
+    async () => {
+      if (status) status.textContent = '🧹 Removendo duplicatas...';
+      for (const item of duplicatas) {
+        if (window._tvExcluirItemCatalogo) await window._tvExcluirItemCatalogo(item.id);
+      }
+      if (status) status.textContent = `✔ ${duplicatas.length} duplicata${duplicatas.length === 1 ? '' : 's'} removida${duplicatas.length === 1 ? '' : 's'}.`;
+      tvAtualizarAdminCatalogo();
+    }
+  );
 }
 
 // ── MIGRAÇÃO — vincula o uid de contas antigas que já jogaram ou já tinham
