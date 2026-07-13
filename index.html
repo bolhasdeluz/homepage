@@ -8268,6 +8268,46 @@ function tvCanvasRoundRectPath(ctx, x, y, w, h, r) {
 // (clona o cenário fora da tela em tamanho fixo, html2canvas tira o "print",
 // e por cima entra uma faixa com o nome e uma frase pra engajar quem vir no
 // Instagram). Funciona tanto no próprio terreirinho quanto visitando alguém ──
+// "assa" a cor + textura do chão/parede (que na sala de verdade usam mask-image
+// pra recortar a cor na forma certa, e mix-blend-mode:multiply pra tingir com a
+// textura por cima) numa única imagem comum, pixel a pixel, com canvas puro —
+// sem nenhum truque de CSS. Isso existe porque tentamos primeiro deixar o
+// html2canvas capturar o mask-image/mix-blend-mode direto (com
+// foreignObjectRendering:true), só que no Safari do iPhone isso sai em branco
+// (bug conhecido do WebKit com foreignObject) — apagando a sala inteira da
+// imagem de compartilhar. Fazendo a mistura de cor pela nossa conta, o
+// resultado é só um PNG comum, que qualquer motor de captura sabe desenhar
+function tvAssarCamadaColorida(texturaUrl, cor, tamanho) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = tamanho;
+      canvas.height = tamanho;
+      const ctx = canvas.getContext('2d');
+      // mesma conta do background-size:contain — desenha a textura inteira
+      // dentro do quadrado, preservando a proporção e centralizada
+      const escala = Math.min(tamanho / img.naturalWidth, tamanho / img.naturalHeight);
+      const w = img.naturalWidth * escala, h = img.naturalHeight * escala;
+      const x = (tamanho - w) / 2, y = (tamanho - h) / 2;
+
+      // cor recortada na forma da textura (equivalente ao mask-image)
+      ctx.fillStyle = cor;
+      ctx.fillRect(0, 0, tamanho, tamanho);
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.drawImage(img, x, y, w, h);
+
+      // textura por cima tingindo a cor de verdade (equivalente ao mix-blend-mode:multiply)
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.drawImage(img, x, y, w, h);
+
+      resolve(canvas.toDataURL());
+    };
+    img.onerror = () => resolve(null);
+    img.src = texturaUrl;
+  });
+}
+
 async function tvCompartilharImagem() {
   const btn = document.getElementById('tv-btn-compartilhar');
   if (!btn) return;
@@ -8284,16 +8324,34 @@ async function tvCompartilharImagem() {
     clone.style.height = '480px';
     clone.style.margin = '0';
 
+    // troca a cor+textura do chão/parede (mask-image + mix-blend-mode) por uma
+    // imagem comum já pronta, assada com canvas — ver tvAssarCamadaColorida
+    const [chaoDataUrl, paredeDataUrl] = await Promise.all([
+      tvAssarCamadaColorida('assets/chao-cinza.png', tvProgresso?.corChao || '#fff5f7', 480),
+      tvAssarCamadaColorida('assets/parede-cinza.png', tvProgresso?.corParede || '#fff5f7', 480),
+    ]);
+    const trocarPorImagem = (seletorCor, seletorTextura, dataUrl) => {
+      const elCor = clone.querySelector(seletorCor);
+      const elTextura = clone.querySelector(seletorTextura);
+      if (!dataUrl || !elCor) return;
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%';
+      elCor.replaceWith(img);
+      if (elTextura) elTextura.remove();
+    };
+    trocarPorImagem('.tv-camada-cor-chao', '.tv-textura-chao', chaoDataUrl);
+    trocarPorImagem('.tv-camada-cor-parede', '.tv-textura-parede', paredeDataUrl);
+
     const palco = document.createElement('div');
     palco.style.cssText = 'position:fixed;left:-9999px;top:0;width:480px;height:480px;';
     palco.appendChild(clone);
     document.body.appendChild(palco);
 
-    // foreignObjectRendering:true usa o motor de verdade do navegador pra desenhar
-    // o clone (em vez do html2canvas reimplementar CSS na mão) — sem isso, o chão
-    // e a parede (que usam mask-image + mix-blend-mode pra colorir e texturizar)
-    // ficavam sem recorte nenhum, mostrando um fundo estranho em vez da sala
-    const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true, foreignObjectRendering: true });
+    // com o chão/parede já virando imagem comum acima, não precisa mais do
+    // foreignObjectRendering (que é o que dava a tela em branco no Safari) —
+    // o motor padrão do html2canvas já dá conta do resto (objetos, avatar etc)
+    const canvasRoom = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
     document.body.removeChild(palco);
 
     // canvas final: a sala + uma faixa de baixo com o convite, tudo dentro de um
