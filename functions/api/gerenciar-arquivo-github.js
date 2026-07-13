@@ -72,7 +72,10 @@ export async function onRequestPost(context) {
       if (!novoNome || /[\/\\]/.test(novoNome) || !novoNome.trim()) {
         return new Response(JSON.stringify({ error: 'Nome novo inválido' }), { status: 400, headers: CORS });
       }
-      const novoCaminho = `${PASTA}/${novoNome.trim()}`;
+      // mantém o arquivo na mesma (sub)pasta em que já estava — renomear não
+      // deveria também mover ele pra pasta raiz sem querer
+      const pastaAtual = caminho.substring(0, caminho.lastIndexOf('/'));
+      const novoCaminho = `${pastaAtual}/${novoNome.trim()}`;
       const existeRes = await fetch(`https://api.github.com/repos/${REPO}/contents/${novoCaminho}`, { headers: headersGithub });
       if (existeRes.ok) {
         return new Response(JSON.stringify({ error: 'Já existe um arquivo com esse nome' }), { status: 409, headers: CORS });
