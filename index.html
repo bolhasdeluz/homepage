@@ -3112,7 +3112,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
       <!-- ADMIN — catálogo da terreira (só aparece pra quem é admin) -->
       <div class="gp-admin-section" id="tv-admin-catalogo" style="display:none">
-        <div class="gp-admin-title" onclick="tvAdminToggleSecao('tv-admin-catalogo-body')">
+        <div class="gp-admin-title" onclick="tvAdminAbrirCatalogo()">
           <span>🏠 Catálogo da Terreira</span>
           <span class="gp-admin-chevron" id="tv-admin-catalogo-body-chevron">▾</span>
         </div>
@@ -8254,8 +8254,11 @@ function tvNomeSugerido(caminho) {
 
 async function tvMontarSelectArquivos() {
   const sel = document.getElementById('tv-admin-novo-arquivo');
-  if (!sel || sel.dataset.montado) return; // já buscou nessa sessão
-  sel.dataset.montado = '1';
+  if (!sel) return;
+  // busca de novo no GitHub toda vez que o formulário abre — antes só buscava
+  // 1x por sessão, então se a pessoa subisse um arquivo novo e abrisse o
+  // formulário na mesma aba (sem recarregar a página), a lista continuava
+  // mostrando a versão antiga, sem o arquivo novo
   sel.innerHTML = '<option value="">Buscando arquivos no GitHub...</option>';
   const todos = await tvBuscarArquivosGithub();
   if (todos === null) {
@@ -8282,7 +8285,12 @@ async function tvMontarSelectArquivos() {
     sel.appendChild(opt);
   });
   tvAtualizarPreviewArquivo();
-  sel.addEventListener('change', tvAtualizarPreviewArquivo);
+  // o listener de troca só precisa ser ligado 1x (senão dispara em dobro depois
+  // de reabrir o formulário algumas vezes) — mas a busca acima sempre roda de novo
+  if (!sel.dataset.listenerLigado) {
+    sel.dataset.listenerLigado = '1';
+    sel.addEventListener('change', tvAtualizarPreviewArquivo);
+  }
 }
 
 function tvAtualizarPreviewArquivo() {
@@ -8367,7 +8375,6 @@ async function tvAdminRenomearArquivo() {
             await window._tvSalvarItemCatalogo(tvAdminEditandoId, { imagem: dados.novoCaminho });
           }
           if (status) status.textContent = '✔ Arquivo renomeado.';
-          document.getElementById('tv-admin-novo-arquivo').dataset.montado = '';
           await tvMontarSelectArquivos();
           tvAtualizarAdminCatalogo();
         } catch (e) {
@@ -8409,7 +8416,6 @@ async function tvAdminExcluirArquivo() {
             await tvAdminExcluir(idParaExcluir);
           }
           if (status) status.textContent = '✔ Arquivo excluído.';
-          document.getElementById('tv-admin-novo-arquivo').dataset.montado = '';
           await tvMontarSelectArquivos();
           tvAtualizarAdminCatalogo();
         } catch (e) {
@@ -8963,6 +8969,22 @@ async function tvAdminAutoCatalogar() {
     }
     tvAtualizarAdminCatalogo(); // recarrega a lista, já mostrando os novos
   } catch (e) { console.warn('tv auto-catalogar geral:', e); }
+}
+
+// a categorização automática (tvAdminAutoCatalogar) só roda 1x sozinha quando a
+// página carrega (tvGarantirSemente) — se a admin subir um arquivo novo e voltar
+// pra aba já aberta sem recarregar, ela não rodava de novo. Reabrir a seção do
+// catálogo é um bom momento natural pra checar de novo, com um intervalo mínimo
+// entre checagens pra não bater no GitHub toda hora só de abrir/fechar
+let tvAutoCatalogarUltimaChecagem = 0;
+function tvAdminAbrirCatalogo() {
+  tvAdminToggleSecao('tv-admin-catalogo-body');
+  const corpo = document.getElementById('tv-admin-catalogo-body');
+  if (!corpo || !corpo.classList.contains('aberto')) return;
+  const agora = Date.now();
+  if (agora - tvAutoCatalogarUltimaChecagem < 60000) return;
+  tvAutoCatalogarUltimaChecagem = agora;
+  tvAdminAutoCatalogar();
 }
 
 // ── MIGRAÇÃO — vincula o uid de contas antigas que já jogaram ou já tinham
