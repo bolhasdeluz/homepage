@@ -1819,6 +1819,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .tv-catalogo-item-info{flex:1;min-width:0;display:flex;flex-direction:column}
 .tv-catalogo-item-nome{font-family:'Cinzel',serif;font-size:10.5px;color:var(--gp-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tv-catalogo-item-meta{font-size:9.5px;color:var(--gp-text-dim)}
+.tv-catalogo-item-selecionado{background:rgba(196,57,107,.08);border-radius:8px}
+.tv-admin-item-checkbox{width:16px;height:16px;flex-shrink:0;cursor:pointer}
 /* formulário de adicionar fica escondido atrás de um botão, só abre quando precisa */
 .tv-catalogo-btn-add{
   width:100%;padding:8px;border:1px dashed var(--gp-gold);border-radius:8px;background:none;
@@ -3134,6 +3136,43 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <option value="chao">▦ Só chão</option>
             <option value="parede">🧱 Só parede</option>
           </select>
+        </div>
+        <div class="admin-row-inputs" style="margin-bottom:8px">
+          <button class="tv-catalogo-btn-add" id="tv-admin-btn-selecionar-varios" onclick="tvAdminAlternarSelecaoMultipla()">☑ Selecionar vários</button>
+        </div>
+        <div class="tv-acoes-objeto" id="tv-admin-selecao-barra" style="display:none">
+          <span class="tv-acoes-nome" id="tv-admin-selecao-contagem">0 selecionados</span>
+          <button onclick="tvAdminSelecionarTodosFiltrados()">Marcar todos filtrados</button>
+          <div class="tv-acoes-grupo">
+            <select id="tv-admin-lote-categoria">
+              <option value="">Categoria...</option>
+              <option value="plantas">🌿 Plantas</option>
+              <option value="moveis">🪑 Móveis</option>
+              <option value="utensilios">🏺 Utensílios</option>
+              <option value="armas">⚔️ Armas &amp; Emblemas</option>
+              <option value="natureza">🌾 Natureza</option>
+              <option value="outros">✦ Outros</option>
+            </select>
+            <button onclick="tvAdminAplicarLoteCategoria()">Aplicar</button>
+          </div>
+          <div class="tv-acoes-grupo">
+            <select id="tv-admin-lote-dia">
+              <option value="">Dia...</option>
+              <option value="1">Dia 1</option>
+              <option value="3">Dia 3</option>
+              <option value="7">Dia 7</option>
+              <option value="14">Dia 14</option>
+              <option value="21">Dia 21</option>
+              <option value="30">Dia 30</option>
+              <option value="45">Dia 45</option>
+              <option value="60">Dia 60</option>
+              <option value="90">Dia 90</option>
+            </select>
+            <button onclick="tvAdminAplicarLoteDia()">Aplicar</button>
+          </div>
+          <button onclick="tvAdminAplicarLotePodeMesa(true)" title="Marca todos os selecionados como 'pode ficar em cima de mesas'">🍽️ Pode em mesa</button>
+          <button onclick="tvAdminAplicarLotePodeMesa(false)" title="Marca todos os selecionados como 'não pode ficar em cima de mesas'">🚫 Não pode em mesa</button>
+          <button onclick="tvAdminExcluirLote()" style="color:#b3364a">🗑️ Excluir selecionados</button>
         </div>
         <div class="tv-catalogo-lista" id="tv-admin-lista">Carregando...</div>
         <button class="tv-catalogo-btn-add" id="tv-admin-btn-form" onclick="tvAdminToggleForm()">+ Novo objeto</button>
@@ -6568,7 +6607,7 @@ const TV_CATEGORIAS = [...TV_CATEGORIAS_BASE];
 function tvAplicarCategoriasExtras(extras) {
   TV_CATEGORIAS.length = TV_CATEGORIAS_BASE.length;
   extras.forEach(cat => { if (!TV_CATEGORIAS.some(c => c.chave === cat.chave)) TV_CATEGORIAS.push(cat); });
-  ['tv-admin-filtro-categoria', 'tv-admin-novo-categoria', 'tv-inv-filtro-categoria'].forEach(selId => {
+  ['tv-admin-filtro-categoria', 'tv-admin-novo-categoria', 'tv-inv-filtro-categoria', 'tv-admin-lote-categoria'].forEach(selId => {
     const sel = document.getElementById(selId);
     if (!sel) return;
     sel.querySelectorAll('option[data-extra]').forEach(o => o.remove());
@@ -8498,6 +8537,88 @@ async function tvAdminAtualizarPreviewSala() {
 }
 
 let tvAdminCatalogoCache = [];
+// edição em lote do catálogo — liga/desliga com o botão "Selecionar vários"
+// (separado do modo de seleção em lote dos objetos JÁ COLOCADOS na sala)
+let tvAdminModoSelecaoMultipla = false;
+let tvAdminSelecaoMultipla = new Set();
+
+function tvAdminAlternarSelecaoMultipla() {
+  tvAdminModoSelecaoMultipla = !tvAdminModoSelecaoMultipla;
+  tvAdminSelecaoMultipla.clear();
+  const btn = document.getElementById('tv-admin-btn-selecionar-varios');
+  if (btn) btn.textContent = tvAdminModoSelecaoMultipla ? '✕ Sair da seleção' : '☑ Selecionar vários';
+  tvAdminRenderLista();
+  tvAdminRenderSelecaoBarra();
+}
+
+function tvAdminAlternarItemSelecionado(id) {
+  if (tvAdminSelecaoMultipla.has(id)) tvAdminSelecaoMultipla.delete(id);
+  else tvAdminSelecaoMultipla.add(id);
+  tvAdminRenderSelecaoBarra();
+}
+
+// marca todos os itens que estão sendo mostrados agora (respeitando a busca e
+// os filtros de categoria/tipo) — útil pra aplicar uma mudança só num grupo
+function tvAdminSelecionarTodosFiltrados() {
+  tvAdminItensFiltrados().forEach(item => tvAdminSelecaoMultipla.add(item.id));
+  tvAdminRenderLista();
+  tvAdminRenderSelecaoBarra();
+}
+
+function tvAdminRenderSelecaoBarra() {
+  const barra = document.getElementById('tv-admin-selecao-barra');
+  if (!barra) return;
+  barra.style.display = tvAdminModoSelecaoMultipla ? 'flex' : 'none';
+  const contagem = document.getElementById('tv-admin-selecao-contagem');
+  if (contagem) contagem.textContent = `${tvAdminSelecaoMultipla.size} selecionado${tvAdminSelecaoMultipla.size === 1 ? '' : 's'}`;
+}
+
+async function tvAdminAplicarLoteCategoria() {
+  const categoria = document.getElementById('tv-admin-lote-categoria')?.value;
+  if (!categoria || !tvAdminSelecaoMultipla.size || !window._tvSalvarItemCatalogo) return;
+  for (const id of tvAdminSelecaoMultipla) {
+    await window._tvSalvarItemCatalogo(id, { categoria });
+  }
+  document.getElementById('tv-admin-lote-categoria').value = '';
+  tvAtualizarAdminCatalogo();
+}
+
+async function tvAdminAplicarLoteDia() {
+  const dia = parseInt(document.getElementById('tv-admin-lote-dia')?.value, 10);
+  if (!dia || !tvAdminSelecaoMultipla.size || !window._tvSalvarItemCatalogo) return;
+  for (const id of tvAdminSelecaoMultipla) {
+    await window._tvSalvarItemCatalogo(id, { diaDesbloqueio: dia });
+  }
+  document.getElementById('tv-admin-lote-dia').value = '';
+  tvAtualizarAdminCatalogo();
+}
+
+async function tvAdminAplicarLotePodeMesa(pode) {
+  if (!tvAdminSelecaoMultipla.size || !window._tvSalvarItemCatalogo) return;
+  for (const id of tvAdminSelecaoMultipla) {
+    await window._tvSalvarItemCatalogo(id, { podeEmCimaDeMesa: pode });
+  }
+  tvAtualizarAdminCatalogo();
+}
+
+function tvAdminExcluirLote() {
+  if (!tvAdminSelecaoMultipla.size) return;
+  const qtd = tvAdminSelecaoMultipla.size;
+  tvMostrarEscolha(
+    '🗑️ Excluir selecionados?',
+    `Isso exclui ${qtd} ite${qtd === 1 ? 'm' : 'ns'} do catálogo. Quem já tiver colocado algum desses no terreirinho não perde o objeto — só some da lista pra colocar de novo. Não dá pra desfazer.`,
+    [
+      { label: 'Cancelar' },
+      { label: 'Sim, excluir', destaque: true, aoClicar: async () => {
+        if (window._tvExcluirItemCatalogo) {
+          for (const id of tvAdminSelecaoMultipla) await window._tvExcluirItemCatalogo(id);
+        }
+        tvAdminSelecaoMultipla.clear();
+        tvAtualizarAdminCatalogo();
+      } },
+    ]
+  );
+}
 
 async function tvAtualizarAdminCatalogo() {
   const secao = document.getElementById('tv-admin-catalogo');
@@ -8522,6 +8643,20 @@ async function tvAtualizarAdminCatalogo() {
   tvAdminRenderLista();
 }
 
+// os mesmos filtros (busca/categoria/tipo) usados tanto pra desenhar a lista
+// quanto pra "selecionar todos os filtrados" no modo de seleção em lote
+function tvAdminItensFiltrados() {
+  const busca = (document.getElementById('tv-admin-busca')?.value || '').trim().toLowerCase();
+  const filtroCategoria = document.getElementById('tv-admin-filtro-categoria')?.value || '';
+  const filtroTipo = document.getElementById('tv-admin-filtro-tipo')?.value || '';
+  return tvAdminCatalogoCache.filter(item => {
+    if (busca && !item.nome.toLowerCase().includes(busca)) return false;
+    if (filtroCategoria && tvCategoriaEfetiva(item) !== filtroCategoria) return false;
+    if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
+    return true;
+  });
+}
+
 // filtra o que já foi buscado (sem precisar recarregar do Firestore a cada
 // letra digitada) por nome, categoria e tipo (chão/parede)
 function tvAdminRenderLista() {
@@ -8529,34 +8664,33 @@ function tvAdminRenderLista() {
   if (!lista) return;
   if (!tvAdminCatalogoCache.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto cadastrado ainda.</div>'; return; }
 
-  const busca = (document.getElementById('tv-admin-busca')?.value || '').trim().toLowerCase();
-  const filtroCategoria = document.getElementById('tv-admin-filtro-categoria')?.value || '';
-  const filtroTipo = document.getElementById('tv-admin-filtro-tipo')?.value || '';
-
-  const filtrados = tvAdminCatalogoCache.filter(item => {
-    if (busca && !item.nome.toLowerCase().includes(busca)) return false;
-    if (filtroCategoria && tvCategoriaEfetiva(item) !== filtroCategoria) return false;
-    if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
-    return true;
-  });
-
+  const filtrados = tvAdminItensFiltrados();
   if (!filtrados.length) { lista.innerHTML = '<div class="gp-admin-vazio">Nenhum objeto encontrado com esse filtro.</div>'; return; }
 
   lista.innerHTML = filtrados.map(item => {
     const cat = TV_CATEGORIAS.find(c => c.chave === tvCategoriaEfetiva(item));
     const escala = item.escalaPadrao || 1;
     const inclinacao = item.inclinacaoPadrao || 0;
+    const selecionado = tvAdminSelecaoMultipla.has(item.id);
     return `
-    <div class="tv-catalogo-item">
+    <div class="tv-catalogo-item${selecionado ? ' tv-catalogo-item-selecionado' : ''}">
+      ${tvAdminModoSelecaoMultipla ? `<input type="checkbox" class="tv-admin-item-checkbox" data-id="${item.id}" ${selecionado ? 'checked' : ''}>` : ''}
       <img class="tv-catalogo-item-thumb" src="${item.imagem}" alt="">
       <div class="tv-catalogo-item-info">
         <span class="tv-catalogo-item-nome">${item.nome}</span>
         <span class="tv-catalogo-item-meta">Dia ${item.diaDesbloqueio} · ${item.tipo === 'parede' ? '🧱 parede' : '▦ chão'} · ${cat ? cat.label : ''} · ${escala.toFixed(2)}x · ${inclinacao}°</span>
       </div>
+      ${tvAdminModoSelecaoMultipla ? '' : `
       <button class="admin-edit" data-id="${item.id}" title="Editar">✎</button>
-      <button class="admin-del" data-id="${item.id}" title="Remover">✕</button>
+      <button class="admin-del" data-id="${item.id}" title="Remover">✕</button>`}
     </div>`;
   }).join('');
+  if (tvAdminModoSelecaoMultipla) {
+    lista.querySelectorAll('.tv-admin-item-checkbox[data-id]').forEach(chk => {
+      chk.addEventListener('change', () => tvAdminAlternarItemSelecionado(chk.dataset.id));
+    });
+    return;
+  }
   lista.querySelectorAll('button.admin-edit[data-id]').forEach(btn => {
     btn.addEventListener('click', () => tvAdminEditarItem(btn.dataset.id));
   });
