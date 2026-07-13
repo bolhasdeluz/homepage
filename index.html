@@ -2989,6 +2989,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
               <option value="chao">▦ Só chão</option>
               <option value="parede">🧱 Só parede</option>
             </select>
+            <select id="tv-inv-filtro-status" onchange="tvRenderInventario()">
+              <option value="">Todos os objetos</option>
+              <option value="colocado">✔ Já no terreirinho</option>
+              <option value="bloqueado">🔒 Ainda bloqueado</option>
+            </select>
           </div>
           <div class="tv-inventario tv-editor-only tv-so-editando" id="tv-inventario"></div>
         </div>
@@ -7594,35 +7599,50 @@ function tvCriarTileInventario(item, dia, colocados) {
   return el;
 }
 
+// diz se um item passa no filtro "✔ Já no terreirinho" / "🔒 Ainda bloqueado" —
+// usado tanto pros objetos normais quanto pro avatar/planta especial, pra o
+// filtro valer pro inventário inteiro e não só pela lista principal
+function tvPassaFiltroStatus(desbloqueado, colocado, filtroStatus) {
+  if (filtroStatus === 'colocado') return colocado;
+  if (filtroStatus === 'bloqueado') return !desbloqueado;
+  return true;
+}
+
 function tvRenderInventario() {
   const wrap = document.getElementById('tv-inventario');
   if (!wrap || !tvProgresso) return;
   const dia = tvDiaAtual();
   const colocados = tvProgresso.colocados || {};
   wrap.innerHTML = '';
+  const filtroStatus = document.getElementById('tv-inv-filtro-status')?.value || '';
 
   // o próprio avatar da jogadora — sempre disponível, não é um item do catálogo
-  // comum (não tem dia de desbloqueio, só existe 1 instância por vez)
-  if (!tvVisitandoUid) {
-    const headerAv = document.createElement('div');
-    headerAv.className = 'tv-inventario-categoria';
-    headerAv.textContent = '🧍 Seu avatar';
-    wrap.appendChild(headerAv);
+  // comum (não tem dia de desbloqueio, só existe 1 instância por vez); nunca é
+  // "bloqueado", então some da lista se o filtro for justamente esse
+  if (!tvVisitandoUid && filtroStatus !== 'bloqueado') {
     const jaColocado = !!colocados[TV_AVATAR_INSTANCIA_ID];
-    const elAv = document.createElement('div');
-    elAv.className = 'tv-item' + (tvItemSelecionado === TV_AVATAR_CATALOG_ID ? ' selecionado' : '');
-    elAv.title = jaColocado ? 'Seu avatar já está no terreirinho — clica nele lá na sala pra mover' : 'Colocar seu avatar no terreirinho';
-    elAv.innerHTML = `<span class="tv-avatar-icone">🧍</span>${jaColocado ? '<span class="tv-qtd-badge">1</span>' : ''}`;
-    if (!jaColocado) elAv.addEventListener('click', () => tvSelecionarItem(TV_AVATAR_CATALOG_ID));
-    else elAv.style.opacity = '.6';
-    wrap.appendChild(elAv);
+    if (tvPassaFiltroStatus(true, jaColocado, filtroStatus)) {
+      const headerAv = document.createElement('div');
+      headerAv.className = 'tv-inventario-categoria';
+      headerAv.textContent = '🧍 Seu avatar';
+      wrap.appendChild(headerAv);
+      const elAv = document.createElement('div');
+      elAv.className = 'tv-item' + (tvItemSelecionado === TV_AVATAR_CATALOG_ID ? ' selecionado' : '');
+      elAv.title = jaColocado ? 'Seu avatar já está no terreirinho — clica nele lá na sala pra mover' : 'Colocar seu avatar no terreirinho';
+      elAv.innerHTML = `<span class="tv-avatar-icone">🧍</span>${jaColocado ? '<span class="tv-qtd-badge">1</span>' : ''}`;
+      if (!jaColocado) elAv.addEventListener('click', () => tvSelecionarItem(TV_AVATAR_CATALOG_ID));
+      else elAv.style.opacity = '.6';
+      wrap.appendChild(elAv);
+    }
   }
 
   // itens especiais — a planta especial (ganha visitando) e os objetos do
   // catálogo com "acao" (ex: Calendário Mágico), todos juntos numa categoria
   // só, no topo, pra ficarem fáceis de achar
-  const itensEspeciaisCatalogo = !tvVisitandoUid ? tvCatalogo.filter(item => item.acao) : [];
-  const temSemente = !tvVisitandoUid && !!tvProgresso.sementeEspecial;
+  const itensEspeciaisCatalogo = (!tvVisitandoUid ? tvCatalogo.filter(item => item.acao) : [])
+    .filter(item => tvPassaFiltroStatus(dia >= (item.diaDesbloqueio || 0), Object.values(colocados).some(c => c.catalogId === item.id), filtroStatus));
+  const temSemente = !tvVisitandoUid && !!tvProgresso.sementeEspecial
+    && tvPassaFiltroStatus(true, !!colocados[TV_SEMENTE_INSTANCIA_ID], filtroStatus);
   if (itensEspeciaisCatalogo.length || temSemente) {
     const headerEsp = document.createElement('div');
     headerEsp.className = 'tv-inventario-categoria';
@@ -7649,7 +7669,7 @@ function tvRenderInventario() {
   }
   // agrupa por categoria pra ficar mais fácil de achar, em vez de uma lista única
   // (itens com "acao" já apareceram em Itens especiais, não repete aqui) — com
-  // busca por nome e filtro de categoria/tipo, igual o catálogo do admin
+  // busca por nome e filtro de categoria/tipo/status, igual o catálogo do admin
   const busca = (document.getElementById('tv-inv-busca')?.value || '').trim().toLowerCase();
   const filtroCategoria = document.getElementById('tv-inv-filtro-categoria')?.value || '';
   const filtroTipo = document.getElementById('tv-inv-filtro-tipo')?.value || '';
@@ -7661,6 +7681,9 @@ function tvRenderInventario() {
       if (tvCategoriaEfetiva(item) !== cat.chave || item.acao) return false;
       if (busca && !item.nome.toLowerCase().includes(busca)) return false;
       if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
+      const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+      const colocado = Object.values(colocados).some(c => c.catalogId === item.id);
+      if (!tvPassaFiltroStatus(desbloqueado, colocado, filtroStatus)) return false;
       return true;
     });
     if (!itensDaCategoria.length) return;
@@ -7672,7 +7695,7 @@ function tvRenderInventario() {
     itensDaCategoria.forEach(item => wrap.appendChild(tvCriarTileInventario(item, dia, colocados)));
   });
 
-  if (!achouAlgo && (busca || filtroCategoria || filtroTipo)) {
+  if (!achouAlgo && (busca || filtroCategoria || filtroTipo || filtroStatus)) {
     const vazio = document.createElement('div');
     vazio.className = 'gp-admin-vazio';
     vazio.textContent = 'Nenhum objeto encontrado com esse filtro.';
