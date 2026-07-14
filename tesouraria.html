@@ -23,7 +23,7 @@
 body { background: radial-gradient(ellipse at 50% 100%, rgba(196,57,107,.1) 0%, rgba(196,57,107,.04) 35%, transparent 65%), radial-gradient(ellipse at 15% 90%, rgba(196,57,107,.07) 0%, transparent 50%), var(--bg); background-attachment: fixed; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; }
 
 /* HEADER */
-.header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); box-shadow: 0 2px 20px rgba(180,60,90,.25); padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 150; }
+.header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); box-shadow: 0 2px 20px rgba(180,60,90,.25); padding: 18px 20px 14px; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 150; }
 .header-title { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 600; color: #fff; }
 .header-subtitle { font-family: 'DM Sans', sans-serif; font-size: .72rem; color: rgba(255,255,255,.7); margin-top: 1px; }
 .header-flame { font-size: 1.4rem; animation: flicker .9s ease-in-out infinite alternate; }
@@ -200,9 +200,187 @@ body { background: radial-gradient(ellipse at 50% 100%, rgba(196,57,107,.1) 0%, 
   body { background: #fff; }
   .content { padding: 0; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   CASCA COMPARTILHADA COM O SITE PRINCIPAL (index.html) — mesmo fundo
+   decorativo, mesma barra de "Ferramentas" com a gaveta, mesmo aviso de
+   login no topo e o mesmo rodapé. Copiado do index.html pra a Tesouraria
+   não parecer uma página à parte do resto do site.
+   ══════════════════════════════════════════════════════════════════════ */
+.bg-entardecer{position:fixed;bottom:0;left:0;right:0;height:220px;z-index:-2;
+  background:linear-gradient(to top,rgba(196,57,107,.1) 0%,rgba(196,57,107,.05) 40%,transparent 100%);
+  pointer-events:none;}
+.bg-mountains{position:fixed;bottom:0;left:0;right:0;z-index:-1;height:160px;
+  background:url('assets/montanhas.png') bottom center/cover no-repeat;opacity:.2;pointer-events:none;}
+.bg-bolhas-img{position:fixed;inset:0;z-index:0;
+  background:url('assets/bolhas.png') center/90% no-repeat;opacity:.04;pointer-events:none;}
+canvas#jardim{position:fixed;bottom:0;left:0;width:100%;z-index:1;height:140px;pointer-events:none}
+#bolhas-container{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+@keyframes subir-bolha{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  10%{opacity:1}
+  30%{transform:translateY(-30vh) translateX(10px)}
+  60%{transform:translateY(-60vh) translateX(-8px)}
+  90%{opacity:.6}
+  100%{transform:translateY(-108vh) translateX(4px);opacity:0}}
+.bolha-el{position:absolute;animation:subir-bolha ease-in-out infinite}
+
+/* barra fixa "Ferramentas" no topo — abre a gaveta */
+#menu-hint{
+  position:fixed;top:0;left:0;right:0;z-index:195;
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 20px 11px;background:rgba(253,246,238,.96);
+  border-bottom:1px solid rgba(196,90,30,.14);box-shadow:0 1px 8px rgba(196,90,30,.06);
+  backdrop-filter:blur(8px);transition:top .25s ease;
+}
+body.bl-logada #menu-hint{top:28px}
+#menu-hint-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;opacity:.85;transition:opacity .2s;padding:3px 4px;}
+#menu-hint-btn:hover,#menu-hint-btn:active{opacity:1}
+#menu-hint-label{font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
+#hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
+body{padding-top:34px}
+body.bl-logada{padding-top:62px}
+body{padding-bottom:64px}
+
+/* aviso de login no topo — igual ao "boas-vindas" da homepage */
+#boas-vindas{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(253,246,238,.96);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(8px);padding:5px 60px;box-shadow:0 1px 8px rgba(196,90,30,.06);
+}
+#boas-vindas-inner{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;max-width:700px;margin:0 auto;}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#bv-sep{color:rgba(196,90,30,.3);font-size:.65rem}
+#user-logout-btn{background:none;border:1px solid var(--border);border-radius:14px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;padding:3px 10px;cursor:pointer;margin-left:6px}
+#user-logout-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+/* gaveta de ferramentas */
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{
+  position:fixed;left:0;right:0;bottom:0;z-index:360;
+  max-height:78vh;background:var(--bg);
+  border-top:1px solid var(--border);border-radius:18px 18px 0 0;
+  box-shadow:0 -8px 32px rgba(46,26,14,.14);
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+}
+#drawer.open{transform:translateY(0)}
+.drawer-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px;cursor:pointer;flex-shrink:0}
+.drawer-handle-pill{width:32px;height:3px;border-radius:3px;background:rgba(196,90,30,.18)}
+.drawer-header{padding:6px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.1em}
+.drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
+.drawer-close:hover{color:var(--gold)}
+.drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.drawer-section{padding:14px 16px 4px}
+.drawer-section-label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.drawer-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
+.drawer-submenu{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 0 14px;}
+@media(min-width:420px){.drawer-submenu{grid-template-columns:repeat(4,1fr)}}
+.drawer-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:14px 8px 12px;background:rgba(255,255,255,.6);border:1px solid rgba(196,90,30,.1);
+  border-radius:12px;cursor:pointer;transition:all .18s;text-align:center;position:relative;min-height:76px;
+}
+.drawer-card:hover{background:#fff;border-color:rgba(196,57,107,.28);box-shadow:0 4px 14px rgba(196,57,107,.12);transform:translateY(-2px);}
+.drawer-card-icon{font-size:1.55rem;line-height:1}
+.drawer-card-name{font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;letter-spacing:.02em;color:var(--text);line-height:1.25;}
+.drawer-card-dot-corner{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:rgba(196,90,30,.22)}
+.drawer-card-dot-corner.mem{background:var(--gold)}
+
+/* modal de login — namespace "bl-" pra não colidir com os modais financeiros já existentes */
+.bl-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.bl-overlay.open{display:flex}
+.bl-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:36px 32px;width:100%;max-width:360px;position:relative}
+.bl-modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.bl-modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.bl-modal-close{position:absolute;top:12px;right:12px;background:rgba(80,30,50,.08);border:1px solid var(--border);border-radius:8px;font-size:1.3rem;color:var(--text-dim);line-height:1;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.bl-modal-close:hover{background:var(--gold-dim);color:var(--gold);border-color:rgba(196,57,107,.3)}
+.bl-modal-footer{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);text-align:center;margin-top:16px}
+.bl-btn-rosa{background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;font-weight:700;padding:11px 24px;transition:all .2s;cursor:pointer;}
+.bl-btn-rosa:hover{background:var(--gold-light);transform:translateY(-1px)}
+
+/* rodapé fixo — igual ao do site principal */
+.bl-footer{position:fixed;left:0;right:0;bottom:0;z-index:120;background:linear-gradient(135deg,#2a1a22,#3a2030);padding:10px 24px;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,.18);}
+.bl-footer-logo{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.1em;margin-bottom:2px}
+.bl-footer-sub{font-family:'Crimson Pro',serif;font-size:.72rem;color:rgba(255,255,255,.3);font-style:italic}
 </style>
 </head>
 <body>
+
+<div class="bg-entardecer"></div>
+<div class="bg-mountains"></div>
+<div class="bg-bolhas-img"></div>
+<canvas id="jardim"></canvas>
+<div id="bolhas-container"></div>
+
+<!-- HINT DE MENU — fixo no topo, abaixo da barra de boas-vindas -->
+<div id="menu-hint">
+  <button id="menu-hint-btn" onclick="toggleDrawer()">
+    <span id="menu-hint-label">Ferramentas</span>
+    <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- GAVETÃO DE FERRAMENTAS -->
+<div id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()">
+    <div class="drawer-handle-pill"></div>
+  </div>
+  <div class="drawer-header">
+    <div>
+      <span class="drawer-logo">Bolhas de Luz</span>
+      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Ferramentas</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div style="padding:2px 16px 10px">
+    <input type="text" id="drawer-busca" placeholder="🔍 Buscar uma ferramenta…"
+      oninput="drawerFiltrar(this.value)"
+      style="width:100%;background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:20px;padding:9px 16px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s;">
+  </div>
+  <div class="drawer-body-scroll">
+    <div id="drawer-body"></div>
+  </div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-overlay" class="bl-overlay" onclick="if(event.target===this)closeLogin()">
+  <div class="bl-modal">
+    <button class="bl-modal-close" onclick="closeLogin()">×</button>
+    <div class="bl-modal-title">Área Interna</div>
+    <div class="bl-modal-sub">Exclusiva para as filhas da casa</div>
+    <button class="bl-btn-rosa" style="width:100%;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 24px;font-size:12px" onclick="loginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.7 13.4 17.9 9.5 24 9.5z"/><path fill="#4A90D9" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.8 28.5A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5L2.4 13.5A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.3-6.3z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.2-7.7 2.2-6.1 0-11.3-4-13.2-9.4l-7.8 6C6.8 42.5 14.7 48 24 48z"/></svg>
+      Entrar com Google
+    </button>
+    <p class="bl-modal-footer">Após entrar, aguarde aprovação da Mãe da Casa.</p>
+  </div>
+</div>
+
+<!-- BOAS-VINDAS / LOGIN NO TOPO -->
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <div id="bv-logged" style="display:none;align-items:center;gap:7px;flex-wrap:wrap">
+      <img id="user-avatar" src="" alt="" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);flex-shrink:0">
+      <span id="bv-emoji"></span>
+      <span id="bv-nome"></span>
+      <button id="user-logout-btn" onclick="logoutGoogle()">Sair</button>
+    </div>
+    <div id="bv-guest" style="display:none;align-items:center;gap:9px">
+      <span style="font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;color:var(--text-dim);font-style:italic">✦ Área das Filhas</span>
+      <button class="bl-btn-rosa" style="padding:5px 15px;font-size:.6rem;letter-spacing:.06em" onclick="openLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
 
 <header class="header">
   <div style="display:flex;align-items:center;gap:10px;">
@@ -3917,6 +4095,218 @@ document.querySelector('[onclick="document.getElementById(\'agosto-modal\').clas
       });
     });
   });
+</script>
+
+<footer class="bl-footer">
+  <div class="bl-footer-logo">Terreiro Bolhas de Luz</div>
+  <div class="bl-footer-sub">Porto Alegre, RS · Umbanda & Quimbanda</div>
+</footer>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CASCA COMPARTILHADA — menu/gaveta de ferramentas + bolhas flutuantes,
+     igual ao index.html (versão enxuta: sem edição de menu, sem modo
+     simulação — isso é só usado no painel admin do site principal) ══ -->
+<script>
+const BL_MENU_API = '/api/menu';
+const BL_ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+function blIsEmailAdmin(email) { return !!email && BL_ADMIN_EMAILS.includes(email); }
+let blMenuData = null;
+
+async function blLoadMenu() {
+  try {
+    const res = await fetch(BL_MENU_API);
+    if (!res.ok) throw new Error('KV indisponível');
+    blMenuData = await res.json();
+  } catch (e) {
+    blMenuData = null;
+  }
+  blRenderDrawer();
+}
+
+const BL_DRAWER_ICONES_PADRAO = {
+  inicio:'🏠', historia:'📜', sessoes:'📅', calendario:'📅', textos:'📖', blog:'✍️',
+  apoie:'💗', pontos:'🎵', lojas:'🛍️', tesouraria:'💰', filhas:'🌸',
+  regimento:'📋', compras:'🛒', estoque:'📦', manutencao:'🔧', resumo:'📋', orientacoes:'📢', admin:'⚙️'
+};
+function blDrawerIconeLabel(item) {
+  const label = item.label || '';
+  const m = label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})️?\s*(.*)$/u);
+  if (m && m[2]) return { icone: m[1], texto: m[2] };
+  return { icone: BL_DRAWER_ICONES_PADRAO[item.id] || '✦', texto: label };
+}
+
+// itens "internos" (páginas dentro do index.html) não existem aqui na
+// Tesouraria — em vez de tentar reabrir uma página específica da SPA de
+// outro arquivo html, manda pro início do site principal
+function blDrawerOnclick(item) {
+  if (item.type === 'internal') return `onclick="location.href='index.html'"`;
+  if (item.type === 'members') {
+    return window._blCurrentUser
+      ? `onclick="window.open('${item.url}','_self')"`
+      : `onclick="openLogin()"`;
+  }
+  return `onclick="window.open('${item.url}','_blank')"`;
+}
+
+function blDrawerTile(item) {
+  const { icone, texto } = blDrawerIconeLabel(item);
+  const desc = (item.desc || '').replace(/"/g, '&quot;');
+  const dot = item.type === 'members' ? '<span class="drawer-card-dot-corner mem"></span>' : '';
+  return `<button class="drawer-card" ${blDrawerOnclick(item)} title="${desc}">
+    ${dot}
+    <span class="drawer-card-icon">${icone}</span>
+    <span class="drawer-card-name">${texto}</span>
+  </button>`;
+}
+
+function blRenderDrawer() {
+  const body = document.getElementById('drawer-body');
+  if (!body) return;
+  if (!blMenuData) {
+    body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Não consegui carregar o menu agora.</div>';
+    return;
+  }
+  const logada = !!window._blCurrentUser;
+  const ehAdmin = logada && blIsEmailAdmin(window._blCurrentUser.email);
+  let grupoUsuario = 'publico';
+  if (ehAdmin) grupoUsuario = 'admin';
+  else if (logada) grupoUsuario = (window._blPerfilData || {}).grupo || 'visitante';
+
+  body.innerHTML = blMenuData.sections.map(sec => {
+    const visiveis = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      if (i.adminOnly && grupoUsuario !== 'admin') return false;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
+      return grupos.includes(grupoUsuario);
+    });
+    if (!visiveis.length) return '';
+    return `
+      <div class="drawer-section">
+        <div class="drawer-section-label">${sec.label}</div>
+        <div class="drawer-submenu">${visiveis.map(blDrawerTile).join('')}</div>
+      </div>`;
+  }).join('');
+}
+
+function blDrawerFiltrar(texto) {
+  const t = (texto || '').toLowerCase().trim();
+  document.querySelectorAll('#drawer-body .drawer-card').forEach(el => {
+    const nome = el.querySelector('.drawer-card-name')?.textContent.toLowerCase() || '';
+    el.style.display = !t || nome.includes(t) ? '' : 'none';
+  });
+  document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
+    const temVisivel = [...sec.querySelectorAll('.drawer-card')].some(c => c.style.display !== 'none');
+    sec.style.display = temVisivel ? '' : 'none';
+  });
+}
+
+function toggleDrawer() {
+  const d = document.getElementById('drawer'), o = document.getElementById('drawer-overlay'), btn = document.getElementById('menu-hint-btn');
+  const open = d.classList.contains('open');
+  if (!open && !blMenuData) blLoadMenu();
+  d.classList.toggle('open', !open);
+  o.classList.toggle('open', !open);
+  btn.classList.toggle('open', !open);
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('menu-hint-btn').classList.remove('open');
+}
+function drawerFiltrar(v) { blDrawerFiltrar(v); }
+
+function openLogin() { document.getElementById('login-overlay').classList.add('open'); }
+function closeLogin() { document.getElementById('login-overlay').classList.remove('open'); }
+
+// bolhas flutuando de baixo pra cima, igual ao index.html
+(function () {
+  const ns = 'http://www.w3.org/2000/svg', bc = document.getElementById('bolhas-container');
+  if (!bc) return;
+  function bolha(x, y, r, op, dur, delay) {
+    const svg = document.createElementNS(ns, 'svg');
+    svg.setAttribute('width', r * 2); svg.setAttribute('height', r * 2); svg.setAttribute('viewBox', `0 0 ${r * 2} ${r * 2}`);
+    svg.classList.add('bolha-el'); svg.style.cssText = `left:${x}px;top:${y}px;opacity:${op};animation-duration:${dur}s;animation-delay:-${delay}s`;
+    const a = document.createElementNS(ns, 'circle'); a.setAttribute('cx', r); a.setAttribute('cy', r); a.setAttribute('r', r - .8); a.setAttribute('fill', 'none'); a.setAttribute('stroke', 'rgba(196,57,107,.28)'); a.setAttribute('stroke-width', '1'); svg.appendChild(a);
+    const rf = document.createElementNS(ns, 'circle'); rf.setAttribute('cx', r * .65); rf.setAttribute('cy', r * .62); rf.setAttribute('r', r * .22); rf.setAttribute('fill', 'rgba(255,255,255,.18)'); svg.appendChild(rf);
+    const br = document.createElementNS(ns, 'circle'); br.setAttribute('cx', r * .72); br.setAttribute('cy', r * .55); br.setAttribute('r', r * .09); br.setAttribute('fill', 'rgba(255,255,255,.45)'); svg.appendChild(br);
+    bc.appendChild(svg); setTimeout(() => svg.remove(), (dur + delay) * 1000);
+  }
+  (function spawn() { const vw = window.innerWidth, vh = window.innerHeight; for (let i = 0; i < 18; i++) { const r = 10 + Math.random() * 22; bolha(Math.random() * vw, vh + r * 2, r, .12 + Math.random() * .15, 24 + Math.random() * 20, Math.random() * 40); } })();
+  setInterval(() => { const r = 10 + Math.random() * 22; bolha(Math.random() * window.innerWidth, window.innerHeight + r * 2, r, .12 + Math.random() * .15, 24 + Math.random() * 20, 0); }, 900);
+})();
+
+function blAtualizarBoasVindas() {
+  const banner = document.getElementById('boas-vindas');
+  const logged = document.getElementById('bv-logged');
+  const guest = document.getElementById('bv-guest');
+  const user = window._blCurrentUser;
+  if (!user) {
+    logged.style.display = 'none'; guest.style.display = 'flex';
+    banner.style.display = 'block';
+    document.body.classList.remove('bl-logada');
+    return;
+  }
+  guest.style.display = 'none'; logged.style.display = 'flex';
+  const perfil = window._blPerfilData || {};
+  const nomeCompleto = perfil.nome || user.displayName || '';
+  document.getElementById('bv-emoji').textContent = perfil.emoji || '✦';
+  document.getElementById('bv-nome').textContent = nomeCompleto.split(' ')[0] || '';
+  const avatar = document.getElementById('user-avatar');
+  if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
+  banner.style.display = 'block';
+  document.body.classList.add('bl-logada');
+}
+window._getCurrentUser = () => window._blCurrentUser;
+
+blLoadMenu();
+// mostra a barra de login (com "Entrar") de cara — não espera o Firebase
+// responder, pra não ficar escondida se a rede demorar ou falhar
+blAtualizarBoasVindas();
+</script>
+
+<!-- FIREBASE — login, igual ao do index.html (mesmo projeto/config) -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+async function blCarregarPerfil(email) {
+  try {
+    const res = await fetch(`/api/perfil?${new URLSearchParams({ email })}`);
+    window._blPerfilData = await res.json();
+  } catch (e) { window._blPerfilData = {}; }
+}
+
+window.loginGoogle = async function () {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { console.warn('login google:', e); }
+};
+window.logoutGoogle = function () { signOut(auth); };
+
+onAuthStateChanged(auth, async (user) => {
+  window._blCurrentUser = user;
+  if (user) {
+    await blCarregarPerfil(user.email);
+    document.getElementById('login-overlay').classList.remove('open');
+  } else {
+    window._blPerfilData = {};
+  }
+  window.blAtualizarBoasVindas?.();
+  if (typeof blRenderDrawer === 'function') blRenderDrawer();
+});
 </script>
 </body>
 </html>
