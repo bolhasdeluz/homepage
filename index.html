@@ -467,6 +467,29 @@ footer{
 .dash-progresso-bar{background:rgba(255,255,255,.18);border-radius:20px;height:7px;overflow:hidden}
 .dash-progresso-fill{background:linear-gradient(90deg,#fff,rgba(255,255,255,.75));height:100%;border-radius:20px;transition:width .6s ease}
 
+/* ── dashboard simplificado de VISITANTE — próxima sessão em destaque (dentro
+   do dash-card rosa) + cartões grandes de "primeiros passos", sem nada de
+   cruzamentos/cortes/aves/pergunta do dia/manutenção (isso é da ficha de
+   filha da casa) ── */
+.dashv-sessao{
+  position:relative;background:rgba(255,255,255,.96);border-radius:14px;
+  padding:16px 18px;margin-top:6px;cursor:pointer;text-align:center;transition:transform .15s;
+}
+.dashv-sessao:hover{transform:translateY(-2px)}
+.dashv-sessao-label{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rosa);margin-bottom:6px}
+.dashv-sessao-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text)}
+.dashv-sessao-data{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.dashv-sessao-cta{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);margin-top:10px}
+.dashv-cards{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.dashv-card{
+  display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border);
+  border-radius:14px;padding:16px 18px;text-decoration:none;transition:all .15s;
+  box-shadow:0 2px 10px rgba(196,57,107,.08);
+}
+.dashv-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(196,57,107,.14);border-color:var(--rosa)}
+.dashv-card-icon{font-size:1.6rem;flex-shrink:0;line-height:1}
+.dashv-card-txt{font-family:'Crimson Pro',Georgia,serif;font-size:.98rem;color:var(--text);line-height:1.35}
+
 /* seção título genérica do dashboard */
 .dash-section-title{
   font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;
@@ -2096,6 +2119,39 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
     <div style="text-align:center;margin-top:22px">
       <button class="btn-rosa" style="cursor:pointer" onclick="showSuaHistoria()">✎ Editar minha ficha</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD DE VISITANTE — visível só pra quem está logada com grupo "visitante"
+       (sem ficha de filha da casa ainda). Bem mais simples que o dash-pessoal: sem
+       cruzamentos/cortes/aves, pergunta do dia ou manutenção — só o que interessa
+       pra quem tá conhecendo a casa: a próxima sessão em destaque e uns caminhos
+       de "primeiros passos" ✦ ver renderDashVisitante() -->
+  <div id="dash-visitante" class="dash-wrap" style="display:none">
+    <div class="dash-card">
+      <div class="dash-eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="dash-nome" id="dashv-nome"></div>
+      <p class="dash-frase">Que bom ter você por aqui ✦ Vem conhecer mais da nossa casa.</p>
+      <div class="dashv-sessao" id="dashv-sessao" onclick="showPage('calendario')">
+        <div class="dashv-sessao-label">✦ Próxima sessão</div>
+        <div class="dashv-sessao-titulo" id="dashv-sessao-titulo">Carregando...</div>
+        <div class="dashv-sessao-data" id="dashv-sessao-data"></div>
+        <div class="dashv-sessao-cta">Clique pra ver mais no calendário →</div>
+      </div>
+    </div>
+    <div class="dashv-cards">
+      <a href="#" class="dashv-card" onclick="dashvAbrirPreparoSessao();return false">
+        <span class="dashv-card-icon">🌙</span>
+        <span class="dashv-card-txt">Como me preparar para ir na sessão</span>
+      </a>
+      <a href="#" class="dashv-card" onclick="showPage('apoie');return false">
+        <span class="dashv-card-icon">🤲</span>
+        <span class="dashv-card-txt">Como ajudar a casa</span>
+      </a>
+      <a href="#" class="dashv-card" onclick="showPage('textos');return false">
+        <span class="dashv-card-icon">🌸</span>
+        <span class="dashv-card-txt">Gostaria de conhecer mais a Umbanda e me aproximar da minha espiritualidade, mas não sei como</span>
+      </a>
     </div>
   </div>
 
@@ -6213,6 +6269,12 @@ function sincronizarMiniCardsPerfil() {
 
   const miniManut = document.getElementById('dash-mini-manut');
   if (miniManut) miniManut.textContent = manutTxt;
+
+  // mesma sessão, só que no card grande de destaque do dashboard de visitante
+  const dashvTitulo = document.getElementById('dashv-sessao-titulo');
+  const dashvData = document.getElementById('dashv-sessao-data');
+  if (dashvTitulo) dashvTitulo.textContent = nomeSessao || 'Sem sessão marcada ainda';
+  if (dashvData) dashvData.textContent = nomeSessao ? dataSessao : '';
 }
 
 async function carregarProximaSessao() {
@@ -12264,9 +12326,21 @@ async function qdCarregarBadge() {
 
 function renderDashPessoal(p, user) {
   const wrap = document.getElementById('dash-pessoal');
+  const wrapVisitante = document.getElementById('dash-visitante');
   if (!wrap) return;
-  if (!user) { wrap.style.display = 'none'; return; }
+  if (!user) { wrap.style.display = 'none'; if (wrapVisitante) wrapVisitante.style.display = 'none'; return; }
   p = p || {};
+
+  // login de visitante (sem ficha de filha da casa) tem uma tela de início bem
+  // mais simples — sem cruzamentos/cortes/aves, pergunta do dia ou manutenção,
+  // só a próxima sessão em destaque e uns caminhos de "primeiros passos"
+  if ((p.grupo || 'visitante') === 'visitante') {
+    wrap.style.display = 'none';
+    renderDashVisitante(p, user);
+    return;
+  }
+  if (wrapVisitante) wrapVisitante.style.display = 'none';
+
   qdRenderCardDia();
   qdCarregarBadge();
 
@@ -12410,7 +12484,34 @@ function renderDashPessoal(p, user) {
 }
 window.renderDashPessoal = renderDashPessoal;
 
-// permite ao admin editar a frase de destaque do dashboard de qualquer filha
+// dashboard simplificado de quem loga como visitante (ainda sem ficha de filha
+// da casa) — próxima sessão em destaque + caminhos de "primeiros passos" na casa
+function renderDashVisitante(p, user) {
+  const wrap = document.getElementById('dash-visitante');
+  if (!wrap) return;
+  const nomeCompleto = p.nome || user.displayName || '';
+  const primeiroNome = nomeCompleto.split(' ')[0] || 'Visitante';
+  document.getElementById('dashv-nome').textContent = primeiroNome;
+  wrap.style.display = 'block';
+  // a próxima sessão já é carregada uma vez só (carregarProximaSessao, no
+  // header) — só copia o que já foi calculado pra cá, igual sincronizarMiniCardsPerfil()
+  // faz pros mini-cards da filha da casa, em vez de buscar tudo de novo
+  sincronizarMiniCardsPerfil();
+}
+
+// card "Como me preparar para ir na sessão" — popup simples com orientações
+// gerais; um texto de partida, é natural a Mãe da Casa querer ajustar as
+// palavras depois pro jeito certo da casa
+function dashvAbrirPreparoSessao() {
+  gpMostrarInfo(
+    '🌙 Como me preparar para ir na sessão',
+    'Chega com calma e um pouco antes do horário marcado, pra se acomodar sem pressa.\n\n' +
+    'Vem com roupas leves e confortáveis, evitando decotes ou coisas muito curtas.\n\n' +
+    'Evite bebida alcoólica antes de vir.\n\n' +
+    'Mantenha respeito e silêncio durante os trabalhos — é um momento sagrado pra quem está sendo atendido.\n\n' +
+    'Qualquer dúvida, é só perguntar pra alguém da corrente quando chegar — todo mundo vai te ajudar a se sentir em casa ✦'
+  );
+}
 window.dashEditarFrase = async function(email, fraseAtual) {
   if (!email) return;
   const nova = prompt('Frase de destaque para esta filha (deixe em branco para voltar à frase automática):', fraseAtual || '');
