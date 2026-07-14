@@ -2546,6 +2546,9 @@ body { background: radial-gradient(ellipse at 50% 100%, rgba(196,57,107,.1) 0%, 
     .ag-dot-gasto { background:#b84040; }
     .ag-dot-aves { background:#c88c00; }
     .ag-progress-overflow { margin-top:6px; font-family:'DM Sans',sans-serif; font-size:.7rem; color:#b84040; font-weight:600; }
+    .ag-progress-saldo { margin-top:6px; font-family:'DM Sans',sans-serif; font-size:.7rem; font-weight:600; }
+    .ag-progress-saldo.ok { color:#2a7a60; }
+    .ag-progress-saldo.warn { color:#b84040; }
     .ag-progress-divider { height:1px; background:rgba(196,57,107,.12); margin:14px 0 10px; }
   </style>
 
@@ -2584,6 +2587,7 @@ body { background: radial-gradient(ellipse at 50% 100%, rgba(196,57,107,.1) 0%, 
       <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-pago"></span>Pago <b id="ag-progress-pago-val">R$ 0,00</b> <span id="ag-progress-pago-pct">(0%)</span></span>
       <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-gasto"></span>Gasto <b id="ag-progress-gasto-val">R$ 0,00</b> <span id="ag-progress-gasto-pct">(0%)</span></span>
     </div>
+    <div id="ag-progress-saldo" class="ag-progress-saldo"></div>
     <div id="ag-progress-overflow" class="ag-progress-overflow" style="display:none;"></div>
 
     <div class="ag-progress-divider"></div>
@@ -2954,6 +2958,15 @@ function agAtualizarProgresso(totalGastos, totalAvesEsperado) {
   document.getElementById('ag-progress-pago-pct').textContent = '('+pctPago+'%)';
   document.getElementById('ag-progress-gasto-val').textContent = agFmt(totalGastos);
   document.getElementById('ag-progress-gasto-pct').textContent = '('+pctGasto+'%)';
+  var saldoEl = document.getElementById('ag-progress-saldo');
+  var diffPagoGasto = pagoObr - totalGastos;
+  if (diffPagoGasto >= 0) {
+    saldoEl.className = 'ag-progress-saldo ok';
+    saldoEl.textContent = '💰 Ainda sobra ' + agFmt(diffPagoGasto) + ' entre o pago e o gasto';
+  } else {
+    saldoEl.className = 'ag-progress-saldo warn';
+    saldoEl.textContent = '⚠️ Gasto já ultrapassou o pago em ' + agFmt(-diffPagoGasto);
+  }
   var overflowEl = document.getElementById('ag-progress-overflow');
   if (totalGastos > totalEsperado) {
     overflowEl.style.display = 'block';
