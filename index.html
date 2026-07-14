@@ -3503,6 +3503,22 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </div>
     </div>
 
+    <!-- BARRA DE AÇÕES EM LOTE (admin, só quando "Selecionar vários" está ativo) -->
+    <div id="cal-lote-barra" style="display:none;max-width:680px;margin:0 auto 10px;background:rgba(255,251,232,.97);border:1px solid var(--rosa);border-radius:10px;padding:10px 12px;flex-wrap:wrap;align-items:center;gap:8px">
+      <span id="cal-lote-contagem" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;color:var(--text);flex:1;min-width:100px">0 selecionadas</span>
+      <button onclick="calLoteSelecionarTodosFiltrados()" style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:'Cinzel',serif;font-size:.58rem;cursor:pointer">Marcar todos filtrados</button>
+      <select id="cal-lote-tipo" style="border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-family:'Crimson Pro',serif;font-size:13px">
+        <option value="">Mudar tipo para...</option>
+        <option value="Interna">Sessão Interna</option>
+        <option value="Atendimento">Sessão com Atendimento</option>
+        <option value="Visita">Sessão de Visita</option>
+        <option value="Familia">Sessão da Família</option>
+        <option value="Reuniao">Reunião</option>
+      </select>
+      <button onclick="calLoteAplicarTipo()" style="background:var(--rosa);border:none;color:#fff;border-radius:6px;padding:6px 14px;font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;cursor:pointer">Aplicar</button>
+      <button onclick="calLoteExcluir()" style="background:none;border:1px solid #b84040;color:#b84040;border-radius:6px;padding:6px 14px;font-family:'Cinzel',serif;font-size:.58rem;cursor:pointer">🗑 Excluir selecionadas</button>
+    </div>
+
     <!-- LAYOUT LADO A LADO -->
     <!-- LISTA COM CABEÇALHOS DE MÊS -->
     <div class="cal-lista-col" style="max-width:680px;margin:0 auto">
@@ -3542,53 +3558,34 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <option value="nao">❌ Não vai ter</option>
       </select>
     </div>
-    <!-- VISIBILIDADE -->
-    <div style="margin-bottom:12px">
-      <label class="form-label">Visibilidade por grupo</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-vis-publico" style="accent-color:var(--rosa)"> 🌍 Público
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-vis-visitante" style="accent-color:var(--rosa)"> 👤 Visitante
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-vis-filhas" style="accent-color:var(--rosa)"> 🌸 Filhas
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-vis-tamboreiro" style="accent-color:var(--rosa)"> 🥁 Tamboreiro
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-vis-amigos" style="accent-color:var(--rosa)"> 🤝 Amigos
-        </label>
-      </div>
+    <!-- a visibilidade não é mais marcada evento por evento — agora é definida
+         por TIPO de sessão, num painel só (⚙️ Visibilidade por tipo, ao lado
+         de "+ Nova Sessão"), e vale pra toda sessão desse tipo automaticamente -->
+    <div style="margin-bottom:12px;font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">
+      ✦ A visibilidade de quem vê essa sessão é definida pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo".
     </div>
-    <!-- VISIBILIDADE PARCIAL -->
-    <div style="margin-bottom:16px">
-      <label class="form-label">Visibilidade parcial (só vê nome + "sessão fechada")</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px">
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-parc-publico" style="accent-color:#888"> 🌍 Público
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-parc-visitante" style="accent-color:#888"> 👤 Visitante
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-parc-filhas" style="accent-color:#888"> 🌸 Filhas
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-parc-tamboreiro" style="accent-color:#888"> 🥁 Tamboreiro
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-          <input type="checkbox" id="cal-parc-amigos" style="accent-color:#888"> 🤝 Amigos
-        </label>
-      </div>
-    </div>
-    <div style="margin-bottom:12px"><label class="form-label">Senha</label><input type="password" class="form-input" id="cal-fSenha"><div style="color:#b84040;font-size:12px;margin-top:4px;display:none;font-family:'DM Sans',sans-serif" id="cal-senhaErr">Senha incorreta.</div></div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
       <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
       <button onclick="calSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL VISIBILIDADE POR TIPO DE SESSÃO — define quem vê cada tipo de sessão
+     de uma vez só, em vez de marcar grupo por grupo em cada evento -->
+<div id="cal-vistipo-overlay" onclick="if(event.target===this)calFecharVisibilidadeTipo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="calFecharVisibilidadeTipo()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">⚙️ Visibilidade por tipo de sessão</h2>
+    <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:16px">
+      Define quem vê cada tipo de sessão — vale pra toda sessão desse tipo, sem precisar mexer evento por evento.
+    </p>
+    <div id="cal-vistipo-lista"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+      <button onclick="calFecharVisibilidadeTipo()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+      <button onclick="calSalvarVisibilidadeTipo()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+    </div>
+    <div id="cal-vistipo-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
   </div>
 </div>
 
@@ -4932,6 +4929,7 @@ function showPage(name) {
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
+    if (calVisibilidadeTipo === null) calCarregarVisibilidadeTipo();
     if (!calSessoes.length) calLoad();
     else calRenderLista();
   }
@@ -5138,7 +5136,10 @@ function toggleDebug(){
 
 // ── CALENDÁRIO INTERNO ──
 const CAL_API = '/api/sessoes';
+const CAL_VISTIPO_API = '/api/sessoes-visibilidade-tipo';
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
+let calModoLote = false;
+let calSelecaoLote = new Set();
 let calMesAtual = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let calDiaSelecionado = null;
 let calDeletarId = null;
@@ -5147,6 +5148,27 @@ const CAL_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho'
 const CAL_DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const CAL_TIPO_LABEL = {Interna:'Interna',Atendimento:'Atendimento',Visita:'Visita',Familia:'Família',Reuniao:'Reunião'};
 const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao:'❌ Sem tambor'};
+const CAL_TIPOS = ['Interna','Atendimento','Visita','Familia','Reuniao'];
+const CAL_GRUPOS = ['publico','visitante','filhas','tamboreiro','amigos'];
+const CAL_GRUPO_LABEL = {publico:'🌍 Público',visitante:'👤 Visitante',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',amigos:'🤝 Amigos'};
+
+// visibilidade por TIPO de sessão (não mais por evento individual) — carregada
+// uma vez do KV e reaproveitada por calSessaoVisivel() pra decidir quem vê o quê
+let calVisibilidadeTipo = null;
+function calVisibilidadeTipoPadrao() {
+  const cfg = {};
+  CAL_TIPOS.forEach(t => { cfg[t] = { grupos: ['publico','visitante','filhas','tamboreiro'], parcial: [] }; });
+  return cfg;
+}
+async function calCarregarVisibilidadeTipo() {
+  try {
+    const res = await fetch(CAL_VISTIPO_API);
+    calVisibilidadeTipo = { ...calVisibilidadeTipoPadrao(), ...(await res.json()) };
+  } catch (e) {
+    calVisibilidadeTipo = calVisibilidadeTipoPadrao();
+  }
+  calRenderGrade(); calRenderLista();
+}
 
 function calGetGrupo() {
   const u = window._getCurrentUser && window._getCurrentUser();
@@ -5158,10 +5180,9 @@ function calGetGrupo() {
 function calSessaoVisivel(s) {
   const g = calGetGrupo();
   if (g === 'admin') return 'total';
-  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
-  const parcial = s.gruposParcial || [];
-  if (grupos.includes(g)) return 'total';
-  if (parcial.includes(g)) return 'parcial';
+  const cfg = (calVisibilidadeTipo || calVisibilidadeTipoPadrao())[s.tipo] || { grupos: ['publico','visitante','filhas','tamboreiro'], parcial: [] };
+  if (cfg.grupos.includes(g)) return 'total';
+  if (cfg.parcial.includes(g)) return 'parcial';
   return false;
 }
 
@@ -5261,14 +5282,11 @@ function calNavMes(dir) {
   calRenderLista();
 }
 
-function calRenderLista() {
-  const el = document.getElementById('cal-lista');
-  if (!el) return;
+// mesmos filtros (busca/tipo/passadas) usados tanto pra desenhar a lista
+// quanto pra "marcar todos filtrados" no modo de seleção em lote
+function calItensFiltrados() {
   const todayStr = calFmtDate(new Date());
-  const isAdmin = calGetGrupo() === 'admin';
-  const isLogada = !!(window._getCurrentUser && window._getCurrentUser());
-
-  let lista = calSessoes.filter(s => {
+  return calSessoes.filter(s => {
     const vis = calSessaoVisivel(s);
     if (!vis) return false;
     if (calFiltro && s.tipo !== calFiltro) return false;
@@ -5279,6 +5297,16 @@ function calRenderLista() {
     }
     return true;
   }).sort((a, b) => a.data.localeCompare(b.data));
+}
+
+function calRenderLista() {
+  const el = document.getElementById('cal-lista');
+  if (!el) return;
+  const todayStr = calFmtDate(new Date());
+  const isAdmin = calGetGrupo() === 'admin';
+  const isLogada = !!(window._getCurrentUser && window._getCurrentUser());
+
+  let lista = calItensFiltrados();
 
   if (!lista.length) {
     el.innerHTML = '<div class="cal-empty">Nenhuma sessão encontrada.</div>';
@@ -5319,6 +5347,7 @@ function calRenderLista() {
 
       html += `<div class="cal-sessao-card ${tc} ${passada}" style="margin-bottom:8px">
         <div class="cal-card-top">
+          ${isAdmin && calModoLote ? `<label style="margin-right:2px" onclick="event.stopPropagation()"><input type="checkbox" class="cal-lote-checkbox" data-id="${s.id}" ${calSelecaoLote.has(s.id) ? 'checked' : ''} onchange="calLoteToggle('${s.id}', this.checked)" style="accent-color:var(--rosa)"></label>` : ''}
           <div class="cal-card-data">
             <div class="cal-card-dia">${sd}</div>
             <div class="cal-card-info">
@@ -5327,7 +5356,7 @@ function calRenderLista() {
             </div>
           </div>
           <div class="cal-card-nome">${calEsc(s.nome)}</div>
-          ${isAdmin ? `<div class="cal-admin-acoes">
+          ${isAdmin && !calModoLote ? `<div class="cal-admin-acoes">
             <button class="cal-icon-btn" onclick="calOpenEdit('${s.id}');event.stopPropagation()">✎</button>
             <button class="cal-icon-btn del" onclick="calDelete('${s.id}');event.stopPropagation()">✕</button>
           </div>` : ''}
@@ -5364,15 +5393,6 @@ function calOpenModal() {
   document.getElementById('cal-fDesc').value = '';
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
-  document.getElementById('cal-fSenha').value = '';
-  document.getElementById('cal-senhaErr').style.display = 'none';
-  // visibilidade padrão
-  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
-    const el = document.getElementById('cal-vis-'+g);
-    const elp = document.getElementById('cal-parc-'+g);
-    if (el) el.checked = ['publico','visitante','filhas','tamboreiro'].includes(g);
-    if (elp) elp.checked = false;
-  });
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5388,20 +5408,15 @@ function calOpenEdit(id) {
   document.getElementById('cal-fDesc').value = s.descricao || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
-  document.getElementById('cal-fSenha').value = '';
-  document.getElementById('cal-senhaErr').style.display = 'none';
-  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
-  const parcial = s.gruposParcial || [];
-  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
-    const el = document.getElementById('cal-vis-'+g);
-    const elp = document.getElementById('cal-parc-'+g);
-    if (el) el.checked = grupos.includes(g);
-    if (elp) elp.checked = parcial.includes(g);
-  });
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
 function calCloseModal() { document.getElementById('cal-modal-overlay').style.display = 'none'; }
+
+// cabeçalho padrão dos endpoints administrativos do site — o botão de editar/
+// excluir só aparece pra quem já está logada como admin de verdade (calGetGrupo
+// === 'admin'), então não faz sentido pedir uma senha extra digitada na hora
+const CAL_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
 
 async function calSalvar() {
   const nome = document.getElementById('cal-fNome').value.trim();
@@ -5409,26 +5424,18 @@ async function calSalvar() {
   const tipo = document.getElementById('cal-fTipo').value;
   if (!nome || !data || !tipo) { alert('Preencha nome, data e tipo.'); return; }
 
-  const grupos = [], parcial = [];
-  ['publico','visitante','filhas','tamboreiro','amigos'].forEach(g => {
-    if (document.getElementById('cal-vis-'+g)?.checked) grupos.push(g);
-    if (document.getElementById('cal-parc-'+g)?.checked) parcial.push(g);
-  });
-
   const payload = { nome, data,
     hora: document.getElementById('cal-fHora').value,
     tipo, descricao: document.getElementById('cal-fDesc').value.trim(),
     responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
-    grupos, gruposParcial: parcial,
-    senha: document.getElementById('cal-fSenha').value
   };
   const editId = document.getElementById('cal-edit-id').value;
   if (editId) payload.id = editId;
 
-  const res = await fetch(CAL_API, { method: editId ? 'PUT' : 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+  const res = await fetch(CAL_API, { method: editId ? 'PUT' : 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(payload) });
+  if (!res.ok) { alert('Não consegui salvar — tenta de novo.'); return; }
   const json = await res.json();
-  if (res.status === 403) { document.getElementById('cal-senhaErr').style.display = 'block'; return; }
 
   if (editId) { const idx = calSessoes.findIndex(x => x.id === editId); if (idx >= 0) calSessoes[idx] = json; }
   else { calSessoes.push(json); calSessoes.sort((a,b) => a.data.localeCompare(b.data)); }
@@ -5437,10 +5444,8 @@ async function calSalvar() {
 
 async function calDelete(id) {
   if (!confirm('Excluir esta sessão?')) return;
-  const senha = prompt('Senha do terreiro:');
-  if (!senha) return;
-  const res = await fetch(CAL_API, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify({id, senha}) });
-  if (res.status === 403) { alert('Senha incorreta.'); return; }
+  const res = await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+  if (!res.ok) { alert('Não consegui excluir — tenta de novo.'); return; }
   calSessoes = calSessoes.filter(x => x.id !== id);
   calRenderGrade(); calRenderLista();
 }
@@ -5448,17 +5453,135 @@ async function calDelete(id) {
 function calFmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function calEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// ── PAINEL: VISIBILIDADE POR TIPO DE SESSÃO ──────────────────────────────
+function calAbrirVisibilidadeTipo() {
+  const cfg = calVisibilidadeTipo || calVisibilidadeTipoPadrao();
+  const lista = document.getElementById('cal-vistipo-lista');
+  lista.innerHTML = CAL_TIPOS.map(t => {
+    const item = cfg[t] || { grupos: [], parcial: [] };
+    return `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">
+      <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:8px">${CAL_TIPO_LABEL[t] || t}</div>
+      <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Vê a sessão inteira</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px">
+        ${CAL_GRUPOS.map(g => `
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="cal-vt-${t}-${g}" ${item.grupos.includes(g) ? 'checked' : ''} style="accent-color:var(--rosa)"> ${CAL_GRUPO_LABEL[g]}
+        </label>`).join('')}
+      </div>
+      <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">Só vê nome + "sessão fechada"</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+        ${CAL_GRUPOS.map(g => `
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="cal-vtp-${t}-${g}" ${item.parcial.includes(g) ? 'checked' : ''} style="accent-color:#888"> ${CAL_GRUPO_LABEL[g]}
+        </label>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('cal-vistipo-status').textContent = '';
+  document.getElementById('cal-vistipo-overlay').style.display = 'flex';
+}
+
+function calFecharVisibilidadeTipo() { document.getElementById('cal-vistipo-overlay').style.display = 'none'; }
+
+async function calSalvarVisibilidadeTipo() {
+  const status = document.getElementById('cal-vistipo-status');
+  const cfg = {};
+  CAL_TIPOS.forEach(t => {
+    cfg[t] = {
+      grupos: CAL_GRUPOS.filter(g => document.getElementById(`cal-vt-${t}-${g}`)?.checked),
+      parcial: CAL_GRUPOS.filter(g => document.getElementById(`cal-vtp-${t}-${g}`)?.checked),
+    };
+  });
+  if (status) status.textContent = 'Salvando...';
+  try {
+    const res = await fetch(CAL_VISTIPO_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(cfg) });
+    if (!res.ok) throw new Error('falhou');
+    calVisibilidadeTipo = cfg;
+    calRenderGrade(); calRenderLista();
+    calFecharVisibilidadeTipo();
+  } catch (e) {
+    if (status) status.textContent = '❌ Não consegui salvar — tenta de novo.';
+  }
+}
+
+// ── EDIÇÃO EM LOTE ────────────────────────────────────────────────────────
+function calRenderLoteBarra() {
+  const barra = document.getElementById('cal-lote-barra');
+  if (!barra) return;
+  barra.style.display = calModoLote ? 'flex' : 'none';
+  const contagem = document.getElementById('cal-lote-contagem');
+  if (contagem) contagem.textContent = `${calSelecaoLote.size} selecionada${calSelecaoLote.size === 1 ? '' : 's'}`;
+}
+
+function calAlternarModoLote() {
+  calModoLote = !calModoLote;
+  calSelecaoLote.clear();
+  const btn = document.getElementById('cal-btn-lote');
+  if (btn) btn.textContent = calModoLote ? '✕ Sair da seleção' : '☑ Selecionar vários';
+  calRenderLoteBarra();
+  calRenderLista();
+}
+
+function calLoteToggle(id, checked) {
+  if (checked) calSelecaoLote.add(id); else calSelecaoLote.delete(id);
+  calRenderLoteBarra();
+}
+
+function calLoteSelecionarTodosFiltrados() {
+  calItensFiltrados().forEach(s => calSelecaoLote.add(s.id));
+  calRenderLoteBarra();
+  calRenderLista();
+}
+
+async function calLoteAplicarTipo() {
+  const tipo = document.getElementById('cal-lote-tipo').value;
+  if (!tipo) { alert('Escolhe um tipo primeiro.'); return; }
+  if (!calSelecaoLote.size) { alert('Marca pelo menos uma sessão.'); return; }
+  for (const id of calSelecaoLote) {
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, tipo }) });
+    if (res.ok) {
+      const json = await res.json();
+      const idx = calSessoes.findIndex(x => x.id === id);
+      if (idx >= 0) calSessoes[idx] = json;
+    }
+  }
+  calSelecaoLote.clear();
+  calRenderLoteBarra(); calRenderGrade(); calRenderLista();
+}
+
+async function calLoteExcluir() {
+  if (!calSelecaoLote.size) { alert('Marca pelo menos uma sessão.'); return; }
+  const qtd = calSelecaoLote.size;
+  if (!confirm(`Excluir ${qtd} sessão${qtd === 1 ? '' : 'ões'} selecionada${qtd === 1 ? '' : 's'}? Não dá pra desfazer.`)) return;
+  for (const id of calSelecaoLote) {
+    await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+    calSessoes = calSessoes.filter(x => x.id !== id);
+  }
+  calSelecaoLote.clear();
+  calRenderLoteBarra(); calRenderGrade(); calRenderLista();
+}
+
 function calAtualizarControlesAdmin() {
   const el = document.getElementById('cal-controles-admin');
   if (!el) return;
   const isAdmin = calGetGrupo() === 'admin';
   const calFO = document.querySelectorAll('.cal-filhas-only');
   if (isAdmin) {
-    el.innerHTML = `<button onclick="calOpenModal()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Nova Sessão</button>`;
+    el.innerHTML = `
+      <button onclick="calOpenModal()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Nova Sessão</button>
+      <button onclick="calAbrirVisibilidadeTipo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">⚙️ Visibilidade por tipo</button>
+      <button id="cal-btn-lote" onclick="calAlternarModoLote()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">☑ Selecionar vários</button>
+    `;
     calFO.forEach(x => x.style.display = '');
   } else {
     el.innerHTML = '';
     calFO.forEach(x => x.style.display = 'none');
+    // se deixar de ser admin (logout, trocou de simulação) com o modo de
+    // seleção em lote ainda ligado, a barra de ações ficaria "presa" na tela
+    calModoLote = false;
+    calSelecaoLote.clear();
+    calRenderLoteBarra();
   }
 }
 
