@@ -4274,7 +4274,17 @@ window._getCurrentUser = () => window._blCurrentUser;
 // alturas diferentes — mede a altura de verdade dele e empurra a barra de
 // Ferramentas + o próprio body (+ o #agosto-modal, que é uma view isolada em
 // tela cheia) pra baixo o suficiente, em vez de supor um valor fixo
+// só quem está logada vê o gavetão de ferramentas — igual ao index.html
+function blAtualizarVisibilidadeMenuHint() {
+  const hint = document.getElementById('menu-hint');
+  if (!hint) return;
+  const logada = !!window._blCurrentUser;
+  hint.style.display = logada ? 'flex' : 'none';
+  if (!logada) closeDrawer();
+}
+
 function blAjustarTopoFixo() {
+  blAtualizarVisibilidadeMenuHint();
   requestAnimationFrame(() => {
     const banner = document.getElementById('boas-vindas');
     const hint = document.getElementById('menu-hint');

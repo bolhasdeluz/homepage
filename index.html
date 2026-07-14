@@ -3932,6 +3932,7 @@ function logoutSenhaAdmin() {
   adminSenhaAtiva = false;
   localStorage.removeItem('adminSenhaAtiva');
   tvPararEdicaoAoTrocarPessoa();
+  window.ajustarTopoFixo?.();
   showPage('inicio');
 }
 // login do "Perfil Padrão" por senha — outra senha separada, pra montar o
@@ -3941,6 +3942,7 @@ function logoutSenhaPadrao() {
   padraoSenhaAtiva = false;
   localStorage.removeItem('padraoSenhaAtiva');
   tvPararEdicaoAoTrocarPessoa();
+  window.ajustarTopoFixo?.();
   showPage('inicio');
 }
 
@@ -5046,6 +5048,7 @@ async function checkAdminSenha(){
       localStorage.removeItem('padraoSenhaAtiva');
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
+      window.ajustarTopoFixo?.();
       showPage('admin');
       return;
     }
@@ -5063,6 +5066,7 @@ async function checkAdminSenha(){
       localStorage.removeItem('adminSenhaAtiva');
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
+      window.ajustarTopoFixo?.();
       showPage('jogos');
       return;
     }
@@ -12759,8 +12763,20 @@ function atualizarBoasVindas() {
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
 
+// só quem está logada (Google, admin por senha, ou "padrão" por senha) vê o
+// gavetão de ferramentas — quem abre o site sem logar não vê nem o botão dele
+function atualizarVisibilidadeMenuHint() {
+  const hint = document.getElementById('menu-hint');
+  if (!hint) return;
+  const logada = !!(window._getCurrentUser && window._getCurrentUser()) || adminSenhaAtiva || padraoSenhaAtiva;
+  hint.style.display = logada ? 'flex' : 'none';
+  if (!logada) closeDrawer(); // fecha a gaveta se por acaso já estava aberta e a pessoa deslogou
+}
+window.atualizarVisibilidadeMenuHint = atualizarVisibilidadeMenuHint;
+
 // ── mede a altura real da barra de boas-vindas e posiciona o menu-hint logo abaixo dela ──
 function ajustarTopoFixo() {
+  atualizarVisibilidadeMenuHint();
   requestAnimationFrame(() => {
     const banner = document.getElementById('boas-vindas');
     const hint = document.getElementById('menu-hint');
@@ -12769,6 +12785,7 @@ function ajustarTopoFixo() {
     const alturaBanner = visivel ? banner.offsetHeight : 0;
     hint.style.top = alturaBanner + 'px';
     // empurra o conteúdo da página o suficiente pra não ficar atrás da barra fixa + hint
+    // (se o hint estiver escondido, offsetHeight já vem 0 sozinho)
     const alturaHint = hint.offsetHeight;
     document.body.style.paddingTop = (alturaBanner + alturaHint) + 'px';
   });
