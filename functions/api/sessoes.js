@@ -1,9 +1,15 @@
 // Cloudflare Pages Function: /api/sessoes
 // CRUD de sessões via KV (SESSOES_KV)
-// Senha protege escrita (POST, PUT, DELETE)
+// Escrita protegida pelo mesmo cabeçalho X-Admin-Password usado nos outros
+// endpoints administrativos do site — antes pedia uma senha própria digitada
+// na hora (por evento), o que era redundante pra quem já está logada como
+// admin de verdade (o botão de editar só aparece pra ela)
 
+const ADMIN_PASSWORD = 'admin';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
   'Content-Type': 'application/json',
 };
 
@@ -15,11 +21,8 @@ export async function onRequest(context) {
   }
 
   const KV = env.SESSOES_KV;
-  const SENHA = env.SESSOES_SENHA || 'terreiro';
-
   if (!KV) return json({ error: 'KV não configurado.' }, 500);
 
-  const url = new URL(request.url);
   const method = request.method;
 
   try {
@@ -35,11 +38,10 @@ export async function onRequest(context) {
       return json(sessoes);
     }
 
-    // Verifica senha para escrita
-    const body = await request.json();
-    if (body.senha !== SENHA) {
-      return json({ error: 'Senha incorreta.' }, 403);
+    if (request.headers.get('X-Admin-Password') !== ADMIN_PASSWORD) {
+      return json({ error: 'Não autorizado' }, 403);
     }
+    const body = await request.json();
 
     // CREATE — POST
     if (method === 'POST') {
@@ -52,6 +54,7 @@ export async function onRequest(context) {
         tipo: body.tipo || '',
         descricao: body.descricao || '',
         responsavel: body.responsavel || '',
+        tambor: body.tambor || '',
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(sessao));
@@ -60,7 +63,7 @@ export async function onRequest(context) {
 
     // UPDATE — PUT
     if (method === 'PUT') {
-      const { id, senha, ...fields } = body;
+      const { id, ...fields } = body;
       if (!id) return json({ error: 'id obrigatório' }, 400);
       const existing = await KV.get(id, { type: 'json' });
       if (!existing) return json({ error: 'Sessão não encontrada' }, 404);
