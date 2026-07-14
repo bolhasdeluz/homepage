@@ -2725,13 +2725,18 @@ body{padding-bottom:64px}
     .ag-progress-track { position:relative; height:12px; background:rgba(196,57,107,.08); border-radius:6px; }
     .ag-progress-fill { position:absolute; inset:0 auto 0 0; height:100%; width:0%; background:linear-gradient(90deg,#2a7a60,#3a9a78); border-radius:6px; transition:width .4s; }
     .ag-progress-fill-aves { background:linear-gradient(90deg,#c88c00,#e8b84d); }
+    .ag-progress-fill-tambor { background:linear-gradient(90deg,#7a3a1a,#b8622e); }
     .ag-progress-marker { position:absolute; top:-3px; bottom:-3px; width:3px; background:#b84040; left:0%; border-radius:2px; transition:left .4s; box-shadow:0 0 0 2px #fff; }
+    /* linha fina separando o pedaço do Tambor/Agê do pedaço do Uber, dentro da mesma barra */
+    .ag-progress-segment-divider { position:absolute; top:-3px; bottom:-3px; width:2px; background:rgba(255,255,255,.85); left:0%; transition:left .4s; box-shadow:0 0 0 1px rgba(80,30,50,.25); }
     .ag-progress-legend { display:flex; justify-content:space-between; margin-top:8px; font-family:'DM Sans',sans-serif; font-size:.72rem; color:rgba(80,30,50,.7); flex-wrap:wrap; gap:6px; }
     .ag-progress-leg-item { display:flex; align-items:center; gap:5px; }
     .ag-dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
     .ag-dot-pago { background:#2a7a60; }
     .ag-dot-gasto { background:#b84040; }
     .ag-dot-aves { background:#c88c00; }
+    .ag-dot-tambor { background:#7a3a1a; }
+    .ag-dot-falta { background:rgba(80,30,50,.3); }
     .ag-progress-overflow { margin-top:6px; font-family:'DM Sans',sans-serif; font-size:.7rem; color:#b84040; font-weight:600; }
     .ag-progress-divider { height:1px; background:rgba(196,57,107,.12); margin:14px 0 10px; }
   </style>
@@ -2784,6 +2789,24 @@ body{padding-bottom:64px}
     </div>
     <div class="ag-progress-legend">
       <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-aves"></span>Arrecadado <b id="ag-progress-aves-val">R$ 0,00</b> <span id="ag-progress-aves-pct">(0%)</span></span>
+    </div>
+
+    <div class="ag-progress-divider"></div>
+
+    <!-- Tambor/Agê + Uber, juntos na mesma barra — o Uber sempre fica no
+         pedaço final (a linha divisória marca onde o Tambor/Agê termina e
+         o Uber começa) -->
+    <div class="ag-progress-hdr">
+      <span class="ag-progress-lbl">🥁 Tambor / Agê + Uber</span>
+      <span class="ag-progress-total" id="ag-progress-tambor-total">R$ 0,00</span>
+    </div>
+    <div class="ag-progress-track">
+      <div class="ag-progress-fill ag-progress-fill-tambor" id="ag-progress-tambor-fill" style="width:0%;"></div>
+      <div class="ag-progress-segment-divider" id="ag-progress-tambor-divisor" style="left:0%;" title="Aqui começa o Uber"></div>
+    </div>
+    <div class="ag-progress-legend">
+      <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-tambor"></span>Pago <b id="ag-progress-tambor-pago-val">R$ 0,00</b> <span id="ag-progress-tambor-pago-pct">(0%)</span></span>
+      <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-falta"></span>Falta <b id="ag-progress-tambor-falta-val">R$ 0,00</b></span>
     </div>
   </div>
 
@@ -3126,6 +3149,42 @@ function agAtualizarSaldo() {
   document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(e)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(e>=metaTot?' ✅':'')) : 'adicione itens ao orçamento';
 
   agAtualizarProgresso(s, totalAvesMeta);
+  agAtualizarProgressoTambor();
+}
+
+// soma total e quanto já foi pago (valorPago, sem passar do total de cada
+// item) de todos os itens de uma categoria do orçamento, incluindo subcategorias
+function agCatTotalEPago(nomeCat) {
+  var total = 0, pago = 0;
+  agCats.forEach(function(cat){
+    if (cat.nome !== nomeCat) return;
+    var itens = cat.itens.slice();
+    (cat.subcats||[]).forEach(function(sc){ itens = itens.concat(sc.itens); });
+    itens.forEach(function(item){
+      var v = agItemTotal(item);
+      total += v;
+      pago += Math.min(parseFloat(item.valorPago) || 0, v);
+    });
+  });
+  return { total: total, pago: pago };
+}
+
+// ── BARRA DE PROGRESSO (Tambor/Agê + Uber, na mesma barra) ──────
+// junta as duas categorias num só total — o Tambor/Agê vem primeiro e o
+// Uber sempre no pedaço final, marcado pela linha divisória
+function agAtualizarProgressoTambor() {
+  var tambor = agCatTotalEPago('Tambor / Agê');
+  var uber = agCatTotalEPago('Transporte');
+  var totalGeral = tambor.total + uber.total;
+  var pagoGeral = tambor.pago + uber.pago;
+  var pct = totalGeral > 0 ? Math.round(pagoGeral / totalGeral * 100) : 0;
+  var divisorPct = totalGeral > 0 ? (tambor.total / totalGeral * 100) : 0;
+  document.getElementById('ag-progress-tambor-total').textContent = agFmt(totalGeral);
+  document.getElementById('ag-progress-tambor-fill').style.width = Math.min(pct, 100) + '%';
+  document.getElementById('ag-progress-tambor-divisor').style.left = divisorPct + '%';
+  document.getElementById('ag-progress-tambor-pago-val').textContent = agFmt(pagoGeral);
+  document.getElementById('ag-progress-tambor-pago-pct').textContent = '(' + pct + '%)';
+  document.getElementById('ag-progress-tambor-falta-val').textContent = agFmt(Math.max(totalGeral - pagoGeral, 0));
 }
 
 // ── BARRA DE PROGRESSO (Obrigação + Aves) ───────────────────────
