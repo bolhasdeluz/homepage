@@ -227,25 +227,30 @@ canvas#jardim{position:fixed;bottom:0;left:0;width:100%;z-index:1;height:140px;p
 
 /* barra fixa "Ferramentas" no topo — abre a gaveta */
 #menu-hint{
-  position:fixed;top:0;left:0;right:0;z-index:195;
+  /* z-index acima do #agosto-modal (500) — senão a barra de ferramentas
+     some por trás daquela visão em tela cheia */
+  position:fixed;top:0;left:0;right:0;z-index:550;
   display:flex;align-items:center;justify-content:center;
   padding:10px 20px 11px;background:rgba(253,246,238,.96);
   border-bottom:1px solid rgba(196,90,30,.14);box-shadow:0 1px 8px rgba(196,90,30,.06);
   backdrop-filter:blur(8px);transition:top .25s ease;
 }
-body.bl-logada #menu-hint{top:28px}
+/* o "top" real de #menu-hint (embaixo do #boas-vindas, que aparece tanto
+   deslogada quanto logada — só muda o conteúdo) é calculado na hora pelo
+   blAjustarTopoFixo(), medindo a altura de verdade do #boas-vindas — um
+   valor fixo aqui não dava conta do estado "deslogada" (o aviso "Entrar"
+   também tem altura, e os dois ficavam um por cima do outro) */
 #menu-hint-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;opacity:.85;transition:opacity .2s;padding:3px 4px;}
 #menu-hint-btn:hover,#menu-hint-btn:active{opacity:1}
 #menu-hint-label{font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
 #hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
 #menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
 body{padding-top:34px}
-body.bl-logada{padding-top:62px}
 body{padding-bottom:64px}
 
 /* aviso de login no topo — igual ao "boas-vindas" da homepage */
 #boas-vindas{
-  display:none;position:fixed;top:0;left:0;right:0;z-index:200;
+  display:none;position:fixed;top:0;left:0;right:0;z-index:551;
   background:rgba(253,246,238,.96);border-bottom:1px solid var(--border);
   backdrop-filter:blur(8px);padding:5px 60px;box-shadow:0 1px 8px rgba(196,90,30,.06);
 }
@@ -257,10 +262,10 @@ body{padding-bottom:64px}
 #user-logout-btn:hover{border-color:var(--gold);color:var(--gold)}
 
 /* gaveta de ferramentas */
-#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:650;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
 #drawer-overlay.open{display:block}
 #drawer{
-  position:fixed;left:0;right:0;bottom:0;z-index:360;
+  position:fixed;left:0;right:0;bottom:0;z-index:660;
   max-height:78vh;background:var(--bg);
   border-top:1px solid var(--border);border-radius:18px 18px 0 0;
   box-shadow:0 -8px 32px rgba(46,26,14,.14);
@@ -305,7 +310,7 @@ body{padding-bottom:64px}
 .bl-btn-rosa:hover{background:var(--gold-light);transform:translateY(-1px)}
 
 /* rodapé fixo — igual ao do site principal */
-.bl-footer{position:fixed;left:0;right:0;bottom:0;z-index:120;background:linear-gradient(135deg,#2a1a22,#3a2030);padding:10px 24px;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,.18);}
+.bl-footer{position:fixed;left:0;right:0;bottom:0;z-index:549;background:linear-gradient(135deg,#2a1a22,#3a2030);padding:10px 24px;text-align:center;box-shadow:0 -4px 20px rgba(0,0,0,.18);}
 .bl-footer-logo{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.1em;margin-bottom:2px}
 .bl-footer-sub{font-family:'Crimson Pro',serif;font-size:.72rem;color:rgba(255,255,255,.3);font-style:italic}
 </style>
@@ -2615,6 +2620,10 @@ body{padding-bottom:64px}
     #agosto-modal.open { display:block !important; }
     /* Estilos escopados para o Agosto — prefixo .ag- */
     #agosto-modal { font-family:'DM Sans',sans-serif; }
+    /* espaço pra não ficar embaixo da barra de Ferramentas + aviso de login
+       (fixos, com z-index acima do Agosto) nem do rodapé fixo — o padding-top
+       de verdade é ajustado na hora por blAjustarTopoFixo() */
+    #agosto-modal { padding-top:34px; padding-bottom:64px; }
     .ag-header { background:linear-gradient(135deg,var(--gold),var(--gold-light)); box-shadow:0 2px 20px rgba(180,60,90,.25); padding:14px 16px 12px; position:sticky; top:0; z-index:10; display:flex; justify-content:space-between; align-items:flex-start; }
     .ag-header h1 { font-family:'Cinzel',serif; font-size:.9rem; font-weight:700; color:#fff; letter-spacing:.1em; }
     .ag-header p { font-size:.72rem; color:rgba(255,255,255,.7); margin-top:2px; }
@@ -4245,6 +4254,7 @@ function blAtualizarBoasVindas() {
     logged.style.display = 'none'; guest.style.display = 'flex';
     banner.style.display = 'block';
     document.body.classList.remove('bl-logada');
+    blAjustarTopoFixo();
     return;
   }
   guest.style.display = 'none'; logged.style.display = 'flex';
@@ -4256,8 +4266,30 @@ function blAtualizarBoasVindas() {
   if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
   banner.style.display = 'block';
   document.body.classList.add('bl-logada');
+  blAjustarTopoFixo();
 }
 window._getCurrentUser = () => window._blCurrentUser;
+
+// o #boas-vindas aparece tanto deslogada (com "Entrar") quanto logada, com
+// alturas diferentes — mede a altura de verdade dele e empurra a barra de
+// Ferramentas + o próprio body (+ o #agosto-modal, que é uma view isolada em
+// tela cheia) pra baixo o suficiente, em vez de supor um valor fixo
+function blAjustarTopoFixo() {
+  requestAnimationFrame(() => {
+    const banner = document.getElementById('boas-vindas');
+    const hint = document.getElementById('menu-hint');
+    if (!banner || !hint) return;
+    const visivel = banner.style.display !== 'none' && getComputedStyle(banner).display !== 'none';
+    const alturaBanner = visivel ? banner.offsetHeight : 0;
+    hint.style.top = alturaBanner + 'px';
+    const alturaTotal = alturaBanner + hint.offsetHeight;
+    document.body.style.paddingTop = alturaTotal + 'px';
+    const agosto = document.getElementById('agosto-modal');
+    if (agosto) agosto.style.paddingTop = alturaTotal + 'px';
+  });
+}
+window.addEventListener('resize', blAjustarTopoFixo);
+window.addEventListener('load', blAjustarTopoFixo);
 
 blLoadMenu();
 // mostra a barra de login (com "Entrar") de cara — não espera o Firebase
