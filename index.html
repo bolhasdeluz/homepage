@@ -2016,7 +2016,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       @bolhasdeluz
     </a>
     <div class="header-cta">
-      <div id="proxima-sessao-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;cursor:pointer;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15)" onclick="showPage('calendario')">
+      <div id="proxima-sessao-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;cursor:pointer;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15)" onclick="calAbrirInfoProxima()">
         <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:5px">✦ Próxima sessão</div>
         <div id="proxima-sessao-nome" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
         <div id="proxima-sessao-data" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
@@ -2141,11 +2141,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <div class="dash-eyebrow">Terreiro Bolhas de Luz</div>
       <div class="dash-nome" id="dashv-nome"></div>
       <p class="dash-frase">Que bom ter você por aqui ✦ Vem conhecer mais da nossa casa.</p>
-      <div class="dashv-sessao" id="dashv-sessao" onclick="showPage('calendario')">
+      <div class="dashv-sessao" id="dashv-sessao" onclick="calAbrirInfoProxima()">
         <div class="dashv-sessao-label">✦ Próxima sessão</div>
         <div class="dashv-sessao-titulo" id="dashv-sessao-titulo">Carregando...</div>
         <div class="dashv-sessao-data" id="dashv-sessao-data"></div>
-        <div class="dashv-sessao-cta">Clique pra ver mais no calendário →</div>
+        <div class="dashv-sessao-cta">Clique pra ver mais →</div>
       </div>
     </div>
     <div class="dashv-cards">
@@ -3592,6 +3592,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div id="cal-info-sub" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:14px"></div>
     <div id="cal-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
     <div id="cal-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.6;white-space:pre-wrap"></div>
+    <div id="cal-info-ir-calendario" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center">
+      <a href="#" onclick="calVerProximasSessoes();return false" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);text-decoration:none">Clique para ver as próximas sessões →</a>
+    </div>
   </div>
 </div>
 
@@ -5187,6 +5190,7 @@ const CAL_API = '/api/sessoes';
 const CAL_VISTIPO_API = '/api/sessoes-visibilidade-tipo';
 const CAL_INFOTIPO_API = '/api/sessoes-info-tipo';
 let calInfoTipo = null;
+let calProximaSessaoObj = null;
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
 let calModoLote = false;
 let calSelecaoLote = new Set();
@@ -5474,10 +5478,23 @@ function calOpenEdit(id) {
 function calCloseModal() { document.getElementById('cal-modal-overlay').style.display = 'none'; }
 
 // ── MODAL "SAIBA MAIS" ────────────────────────────────────────────────────
-function calAbrirInfo(id) {
+async function calAbrirInfo(id) {
   const s = calSessoes.find(x => x.id === id);
   if (!s) return;
   if (calSessaoVisivel(s) !== 'total') return;
+  await calPreencherInfoModal(s, false);
+}
+
+// clique no widget de "Próxima sessão" da tela inicial (cabeçalho de visitante
+// e dashboard de visitante) — usa o objeto já carregado por carregarProximaSessao(),
+// sem depender de calSessoes (que só é populado ao abrir a página do calendário)
+async function calAbrirInfoProxima() {
+  if (!calProximaSessaoObj) { showPage('calendario'); return; }
+  await calPreencherInfoModal(calProximaSessaoObj, true);
+}
+
+async function calPreencherInfoModal(s, mostrarLinkCalendario) {
+  if (calInfoTipo === null) await calCarregarInfoTipo();
   const isLogada = !!(window._getCurrentUser && window._getCurrentUser());
 
   const [, sm, sd] = s.data.split('-');
@@ -5498,10 +5515,14 @@ function calAbrirInfo(id) {
   if (isLogada && s.descricao) corpo += (corpo ? '\n\n' : '') + calEsc(s.descricao);
   document.getElementById('cal-info-corpo').innerHTML = corpo || '<span style="font-style:italic;color:var(--text-dim)">Sem informações adicionais por enquanto.</span>';
 
+  const linkCalendario = document.getElementById('cal-info-ir-calendario');
+  if (linkCalendario) linkCalendario.style.display = mostrarLinkCalendario ? 'block' : 'none';
+
   document.getElementById('cal-info-overlay').style.display = 'flex';
 }
 
 function calFecharInfo() { document.getElementById('cal-info-overlay').style.display = 'none'; }
+function calVerProximasSessoes() { calFecharInfo(); showPage('calendario'); }
 
 // cabeçalho padrão dos endpoints administrativos do site — o botão de editar/
 // excluir só aparece pra quem já está logada como admin de verdade (calGetGrupo
@@ -6526,19 +6547,18 @@ async function carregarProximaSessao() {
   try {
     const res = await fetch('/api/sessoes');
     const sessoes = await res.json();
+    if (calVisibilidadeTipo === null) await calCarregarVisibilidadeTipo();
     const hoje = new Date().toISOString().slice(0,10);
-    const grupo = calGetGrupo ? calGetGrupo() : 'publico';
     const proxima = sessoes
       .filter(s => s.data >= hoje)
-      .filter(s => {
-        const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
-        return grupo === 'admin' || grupos.includes(grupo);
-      })
+      .filter(s => calSessaoVisivel(s) === 'total')
       .sort((a,b) => a.data.localeCompare(b.data))[0];
 
     const loading = document.getElementById('proxima-sessao-loading');
     const card = document.getElementById('proxima-sessao-card');
     if (loading) loading.style.display = 'none';
+
+    calProximaSessaoObj = proxima || null;
 
     if (proxima && card) {
       const [y,m,d] = proxima.data.split('-');
