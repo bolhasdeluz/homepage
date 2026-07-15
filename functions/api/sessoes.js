@@ -53,7 +53,6 @@ export async function onRequest(context) {
         hora: body.hora || '',
         tipo: body.tipo || '',
         descricao: body.descricao || '',
-        infoVisitantes: body.infoVisitantes || '',
         responsavel: body.responsavel || '',
         tambor: body.tambor || '',
         criadoEm: Date.now(),

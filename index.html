@@ -3558,11 +3558,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       </select>
     </div>
     <div style="margin-bottom:12px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
-    <div style="margin-bottom:12px">
-      <label class="form-label">Informações para visitantes 👀</label>
-      <textarea class="form-input" id="cal-fInfoVisitantes" rows="3" style="resize:vertical" placeholder="Ex.: endereço, horário de chegada, o que trazer, como se vestir..."></textarea>
-      <div style="font-family:'Crimson Pro',serif;font-size:.75rem;color:var(--text-dim);font-style:italic;margin-top:3px">Aparece quando qualquer pessoa toca no card da sessão — pensado pra quem vai visitar pela primeira vez.</div>
-    </div>
     <div style="margin-bottom:12px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-fResp"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tambor</label>
       <select class="form-input" id="cal-fTambor">
@@ -3572,11 +3567,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <option value="nao">❌ Não vai ter</option>
       </select>
     </div>
-    <!-- a visibilidade não é mais marcada evento por evento — agora é definida
-         por TIPO de sessão, num painel só (⚙️ Visibilidade por tipo, ao lado
-         de "+ Nova Sessão"), e vale pra toda sessão desse tipo automaticamente -->
+    <!-- a visibilidade e as informações para visitantes não são mais marcadas
+         evento por evento — agora são definidas por TIPO de sessão, em painéis
+         próprios (⚙️ Visibilidade por tipo e 📋 Informações por tipo, ao lado
+         de "+ Nova Sessão"), e valem pra toda sessão desse tipo automaticamente -->
     <div style="margin-bottom:12px;font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">
-      ✦ A visibilidade de quem vê essa sessão é definida pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo".
+      ✦ A visibilidade e as informações para visitantes dessa sessão são definidas pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo" e "📋 Informações por tipo".
     </div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
       <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
@@ -3614,6 +3610,25 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
       <button onclick="calSalvarVisibilidadeTipo()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
     </div>
     <div id="cal-vistipo-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
+  </div>
+</div>
+
+<!-- MODAL INFORMAÇÕES PARA VISITANTES POR TIPO DE SESSÃO — define o texto de
+     "saiba mais" (endereço, horário de chegada, o que trazer etc.) uma vez
+     por tipo, já que esse conteúdo se repete entre sessões do mesmo tipo -->
+<div id="cal-infotipo-overlay" onclick="if(event.target===this)calFecharInfoTipo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="calFecharInfoTipo()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">📋 Informações por tipo de sessão</h2>
+    <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:16px">
+      Define o texto do "saiba mais" (endereço, horário de chegada, o que trazer etc.) uma vez por tipo — vale pra toda sessão desse tipo, sem repetir evento por evento.
+    </p>
+    <div id="cal-infotipo-lista"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+      <button onclick="calFecharInfoTipo()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+      <button onclick="calSalvarInfoTipo()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+    </div>
+    <div id="cal-infotipo-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
   </div>
 </div>
 
@@ -4960,6 +4975,7 @@ function showPage(name) {
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
     if (calVisibilidadeTipo === null) calCarregarVisibilidadeTipo();
+    if (calInfoTipo === null) calCarregarInfoTipo();
     if (!calSessoes.length) calLoad();
     else calRenderLista();
   }
@@ -5169,6 +5185,8 @@ function toggleDebug(){
 // ── CALENDÁRIO INTERNO ──
 const CAL_API = '/api/sessoes';
 const CAL_VISTIPO_API = '/api/sessoes-visibilidade-tipo';
+const CAL_INFOTIPO_API = '/api/sessoes-info-tipo';
+let calInfoTipo = null;
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
 let calModoLote = false;
 let calSelecaoLote = new Set();
@@ -5200,6 +5218,15 @@ async function calCarregarVisibilidadeTipo() {
     calVisibilidadeTipo = calVisibilidadeTipoPadrao();
   }
   calRenderGrade(); calRenderLista();
+}
+
+async function calCarregarInfoTipo() {
+  try {
+    const res = await fetch(CAL_INFOTIPO_API);
+    calInfoTipo = await res.json();
+  } catch (e) {
+    calInfoTipo = {};
+  }
 }
 
 function calGetGrupo() {
@@ -5384,7 +5411,7 @@ function calRenderLista() {
             <div class="cal-card-dia">${sd}</div>
             <div class="cal-card-info">
               <div class="cal-card-dow">${dow}</div>
-              ${isLogada && s.hora ? `<div class="cal-card-hora">${s.hora}</div>` : ''}
+              ${s.hora ? `<div class="cal-card-hora">${s.hora}</div>` : ''}
             </div>
           </div>
           <div class="cal-card-nome">${calEsc(s.nome)}</div>
@@ -5424,7 +5451,6 @@ function calOpenModal() {
   document.getElementById('cal-fHora').value = '20:30';
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fDesc').value = '';
-  document.getElementById('cal-fInfoVisitantes').value = '';
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
@@ -5440,7 +5466,6 @@ function calOpenEdit(id) {
   document.getElementById('cal-fHora').value = s.hora || '';
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fDesc').value = s.descricao || '';
-  document.getElementById('cal-fInfoVisitantes').value = s.infoVisitantes || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
@@ -5460,15 +5485,16 @@ function calAbrirInfo(id) {
   const dow = CAL_DIAS[dataObj.getDay()];
 
   document.getElementById('cal-info-titulo').textContent = s.nome || '';
-  document.getElementById('cal-info-sub').textContent = `${dow}, ${sd}/${sm}` + (isLogada && s.hora ? ` às ${s.hora}` : '');
+  document.getElementById('cal-info-sub').textContent = `${dow}, ${sd}/${sm}` + (s.hora ? ` às ${s.hora}` : '');
 
   let meta = `<span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>`;
   if (isLogada && s.tambor) meta += `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>`;
   if (isLogada && s.responsavel) meta += `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>`;
   document.getElementById('cal-info-meta').innerHTML = meta;
 
+  const infoTipo = (calInfoTipo || {})[s.tipo] || '';
   let corpo = '';
-  if (s.infoVisitantes) corpo += calEsc(s.infoVisitantes);
+  if (infoTipo) corpo += calEsc(infoTipo);
   if (isLogada && s.descricao) corpo += (corpo ? '\n\n' : '') + calEsc(s.descricao);
   document.getElementById('cal-info-corpo').innerHTML = corpo || '<span style="font-style:italic;color:var(--text-dim)">Sem informações adicionais por enquanto.</span>';
 
@@ -5491,7 +5517,6 @@ async function calSalvar() {
   const payload = { nome, data,
     hora: document.getElementById('cal-fHora').value,
     tipo, descricao: document.getElementById('cal-fDesc').value.trim(),
-    infoVisitantes: document.getElementById('cal-fInfoVisitantes').value.trim(),
     responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
   };
@@ -5570,6 +5595,37 @@ async function calSalvarVisibilidadeTipo() {
   }
 }
 
+// ── PAINEL: INFORMAÇÕES PARA VISITANTES POR TIPO DE SESSÃO ───────────────
+async function calAbrirInfoTipo() {
+  if (calInfoTipo === null) await calCarregarInfoTipo();
+  const cfg = calInfoTipo || {};
+  const lista = document.getElementById('cal-infotipo-lista');
+  lista.innerHTML = CAL_TIPOS.map(t => `
+    <div style="margin-bottom:12px">
+      <label class="form-label">${CAL_TIPO_LABEL[t] || t}</label>
+      <textarea class="form-input" id="cal-it-${t}" rows="3" style="resize:vertical" placeholder="Ex.: endereço, horário de chegada, o que trazer, como se vestir...">${calEsc(cfg[t] || '')}</textarea>
+    </div>`).join('');
+  document.getElementById('cal-infotipo-status').textContent = '';
+  document.getElementById('cal-infotipo-overlay').style.display = 'flex';
+}
+
+function calFecharInfoTipo() { document.getElementById('cal-infotipo-overlay').style.display = 'none'; }
+
+async function calSalvarInfoTipo() {
+  const status = document.getElementById('cal-infotipo-status');
+  const cfg = {};
+  CAL_TIPOS.forEach(t => { cfg[t] = (document.getElementById(`cal-it-${t}`)?.value || '').trim(); });
+  if (status) status.textContent = 'Salvando...';
+  try {
+    const res = await fetch(CAL_INFOTIPO_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(cfg) });
+    if (!res.ok) throw new Error('falhou');
+    calInfoTipo = cfg;
+    calFecharInfoTipo();
+  } catch (e) {
+    if (status) status.textContent = '❌ Não consegui salvar — tenta de novo.';
+  }
+}
+
 // ── EDIÇÃO EM LOTE ────────────────────────────────────────────────────────
 function calRenderLoteBarra() {
   const barra = document.getElementById('cal-lote-barra');
@@ -5636,6 +5692,7 @@ function calAtualizarControlesAdmin() {
     el.innerHTML = `
       <button onclick="calOpenModal()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Nova Sessão</button>
       <button onclick="calAbrirVisibilidadeTipo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">⚙️ Visibilidade por tipo</button>
+      <button onclick="calAbrirInfoTipo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">📋 Informações por tipo</button>
       <button id="cal-btn-lote" onclick="calAlternarModoLote()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">☑ Selecionar vários</button>
     `;
     calFO.forEach(x => x.style.display = '');
