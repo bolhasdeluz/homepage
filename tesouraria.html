@@ -2726,6 +2726,7 @@ body{padding-bottom:64px}
     .ag-progress-fill { position:absolute; inset:0 auto 0 0; height:100%; width:0%; background:linear-gradient(90deg,#2a7a60,#3a9a78); border-radius:6px; transition:width .4s; }
     .ag-progress-fill-aves { background:linear-gradient(90deg,#c88c00,#e8b84d); }
     .ag-progress-fill-tambor { background:linear-gradient(90deg,#7a3a1a,#b8622e); }
+    .ag-progress-fill-pessoas { background:linear-gradient(90deg,#2f6b4f,#4fae7d); }
     .ag-progress-marker { position:absolute; top:-3px; bottom:-3px; width:3px; background:#b84040; left:0%; border-radius:2px; transition:left .4s; box-shadow:0 0 0 2px #fff; }
     /* linha fina separando o pedaço do Tambor/Agê do pedaço do Uber, dentro da mesma barra */
     .ag-progress-segment-divider { position:absolute; top:-3px; bottom:-3px; width:2px; background:rgba(255,255,255,.85); left:0%; transition:left .4s; box-shadow:0 0 0 1px rgba(80,30,50,.25); }
@@ -2736,6 +2737,7 @@ body{padding-bottom:64px}
     .ag-dot-gasto { background:#b84040; }
     .ag-dot-aves { background:#c88c00; }
     .ag-dot-tambor { background:#7a3a1a; }
+    .ag-dot-pessoas { background:#2f6b4f; }
     .ag-dot-falta { background:rgba(80,30,50,.3); }
     .ag-progress-overflow { margin-top:6px; font-family:'DM Sans',sans-serif; font-size:.7rem; color:#b84040; font-weight:600; }
     .ag-progress-divider { height:1px; background:rgba(196,57,107,.12); margin:14px 0 10px; }
@@ -2807,6 +2809,21 @@ body{padding-bottom:64px}
     <div class="ag-progress-legend">
       <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-tambor"></span>Pago <b id="ag-progress-tambor-pago-val">R$ 0,00</b> <span id="ag-progress-tambor-pago-pct">(0%)</span></span>
       <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-falta"></span>Falta <b id="ag-progress-tambor-falta-val">R$ 0,00</b></span>
+    </div>
+
+    <div class="ag-progress-divider"></div>
+
+    <!-- Quantas pessoas já quitaram tudo o que devem (Obrigação + Aves) -->
+    <div class="ag-progress-hdr">
+      <span class="ag-progress-lbl">👥 Pessoas quitadas</span>
+      <span class="ag-progress-total" id="ag-progress-pessoas-total">0 de 0</span>
+    </div>
+    <div class="ag-progress-track">
+      <div class="ag-progress-fill ag-progress-fill-pessoas" id="ag-progress-pessoas-fill" style="width:0%;"></div>
+    </div>
+    <div class="ag-progress-legend">
+      <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-pessoas"></span>Pagaram <b id="ag-progress-pessoas-pago-val">0</b> <span id="ag-progress-pessoas-pago-pct">(0%)</span></span>
+      <span class="ag-progress-leg-item"><span class="ag-dot ag-dot-falta"></span>Faltam <b id="ag-progress-pessoas-falta-val">0</b></span>
     </div>
   </div>
 
@@ -3150,6 +3167,7 @@ function agAtualizarSaldo() {
 
   agAtualizarProgresso(s, totalAvesMeta);
   agAtualizarProgressoTambor();
+  agAtualizarProgressoPessoas();
 }
 
 // soma total e quanto já foi pago (valorPago, sem passar do total de cada
@@ -3185,6 +3203,23 @@ function agAtualizarProgressoTambor() {
   document.getElementById('ag-progress-tambor-pago-val').textContent = agFmt(pagoGeral);
   document.getElementById('ag-progress-tambor-pago-pct').textContent = '(' + pct + '%)';
   document.getElementById('ag-progress-tambor-falta-val').textContent = agFmt(Math.max(totalGeral - pagoGeral, 0));
+}
+
+// ── BARRA DE PROGRESSO (quantas pessoas já quitaram Obrigação + Aves) ──
+function agAtualizarProgressoPessoas() {
+  var total = agPessoas.length;
+  var pagaram = agPessoas.filter(function(p) {
+    var pg = agPgtos[p.nome] || {obr:0,aves:0};
+    var tDeve = AG_OBRIGACAO + agAvesVal(p);
+    var tPago = pg.obr + pg.aves;
+    return tPago >= tDeve;
+  }).length;
+  var pct = total > 0 ? Math.round(pagaram / total * 100) : 0;
+  document.getElementById('ag-progress-pessoas-total').textContent = pagaram + ' de ' + total;
+  document.getElementById('ag-progress-pessoas-fill').style.width = Math.min(pct, 100) + '%';
+  document.getElementById('ag-progress-pessoas-pago-val').textContent = pagaram;
+  document.getElementById('ag-progress-pessoas-pago-pct').textContent = '(' + pct + '%)';
+  document.getElementById('ag-progress-pessoas-falta-val').textContent = total - pagaram;
 }
 
 // ── BARRA DE PROGRESSO (Obrigação + Aves) ───────────────────────
