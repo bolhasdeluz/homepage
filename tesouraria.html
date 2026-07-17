@@ -2912,8 +2912,9 @@ body{padding-bottom:64px}
 
   <!-- Sec Aves -->
   <div class="ag-sec" id="ag-sec-aves">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-      <button onclick="agExportarAvesWpp()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">💬 Exportar Lista</button>
+    <div style="display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+      <button onclick="agExportarAvesComNomesWpp()" style="background:linear-gradient(135deg,#8c5a00,#c88c00);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">💬 Exportar com Nomes</button>
+      <button onclick="agExportarAvesWpp()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">💬 Exportar pro Aviário</button>
     </div>
     <div style="background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:9px;padding:8px 11px;margin-bottom:10px;">
       <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🐓 Aves — Pago / Total</div>
@@ -4087,6 +4088,40 @@ function agExportarAvesWpp() {
   if (linhasGalinhas.length) msg += '*Galinhas:*\n' + linhasGalinhas.join('\n') + '\n\n';
   msg += '📊 *TOTAL:* ' + tG + ' galo' + (tG!==1?'s':'') + ' · ' + tH + ' galinha' + (tH!==1?'s':'');
 
+  agCompartilharOuCopiar(msg);
+}
+
+// Exportação COM NOMES — pessoa por pessoa (nome, quantidade e cor), pra uso
+// interno da tesouraria/casa, diferente da de cima que vai pro aviário
+function agExportarAvesComNomesWpp() {
+  var linhas = [];
+  agPessoas.forEach(function(p){
+    if (!p.galos && !p.galinhas) return;
+    var partes = [];
+    if (p.galos > 0) {
+      var corG = (p.coresGalos && p.coresGalos[0]) || 'sem cor definida';
+      partes.push(p.galos + ' galo' + (p.galos>1?'s':'') + ' de cor ' + corG);
+    }
+    if (p.galinhas > 0) {
+      var corH = (p.coresGalinhas && p.coresGalinhas[0]) || 'sem cor definida';
+      partes.push(p.galinhas + ' galinha' + (p.galinhas>1?'s':'') + ' de cor ' + corH);
+    }
+    linhas.push('• *' + p.nome + '*: ' + partes.join(', '));
+  });
+
+  if (!linhas.length) { showToast('Nenhuma ave cadastrada ainda'); return; }
+
+  var tG=0, tH=0;
+  agPessoas.forEach(function(p){ tG+=p.galos; tH+=p.galinhas; });
+
+  var msg = '🐓 *LISTA DE AVES — OBRIGAÇÃO DE AGOSTO*\n\n'
+    + linhas.join('\n')
+    + '\n\n📊 *TOTAL:* ' + tG + ' galo' + (tG!==1?'s':'') + ' · ' + tH + ' galinha' + (tH!==1?'s':'');
+
+  agCompartilharOuCopiar(msg);
+}
+
+function agCompartilharOuCopiar(msg) {
   if (navigator.share) {
     navigator.share({ text: msg }).catch(function(){});
   } else {
