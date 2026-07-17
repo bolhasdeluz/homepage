@@ -3134,6 +3134,15 @@ function agCarregarDados(cb) {
 function agFmt(v) { return 'R$ '+Number(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 function agFmtS(v) { return 'R$'+Number(v).toFixed(0); }
 function agAvesVal(p) { return p.galos*AG_PRECO_GALO + p.galinhas*AG_PRECO_GALINHA; }
+// normaliza a cor pra agrupar na exportação — sem isso "Vermelho", "vermelho "
+// e "vermelhos" viravam grupos diferentes só por causa de maiúscula, espaço
+// ou plural
+function agNormalizarCor(cor) {
+  var c = (cor || '').trim().toLowerCase();
+  if (!c) return 'sem cor definida';
+  if (c.length > 3 && c.slice(-1) === 's') c = c.slice(0, -1);
+  return c;
+}
 // nem todo mundo paga a obrigação fixa — quem está marcada como isenta deve só as aves (se tiver)
 function agObrigacaoDe(p) { return p.isento ? 0 : AG_OBRIGACAO; }
 
@@ -4061,12 +4070,12 @@ function agExportarAvesWpp() {
   var tG=0, tH=0;
   agPessoas.forEach(function(p){
     if (p.galos > 0) {
-      var corG = (p.coresGalos && p.coresGalos[0]) || 'sem cor definida';
+      var corG = agNormalizarCor(p.coresGalos && p.coresGalos[0]);
       galosPorCor[corG] = (galosPorCor[corG]||0) + p.galos;
       tG += p.galos;
     }
     if (p.galinhas > 0) {
-      var corH = (p.coresGalinhas && p.coresGalinhas[0]) || 'sem cor definida';
+      var corH = agNormalizarCor(p.coresGalinhas && p.coresGalinhas[0]);
       galinhasPorCor[corH] = (galinhasPorCor[corH]||0) + p.galinhas;
       tH += p.galinhas;
     }
@@ -4098,13 +4107,13 @@ function agExportarAvesComNomesWpp() {
 
   agPessoas.forEach(function(p){
     if (p.galos > 0) {
-      var corG = (p.coresGalos && p.coresGalos[0]) || 'sem cor definida';
+      var corG = agNormalizarCor(p.coresGalos && p.coresGalos[0]);
       if (!galosPorCor[corG]) galosPorCor[corG] = [];
       galosPorCor[corG].push({ nome: p.nome, qtd: p.galos });
       tG += p.galos;
     }
     if (p.galinhas > 0) {
-      var corH = (p.coresGalinhas && p.coresGalinhas[0]) || 'sem cor definida';
+      var corH = agNormalizarCor(p.coresGalinhas && p.coresGalinhas[0]);
       if (!galinhasPorCor[corH]) galinhasPorCor[corH] = [];
       galinhasPorCor[corH].push({ nome: p.nome, qtd: p.galinhas });
       tH += p.galinhas;
