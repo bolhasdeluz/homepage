@@ -3136,24 +3136,27 @@ function agAtualizarSaldo() {
   var e=0, s=agGastos.reduce(function(a,g){return a+g.valor;},0);
   agPessoas.forEach(function(p){ var pg=agPgtos[p.nome]; e+=pg.obr+pg.aves; });
 
-  // Tambor/Agê + Uber têm orçamento e barra de progresso próprios (ver
-  // agAtualizarProgressoTambor) — o quanto já foi pago deles não entra no
-  // saldo geral nem no orçamento/meta daqui, como se esse valor tivesse sido
-  // repassado direto pro tambor sem passar pelo caixa geral: descontamos o
-  // mesmo tanto de Entradas e de Saídas, então o saldo final não muda, só
-  // deixa de aparecer contado duas vezes (uma vez aqui, outra na barra dele)
-  var tamborCat = agCatTotalEPago('Tambor / Agê');
-  var uberCat = agCatTotalEPago('Transporte');
-  var tamborUberPago = tamborCat.pago + uberCat.pago;
-  e -= tamborUberPago;
-  s -= tamborUberPago;
-
+  // Entradas/Saídas/Saldo aqui embaixo são o extrato real do caixa — dinheiro
+  // que de fato entrou e saiu, Tambor/Uber incluído (já que uma vez pago, esse
+  // dinheiro realmente saiu da caixa). NÃO mexer nesses três valores, senão o
+  // saldo passa a parecer que sobrou dinheiro que na verdade já foi gasto.
   document.getElementById('ag-totalE').textContent=agFmtS(e);
   document.getElementById('ag-totalS').textContent=agFmtS(s);
   var sal=e-s;
   var el=document.getElementById('ag-saldo');
   el.textContent=agFmtS(sal);
   el.style.color=sal>=0?'#2a7a60':'#b84040';
+
+  // Tambor/Agê + Uber têm orçamento e barra de progresso próprios (ver
+  // agAtualizarProgressoTambor) — pra não aparecer contado de novo no
+  // orçamento geral (Meta Total/Prioritária) nem no "Gasto" da barra de Total
+  // Esperado, essas duas contas (só essas, não o extrato real acima) usam uma
+  // versão à parte que desconta o que já foi pago do Tambor/Uber
+  var tamborCat = agCatTotalEPago('Tambor / Agê');
+  var uberCat = agCatTotalEPago('Transporte');
+  var tamborUberPago = tamborCat.pago + uberCat.pago;
+  var eSemTambor = e - tamborUberPago;
+  var sSemTambor = s - tamborUberPago;
 
   // Metas — Meta Mínima = soma dos itens marcados com ⭐; Meta Total = orçamento total (itens + aves)
   // Tambor/Agê e Transporte ficam de fora — orçamento separado, com barra própria
@@ -3173,14 +3176,14 @@ function agAtualizarSaldo() {
   agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
   metaTot += totalAvesMeta;
 
-  var pctPrio = metaPrio>0 ? Math.round(e/metaPrio*100) : 0;
-  var pctTot  = metaTot>0  ? Math.round(e/metaTot*100)  : 0;
+  var pctPrio = metaPrio>0 ? Math.round(eSemTambor/metaPrio*100) : 0;
+  var pctTot  = metaTot>0  ? Math.round(eSemTambor/metaTot*100)  : 0;
   document.getElementById('ag-meta-prio').textContent = agFmtS(metaPrio);
   document.getElementById('ag-meta-total').textContent = agFmtS(metaTot);
-  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(e)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(e>=metaPrio?' ✅':'')) : 'marque itens ⭐ no orçamento';
-  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(e)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(e>=metaTot?' ✅':'')) : 'adicione itens ao orçamento';
+  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(eSemTambor)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(eSemTambor>=metaPrio?' ✅':'')) : 'marque itens ⭐ no orçamento';
+  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(eSemTambor)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(eSemTambor>=metaTot?' ✅':'')) : 'adicione itens ao orçamento';
 
-  agAtualizarProgresso(s, totalAvesMeta);
+  agAtualizarProgresso(sSemTambor, totalAvesMeta);
   agAtualizarProgressoTambor();
   agAtualizarProgressoPessoas();
 }
