@@ -3135,6 +3135,19 @@ function agAvesVal(p) { return p.galos*AG_PRECO_GALO + p.galinhas*AG_PRECO_GALIN
 function agAtualizarSaldo() {
   var e=0, s=agGastos.reduce(function(a,g){return a+g.valor;},0);
   agPessoas.forEach(function(p){ var pg=agPgtos[p.nome]; e+=pg.obr+pg.aves; });
+
+  // Tambor/Agê + Uber têm orçamento e barra de progresso próprios (ver
+  // agAtualizarProgressoTambor) — o quanto já foi pago deles não entra no
+  // saldo geral nem no orçamento/meta daqui, como se esse valor tivesse sido
+  // repassado direto pro tambor sem passar pelo caixa geral: descontamos o
+  // mesmo tanto de Entradas e de Saídas, então o saldo final não muda, só
+  // deixa de aparecer contado duas vezes (uma vez aqui, outra na barra dele)
+  var tamborCat = agCatTotalEPago('Tambor / Agê');
+  var uberCat = agCatTotalEPago('Transporte');
+  var tamborUberPago = tamborCat.pago + uberCat.pago;
+  e -= tamborUberPago;
+  s -= tamborUberPago;
+
   document.getElementById('ag-totalE').textContent=agFmtS(e);
   document.getElementById('ag-totalS').textContent=agFmtS(s);
   var sal=e-s;
@@ -3143,9 +3156,11 @@ function agAtualizarSaldo() {
   el.style.color=sal>=0?'#2a7a60':'#b84040';
 
   // Metas — Meta Mínima = soma dos itens marcados com ⭐; Meta Total = orçamento total (itens + aves)
+  // Tambor/Agê e Transporte ficam de fora — orçamento separado, com barra própria
   var metaPrio = 0;
   var metaTot = 0;
   agCats.forEach(function(cat){
+    if (cat.nome === 'Tambor / Agê' || cat.nome === 'Transporte') return;
     var allItens = cat.itens.slice();
     (cat.subcats||[]).forEach(function(sc){ allItens = allItens.concat(sc.itens); });
     allItens.forEach(function(item){
