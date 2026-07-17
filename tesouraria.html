@@ -2633,6 +2633,7 @@ body{padding-bottom:64px}
     .ag-saldo-card .ag-lbl { font-family:'Cinzel',serif; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:rgba(80,30,50,.5); }
     .ag-saldo-card .ag-val { font-family:'Crimson Pro',serif; font-size:1.1rem; font-weight:600; margin-top:2px; }
     .ag-saldo-card.e .ag-val { color:#2a7a60; } .ag-saldo-card.s .ag-val { color:#b84040; } .ag-saldo-card.b .ag-val { color:#c4396b; } .ag-saldo-card.b { border-color:rgba(196,57,107,.3); background:rgba(196,57,107,.05); }
+    .ag-saldo-nota { grid-column:1 / -1; font-family:'DM Sans',sans-serif; font-size:.68rem; color:rgba(80,30,50,.55); text-align:center; padding:2px 4px 0; }
     .ag-tabs { display:flex; gap:5px; padding:12px 12px 0; overflow-x:auto; scrollbar-width:none; }
     .ag-tabs::-webkit-scrollbar { display:none; }
     .ag-tab { font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:.07em; font-weight:600; padding:6px 13px; border-radius:20px; border:1px solid rgba(196,57,107,.15); background:#fff; color:rgba(80,30,50,.5); cursor:pointer; white-space:nowrap; transition:all .2s; }
@@ -2832,6 +2833,7 @@ body{padding-bottom:64px}
     <div class="ag-saldo-card e"><div class="ag-lbl">Entradas</div><div class="ag-val" id="ag-totalE">R$0</div></div>
     <div class="ag-saldo-card s"><div class="ag-lbl">Saídas</div><div class="ag-val" id="ag-totalS">R$0</div></div>
     <div class="ag-saldo-card b"><div class="ag-lbl">Saldo</div><div class="ag-val" id="ag-saldo">R$0</div></div>
+    <div class="ag-saldo-nota" id="ag-saldo-nota" style="display:none"></div>
   </div>
   <!-- Metas -->
   <div style="margin:8px 12px 0;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
@@ -3136,25 +3138,41 @@ function agAtualizarSaldo() {
   var e=0, s=agGastos.reduce(function(a,g){return a+g.valor;},0);
   agPessoas.forEach(function(p){ var pg=agPgtos[p.nome]; e+=pg.obr+pg.aves; });
 
-  // Entradas/Saídas/Saldo aqui embaixo são o extrato real do caixa — dinheiro
-  // que de fato entrou e saiu, Tambor/Uber incluído (já que uma vez pago, esse
-  // dinheiro realmente saiu da caixa). NÃO mexer nesses três valores, senão o
-  // saldo passa a parecer que sobrou dinheiro que na verdade já foi gasto.
-  document.getElementById('ag-totalE').textContent=agFmtS(e);
-  document.getElementById('ag-totalS').textContent=agFmtS(s);
-  var sal=e-s;
-  var el=document.getElementById('ag-saldo');
-  el.textContent=agFmtS(sal);
-  el.style.color=sal>=0?'#2a7a60':'#b84040';
-
   // Tambor/Agê + Uber têm orçamento e barra de progresso próprios (ver
-  // agAtualizarProgressoTambor) — pra não aparecer contado de novo no
-  // orçamento geral (Meta Total/Prioritária) nem no "Gasto" da barra de Total
-  // Esperado, essas duas contas (só essas, não o extrato real acima) usam uma
-  // versão à parte que desconta o que já foi pago do Tambor/Uber
+  // agAtualizarProgressoTambor)
   var tamborCat = agCatTotalEPago('Tambor / Agê');
   var uberCat = agCatTotalEPago('Transporte');
   var tamborUberPago = tamborCat.pago + uberCat.pago;
+  var tamborUberFalta = Math.max((tamborCat.total + uberCat.total) - tamborUberPago, 0);
+
+  // Entradas/Saídas são o extrato real do caixa — dinheiro que de fato entrou
+  // e saiu, Tambor/Uber incluído (já que uma vez pago, esse dinheiro realmente
+  // saiu da caixa). NÃO mexer nesses dois valores.
+  document.getElementById('ag-totalE').textContent=agFmtS(e);
+  document.getElementById('ag-totalS').textContent=agFmtS(s);
+
+  // O Saldo, porém, desconta o que AINDA falta pagar do Tambor/Uber — esse
+  // dinheiro já está comprometido (vai sair da caixa assim que o resto for
+  // pago) e não é "sobra" de verdade, mesmo aparecendo como saldo positivo
+  // na conta simples de Entradas−Saídas
+  var sal = e - s - tamborUberFalta;
+  var el=document.getElementById('ag-saldo');
+  el.textContent=agFmtS(sal);
+  el.style.color=sal>=0?'#2a7a60':'#b84040';
+  var nota = document.getElementById('ag-saldo-nota');
+  if (nota) {
+    if (tamborUberFalta > 0) {
+      nota.style.display = 'block';
+      nota.textContent = 'já descontando ' + agFmtS(tamborUberFalta) + ' que ainda falta pro Tambor/Uber';
+    } else {
+      nota.style.display = 'none';
+    }
+  }
+
+  // Pra não aparecer contado de novo no orçamento geral (Meta Total/
+  // Prioritária) nem no "Gasto" da barra de Total Esperado, essas duas contas
+  // (só essas, não o extrato real de Entradas/Saídas acima) usam uma versão à
+  // parte que desconta o que já foi pago do Tambor/Uber
   var eSemTambor = e - tamborUberPago;
   var sSemTambor = s - tamborUberPago;
 
