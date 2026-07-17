@@ -3256,8 +3256,12 @@ function agAtualizarProgressoTambor() {
 
 // ── BARRA DE PROGRESSO (quantas pessoas já quitaram Obrigação + Aves) ──
 function agAtualizarProgressoPessoas() {
-  var total = agPessoas.length;
-  var pagaram = agPessoas.filter(function(p) {
+  // pessoas isentas não fazem parte da obrigação, então saem da conta por
+  // completo — senão, como não devem nada, sempre contariam como "quitadas"
+  // e infla a porcentagem sem refletir quem realmente precisa pagar
+  var naoIsentas = agPessoas.filter(function(p){ return !p.isento; });
+  var total = naoIsentas.length;
+  var pagaram = naoIsentas.filter(function(p) {
     var pg = agPgtos[p.nome] || {obr:0,aves:0};
     var tDeve = agObrigacaoDe(p) + agAvesVal(p);
     var tPago = pg.obr + pg.aves;
