@@ -4036,30 +4036,40 @@ function agRenderAves(){
     +'<div class="ag-aves-row" style="font-weight:700"><span>TOTAL AVES</span><span></span><span class="ag-aves-val">'+agFmt(tv)+'</span></div>';
 }
 
+// Exportação pro AVIÁRIO — só quantidade e cor, agrupado, sem nome de
+// ninguém (diferente da lista interna da tesouraria, essa aqui é pra mandar
+// pra fora da casa)
 function agExportarAvesWpp() {
-  var linhas = [];
+  var galosPorCor = {}, galinhasPorCor = {};
+  var tG=0, tH=0;
   agPessoas.forEach(function(p){
-    if (!p.galos && !p.galinhas) return;
-    var partes = [];
     if (p.galos > 0) {
       var corG = (p.coresGalos && p.coresGalos[0]) || 'sem cor definida';
-      partes.push(p.galos + ' galo' + (p.galos>1?'s':'') + ' de cor ' + corG);
+      galosPorCor[corG] = (galosPorCor[corG]||0) + p.galos;
+      tG += p.galos;
     }
     if (p.galinhas > 0) {
       var corH = (p.coresGalinhas && p.coresGalinhas[0]) || 'sem cor definida';
-      partes.push(p.galinhas + ' galinha' + (p.galinhas>1?'s':'') + ' de cor ' + corH);
+      galinhasPorCor[corH] = (galinhasPorCor[corH]||0) + p.galinhas;
+      tH += p.galinhas;
     }
-    linhas.push('• *' + p.nome + '*: ' + partes.join(', '));
   });
 
-  if (!linhas.length) { showToast('Nenhuma ave cadastrada ainda'); return; }
+  if (!tG && !tH) { showToast('Nenhuma ave cadastrada ainda'); return; }
 
-  var tG=0, tH=0;
-  agPessoas.forEach(function(p){ tG+=p.galos; tH+=p.galinhas; });
+  var linhasGalos = Object.keys(galosPorCor).map(function(cor){
+    var q = galosPorCor[cor];
+    return '• ' + q + ' galo' + (q>1?'s':'') + (cor === 'sem cor definida' ? ' sem cor definida' : ' de cor ' + cor);
+  });
+  var linhasGalinhas = Object.keys(galinhasPorCor).map(function(cor){
+    var q = galinhasPorCor[cor];
+    return '• ' + q + ' galinha' + (q>1?'s':'') + (cor === 'sem cor definida' ? ' sem cor definida' : ' de cor ' + cor);
+  });
 
-  var msg = '🐓 *LISTA DE AVES — OBRIGAÇÃO DE AGOSTO*\n\n'
-    + linhas.join('\n')
-    + '\n\n📊 *TOTAL:* ' + tG + ' galo' + (tG!==1?'s':'') + ' · ' + tH + ' galinha' + (tH!==1?'s':'');
+  var msg = '🐓 *LISTA DE AVES — OBRIGAÇÃO DE AGOSTO*\n\n';
+  if (linhasGalos.length) msg += '*Galos:*\n' + linhasGalos.join('\n') + '\n\n';
+  if (linhasGalinhas.length) msg += '*Galinhas:*\n' + linhasGalinhas.join('\n') + '\n\n';
+  msg += '📊 *TOTAL:* ' + tG + ' galo' + (tG!==1?'s':'') + ' · ' + tH + ' galinha' + (tH!==1?'s':'');
 
   if (navigator.share) {
     navigator.share({ text: msg }).catch(function(){});
