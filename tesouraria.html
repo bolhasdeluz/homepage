@@ -2648,6 +2648,7 @@ body{padding-bottom:64px}
     .ag-pill-ok { background:#e8f4f0; color:#2a7a60; border:1px solid #b8ddd4; }
     .ag-pill-pend { background:rgba(196,57,107,.08); color:#c4396b; border:1px solid rgba(196,57,107,.25); }
     .ag-pill-nao { background:rgba(184,64,64,.08); color:#b84040; border:1px solid rgba(184,64,64,.2); }
+    .ag-pill-isento { background:rgba(80,30,50,.06); color:rgba(80,30,50,.55); border:1px solid rgba(80,30,50,.15); }
     .ag-pessoa-total { font-family:'DM Sans',sans-serif; font-size:.72rem; font-weight:500; color:#2a7a60; min-width:56px; text-align:right; }
     .ag-chevron { font-size:.75rem; color:rgba(80,30,50,.5); transition:transform .2s; }
     .ag-pessoa.open .ag-chevron { transform:rotate(180deg); }
@@ -3132,6 +3133,8 @@ function agCarregarDados(cb) {
 function agFmt(v) { return 'R$ '+Number(v).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
 function agFmtS(v) { return 'R$'+Number(v).toFixed(0); }
 function agAvesVal(p) { return p.galos*AG_PRECO_GALO + p.galinhas*AG_PRECO_GALINHA; }
+// nem todo mundo paga a obrigação fixa — quem está marcada como isenta deve só as aves (se tiver)
+function agObrigacaoDe(p) { return p.isento ? 0 : AG_OBRIGACAO; }
 
 // ── SALDO ────────────────────────────────────────────────────
 function agAtualizarSaldo() {
@@ -3246,7 +3249,7 @@ function agAtualizarProgressoPessoas() {
   var total = agPessoas.length;
   var pagaram = agPessoas.filter(function(p) {
     var pg = agPgtos[p.nome] || {obr:0,aves:0};
-    var tDeve = AG_OBRIGACAO + agAvesVal(p);
+    var tDeve = agObrigacaoDe(p) + agAvesVal(p);
     var tPago = pg.obr + pg.aves;
     return tPago >= tDeve;
   }).length;
@@ -3260,7 +3263,7 @@ function agAtualizarProgressoPessoas() {
 
 // ── BARRA DE PROGRESSO (Obrigação + Aves) ───────────────────────
 function agAtualizarProgresso(totalGastos, totalAvesEsperado) {
-  var totalEsperado = agPessoas.length * AG_OBRIGACAO;
+  var totalEsperado = agPessoas.reduce(function(sum,p){ return sum + agObrigacaoDe(p); }, 0);
   var pagoObr = agPessoas.reduce(function(sum,p){ var pg=agPgtos[p.nome]; return sum + (pg ? pg.obr : 0); }, 0);
   var pctPago  = totalEsperado>0 ? Math.round(pagoObr/totalEsperado*100) : 0;
   var pctGasto = totalEsperado>0 ? Math.round(totalGastos/totalEsperado*100) : 0;
@@ -3302,8 +3305,8 @@ function agRenderPessoas() {
   var list=document.getElementById('ag-pessoas-list');
   list.innerHTML='';
   agPessoas.forEach(function(p) {
-    var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=AG_OBRIGACAO+tAves, tPago=pg.obr+pg.aves;
-    var sO=pg.obr>=AG_OBRIGACAO?'ok':(pg.obr>0?'pend':'nao');
+    var pg=agPgtos[p.nome], tAves=agAvesVal(p), obrDevida=agObrigacaoDe(p), tDeve=obrDevida+tAves, tPago=pg.obr+pg.aves;
+    var sO = p.isento ? 'isento' : (pg.obr>=AG_OBRIGACAO?'ok':(pg.obr>0?'pend':'nao'));
     var sA=tAves===0?'ok':(pg.aves>=tAves?'ok':(pg.aves>0?'pend':'nao'));
     var statusIcon = tPago>=tDeve ? '✅' : tPago>0 ? '🔶' : '❌';
     var card=document.createElement('div');
@@ -3312,15 +3315,21 @@ function agRenderPessoas() {
       +'<span style="font-size:1rem;flex-shrink:0;">'+statusIcon+'</span>'
       +'<span class="ag-pessoa-nome">'+p.nome+'</span>'
       +'<input type="text" value="'+(pg.dataPrevista||'')+'" placeholder="data prevista…" maxlength="30" onclick="event.stopPropagation()" onchange="agSetDataPrevista(\''+p.nome+'\',this.value)" style="width:78px;background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.65);padding:3px 5px;flex-shrink:0;">'
-      +'<span class="ag-pill ag-pill-'+sO+'">Obr</span>'
+      +'<span class="ag-pill ag-pill-'+sO+'">'+(p.isento?'Isenta':'Obr')+'</span>'
       +(tAves>0?'<span class="ag-pill ag-pill-'+sA+'">Aves</span>':'')
       +'<span class="ag-pessoa-total">'+(tPago>0?agFmt(tPago):'')+'</span>'
       +'<span class="ag-chevron">▾</span></div>'
       +'<div class="ag-pessoa-body">'
-      +'<div class="ag-pgto-grp"><div class="ag-pgto-grp-title">Obrigação (total: '+agFmt(AG_OBRIGACAO)+')</div>'
-      +'<div class="ag-pgto-row"><span class="ag-pgto-label">Já pagou:</span>'
-      +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.obr+'" onchange="agSetPgto(\''+p.nome+'\',\'obr\',this.value)"></div>'
-      +'<div class="ag-pgto-sub">'+agFmt(pg.obr)+' / '+agFmt(AG_OBRIGACAO)+' '+(pg.obr>=AG_OBRIGACAO?'✅':'— falta '+agFmt(AG_OBRIGACAO-pg.obr))+'</div></div>'
+      +'<div class="ag-pgto-grp"><div class="ag-pgto-grp-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+      +'<span>Obrigação (total: '+(p.isento?'isenta':agFmt(AG_OBRIGACAO))+')</span>'
+      +'<label style="display:flex;align-items:center;gap:4px;font-family:\'DM Sans\',sans-serif;font-size:.66rem;font-weight:400;text-transform:none;letter-spacing:0;color:rgba(80,30,50,.6);cursor:pointer;white-space:nowrap" onclick="event.stopPropagation()"><input type="checkbox" '+(p.isento?'checked':'')+' onchange="agToggleIsento(\''+p.nome+'\')" style="accent-color:var(--gold)">Isenta</label>'
+      +'</div>'
+      +(p.isento
+        ? '<div class="ag-info" style="margin-top:4px">Não deve a obrigação de agosto.</div>'
+        : '<div class="ag-pgto-row"><span class="ag-pgto-label">Já pagou:</span>'
+          +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.obr+'" onchange="agSetPgto(\''+p.nome+'\',\'obr\',this.value)"></div>'
+          +'<div class="ag-pgto-sub">'+agFmt(pg.obr)+' / '+agFmt(AG_OBRIGACAO)+' '+(pg.obr>=AG_OBRIGACAO?'✅':'— falta '+agFmt(AG_OBRIGACAO-pg.obr))+'</div>')
+      +'</div>'
       +(tAves>0
         ?'<div class="ag-pgto-grp" style="margin-top:8px"><div class="ag-pgto-grp-title">Aves — Galo: '+p.galos+' + Galinha: '+p.galinhas+' = '+agFmt(tAves)+'</div>'
          +'<div class="ag-pgto-row"><span class="ag-pgto-label">Já pagou:</span>'
@@ -3343,6 +3352,13 @@ function agSetDataPrevista(nome, val) {
   if (!agPgtos[nome]) agPgtos[nome] = {obr:0,aves:0};
   agPgtos[nome].dataPrevista = val;
   agSalvar();
+}
+function agToggleIsento(nome) {
+  var p = agPessoas.find(function(x){ return x.nome === nome; });
+  if (!p) return;
+  p.isento = !p.isento;
+  agSalvar(); agAtualizarSaldo(); agRenderPessoas();
+  setTimeout(function(){ var c=document.getElementById('ag-pc-'+nome); if(c) c.classList.add('open'); },10);
 }
 
 // ── GERENCIAR PESSOAS ─────────────────────────────────────────
@@ -4123,11 +4139,11 @@ function agExportPDF() {
 
 function agExportCSV() {
   document.getElementById('ag-export-dd').style.display='none';
-  var linhas = [['Nome','Galos','Galinhas','Valor Aves','Obrigação Total','Obrigação Paga','Aves Pagas','Total Pago','Total Devido','Situação']];
+  var linhas = [['Nome','Isenta da Obrigação','Galos','Galinhas','Valor Aves','Obrigação Total','Obrigação Paga','Aves Pagas','Total Pago','Total Devido','Situação']];
   agPessoas.forEach(function(p) {
-    var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=AG_OBRIGACAO+tAves, tPago=pg.obr+pg.aves;
+    var pg=agPgtos[p.nome], tAves=agAvesVal(p), obrDevida=agObrigacaoDe(p), tDeve=obrDevida+tAves, tPago=pg.obr+pg.aves;
     var sit=tPago>=tDeve?'Quitado':tPago>0?'Parcial':'Pendente';
-    linhas.push([p.nome,p.galos,p.galinhas,tAves.toFixed(2),AG_OBRIGACAO.toFixed(2),pg.obr.toFixed(2),pg.aves.toFixed(2),tPago.toFixed(2),tDeve.toFixed(2),sit]);
+    linhas.push([p.nome,p.isento?'Sim':'Não',p.galos,p.galinhas,tAves.toFixed(2),obrDevida.toFixed(2),pg.obr.toFixed(2),pg.aves.toFixed(2),tPago.toFixed(2),tDeve.toFixed(2),sit]);
   });
   linhas.push([]);
   linhas.push(['GASTOS','','','','','','','','','']);
@@ -4168,7 +4184,7 @@ function agGerarMsgWpp() {
     msg+='👥 *PAGAMENTOS*\n';
     var quitados=0, parciais=0, pendentes=0;
     agPessoas.forEach(function(p){
-      var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=AG_OBRIGACAO+tAves, tPago=pg.obr+pg.aves;
+      var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=agObrigacaoDe(p)+tAves, tPago=pg.obr+pg.aves;
       if(tPago>=tDeve) quitados++; else if(tPago>0) parciais++; else pendentes++;
     });
     msg+='✅ Quitados: '+quitados+'\n';
@@ -4178,9 +4194,9 @@ function agGerarMsgWpp() {
   } else {
     msg+='👥 *PAGAMENTOS*\n';
     agPessoas.forEach(function(p){
-      var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=AG_OBRIGACAO+tAves, tPago=pg.obr+pg.aves;
+      var pg=agPgtos[p.nome], tAves=agAvesVal(p), tDeve=agObrigacaoDe(p)+tAves, tPago=pg.obr+pg.aves;
       var icon=tPago>=tDeve?'✅':tPago>0?'🔶':'❌';
-      msg+=icon+' '+p.nome+': '+agFmt(tPago)+' / '+agFmt(tDeve);
+      msg+=icon+' '+p.nome+(p.isento?' (isenta)':'')+': '+agFmt(tPago)+' / '+agFmt(tDeve);
       if(tPago<tDeve) msg+=' (falta '+agFmt(tDeve-tPago)+')';
       msg+='\n';
     });
