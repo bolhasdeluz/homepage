@@ -258,12 +258,26 @@ async function ckSalvar() {
 document.getElementById('ck-personagem-btn').addEventListener('click', (e) => {
   ckEstado.bolhas += 1;
   ckAtualizarContador();
+  ckAtualizarBotoesCompra();
   ckAgendarSalvar();
   ckMostrarFlutuante(e);
   const btn = document.getElementById('ck-personagem-btn');
   btn.style.transform = 'scale(.92)';
   setTimeout(() => { btn.style.transform = ''; }, 90);
 });
+
+// liga/desliga os botões de compra conforme o saldo de bolhas muda — sem
+// redesenhar a lista inteira (chamado a cada clique e a cada tick de
+// produção, então precisa ser barato)
+function ckAtualizarBotoesCompra() {
+  document.querySelectorAll('#ck-ajudantes-lista [data-custo]').forEach(btn => {
+    btn.disabled = ckEstado.bolhas < parseFloat(btn.dataset.custo);
+  });
+  document.querySelectorAll('#ck-moveis-lista [data-custo]').forEach(btn => {
+    if (btn.classList.contains('comprado')) return;
+    btn.disabled = ckEstado.bolhas < parseFloat(btn.dataset.custo);
+  });
+}
 
 function ckMostrarFlutuante(e) {
   const area = document.querySelector('.ck-clique-area');
@@ -291,6 +305,7 @@ setInterval(() => {
   if (producao > 0) {
     ckEstado.bolhas += producao;
     ckAtualizarContador();
+    ckAtualizarBotoesCompra();
     ckAgendarSalvar();
   }
 }, 1000);
@@ -333,7 +348,7 @@ function ckRenderAjudantes() {
         <div class="ck-item-sub">+${aj.producao} bolha${aj.producao === 1 ? '' : 's'}/s cada</div>
         <div class="ck-item-qtd">${qtd} no terreirinho</div>
       </div>
-      <button class="ck-item-btn" ${daPra ? '' : 'disabled'} onclick="window._ckComprarAjudante('${aj.id}')">🫧 ${ckFormatarNumero(custo)}</button>
+      <button class="ck-item-btn" data-custo="${custo}" ${daPra ? '' : 'disabled'} onclick="window._ckComprarAjudante('${aj.id}')">🫧 ${ckFormatarNumero(custo)}</button>
     `;
     lista.appendChild(item);
   });
@@ -386,7 +401,7 @@ function ckRenderMoveis() {
         <div class="ck-item-nome">${item.nome}</div>
         <div class="ck-item-sub">${comprado ? 'Já é seu — vá colocar no terreirinho' : 'Compre e desbloqueie no seu terreirinho'}</div>
       </div>
-      <button class="ck-item-btn ${comprado ? 'comprado' : ''}" ${comprado || !daPra ? 'disabled' : ''} onclick="window._ckComprarMovel('${item.id}')">
+      <button class="ck-item-btn ${comprado ? 'comprado' : ''}" data-custo="${item.precoBolhas}" ${comprado || !daPra ? 'disabled' : ''} onclick="window._ckComprarMovel('${item.id}')">
         ${comprado ? '✓ Seu' : '🫧 ' + ckFormatarNumero(item.precoBolhas)}
       </button>
     `;
