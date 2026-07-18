@@ -3129,6 +3129,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             <span class="gp-trilha-legenda">De quem<br>é?</span>
             <div class="gp-streak-dots"><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div><div class="gp-streak-dot"></div></div>
           </div>
+
+          <!-- clicker não tem "conclusão diária" nem entra na conta da trilha
+               completa (classe nao-diario), já que é um jogo pra ficar
+               voltando sempre, não um desafio de uma vez por dia -->
+          <div class="gp-trilha-passo nao-diario" id="gp-passo-clicker" data-jogo="clicker">
+            <button class="gp-trilha-pedra" onclick="gpPlayGame('clicker')" title="Clicker de Bolhas de Luz"><span>🫧</span></button>
+            <span class="gp-trilha-legenda">Clicker de<br>Bolhas</span>
+          </div>
         </div>
 
         <div class="gp-trilha-bonus" id="gp-trilha-bonus" style="display:none">🎉 Trilha completa hoje — bônus de pontos garantido!</div>
@@ -6787,6 +6795,7 @@ const gpCardIds = {
 function gpPlayGame(jogo) {
   if (jogo === 'palavra') { window.open('/palavra.html', '_blank'); return; }
   if (jogo === 'verdadeiro') { window.open('/quiz.html', '_blank'); return; }
+  if (jogo === 'clicker') { window.open('/clicker.html', '_blank'); return; }
 
   if (gpState.jogadoHoje[jogo]) return;
   // TODO: 'complete' e 'quem' ainda não têm jogo implementado — protótipo visual.
@@ -6836,7 +6845,7 @@ function gpAtualizarTrilha() {
   const trilha = document.getElementById('gp-trilha');
   const peninha = document.getElementById('gp-trilha-peninha');
   if (!trilha || !peninha) return;
-  const passos = [...trilha.querySelectorAll('.gp-trilha-passo')];
+  const passos = [...trilha.querySelectorAll('.gp-trilha-passo:not(.nao-diario)')];
   if (!passos.length) return;
   const completos = passos.filter(p => p.classList.contains('feito')).length;
 
