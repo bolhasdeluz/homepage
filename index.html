@@ -3352,6 +3352,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </select>
             <button type="button" class="tv-admin-form-fechar" style="font-size:.78rem;border:1px solid var(--gp-border);border-radius:6px;padding:6px 10px" onclick="tvAdminNovaCategoria()" title="Criar categoria nova">+ categoria</button>
           </div>
+          <div class="admin-row-inputs">
+            <label style="display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--gp-text-dim);flex:1">
+              🫧 Preço em Bolhas de Luz (opcional — só pra objeto da lojinha do clicker)
+              <input type="number" id="tv-admin-novo-preco-bolhas" min="0" step="1" placeholder="vazio = desbloqueia só por dia" style="width:150px">
+            </label>
+          </div>
           <div class="tv-admin-preview-sala" id="tv-admin-preview-sala">
             <div class="tv-admin-preview-piso" id="tv-admin-preview-piso"></div>
             <img class="tv-admin-preview-img" id="tv-admin-preview-objeto" alt="" style="display:none" onclick="tvAdminCliquePreviewObjeto(event)">
@@ -6973,7 +6979,16 @@ async function gpAlternarVisibilidade(chave, campo, btn) {
 // TERREIRINHO DIGITAL — ganha 1 objeto novo a cada 7 dias (configurável
 // pelo admin), monta no chão ou nas paredes, gira/espelha, escolhe a cor do salão.
 // ══════════════════════════════════════════════════════════════
-let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede', categoria }]
+let tvCatalogo = [];    // [{ id, nome, imagem, diaDesbloqueio, tipo: 'chao'|'parede', categoria, precoBolhas? }]
+
+// itens com precoBolhas definido são liberados só pela lojinha do Clicker de
+// Bolhas (ver tvClicker*), nunca por dia de casa — os dois tipos de
+// desbloqueio são mutuamente exclusivos, então ignoramos diaDesbloqueio
+// nesse caso mesmo que o formulário admin exija preencher algum valor nele
+function tvItemDesbloqueado(item, dia) {
+  if (item.precoBolhas != null) return (tvProgresso?.itensComprados || []).includes(item.id);
+  return dia >= (item.diaDesbloqueio || 0);
+}
 let tvProgresso = null; // { dataInicio(ms), corChao, corParede, colocados: { itemId: {superficie,slot,rot,espelhado} } }
 let tvMeuProgresso = null; // guarda o progresso de verdade da própria pessoa, enquanto visita outra
 let tvUidProprio = null;
@@ -7916,13 +7931,13 @@ async function tvRenderGrid() {
 // "unico" (só pode ter 1 colocado, ex: a planta especial) ficam esmaecidos e
 // não iniciam nova colocação quando já tiver um no terreirinho
 function tvCriarTileInventario(item, dia, colocados) {
-  const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+  const desbloqueado = tvItemDesbloqueado(item, dia);
   const qtdColocada = Object.values(colocados).filter(c => c.catalogId === item.id).length;
   const ehParede = item.tipo === 'parede';
   const jaTemUm = item.unico && qtdColocada > 0;
   const el = document.createElement('div');
   el.className = 'tv-item' + (!desbloqueado ? ' bloqueado' : '') + (tvItemSelecionado === item.id ? ' selecionado' : '');
-  el.title = !desbloqueado ? `Libera no dia ${item.diaDesbloqueio}` : jaTemUm ? `${item.nome} já está no seu terreirinho` : `${item.nome}${item.unico ? '' : ` (${ehParede ? 'parede' : 'chão'})`}`;
+  el.title = !desbloqueado ? (item.precoBolhas != null ? `Compre na lojinha do Clicker por 🫧 ${item.precoBolhas}` : `Libera no dia ${item.diaDesbloqueio}`) : jaTemUm ? `${item.nome} já está no seu terreirinho` : `${item.nome}${item.unico ? '' : ` (${ehParede ? 'parede' : 'chão'})`}`;
   if (!desbloqueado) {
     el.innerHTML = `<span class="tv-cadeado">🔒</span>`;
   } else {
@@ -7980,7 +7995,7 @@ function tvRenderInventario() {
   // catálogo com "acao" (ex: Calendário Mágico), todos juntos numa categoria
   // só, no topo, pra ficarem fáceis de achar
   const itensEspeciaisCatalogo = (!tvVisitandoUid ? tvCatalogo.filter(item => item.acao) : [])
-    .filter(item => tvPassaFiltroStatus(dia >= (item.diaDesbloqueio || 0), Object.values(colocados).some(c => c.catalogId === item.id), filtroStatus));
+    .filter(item => tvPassaFiltroStatus(tvItemDesbloqueado(item, dia), Object.values(colocados).some(c => c.catalogId === item.id), filtroStatus));
   const temSemente = !tvVisitandoUid && !!tvProgresso.sementeEspecial
     && tvPassaFiltroStatus(true, !!colocados[TV_SEMENTE_INSTANCIA_ID], filtroStatus);
   if (itensEspeciaisCatalogo.length || temSemente) {
@@ -8021,7 +8036,7 @@ function tvRenderInventario() {
       if (tvCategoriaEfetiva(item) !== cat.chave || item.acao) return false;
       if (busca && !item.nome.toLowerCase().includes(busca)) return false;
       if (filtroTipo && (item.tipo === 'parede' ? 'parede' : 'chao') !== filtroTipo) return false;
-      const desbloqueado = dia >= (item.diaDesbloqueio || 0);
+      const desbloqueado = tvItemDesbloqueado(item, dia);
       const colocado = Object.values(colocados).some(c => c.catalogId === item.id);
       if (!tvPassaFiltroStatus(desbloqueado, colocado, filtroStatus)) return false;
       return true;
@@ -8551,7 +8566,7 @@ function tvRenderProximo() {
   if (!el) return;
   if (!tvCatalogo.length) { el.textContent = 'Nenhum objeto cadastrado ainda.'; return; }
   const dia = tvDiaAtual();
-  const proximo = tvCatalogo.find(o => (o.diaDesbloqueio || 0) > dia);
+  const proximo = tvCatalogo.find(o => o.precoBolhas == null && (o.diaDesbloqueio || 0) > dia);
   if (!proximo) { el.textContent = '🎉 Você já desbloqueou todos os objetos!'; return; }
   const faltam = proximo.diaDesbloqueio - dia;
   el.textContent = `🎁 Próximo objeto em ${faltam} dia${faltam === 1 ? '' : 's'}`;
@@ -9557,6 +9572,7 @@ function tvAdminLimparForm() {
   document.getElementById('tv-admin-novo-mesa').checked = false;
   document.getElementById('tv-admin-novo-altura-tampo').value = '0.5';
   document.getElementById('tv-admin-novo-inclinacao-tampo').value = '0';
+  document.getElementById('tv-admin-novo-preco-bolhas').value = '';
   tvAdminSpotsAtual = [];
   tvAdminAtualizarValoresSlider();
   tvAdminAtualizarVisibilidadeMesa();
@@ -9641,6 +9657,7 @@ async function tvAdminEditarItem(id) {
   document.getElementById('tv-admin-novo-mesa').checked = !!item.mesa;
   document.getElementById('tv-admin-novo-altura-tampo').value = String(item.alturaTampo || 0.5);
   document.getElementById('tv-admin-novo-inclinacao-tampo').value = String(item.tampoInclinacao || 0);
+  document.getElementById('tv-admin-novo-preco-bolhas').value = item.precoBolhas != null ? String(item.precoBolhas) : '';
   tvAdminSpotsAtual = (item.tampoSpots || []).map(s => ({ ...s }));
   tvAdminAtualizarValoresSlider();
   tvAdminAtualizarVisibilidadeMesa();
@@ -9664,11 +9681,13 @@ async function tvAdminAdicionar() {
   const tampoInclinacao = parseInt(document.getElementById('tv-admin-novo-inclinacao-tampo')?.value, 10) || 0;
   const podeEmCimaDeMesa = !!document.getElementById('tv-admin-novo-pode-mesa')?.checked;
   const tampoSpots = mesa ? tvAdminSpotsAtual.map(s => ({ ...s })) : [];
+  const precoBolhasStr = document.getElementById('tv-admin-novo-preco-bolhas')?.value;
+  const precoBolhas = precoBolhasStr ? parseInt(precoBolhasStr, 10) : null;
   if (!nome || !dia) { alert('Preenche o nome e o dia.'); return; }
 
   if (tvAdminEditandoId) {
     if (window._tvSalvarItemCatalogo) {
-      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa });
+      await window._tvSalvarItemCatalogo(tvAdminEditandoId, { nome, diaDesbloqueio: dia, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa, precoBolhas });
     }
     tvAdminCancelarForm();
     tvAtualizarAdminCatalogo();
@@ -9678,7 +9697,7 @@ async function tvAdminAdicionar() {
   const imagem = document.getElementById('tv-admin-novo-arquivo').value;
   if (!imagem) { alert('Escolhe o arquivo.'); return; }
   const id = 'obj_' + Date.now();
-  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa });
+  if (window._tvSalvarItemCatalogo) await window._tvSalvarItemCatalogo(id, { nome, diaDesbloqueio: dia, imagem, tipo, categoria, escalaPadrao, inclinacaoPadrao, mesa, alturaTampo, tampoInclinacao, tampoSpots, podeEmCimaDeMesa, precoBolhas });
   tvAdminLimparForm();
   tvAdminToggleForm();
   tvAtualizarAdminCatalogo();
@@ -10722,7 +10741,11 @@ const auth = getAuth(app);
           corParede: dados.corParede || '#fff5f7',
           colocados: dados.colocados || {},
           sementeEspecial: dados.sementeEspecial || null,
-          sementeUltimoGanhoData: dados.sementeUltimoGanhoData || ''
+          sementeUltimoGanhoData: dados.sementeUltimoGanhoData || '',
+          bolhas: dados.bolhas || 0,
+          ajudantes: dados.ajudantes || {},
+          itensComprados: dados.itensComprados || [],
+          clickerUltimoSalvo: dados.clickerUltimoSalvo?.toMillis?.() || null
         };
       }
       // primeira vez que essa pessoa abre o terreirinho — começa a partir do
@@ -10757,7 +10780,7 @@ const auth = getAuth(app);
           });
         } catch (e) { console.warn('tv carta de boas-vindas:', e); }
       }
-      return { nome: nome || '', dataInicio: Date.now(), corChao, corParede, colocados, sementeEspecial: null, sementeUltimoGanhoData: '' };
+      return { nome: nome || '', dataInicio: Date.now(), corChao, corParede, colocados, sementeEspecial: null, sementeUltimoGanhoData: '', bolhas: 0, ajudantes: {}, itensComprados: [], clickerUltimoSalvo: null };
     } catch (e) { console.warn('tv carregar progresso:', e); return { nome: nome || '', dataInicio: Date.now(), corChao: '#fff5f7', corParede: '#fff5f7', colocados: {}, sementeEspecial: null, sementeUltimoGanhoData: '' }; }
   };
 
