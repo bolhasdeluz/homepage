@@ -2840,21 +2840,6 @@ body{padding-bottom:64px}
     <div class="ag-saldo-card b"><div class="ag-lbl">Saldo</div><div class="ag-val" id="ag-saldo">R$0</div></div>
     <div class="ag-saldo-nota" id="ag-saldo-nota" style="display:none"></div>
   </div>
-  <!-- Metas -->
-  <div style="margin:8px 12px 0;display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-    <div style="background:#fffbe8;border:1px solid #e8d080;border-radius:9px;padding:8px 11px;">
-      <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#8c5a00;">⭐ Meta Mínima</div>
-      <div id="ag-meta-prio" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:#8c5a00;">R$0</div>
-      <div id="ag-meta-prio-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:#c88c00;margin-top:1px;"></div>
-    </div>
-    <div style="background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:9px;padding:8px 11px;">
-      <div style="font-family:'Cinzel',serif;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">📋 Meta Total (orçamento)</div>
-      <div id="ag-meta-total" style="font-family:'Crimson Pro',serif;font-size:1.1rem;font-weight:600;color:var(--text);">R$0</div>
-      <div id="ag-meta-total-pct" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:1px;"></div>
-    </div>
-  </div>
-  <div style="margin:6px 12px 0;font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(80,30,50,.4);text-align:center;">⭐ marque itens no Orçamento como "meta mínima" · a meta total segue automaticamente o valor orçado</div>
-
   <!-- Tabs -->
   <div class="ag-tabs">
     <button class="ag-tab active" onclick="agShowTab('pessoas',this)">👥 Pessoas</button>
@@ -3186,37 +3171,13 @@ function agAtualizarSaldo() {
     }
   }
 
-  // Pra não aparecer contado de novo no orçamento geral (Meta Total/
-  // Prioritária) nem no "Gasto" da barra de Total Esperado, essas duas contas
-  // (só essas, não o extrato real de Entradas/Saídas acima) usam uma versão à
-  // parte que desconta o que já foi pago do Tambor/Uber
-  var eSemTambor = e - tamborUberPago;
+  // Pra não aparecer contado de novo no "Gasto" da barra de Total Esperado,
+  // essa conta (só essa, não o extrato real de Entradas/Saídas acima) usa uma
+  // versão à parte que desconta o que já foi pago do Tambor/Uber
   var sSemTambor = s - tamborUberPago;
 
-  // Metas — Meta Mínima = soma dos itens marcados com ⭐; Meta Total = orçamento total (itens + aves)
-  // Tambor/Agê e Transporte ficam de fora — orçamento separado, com barra própria
-  var metaPrio = 0;
-  var metaTot = 0;
-  agCats.forEach(function(cat){
-    if (cat.nome === 'Tambor / Agê' || cat.nome === 'Transporte') return;
-    var allItens = cat.itens.slice();
-    (cat.subcats||[]).forEach(function(sc){ allItens = allItens.concat(sc.itens); });
-    allItens.forEach(function(item){
-      var v = agItemTotal(item);
-      metaTot += v;
-      if (item.prio) metaPrio += v;
-    });
-  });
   var totalAvesMeta = 0;
   agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
-  metaTot += totalAvesMeta;
-
-  var pctPrio = metaPrio>0 ? Math.round(eSemTambor/metaPrio*100) : 0;
-  var pctTot  = metaTot>0  ? Math.round(eSemTambor/metaTot*100)  : 0;
-  document.getElementById('ag-meta-prio').textContent = agFmtS(metaPrio);
-  document.getElementById('ag-meta-total').textContent = agFmtS(metaTot);
-  document.getElementById('ag-meta-prio-pct').textContent = metaPrio>0 ? (agFmtS(eSemTambor)+' / '+agFmtS(metaPrio)+' · '+pctPrio+'%'+(eSemTambor>=metaPrio?' ✅':'')) : 'marque itens ⭐ no orçamento';
-  document.getElementById('ag-meta-total-pct').textContent = metaTot>0 ? (agFmtS(eSemTambor)+' / '+agFmtS(metaTot)+' · '+pctTot+'%'+(eSemTambor>=metaTot?' ✅':'')) : 'adicione itens ao orçamento';
 
   agAtualizarProgresso(sSemTambor, totalAvesMeta);
   agAtualizarProgressoTambor();
