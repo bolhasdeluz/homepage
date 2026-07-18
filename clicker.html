@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clicker de Bolhas de Luz — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Clicker de Bolhas de Luz.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);
+  --gold:#b8860b;--gold-dim:rgba(184,134,11,.1);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.bolhas-fundo{position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none}
+.bolha{position:absolute;border-radius:50%;border:1.5px solid rgba(196,57,107,.18);background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.5),rgba(196,57,107,.03));animation:bolhaSobe linear infinite}
+@keyframes bolhaSobe{
+  0%{transform:translateY(0) translateX(0) scale(1);opacity:0}
+  8%{opacity:.65}
+  92%{opacity:.5}
+  100%{transform:translateY(-115vh) translateX(var(--deriva,20px)) scale(1.15);opacity:0}
+}
+
+.topo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;max-width:480px;margin:0 auto}
+.topo-voltar{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--rosa);border:1px solid var(--border);border-radius:20px;padding:6px 14px;white-space:nowrap}
+.topo-login{display:flex;align-items:center;gap:8px}
+#login-avatar{width:26px;height:26px;border-radius:50%;display:none;object-fit:cover}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);display:none}
+
+.wrap{max-width:480px;margin:0 auto;padding:4px 16px 60px}
+
+.ck-titulo{text-align:center;margin:6px 0 18px}
+.ck-titulo h1{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text)}
+.ck-titulo p{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.9rem;margin-top:4px}
+
+.ck-contador{text-align:center;background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:18px;box-shadow:0 4px 24px rgba(196,57,107,.08)}
+.ck-contador-val{font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:600;color:var(--rosa);line-height:1}
+.ck-contador-lbl{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+.ck-contador-sub{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:6px}
+
+.ck-clique-area{display:flex;justify-content:center;margin-bottom:22px;position:relative}
+.ck-personagem-btn{position:relative;width:170px;height:170px;border:none;background:none;padding:0;transition:transform .1s}
+.ck-personagem-btn:active{transform:scale(.92)}
+.ck-personagem-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 20px rgba(196,57,107,.25))}
+.ck-personagem-emoji{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5.2rem;filter:drop-shadow(0 8px 20px rgba(196,57,107,.25))}
+.ck-flutuante{position:absolute;left:50%;top:20%;font-family:'Cinzel',serif;font-weight:700;color:var(--rosa);font-size:1.1rem;pointer-events:none;animation:ckFlutuar .9s ease-out forwards}
+@keyframes ckFlutuar{0%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-60px) scale(1.3)}}
+
+.ck-secao-titulo{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin:22px 0 10px;display:flex;align-items:center;gap:6px}
+
+.ck-lista{display:flex;flex-direction:column;gap:8px}
+.ck-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 10px rgba(180,60,90,.05)}
+.ck-item.indisponivel{opacity:.55}
+.ck-item-img{width:44px;height:44px;object-fit:contain;flex-shrink:0}
+.ck-item-emoji{width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;background:var(--rosa-dim);border-radius:10px}
+.ck-item-info{flex:1;min-width:0}
+.ck-item-nome{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:var(--text)}
+.ck-item-sub{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim);margin-top:1px}
+.ck-item-qtd{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;color:var(--rosa);margin-top:2px}
+.ck-item-btn{background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.62rem;font-weight:700;letter-spacing:.05em;padding:8px 12px;white-space:nowrap;flex-shrink:0}
+.ck-item-btn:disabled{background:rgba(80,30,50,.18);cursor:not-allowed}
+.ck-item-btn.comprado{background:var(--green)}
+
+.ck-vazio{text-align:center;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem;padding:14px}
+
+.ck-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 20px;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:.78rem;opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.ck-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="bolhas-fundo" id="bolhas-fundo"></div>
+
+<div class="topo">
+  <a class="topo-voltar" href="/index.html">← Voltar</a>
+  <div class="topo-login">
+    <span id="login-status">Entrando...</span>
+    <img id="login-avatar">
+    <button id="login-btn" style="display:none">Entrar com Google</button>
+    <button id="logout-btn">Sair</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="ck-titulo">
+    <h1>🫧 Clicker de Bolhas de Luz</h1>
+    <p>Clique, junte bolhas e decore o seu terreirinho</p>
+  </div>
+
+  <div class="ck-contador">
+    <div class="ck-contador-val" id="ck-bolhas-total">0</div>
+    <div class="ck-contador-lbl">Bolhas de Luz</div>
+    <div class="ck-contador-sub" id="ck-producao-sub">0 bolhas por segundo</div>
+  </div>
+
+  <div class="ck-clique-area">
+    <button class="ck-personagem-btn" id="ck-personagem-btn" title="Clique pra gerar bolhas">
+      <img class="ck-personagem-img" id="ck-personagem-img" src="assets/clicker/personagem.png" alt="Personagem do clicker" style="display:none">
+      <div class="ck-personagem-emoji" id="ck-personagem-emoji">🫧</div>
+    </button>
+  </div>
+
+  <div class="ck-secao-titulo">🌳 Ajudantes</div>
+  <div class="ck-lista" id="ck-ajudantes-lista"></div>
+
+  <div class="ck-secao-titulo">🪑 Lojinha do Terreirinho</div>
+  <div class="ck-lista" id="ck-moveis-lista">
+    <div class="ck-vazio">Carregando lojinha...</div>
+  </div>
+
+</div>
+
+<div class="ck-toast" id="ck-toast"></div>
+
+<script>
+// fundo de bolhas subindo — só decorativo
+(function() {
+  const container = document.getElementById('bolhas-fundo');
+  const n = 14;
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div');
+    b.className = 'bolha';
+    const tamanho = 10 + Math.random() * 34;
+    b.style.width = tamanho + 'px';
+    b.style.height = tamanho + 'px';
+    b.style.left = Math.random() * 100 + '%';
+    b.style.setProperty('--deriva', (Math.random() * 60 - 30) + 'px');
+    b.style.animationDuration = (10 + Math.random() * 12) + 's';
+    b.style.animationDelay = (Math.random() * 12) + 's';
+    container.appendChild(b);
+  }
+})();
+
+function ckToast(msg) {
+  const el = document.getElementById('ck-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(window._ckToastTimer);
+  window._ckToastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, updateDoc, setDoc, collection, getDocs, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+// ══════════════════════════════════════════════════════════════
+// AJUDANTES — uma criatura só, em tiers batizados com nomes de
+// árvores. Cada tier tem seu próprio custo (que cresce a cada
+// compra) e produção de bolhas por segundo.
+// ══════════════════════════════════════════════════════════════
+const CK_AJUDANTES = [
+  { id: 'guapuruvu', nome: 'Guapuruvu', custoBase: 15,      producao: 0.1 },
+  { id: 'ipe',        nome: 'Ipê',        custoBase: 100,     producao: 1 },
+  { id: 'jequitiba',  nome: 'Jequitibá',  custoBase: 1100,    producao: 8 },
+  { id: 'aroeira',    nome: 'Aroeira',    custoBase: 12000,   producao: 47 },
+  { id: 'jatoba',     nome: 'Jatobá',     custoBase: 130000,  producao: 260 },
+  { id: 'angico',     nome: 'Angico',     custoBase: 1400000, producao: 1400 },
+];
+const CK_MULTIPLICADOR_CUSTO = 1.15;
+
+function ckCustoAjudante(ajudante, qtdAtual) {
+  return Math.ceil(ajudante.custoBase * Math.pow(CK_MULTIPLICADOR_CUSTO, qtdAtual));
+}
+
+// ══════════════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════════════
+let ckEstado = { bolhas: 0, ajudantes: {}, itensComprados: [], clickerUltimoSalvo: null };
+let ckMoveisCatalogo = [];
+let ckSalvarTimer = null;
+let ckUid = null;
+
+function ckProducaoTotalPorSegundo() {
+  return CK_AJUDANTES.reduce((soma, aj) => soma + (ckEstado.ajudantes[aj.id] || 0) * aj.producao, 0);
+}
+
+function ckFormatarNumero(v) {
+  if (v < 1000) {
+    // mantém 1 casa decimal pra valores fracionários pequenos (ex.: 0.1/s de
+    // um único ajudante iniciante) — arredondar pra baixo faria isso virar
+    // "0", como se não tivesse produção nenhuma
+    return Number.isInteger(v) ? String(v) : v.toFixed(1);
+  }
+  const n = Math.floor(v);
+  if (n < 1000000) return (n / 1000).toFixed(n < 10000 ? 1 : 0) + 'mil';
+  return (n / 1000000).toFixed(1) + 'mi';
+}
+
+function ckAtualizarContador() {
+  document.getElementById('ck-bolhas-total').textContent = '🫧 ' + ckFormatarNumero(ckEstado.bolhas);
+  const producao = ckProducaoTotalPorSegundo();
+  document.getElementById('ck-producao-sub').textContent = producao > 0
+    ? ckFormatarNumero(producao) + ' bolhas por segundo (dos ajudantes)'
+    : 'clique no personagem pra começar';
+}
+
+function ckAgendarSalvar() {
+  clearTimeout(ckSalvarTimer);
+  ckSalvarTimer = setTimeout(ckSalvar, 800);
+}
+
+async function ckSalvar() {
+  if (!ckUid) return;
+  try {
+    await updateDoc(doc(db, 'terreira_jogadores', ckUid), {
+      bolhas: ckEstado.bolhas,
+      ajudantes: ckEstado.ajudantes,
+      itensComprados: ckEstado.itensComprados,
+      clickerUltimoSalvo: serverTimestamp()
+    });
+  } catch (e) { console.warn('ck salvar:', e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// CLIQUE MANUAL
+// ══════════════════════════════════════════════════════════════
+document.getElementById('ck-personagem-btn').addEventListener('click', (e) => {
+  ckEstado.bolhas += 1;
+  ckAtualizarContador();
+  ckAgendarSalvar();
+  ckMostrarFlutuante(e);
+  const btn = document.getElementById('ck-personagem-btn');
+  btn.style.transform = 'scale(.92)';
+  setTimeout(() => { btn.style.transform = ''; }, 90);
+});
+
+function ckMostrarFlutuante(e) {
+  const area = document.querySelector('.ck-clique-area');
+  const el = document.createElement('div');
+  el.className = 'ck-flutuante';
+  el.textContent = '+1';
+  el.style.left = (45 + Math.random() * 10) + '%';
+  area.appendChild(el);
+  setTimeout(() => el.remove(), 900);
+}
+
+document.getElementById('ck-personagem-img').addEventListener('error', function() {
+  this.style.display = 'none';
+});
+document.getElementById('ck-personagem-img').addEventListener('load', function() {
+  this.style.display = 'block';
+  document.getElementById('ck-personagem-emoji').style.display = 'none';
+});
+
+// ══════════════════════════════════════════════════════════════
+// PRODUÇÃO PASSIVA — tick a cada segundo enquanto a página tá aberta
+// ══════════════════════════════════════════════════════════════
+setInterval(() => {
+  const producao = ckProducaoTotalPorSegundo();
+  if (producao > 0) {
+    ckEstado.bolhas += producao;
+    ckAtualizarContador();
+    ckAgendarSalvar();
+  }
+}, 1000);
+
+// ganho offline — calcula quanto os ajudantes produziram enquanto a pessoa
+// estava fora, com um teto de 8h pra não virar um exploit de "deixar parado
+// pra sempre" nem confundir quem só voltou depois de dias
+const CK_TETO_OFFLINE_MS = 8 * 60 * 60 * 1000;
+function ckAplicarGanhoOffline() {
+  if (!ckEstado.clickerUltimoSalvo) return;
+  const passou = Math.min(Date.now() - ckEstado.clickerUltimoSalvo, CK_TETO_OFFLINE_MS);
+  if (passou < 30000) return; // menos de 30s não vale a pena avisar
+  const producao = ckProducaoTotalPorSegundo();
+  if (producao <= 0) return;
+  const ganho = producao * (passou / 1000);
+  ckEstado.bolhas += ganho;
+  const minutos = Math.round(passou / 60000);
+  ckToast('🫧 Seus ajudantes juntaram ' + ckFormatarNumero(ganho) + ' bolhas enquanto você esteve fora (' + minutos + ' min)');
+}
+
+// ══════════════════════════════════════════════════════════════
+// AJUDANTES — renderização e compra
+// ══════════════════════════════════════════════════════════════
+function ckRenderAjudantes() {
+  const lista = document.getElementById('ck-ajudantes-lista');
+  lista.innerHTML = '';
+  CK_AJUDANTES.forEach(aj => {
+    const qtd = ckEstado.ajudantes[aj.id] || 0;
+    const custo = ckCustoAjudante(aj, qtd);
+    const daPra = ckEstado.bolhas >= custo;
+    const item = document.createElement('div');
+    item.className = 'ck-item';
+    item.innerHTML = `
+      <img class="ck-item-img" src="assets/clicker/ajudante-${aj.id}.png" alt="${aj.nome}" style="display:none"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+        onload="this.style.display='block';this.nextElementSibling.style.display='none'">
+      <div class="ck-item-emoji">🌳</div>
+      <div class="ck-item-info">
+        <div class="ck-item-nome">${aj.nome}</div>
+        <div class="ck-item-sub">+${aj.producao} bolha${aj.producao === 1 ? '' : 's'}/s cada</div>
+        <div class="ck-item-qtd">${qtd} no terreirinho</div>
+      </div>
+      <button class="ck-item-btn" ${daPra ? '' : 'disabled'} onclick="window._ckComprarAjudante('${aj.id}')">🫧 ${ckFormatarNumero(custo)}</button>
+    `;
+    lista.appendChild(item);
+  });
+}
+
+window._ckComprarAjudante = function(id) {
+  const aj = CK_AJUDANTES.find(a => a.id === id);
+  if (!aj) return;
+  const qtd = ckEstado.ajudantes[id] || 0;
+  const custo = ckCustoAjudante(aj, qtd);
+  if (ckEstado.bolhas < custo) return;
+  ckEstado.bolhas -= custo;
+  ckEstado.ajudantes[id] = qtd + 1;
+  ckAtualizarContador();
+  ckRenderAjudantes();
+  ckAgendarSalvar();
+  ckToast(aj.nome + ' se juntou ao seu terreirinho! 🌳');
+};
+
+// ══════════════════════════════════════════════════════════════
+// LOJINHA DE MÓVEIS — itens do catálogo do terreirinho que têm
+// precoBolhas definido (ver painel admin da Terreira em Jogos)
+// ══════════════════════════════════════════════════════════════
+async function ckCarregarMoveis() {
+  try {
+    const snap = await getDocs(collection(db, 'terreira_catalogo'));
+    ckMoveisCatalogo = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(item => item.precoBolhas != null)
+      .sort((a, b) => a.precoBolhas - b.precoBolhas);
+  } catch (e) { console.warn('ck carregar móveis:', e); ckMoveisCatalogo = []; }
+  ckRenderMoveis();
+}
+
+function ckRenderMoveis() {
+  const lista = document.getElementById('ck-moveis-lista');
+  if (!ckMoveisCatalogo.length) {
+    lista.innerHTML = '<div class="ck-vazio">Ainda não tem nenhum móvel especial à venda — em breve!</div>';
+    return;
+  }
+  lista.innerHTML = '';
+  ckMoveisCatalogo.forEach(item => {
+    const comprado = ckEstado.itensComprados.includes(item.id);
+    const daPra = ckEstado.bolhas >= item.precoBolhas;
+    const el = document.createElement('div');
+    el.className = 'ck-item' + (!comprado && !daPra ? ' indisponivel' : '');
+    el.innerHTML = `
+      <img class="ck-item-img" src="${item.imagem || ''}" alt="${item.nome}">
+      <div class="ck-item-info">
+        <div class="ck-item-nome">${item.nome}</div>
+        <div class="ck-item-sub">${comprado ? 'Já é seu — vá colocar no terreirinho' : 'Compre e desbloqueie no seu terreirinho'}</div>
+      </div>
+      <button class="ck-item-btn ${comprado ? 'comprado' : ''}" ${comprado || !daPra ? 'disabled' : ''} onclick="window._ckComprarMovel('${item.id}')">
+        ${comprado ? '✓ Seu' : '🫧 ' + ckFormatarNumero(item.precoBolhas)}
+      </button>
+    `;
+    lista.appendChild(el);
+  });
+}
+
+window._ckComprarMovel = function(id) {
+  const item = ckMoveisCatalogo.find(i => i.id === id);
+  if (!item || ckEstado.itensComprados.includes(id)) return;
+  if (ckEstado.bolhas < item.precoBolhas) return;
+  ckEstado.bolhas -= item.precoBolhas;
+  ckEstado.itensComprados.push(id);
+  ckAtualizarContador();
+  ckRenderMoveis();
+  ckAgendarSalvar();
+  ckToast('🪑 ' + item.nome + ' comprado! Vá até o seu terreirinho pra colocar ✦');
+};
+
+// ══════════════════════════════════════════════════════════════
+// CARREGAR / LOGIN
+// ══════════════════════════════════════════════════════════════
+async function ckCarregarProgresso(uid) {
+  try {
+    const ref = doc(db, 'terreira_jogadores', uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const dados = snap.data();
+      ckEstado = {
+        bolhas: dados.bolhas || 0,
+        ajudantes: dados.ajudantes || {},
+        itensComprados: dados.itensComprados || [],
+        clickerUltimoSalvo: dados.clickerUltimoSalvo?.toMillis?.() || null
+      };
+    } else {
+      // ainda não existe doc pra essa pessoa (primeira vez em Jogos) — cria vazio
+      await setDoc(ref, { bolhas: 0, ajudantes: {}, itensComprados: [], dataInicio: serverTimestamp() }, { merge: true });
+      ckEstado = { bolhas: 0, ajudantes: {}, itensComprados: [], clickerUltimoSalvo: null };
+    }
+  } catch (e) {
+    console.warn('ck carregar progresso:', e);
+    ckEstado = { bolhas: 0, ajudantes: {}, itensComprados: [], clickerUltimoSalvo: null };
+  }
+  ckAplicarGanhoOffline();
+  ckAtualizarContador();
+  ckRenderAjudantes();
+  ckRenderMoveis();
+}
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    ckUid = user.uid;
+    await ckCarregarProgresso(ckUid);
+  } else {
+    statusEl.textContent = 'Entre pra guardar seu progresso';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    ckUid = null;
+    ckEstado = { bolhas: 0, ajudantes: {}, itensComprados: [], clickerUltimoSalvo: null };
+    ckAtualizarContador();
+    ckRenderAjudantes();
+  }
+});
+
+ckCarregarMoveis();
+
+// salva antes de sair da página, pra não perder os últimos cliques
+window.addEventListener('beforeunload', () => { if (ckUid) ckSalvar(); });
+</script>
+
+</body>
+</html>
