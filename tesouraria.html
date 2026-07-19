@@ -3135,13 +3135,16 @@ function agObrigacaoDe(p) { return p.isento ? 0 : AG_OBRIGACAO; }
 
 // ── SALDO ────────────────────────────────────────────────────
 function agAtualizarSaldo() {
-  // Entradas = tudo que as pessoas já pagaram (obrigação + aves).
-  // Saídas = tudo que já foi gasto de verdade (Tambor/Uber incluído).
-  // Sobrou = Entradas − Saídas, direto, sem desconto escondido de nada —
-  // pra saber quanto ainda falta comprometer (ex.: o resto do Tambor/Uber),
-  // olha a barra "🥁 Tambor / Agê + Uber" mais acima, que já mostra isso.
+  // Entradas = só a obrigação (R$270) que as pessoas já pagaram — as aves são
+  // uma conta separada, só aparecem na lista própria delas (barra "🐓 Aves
+  // esperado"), nunca aqui.
+  // Saídas = tudo que já foi gasto de verdade (Tambor/Uber incluído — o
+  // quanto já foi pago do Tambor/Uber aparece aqui, descontando das entradas).
+  // Sobrou = Entradas − Saídas, direto, sem desconto escondido de mais nada —
+  // pra saber quanto ainda falta comprometer do Tambor/Uber, olha a barra
+  // "🥁 Tambor / Agê + Uber" mais acima, que já mostra isso.
   var e=0, s=agGastos.reduce(function(a,g){return a+g.valor;},0);
-  agPessoas.forEach(function(p){ var pg=agPgtos[p.nome]; e+=pg.obr+pg.aves; });
+  agPessoas.forEach(function(p){ var pg=agPgtos[p.nome]; e+=pg.obr; });
 
   document.getElementById('ag-totalE').textContent=agFmtS(e);
   document.getElementById('ag-totalS').textContent=agFmtS(s);
@@ -4165,7 +4168,7 @@ function agExportCSV() {
   linhas.push(['GASTOS','','','','','','','','','']);
   linhas.push(['Descrição','Categoria','Data','Valor','','','','','','']);
   agGastos.forEach(function(g){ linhas.push([g.desc,g.categoria,g.data||'',g.valor.toFixed(2),'','','','','','']); });
-  var totalE=agPessoas.reduce(function(s,p){var pg=agPgtos[p.nome];return s+pg.obr+pg.aves;},0);
+  var totalE=agPessoas.reduce(function(s,p){var pg=agPgtos[p.nome];return s+pg.obr;},0);
   var totalS=agGastos.reduce(function(s,g){return s+g.valor;},0);
   linhas.push([]);
   linhas.push(['Entradas','','','',totalE.toFixed(2),'','','','','']);
@@ -4191,7 +4194,7 @@ function agTogglePriv() {
 
 function agGerarMsgWpp() {
   var hoje=new Date().toLocaleDateString('pt-BR');
-  var totalE=agPessoas.reduce(function(s,p){var pg=agPgtos[p.nome];return s+pg.obr+pg.aves;},0);
+  var totalE=agPessoas.reduce(function(s,p){var pg=agPgtos[p.nome];return s+pg.obr;},0);
   var totalS=agGastos.reduce(function(s,g){return s+g.valor;},0);
   var msg='🕯 *OBRIGAÇÃO DE AGOSTO — BOLHAS DE LUZ*'+(agPrivAtivo?' 🔒':'')+'\n📅 '+hoje+'\n'+'─'.repeat(28)+'\n\n';
   msg+='💰 *SALDO*\n▸ Entradas: '+agFmt(totalE)+'\n▸ Saídas: '+agFmt(totalS)+'\n▸ Saldo: *'+agFmt(totalE-totalS)+'*\n\n';
