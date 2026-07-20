@@ -3438,13 +3438,17 @@ function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
     return pg.obr >= AG_OBRIGACAO;
   });
   var pctPag270 = naoIsentas.length ? Math.round(quitaram270.length/naoIsentas.length*100) : 0;
-  var pctCob270 = totalGastos>0 ? Math.round(totalObrPago/totalGastos*100) : (totalObrPago>0?100:0);
+  // Coberto = % do total esperado da obrigação (R$270 × quem deve pagar) que já
+  // foi arrecadado — não tem relação com os gastos gerais do Agosto (Tambor,
+  // Uber etc.), que já têm barra de progresso própria mais abaixo.
+  var totalObrEsperado = naoIsentas.length * AG_OBRIGACAO;
+  var pctCob270 = totalObrEsperado>0 ? Math.round(totalObrPago/totalObrEsperado*100) : (totalObrPago>0?100:0);
   var naoPag270 = naoIsentas.filter(function(p){ return quitaram270.indexOf(p)===-1; }).map(function(p){ return p.nome; });
 
   document.getElementById('ag270-pct-pag').textContent = pctPag270 + '%';
   document.getElementById('ag270-pag-sub').textContent = quitaram270.length + '/' + naoIsentas.length + ' membros';
   document.getElementById('ag270-pct-cob').textContent = pctCob270 + '%';
-  document.getElementById('ag270-cob-sub').textContent = agFmt(totalObrPago) + ' / ' + agFmt(totalGastos);
+  document.getElementById('ag270-cob-sub').textContent = agFmt(totalObrPago) + ' / ' + agFmt(totalObrEsperado);
   document.getElementById('ag270-bar-cob').style.width = Math.min(pctCob270,100) + '%';
   document.getElementById('ag270-entradas').textContent = agFmt(totalObrPago);
   document.getElementById('ag270-gastos').textContent = agFmt(totalGastos);
