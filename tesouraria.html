@@ -408,6 +408,7 @@ body{padding-bottom:64px}
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showPanel('painel-inicio', this)">Início</button>
+  <button class="nav-btn" onclick="showPanel('painel-contas', this)">Contas</button>
   <button class="nav-btn" onclick="showPanel('painel-caixa', this)">Caixa <span id="caixa-badge" style="display:none;background:var(--gold);color:#fff;border-radius:10px;font-size:8px;padding:1px 5px;margin-left:2px;vertical-align:middle;">0</span></button>
   <button class="nav-btn" onclick="showPanel('painel-historico', this)">Histórico</button>
   <button class="nav-btn" onclick="showPanel('painel-resumo', this)">Resumo</button>
@@ -514,6 +515,20 @@ body{padding-bottom:64px}
     <div id="lista-recente"></div>
   </div>
 
+  <!-- CONTAS (contas fixas do mês, já lançadas — só marcar pago ou não) -->
+  <div id="painel-contas" class="panel">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+      <button onclick="mudarMesFiltro(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:1rem;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
+      <div style="flex:1;text-align:center;">
+        <div id="contas-mes-label" style="font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text);"></div>
+      </div>
+      <button onclick="mudarMesFiltro(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:1rem;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">›</button>
+      <button onclick="abrirGerenciarFicha()" title="Gerenciar contas fixas" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:1rem;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⚙</button>
+    </div>
+    <div id="lista-contas"></div>
+    <div id="contas-vazio" style="display:none;text-align:center;padding:30px 10px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.9rem;">Nenhuma conta fixa cadastrada ainda. Toque em ⚙ pra adicionar (aluguel, luz, água…).</div>
+  </div>
+
   <!-- HISTÓRICO -->
   <div id="painel-historico" class="panel">
     <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
@@ -553,9 +568,6 @@ body{padding-bottom:64px}
     <button onclick="abrirLancamentoModal('pendente')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--red);">
       <span style="width:28px;height:28px;background:rgba(184,64,64,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;">🔴</span> Pendente
     </button>
-    <button onclick="abrirFicha()" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);">
-      <span style="width:28px;height:28px;background:var(--gold-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">📋</span> Ficha do Mês
-    </button>
     <button onclick="abrirLancamentoModal('entrada')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--green);">
       <span style="width:28px;height:28px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">💚</span> Entrada
     </button>
@@ -575,24 +587,7 @@ body{padding-bottom:64px}
 </div>
 
 <!-- FICHA DE CONTAS FIXAS (preenchimento rápido mensal) -->
-<div class="modal-overlay" id="ficha-overlay" onclick="fecharModal('ficha-overlay',event)">
-  <div class="modal-sheet">
-    <div class="modal-header">
-      <div class="modal-title">📋 Ficha de Contas Fixas — <span id="ficha-mes-label"></span></div>
-      <button class="modal-close" onclick="document.getElementById('ficha-overlay').classList.remove('open')">✕</button>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:2px;">
-        <button onclick="abrirGerenciarFicha()" style="background:none;border:none;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);cursor:pointer;">⚙ Gerenciar contas</button>
-      </div>
-      <div id="ficha-linhas"></div>
-      <div id="ficha-vazio" style="display:none;text-align:center;padding:20px 10px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.9rem;">Nenhuma conta fixa cadastrada ainda. Toque em "Gerenciar contas" pra adicionar as suas (aluguel, luz, água…).</div>
-    </div>
-    <div class="modal-footer"><button class="btn-primary" onclick="salvarFicha()">💾 Salvar tudo</button></div>
-  </div>
-</div>
-
-<!-- GERENCIAR CONTAS FIXAS (itens da ficha) -->
+<!-- GERENCIAR CONTAS FIXAS (itens da aba Contas) -->
 <div class="modal-overlay" id="ficha-gerenciar-overlay" onclick="fecharModal('ficha-gerenciar-overlay',event)">
   <div class="modal-sheet">
     <div class="modal-header">
@@ -1109,6 +1104,7 @@ body{padding-bottom:64px}
     if (id === 'painel-historico') renderHistorico();
     if (id === 'painel-resumo') renderResumo();
     if (id === 'painel-inicio') renderInicio();
+    if (id === 'painel-contas') renderContas();
     if (id === 'painel-caixa') {
       renderCaixa();
       // Garante que os dados do Agosto estão carregados para poder direcionar
@@ -1116,6 +1112,15 @@ body{padding-bottom:64px}
         agCarregarDados(function(){});
       }
     }
+  }
+
+  // Reaplica o render do painel que estiver visível no momento (usado depois
+  // de editar/excluir/clonar/marcar pago um lançamento, pra atualizar a tela certa)
+  function renderPainelAtivo() {
+    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
+    if (painelAtivo === 'painel-historico') renderHistorico();
+    else if (painelAtivo === 'painel-contas') renderContas();
+    else renderInicio();
   }
 
   // ── ENTRADA ───────────────────────────────────────────────
@@ -1337,7 +1342,9 @@ body{padding-bottom:64px}
     var d = new Date(ano, mes + delta, 1);
     filtroMesAtivo = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     atualizarLabelMes();
-    renderInicio();
+    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
+    if (painelAtivo === 'painel-contas') renderContas();
+    else renderInicio();
   }
 
   function lancamentosDoMes(mes) {
@@ -1659,9 +1666,7 @@ body{padding-bottom:64px}
     var clone = Object.assign({}, original, { id: Date.now(), data: today() });
     lancamentos.unshift(clone);
     save();
-    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
-    if (painelAtivo === 'painel-historico') renderHistorico();
-    else renderInicio();
+    renderPainelAtivo();
     showToast('Lançamento clonado ✓');
   }
 
@@ -1809,10 +1814,12 @@ body{padding-bottom:64px}
     }
   }
 
-  // ── FICHA DE CONTAS FIXAS (preenchimento rápido, repete todo mês) ──
-  // Lista de contas que se repetem todo mês (aluguel, luz, água…). Cada uma
-  // vira uma linha na ficha, prefilada com o último valor lançado — só ajusta
-  // a variação do mês e marca se já pagou ou não.
+  // ── CONTAS FIXAS (aba "Contas" — já lançadas todo mês, só marca pago/não) ──
+  // Lista de contas que se repetem todo mês (aluguel, luz, água…). Ao abrir a
+  // aba Contas (ou navegar de mês por lá), cada uma já aparece como um
+  // lançamento de gasto pendente, prefilado com o valor e o dia de vencimento
+  // do mês anterior — não precisa preencher formulário nenhum, só editar o
+  // valor se mudou e marcar como pago quando pagar.
   var contasFixas = [
     { id: 1, conta: 'Aluguel', valorPadrao: 0 },
     { id: 2, conta: 'Luz', valorPadrao: 0 },
@@ -1820,24 +1827,10 @@ body{padding-bottom:64px}
     { id: 4, conta: 'Internet', valorPadrao: 0 },
     { id: 5, conta: 'Alarme Serviço', valorPadrao: 0 }
   ];
-  var fichaMes = null;
-  var fichaEstado = {}; // { [contaFixaId]: {valor, status, vencimento, incluir, existingId} }
 
   function saveContasFixas() {
     try { localStorage.setItem('bdl-contas-fixas', JSON.stringify(contasFixas)); } catch(e){}
     kvSet('contas_fixas', contasFixas);
-  }
-
-  function abrirFicha() {
-    fabAberto = false;
-    document.getElementById('fab-menu').style.display = 'none';
-    document.getElementById('fab-btn').style.transform = 'rotate(0)';
-    fichaMes = filtroMesAtivo || today().slice(0,7);
-    var partes = fichaMes.split('-');
-    document.getElementById('ficha-mes-label').textContent = MESES_NOMES_FULL[parseInt(partes[1])-1] + ' ' + partes[0];
-    montarEstadoFicha();
-    renderFicha();
-    document.getElementById('ficha-overlay').classList.add('open');
   }
 
   // Mês anterior a 'YYYY-MM'
@@ -1847,89 +1840,47 @@ body{padding-bottom:64px}
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
   }
 
-  function montarEstadoFicha() {
-    fichaEstado = {};
-    var mesAnt = mesAnterior(fichaMes);
+  // Garante que toda conta fixa já tem um lançamento de gasto pendente pro
+  // mês dado — cria só o que ainda não existe (clonando valor e dia de
+  // vencimento do mês anterior). Idempotente: não duplica se já existir.
+  function garantirContasDoMes(mes) {
+    if (!mes) return;
+    var mesAnt = mesAnterior(mes);
+    var criou = false;
     contasFixas.forEach(function(item) {
-      var doMes = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId === item.id; });
-      var existente = doMes.find(function(l) {
-        return (l.data ? l.data.slice(0,7) : '') === fichaMes;
-      });
-      if (existente) {
-        fichaEstado[item.id] = { valor: existente.valor, status: existente.status === 'pendente' ? 'pendente' : 'pago', vencimento: existente.vencimento || (fichaMes + '-10'), incluir: true, existingId: existente.id };
-      } else {
-        // Clona o mês anterior por padrão (valor e o dia de vencimento) — sempre
-        // editável na ficha. Se não achar o mês anterior exato, usa o último
-        // lançamento dessa conta que existir; sem nenhum histórico, usa o valor
-        // padrão cadastrado em "Gerenciar contas".
-        var historico = doMes.slice().sort(function(a,b){ return new Date(b.data||b.vencimento) - new Date(a.data||a.vencimento); });
-        var base = doMes.find(function(l){ return (l.data ? l.data.slice(0,7) : '') === mesAnt; }) || historico[0];
-        var dia = base ? (base.vencimento || base.data || '').split('-')[2] : null;
-        fichaEstado[item.id] = { valor: base ? base.valor : (item.valorPadrao || 0), status: 'pendente', vencimento: fichaMes + '-' + (dia || '10'), incluir: true, existingId: null };
-      }
+      var doConta = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId === item.id; });
+      var jaExiste = doConta.some(function(l){ return (l.data ? l.data.slice(0,7) : '') === mes; });
+      if (jaExiste) return;
+      var historico = doConta.slice().sort(function(a,b){ return new Date(b.data||b.vencimento) - new Date(a.data||a.vencimento); });
+      var base = doConta.find(function(l){ return (l.data ? l.data.slice(0,7) : '') === mesAnt; }) || historico[0];
+      var dia = base ? (base.vencimento || base.data || '').split('-')[2] : null;
+      var valor = base ? base.valor : (item.valorPadrao || 0);
+      var vencimento = mes + '-' + (dia || '10');
+      lancamentos.push({ id: Date.now() + item.id + Math.random(), tipo: 'gasto', conta: item.conta, valor: valor, contaFixaId: item.id, status: 'pendente', vencimento: vencimento, data: vencimento, obs: '', comprovante: null });
+      criou = true;
     });
+    if (criou) {
+      lancamentos.sort(function(a,b){ return new Date(b.data) - new Date(a.data); });
+      save();
+    }
   }
 
-  function renderFicha() {
-    var wrap = document.getElementById('ficha-linhas');
-    var vazio = document.getElementById('ficha-vazio');
+  function renderContas() {
+    var mes = filtroMesAtivo || today().slice(0,7);
+    var partes = mes.split('-');
+    var label = document.getElementById('contas-mes-label');
+    if (label) label.textContent = MESES_NOMES_FULL[parseInt(partes[1])-1] + ' ' + partes[0];
+    garantirContasDoMes(mes);
+    var wrap = document.getElementById('lista-contas');
+    var vazio = document.getElementById('contas-vazio');
     if (contasFixas.length === 0) { wrap.innerHTML = ''; vazio.style.display = 'block'; return; }
     vazio.style.display = 'none';
-    wrap.innerHTML = contasFixas.map(function(item){ return fichaLinhaHTML(item); }).join('');
-  }
-
-  function fichaLinhaHTML(item) {
-    var st = fichaEstado[item.id] || { valor: 0, status: 'pendente', vencimento: '', incluir: true };
-    var pago = st.status === 'pago';
-    return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;' + (st.incluir ? '' : 'opacity:.45;') + '">'
-      + '<div style="display:flex;align-items:center;gap:8px;">'
-      + '<input type="checkbox" ' + (st.incluir?'checked':'') + ' onchange="fichaToggleIncluir(' + item.id + ', this.checked)" style="width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;">'
-      + '<div style="flex:1;font-family:\'Crimson Pro\',serif;font-size:.95rem;font-weight:600;color:var(--text);">' + item.conta + '</div>'
-      + '<button onclick="fichaToggleStatus(' + item.id + ')" style="border:1px solid ' + (pago?'var(--green)':'var(--red)') + ';color:' + (pago?'var(--green)':'var(--red)') + ';background:none;border-radius:20px;font-family:\'Cinzel\',serif;font-size:8.5px;font-weight:700;letter-spacing:.06em;padding:4px 9px;cursor:pointer;white-space:nowrap;">' + (pago ? '✅ Pago' : '🔴 Pendente') + '</button>'
-      + '</div>'
-      + '<div style="display:flex;gap:8px;margin-top:8px;">'
-      + '<input type="number" value="' + (st.valor || '') + '" placeholder="0,00" min="0" step="0.01" oninput="fichaAtualizarValor(' + item.id + ', this.value)" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:\'Crimson Pro\',serif;font-size:.95rem;padding:6px 9px;">'
-      + (pago ? '' : '<input type="date" value="' + (st.vencimento||'') + '" oninput="fichaAtualizarVenc(' + item.id + ', this.value)" style="background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:\'DM Sans\',sans-serif;font-size:.82rem;padding:6px 9px;">')
-      + '</div></div>';
-  }
-
-  function fichaToggleIncluir(id, val) { if (fichaEstado[id]) { fichaEstado[id].incluir = val; renderFicha(); } }
-  function fichaToggleStatus(id) { if (fichaEstado[id]) { fichaEstado[id].status = fichaEstado[id].status === 'pago' ? 'pendente' : 'pago'; renderFicha(); } }
-  function fichaAtualizarValor(id, val) { if (fichaEstado[id]) fichaEstado[id].valor = parseFloat(val) || 0; }
-  function fichaAtualizarVenc(id, val) { if (fichaEstado[id]) fichaEstado[id].vencimento = val; }
-
-  function salvarFicha() {
-    var criados = 0, atualizados = 0;
-    var dataPago = (fichaMes === today().slice(0,7)) ? today() : (fichaMes + '-01');
-    contasFixas.forEach(function(item) {
-      var st = fichaEstado[item.id];
-      if (!st || !st.incluir || !st.valor || st.valor <= 0) return;
-      if (st.existingId) {
-        var l = lancamentos.find(function(x){ return x.id === st.existingId; });
-        if (!l) return;
-        l.valor = st.valor;
-        if (st.status === 'pendente') { l.status = 'pendente'; l.vencimento = st.vencimento || (fichaMes + '-10'); l.data = l.vencimento; }
-        else { delete l.status; delete l.vencimento; l.data = dataPago; }
-        atualizados++;
-      } else {
-        var novo = { id: Date.now() + item.id + Math.random(), tipo: 'gasto', conta: item.conta, valor: st.valor, contaFixaId: item.id, obs: '', comprovante: null };
-        if (st.status === 'pendente') { novo.status = 'pendente'; novo.vencimento = st.vencimento || (fichaMes + '-10'); novo.data = novo.vencimento; }
-        else { novo.data = dataPago; }
-        lancamentos.push(novo);
-        criados++;
-      }
+    var lista = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId && (l.data ? l.data.slice(0,7) : '') === mes; });
+    lista.sort(function(a,b){
+      if ((a.status === 'pendente') !== (b.status === 'pendente')) return a.status === 'pendente' ? -1 : 1;
+      return (a.conta||'').localeCompare(b.conta||'');
     });
-    if (criados === 0 && atualizados === 0) { showToast('Preencha ao menos uma conta'); return; }
-    lancamentos.sort(function(a,b){ return new Date(b.data) - new Date(a.data); });
-    save();
-    document.getElementById('ficha-overlay').classList.remove('open');
-    try { renderInicio(); } catch(e){}
-    try { renderHistorico(); } catch(e){}
-    try { renderResumo(); } catch(e){}
-    var partes = [];
-    if (criados) partes.push(criados + ' nova' + (criados>1?'s':''));
-    if (atualizados) partes.push(atualizados + ' atualizada' + (atualizados>1?'s':''));
-    showToast(partes.join(' · ') + ' ✓');
+    wrap.innerHTML = lista.map(function(l, idx){ return itemHTML(l, idx); }).join('');
   }
 
   function abrirGerenciarFicha() {
@@ -1958,24 +1909,21 @@ body{padding-bottom:64px}
     var nome = document.getElementById('ficha-nova-conta').value.trim();
     var valor = parseFloat(document.getElementById('ficha-novo-valor').value) || 0;
     if (!nome) { showToast('Dê um nome pra conta'); return; }
-    var novoItem = { id: Date.now(), conta: nome, valorPadrao: valor };
-    contasFixas.push(novoItem);
-    fichaEstado[novoItem.id] = { valor: valor, status: 'pendente', vencimento: (fichaMes || today().slice(0,7)) + '-10', incluir: true, existingId: null };
+    contasFixas.push({ id: Date.now(), conta: nome, valorPadrao: valor });
     saveContasFixas();
     document.getElementById('ficha-nova-conta').value = '';
     document.getElementById('ficha-novo-valor').value = '';
     renderGerenciarFicha();
-    renderFicha();
+    renderContas();
   }
 
   function removerContaFixa(id) {
     var idx = contasFixas.findIndex(function(x){ return x.id === id; });
     if (idx === -1) return;
     contasFixas.splice(idx, 1);
-    delete fichaEstado[id];
     saveContasFixas();
     renderGerenciarFicha();
-    renderFicha();
+    renderContas();
   }
 
   // ── EXPORT ────────────────────────────────────────────────
@@ -2420,9 +2368,7 @@ body{padding-bottom:64px}
     l.data = today();
     save();
     showToast('Marcado como pago ✅');
-    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
-    if (painelAtivo === 'painel-historico') renderHistorico();
-    else renderInicio();
+    renderPainelAtivo();
   }
 
   // ── EDIT FILE HANDLING ────────────────────────────────────
@@ -2523,9 +2469,8 @@ body{padding-bottom:64px}
     save();
     document.getElementById('edit-overlay').classList.remove('open');
     showToast('Lançamento atualizado ✓');
-    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
-    if (painelAtivo === 'painel-historico') renderHistorico();
-    else { renderInicio(); renderResumo(); }
+    renderPainelAtivo();
+    renderResumo();
   }
 
   function excluirLancamento() {
@@ -2535,9 +2480,7 @@ body{padding-bottom:64px}
     save();
     document.getElementById('edit-overlay').classList.remove('open');
     showToast('Lançamento excluído');
-    var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
-    if (painelAtivo === 'painel-historico') renderHistorico();
-    else renderInicio();
+    renderPainelAtivo();
     renderResumo();
   }
 
