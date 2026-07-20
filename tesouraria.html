@@ -571,8 +571,24 @@ body{padding-bottom:64px}
     <button onclick="abrirLancamentoModal('entrada')" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--green);">
       <span style="width:28px;height:28px;background:var(--green-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">💚</span> Entrada
     </button>
+    <button onclick="abrirResumoGeral()" style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:20px;padding:8px 16px 8px 12px;box-shadow:0 4px 16px rgba(180,60,90,.15);cursor:pointer;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);">
+      <span style="width:28px;height:28px;background:var(--gold-dim);border-radius:50%;display:flex;align-items:center;justify-content:center;">📊</span> Resumo Geral
+    </button>
   </div>
   <button id="fab-btn" onclick="toggleFab()" style="width:52px;height:52px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:50%;color:#fff;font-size:1.5rem;box-shadow:0 4px 20px rgba(196,57,107,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .2s;">＋</button>
+</div>
+
+<!-- RESUMO GERAL (Mensalidades + 270 + Aves juntos, pronto pra compartilhar) -->
+<div id="resumo-geral-modal" style="position:fixed;inset:0;z-index:550;background:var(--bg);overflow-y:auto;display:none;padding-top:34px;">
+  <style>#resumo-geral-modal.open { display:block !important; }</style>
+  <div style="background:linear-gradient(135deg,var(--gold),var(--gold-light));padding:16px;position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 20px rgba(180,60,90,.25);">
+    <div>
+      <div style="font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:#fff;letter-spacing:.08em;">📊 Resumo Geral</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:rgba(255,255,255,.75);margin-top:2px;">Bolhas de Luz — pronto pra compartilhar</div>
+    </div>
+    <button onclick="document.getElementById('resumo-geral-modal').classList.remove('open')" style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:6px 13px;cursor:pointer;white-space:nowrap;">✕ Fechar</button>
+  </div>
+  <div id="resumo-geral-corpo" style="padding:14px;max-width:480px;margin:0 auto;"></div>
 </div>
 
 <!-- WPP MODAL -->
@@ -1924,6 +1940,110 @@ body{padding-bottom:64px}
     saveContasFixas();
     renderGerenciarFicha();
     renderContas();
+  }
+
+  // ── RESUMO GERAL (Mensalidades + 270 + Aves juntos, pra compartilhar) ──
+  // Calcula os números do card de mensalidades sem tocar no DOM (mesma lógica
+  // do modo mês do renderInicio), pra poder desenhar o mesmo card em telas
+  // diferentes sem duplicar a conta.
+  function calcularCardMensalidades(mes) {
+    var lista = lancamentosDoMes(mes);
+    var totalE = lista.filter(function(l){ return l.tipo === 'entrada'; }).reduce(function(a,l){ return a + l.valor; }, 0);
+    var totalG = lista.filter(function(l){ return l.tipo === 'gasto'; }).reduce(function(a,l){ return a + l.valor; }, 0);
+    var membros = getMembrosAtivos(mes);
+    var entradasMembros = lista.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; });
+    var pagaram = {};
+    entradasMembros.forEach(function(l){ if(l.membro) pagaram[l.membro]=true; });
+    var nPag = Object.keys(pagaram).length;
+    var nTot = membros.length;
+    var pctCob = totalG>0 ? Math.round(totalE/totalG*100) : (totalE>0?100:0);
+    return {
+      pctPag: nTot ? Math.round(nPag/nTot*100) : 0, nPag: nPag, nTot: nTot,
+      pctCob: pctCob, entradas: totalE, gastos: totalG,
+      naoPag: membros.filter(function(m){ return !pagaram[m]; }),
+      saldo: totalE - totalG
+    };
+  }
+
+  function preencherCardMensalidades(prefix, d) {
+    document.getElementById(prefix+'-pct-pag').textContent = d.pctPag + '%';
+    document.getElementById(prefix+'-pag-sub').textContent = d.nPag + '/' + d.nTot + ' membros';
+    document.getElementById(prefix+'-pct-cob').textContent = d.pctCob + '%';
+    document.getElementById(prefix+'-cob-sub').textContent = fmt(d.entradas) + ' / ' + fmt(d.gastos);
+    document.getElementById(prefix+'-bar-cob').style.width = Math.min(d.pctCob,100) + '%';
+    document.getElementById(prefix+'-entradas').textContent = fmt(d.entradas);
+    document.getElementById(prefix+'-gastos').textContent = fmt(d.gastos);
+    document.getElementById(prefix+'-nao-pagaram').textContent = blFaltamTexto(d.naoPag);
+    var saldoLinha = document.getElementById(prefix+'-saldo-linha');
+    if (d.saldo < 0) { saldoLinha.style.display = 'flex'; document.getElementById(prefix+'-saldo-val').textContent = fmt(d.saldo); }
+    else saldoLinha.style.display = 'none';
+  }
+
+  // Gera o HTML de um card estilo "mensalidades" (Pagantes/Coberto) com ids
+  // prefixados, pra poder repetir o mesmo card em telas diferentes.
+  function saldoCardHTML(prefix, titulo, campo2Label, campo2Id) {
+    return '<div class="saldo-card" style="margin-bottom:12px;">'
+      + '<div class="saldo-label">' + titulo + '</div>'
+      + '<div style="display:flex;gap:10px;margin-top:4px;">'
+        + '<div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">👥 Pagantes</div>'
+          + '<div id="'+prefix+'-pct-pag" style="font-family:\'Playfair Display\',serif;font-size:1.4rem;font-weight:600;color:#fff;line-height:1;">0%</div>'
+          + '<div id="'+prefix+'-pag-sub" style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;"></div>'
+        + '</div>'
+        + '<div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">💰 Coberto</div>'
+          + '<div id="'+prefix+'-pct-cob" style="font-family:\'Playfair Display\',serif;font-size:1.4rem;font-weight:600;color:#fff;line-height:1;">0%</div>'
+          + '<div id="'+prefix+'-cob-sub" style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;"></div>'
+        + '</div>'
+      + '</div>'
+      + '<div style="background:rgba(255,255,255,.15);border-radius:4px;height:3px;overflow:hidden;margin-top:10px;">'
+        + '<div id="'+prefix+'-bar-cob" style="height:100%;border-radius:4px;transition:width .4s;width:0%;background:rgba(255,255,255,.85);"></div>'
+      + '</div>'
+      + '<div id="'+prefix+'-saldo-linha" style="display:none;margin-top:8px;justify-content:space-between;align-items:center;">'
+        + '<span style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:rgba(255,255,255,.45);">coberto pela mãe de santo 🕯️</span>'
+        + '<span id="'+prefix+'-saldo-val" style="font-family:\'Crimson Pro\',serif;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.6);"></span>'
+      + '</div>'
+      + '<div style="display:flex;gap:12px;margin-top:10px;">'
+        + '<div style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">↑ Entradas</div>'
+          + '<div id="'+prefix+'-entradas" style="font-family:\'Crimson Pro\',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>'
+        + '</div>'
+        + '<div style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;">'
+          + '<div style="font-family:\'DM Sans\',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">'+campo2Label+'</div>'
+          + '<div id="'+prefix+'-'+campo2Id+'" style="font-family:\'Crimson Pro\',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>'
+        + '</div>'
+      + '</div>'
+      + '<div id="'+prefix+'-nao-pagaram" style="margin-top:7px;font-family:\'DM Sans\',sans-serif;font-size:.67rem;color:rgba(255,255,255,.45);"></div>'
+    + '</div>';
+  }
+
+  function abrirResumoGeral() {
+    fabAberto = false;
+    document.getElementById('fab-menu').style.display = 'none';
+    document.getElementById('fab-btn').style.transform = 'rotate(0)';
+    var mes = filtroMesAtivo || today().slice(0,7);
+    var partes = mes.split('-');
+    var tituloMes = MESES_NOMES_FULL[parseInt(partes[1])-1] + ' ' + partes[0];
+    document.getElementById('resumo-geral-corpo').innerHTML =
+      saldoCardHTML('resumoMensal', '🕯 Mensalidades — ' + tituloMes, '↓ Gastos', 'gastos')
+      + saldoCardHTML('resumo270', '🕯 270 — Obrigação de Agosto', '↓ Gastos', 'gastos')
+      + saldoCardHTML('resumoAves', '🐓 Aves — Agosto', '🎯 Esperado', 'esperado');
+    preencherCardMensalidades('resumoMensal', calcularCardMensalidades(mes));
+    function preencherAgosto() {
+      var e = 0, s = agGastos.reduce(function(a,g){ return a+g.valor; },0);
+      agPessoas.forEach(function(p){ var pg = agPgtos[p.nome] || {obr:0}; e += pg.obr; });
+      var totalAvesMeta = 0;
+      agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
+      var dados = calcularCards270Aves(e, s, totalAvesMeta);
+      preencherCard270('resumo270', dados.c270);
+      preencherCardAves('resumoAves', dados.aves);
+    }
+    if (typeof agCarregarDados === 'function' && Object.keys(agPgtos).length === 0) {
+      agCarregarDados(preencherAgosto);
+    } else {
+      preencherAgosto();
+    }
+    document.getElementById('resumo-geral-modal').classList.add('open');
   }
 
   // ── EXPORT ────────────────────────────────────────────────
@@ -3429,30 +3549,27 @@ function agAtualizarSaldo() {
 }
 
 // ── CARDS ESTILO "MENSALIDADES" (Pagantes/Coberto) — um pra 270, outro pra Aves ──
-function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
+// Calcula os números dos cards de 270 e Aves sem tocar no DOM — usado tanto
+// pelo card fixo do modal Agosto quanto pela tela de Resumo Geral.
+function calcularCards270Aves(totalObrPago, totalGastos, totalAvesMeta) {
   var naoIsentas = agPessoas.filter(function(p){ return !p.isento; });
 
-  // 270 — pagante é quem já quitou a obrigação inteira
+  // 270 — pagante é quem já quitou a obrigação inteira. Coberto = % do total
+  // esperado da obrigação (R$270 × quem deve pagar) que já foi arrecadado —
+  // não tem relação com os gastos gerais do Agosto (Tambor, Uber etc.), que já
+  // têm barra de progresso própria mais abaixo no modal.
   var quitaram270 = naoIsentas.filter(function(p){
     var pg = agPgtos[p.nome] || {obr:0};
     return pg.obr >= AG_OBRIGACAO;
   });
-  var pctPag270 = naoIsentas.length ? Math.round(quitaram270.length/naoIsentas.length*100) : 0;
-  // Coberto = % do total esperado da obrigação (R$270 × quem deve pagar) que já
-  // foi arrecadado — não tem relação com os gastos gerais do Agosto (Tambor,
-  // Uber etc.), que já têm barra de progresso própria mais abaixo.
   var totalObrEsperado = naoIsentas.length * AG_OBRIGACAO;
   var pctCob270 = totalObrEsperado>0 ? Math.round(totalObrPago/totalObrEsperado*100) : (totalObrPago>0?100:0);
-  var naoPag270 = naoIsentas.filter(function(p){ return quitaram270.indexOf(p)===-1; }).map(function(p){ return p.nome; });
-
-  document.getElementById('ag270-pct-pag').textContent = pctPag270 + '%';
-  document.getElementById('ag270-pag-sub').textContent = quitaram270.length + '/' + naoIsentas.length + ' membros';
-  document.getElementById('ag270-pct-cob').textContent = pctCob270 + '%';
-  document.getElementById('ag270-cob-sub').textContent = agFmt(totalObrPago) + ' / ' + agFmt(totalObrEsperado);
-  document.getElementById('ag270-bar-cob').style.width = Math.min(pctCob270,100) + '%';
-  document.getElementById('ag270-entradas').textContent = agFmt(totalObrPago);
-  document.getElementById('ag270-gastos').textContent = agFmt(totalGastos);
-  document.getElementById('ag270-nao-pagaram').textContent = blFaltamTexto(naoPag270);
+  var c270 = {
+    pctPag: naoIsentas.length ? Math.round(quitaram270.length/naoIsentas.length*100) : 0,
+    nPag: quitaram270.length, nTot: naoIsentas.length,
+    pctCob: pctCob270, entradas: totalObrPago, esperado: totalObrEsperado, gastos: totalGastos,
+    naoPag: naoIsentas.filter(function(p){ return quitaram270.indexOf(p)===-1; }).map(function(p){ return p.nome; })
+  };
 
   // Aves — só conta quem encomendou (galos/galinhas > 0); pagante é quem já
   // quitou o valor das aves que encomendou
@@ -3463,18 +3580,43 @@ function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
     var pg = agPgtos[p.nome] || {aves:0};
     return pg.aves >= agAvesVal(p);
   });
-  var pctPagAves = pessoasComAves.length ? Math.round(quitaramAves.length/pessoasComAves.length*100) : 0;
-  var pctCobAves = totalAvesMeta>0 ? Math.round(totalAvesPago/totalAvesMeta*100) : (totalAvesPago>0?100:0);
-  var naoPagAves = pessoasComAves.filter(function(p){ return quitaramAves.indexOf(p)===-1; }).map(function(p){ return p.nome; });
+  var aves = {
+    pctPag: pessoasComAves.length ? Math.round(quitaramAves.length/pessoasComAves.length*100) : 0,
+    nPag: quitaramAves.length, nTot: pessoasComAves.length,
+    pctCob: totalAvesMeta>0 ? Math.round(totalAvesPago/totalAvesMeta*100) : (totalAvesPago>0?100:0),
+    entradas: totalAvesPago, esperado: totalAvesMeta,
+    naoPag: pessoasComAves.filter(function(p){ return quitaramAves.indexOf(p)===-1; }).map(function(p){ return p.nome; })
+  };
 
-  document.getElementById('agAves-pct-pag').textContent = pctPagAves + '%';
-  document.getElementById('agAves-pag-sub').textContent = quitaramAves.length + '/' + pessoasComAves.length + ' membros';
-  document.getElementById('agAves-pct-cob').textContent = pctCobAves + '%';
-  document.getElementById('agAves-cob-sub').textContent = agFmt(totalAvesPago) + ' / ' + agFmt(totalAvesMeta);
-  document.getElementById('agAves-bar-cob').style.width = Math.min(pctCobAves,100) + '%';
-  document.getElementById('agAves-entradas').textContent = agFmt(totalAvesPago);
-  document.getElementById('agAves-esperado').textContent = agFmt(totalAvesMeta);
-  document.getElementById('agAves-nao-pagaram').textContent = blFaltamTexto(naoPagAves);
+  return { c270: c270, aves: aves };
+}
+
+function preencherCard270(prefix, d) {
+  document.getElementById(prefix+'-pct-pag').textContent = d.pctPag + '%';
+  document.getElementById(prefix+'-pag-sub').textContent = d.nPag + '/' + d.nTot + ' membros';
+  document.getElementById(prefix+'-pct-cob').textContent = d.pctCob + '%';
+  document.getElementById(prefix+'-cob-sub').textContent = agFmt(d.entradas) + ' / ' + agFmt(d.esperado);
+  document.getElementById(prefix+'-bar-cob').style.width = Math.min(d.pctCob,100) + '%';
+  document.getElementById(prefix+'-entradas').textContent = agFmt(d.entradas);
+  document.getElementById(prefix+'-gastos').textContent = agFmt(d.gastos);
+  document.getElementById(prefix+'-nao-pagaram').textContent = blFaltamTexto(d.naoPag);
+}
+
+function preencherCardAves(prefix, d) {
+  document.getElementById(prefix+'-pct-pag').textContent = d.pctPag + '%';
+  document.getElementById(prefix+'-pag-sub').textContent = d.nPag + '/' + d.nTot + ' membros';
+  document.getElementById(prefix+'-pct-cob').textContent = d.pctCob + '%';
+  document.getElementById(prefix+'-cob-sub').textContent = agFmt(d.entradas) + ' / ' + agFmt(d.esperado);
+  document.getElementById(prefix+'-bar-cob').style.width = Math.min(d.pctCob,100) + '%';
+  document.getElementById(prefix+'-entradas').textContent = agFmt(d.entradas);
+  document.getElementById(prefix+'-esperado').textContent = agFmt(d.esperado);
+  document.getElementById(prefix+'-nao-pagaram').textContent = blFaltamTexto(d.naoPag);
+}
+
+function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
+  var dados = calcularCards270Aves(totalObrPago, totalGastos, totalAvesMeta);
+  preencherCard270('ag270', dados.c270);
+  preencherCardAves('agAves', dados.aves);
 }
 
 // soma total e quanto já foi pago (valorPago, sem passar do total de cada
@@ -4779,6 +4921,8 @@ function blAjustarTopoFixo() {
     document.body.style.paddingTop = alturaTotal + 'px';
     const agosto = document.getElementById('agosto-modal');
     if (agosto) agosto.style.paddingTop = alturaTotal + 'px';
+    const resumoGeral = document.getElementById('resumo-geral-modal');
+    if (resumoGeral) resumoGeral.style.paddingTop = alturaTotal + 'px';
   });
 }
 window.addEventListener('resize', blAjustarTopoFixo);
