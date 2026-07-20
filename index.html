@@ -5029,6 +5029,10 @@ function toggleDrawer() {
   d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');
   document.body.style.overflow=open?'':'hidden';
 }
+function abrirDrawer() {
+  const d = document.getElementById('drawer');
+  if (d && !d.classList.contains('open')) toggleDrawer();
+}
 function drawerFiltrar(texto) {
   const termo = (texto || '').trim().toLowerCase();
   document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
@@ -5110,7 +5114,7 @@ async function checkAdminSenha(){
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
       window.ajustarTopoFixo?.();
-      showPage('admin');
+      abrirDrawer();
       return;
     }
     const respPadrao = await fetch('/api/padrao-login', {
@@ -12873,14 +12877,15 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
-    // admin vai direto pro painel — garante que está no index primeiro
+    // admin já abre com a barra de ferramentas à mão — garante que está no index primeiro
     if (isEmailAdmin(user.email)) {
       // se não estiver no index, redireciona
       if (!window.location.pathname.match(/^\/?$|\/index\.html$/)) {
         window.location.href = '/';
         return;
       }
-      showPage('admin');
+      ajustarTopoFixo();
+      abrirDrawer();
     }
   } else {
     const avatar = document.getElementById('user-avatar');
