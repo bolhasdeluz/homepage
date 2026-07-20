@@ -2033,7 +2033,7 @@ body{padding-bottom:64px}
       var e = 0, s = agGastos.reduce(function(a,g){ return a+g.valor; },0);
       agPessoas.forEach(function(p){ var pg = agPgtos[p.nome] || {obr:0}; e += pg.obr; });
       var totalAvesMeta = 0;
-      agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
+      agPessoas.forEach(function(p){ if (agContaNasAves(p)) totalAvesMeta += agAvesVal(p); });
       var dados = calcularCards270Aves(e, s, totalAvesMeta);
       preencherCard270('resumo270', dados.c270);
       preencherCardAves('resumoAves', dados.aves);
@@ -3511,6 +3511,12 @@ function agNormalizarCor(cor) {
 // nem todo mundo paga a obrigação fixa — quem está marcada como isenta deve só as aves (se tiver)
 function agObrigacaoDe(p) { return p.isento ? 0 : AG_OBRIGACAO; }
 
+// essas pessoas não entram na conta das aves (totais, %, exportação pro
+// aviário) mesmo que apareçam na lista — mas a lista continua editável pra
+// elas, caso alguém precise corrigir/adicionar aves no futuro
+var AG_AVES_EXCLUIR = ['Luana', 'Anna', 'Ogum'];
+function agContaNasAves(p) { return AG_AVES_EXCLUIR.indexOf(p.nome) === -1; }
+
 // ── SALDO ────────────────────────────────────────────────────
 function agAtualizarSaldo() {
   // Entradas = só a obrigação (R$270) que as pessoas já pagaram — as aves são
@@ -3540,7 +3546,7 @@ function agAtualizarSaldo() {
   var sSemTambor = s - tamborUberPago;
 
   var totalAvesMeta = 0;
-  agPessoas.forEach(function(p){ totalAvesMeta += agAvesVal(p); });
+  agPessoas.forEach(function(p){ if (agContaNasAves(p)) totalAvesMeta += agAvesVal(p); });
 
   agAtualizarProgresso(sSemTambor, totalAvesMeta);
   agAtualizarProgressoTambor();
@@ -3573,9 +3579,9 @@ function calcularCards270Aves(totalObrPago, totalGastos, totalAvesMeta) {
 
   // Aves — só conta quem encomendou (galos/galinhas > 0); pagante é quem já
   // quitou o valor das aves que encomendou
-  var pessoasComAves = agPessoas.filter(function(p){ return agAvesVal(p) > 0; });
+  var pessoasComAves = agPessoas.filter(function(p){ return agContaNasAves(p) && agAvesVal(p) > 0; });
   var totalAvesPago = 0;
-  agPessoas.forEach(function(p){ var pg = agPgtos[p.nome] || {aves:0}; totalAvesPago += pg.aves; });
+  agPessoas.forEach(function(p){ if (!agContaNasAves(p)) return; var pg = agPgtos[p.nome] || {aves:0}; totalAvesPago += pg.aves; });
   var quitaramAves = pessoasComAves.filter(function(p){
     var pg = agPgtos[p.nome] || {aves:0};
     return pg.aves >= agAvesVal(p);
@@ -4417,7 +4423,7 @@ function agRenderAves(){
   var body=document.getElementById('ag-aves-body'); body.innerHTML='';
   var tG=0,tH=0;
   agPessoas.forEach(function(p,pi){
-    tG+=p.galos; tH+=p.galinhas;
+    if (agContaNasAves(p)) { tG+=p.galos; tH+=p.galinhas; }
     var pg = agPgtos[p.nome];
     var tAves = agAvesVal(p);
     var quitou = pg && tAves > 0 && pg.aves >= tAves;
@@ -4463,7 +4469,7 @@ function agRenderAves(){
 
   // Card Pago/Total das aves
   var pagoAves = 0;
-  agPessoas.forEach(function(p){ var pg = agPgtos[p.nome]; if (pg) pagoAves += (pg.aves||0); });
+  agPessoas.forEach(function(p){ if (!agContaNasAves(p)) return; var pg = agPgtos[p.nome]; if (pg) pagoAves += (pg.aves||0); });
   var pctPagoAves = tv>0 ? Math.round(pagoAves/tv*100) : 0;
   document.getElementById('ag-aves-pago-total').textContent = agFmtS(pagoAves) + ' / ' + agFmtS(tv);
   document.getElementById('ag-aves-pago-pct').textContent = tv>0 ? (pctPagoAves+'%'+(pagoAves>=tv?' ✅':'')) : 'nenhuma ave cadastrada';
@@ -4480,6 +4486,7 @@ function agExportarAvesWpp() {
   var galosPorCor = {}, galinhasPorCor = {};
   var tG=0, tH=0;
   agPessoas.forEach(function(p){
+    if (!agContaNasAves(p)) return;
     if (p.galos > 0) {
       var corG = agNormalizarCor(p.coresGalos && p.coresGalos[0]);
       galosPorCor[corG] = (galosPorCor[corG]||0) + p.galos;
@@ -4517,6 +4524,7 @@ function agExportarAvesComNomesWpp() {
   var tG=0, tH=0;
 
   agPessoas.forEach(function(p){
+    if (!agContaNasAves(p)) return;
     if (p.galos > 0) {
       var corG = agNormalizarCor(p.coresGalos && p.coresGalos[0]);
       if (!galosPorCor[corG]) galosPorCor[corG] = [];
