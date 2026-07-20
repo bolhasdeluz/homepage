@@ -3680,6 +3680,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <option value="filhas">Filhas da Casa</option>
           <option value="tamboreiro">Tamboreiro</option>
           <option value="amigos">Amigos</option>
+          <option value="assistencia">Assistência</option>
         </select>
       </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
@@ -3835,6 +3836,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <button class="toggle-pill on" id="sua-hist-vis-filhas" onclick="toggleSuaHistoriaVis('filhas')">🌸 Filhas</button>
         <button class="toggle-pill on" id="sua-hist-vis-tamboreiro" onclick="toggleSuaHistoriaVis('tamboreiro')">🥁 Tamboreiro</button>
         <button class="toggle-pill on" id="sua-hist-vis-amigos" onclick="toggleSuaHistoriaVis('amigos')">🤝 Amigos</button>
+        <button class="toggle-pill" id="sua-hist-vis-assistencia" onclick="toggleSuaHistoriaVis('assistencia')">🤲 Assistência</button>
       </div>
     </div>
 
@@ -4330,11 +4332,11 @@ function renderAdminPanel() {
           <!-- visibilidade por grupo -->
           <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
             <span style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;color:var(--text-dim);white-space:nowrap">Visível para:</span>
-            ${['publico','visitante','filhas','tamboreiro','amigos'].map(g => {
+            ${['publico','visitante','filhas','tamboreiro','amigos','assistencia'].map(g => {
               const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
               const ativo = grupos.includes(g);
-              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝'}[g];
-              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos'}[g];
+              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲'}[g];
+              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência'}[g];
               return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
             }).join('')}
             <span style="width:1px;height:14px;background:rgba(196,90,30,.15);margin:0 2px"></span>
@@ -5221,8 +5223,8 @@ const CAL_DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const CAL_TIPO_LABEL = {Interna:'Interna',Atendimento:'Atendimento',Visita:'Visita',Familia:'Família',Reuniao:'Reunião'};
 const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao:'❌ Sem tambor'};
 const CAL_TIPOS = ['Interna','Atendimento','Visita','Familia','Reuniao'];
-const CAL_GRUPOS = ['publico','visitante','filhas','tamboreiro','amigos'];
-const CAL_GRUPO_LABEL = {publico:'🌍 Público',visitante:'👤 Visitante',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',amigos:'🤝 Amigos'};
+const CAL_GRUPOS = ['publico','visitante','filhas','tamboreiro','amigos','assistencia'];
+const CAL_GRUPO_LABEL = {publico:'🌍 Público',visitante:'👤 Visitante',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',amigos:'🤝 Amigos',assistencia:'🤲 Assistência'};
 
 // visibilidade por TIPO de sessão (não mais por evento individual) — carregada
 // uma vez do KV e reaproveitada por calSessaoVisivel() pra decidir quem vê o quê
@@ -12635,7 +12637,7 @@ function renderDashPessoal(p, user) {
   // login de visitante (sem ficha de filha da casa) tem uma tela de início bem
   // mais simples — sem cruzamentos/cortes/aves, pergunta do dia ou manutenção,
   // só a próxima sessão em destaque e uns caminhos de "primeiros passos"
-  if ((p.grupo || 'visitante') === 'visitante') {
+  if (['visitante', 'assistencia'].includes(p.grupo || 'visitante')) {
     wrap.style.display = 'none';
     renderDashVisitante(p, user);
     return;

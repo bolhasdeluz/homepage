@@ -23,7 +23,7 @@ const CORS = {
 
 const CHAVE = 'config:visibilidade-tipo';
 const TIPOS_VALIDOS = ['Interna', 'Atendimento', 'Visita', 'Familia', 'Reuniao'];
-const GRUPOS_VALIDOS = ['publico', 'visitante', 'filhas', 'tamboreiro', 'amigos'];
+const GRUPOS_VALIDOS = ['publico', 'visitante', 'filhas', 'tamboreiro', 'amigos', 'assistencia'];
 
 function padrao() {
   const cfg = {};

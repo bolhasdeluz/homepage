@@ -372,6 +372,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
           <input type="checkbox" id="vis-tamboreiro" style="accent-color:var(--rosa);width:14px;height:14px"> 🥁 Tamboreiro
         </label>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="vis-assistencia" style="accent-color:var(--rosa);width:14px;height:14px"> 🤲 Assistência
+        </label>
       </div>
     </div>
     <div class="form-row"><label>Senha</label><input type="password" id="fSenha"><div class="senha-err" id="senhaErr">Senha incorreta.</div></div>
@@ -707,6 +710,7 @@ window.openModal=()=>{
   document.getElementById('vis-amigos').checked=false;
   document.getElementById('vis-filhas').checked=true;
   document.getElementById('vis-tamboreiro').checked=true;
+  document.getElementById('vis-assistencia').checked=false;
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('fNome').focus(),80);
 };
@@ -729,6 +733,7 @@ window.openEdit=(id)=>{
   document.getElementById('vis-amigos').checked=grupos.includes('amigos');
   document.getElementById('vis-filhas').checked=grupos.includes('filhas');
   document.getElementById('vis-tamboreiro').checked=grupos.includes('tamboreiro');
+  document.getElementById('vis-assistencia').checked=grupos.includes('assistencia');
   document.getElementById('overlay').classList.add('open');
 };
 window.closeModal=()=>document.getElementById('overlay').classList.remove('open');
@@ -738,7 +743,7 @@ window.salvar=async()=>{
   const tipo=document.getElementById('fTipo').value;
   if(!nome||!data||!tipo){alert('Preencha nome, data e tipo.');return;}
   const grupos=[];
-  ['visitante','amigos','filhas','tamboreiro'].forEach(g=>{
+  ['visitante','amigos','filhas','tamboreiro','assistencia'].forEach(g=>{
     if(document.getElementById('vis-'+g)?.checked) grupos.push(g);
   });
   const payload={nome,data,hora:document.getElementById('fHora').value,tipo,
