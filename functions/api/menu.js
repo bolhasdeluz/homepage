@@ -13,9 +13,17 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true, desc: 'A fundação do Bolhas de Luz' },
       { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true, desc: 'Sessões e eventos da casa' },
       { id: 'textos',   label: 'Textos da Casa',    type: 'internal', page: 'textos',   showCard: true, showMenu: true, desc: 'Fundamentos e reflexões' },
+      { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
       { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true, desc: 'Como nos ajudar' },
       { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true, desc: 'Catálogo com player de áudio e letras' },
       { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev', showCard: true, showMenu: true, desc: 'Artigos religiosos recomendados' },
+      { id: 'compras',  label: '🛒 Lista de Compras', type: 'internal', page: 'compras', showCard: true, showMenu: true, desc: 'Veja o que a casa está precisando' },
+      { id: 'estoque',  label: '📦 Estoque',          type: 'internal', page: 'estoque', showCard: true, showMenu: true, desc: 'O que temos e o que está acabando' },
+      { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', showCard: true, showMenu: true, desc: 'Tarefas e reparos da casa' },
+      { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', showCard: true, showMenu: true, desc: 'Teste seus conhecimentos, com ranking da casa' },
+      { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', showCard: true, showMenu: true, desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa' },
+      { id: 'resumo',     label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', showCard: true, showMenu: true, desc: 'Tudo pronto pra printar e mandar no grupo' },
+      { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', showCard: true, showMenu: true, desc: 'Monte o aviso da próxima sessão rapidinho' },
     ]},
     { id: 'corrente', label: 'Corrente', items: [
       { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: '/tesouraria', showCard: true, showMenu: true, desc: 'Finanças e obrigações da casa' },
@@ -34,7 +42,17 @@ export async function onRequest(context) {
 
   if (request.method === 'GET') {
     let data = await env.MENU_DATA.get('menu');
-    if (!data) {
+    let precisaRestaurar = !data;
+    if (!precisaRestaurar) {
+      try {
+        const parsed = JSON.parse(data);
+        const totalItens = (parsed.sections || []).reduce((n, sec) => n + (sec.items?.length || 0), 0);
+        if (!totalItens) precisaRestaurar = true;
+      } catch (e) {
+        precisaRestaurar = true;
+      }
+    }
+    if (precisaRestaurar) {
       await env.MENU_DATA.put('menu', DEFAULT_MENU);
       data = DEFAULT_MENU;
     }
