@@ -2026,9 +2026,16 @@ body{padding-bottom:64px}
     var tituloMes = MESES_NOMES_FULL[parseInt(partes[1])-1] + ' ' + partes[0];
     document.getElementById('resumo-geral-corpo').innerHTML =
       saldoCardHTML('resumoMensal', '🕯 Mensalidades — ' + tituloMes, '↓ Gastos', 'gastos')
+      + '<div id="resumoMensal-mes-passado" style="text-align:center;font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:var(--text-dim);margin:-4px 0 12px;"></div>'
       + saldoCardHTML('resumo270', '🕯 270 — Obrigação de Agosto', '↓ Gastos', 'gastos')
       + saldoCardHTML('resumoAves', '🐓 Aves — Agosto', '🎯 Esperado', 'esperado');
     preencherCardMensalidades('resumoMensal', calcularCardMensalidades(mes));
+    var mesAnt = mesAnterior(mes);
+    var dAnt = calcularCardMensalidades(mesAnt);
+    var partesAnt = mesAnt.split('-');
+    var labelAnt = MESES_NOMES_CURTOS[parseInt(partesAnt[1])-1] + '/' + partesAnt[0].slice(2);
+    document.getElementById('resumoMensal-mes-passado').textContent =
+      '📅 ' + labelAnt + ': ' + dAnt.pctPag + '% pagantes · ' + dAnt.pctCob + '% coberto · ' + fmt(dAnt.entradas) + ' entradas';
     function preencherAgosto() {
       var e = 0, s = agGastos.reduce(function(a,g){ return a+g.valor; },0);
       agPessoas.forEach(function(p){ var pg = agPgtos[p.nome] || {obr:0}; e += pg.obr; });
