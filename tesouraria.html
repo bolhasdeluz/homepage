@@ -1840,20 +1840,32 @@ body{padding-bottom:64px}
     document.getElementById('ficha-overlay').classList.add('open');
   }
 
+  // Mês anterior a 'YYYY-MM'
+  function mesAnterior(mes) {
+    var p = mes.split('-'), ano = parseInt(p[0]), m = parseInt(p[1]);
+    var d = new Date(ano, m - 2, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
   function montarEstadoFicha() {
     fichaEstado = {};
+    var mesAnt = mesAnterior(fichaMes);
     contasFixas.forEach(function(item) {
-      var existente = lancamentos.find(function(l) {
-        return l.tipo === 'gasto' && l.contaFixaId === item.id
-          && (l.data ? l.data.slice(0,7) : '') === fichaMes;
+      var doMes = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId === item.id; });
+      var existente = doMes.find(function(l) {
+        return (l.data ? l.data.slice(0,7) : '') === fichaMes;
       });
       if (existente) {
         fichaEstado[item.id] = { valor: existente.valor, status: existente.status === 'pendente' ? 'pendente' : 'pago', vencimento: existente.vencimento || (fichaMes + '-10'), incluir: true, existingId: existente.id };
       } else {
-        var historico = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId === item.id; })
-          .sort(function(a,b){ return new Date(b.data||b.vencimento) - new Date(a.data||a.vencimento); });
-        var ultimo = historico[0];
-        fichaEstado[item.id] = { valor: ultimo ? ultimo.valor : (item.valorPadrao || 0), status: 'pendente', vencimento: fichaMes + '-10', incluir: true, existingId: null };
+        // Clona o mês anterior por padrão (valor e o dia de vencimento) — sempre
+        // editável na ficha. Se não achar o mês anterior exato, usa o último
+        // lançamento dessa conta que existir; sem nenhum histórico, usa o valor
+        // padrão cadastrado em "Gerenciar contas".
+        var historico = doMes.slice().sort(function(a,b){ return new Date(b.data||b.vencimento) - new Date(a.data||a.vencimento); });
+        var base = doMes.find(function(l){ return (l.data ? l.data.slice(0,7) : '') === mesAnt; }) || historico[0];
+        var dia = base ? (base.vencimento || base.data || '').split('-')[2] : null;
+        fichaEstado[item.id] = { valor: base ? base.valor : (item.valorPadrao || 0), status: 'pendente', vencimento: fichaMes + '-' + (dia || '10'), incluir: true, existingId: null };
       }
     });
   }
