@@ -396,6 +396,7 @@ body{padding-bottom:64px}
     </div>
   </div>
   <div class="header-right">
+    <button id="btn-toggle-nomes" onclick="blToggleNomes()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:5px 11px;cursor:pointer;white-space:nowrap;">🙈 Ocultar nomes</button>
     <button onclick="document.getElementById('agosto-modal').classList.add('open')" style="background:linear-gradient(135deg,#8c5a00,#c88c00);border:none;border-radius:20px;color:#fff8e0;font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;letter-spacing:.07em;padding:5px 12px;cursor:pointer;white-space:nowrap;">🕯 Agosto</button>
     <button class="export-btn" onclick="abrirExportConfig()">↑ Exportar</button>
     <div class="header-flame">🕯️</div>
@@ -927,6 +928,26 @@ body{padding-bottom:64px}
     t.classList.add('show');
     setTimeout(function(){ t.classList.remove('show'); }, 2500);
   }
+  // ── Ocultar nomes (pra print sem expor quem falta pagar) ────────
+  function blNomesOcultos() { return localStorage.getItem('bl-ocultar-nomes') === '1'; }
+  function blFaltamTexto(nomes) {
+    if (!nomes || !nomes.length) return '✓ Todas pagaram!';
+    if (blNomesOcultos()) return 'Faltam: ' + nomes.length + (nomes.length === 1 ? ' pessoa' : ' pessoas');
+    return 'Faltam: ' + nomes.join(', ');
+  }
+  function blAtualizarBotaoNomes() {
+    var label = blNomesOcultos() ? '👁 Mostrar nomes' : '🙈 Ocultar nomes';
+    ['btn-toggle-nomes', 'ag-btn-toggle-nomes'].forEach(function(id){
+      var el = document.getElementById(id);
+      if (el) el.textContent = label;
+    });
+  }
+  function blToggleNomes() {
+    localStorage.setItem('bl-ocultar-nomes', blNomesOcultos() ? '0' : '1');
+    blAtualizarBotaoNomes();
+    renderInicio();
+    if (typeof agAtualizarSaldo === 'function') { try { agAtualizarSaldo(); } catch(e){} }
+  }
   function fecharModal(id, e) {
     if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('open');
   }
@@ -1327,7 +1348,7 @@ body{padding-bottom:64px}
       document.getElementById('stat-bar-cobertura').style.width = Math.min(pctCob,100) + '%';
       document.getElementById('total-entradas-display').textContent = fmt(totalE);
       document.getElementById('total-gastos-display').textContent = fmt(totalG);
-      document.getElementById('stat-nao-pagaram').textContent = naoPag.length ? 'Faltam: ' + naoPag.join(', ') : '✓ Todas pagaram!';
+      document.getElementById('stat-nao-pagaram').textContent = blFaltamTexto(naoPag);
 
       // Saldo negativo discreto
       var saldoLinha = document.getElementById('stat-saldo-linha');
@@ -2561,6 +2582,7 @@ body{padding-bottom:64px}
 
   // ── INIT ──────────────────────────────────────────────────
   inicializarFiltroMes();
+  blAtualizarBotaoNomes();
 
   // 1. Carrega localStorage IMEDIATAMENTE (sem esperar rede)
   try {
@@ -2756,6 +2778,7 @@ body{padding-bottom:64px}
       </div>
     </div>
     <div style="display:flex;gap:7px;align-items:center;position:relative;">
+      <button id="ag-btn-toggle-nomes" onclick="blToggleNomes()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.72rem;padding:5px 11px;cursor:pointer;white-space:nowrap;">🙈 Ocultar nomes</button>
       <button onclick="agToggleExport(event)" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.72rem;padding:5px 11px;cursor:pointer;white-space:nowrap;">↑ Exportar</button>
       <button class="ag-back" onclick="document.getElementById('agosto-modal').classList.remove('open')">✕ Fechar</button>
       <!-- Dropdown exportar -->
@@ -3253,7 +3276,7 @@ function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
   document.getElementById('ag270-bar-cob').style.width = Math.min(pctCob270,100) + '%';
   document.getElementById('ag270-entradas').textContent = agFmt(totalObrPago);
   document.getElementById('ag270-gastos').textContent = agFmt(totalGastos);
-  document.getElementById('ag270-nao-pagaram').textContent = naoPag270.length ? 'Faltam: ' + naoPag270.join(', ') : '✓ Todas pagaram!';
+  document.getElementById('ag270-nao-pagaram').textContent = blFaltamTexto(naoPag270);
 
   // Aves — só conta quem encomendou (galos/galinhas > 0); pagante é quem já
   // quitou o valor das aves que encomendou
@@ -3275,7 +3298,7 @@ function agRenderMensalCards(totalObrPago, totalGastos, totalAvesMeta) {
   document.getElementById('agAves-bar-cob').style.width = Math.min(pctCobAves,100) + '%';
   document.getElementById('agAves-entradas').textContent = agFmt(totalAvesPago);
   document.getElementById('agAves-esperado').textContent = agFmt(totalAvesMeta);
-  document.getElementById('agAves-nao-pagaram').textContent = naoPagAves.length ? 'Faltam: ' + naoPagAves.join(', ') : '✓ Todas pagaram!';
+  document.getElementById('agAves-nao-pagaram').textContent = blFaltamTexto(naoPagAves);
 }
 
 // soma total e quanto já foi pago (valorPago, sem passar do total de cada
