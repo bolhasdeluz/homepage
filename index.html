@@ -12994,12 +12994,12 @@ function dasaRenderPresenca() {
     const [y,m,d] = s.data.split('-');
     const dataFmt = `${parseInt(d)}/${parseInt(m)}` + (s.hora ? ' · ' + s.hora : '');
     const vou = presencas[s.id] === true;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08)">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08);cursor:pointer" onclick="dasaAbrirInfo('${s.id}')">
       <div>
         <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text)">${s.nome || s.tipo || 'Sessão'}</div>
         <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim)">${dataFmt}</div>
       </div>
-      <button class="toggle-pill ${vou ? 'on' : ''}" style="font-size:.62rem;padding:4px 10px;white-space:nowrap" onclick="dasaTogglePresenca('${s.id}')">${vou ? '✓ Vou' : 'Marcar presença'}</button>
+      <button class="toggle-pill ${vou ? 'on' : ''}" style="font-size:.62rem;padding:4px 10px;white-space:nowrap" onclick="event.stopPropagation();dasaTogglePresenca('${s.id}')">${vou ? '✓ Vou' : 'Marcar presença'}</button>
     </div>`;
   }).join('');
   const botaoVerMais = dasaSessoesProximas.length > dasaPresencaLimite
@@ -13011,6 +13011,15 @@ function dasaRenderPresenca() {
 window.dasaVerMaisPresenca = function() {
   dasaPresencaLimite += 5;
   dasaRenderPresenca();
+};
+
+// abre o mesmo modal "Saiba mais" usado no card principal do calendário —
+// usa a sessão já carregada em dasaSessoesProximas, sem depender de calSessoes
+// (que só é populado quando a página do calendário é aberta)
+window.dasaAbrirInfo = async function(sessaoId) {
+  const s = dasaSessoesProximas.find(x => x.id === sessaoId);
+  if (!s) return;
+  await calPreencherInfoModal(s, false);
 };
 
 window.dasaTogglePresenca = async function(sessaoId) {
@@ -13042,6 +13051,8 @@ window.dasaEscolherCategoria = function(cat) {
     : 'O que levar, lembretes, anotações pra próxima sessão...';
 };
 
+let dasaNotasLimite = { levar: 5, axe: 5 };
+
 function dasaRenderNotas(p) {
   const el = document.getElementById('dasa-notas-lista');
   if (!el) return;
@@ -13050,8 +13061,13 @@ function dasaRenderNotas(p) {
   // por categoria — é esse índice que o botão de excluir usa
   const comIndice = notas.map((n, i) => ({ ...n, i }));
   const blocos = DASA_CATEGORIAS_NOTA.map(cat => {
-    const itens = comIndice.filter(n => (n.categoria || 'levar') === cat.chave);
-    if (!itens.length) return '';
+    const todosItens = comIndice.filter(n => (n.categoria || 'levar') === cat.chave);
+    if (!todosItens.length) return '';
+    const limite = dasaNotasLimite[cat.chave] || 5;
+    const itens = todosItens.slice(0, limite);
+    const botaoVerMais = todosItens.length > limite
+      ? `<button onclick="dasaVerMaisNotas('${cat.chave}')" style="display:block;margin:2px auto 0;background:none;border:none;color:var(--rosa);font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;padding:6px 0;cursor:pointer">Ver mais ↓</button>`
+      : '';
     return `
       <div style="margin-top:12px">
         <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">${cat.titulo}</div>
@@ -13063,10 +13079,16 @@ function dasaRenderNotas(p) {
             </div>
             <button onclick="dasaExcluirNota(${n.i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>
           </div>`).join('')}
+        ${botaoVerMais}
       </div>`;
   }).join('');
   el.innerHTML = blocos || '<div style="font-family:\'Crimson Pro\',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;padding:6px 0">Nenhuma nota ainda.</div>';
 }
+
+window.dasaVerMaisNotas = function(categoria) {
+  dasaNotasLimite[categoria] = (dasaNotasLimite[categoria] || 5) + 5;
+  dasaRenderNotas(perfilData);
+};
 
 window.dasaSalvarNota = async function() {
   if (!currentUser) return;
@@ -13099,23 +13121,42 @@ window.dasaExcluirNota = async function(idx) {
   dasaRenderNotas(perfilData);
 };
 
+let dasaAvisosVisiveis = [];
+let dasaAvisosLimite = 5;
+
 async function dasaCarregarAvisos() {
   const el = document.getElementById('dasa-avisos-lista');
   if (!el) return;
   try {
     const res = await fetch('/api/avisos');
     const avisos = await res.json();
-    const visiveis = avisos.filter(a => (a.grupos || []).includes('assistencia'));
-    if (!visiveis.length) { el.innerHTML = ''; return; }
-    el.innerHTML = visiveis.map(a => `
-      <div style="padding:10px 12px;margin-top:8px;background:var(--gold-dim);border:1px solid var(--border);border-radius:8px">
-        <div style="font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim)">${fmtData(a.data)}</div>
-        <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text);white-space:pre-wrap">${a.texto}</div>
-      </div>`).join('');
+    dasaAvisosVisiveis = avisos.filter(a => (a.grupos || []).includes('assistencia'));
+    dasaAvisosLimite = 5;
+    dasaRenderAvisos();
   } catch(e) {
     el.innerHTML = '';
   }
 }
+
+function dasaRenderAvisos() {
+  const el = document.getElementById('dasa-avisos-lista');
+  if (!el) return;
+  if (!dasaAvisosVisiveis.length) { el.innerHTML = ''; return; }
+  const cards = dasaAvisosVisiveis.slice(0, dasaAvisosLimite).map(a => `
+    <div style="padding:10px 12px;margin-top:8px;background:var(--gold-dim);border:1px solid var(--border);border-radius:8px">
+      <div style="font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim)">${fmtData(a.data)}</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text);white-space:pre-wrap">${a.texto}</div>
+    </div>`).join('');
+  const botaoVerMais = dasaAvisosVisiveis.length > dasaAvisosLimite
+    ? `<button onclick="dasaVerMaisAvisos()" style="display:block;margin:6px auto 0;background:none;border:none;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 0;cursor:pointer">Ver mais ↓</button>`
+    : '';
+  el.innerHTML = cards + botaoVerMais;
+}
+
+window.dasaVerMaisAvisos = function() {
+  dasaAvisosLimite += 5;
+  dasaRenderAvisos();
+};
 
 // card "Como me preparar para ir na sessão" — popup simples com orientações
 // gerais; um texto de partida, é natural a Mãe da Casa querer ajustar as
