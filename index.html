@@ -5135,6 +5135,9 @@ function showPage(name) {
   // história, sessões, textos, apoie → modais
   // sessoes → calendário interno
   if (name === 'sessoes') { showPage('calendario'); return; }
+  // lista de necessidades da casa é só pra quem está logada — pede login em
+  // vez de abrir a página, não importa por onde a pessoa tentou chegar nela
+  if (name === 'compras' && !(window._getCurrentUser && window._getCurrentUser())) { openLogin(); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
   if (p) {
@@ -11213,6 +11216,9 @@ const auth = getAuth(app);
       const txt  = document.getElementById('lista-compras-card-txt');
       const sub  = document.getElementById('lista-compras-card-sub');
       if (!card) return;
+      // deslogada não vê nem o atalho no topo — só quem está logada consegue
+      // abrir a lista completa (bloqueado também em showPage('compras'))
+      if (!(window._getCurrentUser && window._getCurrentUser())) { card.style.display = 'none'; return; }
       const precisando = cpItens.filter(i => i.precisando);
       if (precisando.length) {
         const nomes = precisando.map(i => i.nome);
