@@ -5685,10 +5685,13 @@ async function calPreencherInfoModal(s, mostrarLinkCalendario) {
   if (isLogada && s.responsavel) meta += `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>`;
   document.getElementById('cal-info-meta').innerHTML = meta;
 
+  // orientação de cada sessão: a padronizada por tipo + a individual dessa
+  // sessão específica (descricao), as duas juntas — a individual aparece pra
+  // todo mundo, logada ou não, já que é informação da sessão, não dado interno
   const infoTipo = (calInfoTipo || {})[s.tipo] || '';
   let corpo = '';
   if (infoTipo) corpo += calEsc(infoTipo);
-  if (isLogada && s.descricao) corpo += (corpo ? '\n\n' : '') + calEsc(s.descricao);
+  if (s.descricao) corpo += (corpo ? '\n\n' : '') + calEsc(s.descricao);
   document.getElementById('cal-info-corpo').innerHTML = corpo || '<span style="font-style:italic;color:var(--text-dim)">Sem informações adicionais por enquanto.</span>';
 
   const linkCalendario = document.getElementById('cal-info-ir-calendario');
