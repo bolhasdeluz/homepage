@@ -1995,8 +1995,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 <!-- PÁGINA INÍCIO -->
 <div id="page-inicio" class="page active">
   <header>
-    <img src="assets/logo-hori.png" alt="Bolhas de Luz" class="header-logo" onerror="this.style.display='none';document.querySelector('.header-logo-text').style.display='block'">
-    <div class="header-logo-text" style="display:none">Bolhas de Luz</div>
+    <img src="assets/icon.png" alt="Bolhas de Luz" class="header-logo">
+    <div class="header-logo-text">Bolhas de Luz</div>
     <div class="header-eyebrow">Terreiro de Umbanda e Quimbanda · Porto Alegre, RS</div>
     <svg class="ornamento" width="48" height="48" viewBox="0 0 52 52" fill="none">
       <ellipse cx="26" cy="10" rx="4" ry="7" fill="#c4396b" opacity=".6" transform="rotate(0 26 26)"/>
@@ -2029,7 +2029,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div id="aniversario-data" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
       </div>
 
-      <div id="lista-compras-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;cursor:pointer;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px" onclick="showPage('compras')">
+      <div id="lista-compras-card" style="display:none;background:#fff;border:none;border-radius:12px;padding:12px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 2px 16px rgba(196,57,107,.15);margin-top:10px">
         <div style="font-family:'Cinzel',serif;font-size:.52rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:5px">🛒 Necessidades da casa</div>
         <div id="lista-compras-card-txt" style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:3px"></div>
         <div id="lista-compras-card-sub" style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic"></div>
@@ -11216,9 +11216,10 @@ const auth = getAuth(app);
       const txt  = document.getElementById('lista-compras-card-txt');
       const sub  = document.getElementById('lista-compras-card-sub');
       if (!card) return;
-      // deslogada não vê nem o atalho no topo — só quem está logada consegue
-      // abrir a lista completa (bloqueado também em showPage('compras'))
-      if (!(window._getCurrentUser && window._getCurrentUser())) { card.style.display = 'none'; return; }
+      // fica visível pra todo mundo (inclusive deslogada), mas só quem está
+      // logada consegue tocar pra abrir a lista inteira — deslogada só
+      // enxerga a prévia, sem ação nenhuma no toque
+      const logada = !!(window._getCurrentUser && window._getCurrentUser());
       const precisando = cpItens.filter(i => i.precisando);
       if (precisando.length) {
         const nomes = precisando.map(i => i.nome);
@@ -11226,16 +11227,19 @@ const auth = getAuth(app);
         const mostrar = nomes.slice(0, MAX);
         const resto = nomes.length - mostrar.length;
         txt.textContent = formatarListaNomes(mostrar) + (resto > 0 ? ` (+${resto})` : '');
-        sub.textContent = 'Toque para ver a lista completa';
+        sub.textContent = logada ? 'Toque para ver a lista completa' : '';
       } else if (cpItens.length) {
         txt.textContent = 'Tudo em dia! ✓';
-        sub.textContent = 'Nada precisando no momento ✦';
+        sub.textContent = logada ? 'Nada precisando no momento ✦' : '';
       } else {
         txt.textContent = 'Lista vazia';
-        sub.textContent = 'Nada cadastrado por aqui ✦';
+        sub.textContent = logada ? 'Nada cadastrado por aqui ✦' : '';
       }
+      card.style.cursor = logada ? 'pointer' : 'default';
+      card.onclick = logada ? () => showPage('compras') : null;
       card.style.display = 'block';
     }
+    window.cpAtualizarCard = cpAtualizarCard;
 
     async function cpAdicionarItem() {
       const nomeEl = document.getElementById('cp-inp-nome');
@@ -13278,6 +13282,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
+    window.cpAtualizarCard?.();
     // admin já abre com a barra de ferramentas à mão — garante que está no index primeiro
     if (isEmailAdmin(user.email)) {
       // se não estiver no index, redireciona
@@ -13296,6 +13301,7 @@ onAuthStateChanged(auth, async (user) => {
     atualizarWidgetHistoria(false);
     if (menuData) renderCards();
     window.atualizarBoasVindas?.();
+    window.cpAtualizarCard?.();
   }
 });
 
