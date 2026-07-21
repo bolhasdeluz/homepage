@@ -11137,14 +11137,25 @@ const auth = getAuth(app);
     function cpEstado(item) { return item.precisando ? 'precisando' : 'ok'; }
     function cpNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
 
-    onSnapshot(colCompras, snap => {
-      cpItens = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.nome||'').localeCompare(b.nome||''));
-      const carregando = document.getElementById('cp-carregando');
-      if (carregando) carregando.style.display = 'none';
-      cpRenderizar();
-      cpAtualizarCard();
-      cpRenderPrateleira();
-    }, err => console.warn('lista_compras onSnapshot:', err));
+    // reabre o listener sempre que o login muda — se a primeira tentativa
+    // caiu numa corrida com o token de auth ainda não pronto (regra do
+    // Firestore exige login pra ler), essa nova tentativa já pega o token
+    // certo, em vez de deixar o card travado em "carregando" até recarregar
+    // a página inteira
+    let cpUnsub = null;
+    function cpIniciarListener() {
+      if (cpUnsub) cpUnsub();
+      cpUnsub = onSnapshot(colCompras, snap => {
+        cpItens = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (a.nome||'').localeCompare(b.nome||''));
+        const carregando = document.getElementById('cp-carregando');
+        if (carregando) carregando.style.display = 'none';
+        cpRenderizar();
+        cpAtualizarCard();
+        cpRenderPrateleira();
+      }, err => console.warn('lista_compras onSnapshot:', err));
+    }
+    cpIniciarListener();
+    window.cpIniciarListener = cpIniciarListener;
 
     // ── ILUSTRAÇÃO: PRATELEIRA DE POTINHOS ──
     // pote CHEIO = item em dia (não precisa) · pote VAZIO = item precisando (marcar pra alguém trazer)
@@ -13275,6 +13286,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById('login-overlay').classList.remove('open');
     await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
+    window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
     // admin já abre com a barra de ferramentas à mão — garante que está no index primeiro
     if (isEmailAdmin(user.email)) {
@@ -13294,6 +13306,7 @@ onAuthStateChanged(auth, async (user) => {
     atualizarWidgetHistoria(false);
     if (menuData) renderCards();
     window.atualizarBoasVindas?.();
+    window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
   }
 });
