@@ -2481,6 +2481,29 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+<!-- PÁGINA PIX PARA DOAÇÕES — card direto, pra quem chega pelo QR code do portão -->
+<div id="page-pix" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Apoie a Terreira</div>
+    <div class="section-title">Pix para doações</div>
+    <p class="section-sub">Qualquer valor é bem-vindo e será revertido às contas e manutenção da casa.</p>
+
+    <div style="background:linear-gradient(135deg,var(--rosa),#e07a90);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(196,57,107,.25)">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:6px">✦ Doe via PIX</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 14px">
+        <div style="min-width:0">
+          <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:2px">Chave PIX (copia e cola)</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix('btn-copiar-pix-doacoes')" id="btn-copiar-pix-doacoes" style="background:#fff;border:none;border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+
+    <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic">A chave é um e-mail — cole no seu banco em "Pix" → "Copia e cola" ou "Chave e-mail".</p>
+  </div>
+</div>
+
 <!-- MODAL BOAS-VINDAS PRIMEIRO LOGIN -->
 <div id="modal-boasvindas" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:420px;padding:28px 24px;position:relative">
@@ -4097,7 +4120,8 @@ function getDefaultMenu() {
         { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
         { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true },
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
-        { id: 'compras',  label: '🛒 Lista de Compras', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
+        { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
+        { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', desc: 'Chave: bolhasdeluz@gmail.com', showCard: true, showMenu: true },
         { id: 'estoque',  label: '📦 Estoque',          type: 'internal', page: 'estoque', desc: 'O que temos e o que está acabando', showCard: true, showMenu: true },
         { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
         { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
@@ -6779,6 +6803,13 @@ function atualizarAniversarioCard() {
   const nomeEl= document.getElementById('aniversario-nome');
   const dataEl= document.getElementById('aniversario-data');
   if (!card) return;
+
+  // card público removido da Início a pedido da admin — agora o site é
+  // acessado via QR code no portão, e a tela deslogada é só pra informação
+  // direta de visitante (mantém o resto da função pronto pra religar depois,
+  // se um dia quiserem o card de volta)
+  card.style.display = 'none';
+  return;
 
   const hoje = new Date();
   const hm = hoje.getMonth() + 1, hd = hoje.getDate();
