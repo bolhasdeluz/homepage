@@ -12963,6 +12963,9 @@ function renderDashAssistencia(p, user) {
   dasaCarregarAvisos();
 }
 
+let dasaSessoesProximas = [];
+let dasaPresencaLimite = 5;
+
 async function dasaCarregarPresenca() {
   const el = document.getElementById('dasa-presenca-lista');
   if (!el) return;
@@ -12971,29 +12974,44 @@ async function dasaCarregarPresenca() {
     const sessoes = await res.json();
     if (calVisibilidadeTipo === null) await calCarregarVisibilidadeTipo();
     const hoje = new Date().toISOString().slice(0,10);
-    const proximas = sessoes
+    dasaSessoesProximas = sessoes
       .filter(s => s.data >= hoje)
       .filter(s => calSessaoVisivel(s) === 'total')
-      .sort((a,b) => a.data.localeCompare(b.data))
-      .slice(0, 5);
-    if (!proximas.length) { el.textContent = 'Nenhuma sessão marcada por enquanto.'; return; }
-    const presencas = (perfilData || {}).presencas || {};
-    el.innerHTML = proximas.map(s => {
-      const [y,m,d] = s.data.split('-');
-      const dataFmt = `${parseInt(d)}/${parseInt(m)}` + (s.hora ? ' · ' + s.hora : '');
-      const vou = presencas[s.id] === true;
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08)">
-        <div>
-          <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text)">${s.nome || s.tipo || 'Sessão'}</div>
-          <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim)">${dataFmt}</div>
-        </div>
-        <button class="toggle-pill ${vou ? 'on' : ''}" style="font-size:.62rem;padding:4px 10px;white-space:nowrap" onclick="dasaTogglePresenca('${s.id}')">${vou ? '✓ Vou' : 'Marcar presença'}</button>
-      </div>`;
-    }).join('');
+      .sort((a,b) => a.data.localeCompare(b.data));
+    dasaPresencaLimite = 5;
+    dasaRenderPresenca();
   } catch(e) {
     el.textContent = 'Não consegui carregar as sessões agora.';
   }
 }
+
+function dasaRenderPresenca() {
+  const el = document.getElementById('dasa-presenca-lista');
+  if (!el) return;
+  if (!dasaSessoesProximas.length) { el.textContent = 'Nenhuma sessão marcada por enquanto.'; return; }
+  const presencas = (perfilData || {}).presencas || {};
+  const linhas = dasaSessoesProximas.slice(0, dasaPresencaLimite).map(s => {
+    const [y,m,d] = s.data.split('-');
+    const dataFmt = `${parseInt(d)}/${parseInt(m)}` + (s.hora ? ' · ' + s.hora : '');
+    const vou = presencas[s.id] === true;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08)">
+      <div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text)">${s.nome || s.tipo || 'Sessão'}</div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim)">${dataFmt}</div>
+      </div>
+      <button class="toggle-pill ${vou ? 'on' : ''}" style="font-size:.62rem;padding:4px 10px;white-space:nowrap" onclick="dasaTogglePresenca('${s.id}')">${vou ? '✓ Vou' : 'Marcar presença'}</button>
+    </div>`;
+  }).join('');
+  const botaoVerMais = dasaSessoesProximas.length > dasaPresencaLimite
+    ? `<button onclick="dasaVerMaisPresenca()" style="display:block;margin:6px auto 0;background:none;border:none;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 0;cursor:pointer">Ver mais ↓</button>`
+    : '';
+  el.innerHTML = linhas + botaoVerMais;
+}
+
+window.dasaVerMaisPresenca = function() {
+  dasaPresencaLimite += 5;
+  dasaRenderPresenca();
+};
 
 window.dasaTogglePresenca = async function(sessaoId) {
   if (!currentUser) return;
@@ -13006,7 +13024,7 @@ window.dasaTogglePresenca = async function(sessaoId) {
     body: JSON.stringify(payload)
   });
   perfilData = payload;
-  dasaCarregarPresenca();
+  dasaRenderPresenca();
 };
 
 const DASA_CATEGORIAS_NOTA = [
