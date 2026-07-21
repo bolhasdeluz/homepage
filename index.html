@@ -2186,6 +2186,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="admin-section-block" style="margin:16px 0">
       <div class="admin-section-header"><span class="admin-section-title">📓 Minha agendinha</span></div>
       <div style="padding:12px 16px">
+        <div style="display:flex;gap:6px;margin-bottom:8px" id="dasa-nota-categoria-wrap">
+          <button type="button" class="toggle-pill on" id="dasa-cat-levar" onclick="dasaEscolherCategoria('levar')">🎒 O que levar na próxima</button>
+          <button type="button" class="toggle-pill" id="dasa-cat-axe" onclick="dasaEscolherCategoria('axe')">✨ Axés que eu aprendi</button>
+        </div>
         <textarea id="dasa-nota-texto" placeholder="O que levar, lembretes, anotações pra próxima sessão..." style="width:100%;min-height:60px;font-family:'Crimson Pro',serif;font-size:.9rem;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical"></textarea>
         <button class="btn-add" style="margin-top:8px" onclick="dasaSalvarNota()">+ Adicionar nota</button>
         <div id="dasa-notas-lista" style="margin-top:10px"></div>
@@ -13005,19 +13009,45 @@ window.dasaTogglePresenca = async function(sessaoId) {
   dasaCarregarPresenca();
 };
 
+const DASA_CATEGORIAS_NOTA = [
+  { chave: 'levar', titulo: '🎒 O que levar na próxima' },
+  { chave: 'axe',   titulo: '✨ Axés que eu aprendi' },
+];
+let dasaCategoriaAtual = 'levar';
+window.dasaEscolherCategoria = function(cat) {
+  dasaCategoriaAtual = cat;
+  document.getElementById('dasa-cat-levar')?.classList.toggle('on', cat === 'levar');
+  document.getElementById('dasa-cat-axe')?.classList.toggle('on', cat === 'axe');
+  const campo = document.getElementById('dasa-nota-texto');
+  if (campo) campo.placeholder = cat === 'axe'
+    ? 'O que você aprendeu, entendeu melhor, guardou pra lembrar...'
+    : 'O que levar, lembretes, anotações pra próxima sessão...';
+};
+
 function dasaRenderNotas(p) {
   const el = document.getElementById('dasa-notas-lista');
   if (!el) return;
   const notas = p.diario || [];
-  if (!notas.length) { el.innerHTML = ''; return; }
-  el.innerHTML = notas.map((n, i) => `
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08)">
-      <div>
-        <div style="font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim)">${fmtData(n.data)}</div>
-        <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text);white-space:pre-wrap">${n.texto}</div>
-      </div>
-      <button onclick="dasaExcluirNota(${i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>
-    </div>`).join('');
+  // guarda o índice original de cada nota (na lista cheia) antes de separar
+  // por categoria — é esse índice que o botão de excluir usa
+  const comIndice = notas.map((n, i) => ({ ...n, i }));
+  const blocos = DASA_CATEGORIAS_NOTA.map(cat => {
+    const itens = comIndice.filter(n => (n.categoria || 'levar') === cat.chave);
+    if (!itens.length) return '';
+    return `
+      <div style="margin-top:12px">
+        <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);text-transform:uppercase;margin-bottom:4px">${cat.titulo}</div>
+        ${itens.map(n => `
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.08)">
+            <div>
+              <div style="font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim)">${fmtData(n.data)}</div>
+              <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text);white-space:pre-wrap">${n.texto}</div>
+            </div>
+            <button onclick="dasaExcluirNota(${n.i})" style="background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:.9rem;flex-shrink:0">✕</button>
+          </div>`).join('')}
+      </div>`;
+  }).join('');
+  el.innerHTML = blocos || '<div style="font-family:\'Crimson Pro\',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;padding:6px 0">Nenhuma nota ainda.</div>';
 }
 
 window.dasaSalvarNota = async function() {
@@ -13026,7 +13056,7 @@ window.dasaSalvarNota = async function() {
   const texto = campo.value.trim();
   if (!texto) return;
   const hoje = new Date().toISOString().slice(0,10);
-  const diario = [{ data: hoje, texto }, ...(perfilData.diario || [])];
+  const diario = [{ data: hoje, texto, categoria: dasaCategoriaAtual }, ...(perfilData.diario || [])];
   const payload = { ...perfilData, diario, solicitacao: 'Adicionou nota na agendinha pessoal' };
   await fetch('/api/perfil', {
     method: 'POST',
