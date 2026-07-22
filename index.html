@@ -2403,6 +2403,17 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- MODAL INFORMATIVO GENÉRICO — usado por cards de fora do Portal de Jogos
+     (ex: "Como se preparar pra sessão"), porque o gp-info-modal-overlay fica
+     preso dentro de #page-jogos e some quando chamado de outra página -->
+<div id="info-geral-overlay" class="overlay" onclick="if(event.target===this)fecharInfoGeral()">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharInfoGeral()">×</button>
+    <div class="modal-title" id="info-geral-titulo"></div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);line-height:1.65;white-space:pre-wrap;margin-top:8px" id="info-geral-texto"></p>
+  </div>
+</div>
+
 <!-- BOAS-VINDAS -->
 <div id="boas-vindas">
   <div id="boas-vindas-inner">
@@ -12298,7 +12309,7 @@ function abrirLinhaDoTempoModal() {
 }
 window.abrirLinhaDoTempoModal = abrirLinhaDoTempoModal;
 
-function dashToggleSecao(tituloEl) {
+window.dashToggleSecao = function(tituloEl) {
   const grid = tituloEl.nextElementSibling;
   if (!grid) return;
   const abrindo = grid.style.display === 'none';
@@ -12861,15 +12872,21 @@ window.dasaVerMaisAvisos = function() {
 // card "Como me preparar para ir na sessão" — popup simples com orientações
 // gerais; um texto de partida, é natural a Mãe da Casa querer ajustar as
 // palavras depois pro jeito certo da casa
-function dashvAbrirPreparoSessao() {
-  gpMostrarInfo(
-    '🌙 Como me preparar para ir na sessão',
+// (window.* aqui porque esse <script> é type="module" — declaração comum de
+// function não vira global, e o onclick inline no HTML não ia enxergar essa
+// função, igual o bug do pill "Jogo de Cartas")
+window.dashvAbrirPreparoSessao = function() {
+  document.getElementById('info-geral-titulo').textContent = '🌙 Como me preparar para ir na sessão';
+  document.getElementById('info-geral-texto').textContent =
     'Chega com calma e um pouco antes do horário marcado, pra se acomodar sem pressa.\n\n' +
     'Vem com roupas leves e confortáveis, evitando decotes ou coisas muito curtas.\n\n' +
     'Evite bebida alcoólica antes de vir.\n\n' +
     'Mantenha respeito e silêncio durante os trabalhos — é um momento sagrado pra quem está sendo atendido.\n\n' +
-    'Qualquer dúvida, é só perguntar pra alguém da corrente quando chegar — todo mundo vai te ajudar a se sentir em casa ✦'
-  );
+    'Qualquer dúvida, é só perguntar pra alguém da corrente quando chegar — todo mundo vai te ajudar a se sentir em casa ✦';
+  document.getElementById('info-geral-overlay').classList.add('open');
+}
+window.fecharInfoGeral = function() {
+  document.getElementById('info-geral-overlay').classList.remove('open');
 }
 
 // popup informativo do "Jogo de Cartas" — usa seu próprio modal (não o
