@@ -182,6 +182,17 @@ body.logada{padding-top:62px}
 .back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:28px;transition:color .2s;}
 .back-btn:hover{color:var(--rosa)}
 
+/* timeline */
+.timeline{position:relative}
+.timeline-item{display:grid;grid-template-columns:110px 1fr;gap:32px;margin-bottom:52px;position:relative}
+.timeline-item::before{content:'';position:absolute;left:109px;top:28px;bottom:-52px;width:1px;background:var(--border)}
+.timeline-item:last-child::before{display:none}
+.timeline-date{text-align:right;padding-top:4px}
+.timeline-date-label{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:4px}
+.timeline-dot{width:10px;height:10px;background:var(--rosa);border-radius:50%;margin-left:auto;margin-top:2px;box-shadow:0 0 0 3px rgba(196,57,107,.15);position:relative;z-index:1}
+.timeline-content h3{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:10px}
+.timeline-content p{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.75}
+
 /* eventos */
 .events-list{display:flex;flex-direction:column}
 .event-item{display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid var(--border)}
@@ -190,6 +201,29 @@ body.logada{padding-top:62px}
 .event-month{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);display:block}
 .event-day{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:var(--text);line-height:1}
 .event-name{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.05em;color:var(--text)}
+
+/* faq */
+.faq-list{display:flex;flex-direction:column}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-item:first-child{border-top:1px solid var(--border)}
+.faq-btn{width:100%;background:none;border:none;text-align:left;padding:20px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.faq-question{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.05em;font-weight:600;color:var(--text)}
+.faq-chevron{font-size:1.1rem;color:var(--rosa);transition:transform .25s;flex-shrink:0}
+.faq-chevron.open{transform:rotate(180deg)}
+.faq-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.faq-body.open{max-height:800px}
+.faq-content{padding:0 0 20px}
+.faq-content p{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.75;margin-bottom:12px}
+.faq-content p:last-child{margin-bottom:0}
+.faq-content p.accent{color:var(--rosa);font-style:italic}
+.help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:4px}
+.help-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 14px}
+.help-title{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.06em;color:var(--text);margin-bottom:6px}
+.help-text{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);line-height:1.5}
+.pix-box{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:10px 12px;margin-top:10px}
+.pix-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px}
+.pix-key{font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)}
+.badge-wip{display:inline-block;background:var(--amber-dim);border:1px solid var(--amber-border);color:var(--amber);border-radius:20px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:3px 12px;margin-top:12px}
 
 /* modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
@@ -224,6 +258,11 @@ footer{
 
 @media(max-width:500px){
   .widgets-grid{grid-template-columns:1fr 1fr}
+  .timeline-item{grid-template-columns:1fr;gap:6px}
+  .timeline-item::before{display:none}
+  .timeline-date{display:flex;align-items:center;gap:10px;text-align:left}
+  .timeline-dot{margin-left:0}
+  .help-grid{grid-template-columns:1fr}
 }
 
 /* ── GAVETÃO DE BAIXO (delicado) ── */
@@ -276,9 +315,20 @@ footer{
 .admin-panel h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--text);margin-bottom:6px}
 .admin-panel .sub{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
 .admin-section-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;backdrop-filter:blur(4px)}
+.admin-menu-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 12px;cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.admin-menu-item:hover{border-color:var(--rosa);transform:translateY(-1px);box-shadow:0 4px 16px rgba(196,57,107,.12)}
+.admin-menu-item-icon{font-size:1.6rem;margin-bottom:2px}
+.admin-menu-item-label{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;letter-spacing:.05em;color:var(--terra)}
+.admin-menu-item-desc{font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;line-height:1.3}
 .admin-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:rgba(196,90,30,.04)}
 .admin-section-title{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--terra)}
+.admin-item-row{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
+.admin-item-row:last-child{border-bottom:none}
+.admin-item-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.04em;color:var(--text);min-width:80px;flex:1}
+.admin-item-url{font-family:'Crimson Pro',serif;font-size:.75rem;color:var(--text-dim);font-style:italic;width:100%;order:10;padding-left:20px;margin-top:-4px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-item-actions{display:flex;gap:4px;flex-wrap:wrap;width:100%;order:11;padding-left:20px}
 @media(max-width:600px){
+  .admin-item-url{font-size:.7rem}
   .toggle-pill{font-size:.5rem;padding:3px 7px}
 }
 .toggle-pill{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);transition:all .2s;white-space:nowrap}
@@ -288,6 +338,9 @@ footer{
 .admin-del:hover{color:#b84040}
 .admin-edit{background:none;border:none;color:rgba(196,57,107,.4);font-size:.9rem;padding:2px 6px;cursor:pointer;transition:color .2s}
 .admin-edit:hover{color:var(--gp-gold,#c4396b)}
+.admin-add-form{padding:14px 16px;background:rgba(196,90,30,.03);border-top:1px solid var(--border)}
+.admin-add-form input,.admin-add-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+.admin-add-form input:focus,.admin-add-form select:focus{border-color:var(--rosa)}
 .admin-row-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .tv-admin-preview-sala{
   position:relative;width:150px;height:150px;margin:10px auto 4px;background:var(--gp-bg);
@@ -325,6 +378,13 @@ footer{
 .tv-admin-slider-valor{min-width:36px;text-align:right;font-family:'Cinzel',serif;color:var(--gp-gold)}
 .btn-add{background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;font-weight:700;padding:9px 18px;transition:all .2s}
 .btn-add:hover{background:var(--rosa-l)}
+.btn-save-menu{width:100%;background:var(--terra);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;font-weight:700;padding:13px;margin-top:8px;transition:all .2s}
+.btn-save-menu:hover{background:#a04020}
+.admin-edit-btn{background:none;border:none;color:rgba(196,90,30,.45);font-size:.9rem;padding:2px 6px;transition:color .2s;cursor:pointer}
+.admin-edit-btn:hover{color:var(--terra)}
+.admin-edit-form{padding:12px 16px;background:rgba(196,57,107,.04);border-bottom:1px solid var(--border)}
+.admin-edit-form input,.admin-edit-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+.admin-edit-form input:focus,.admin-edit-form select:focus{border-color:var(--rosa)}
 .hidden{display:none!important}
 /* ── MINHA HISTÓRIA ── */
 .mh-layout-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
@@ -539,6 +599,42 @@ footer{
 .cal-empty{text-align:center;padding:32px 16px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.95rem}
 .cal-filhas-only{display:none}
 
+.admin-filhas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:8px}
+.admin-filha-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px)}
+.admin-filha-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(180,60,90,.12)}
+.admin-filha-foto{width:50px;height:50px;border-radius:50%;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:var(--rosa);overflow:hidden}
+.admin-filha-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.admin-filha-nome{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--text);margin-bottom:3px;line-height:1.3}
+.admin-filha-guia{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic}
+.admin-filhas-vazio{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;padding:12px 0}
+/* modal ficha */
+#modal-ficha-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
+#modal-ficha-overlay.open{display:flex}
+#modal-ficha{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:580px;margin:auto;padding:28px 24px;position:relative}
+#modal-ficha-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer}
+#modal-ficha-close:hover{color:var(--rosa)}
+.mf-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.mf-foto{width:52px;height:52px;border-radius:50%;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);display:flex;align-items:center;justify-content:center;font-size:1.4rem;overflow:hidden;flex-shrink:0}
+.mf-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.mf-nome{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:2px}
+.mf-email{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;color:var(--text-dim)}
+.mf-section{margin-bottom:16px}
+.mf-section-title{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.mf-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 20px}
+.mf-field label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:1px}
+.mf-field .v{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text)}
+.mf-vazio{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic}
+/* histórico */
+.hist-item{padding:10px 0;border-bottom:1px solid var(--border)}
+.hist-item:last-child{border-bottom:none}
+.hist-meta{display:flex;justify-content:space-between;margin-bottom:3px}
+.hist-quem{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--rosa)}
+.hist-quando{font-family:'Cinzel',serif;font-size:.56rem;color:var(--text-dim)}
+.hist-texto{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text);font-style:italic}
+.hist-vazio{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;padding:8px 0}
+.mf-tabs{display:flex;gap:4px;margin-bottom:16px}
+.mf-tab{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);cursor:pointer;transition:all .2s}
+.mf-tab.active{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 
 #boas-vindas{
   display:none;
@@ -979,6 +1075,124 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mh-mini-txt{display:flex;flex-direction:column;min-width:0}
 .mh-mini-label{font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
 .mh-mini-val{font-family:'Crimson Pro',serif;font-size:.76rem;color:var(--text);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ══ RESUMO MENSAL ══ */
+.rm-frame{background:linear-gradient(180deg,#fff 0%,#fff8f4 100%);border:1.5px solid rgba(196,57,107,.18);border-radius:22px;padding:0;margin:0 auto 26px;max-width:520px;box-shadow:0 10px 40px rgba(196,57,107,.13);overflow:hidden;position:relative}
+.rm-header{background:linear-gradient(135deg,#c4396b 0%,#a52c58 55%,#8a1a40 100%);padding:7px 16px 6px;text-align:center;position:relative;overflow:hidden}
+.rm-header::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:22px;background:
+  radial-gradient(circle at 10% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 30% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 50% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 70% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 90% 100%, #fff 0 9px, transparent 10px);
+  background-size:20% 100%;}
+.rm-header-eyebrow{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:1px}
+.rm-header-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);line-height:1.1}
+.rm-header-sub{font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:rgba(255,255,255,.8);margin-top:4px}
+.rm-body{padding:6px 10px 7px;display:flex;flex-direction:column;gap:4px}
+.rm-secao{background:#fff;border:1px solid var(--border);border-radius:9px;padding:5px 8px;position:relative}
+.rm-secao-titulo{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.76rem;letter-spacing:.03em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:3px}
+.rm-secao-titulo .ic{font-size:1.05rem}
+.rm-edit-btn{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;transition:all .15s}
+.rm-edit-btn:hover{color:var(--rosa);background:var(--rosa-dim)}
+
+/* tesouraria */
+.rm-tesouraria-mes{font-family:'Crimson Pro',serif;font-size:.82rem;font-style:italic;color:var(--text-dim);margin-bottom:3px}
+
+/* recado do mês */
+.rm-secao-recado{background:linear-gradient(135deg,rgba(196,57,107,.06),rgba(196,90,30,.04));border-color:rgba(196,57,107,.2)}
+.rm-secao-recado.rm-secao-recado-vazia{padding:0;background:none;border:none;box-shadow:none}
+.rm-recado-add{width:100%;background:rgba(196,57,107,.05);border:1px dashed rgba(196,57,107,.3);border-radius:12px;padding:11px;font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--rosa);cursor:pointer;transition:background .15s}
+.rm-recado-add:hover{background:rgba(196,57,107,.1)}
+.rm-recado-texto{font-family:'Playfair Display',serif;font-size:1.02rem;font-style:italic;color:var(--text);line-height:1.6;white-space:pre-wrap}
+.rm-recado-vazio{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic}
+.rm-tes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:3px}
+.rm-tes-pill{text-align:center;background:var(--rosa-dim);border-radius:8px;padding:4px 5px}
+.rm-tes-pill.entrada{background:var(--green-dim)}
+.rm-tes-pill.saida{background:#fdecea}
+.rm-tes-pill.saldo{background:linear-gradient(135deg,rgba(196,57,107,.12),rgba(196,90,30,.08))}
+.rm-tes-label{font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:4px}
+.rm-tes-valor{font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;color:var(--text)}
+.rm-tes-pill.entrada .rm-tes-valor{color:var(--green)}
+.rm-tes-pill.saida .rm-tes-valor{color:#c0392b}
+.rm-tes-pill.saldo .rm-tes-valor{color:var(--rosa)}
+.rm-tes-obs{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;line-height:1.5}
+
+/* listas genéricas dentro das seções */
+.rm-lista{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.rm-linha{display:flex;flex-direction:column;gap:0;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);padding:4px 8px;background:var(--rosa-dim);border-radius:7px;overflow:hidden;min-width:0;line-height:1.25}
+.rm-linha>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.rm-linha-tag{font-family:'Cinzel',serif;font-size:.72rem;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-lista-1col{grid-template-columns:1fr}
+.rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
+
+.rm-footer{text-align:center;padding:4px 16px 5px;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.rm-footer .sub{display:block;font-family:'Crimson Pro',serif;font-size:.75rem;letter-spacing:0;text-transform:none;font-style:italic;margin-top:3px;color:rgba(196,90,30,.5)}
+
+.rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
+.rm-btn-whats:hover{transform:translateY(-2px)}
+.rm-btn-mes{background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff;border:none;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.06em;box-shadow:0 4px 16px rgba(196,57,107,.25);transition:transform .15s}
+.rm-btn-mes:hover{transform:translateY(-2px)}
+
+.rm-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
+@media(max-width:480px){
+  .rm-tes-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .rm-tes-valor{font-size:.85rem}
+  .rm-header-titulo{font-size:1.35rem}
+}
+
+/* ══ ORIENTAÇÕES DA SESSÃO ══ */
+.or-proxima{background:linear-gradient(135deg,#fff,#fff8f4);border:1px solid var(--border);border-left:5px solid var(--rosa);border-radius:14px;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.or-proxima-icon{font-size:1.9rem;flex-shrink:0}
+.or-proxima-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:2px}
+.or-proxima-titulo{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
+.or-proxima-sub{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic}
+
+.or-secao{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;position:relative}
+.or-secao-titulo{display:flex;align-items:center;gap:7px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:14px}
+.or-edit-btn{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;transition:all .15s}
+.or-edit-btn:hover{color:var(--rosa);background:var(--rosa-dim)}
+
+.or-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.or-campo{display:flex;flex-direction:column;gap:5px;flex:1 1 140px}
+.or-campo label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+.or-campo input,.or-campo select,.or-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;width:100%}
+.or-campo textarea{min-height:64px;resize:vertical;font-family:'DM Sans',sans-serif;line-height:1.5}
+.or-campo input:focus,.or-campo select:focus,.or-campo textarea:focus{border-color:var(--rosa);background:#fff}
+
+.or-radio-group{display:flex;gap:8px;flex-wrap:wrap}
+.or-radio-pill{flex:1 1 140px;text-align:center;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--rosa-dim);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:var(--text-dim);transition:all .15s}
+.or-radio-pill.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
+
+.or-item-linha{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--border)}
+.or-item-linha:last-child{border-bottom:none}
+.or-item-check{width:19px;height:19px;accent-color:var(--rosa);flex-shrink:0;cursor:pointer}
+.or-item-emoji{font-size:1.15rem;flex-shrink:0;width:26px;text-align:center}
+.or-item-texto{flex:1;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text)}
+.or-btn-add-extra{width:100%;background:none;border:1px dashed var(--rosa);border-radius:9px;color:var(--rosa);font-family:'Crimson Pro',serif;font-size:.85rem;padding:9px;cursor:pointer;margin-top:6px}
+.or-extra-linha{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.or-extra-linha input.or-texto-inp{flex:1}
+.or-extra-del{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:4px 6px;flex-shrink:0}
+.or-extra-del:hover{color:#c0392b}
+.or-emoji-btn{width:44px;height:38px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:var(--rosa-dim);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.or-emoji-btn:hover{border-color:var(--rosa)}
+.or-emoji-picker{position:absolute;z-index:400;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.15);padding:8px;display:grid;grid-template-columns:repeat(6,1fr);gap:3px;max-width:220px}
+.or-emoji-opcao{width:32px;height:32px;border:none;background:none;font-size:1.15rem;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.or-emoji-opcao:hover{background:var(--rosa-dim)}
+
+.or-btn-gerar{width:100%;background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Cinzel',serif;font-size:12.5px;letter-spacing:.08em;font-weight:700;cursor:pointer;margin-top:8px;box-shadow:0 4px 16px rgba(196,57,107,.25);transition:transform .15s}
+.or-btn-gerar:hover{transform:translateY(-2px)}
+
+/* modal editar padrões */
+.or-tpl-item-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.or-tpl-item-row input.or-texto-inp{flex:1}
+
+@media(max-width:600px){
+  .or-row{flex-direction:column;align-items:stretch}
+  .or-proxima{flex-direction:column;text-align:center;justify-content:center}
+}
 
 /* ══ MODAL EDITAR FICHA — versão bem enxuta, sem depender do espaçamento padrão do resto do site ══ */
 #mh-modal-overlay .perfil-grid{grid-template-columns:1fr 1fr!important;gap:6px 12px!important}
@@ -1815,7 +2029,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <span class="dashv-card-icon">🌙</span>
         <span class="dashv-card-txt">Como me preparar para ir na sessão</span>
       </a>
-      <a href="#" class="dashv-card" onclick="window.open('/apoie','_self')">
+      <a href="#" class="dashv-card" onclick="showPage('apoie');return false">
         <span class="dashv-card-icon">🤲</span>
         <span class="dashv-card-txt">Como ajudar a casa</span>
       </a>
@@ -1891,6 +2105,46 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+
+<!-- PÁGINA HISTÓRIA DA CASA -->
+<div id="page-historia" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Fundação</div>
+    <div class="section-title">Nossa história</div>
+    <p class="section-sub">Da previsão de Exu Tranca Ruas até a conquista da sede própria — cada passo foi guiado pela espiritualidade.</p>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">Final de 2020</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Anúncio e a Previsão</h3><p>Exu Tranca Ruas previu a caminhada que estava por vir, anunciando a chegada dos axés, dos filhos e da futura casa.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">Fevereiro de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Encontro Inicial</h3><p>O destino se apressou e trouxe o encontro de Vanessa com Anna, passando assim a acompanhá-la nas terreiras, e se deu o início real a esta jornada espiritual.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">Maio de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>A Manifestação de Vô Chico</h3><p>A espiritualidade se manifestou decisivamente com o nascimento de Vô Chico através da médium Vanessa, marcando a necessidade de movimento de Anna para a iniciação de sua filha.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">Outubro de 2021</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>Abertura das Portas</h3><p>Com a benção de Mãe Betânia, o Bolhas de Luz abriu suas portas oficialmente em um quarto improvisado, unindo Anna como Mãe da casa e Vanessa como sua primeira filha.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">2021 — 2022</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>Sessões de Visita</h3><p>Começamos ali, nos adaptando: tocando nas ruas e nas praças, indo em sessões de amigos, e assim foram os primeiros três anos de trabalhos, onde a casa deu seus primeiros passos, foi estruturando seu calendário, suas obrigações, seus fundamentos.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">2022 — 2023</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>O Período no "Empilhadeiro"</h3><p>Anos voltados ao desenvolvimento e manutenção reservada, adaptando-se ao espaço reduzido do apartamento, enquanto buscávamos a "casa de chão". Sessões com tambor eram nas ruas, torcendo para não vir chuva. A maior parte das sessões eram em quarto apertado, e mesmo assim, a casa foi crescendo até não caber mais em si.</p></div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-date"><div class="timeline-date-label">Março de 2024</div><div class="timeline-dot"></div></div>
+        <div class="timeline-content"><h3>A Conquista da Sede Própria</h3><p>Os guias autorizaram a busca por uma sede física. O terreiro finalmente estabeleceu seu salão e chão na Rua Ary Tarrago, 2155, garantindo liberdade para os trabalhos e assentamentos.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- PÁGINA SUA HISTÓRIA -->
 <!-- MODAL EDITAR MINHA FICHA (abre pelo botão ✎ Editar no Início) -->
@@ -2003,7 +2257,98 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 </div>
 
 <!-- PÁGINA APOIE -->
+<div id="page-apoie" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Apoie a Terreira</div>
+    <div class="section-title">Como posso ajudar?</div>
+    <p class="section-sub">Algumas dúvidas sobre a dinâmica financeira e como nos apoiar.</p>
+
+    <!-- PIX EM DESTAQUE -->
+    <div style="background:linear-gradient(135deg,var(--rosa),#e07a90);border-radius:14px;padding:20px 22px;margin-bottom:24px;box-shadow:0 6px 24px rgba(196,57,107,.25)">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:6px">✦ Doe via PIX</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.92rem;color:rgba(255,255,255,.92);font-style:italic;margin-bottom:14px;line-height:1.5">Qualquer valor é bem-vinda e será revertido às contas e manutenção da casa.</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 14px">
+        <div style="min-width:0">
+          <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:2px">Chave PIX (copia e cola)</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix('btn-copiar-pix-topo')" id="btn-copiar-pix-topo" style="background:#fff;border:none;border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+
+    <div class="faq-list">
+      <div class="faq-item">
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Não há cobrança de atendimentos</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content">
+          <p>Nenhum atendimento de gira, ou oriundo dela, é cobrado. Nem obrigação, reforço, cruzamentos, axés ou limpezas.</p>
+          <p>O seu gasto será com o material utilizado e, se houver, o deslocamento da corrente. A exceção são axés muito específicos pedidos por vontade própria, sem orientação ou necessidade da espiritualidade.</p>
+          <p class="accent">A casa não realiza trabalhos de dano.</p>
+        </div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Quais são as arrecadações?</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content">
+          <p>A casa vive de doações — tanto das filhas quanto de visitantes — e das mensalidades das integrantes da corrente, destinadas à manutenção da casa.</p>
+          <p>Os valores arrecadados não cobrem todas as contas hoje, então contamos com doações espontâneas. Eventualmente realizamos rifas, vendas de camisetas e similares.</p>
+        </div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Como ajudar?</span><span class="faq-chevron open">›</span></button>
+        <div class="faq-body open"><div class="faq-content">
+          <div class="help-grid">
+            <div class="help-card"><div class="help-title">Velas</div><div class="help-text">Doações de velas são sempre bem-vindas. Na dúvida, branco nunca erra. Temos uma listinha de guias e cores.</div></div>
+            <div class="help-card"><div class="help-title">Alimentos</div><div class="help-text">Nas sessões, oferecemos oferendas que são divididas com os presentes.</div></div>
+            <div class="help-card"><div class="help-title">Produtos</div><div class="help-text">Visite nossa lojinha! Camisetas, ecobags, velas, incensos e outros.</div></div>
+            <div class="help-card"><div class="help-title">PIX</div><div class="help-text">Doações financeiras revertidas às contas e manutenções da casa.</div><div class="pix-box" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="pix-label">Chave PIX</div><div class="pix-key">bolhasdeluz@gmail.com</div></div><button onclick="copiarPix()" id="btn-copiar-pix" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.06em;font-weight:700;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button></div></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Doações mensais</span><span class="faq-chevron">›</span></button>
+        <div class="faq-body"><div class="faq-content"><span class="badge-wip">✦ Em construção</span></div></div>
+      </div>
+    </div>
+    <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:10px;padding:16px 18px;margin-top:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🍿 Pipoca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌽 Canjica branca</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌾 Canjica amarela</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫘 Feijão</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌿 Lentilha</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫙 Óleo</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🕯️ Velas brancas</div>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌸 Flores</div>
+      </div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:10px">Na dúvida sobre velas: branco nunca erra! 🕯️</p>
+    </div>
+  </div>
+</div>
+
 <!-- PÁGINA PIX PARA DOAÇÕES — card direto, pra quem chega pelo QR code do portão -->
+<div id="page-pix" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Apoie a Terreira</div>
+    <div class="section-title">Pix para doações</div>
+    <p class="section-sub">Qualquer valor é bem-vindo e será revertido às contas e manutenção da casa.</p>
+
+    <div style="background:linear-gradient(135deg,var(--rosa),#e07a90);border-radius:14px;padding:20px 22px;margin-bottom:18px;box-shadow:0 6px 24px rgba(196,57,107,.25)">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:6px">✦ Doe via PIX</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 14px">
+        <div style="min-width:0">
+          <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:2px">Chave PIX (copia e cola)</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bolhasdeluz@gmail.com</div>
+        </div>
+        <button onclick="copiarPix('btn-copiar-pix-doacoes')" id="btn-copiar-pix-doacoes" style="background:#fff;border:none;border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button>
+      </div>
+    </div>
+
+    <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic">A chave é um e-mail — cole no seu banco em "Pix" → "Copia e cola" ou "Chave e-mail".</p>
+  </div>
+</div>
 
 <!-- MODAL BOAS-VINDAS PRIMEIRO LOGIN -->
 <div id="modal-boasvindas" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:16px">
@@ -2162,6 +2507,278 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="cp-lista-ok"></div>
     <div id="cp-carregando" class="cp-carregando">Carregando lista...</div>
     <div id="cp-vazio" class="cp-vazio" style="display:none"><div class="cp-vazio-icon">🛒</div><p>A prateleira está vazia. Adicione os itens fixos que a casa sempre usa!</p></div>
+  </div>
+</div>
+
+<!-- PÁGINA RESUMO MENSAL -->
+<div id="page-resumo" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">📋 Resumo Mensal</div>
+    <p class="section-sub">Tudo num só lugar — pronto pra printar e mandar no grupo ✦</p>
+
+    <div class="rm-topo-acoes">
+      <button class="rm-btn-mes" id="rm-btn-mes-editar">📅 Escolher mês</button>
+      <button class="rm-btn-whats" id="rm-btn-whats">📱 Gerar mensagem pro WhatsApp</button>
+      <button class="rm-btn-mes" id="rm-btn-imagem" style="background:linear-gradient(135deg,#8c5a00,#c88c00)">📸 Gerar Imagem</button>
+      <button class="rm-btn-mes" id="rm-btn-tela-cheia" style="background:linear-gradient(135deg,#4a6fa5,#2f4d75)">🔍 Ver tela cheia</button>
+    </div>
+
+    <div class="rm-frame" id="rm-frame">
+      <div class="rm-header">
+        <button class="rm-edit-btn" id="rm-header-editar" style="color:rgba(255,255,255,.75)" title="Escolher mês">✎</button>
+        <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+        <div class="rm-header-titulo" id="rm-mes-titulo">—</div>
+        <div class="rm-header-sub">Um espaço de fé, axé e comunidade</div>
+      </div>
+
+      <div class="rm-body">
+        <!-- RECADO DO MÊS (opcional — fica compacto quando vazio) -->
+        <div class="rm-secao rm-secao-recado" id="rm-secao-recado-wrap">
+          <button class="rm-edit-btn" id="rm-recado-editar" title="Editar">✎</button>
+          <div class="rm-secao-titulo"><span class="ic">💌</span> Recado do Mês</div>
+          <div class="rm-recado-texto" id="rm-recado-texto"></div>
+        </div>
+
+        <!-- TESOURARIA -->
+        <div class="rm-secao">
+          <button class="rm-edit-btn" id="rm-tes-editar" title="Editar">✎</button>
+          <div class="rm-secao-titulo"><span class="ic">💰</span> Tesouraria — mês passado</div>
+          <div class="rm-tesouraria-mes" id="rm-tes-mes">Ainda não preenchido</div>
+          <div class="rm-tes-grid" style="grid-template-columns:1fr 1fr;margin-bottom:6px">
+            <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">👥 Pagantes</span><span class="rm-tes-valor" id="rm-tes-pct-pag" style="color:var(--rosa);font-size:1.2rem">0%</span><div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:1px" id="rm-tes-pag-sub"></div></div>
+            <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">💰 Coberto</span><span class="rm-tes-valor" id="rm-tes-pct-cob" style="color:var(--rosa);font-size:1.2rem">0%</span></div>
+          </div>
+          <div class="rm-tes-grid">
+            <div class="rm-tes-pill entrada"><span class="rm-tes-label">Entradas</span><span class="rm-tes-valor" id="rm-tes-entradas">R$ 0</span></div>
+            <div class="rm-tes-pill saida"><span class="rm-tes-label">Saídas</span><span class="rm-tes-valor" id="rm-tes-saidas">R$ 0</span></div>
+            <div class="rm-tes-pill saldo"><span class="rm-tes-label">Saldo</span><span class="rm-tes-valor" id="rm-tes-saldo">R$ 0</span></div>
+          </div>
+          <div class="rm-tes-obs" id="rm-tes-obs"></div>
+        </div>
+
+        <!-- PRÓXIMAS SESSÕES -->
+        <div class="rm-secao">
+          <div class="rm-secao-titulo"><span class="ic">📅</span> Próximas Sessões</div>
+          <div class="rm-lista rm-lista-1col" id="rm-sessoes-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+        </div>
+
+        <!-- ANIVERSARIANTES -->
+        <div class="rm-secao">
+          <div class="rm-secao-titulo"><span class="ic">🎂</span> Aniversariantes do Mês</div>
+          <div class="rm-lista" id="rm-aniv-lista"></div>
+        </div>
+
+        <!-- MANUTENÇÃO -->
+        <div class="rm-secao">
+          <div class="rm-secao-titulo"><span class="ic">🔧</span> Manutenção</div>
+          <div class="rm-lista" id="rm-manut-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+        </div>
+
+        <!-- LISTA DE COMPRAS -->
+        <div class="rm-secao">
+          <button class="rm-edit-btn" onclick="showPage('compras')" title="Editar na Lista de Compras">✎</button>
+          <div class="rm-secao-titulo"><span class="ic">🛒</span> Itens Faltando</div>
+          <div class="rm-lista" id="rm-compras-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+        </div>
+      </div>
+
+      <div class="rm-footer">Terreiro Bolhas de Luz<span class="sub">Porto Alegre, RS · bolhasdeluz.ong.br</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RECADO DO MÊS -->
+<div class="mn-modal-bg" id="rm-recado-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>💌 Recado do Mês</h3>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Orientações, avisos ou mensagem breve pra casa</label><textarea id="rm-recado-inp" placeholder="Ex: Este mês pedimos atenção redobrada com os horários das sessões..." style="min-height:120px"></textarea></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-recado-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-recado-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TESOURARIA -->
+<div class="mn-modal-bg" id="rm-tes-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>💰 Observação da Tesouraria</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Entradas, saídas e saldo agora vêm direto da sua Tesouraria — só a observação é digitada aqui.</p>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Observação (opcional)</label><textarea id="rm-tes-inp-obs" placeholder="Ex: inclui doação especial da Semana Caldeira..."></textarea></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-tes-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-tes-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO WHATSAPP RESUMO -->
+<div class="mn-modal-bg" id="rm-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📋 Mensagem do Resumo Mensal</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="rm-rel-texto" style="min-height:320px"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="rm-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="rm-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESCOLHER MÊS DO RESUMO -->
+<div class="mn-modal-bg" id="rm-mes-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>📅 Qual mês este resumo representa?</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Isso muda o título do cartão e os aniversariantes exibidos.</p>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Mês / ano</label><input type="month" id="rm-mes-inp"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-mes-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-mes-salvar">Usar este mês ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TELA CHEIA DO RESUMO -->
+<div id="rm-full-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:#fdeef2;overflow-y:auto;padding:20px 14px 60px">
+  <button id="rm-full-fechar" style="position:fixed;top:16px;right:16px;z-index:1000;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer">×</button>
+  <div id="rm-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
+</div>
+
+<!-- PÁGINA ORIENTAÇÕES DA SESSÃO -->
+<div id="page-orientacoes" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">📢 Orientações da Sessão</div>
+    <p class="section-sub">Já vem com o que você sempre usa — só ajustar e mandar ✦</p>
+
+    <div class="or-proxima" id="or-proxima">
+      <div class="or-proxima-icon">📅</div>
+      <div>
+        <div class="or-proxima-label">Próxima sessão na agenda</div>
+        <div class="or-proxima-titulo" id="or-proxima-titulo">Carregando...</div>
+        <div class="or-proxima-sub" id="or-proxima-sub"></div>
+      </div>
+    </div>
+
+    <div class="or-secao">
+      <div class="or-secao-titulo">✦ Sobre a sessão</div>
+      <div class="or-row">
+        <div class="or-campo" style="flex:1 1 100%">
+          <label>Tipo de sessão (define os emojis certos automaticamente)</label>
+          <select id="or-inp-tipo" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none">
+            <option value="quimbanda">Quimbanda</option>
+            <option value="pretosvelhos">Pretos Velhos</option>
+            <option value="ciganos">Ciganos</option>
+            <option value="caboclos">Caboclos</option>
+            <option value="cosmes">Cosmes e Caboclos</option>
+            <option value="desenvolvimento">Desenvolvimento</option>
+            <option value="cruzamento">Cruzamento</option>
+            <option value="obrigacao">Obrigação</option>
+            <option value="outro">Outro / genérico</option>
+          </select>
+        </div>
+      </div>
+      <div class="or-row">
+        <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
+      </div>
+      <div class="or-row">
+        <div class="or-campo"><label><span id="or-emoji-chegada">🧑‍🦱</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
+        <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
+      </div>
+      <div class="or-row">
+        <div class="or-campo" style="flex:1 1 100%">
+          <label>Assistência</label>
+          <div class="or-radio-group">
+            <div class="or-radio-pill ativo" id="or-radio-aberta" data-val="aberta">🧑‍🤝‍🧑 Sessão aberta à assistência</div>
+            <div class="or-radio-pill" id="or-radio-sem" data-val="sem">Sessão sem atendimentos</div>
+            <div class="or-radio-pill" id="or-radio-fechada" data-val="fechada">Sessão fechada</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="or-secao">
+      <div class="or-secao-titulo">✦ Notas rápidas pra IA (opcional)</div>
+      <p style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">Escreve do seu jeito, solto mesmo — a IA transforma em linhas com emoji igual você costuma mandar. Ex: "tragam comidinha doce ou salgada, chapéu no cabideiro, identificar bebida na mesa"</p>
+      <textarea id="or-inp-notas-ia" placeholder="Ex: tragam ervas, banho tomado antes de sair de casa, quem não tem guia do caboclo vem com a do pai xangô..." style="width:100%;min-height:60px;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none;resize:vertical"></textarea>
+      <button class="or-btn-add-extra" id="or-btn-ia" style="background:linear-gradient(135deg,#8c5a00,#c88c00);color:#fff;border:none;margin-top:8px">✨ Transformar com IA</button>
+      <div id="or-ia-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:6px"></div>
+    </div>
+
+    <div class="or-secao">
+      <button class="or-edit-btn" id="or-tpl-editar" title="Editar itens fixos">✎</button>
+      <div class="or-secao-titulo">✦ Itens fixos (marque o que se aplica)</div>
+      <div id="or-itens-fixos"></div>
+    </div>
+
+    <div class="or-secao">
+      <div class="or-secao-titulo">✦ Itens extras desta sessão</div>
+      <div id="or-itens-extras"></div>
+      <button class="or-btn-add-extra" id="or-btn-add-extra">+ Adicionar item extra</button>
+    </div>
+
+    <div class="or-secao">
+      <div class="or-secao-titulo">✦ Observação livre (opcional)</div>
+      <textarea id="or-inp-obs" placeholder="Qualquer outro aviso específico dessa sessão..." style="width:100%;min-height:70px;border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none;resize:vertical"></textarea>
+    </div>
+
+    <div class="or-secao">
+      <button class="or-edit-btn" id="or-mens-editar" title="Editar valores">✎</button>
+      <div class="or-secao-titulo">✦ Lembrete de mensalidade</div>
+      <div class="or-item-linha" style="border:none;padding:0">
+        <input type="checkbox" class="or-item-check" id="or-check-mensalidade" checked>
+        <span class="or-item-texto" id="or-mens-preview">Carregando...</span>
+      </div>
+    </div>
+
+    <button class="or-btn-gerar" id="or-btn-gerar">📋 Gerar Mensagem</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ITENS FIXOS -->
+<div class="mn-modal-bg" id="or-tpl-modal" style="display:none">
+  <div class="mn-modal" style="width:420px">
+    <h3>✎ Itens fixos padrão</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Esses itens aparecem pré-marcados toda vez que você abrir essa ferramenta.</p>
+    <div id="or-tpl-lista"></div>
+    <button class="or-btn-add-extra" id="or-tpl-add" style="margin-bottom:14px">+ Adicionar item fixo</button>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="or-tpl-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="or-tpl-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR MENSALIDADE/CONTATO -->
+<div class="mn-modal-bg" id="or-mens-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>✎ Mensalidade e contato</h3>
+    <div class="mn-row">
+      <div class="mn-campo"><label>Valor mínimo (R$)</label><input type="number" id="or-mens-inp-min" step="0.01" min="0"></div>
+      <div class="mn-campo"><label>Valor máximo (R$)</label><input type="number" id="or-mens-inp-max" step="0.01" min="0"></div>
+    </div>
+    <div class="mn-campo mn-full" style="margin-bottom:10px"><label>E-mail / chave PIX</label><input type="text" id="or-mens-inp-email"></div>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Link de pagamento</label><input type="text" id="or-mens-inp-link"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="or-mens-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="or-mens-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MENSAGEM GERADA -->
+<div class="mn-modal-bg" id="or-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📢 Mensagem da Sessão</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="or-rel-texto" style="min-height:340px"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="or-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="or-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
   </div>
 </div>
 
@@ -2909,6 +3526,132 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- MODAL CRIAR/EDITAR PERFIL ADMIN -->
+<div id="modal-criar-overlay" onclick="if(event.target===this)fecharCriarPerfil()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:600px;margin:auto;padding:28px 24px;position:relative">
+    <button onclick="fecharCriarPerfil()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:4px" id="criar-modal-titulo">Criar Perfil</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:20px">O perfil ficará disponível quando ela logar pela primeira vez.</div>
+
+    <div style="margin-bottom:12px">
+      <label class="form-label">E-mail (obrigatório)</label>
+      <input type="email" class="form-input" id="cp-email" placeholder="filha@gmail.com">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="form-label">Nome</label><input type="text" class="form-input" id="cp-nome" placeholder="Nome completo"></div>
+      <div><label class="form-label">Cargo / Função</label>
+        <select class="form-input" id="cp-cargo" style="font-family:'Crimson Pro',serif;font-size:15px">
+          <option value="">— Selecionar —</option>
+          <option value="Mãe da Casa">Mãe da Casa</option>
+          <option value="Cacique">Cacique</option>
+          <option value="Tamoio">Tamoio</option>
+          <option value="Naurú">Naurú</option>
+          <option value="Cambona">Cambona</option>
+          <option value="Tamboreiro">Tamboreiro</option>
+          <option value="Curumim">Curumim</option>
+        </select>
+      </div>
+      <div><label class="form-label">Grupo de acesso</label>
+        <select class="form-input" id="cp-grupo" style="font-family:'Crimson Pro',serif;font-size:15px">
+          <option value="visitante">Visitante (padrão)</option>
+          <option value="filhas">Filhas da Casa</option>
+          <option value="tamboreiro">Tamboreiro</option>
+          <option value="amigos">Amigos</option>
+          <option value="assistencia">Assistência</option>
+        </select>
+      </div>
+      <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
+      <div><label class="form-label">🎂 Data de Aniversário</label><input type="date" class="form-input" id="cp-data_nascimento"></div>
+    </div>
+
+    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">História</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+      <div><label class="form-label">Data de Entrada</label><input type="date" class="form-input" id="cp-data_entrada"></div>
+      <div><label class="form-label">Guia Chefe</label><input type="text" class="form-input" id="cp-guia_chefe" placeholder="Nome do guia chefe"></div>
+      <div><label class="form-label">Apronte</label><input type="date" class="form-input" id="cp-apronte"></div>
+      <div><label class="form-label">Apronte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-apronte_galinhas" placeholder="0"></div>
+      <div><label class="form-label">Apronte — Galos</label><input type="number" min="0" class="form-input" id="cp-apronte_galos" placeholder="0"></div>
+      <div><label class="form-label">Coroação</label><input type="date" class="form-input" id="cp-coroacao"></div>
+      <div><label class="form-label">Cacicamento</label><input type="date" class="form-input" id="cp-cacicamento"></div>
+      <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="cp-madrinha" placeholder="Nome da madrinha"></div>
+      <div><label class="form-label">Data — Madrinha</label><input type="date" class="form-input" id="cp-madrinha_data"></div>
+      <div><label class="form-label">Afilhada 1</label><input type="text" class="form-input" id="cp-afilhada_1" placeholder="Nome"></div>
+      <div><label class="form-label">Data — Afilhada 1</label><input type="date" class="form-input" id="cp-afilhada_1_data"></div>
+      <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" placeholder="Nome"></div>
+      <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
+      <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
+      <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
+      <div><label class="form-label">1º Corte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-corte_1_galinhas" placeholder="0"></div>
+      <div><label class="form-label">1º Corte — Galos</label><input type="number" min="0" class="form-input" id="cp-corte_1_galos" placeholder="0"></div>
+    </div>
+
+    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Guias e Guardiões</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+      <div><label class="form-label">Caboclo</label><input type="text" class="form-input" id="cp-caboclo" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-caboclo_data"></div>
+      <div><label class="form-label">Exu</label><input type="text" class="form-input" id="cp-exu" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-exu_data"></div>
+      <div><label class="form-label">Pomba Gira</label><input type="text" class="form-input" id="cp-pomba_gira" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-pomba_gira_data"></div>
+      <div><label class="form-label">Preto Velho</label><input type="text" class="form-input" id="cp-preto_velho" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-preto_velho_data"></div>
+      <div><label class="form-label">Cigana</label><input type="text" class="form-input" id="cp-cigana" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-cigana_data"></div>
+      <div><label class="form-label">Cosme</label><input type="text" class="form-input" id="cp-cosme" placeholder="Nome"></div>
+      <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-cosme_data"></div>
+    </div>
+
+    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Cruzamentos e Axés</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div><label class="form-label">Mata</label><input type="date" class="form-input" id="cp-cruz_mata"></div>
+      <div><label class="form-label">Praia</label><input type="date" class="form-input" id="cp-cruz_praia"></div>
+      <div><label class="form-label">Rio/Cachoeira</label><input type="date" class="form-input" id="cp-cruz_rio"></div>
+      <div><label class="form-label">Pedreira</label><input type="date" class="form-input" id="cp-cruz_pedreira"></div>
+    </div>
+
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-ativo" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        Perfil ativo (desmarque se a pessoa saiu da casa — some de tudo, mas os dados ficam guardados)
+      </label>
+    </div>
+    <!-- CAMPOS CACIQUE -->
+    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
+      ✦ Cacique — campos especiais
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-visivelGuias" style="accent-color:var(--rosa);width:16px;height:16px">
+        Exibir na página de Guias (pública)
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>
+        <label class="form-label">Título do campo (ex: "Meu Terreiro")</label>
+        <input type="text" class="form-input" id="cp-terreiro_titulo" placeholder="Meu Terreiro">
+      </div>
+      <div>
+        <label class="form-label">Nome do terreiro</label>
+        <input type="text" class="form-input" id="cp-terreiro_nome" placeholder="ex: Terreiro das Estrelas">
+      </div>
+      <div>
+        <label class="form-label">Data de inauguração</label>
+        <input type="date" class="form-input" id="cp-terreiro_data">
+      </div>
+      <div style="display:flex;flex-direction:column;justify-content:flex-end">
+        <label class="form-label">Visível na Início?</label>
+        <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;margin-top:6px">
+          <input type="checkbox" id="cp-terreiro_visivel" style="accent-color:var(--rosa);width:16px;height:16px">
+          Mostrar na Início
+        </label>
+      </div>
+    </div>
+
+    <div id="cp-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
+    <button class="btn-rosa" style="width:100%;padding:13px;font-size:11px;letter-spacing:.1em" onclick="salvarPerfilAdmin()">✦ Salvar perfil</button>
+  </div>
+</div>
+
 <!-- MODAL ANIVERSÁRIOS -->
 <div id="modal-aniversarios-overlay" onclick="if(event.target===this)fecharModalAniversarios()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:550;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;margin:40px auto;padding:26px 22px;position:relative">
@@ -2924,27 +3667,134 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- MODAL FICHA ADMIN -->
+<div id="modal-ficha-overlay" onclick="if(event.target===this)fecharFicha()">
+  <div id="modal-ficha">
+    <button id="modal-ficha-close" onclick="fecharFicha()">×</button>
+    <div class="mf-header">
+      <div class="mf-foto" id="mf-foto">👤</div>
+      <div>
+        <div class="mf-nome" id="mf-nome"></div>
+        <div class="mf-email" id="mf-email"></div>
+      </div>
+    </div>
+    <div class="mf-tabs">
+      <button class="mf-tab active" onclick="mfTab('ficha',this)">Ficha</button>
+      <button class="mf-tab" onclick="mfTab('historico',this)">Histórico</button>
+      <button class="mf-tab" onclick="fecharFicha();abrirCriarPerfil(document.getElementById('mf-email').textContent)" style="margin-left:auto">✎ Editar</button>
+    </div>
+    <div id="mf-body-ficha"></div>
+    <div id="mf-body-historico" style="display:none"></div>
+  </div>
+</div>
+
 <!-- FIREBASE -->
 <div id="page-admin" class="page">
   <div class="admin-panel">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <h2>Painel de Administração</h2>
-    <p class="sub">Simule a visão de outra pessoa aqui, ou abra o painel completo pra gerenciar menu, avisos e perfis.</p>
-    <button onclick="iniciarSimulacao()" style="background:var(--green);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;font-weight:700;padding:10px 20px;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+    <p class="sub">Gerencie o menu e os cards da homepage. Alterações são salvas no Cloudflare KV.</p>
+    <button onclick="iniciarSimulacao()" style="background:var(--green);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;font-weight:700;padding:10px 20px;cursor:pointer;margin-bottom:24px;display:flex;align-items:center;gap:8px">
       👁 Simular visão de outra pessoa
     </button>
-    <br>
-    <button id="btn-sair-admin-senha" onclick="logoutSenhaAdmin()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:24px">
+    <button id="btn-sair-admin-senha" onclick="logoutSenhaAdmin()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:24px;margin-left:8px">
       🔑 Sair do modo admin (senha)
     </button>
 
-    <a href="/admin" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;backdrop-filter:blur(4px);transition:all .2s" onmouseover="this.style.borderColor='var(--rosa)'" onmouseout="this.style.borderColor='var(--border)'">
-      <span>
-        <span style="display:block;font-family:'Cinzel',serif;font-size:.75rem;font-weight:600;letter-spacing:.05em;color:var(--terra)">⚙ Abrir Painel Completo</span>
-        <span style="display:block;font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px">Menu do Site, Sua História, Avisos e Filhas da Casa</span>
-      </span>
-      <span style="color:var(--rosa);font-size:1.2rem">→</span>
-    </a>
+    <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
+    <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+      <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
+        <span class="admin-menu-item-icon">📋</span>
+        <span class="admin-menu-item-label">Menu do Site</span>
+        <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
+        <span class="admin-menu-item-icon">📜</span>
+        <span class="admin-menu-item-label">Sua História</span>
+        <span class="admin-menu-item-desc">Quem pode ver o card</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')">
+        <span class="admin-menu-item-icon">📢</span>
+        <span class="admin-menu-item-label">Avisos / Comunicados</span>
+        <span class="admin-menu-item-desc">Escreva avisos pra cada grupo</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')">
+        <span class="admin-menu-item-icon">🌸</span>
+        <span class="admin-menu-item-label">Filhas da Casa</span>
+        <span class="admin-menu-item-desc">Perfis e fichas</span>
+      </button>
+    </div>
+
+    <!-- MENU DO SITE (cards + seções) -->
+    <div id="admin-sub-menu" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div id="admin-sections-container"></div>
+      <div class="admin-section-block">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Nova Seção do Menu</span>
+        </div>
+        <div class="admin-add-form">
+          <input type="text" id="new-section-label" placeholder="Nome da seção (ex: Especial)">
+          <button class="btn-add" onclick="addSection()">+ Adicionar Seção</button>
+        </div>
+      </div>
+      <button class="btn-save-menu" onclick="saveMenu()">↻ Forçar salvar agora</button>
+      <div class="save-status" id="save-status"></div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:4px">Toda alteração já é salva automaticamente ✦</div>
+    </div>
+
+    <!-- VISIBILIDADE: SUA HISTÓRIA -->
+    <div id="admin-sub-historia" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Sua História — Visibilidade</span>
+        </div>
+        <div style="padding:12px 16px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">O card "Sua História" aparece para quem estiver logada nos grupos selecionados:</div>
+        <div style="padding:0 16px 14px;display:flex;gap:6px;flex-wrap:wrap" id="sua-historia-vis-wrap">
+          <button class="toggle-pill on" id="sua-hist-vis-visitante" onclick="toggleSuaHistoriaVis('visitante')">👤 Visitante</button>
+          <button class="toggle-pill on" id="sua-hist-vis-filhas" onclick="toggleSuaHistoriaVis('filhas')">🌸 Filhas</button>
+          <button class="toggle-pill on" id="sua-hist-vis-tamboreiro" onclick="toggleSuaHistoriaVis('tamboreiro')">🥁 Tamboreiro</button>
+          <button class="toggle-pill on" id="sua-hist-vis-amigos" onclick="toggleSuaHistoriaVis('amigos')">🤝 Amigos</button>
+          <button class="toggle-pill" id="sua-hist-vis-assistencia" onclick="toggleSuaHistoriaVis('assistencia')">🤲 Assistência</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AVISOS / COMUNICADOS -->
+    <div id="admin-sub-avisos" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">📢 Avisos / Comunicados</span>
+        </div>
+        <div style="padding:12px 16px 0;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">Escreva um aviso e marque quem deve ver — fica oculto até você marcar um grupo.</div>
+        <div style="padding:10px 16px 14px">
+          <textarea id="av-novo-texto" placeholder="Texto do aviso..." style="width:100%;min-height:60px;font-family:'Crimson Pro',serif;font-size:.9rem;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical;margin-bottom:8px"></textarea>
+          <button class="btn-add" onclick="avAdicionar()">+ Adicionar aviso</button>
+        </div>
+        <div id="av-lista" style="padding:0 16px 14px"></div>
+      </div>
+    </div>
+
+    <!-- FILHAS DA CASA -->
+    <div id="admin-sub-filhas" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Filhas da Casa</span>
+          <div style="display:flex;gap:6px">
+            <button class="admin-btn" onclick="abrirCriarPerfil()">+ Criar perfil</button>
+            <button class="admin-btn" onclick="carregarFilhasAdmin()">↺ Atualizar</button>
+          </div>
+        </div>
+        <div style="padding:16px">
+          <div class="admin-filhas-grid" id="admin-filhas-grid">
+            <div class="admin-filhas-vazio">Carregando perfis...</div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3113,19 +3963,19 @@ function getDefaultMenu() {
     sections: [
       { id: 'publico', label: 'Público', items: [
         { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
-        { id: 'historia', label: 'Nossa História',    type: 'external', url: '/historia', showCard: true, showMenu: true },
+        { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true },
         { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
         { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
-        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'external', url: '/apoie',    showCard: true, showMenu: true },
+        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
         { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true },
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
         { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
-        { id: 'pix',      label: 'Pix para doações',   type: 'external', url: '/pix', desc: 'Chave: bolhasdeluz@gmail.com', showCard: true, showMenu: true },
+        { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', desc: 'Chave: bolhasdeluz@gmail.com', showCard: true, showMenu: true },
         { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
         { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
         { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa', showCard: true, showMenu: true },
-        { id: 'resumo', label: '📋 Resumo Mensal',       type: 'external', url: '/resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
-        { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'external', url: '/orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
+        { id: 'resumo', label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
+        { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
       ]},
       { id: 'corrente', label: 'Corrente', items: [
         { id: 'tesouraria', label: '💰 Tesouraria',      type: 'external', url: '/tesouraria', desc: 'Extrato e separação de valores por categoria', showCard: true, showMenu: true },
@@ -3233,11 +4083,11 @@ function renderDrawerItem(item, ctx) {
   // ── widget especial: Nossa História (pública) — "Minha História" foi removida daqui,
   // já que agora abre pelo botão "✎ Editar minha ficha" direto na Início ──
   if (item.id === 'historia') {
-    if (!logada) return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="window.open('/historia','_self')"`, 'A fundação do Bolhas de Luz');
+    if (!logada) return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
     const grupoUser = pd.grupo || 'visitante';
     if (!ehAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
-      return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="window.open('/historia','_self')"`, 'A fundação do Bolhas de Luz');
+      return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     }
     return ''; // é filha da casa/admin — já tem o editar na Início, não precisa do atalho aqui
   }
@@ -3249,22 +4099,7 @@ function renderDrawerItem(item, ctx) {
 
   // ── widget especial: Apoie o Terreiro ──
   if (item.id === 'apoie') {
-    return drawerTile(item, `onclick="window.open('/apoie','_self')"`, 'Como nos ajudar');
-  }
-
-  // ── widget especial: Pix para doações ──
-  if (item.id === 'pix') {
-    return drawerTile(item, `onclick="window.open('/pix','_self')"`);
-  }
-
-  // ── widget especial: Resumo Mensal ──
-  if (item.id === 'resumo') {
-    return drawerTile(item, `onclick="window.open('/resumo','_self')"`);
-  }
-
-  // ── widget especial: Orientações da Sessão ──
-  if (item.id === 'orientacoes') {
-    return drawerTile(item, `onclick="window.open('/orientacoes','_self')"`);
+    return drawerTile(item, `onclick="showPage('apoie');closeDrawer()"`, 'Como nos ajudar');
   }
 
   // ── widget especial: Filhas da Casa ──
@@ -3353,11 +4188,11 @@ function renderCards() {
       // widget especial: historia (pública) — "Minha História" removida daqui,
       // já que agora abre pelo botão "✎ Editar minha ficha" direto na Início
       if (item.id === 'historia') {
-        if (!logada) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="window.open('/historia','_self')"`, 'A fundação do Bolhas de Luz'); return; }
+        if (!logada) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
         const grupoUser = pd.grupo || 'visitante';
         const isAdminReal = ehAdmin;
-        if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="window.open('/historia','_self')"`, 'A fundação do Bolhas de Luz'); return; }
+        if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         return; // é filha da casa/admin — já tem o editar na Início, não precisa do card aqui
       }
 
@@ -3366,19 +4201,7 @@ function renderCards() {
         return;
       }
       if (item.id === 'apoie') {
-        html += widgetTile(item, `onclick="window.open('/apoie','_self')"`, 'Como nos ajudar');
-        return;
-      }
-      if (item.id === 'pix') {
-        html += widgetTile(item, `onclick="window.open('/pix','_self')"`);
-        return;
-      }
-      if (item.id === 'resumo') {
-        html += widgetTile(item, `onclick="window.open('/resumo','_self')"`);
-        return;
-      }
-      if (item.id === 'orientacoes') {
-        html += widgetTile(item, `onclick="window.open('/orientacoes','_self')"`);
+        html += widgetTile(item, `onclick="showPage('apoie');return false"`, 'Como nos ajudar');
         return;
       }
       if (item.id === 'filhas') {
@@ -3402,12 +4225,262 @@ function renderCards() {
   grid.innerHTML = html;
 }
 
+// ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
+// empilhado numa rolagem só ──
+const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'filhas'];
+function adminAbrirSecao(nome) {
+  document.getElementById('admin-menu-principal').style.display = 'none';
+  ADMIN_SUBSECOES.forEach(n => {
+    const el = document.getElementById('admin-sub-' + n);
+    if (el) el.style.display = n === nome ? 'block' : 'none';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function adminVoltarMenu() {
+  document.getElementById('admin-menu-principal').style.display = 'grid';
+  ADMIN_SUBSECOES.forEach(n => {
+    const el = document.getElementById('admin-sub-' + n);
+    if (el) el.style.display = 'none';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── PAINEL ADMIN ──
+function renderAdminPanel() {
+  const container = document.getElementById('admin-sections-container');
+  if (!container || !menuData) return;
+  container.innerHTML = menuData.sections.map((sec, si) => `
+    <div class="admin-section-block">
+      <div class="admin-section-header">
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+          <input type="text" value="${sec.label}"
+            style="font-family:'Cinzel',serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;color:var(--terra);background:transparent;border:none;border-bottom:1px dashed transparent;outline:none;flex:1;min-width:0;transition:border-color .16s;"
+            onfocus="this.style.borderColor='var(--rosa)';this.style.background='rgba(196,57,107,.04)'"
+            onblur="this.style.borderColor='transparent';this.style.background='transparent';adminSaveSecLabel(${si},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()"
+            title="Clique para editar o nome da seção">
+        </div>
+        <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
+      </div>
+      <div id="sortable-${si}" data-section="${si}">
+      ${sec.items.map((item, ii) => `
+        <div class="admin-item-row" draggable="true" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}"
+          ondragstart="dragStart(event,${si},${ii})"
+          ondragover="dragOver(event)"
+          ondrop="dragDrop(event,${si},${ii})"
+          ondragend="dragEnd(event)">
+          <span style="color:var(--text-dim);font-size:.8rem;cursor:grab;padding:0 4px;flex-shrink:0">⠿</span>
+          <span class="admin-item-label">${item.label}</span>
+          <span class="admin-item-url">${item.url||item.page||''}</span>
+          <div class="admin-item-actions">
+            <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
+            <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
+            <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
+            <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+          </div>
+          <!-- visibilidade por grupo -->
+          <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
+            <span style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;color:var(--text-dim);white-space:nowrap">Visível para:</span>
+            ${['publico','visitante','filhas','tamboreiro','amigos','assistencia'].map(g => {
+              const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
+              const ativo = grupos.includes(g);
+              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲'}[g];
+              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência'}[g];
+              return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
+            }).join('')}
+            <span style="width:1px;height:14px;background:rgba(196,90,30,.15);margin:0 2px"></span>
+            <button class="toggle-pill ${item.adminOnly?'on':''}" style="font-size:.54rem;padding:3px 8px;${item.adminOnly?'background:#888;border-color:#888':''}" onclick="toggleAdminOnly(${si},${ii})" title="Se ativado, só admin vê esse card — ignora os grupos acima">🔒 Só admin</button>
+          </div>
+        </div>
+        <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
+          <div class="admin-row-inputs">
+            <input type="text" id="edit-label-${si}-${ii}" value="${item.label}" placeholder="Nome">
+            <select id="edit-type-${si}-${ii}">
+              <option value="external" ${item.type==='external'?'selected':''}>Link externo</option>
+              <option value="internal" ${item.type==='internal'?'selected':''}>Página interna</option>
+              <option value="members" ${item.type==='members'?'selected':''}>Área de membros</option>
+            </select>
+          </div>
+          <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug">
+          <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta">
+          <input type="text" id="edit-tagLabel-${si}-${ii}" value="${item.tagLabel||''}" placeholder="Texto da pílula (ex: público, interno, admin) — deixe vazio para padrão">
+          <div style="display:flex;gap:8px">
+            <button class="btn-add" onclick="saveEditItem(${si},${ii})">✓ Salvar</button>
+            <button class="btn-add" style="background:var(--text-dim)" onclick="toggleEditRow(${si},${ii})">Cancelar</button>
+          </div>
+        </div>`).join('')}
+      </div>
+      <div class="admin-add-form">
+        <div class="admin-row-inputs">
+          <input type="text" id="label-${si}" placeholder="Nome do item">
+          <select id="type-${si}">
+            <option value="external">Link externo</option>
+            <option value="internal">Página interna</option>
+            <option value="members">Área de membros</option>
+            <option value="blank">Página em branco</option>
+          </select>
+        </div>
+        <input type="text" id="url-${si}" placeholder="URL ou nome da página">
+        <input type="text" id="desc-${si}" placeholder="Descrição curta (opcional)">
+        <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── DRAG AND DROP ──
+let dragSrc = null;
+
+function dragStart(e, si, ii) {
+  dragSrc = { si, ii };
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function dragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function dragDrop(e, si, ii) {
+  e.preventDefault();
+  if (!dragSrc || (dragSrc.si === si && dragSrc.ii === ii)) return;
+  if (dragSrc.si !== si) return; // só dentro da mesma seção por ora
+  const items = menuData.sections[si].items;
+  const [moved] = items.splice(dragSrc.ii, 1);
+  items.splice(ii, 0, moved);
+  renderAdminPanel();
+  renderDrawer();
+  renderCards();
+  agendarSalvarMenu();
+}
+function dragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
+  dragSrc = null;
+}
+
+// ── VISIBILIDADE POR ESTADO ──
+function toggleGrupoCard(si, ii, grupo) {
+  const item = menuData.sections[si].items[ii];
+  if (!item.grupos) item.grupos = ['publico','visitante','filhas','tamboreiro'];
+  const idx = item.grupos.indexOf(grupo);
+  if (idx >= 0) item.grupos.splice(idx, 1);
+  else item.grupos.push(grupo);
+  renderAdminPanel(); renderCards(); renderDrawer();
+  agendarSalvarMenu();
+}
+
+function toggleGrupo(si, ii, grupo) { toggleGrupoCard(si, ii, grupo); }
+
+function toggleAdminOnly(si, ii) {
+  const item = menuData.sections[si].items[ii];
+  item.adminOnly = !item.adminOnly;
+  renderAdminPanel(); renderCards(); renderDrawer();
+  agendarSalvarMenu();
+}
+
+function toggleEditRow(si, ii) {
+  const form = document.getElementById(`edit-${si}-${ii}`);
+  form.classList.toggle('hidden');
+}
+function saveEditItem(si, ii) {
+  const item = menuData.sections[si].items[ii];
+  item.label = document.getElementById(`edit-label-${si}-${ii}`).value.trim() || item.label;
+  item.type  = document.getElementById(`edit-type-${si}-${ii}`).value;
+  item.desc  = document.getElementById(`edit-desc-${si}-${ii}`).value.trim();
+  const tagLabel = document.getElementById(`edit-tagLabel-${si}-${ii}`)?.value.trim();
+  if (tagLabel) item.tagLabel = tagLabel;
+  else delete item.tagLabel;
+  const urlVal = document.getElementById(`edit-url-${si}-${ii}`).value.trim();
+  if (item.type === 'internal') { item.page = urlVal; delete item.url; }
+  else { item.url = urlVal; delete item.page; }
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+
 // fallback enquanto Firebase carrega
 window.loginGoogle = function() { console.warn('Firebase ainda carregando...'); };
 window._simUsuario = null;
 window._getCurrentUser = () => null;
 window._getPerfilData  = () => ({});
 let _modoSimulacao = null; // null = admin real, 'publico', 'filha', ou email específico
+
+// grupos que podem ver Sua História
+let suaHistoriaGrupos = ['visitante','filhas','tamboreiro','amigos'];
+function toggleSuaHistoriaVis(grupo) {
+  const idx = suaHistoriaGrupos.indexOf(grupo);
+  if (idx >= 0) suaHistoriaGrupos.splice(idx, 1);
+  else suaHistoriaGrupos.push(grupo);
+  const btn = document.getElementById('sua-hist-vis-'+grupo);
+  if (btn) btn.classList.toggle('on', suaHistoriaGrupos.includes(grupo));
+  renderCards();
+}
+
+// ── AVISOS / COMUNICADOS (painel admin) ──
+let avisosData = [];
+async function avCarregar() {
+  try {
+    const res = await fetch('/api/avisos');
+    avisosData = await res.json();
+  } catch (e) {
+    avisosData = [];
+  }
+  avRenderLista();
+}
+function avRenderLista() {
+  const el = document.getElementById('av-lista');
+  if (!el) return;
+  if (!avisosData.length) {
+    el.innerHTML = '<div style="font-family:\'Crimson Pro\',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;padding:8px 0">Nenhum aviso ainda.</div>';
+    return;
+  }
+  el.innerHTML = avisosData.map((a, i) => `
+    <div style="padding:10px 0;border-bottom:1px solid rgba(196,90,30,.08)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text);white-space:pre-wrap;flex:1">${a.texto}</div>
+        <button class="admin-del" onclick="avExcluir(${i})">✕</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+        ${['publico','visitante','filhas','tamboreiro','amigos','assistencia'].map(g => {
+          const ativo = (a.grupos || []).includes(g);
+          const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲'}[g];
+          const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência'}[g];
+          return `<button class="toggle-pill ${ativo ? 'on' : ''}" style="font-size:.54rem;padding:3px 8px" onclick="avToggleGrupo(${i},'${g}')">${emoji} ${label}</button>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+async function avSalvar() {
+  await fetch('/api/avisos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+    body: JSON.stringify(avisosData)
+  });
+}
+window.avAdicionar = function() {
+  const campo = document.getElementById('av-novo-texto');
+  const texto = campo.value.trim();
+  if (!texto) return;
+  avisosData.unshift({ texto, data: new Date().toISOString().slice(0, 10), grupos: [] });
+  campo.value = '';
+  avRenderLista();
+  avSalvar();
+};
+window.avToggleGrupo = function(i, grupo) {
+  const item = avisosData[i];
+  if (!item) return;
+  if (!item.grupos) item.grupos = [];
+  const idx = item.grupos.indexOf(grupo);
+  if (idx >= 0) item.grupos.splice(idx, 1);
+  else item.grupos.push(grupo);
+  avRenderLista();
+  avSalvar();
+};
+window.avExcluir = function(i) {
+  avisosData.splice(i, 1);
+  avRenderLista();
+  avSalvar();
+};
 
 async function iniciarSimulacao() {
   // popula select com perfis do KV
@@ -3422,13 +4495,7 @@ async function iniciarSimulacao() {
       opt.textContent = (p.nome || p.email.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
       group.appendChild(opt);
     });
-  } catch(e) {
-    console.error('erro ao listar perfis pra simular:', e);
-    const opt = document.createElement('option');
-    opt.disabled = true;
-    opt.textContent = '⚠ Erro ao carregar a lista — tenta de novo';
-    group.appendChild(opt);
-  }
+  } catch(e) {}
   document.getElementById('sim-bar').classList.add('active');
   document.getElementById('sim-select').value = 'publico';
   mudarSimulacao('publico');
@@ -3440,63 +4507,58 @@ function mudarSimulacao(valor) {
   const badge = document.getElementById('sim-badge');
 
   function aplicarSimulacao(simUser, simPerfil) {
-    try {
-      window._simUsuario = simUser;
-      // em simulação, retorna o perfil simulado; fora, retorna o real via closure do módulo
-      window._getPerfilData = simPerfil ? () => simPerfil : window._getPerfilDataReal || (() => ({}));
+    window._simUsuario = simUser;
+    // em simulação, retorna o perfil simulado; fora, retorna o real via closure do módulo
+    window._getPerfilData = simPerfil ? () => simPerfil : window._getPerfilDataReal || (() => ({}));
 
-      // atualiza badge
-      if (simPerfil) {
-        badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
-      } else {
-        badge.textContent = 'Visitante (não logada)';
-      }
+    // atualiza badge
+    if (simPerfil) {
+      badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
+    } else {
+      badge.textContent = 'Visitante (não logada)';
+    }
 
-      // volta para o início para ver a visão da pessoa
-      showPage('inicio');
+    // volta para o início para ver a visão da pessoa
+    showPage('inicio');
 
-      // re-renderiza tudo
-      renderCards();
-      renderDrawer();
+    // re-renderiza tudo
+    renderCards();
+    renderDrawer();
 
-      // atualiza barra de boas-vindas
-      if (simPerfil && simUser) {
-        const primeiroNome = (simPerfil.nome || '').split(' ')[0];
-        const cargo = simPerfil.cargo || '';
-        const emoji = simPerfil.emoji || '✦';
-        const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
-        const avatar = document.getElementById('user-avatar');
-        if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
-        document.getElementById('bv-emoji').textContent = emoji;
-        document.getElementById('bv-nome').textContent  = primeiroNome;
-        document.getElementById('bv-cargo').textContent = cargo;
-        document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
-        document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
-        document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
-        document.getElementById('bv-guest').style.display = 'none';
-        document.getElementById('bv-logged').style.display = 'flex';
-        document.getElementById('boas-vindas').style.display = 'block';
-        document.body.classList.add('logada');
-        window.renderDashPessoal?.(simPerfil, simUser);
-      } else {
-        document.getElementById('bv-logged').style.display = 'none';
-        document.getElementById('bv-guest').style.display = 'flex';
-        document.getElementById('boas-vindas').style.display = 'block';
-        document.body.classList.remove('logada');
-        const dashEl = document.getElementById('dash-pessoal');
-        if (dashEl) dashEl.style.display = 'none';
-      }
-      window.ajustarTopoFixo?.();
+    // atualiza barra de boas-vindas
+    if (simPerfil && simUser) {
+      const primeiroNome = (simPerfil.nome || '').split(' ')[0];
+      const cargo = simPerfil.cargo || '';
+      const emoji = simPerfil.emoji || '✦';
+      const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
+      const avatar = document.getElementById('user-avatar');
+      if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
+      document.getElementById('bv-emoji').textContent = emoji;
+      document.getElementById('bv-nome').textContent  = primeiroNome;
+      document.getElementById('bv-cargo').textContent = cargo;
+      document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+      document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
+      document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+      document.getElementById('bv-guest').style.display = 'none';
+      document.getElementById('bv-logged').style.display = 'flex';
+      document.getElementById('boas-vindas').style.display = 'block';
+      document.body.classList.add('logada');
+      window.renderDashPessoal?.(simPerfil, simUser);
+    } else {
+      document.getElementById('bv-logged').style.display = 'none';
+      document.getElementById('bv-guest').style.display = 'flex';
+      document.getElementById('boas-vindas').style.display = 'block';
+      document.body.classList.remove('logada');
+      const dashEl = document.getElementById('dash-pessoal');
+      if (dashEl) dashEl.style.display = 'none';
+    }
+    window.ajustarTopoFixo?.();
 
-      // re-renderiza calendário se estiver aberto
-      const calPage = document.getElementById('page-calendario');
-      if (calPage?.classList.contains('active')) {
-        calAtualizarControlesAdmin();
-        calRenderLista();
-      }
-    } catch (e) {
-      console.error('erro ao simular:', e);
-      alert('Deu erro ao simular: ' + (e?.message || e) + '\n\nTira um print dessa mensagem e manda pro Claude — isso ajuda a achar o bug.');
+    // re-renderiza calendário se estiver aberto
+    const calPage = document.getElementById('page-calendario');
+    if (calPage?.classList.contains('active')) {
+      calAtualizarControlesAdmin();
+      calRenderLista();
     }
   }
 
@@ -3512,10 +4574,7 @@ function mudarSimulacao(valor) {
   } else {
     // email específico — busca perfil real
     fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
-      .then(r => {
-        if (!r.ok) throw new Error('API de perfil respondeu ' + r.status);
-        return r.json();
-      })
+      .then(r => r.json())
       .then(p => {
         // uid salvo no perfil (guardado no primeiro login real dessa pessoa depois desse
         // recurso existir) — sem ele, a aba de Jogos/Terreirinho simulada não tem como
@@ -3524,10 +4583,6 @@ function mudarSimulacao(valor) {
           { uid: p.uid || null, email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
           p
         );
-      })
-      .catch(e => {
-        console.error('erro ao buscar perfil pra simular:', e);
-        alert('Não consegui buscar o perfil pra simular: ' + (e?.message || e) + '\n\nTira um print dessa mensagem e manda pro Claude — isso ajuda a achar o bug.');
       });
   }
 }
@@ -3558,6 +4613,357 @@ function sairSimulacao() {
   document.body.classList.add('logada');
   window.renderDashPessoal?.(realPerfil, realUser);
   window.ajustarTopoFixo?.();
+}
+
+const camposLabels = {
+  data_entrada:'Data de Entrada', guia_chefe:'Guia Chefe', apronte:'Apronte',
+  coroacao:'Coroação', cacicamento:'Cacicamento',
+  madrinha:'Madrinha', madrinha_data:'Data — Madrinha',
+  afilhada_1:'Afilhada 1', afilhada_1_data:'Data — Afilhada 1',
+  afilhada_2:'Afilhada 2', afilhada_2_data:'Data — Afilhada 2',
+  caboclo:'Caboclo', caboclo_data:'Chegada do Caboclo',
+  exu:'Exu', exu_data:'Chegada do Exu',
+  pomba_gira:'Pomba Gira', pomba_gira_data:'Chegada da P. Gira',
+  preto_velho:'Preto Velho', preto_velho_data:'Chegada de P. Velho',
+  cigana:'Cigana', cigana_data:'Chegada da Cigana',
+  cosme:'Cosme', cosme_data:'Chegada do Cosme',
+  cruz_conga:'Conga', cruz_mata:'Mata', cruz_praia:'Praia',
+  cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte',
+  apronte_galinhas:'Apronte — Galinhas', apronte_galos:'Apronte — Galos',
+  corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos'
+};
+
+function fmtDataAdmin(v) {
+  if (!v) return '—';
+  const d = new Date(v + 'T12:00:00');
+  return isNaN(d.getTime()) ? v : d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+async function carregarFilhasAdmin() {
+  const grid = document.getElementById('admin-filhas-grid');
+  if (!grid) return;
+  grid.innerHTML = '<div class="admin-filhas-vazio">Carregando...</div>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
+    const perfis = await res.json();
+    if (!perfis.length) { grid.innerHTML = '<div class="admin-filhas-vazio">Nenhum perfil salvo ainda.</div>'; return; }
+    const ordenados = [...perfis].sort((a,b) => (a.ativo===false?1:0) - (b.ativo===false?1:0));
+    grid.innerHTML = ordenados.map(p => `
+      <div class="admin-filha-card" style="${p.ativo===false?'opacity:.5':''}" onclick="abrirFicha('${p.email}')">
+        <div class="admin-filha-foto">${p.foto?`<img src="${p.foto}" alt="">`:'👤'}</div>
+        <div class="admin-filha-nome">${p.nome||p.email.split('@')[0]}${p.ativo===false?' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>':''}</div>
+        <div class="admin-filha-guia">${p.guias?.caboclo||p.historia?.guia_chefe||'sem guia'}</div>
+      </div>`).join('');
+  } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
+}
+
+// marcos padrão da linha do tempo — declarado aqui para estar disponível em abrirFicha e renderTimeline
+const MH_MARCOS_DEF = [
+  { key:'data_entrada', label:'Entrada na Casa', cor:'#c4396b', tipo:'data' },
+  { key:'guia_chefe',   label:'Guia Chefe',      cor:'#c9963c', tipo:'texto' },
+  { key:'apronte',      label:'Apronte',          cor:'#6a9e6a', tipo:'data' },
+  { key:'coroacao',     label:'Coroação',         cor:'#4a6fa5', tipo:'data' },
+  { key:'cacicamento',  label:'Cacicamento',      cor:'#9e6a9e', tipo:'data' },
+  { key:'madrinha',     label:'Madrinha',         cor:'#8a8a9a', tipo:'texto' },
+];
+
+async function abrirFicha(email) {
+  document.getElementById('modal-ficha-overlay').classList.add('open');
+  document.getElementById('mf-nome').textContent = 'Carregando...';
+  document.getElementById('mf-email').textContent = email;
+  document.getElementById('mf-foto').innerHTML = '👤';
+  document.getElementById('mf-body-ficha').innerHTML = '';
+  document.getElementById('mf-body-historico').innerHTML = '';
+  // reset tabs
+  document.querySelectorAll('.mf-tab').forEach((b,i)=>b.classList.toggle('active',i===0));
+  document.getElementById('mf-body-ficha').style.display = '';
+  document.getElementById('mf-body-historico').style.display = 'none';
+  try {
+    const [pr, hr] = await Promise.all([
+      fetch(`/api/perfil?email=${encodeURIComponent(email)}`,{headers:{'X-Admin-Password':'admin'}}),
+      fetch(`/api/perfil?historico=${encodeURIComponent(email)}`,{headers:{'X-Admin-Password':'admin'}})
+    ]);
+    const perfil = await pr.json();
+    const hist   = await hr.json();
+    document.getElementById('mf-nome').textContent = perfil.nome||email.split('@')[0];
+    if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
+    const ficha = document.getElementById('mf-body-ficha');
+    ficha.innerHTML =
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga']) +
+      mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
+      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_galinhas','corte_1_galos']) +
+      mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
+      (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
+        <div class="mf-section"><div class="mf-section-title">🌸 Boas-vindas</div>
+          <div class="mf-grid">
+            ${perfil.boasVindas?.comoConheceu ? `<div class="mf-field"><label>Como conheceu</label><div class="v">${perfil.boasVindas.comoConheceu}</div></div>` : ''}
+            ${perfil.boasVindas?.tempoFrequenta ? `<div class="mf-field"><label>Tempo que frequenta</label><div class="v">${perfil.boasVindas.tempoFrequenta}</div></div>` : ''}
+          </div>
+        </div>` : '') +
+      (perfil.notas?`<div class="mf-section"><div class="mf-section-title">Notas</div><p style="font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text)">${perfil.notas}</p></div>`:'') +
+      // marcos da linha do tempo
+      (() => {
+        const emailSafe = email.replace(/'/g, "\\'");
+        const marcosLista = perfil.marcos || MH_MARCOS_DEF.map(m=>({...m, data: (perfil.historia||{})[m.key]||''}));
+        return `<div class="mf-section"><div class="mf-section-title">Linha do Tempo</div><div class="mf-grid">${
+          marcosLista.map(m=>{
+            const tipo = m.tipo || (m.data && m.data.match(/^\d{4}-\d{2}-\d{2}$/) ? 'data' : 'texto');
+            const inputType = tipo === 'data' ? 'date' : 'text';
+            return `<div class="mf-field"><label>${m.label}</label>
+              <input type="${inputType}" value="${m.data||''}" data-marco="${m.key}"
+                style="width:100%;background:transparent;border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:'Crimson Pro',serif;font-size:13px;color:var(--text)"
+                onchange="atualizarMarcoAdmin('${emailSafe}','${m.key}',this.value)">
+            </div>`;
+          }).join('')
+        }</div></div>`;
+      })();
+    const histEl = document.getElementById('mf-body-historico');
+    histEl.innerHTML = !hist.length
+      ? '<div class="hist-vazio">Nenhuma edição registrada ainda.</div>'
+      : hist.map(h=>`<div class="hist-item"><div class="hist-meta"><span class="hist-quem">${h.quem}</span><span class="hist-quando">${new Date(h.quando).toLocaleString('pt-BR')}</span></div><div class="hist-texto">${h.solicitacao||'<span style="opacity:.35">Sem descrição</span>'}</div></div>`).join('');
+  } catch(e) {
+    document.getElementById('mf-body-ficha').innerHTML = '<div class="hist-vazio">Erro ao carregar ficha.</div>';
+  }
+}
+
+async function atualizarMarcoAdmin(email, marcoKey, valor) {
+  try {
+    const res = await fetch(`/api/perfil?email=${encodeURIComponent(email)}`, { headers: {'X-Admin-Password':'admin'} });
+    const perfil = await res.json();
+    if (!perfil.historia) perfil.historia = {};
+    perfil.historia[marcoKey] = valor;
+    // atualiza também os marcos customizados
+    if (!perfil.marcos) perfil.marcos = MH_MARCOS_DEF.map(m => ({...m, data: perfil.historia[m.key]||''}));
+    const m = perfil.marcos.find(x => x.key === marcoKey);
+    if (m) m.data = valor;
+    await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ ...perfil, email, solicitacao: `Marco ${marcoKey} atualizado: ${valor}` })
+    });
+  } catch(e) { console.error('Erro ao atualizar marco:', e); }
+}
+
+function mfSection(titulo, dados, keys) {
+  return `<div class="mf-section"><div class="mf-section-title">${titulo}</div><div class="mf-grid">${
+    keys.map(k => {
+      const v = dados[k];
+      const isDataKey = k.includes('_data') || k === 'data_entrada' || k.startsWith('cruz') || k === 'corte_1';
+      const isDataVal = v && /^\d{4}-\d{2}-\d{2}$/.test(v);
+      const display = v
+        ? (isDataKey || isDataVal ? fmtDataAdmin(v) : v)
+        : '<span style="opacity:.25">—</span>';
+      return `<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${display}</div></div>`;
+    }).join('')
+  }</div></div>`;
+}
+
+function fecharFicha() { document.getElementById('modal-ficha-overlay').classList.remove('open'); }
+function mfTab(tab, btn) {
+  document.querySelectorAll('.mf-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('mf-body-ficha').style.display    = tab==='ficha'?'':'none';
+  document.getElementById('mf-body-historico').style.display = tab==='historico'?'':'none';
+}
+
+// ── CRIAR / EDITAR PERFIL ADMIN ──
+const cpCampos = {
+  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1','corte_1_galinhas','corte_1_galos'],
+  guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
+  cruzamentos:  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']
+};
+// guarda o perfil completo (todos os campos, inclusive os que não têm input neste formulário)
+// pra garantir que salvar não apague foto, notas, cortes extras, cruzamentos extras, marcos, etc.
+let cpPerfilOriginal = null;
+
+function abrirCriarPerfil(emailParaEditar) {
+  // limpar campos
+  ['email','nome','cargo','data_nascimento'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
+  Object.values(cpCampos).flat().forEach(k => { const el = document.getElementById('cp-'+k); if(el) el.value = ''; });
+  document.getElementById('cp-status').textContent = '';
+  document.getElementById('cp-email').disabled = false;
+  document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
+  if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
+  cpPerfilOriginal = null;
+
+  // se editar, preencher
+  if (emailParaEditar) {
+    document.getElementById('criar-modal-titulo').textContent = 'Editar Perfil';
+    fetch(`/api/perfil?email=${encodeURIComponent(emailParaEditar)}`, { headers: {'X-Admin-Password':'admin'} })
+      .then(r => r.json())
+      .then(p => { cpPerfilOriginal = p; preencherFormPerfil(p); });
+    document.getElementById('cp-email').value = emailParaEditar;
+    document.getElementById('cp-email').disabled = true;
+  }
+
+  document.getElementById('modal-criar-overlay').style.display = 'flex';
+}
+
+function fecharCriarPerfil() {
+  document.getElementById('modal-criar-overlay').style.display = 'none';
+  cpPerfilOriginal = null;
+}
+
+function preencherFormPerfil(p) {
+  if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
+  if (p.cargo) { const sel = document.getElementById('cp-cargo'); if (sel) sel.value = p.cargo; }
+  if (p.grupo) { const sel = document.getElementById('cp-grupo'); if (sel) sel.value = p.grupo; }
+  if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
+  if (p.dataNascimento) document.getElementById('cp-data_nascimento').value = p.dataNascimento;
+  Object.entries(cpCampos).forEach(([grupo, keys]) => {
+    const dados = p[grupo] || {};
+    keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
+  });
+  // campos cacique
+  const c = p.cacique || {};
+  if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
+  if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
+  if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
+  if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = p.ativo !== false;
+  if (document.getElementById('cp-visivelGuias')) document.getElementById('cp-visivelGuias').checked = !!p.visivelGuias;
+}
+
+async function salvarPerfilAdmin() {
+  const email = document.getElementById('cp-email').value.trim();
+  const status = document.getElementById('cp-status');
+  if (!email) { status.textContent = 'E-mail é obrigatório.'; return; }
+
+  // parte do perfil ORIGINAL completo (se estiver editando) — garante que nada que não tem
+  // campo neste formulário (foto, notas, cortes extras, cruzamentos extras, marcos, criadoEm...) se perca
+  const base = cpPerfilOriginal ? JSON.parse(JSON.stringify(cpPerfilOriginal)) : {};
+
+  const payload = {
+    ...base,
+    email: email.toLowerCase(),
+    nome:  document.getElementById('cp-nome').value.trim(),
+    cargo: document.getElementById('cp-cargo').value,
+    grupo: document.getElementById('cp-grupo').value || 'visitante',
+    emoji: document.getElementById('cp-emoji').value.trim(),
+    dataNascimento: document.getElementById('cp-data_nascimento').value || '',
+    historia: { ...(base.historia || {}) },
+    guias: { ...(base.guias || {}) },
+    cruzamentos: { ...(base.cruzamentos || {}) },
+    criadoEm: base.criadoEm || Date.now(),
+    solicitacao: 'Perfil criado/editado pelo admin',
+    ativo: document.getElementById('cp-ativo')?.checked !== false,
+    visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
+    cacique: {
+      ...(base.cacique || {}),
+      terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
+      terreiro_nome:   document.getElementById('cp-terreiro_nome')?.value.trim()   || '',
+      terreiro_data:   document.getElementById('cp-terreiro_data')?.value          || '',
+      terreiro_visivel: document.getElementById('cp-terreiro_visivel')?.checked    || false,
+    }
+  };
+
+  // aplica os campos do formulário — inclusive limpando quando o campo é deixado vazio
+  Object.entries(cpCampos).forEach(([grupo, keys]) => {
+    keys.forEach(k => {
+      const el = document.getElementById('cp-'+k);
+      if (!el) return;
+      const v = el.value.trim();
+      if (v) payload[grupo][k] = v;
+      else delete payload[grupo][k];
+    });
+  });
+
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin', 'X-User-Email': email },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = '✦ Salvo com sucesso!';
+      carregarFilhasAdmin();
+      setTimeout(fecharCriarPerfil, 1200);
+    } else { status.textContent = 'Erro ao salvar.'; }
+  } catch(e) { status.textContent = 'Erro de conexão.'; }
+}
+
+
+function adminSaveSecLabel(si, newLabel) {
+  const v = (newLabel||'').trim();
+  if (!v || !menuData?.sections[si]) return;
+  menuData.sections[si].label = v;
+  renderDrawer();
+  agendarSalvarMenu();
+}
+
+function toggleItemMenu(si, ii) {
+  menuData.sections[si].items[ii].showMenu = !menuData.sections[si].items[ii].showMenu;
+  renderAdminPanel(); renderDrawer();
+  agendarSalvarMenu();
+}
+function toggleItemCard(si, ii) {
+  menuData.sections[si].items[ii].showCard = !menuData.sections[si].items[ii].showCard;
+  renderAdminPanel(); renderCards();
+  agendarSalvarMenu();
+}
+function deleteItem(si, ii) {
+  if (!confirm('Remover este item?')) return;
+  menuData.sections[si].items.splice(ii, 1);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+function deleteSection(si) {
+  if (!confirm('Remover esta seção e todos os seus itens?')) return;
+  menuData.sections.splice(si, 1);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+function addItem(si) {
+  const label = document.getElementById(`label-${si}`).value.trim();
+  const type  = document.getElementById(`type-${si}`).value;
+  const url   = document.getElementById(`url-${si}`).value.trim();
+  const desc  = document.getElementById(`desc-${si}`).value.trim();
+  if (!label) return alert('Digite o nome do item.');
+  const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  const item = { id, label, type, showCard: true, showMenu: true, desc };
+  if (type === 'internal' || type === 'blank') item.page = url || id;
+  else item.url = url;
+  menuData.sections[si].items.push(item);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+function addSection() {
+  const label = document.getElementById('new-section-label').value.trim();
+  if (!label) return alert('Digite o nome da seção.');
+  const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+  menuData.sections.push({ id, label, items: [] });
+  document.getElementById('new-section-label').value = '';
+  renderAdminPanel();
+  agendarSalvarMenu();
+}
+// ── AUTOSAVE ──
+let _menuSaveTimer = null;
+function agendarSalvarMenu() {
+  const status = document.getElementById('save-status');
+  if (status) { status.textContent = '✎ salvando...'; status.style.color = 'var(--text-dim)'; }
+  clearTimeout(_menuSaveTimer);
+  _menuSaveTimer = setTimeout(saveMenu, 700);
+}
+
+async function saveMenu() {
+  const status = document.getElementById('save-status');
+  if (status) { status.textContent = '✎ salvando...'; status.style.color = 'var(--text-dim)'; }
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify(menuData)
+    });
+    const data = await res.json();
+    if (status) {
+      status.style.color = data.ok ? 'var(--green,#2a7a60)' : '#c0392b';
+      status.textContent = data.ok ? '✦ Salvo automaticamente' : '✕ Erro ao salvar.';
+    }
+  } catch(e) {
+    if (status) { status.style.color = '#c0392b'; status.textContent = '✕ Erro de conexão.'; }
+  }
+  if (status) setTimeout(() => { if (status.textContent.includes('Salvo')) status.textContent = ''; }, 2500);
 }
 
 // ── NAVEGAÇÃO ──
@@ -3601,6 +5007,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
+  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
@@ -3612,6 +5019,11 @@ function showPage(name) {
   if (name === 'guias') {
     if (!guiasData.length) guiasLoad();
     else guiasRenderGrid(guiasData);
+  }
+  if (name === 'orientacoes') {
+    // recarrega a próxima sessão sempre que a página abrir — antes só carregava
+    // uma vez, quando o site era aberto pela primeira vez, e ficava desatualizada
+    window.orCarregarProximaSessao?.();
   }
   if (name === 'jogos') {
     gpAtualizarPortal();
@@ -3694,6 +5106,11 @@ window.abrirApoie = function() {
   document.getElementById('modal-apoie-overlay').style.display = 'flex';
 };
 
+function toggleFaq(btn){  const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
+  document.querySelectorAll('.faq-body.open').forEach(b=>b.classList.remove('open'));
+  document.querySelectorAll('.faq-chevron.open').forEach(c=>c.classList.remove('open'));
+  if(!open){body.classList.add('open');ch.classList.add('open')}
+}
 async function checkAdminSenha(){
   const input=document.getElementById('admin-senha-input'),erro=document.getElementById('admin-senha-erro');
   const senha = input.value;
@@ -5085,6 +6502,8 @@ function drawerSaveSecName(si) {
   if (newLabel && menuData?.sections[si]) {
     menuData.sections[si].label = newLabel;
     nameEl.textContent = newLabel;
+    // atualiza painel admin se estiver aberto
+    renderAdminPanel();
   }
   nameEl.style.display = '';
   inputEl.classList.remove('visible');
@@ -9743,6 +11162,751 @@ const auth = getAuth(app);
     document.getElementById('cp-inp-nome')?.addEventListener('keydown', e => { if (e.key === 'Enter') cpAdicionarItem(); });
   })();
 
+  // ── normalização de status de manutenção, compartilhada entre a página de Manutenção
+  // e o card de Manutenção do Resumo Mensal — cobre status "antigos"/digitados manualmente
+  // (era por isso que "futura"/"andamento" apareciam num lugar e não no outro)
+  const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', andamento: '🔄', concluida: '✅' };
+  const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', andamento: '🔄 Em Andamento', concluida: '✅ Concluída' };
+  function mnStatusReal(item) {
+    const s = (item.status || 'pendente').toLowerCase().trim();
+    if (['pendente','aguardando','agendada','andamento','concluida'].includes(s)) return s;
+    return 'pendente'; // cobre "futura" e qualquer outro valor desconhecido
+  }
+
+  // ══ RESUMO MENSAL ══
+  (function initResumoMensal() {
+    const MESES_RM = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    let rmTesouraria = null;
+    let rmTesEntradas = 0, rmTesSaidas = 0, rmTesMesLabel = '';
+    let rmTesPctPag = 0, rmTesNPag = 0, rmTesTotalMembros = 0, rmTesPctCob = 0;
+    // mesma lista de membros da Tesouraria real (não vem de API — é fixa lá também).
+    // se alguém sair da casa por lá, espelhar aqui também em RM_MEMBROS_SAIDA.
+    const RM_MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+    const RM_MEMBROS_SAIDA = { 'Juliana': '2026-07' };
+    function rmMembrosAtivos(mesRef) {
+      return RM_MEMBROS_TODOS.filter(m => { const s = RM_MEMBROS_SAIDA[m]; return !s || mesRef < s; });
+    }
+    let rmRecado = null;
+    let rmSessoes = [];
+    let rmManutencao = [];
+    let rmCompras = [];
+    const hojeISO = new Date();
+    let rmMesEscolhido = `${hojeISO.getFullYear()}-${String(hojeISO.getMonth()+1).padStart(2,'0')}`; // 'YYYY-MM'
+
+    function rmNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
+    function rmFmtMoeda(v) { return 'R$ ' + (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function rmFmtDataISO(dataStr) {
+      if (!dataStr) return '';
+      const [y,m,d] = dataStr.split('-');
+      const dataObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+      const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+      const MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
+    }
+    function rmMesNumero() { return parseInt(rmMesEscolhido.split('-')[1], 10); } // 1-12
+    function rmAnoNumero() { return parseInt(rmMesEscolhido.split('-')[0], 10); }
+
+    function rmTitulo() {
+      const el = document.getElementById('rm-mes-titulo');
+      const m = rmMesNumero(), a = rmAnoNumero();
+      if (el) el.textContent = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
+    }
+    rmTitulo();
+
+    // ── ESCOLHER MÊS (Firestore config/resumo_config) ──
+    async function rmCarregarMesEscolhido() {
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'resumo_config');
+        if (d && d.data().mesRef) rmMesEscolhido = d.data().mesRef;
+      } catch(e) { console.warn('resumo_config load:', e); }
+      rmTitulo();
+      rmRenderAniversariantes();
+      rmCarregarSessoes();
+      rmCarregarTesouraria();
+    }
+    async function rmSalvarMesEscolhido(novoMes) {
+      rmMesEscolhido = novoMes;
+      rmTitulo();
+      rmRenderAniversariantes();
+      rmCarregarSessoes();
+      rmCarregarTesouraria();
+      try { await setDoc(doc(db, 'config', 'resumo_config'), { mesRef: novoMes }); } catch(e) { console.warn('resumo_config save:', e); }
+    }
+    document.getElementById('rm-btn-mes-editar')?.addEventListener('click', () => {
+      document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+      document.getElementById('rm-mes-modal').style.display = 'flex';
+    });
+    document.getElementById('rm-header-editar')?.addEventListener('click', () => {
+      document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+      document.getElementById('rm-mes-modal').style.display = 'flex';
+    });
+    document.getElementById('rm-mes-cancelar')?.addEventListener('click', () => { document.getElementById('rm-mes-modal').style.display = 'none'; });
+    document.getElementById('rm-mes-salvar')?.addEventListener('click', () => {
+      const v = document.getElementById('rm-mes-inp').value;
+      if (!v) return;
+      rmSalvarMesEscolhido(v);
+      document.getElementById('rm-mes-modal').style.display = 'none';
+    });
+
+    // ── VER TELA CHEIA ──
+    document.getElementById('rm-btn-tela-cheia')?.addEventListener('click', () => {
+      const frame = document.getElementById('rm-frame');
+      const destino = document.getElementById('rm-full-conteudo');
+      destino.innerHTML = '';
+      const clone = frame.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+      destino.appendChild(clone);
+      document.getElementById('rm-full-overlay').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    });
+    document.getElementById('rm-full-fechar')?.addEventListener('click', () => {
+      document.getElementById('rm-full-overlay').style.display = 'none';
+      document.body.style.overflow = '';
+    });
+
+    // ── GERAR IMAGEM (PNG) — pra mandar direto no WhatsApp, sem precisar printar ──
+    document.getElementById('rm-btn-imagem')?.addEventListener('click', async () => {
+      const btn = document.getElementById('rm-btn-imagem');
+      const textoOriginal = btn.textContent;
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      try {
+        const frame = document.getElementById('rm-frame');
+        // clona o cartão numa cópia fixa fora da tela, sem os lápis de editar,
+        // com largura fixa pra a imagem sair sempre igual, não importa o tamanho da tela.
+        // largura um pouco maior aqui ajuda a proporção final ficar mais parecida com um print
+        // de celular normal, em vez de ficar bem mais alta que larga
+        const clone = frame.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+        // o Recado do Mês sai da imagem — vira texto na própria mensagem do WhatsApp,
+        // já que é o que mais ocupava espaço e fica mais legível como texto corrido
+        const recadoEl = clone.querySelector('#rm-secao-recado-wrap');
+        if (recadoEl) recadoEl.remove();
+        // a linha decorativa do subtítulo também sai só da imagem — ajuda a caber tudo na prévia do WhatsApp
+        const subEl = clone.querySelector('.rm-header-sub');
+        if (subEl) subEl.remove();
+        clone.style.margin = '0';
+        // largura de celular de verdade (não mais larga que isso) — gerar mais largo do que
+        // a tela onde vai ser vista faz o texto encolher mais do que devia ao exibir
+        clone.style.width = '420px';
+        clone.style.maxWidth = '420px';
+
+        const palco = document.createElement('div');
+        palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:452px;';
+        palco.appendChild(clone);
+        document.body.appendChild(palco);
+
+        const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
+        document.body.removeChild(palco);
+
+        // texto que acompanha a imagem: recado do mês (se tiver) + assinatura
+        const recadoTexto = (rmRecado && rmRecado.texto && rmRecado.texto.trim()) ? rmRecado.texto.trim() : '';
+        const textoCompartilhar = (recadoTexto ? `💌 ${recadoTexto}\n\n` : '') + '🌸 Terreiro Bolhas de Luz';
+
+        canvas.toBlob(async (blob) => {
+          btn.textContent = textoOriginal;
+          btn.disabled = false;
+          if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+          const nomeArquivo = `resumo-${rmMesEscolhido}.png`;
+          const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+
+          // no celular, tenta abrir direto o menu de compartilhar (WhatsApp já aparece como opção)
+          if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+            try {
+              await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz', text: textoCompartilhar });
+              return;
+            } catch(e) { /* usuária cancelou o compartilhamento — segue pro download */ }
+          }
+
+          // fallback: baixa a imagem pra galeria/downloads, pra anexar manualmente
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = nomeArquivo; a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      } catch(e) {
+        console.warn('erro ao gerar imagem do resumo:', e);
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+        alert('Não deu pra gerar a imagem. Tenta de novo.');
+      }
+    });
+
+    // ── RECADO DO MÊS (Firestore config/resumo_recado) ──
+    async function rmCarregarRecado() {
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'resumo_recado');
+        rmRecado = d ? d.data() : null;
+      } catch(e) { console.warn('recado load:', e); }
+      rmRenderRecado();
+    }
+    function rmRenderRecado() {
+      const wrap = document.getElementById('rm-secao-recado-wrap');
+      const texto = (rmRecado && rmRecado.texto) ? rmRecado.texto.trim() : '';
+      if (texto) {
+        wrap.classList.remove('rm-secao-recado-vazia');
+        wrap.innerHTML = `
+          <button class="rm-edit-btn" id="rm-recado-editar" title="Editar">✎</button>
+          <div class="rm-secao-titulo"><span class="ic">💌</span> Recado do Mês</div>
+          <div class="rm-recado-texto" id="rm-recado-texto">${texto}</div>`;
+      } else {
+        wrap.classList.add('rm-secao-recado-vazia');
+        wrap.innerHTML = `<button class="rm-recado-add" id="rm-recado-editar">💌 + Adicionar recado do mês (opcional)</button>`;
+      }
+      document.getElementById('rm-recado-editar')?.addEventListener('click', rmAbrirEditarRecado);
+    }
+    function rmAbrirEditarRecado() {
+      document.getElementById('rm-recado-inp').value = (rmRecado && rmRecado.texto) || '';
+      document.getElementById('rm-recado-modal').style.display = 'flex';
+    }
+    function rmFecharEditarRecado() { document.getElementById('rm-recado-modal').style.display = 'none'; }
+    async function rmSalvarRecado() {
+      const dados = {
+        texto: document.getElementById('rm-recado-inp').value.trim(),
+        atualizadoEm: serverTimestamp(), atualizadoPor: rmNomeAtual()
+      };
+      try {
+        await setDoc(doc(db, 'config', 'resumo_recado'), dados);
+        rmRecado = dados;
+        rmRenderRecado();
+        rmFecharEditarRecado();
+      } catch(e) { alert('Erro ao salvar recado.'); }
+    }
+
+    // ── TESOURARIA (Firestore config/resumo_tesouraria) ──
+    function rmMesPassadoInfo() {
+      // mês anterior ao mês selecionado no resumo
+      let m = rmMesNumero() - 1, a = rmAnoNumero();
+      if (m < 1) { m = 12; a -= 1; }
+      const mesRef = `${a}-${String(m).padStart(2,'0')}`;
+      const label = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
+      return { mesRef, label };
+    }
+    async function rmCarregarTesouraria() {
+      // observação manual (única coisa que ainda é digitada aqui)
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'resumo_tesouraria');
+        rmTesouraria = d ? d.data() : null;
+      } catch(e) { console.warn('tesouraria load:', e); rmTesouraria = null; }
+
+      // dados reais: vêm da Tesouraria de verdade (app separado em /tesouraria, API própria em /api/dados —
+      // não é Firestore). Soma os lançamentos do mês passado (relativo ao mês escolhido no resumo).
+      const { mesRef, label } = rmMesPassadoInfo();
+      rmTesMesLabel = label;
+      try {
+        const res = await fetch('/api/dados?chave=lancamentos');
+        const lancamentos = await res.json();
+        const lista = Array.isArray(lancamentos) ? lancamentos : [];
+        const doMes = lista.filter(l => {
+          // entradas usam "competencia" quando preenchida, senão a data do pagamento
+          const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : '');
+          return ref === mesRef;
+        });
+        rmTesEntradas = doMes.filter(l => l.tipo === 'entrada').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+        // gastos pendentes (contas ainda não pagas) não entram na saída realizada do mês
+        // a Tesouraria real soma TODOS os gastos do mês no total exibido, sem excluir pendentes —
+        // segue o mesmo critério aqui pra bater com o número de lá
+        rmTesSaidas = doMes.filter(l => l.tipo === 'gasto').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+
+        // % pagantes: quantas pessoas fizeram entrada de mensalidade (não conta "extra") neste mês
+        const pagantes = {};
+        doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra' && l.membro).forEach(l => { pagantes[l.membro] = true; });
+        rmTesNPag = Object.keys(pagantes).length;
+        rmTesTotalMembros = rmMembrosAtivos(mesRef).length;
+        rmTesPctPag = rmTesTotalMembros > 0 ? Math.round(rmTesNPag / rmTesTotalMembros * 100) : 0;
+
+        // % coberto: quanto das saídas as entradas já cobrem
+        rmTesPctCob = rmTesSaidas > 0 ? Math.round(rmTesEntradas / rmTesSaidas * 100) : (rmTesEntradas > 0 ? 100 : 0);
+      } catch(e) {
+        console.warn('lancamentos (tesouraria real) load:', e);
+        rmTesEntradas = 0; rmTesSaidas = 0; rmTesPctPag = 0; rmTesPctCob = 0; rmTesNPag = 0; rmTesTotalMembros = 0;
+      }
+
+      rmRenderTesouraria();
+    }
+    function rmRenderTesouraria() {
+      const t = rmTesouraria || {};
+      document.getElementById('rm-tes-mes').textContent = rmTesMesLabel || '';
+      document.getElementById('rm-tes-entradas').textContent = rmFmtMoeda(rmTesEntradas || 0);
+      document.getElementById('rm-tes-saidas').textContent = rmFmtMoeda(rmTesSaidas || 0);
+      document.getElementById('rm-tes-saldo').textContent = rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0));
+      document.getElementById('rm-tes-obs').textContent = t.observacao || '';
+      document.getElementById('rm-tes-pct-pag').textContent = (rmTesPctPag || 0) + '%';
+      document.getElementById('rm-tes-pag-sub').textContent = rmTesTotalMembros ? (rmTesNPag + '/' + rmTesTotalMembros + ' membros') : '';
+      document.getElementById('rm-tes-pct-cob').textContent = (rmTesPctCob || 0) + '%';
+    }
+    function rmAbrirEditarTesouraria() {
+      const t = rmTesouraria || {};
+      document.getElementById('rm-tes-inp-obs').value = t.observacao || '';
+      document.getElementById('rm-tes-modal').style.display = 'flex';
+    }
+    function rmFecharEditarTesouraria() { document.getElementById('rm-tes-modal').style.display = 'none'; }
+    async function rmSalvarTesouraria() {
+      const dados = {
+        observacao: document.getElementById('rm-tes-inp-obs').value.trim(),
+        atualizadoEm: serverTimestamp(), atualizadoPor: rmNomeAtual()
+      };
+      try {
+        await setDoc(doc(db, 'config', 'resumo_tesouraria'), dados);
+        rmTesouraria = dados;
+        rmRenderTesouraria();
+        rmFecharEditarTesouraria();
+      } catch(e) { alert('Erro ao salvar tesouraria.'); }
+    }
+
+    // ── PRÓXIMAS SESSÕES ──
+    async function rmCarregarSessoes() {
+      const wrap = document.getElementById('rm-sessoes-lista');
+      try {
+        const res = await fetch('/api/sessoes');
+        const sessoes = await res.json();
+        const ano = rmAnoNumero(), mes = rmMesNumero();
+        const inicioMes = `${ano}-${String(mes).padStart(2,'0')}-01`;
+        const ultimoDia = new Date(ano, mes, 0).getDate();
+        const fimMes = `${ano}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+        const hoje = new Date().toISOString().slice(0,10);
+        const limiteInferior = inicioMes > hoje ? inicioMes : hoje;
+        rmSessoes = sessoes.filter(s => s.data >= limiteInferior && s.data <= fimMes).sort((a,b) => a.data.localeCompare(b.data));
+      } catch(e) { rmSessoes = []; }
+      if (!wrap) return;
+      if (!rmSessoes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhuma sessão marcada para este mês</div>'; return; }
+      wrap.innerHTML = rmSessoes.map(s => `<div class="rm-linha"><span>${s.nome}</span><span class="rm-linha-tag">${rmFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
+    }
+
+    // ── ANIVERSARIANTES DO MÊS ──
+    function rmRenderAniversariantes() {
+      const wrap = document.getElementById('rm-aniv-lista');
+      if (!wrap) return;
+      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
+      if (!doMes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum aniversariante este mês</div>'; return; }
+      wrap.innerHTML = doMes.map(a => `<div class="rm-linha"><span>${a.nome}</span><span class="rm-linha-tag">${a.dia} de ${MESES_RM[a.mes-1]}</span></div>`).join('');
+    }
+
+    // ── MANUTENÇÃO ATUAL ──
+    onSnapshot(collection(db, 'manutencao'), snap => {
+      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => mnStatusReal(i) !== 'concluida');
+      const wrap = document.getElementById('rm-manut-lista');
+      if (!wrap) return;
+      if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
+      wrap.innerHTML = rmManutencao.map(m => {
+        const st = mnStatusReal(m);
+        const tag = st === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (MN_LABEL_STATUS[st] || st).replace(/^\S+\s/, '');
+        return `<div class="rm-linha"><span>${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${tag}</span></div>`;
+      }).join('');
+    }, err => console.warn('resumo manutencao:', err));
+
+    // ── LISTA DE COMPRAS (itens precisando) ──
+    onSnapshot(collection(db, 'lista_compras'), snap => {
+      rmCompras = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => i.precisando);
+      const wrap = document.getElementById('rm-compras-lista');
+      if (!wrap) return;
+      if (!rmCompras.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nada faltando — prateleira em dia ✦</div>'; return; }
+      wrap.innerHTML = rmCompras.map(c => `<div class="rm-linha"><span>🔴 ${c.nome}</span>${c.categoria ? `<span class="rm-linha-tag">${c.categoria}</span>` : ''}</div>`).join('');
+    }, err => console.warn('resumo compras:', err));
+
+    // ── MENSAGEM WHATSAPP ──
+    function rmGerarTexto() {
+      const mesAtual = MESES_RM[rmMesNumero()-1].charAt(0).toUpperCase() + MESES_RM[rmMesNumero()-1].slice(1) + ' de ' + rmAnoNumero();
+      const t = rmTesouraria || {};
+      let txt = `📋 *Resumo Mensal — Terreiro Bolhas de Luz*\n✦ ${mesAtual} ✦\n\n`;
+
+      if (rmRecado && rmRecado.texto && rmRecado.texto.trim()) {
+        txt += `💌 *Recado do mês:*\n${rmRecado.texto.trim()}\n\n`;
+      }
+
+      txt += `💰 *Tesouraria (${rmTesMesLabel || 'mês passado'}):*\n`;
+      txt += `👥 Pagantes: ${rmTesPctPag || 0}% (${rmTesNPag}/${rmTesTotalMembros})\n`;
+      txt += `💰 Coberto: ${rmTesPctCob || 0}%\n`;
+      txt += `Entradas: ${rmFmtMoeda(rmTesEntradas || 0)}\n`;
+      txt += `Saídas: ${rmFmtMoeda(rmTesSaidas || 0)}\n`;
+      txt += `Saldo: ${rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0))}\n`;
+      if (t.observacao) txt += `_${t.observacao}_\n`;
+      txt += `\n`;
+
+      txt += `📅 *Próximas Sessões:*\n`;
+      if (rmSessoes.length) rmSessoes.forEach(s => { txt += `• ${s.nome} — ${rmFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`; });
+      else txt += `Nenhuma sessão marcada no momento\n`;
+      txt += `\n`;
+
+      const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
+      txt += `🎂 *Aniversariantes do Mês:*\n`;
+      if (doMes.length) doMes.forEach(a => { txt += `• ${a.nome} — ${a.dia} de ${MESES_RM[a.mes-1]}\n`; });
+      else txt += `Ninguém este mês\n`;
+      txt += `\n`;
+
+      txt += `🔧 *Manutenção:*\n`;
+      if (rmManutencao.length) {
+        rmManutencao.forEach(m => { const st = mnStatusReal(m); txt += `• ${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}${st === 'agendada' && m.dataLimite ? ' — ' + rmFmtDataISO(m.dataLimite) : ''}\n`; });
+      } else txt += `Tudo em dia ✦\n`;
+      txt += `\n`;
+
+      txt += `🛒 *Itens Faltando:*\n`;
+      if (rmCompras.length) rmCompras.forEach(c => { txt += `• ${c.nome}\n`; });
+      else txt += `Nada faltando ✦\n`;
+
+      txt += `\n🌸 _Terreiro Bolhas de Luz · bolhasdeluz.ong.br_`;
+      return txt;
+    }
+    function rmAbrirRelatorio() {
+      document.getElementById('rm-rel-texto').value = rmGerarTexto();
+      document.getElementById('rm-rel-overlay').style.display = 'flex';
+    }
+    function rmFecharRelatorio() { document.getElementById('rm-rel-overlay').style.display = 'none'; }
+    function rmEnviarWhatsapp() {
+      const texto = document.getElementById('rm-rel-texto').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    }
+
+    // inicializa quando a página existir no DOM
+    if (document.getElementById('rm-mes-titulo')) {
+      rmCarregarMesEscolhido();
+      rmCarregarRecado();
+    }
+
+    document.getElementById('rm-recado-cancelar')?.addEventListener('click', rmFecharEditarRecado);
+    document.getElementById('rm-recado-salvar')?.addEventListener('click', rmSalvarRecado);
+
+    document.getElementById('rm-tes-editar')?.addEventListener('click', rmAbrirEditarTesouraria);
+    document.getElementById('rm-tes-cancelar')?.addEventListener('click', rmFecharEditarTesouraria);
+    document.getElementById('rm-tes-salvar')?.addEventListener('click', rmSalvarTesouraria);
+    document.getElementById('rm-btn-whats')?.addEventListener('click', rmAbrirRelatorio);
+    document.getElementById('rm-rel-cancelar')?.addEventListener('click', rmFecharRelatorio);
+    document.getElementById('rm-rel-enviar')?.addEventListener('click', rmEnviarWhatsapp);
+  })();
+
+  // ══ ORIENTAÇÕES DA SESSÃO ══
+  (function initOrientacoes() {
+    let orTemplate = null;
+    let orItensExtras = [];
+    let orAssistencia = 'aberta';
+    let orProximaSessao = null;
+
+    // Emojis corretos por tipo de sessão — baseado no padrão real das mensagens que a Anna manda.
+    // 🧑‍🦱 (chegada) é sempre fixo. O emoji do "início dos trabalhos" muda conforme a entidade.
+    const OR_TIPOS = {
+      quimbanda:      { titulo: 'Sessão de Quimbanda',       tituloEmoji: '💃', inicioEmoji: '🍾' },
+      pretosvelhos:   { titulo: 'Sessão de Pretos Velhos',   tituloEmoji: '🧓🏾', inicioEmoji: '☕' },
+      ciganos:        { titulo: 'Sessão de Ciganos',         tituloEmoji: '💃', inicioEmoji: '🏹' },
+      caboclos:       { titulo: 'Sessão de Caboclos',        tituloEmoji: '💃', inicioEmoji: '🍷' },
+      cosmes:         { titulo: 'Sessão de Cosmes e Caboclos', tituloEmoji: '💃', inicioEmoji: '🦜' },
+      desenvolvimento:{ titulo: 'Sessão de Desenvolvimento', tituloEmoji: '🌿', inicioEmoji: '🦜' },
+      cruzamento:     { titulo: 'Cruzamento',                tituloEmoji: '🌿', inicioEmoji: '🦜' },
+      obrigacao:      { titulo: 'Obrigação',                 tituloEmoji: '🧎‍♀️', inicioEmoji: '🍾' },
+      outro:          { titulo: '',                          tituloEmoji: '✦', inicioEmoji: '🍾' }
+    };
+
+    const OR_PADRAO = {
+      horaChegada: '20:00',
+      horaInicio: '21:00',
+      itens: [
+        { emoji: '🏠', texto: 'Resguardo', ativo: true },
+        { emoji: '🌿', texto: 'Banho de ervas', ativo: true },
+        { emoji: '🥁', texto: 'Teremos tambor', ativo: false }
+      ],
+      mensalidadeMin: 60,
+      mensalidadeMax: 90,
+      email: 'bolhasdeluz@gmail.com',
+      link: 'https://loja.infinitepay.io/bolhasdeluz'
+    };
+
+    function orNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
+    function orFmtDataISO(dataStr) {
+      if (!dataStr) return '';
+      const [y,m,d] = dataStr.split('-');
+      const dataObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+      const DIAS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+      const MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
+    }
+
+    // ── CARREGAR PRÓXIMA SESSÃO DA AGENDA ──
+    async function orCarregarProximaSessao() {
+      const titEl = document.getElementById('or-proxima-titulo');
+      const subEl = document.getElementById('or-proxima-sub');
+      try {
+        const res = await fetch('/api/sessoes');
+        const sessoes = await res.json();
+        const hoje = new Date().toISOString().slice(0,10);
+        orProximaSessao = sessoes.filter(s => s.data >= hoje).sort((a,b) => a.data.localeCompare(b.data))[0];
+        if (orProximaSessao) {
+          titEl.textContent = orProximaSessao.nome;
+          subEl.textContent = orFmtDataISO(orProximaSessao.data) + (orProximaSessao.hora ? ' · ' + orProximaSessao.hora : '');
+          document.getElementById('or-inp-titulo').value = orProximaSessao.nome;
+          if (orProximaSessao.hora) document.getElementById('or-inp-inicio').value = orProximaSessao.hora;
+        } else {
+          titEl.textContent = 'Nenhuma sessão marcada';
+          subEl.textContent = 'Cadastre uma no Calendário pra puxar aqui';
+        }
+      } catch(e) {
+        titEl.textContent = 'Não foi possível carregar';
+        subEl.textContent = '';
+      }
+    }
+
+    // ── TEMPLATE PADRÃO (Firestore config/orientacoes_template) ──
+    async function orCarregarTemplate() {
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'orientacoes_template');
+        orTemplate = d ? d.data() : JSON.parse(JSON.stringify(OR_PADRAO));
+      } catch(e) { orTemplate = JSON.parse(JSON.stringify(OR_PADRAO)); }
+      if (!orTemplate.itens) orTemplate.itens = JSON.parse(JSON.stringify(OR_PADRAO.itens));
+      document.getElementById('or-inp-chegada').value = orTemplate.horaChegada || OR_PADRAO.horaChegada;
+      document.getElementById('or-inp-inicio').value = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio || OR_PADRAO.horaInicio;
+      orRenderItensFixos();
+      orRenderMensPreview();
+    }
+    async function orSalvarTemplateFirestore() {
+      try { await setDoc(doc(db, 'config', 'orientacoes_template'), orTemplate); } catch(e) { alert('Erro ao salvar padrões.'); }
+    }
+
+    function orRenderItensFixos() {
+      const wrap = document.getElementById('or-itens-fixos');
+      if (!orTemplate.itens.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum item fixo cadastrado ainda.</div>'; return; }
+      wrap.innerHTML = orTemplate.itens.map((it, i) => `
+        <div class="or-item-linha">
+          <input type="checkbox" class="or-item-check" data-i="${i}" ${it.ativo ? 'checked' : ''}>
+          <span class="or-item-emoji">${it.emoji}</span>
+          <span class="or-item-texto">${it.texto}</span>
+        </div>`).join('');
+      wrap.querySelectorAll('.or-item-check').forEach(cb => {
+        cb.addEventListener('change', e => { orTemplate.itens[parseInt(e.target.dataset.i)].ativo = e.target.checked; });
+      });
+    }
+
+    function orRenderMensPreview() {
+      const el = document.getElementById('or-mens-preview');
+      el.textContent = `Lembrete de mensalidade R$ ${orTemplate.mensalidadeMin} a R$ ${orTemplate.mensalidadeMax}`;
+    }
+
+    // ── ITENS EXTRAS (transientes, só desta sessão) ──
+    // ── SELETOR DE EMOJI (popover) ──
+    const OR_PALETA_EMOJI = ['🌿','🥻','🍅','🫓','🍬','🍎','🎩','📝','🕯️','🧹','🦟','🍷','🚌','🥁','💙','📧','🌐','🐷','🏠','🔪','🔥','🎪','🧎‍♀️','✦'];
+    function orAbrirEmojiPicker(botaoEl, onEscolher) {
+      document.querySelectorAll('.or-emoji-picker').forEach(p => p.remove());
+      const pop = document.createElement('div');
+      pop.className = 'or-emoji-picker';
+      pop.innerHTML = OR_PALETA_EMOJI.map(e => `<button type="button" class="or-emoji-opcao">${e}</button>`).join('');
+      document.body.appendChild(pop);
+      const rect = botaoEl.getBoundingClientRect();
+      pop.style.top = (window.scrollY + rect.bottom + 4) + 'px';
+      pop.style.left = (window.scrollX + rect.left) + 'px';
+      pop.querySelectorAll('.or-emoji-opcao').forEach(btn => {
+        btn.addEventListener('click', ev => { ev.stopPropagation(); onEscolher(btn.textContent); pop.remove(); });
+      });
+      setTimeout(() => {
+        document.addEventListener('click', function fechar(e) {
+          if (!pop.contains(e.target) && e.target !== botaoEl) { pop.remove(); document.removeEventListener('click', fechar); }
+        });
+      }, 0);
+    }
+
+    function orRenderItensExtras() {
+      const wrap = document.getElementById('or-itens-extras');
+      if (!orItensExtras.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum item extra adicionado.</div>'; return; }
+      wrap.innerHTML = '';
+      orItensExtras.forEach((it, i) => {
+        const row = document.createElement('div'); row.className = 'or-extra-linha';
+        row.innerHTML = `
+          <button type="button" class="or-emoji-btn" title="Escolher emoji">${it.emoji}</button>
+          <input type="text" class="or-texto-inp" value="${it.texto}" placeholder="Descreva o item...">
+          <button class="or-extra-del" title="Remover">✕</button>
+        `;
+        const emojiBtn = row.querySelector('.or-emoji-btn');
+        emojiBtn.addEventListener('click', () => {
+          orAbrirEmojiPicker(emojiBtn, emoji => { orItensExtras[i].emoji = emoji; emojiBtn.textContent = emoji; });
+        });
+        row.querySelector('.or-texto-inp').addEventListener('input', e => { orItensExtras[i].texto = e.target.value; });
+        row.querySelector('.or-extra-del').addEventListener('click', () => { orItensExtras.splice(i,1); orRenderItensExtras(); });
+        wrap.appendChild(row);
+      });
+    }
+    document.getElementById('or-btn-add-extra')?.addEventListener('click', () => {
+      orItensExtras.push({ emoji: '✦', texto: '' });
+      orRenderItensExtras();
+    });
+
+    // ── ASSISTÊNCIA (radio pill, 3 estados) ──
+    const OR_RADIOS_ASSISTENCIA = ['or-radio-aberta', 'or-radio-sem', 'or-radio-fechada'];
+    function orSetAssistencia(valor, idAtivo) {
+      orAssistencia = valor;
+      OR_RADIOS_ASSISTENCIA.forEach(id => document.getElementById(id)?.classList.toggle('ativo', id === idAtivo));
+    }
+    document.getElementById('or-radio-aberta')?.addEventListener('click', () => orSetAssistencia('aberta', 'or-radio-aberta'));
+    document.getElementById('or-radio-sem')?.addEventListener('click', () => orSetAssistencia('sem', 'or-radio-sem'));
+    document.getElementById('or-radio-fechada')?.addEventListener('click', () => orSetAssistencia('fechada', 'or-radio-fechada'));
+
+    // ── TIPO DE SESSÃO (define emojis certos automaticamente) ──
+    document.getElementById('or-inp-tipo')?.addEventListener('change', e => {
+      orAplicarTipo(e.target.value);
+    });
+    function orAplicarTipo(tipoKey) {
+      const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
+      document.getElementById('or-emoji-chegada').textContent = '🧑‍🦱';
+      document.getElementById('or-emoji-inicio').textContent = cfg.inicioEmoji;
+      const tituloEl = document.getElementById('or-inp-titulo');
+      // só substitui o título se estiver vazio ou ainda for uma sugestão automática anterior —
+      // preserva o que a Anna já tiver digitado/customizado
+      const eraSugestaoAutomatica = Object.values(OR_TIPOS).some(t => t.titulo === tituloEl.value);
+      if (!tituloEl.value.trim() || eraSugestaoAutomatica) tituloEl.value = cfg.titulo;
+    }
+
+    // ── MODAL EDITAR ITENS FIXOS ──
+    function orAbrirTplModal() {
+      orRenderTplModalLista();
+      document.getElementById('or-tpl-modal').style.display = 'flex';
+    }
+    function orRenderTplModalLista() {
+      const wrap = document.getElementById('or-tpl-lista');
+      wrap.innerHTML = '';
+      orTemplate.itens.forEach((it, i) => {
+        const row = document.createElement('div'); row.className = 'or-tpl-item-row';
+        row.innerHTML = `
+          <button type="button" class="or-emoji-btn" title="Escolher emoji">${it.emoji}</button>
+          <input type="text" class="or-texto-inp" value="${it.texto}">
+          <button class="or-extra-del" title="Remover">✕</button>
+        `;
+        const emojiBtn = row.querySelector('.or-emoji-btn');
+        emojiBtn.addEventListener('click', () => {
+          orAbrirEmojiPicker(emojiBtn, emoji => { orTemplate.itens[i].emoji = emoji; emojiBtn.textContent = emoji; });
+        });
+        row.querySelector('.or-texto-inp').addEventListener('input', e => { orTemplate.itens[i].texto = e.target.value; });
+        row.querySelector('.or-extra-del').addEventListener('click', () => { orTemplate.itens.splice(i,1); orRenderTplModalLista(); });
+        wrap.appendChild(row);
+      });
+    }
+    document.getElementById('or-tpl-editar')?.addEventListener('click', orAbrirTplModal);
+    document.getElementById('or-tpl-cancelar')?.addEventListener('click', () => { document.getElementById('or-tpl-modal').style.display = 'none'; orCarregarTemplate(); });
+    document.getElementById('or-tpl-add')?.addEventListener('click', () => { orTemplate.itens.push({ emoji: '✦', texto: '', ativo: true }); orRenderTplModalLista(); });
+    document.getElementById('or-tpl-salvar')?.addEventListener('click', async () => {
+      orTemplate.itens = orTemplate.itens.filter(it => it.texto.trim());
+      await orSalvarTemplateFirestore();
+      orRenderItensFixos();
+      document.getElementById('or-tpl-modal').style.display = 'none';
+    });
+
+    // ── MODAL EDITAR MENSALIDADE ──
+    document.getElementById('or-mens-editar')?.addEventListener('click', () => {
+      document.getElementById('or-mens-inp-min').value = orTemplate.mensalidadeMin;
+      document.getElementById('or-mens-inp-max').value = orTemplate.mensalidadeMax;
+      document.getElementById('or-mens-inp-email').value = orTemplate.email;
+      document.getElementById('or-mens-inp-link').value = orTemplate.link;
+      document.getElementById('or-mens-modal').style.display = 'flex';
+    });
+    document.getElementById('or-mens-cancelar')?.addEventListener('click', () => { document.getElementById('or-mens-modal').style.display = 'none'; });
+    document.getElementById('or-mens-salvar')?.addEventListener('click', async () => {
+      orTemplate.mensalidadeMin = parseFloat(document.getElementById('or-mens-inp-min').value) || 0;
+      orTemplate.mensalidadeMax = parseFloat(document.getElementById('or-mens-inp-max').value) || 0;
+      orTemplate.email = document.getElementById('or-mens-inp-email').value.trim();
+      orTemplate.link = document.getElementById('or-mens-inp-link').value.trim();
+      await orSalvarTemplateFirestore();
+      orRenderMensPreview();
+      document.getElementById('or-mens-modal').style.display = 'none';
+    });
+
+    // ── GERAR MENSAGEM ──
+    function orGerarTexto() {
+      const titulo = document.getElementById('or-inp-titulo').value.trim() || 'Sessão';
+      const chegada = document.getElementById('or-inp-chegada').value || orTemplate.horaChegada;
+      const inicio = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio;
+      const obs = document.getElementById('or-inp-obs').value.trim();
+      const incluirMens = document.getElementById('or-check-mensalidade').checked;
+      const tipoKey = document.getElementById('or-inp-tipo')?.value || 'quimbanda';
+      const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
+      const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
+
+      let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
+      txt += `🧑‍🦱 Chegada da Corrente: ${chegada}\n`;
+      txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
+      const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
+      txt += `🧑‍🤝‍🧑 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
+
+      const itensAtivos = orTemplate.itens.filter(it => it.ativo && it.texto.trim());
+      const extrasValidos = orItensExtras.filter(it => it.texto.trim());
+      if (itensAtivos.length || extrasValidos.length) {
+        txt += `\n`;
+        itensAtivos.forEach(it => { txt += `${it.emoji} ${it.texto}\n`; });
+        extrasValidos.forEach(it => { txt += `${it.emoji} ${it.texto}\n`; });
+      }
+
+      if (obs) txt += `\n${obs}\n`;
+
+      if (incluirMens) {
+        txt += `\n💙 Lembrete de mensalidade R$ ${orTemplate.mensalidadeMin} a R$ ${orTemplate.mensalidadeMax}\n`;
+        if (orTemplate.email) txt += `📧 ${orTemplate.email}\n`;
+        if (orTemplate.link) txt += `🌐 ${orTemplate.link}\n`;
+      }
+      return txt.trim();
+    }
+
+    // ── ✨ TRANSFORMAR NOTAS COM IA ──
+    // Chama o Worker do Cloudflare (endpoint /api/orientacao-ia) que usa a API da Anthropic
+    // com o padrão real de emojis/estilo da Anna, e devolve os itens já formatados.
+    document.getElementById('or-btn-ia')?.addEventListener('click', async () => {
+      const notas = document.getElementById('or-inp-notas-ia').value.trim();
+      const statusEl = document.getElementById('or-ia-status');
+      if (!notas) { statusEl.textContent = 'Escreve algumas notas primeiro.'; return; }
+      const btn = document.getElementById('or-btn-ia');
+      const textoOriginal = btn.textContent;
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      statusEl.textContent = '';
+      try {
+        const tipoKey = document.getElementById('or-inp-tipo')?.value || 'quimbanda';
+        const res = await fetch('/api/orientacao-ia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: tipoKey,
+            titulo: document.getElementById('or-inp-titulo').value.trim(),
+            notas: notas
+          })
+        });
+        if (!res.ok) throw new Error('Worker retornou erro ' + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data.itens) || !data.itens.length) throw new Error('Resposta vazia');
+        // adiciona os itens gerados aos itens extras (não substitui o que já tinha)
+        data.itens.forEach(it => { if (it.texto) orItensExtras.push({ emoji: it.emoji || '✦', texto: it.texto }); });
+        orRenderItensExtras();
+        document.getElementById('or-inp-notas-ia').value = '';
+        statusEl.textContent = '✓ Itens adicionados abaixo — revise antes de gerar a mensagem.';
+      } catch(e) {
+        console.warn('orientacao-ia:', e);
+        statusEl.textContent = 'Não consegui falar com a IA agora. Você pode adicionar os itens manualmente em "Itens extras" abaixo.';
+      } finally {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('or-btn-gerar')?.addEventListener('click', () => {
+      document.getElementById('or-rel-texto').value = orGerarTexto();
+      document.getElementById('or-rel-overlay').style.display = 'flex';
+    });
+    document.getElementById('or-rel-cancelar')?.addEventListener('click', () => { document.getElementById('or-rel-overlay').style.display = 'none'; });
+    document.getElementById('or-rel-enviar')?.addEventListener('click', () => {
+      const texto = document.getElementById('or-rel-texto').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    });
+
+    // exposta globalmente pra showPage() poder chamar de novo toda vez que a página reabrir —
+    // sem isso, a "próxima sessão" ficava travada na que existia quando o site carregou pela primeira vez
+    window.orCarregarProximaSessao = orCarregarProximaSessao;
+
+    // inicializa quando a página existir no DOM
+    if (document.getElementById('or-proxima-titulo')) {
+      orAplicarTipo(document.getElementById('or-inp-tipo')?.value || 'quimbanda');
+      orCarregarProximaSessao();
+      orCarregarTemplate();
+      orRenderItensExtras();
+    }
+  })();
+
 
   const provider = new GoogleAuthProvider();
 
@@ -10478,11 +12642,7 @@ function dashvRenderApresentacao() {
     const { icone, texto } = drawerIconeLabel(item);
     let onclick;
     if (item.id === 'sessoes' || item.id === 'calendario') onclick = `showPage('calendario');return false`;
-    else if (item.id === 'apoie') onclick = `window.open('/apoie','_self')`;
-    else if (item.id === 'historia') onclick = `window.open('/historia','_self')`;
-    else if (item.id === 'pix') onclick = `window.open('/pix','_self')`;
-    else if (item.id === 'resumo') onclick = `window.open('/resumo','_self')`;
-    else if (item.id === 'orientacoes') onclick = `window.open('/orientacoes','_self')`;
+    else if (item.id === 'apoie') onclick = `showPage('apoie');return false`;
     else if (item.type === 'internal') onclick = `showPage('${item.page}');return false`;
     else if (item.url && item.url.includes('blogbolhas.pages.dev')) onclick = `showPage('blog');return false`;
     else onclick = `window.open('${item.url}','_blank');return false`;
