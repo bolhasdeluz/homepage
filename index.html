@@ -327,6 +327,11 @@ footer{
 .admin-panel h2{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600;color:var(--text);margin-bottom:6px}
 .admin-panel .sub{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;margin-bottom:32px}
 .admin-section-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:20px;overflow:hidden;backdrop-filter:blur(4px)}
+.admin-menu-item{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 12px;cursor:pointer;transition:all .2s;backdrop-filter:blur(4px)}
+.admin-menu-item:hover{border-color:var(--rosa);transform:translateY(-1px);box-shadow:0 4px 16px rgba(196,57,107,.12)}
+.admin-menu-item-icon{font-size:1.6rem;margin-bottom:2px}
+.admin-menu-item-label{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;letter-spacing:.05em;color:var(--terra)}
+.admin-menu-item-desc{font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;line-height:1.3}
 .admin-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:rgba(196,90,30,.04)}
 .admin-section-title{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--terra)}
 .admin-item-row{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
@@ -3891,62 +3896,101 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <button id="btn-sair-admin-senha" onclick="logoutSenhaAdmin()" style="display:none;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:8px 16px;cursor:pointer;margin-bottom:24px;margin-left:8px">
       🔑 Sair do modo admin (senha)
     </button>
-    <div id="admin-sections-container"></div>
+
+    <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
+    <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+      <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
+        <span class="admin-menu-item-icon">📋</span>
+        <span class="admin-menu-item-label">Menu do Site</span>
+        <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
+        <span class="admin-menu-item-icon">📜</span>
+        <span class="admin-menu-item-label">Sua História</span>
+        <span class="admin-menu-item-desc">Quem pode ver o card</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')">
+        <span class="admin-menu-item-icon">📢</span>
+        <span class="admin-menu-item-label">Avisos / Comunicados</span>
+        <span class="admin-menu-item-desc">Escreva avisos pra cada grupo</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')">
+        <span class="admin-menu-item-icon">🌸</span>
+        <span class="admin-menu-item-label">Filhas da Casa</span>
+        <span class="admin-menu-item-desc">Perfis e fichas</span>
+      </button>
+    </div>
+
+    <!-- MENU DO SITE (cards + seções) -->
+    <div id="admin-sub-menu" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div id="admin-sections-container"></div>
+      <div class="admin-section-block">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Nova Seção do Menu</span>
+        </div>
+        <div class="admin-add-form">
+          <input type="text" id="new-section-label" placeholder="Nome da seção (ex: Especial)">
+          <button class="btn-add" onclick="addSection()">+ Adicionar Seção</button>
+        </div>
+      </div>
+      <button class="btn-save-menu" onclick="saveMenu()">↻ Forçar salvar agora</button>
+      <div class="save-status" id="save-status"></div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:4px">Toda alteração já é salva automaticamente ✦</div>
+    </div>
 
     <!-- VISIBILIDADE: SUA HISTÓRIA -->
-    <div class="admin-section-block" style="margin-bottom:20px">
-      <div class="admin-section-header">
-        <span class="admin-section-title">Sua História — Visibilidade</span>
-      </div>
-      <div style="padding:12px 16px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">O card "Sua História" aparece para quem estiver logada nos grupos selecionados:</div>
-      <div style="padding:0 16px 14px;display:flex;gap:6px;flex-wrap:wrap" id="sua-historia-vis-wrap">
-        <button class="toggle-pill on" id="sua-hist-vis-visitante" onclick="toggleSuaHistoriaVis('visitante')">👤 Visitante</button>
-        <button class="toggle-pill on" id="sua-hist-vis-filhas" onclick="toggleSuaHistoriaVis('filhas')">🌸 Filhas</button>
-        <button class="toggle-pill on" id="sua-hist-vis-tamboreiro" onclick="toggleSuaHistoriaVis('tamboreiro')">🥁 Tamboreiro</button>
-        <button class="toggle-pill on" id="sua-hist-vis-amigos" onclick="toggleSuaHistoriaVis('amigos')">🤝 Amigos</button>
-        <button class="toggle-pill" id="sua-hist-vis-assistencia" onclick="toggleSuaHistoriaVis('assistencia')">🤲 Assistência</button>
+    <div id="admin-sub-historia" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Sua História — Visibilidade</span>
+        </div>
+        <div style="padding:12px 16px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">O card "Sua História" aparece para quem estiver logada nos grupos selecionados:</div>
+        <div style="padding:0 16px 14px;display:flex;gap:6px;flex-wrap:wrap" id="sua-historia-vis-wrap">
+          <button class="toggle-pill on" id="sua-hist-vis-visitante" onclick="toggleSuaHistoriaVis('visitante')">👤 Visitante</button>
+          <button class="toggle-pill on" id="sua-hist-vis-filhas" onclick="toggleSuaHistoriaVis('filhas')">🌸 Filhas</button>
+          <button class="toggle-pill on" id="sua-hist-vis-tamboreiro" onclick="toggleSuaHistoriaVis('tamboreiro')">🥁 Tamboreiro</button>
+          <button class="toggle-pill on" id="sua-hist-vis-amigos" onclick="toggleSuaHistoriaVis('amigos')">🤝 Amigos</button>
+          <button class="toggle-pill" id="sua-hist-vis-assistencia" onclick="toggleSuaHistoriaVis('assistencia')">🤲 Assistência</button>
+        </div>
       </div>
     </div>
 
     <!-- AVISOS / COMUNICADOS -->
-    <div class="admin-section-block" style="margin-bottom:20px">
-      <div class="admin-section-header">
-        <span class="admin-section-title">📢 Avisos / Comunicados</span>
+    <div id="admin-sub-avisos" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">📢 Avisos / Comunicados</span>
+        </div>
+        <div style="padding:12px 16px 0;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">Escreva um aviso e marque quem deve ver — fica oculto até você marcar um grupo.</div>
+        <div style="padding:10px 16px 14px">
+          <textarea id="av-novo-texto" placeholder="Texto do aviso..." style="width:100%;min-height:60px;font-family:'Crimson Pro',serif;font-size:.9rem;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical;margin-bottom:8px"></textarea>
+          <button class="btn-add" onclick="avAdicionar()">+ Adicionar aviso</button>
+        </div>
+        <div id="av-lista" style="padding:0 16px 14px"></div>
       </div>
-      <div style="padding:12px 16px 0;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">Escreva um aviso e marque quem deve ver — fica oculto até você marcar um grupo.</div>
-      <div style="padding:10px 16px 14px">
-        <textarea id="av-novo-texto" placeholder="Texto do aviso..." style="width:100%;min-height:60px;font-family:'Crimson Pro',serif;font-size:.9rem;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical;margin-bottom:8px"></textarea>
-        <button class="btn-add" onclick="avAdicionar()">+ Adicionar aviso</button>
-      </div>
-      <div id="av-lista" style="padding:0 16px 14px"></div>
     </div>
 
-    <div class="admin-section-block" style="margin-bottom:20px">
-      <div class="admin-section-header">
-        <span class="admin-section-title">Filhas da Casa</span>
-        <div style="display:flex;gap:6px">
-          <button class="admin-btn" onclick="abrirCriarPerfil()">+ Criar perfil</button>
-          <button class="admin-btn" onclick="carregarFilhasAdmin()">↺ Atualizar</button>
+    <!-- FILHAS DA CASA -->
+    <div id="admin-sub-filhas" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Filhas da Casa</span>
+          <div style="display:flex;gap:6px">
+            <button class="admin-btn" onclick="abrirCriarPerfil()">+ Criar perfil</button>
+            <button class="admin-btn" onclick="carregarFilhasAdmin()">↺ Atualizar</button>
+          </div>
         </div>
-      </div>
-      <div style="padding:16px">
-        <div class="admin-filhas-grid" id="admin-filhas-grid">
-          <div class="admin-filhas-vazio">Carregando perfis...</div>
+        <div style="padding:16px">
+          <div class="admin-filhas-grid" id="admin-filhas-grid">
+            <div class="admin-filhas-vazio">Carregando perfis...</div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="admin-section-block">
-      <div class="admin-section-header">
-        <span class="admin-section-title">Nova Seção do Menu</span>
-      </div>
-      <div class="admin-add-form">
-        <input type="text" id="new-section-label" placeholder="Nome da seção (ex: Especial)">
-        <button class="btn-add" onclick="addSection()">+ Adicionar Seção</button>
-      </div>
-    </div>
-    <button class="btn-save-menu" onclick="saveMenu()">↻ Forçar salvar agora</button>
-    <div class="save-status" id="save-status"></div>
-    <div style="font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:4px">Toda alteração já é salva automaticamente ✦</div>
   </div>
 </div>
 
@@ -4376,6 +4420,26 @@ function renderCards() {
     });
   });
   grid.innerHTML = html;
+}
+
+// ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
+// empilhado numa rolagem só ──
+const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'filhas'];
+function adminAbrirSecao(nome) {
+  document.getElementById('admin-menu-principal').style.display = 'none';
+  ADMIN_SUBSECOES.forEach(n => {
+    const el = document.getElementById('admin-sub-' + n);
+    if (el) el.style.display = n === nome ? 'block' : 'none';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function adminVoltarMenu() {
+  document.getElementById('admin-menu-principal').style.display = 'grid';
+  ADMIN_SUBSECOES.forEach(n => {
+    const el = document.getElementById('admin-sub-' + n);
+    if (el) el.style.display = 'none';
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── PAINEL ADMIN ──
@@ -5140,7 +5204,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
-  if (name === 'admin') { renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); }
+  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
