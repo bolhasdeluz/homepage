@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumo Mensal — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — Resumo Mensal: tesouraria, sessões, aniversariantes e manutenção, pronto pra mandar no grupo.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Resumo Mensal — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;--surface:rgba(255,255,255,.72);
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:1000px;margin:0 auto;padding:32px 24px 120px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:36px;line-height:1.6}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:28px;transition:color .2s;}
+.back-btn:hover{color:var(--rosa)}
+
+#login-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:1000px;margin:0 auto;padding:16px 24px 0}
+#login-bar img{width:34px;height:34px;border-radius:50%;display:none}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+
+@keyframes cpPop{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.cp-btn-cancelar{background:none;color:var(--text-dim);border:1px solid var(--border)}
+.cp-btn-confirmar{background:var(--rosa);color:#fff;border:none;transition:background .15s}
+
+.mn-modal-bg{position:fixed;inset:0;background:rgba(40,10,20,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:999;padding:16px;overflow-y:auto}
+.mn-modal{background:#fff;border:1px solid var(--border);border-top:4px solid var(--terra);border-radius:14px;padding:26px;width:380px;max-width:100%;box-shadow:0 8px 40px rgba(140,58,26,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1);margin:auto}
+.mn-modal h3{font-family:'Playfair Display',serif;font-weight:600;font-size:1.05rem;color:var(--text);margin-bottom:16px}
+.mn-modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+.mn-modal-btns button{border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
+.mn-campo{display:flex;flex-direction:column;gap:5px;flex:1 1 160px;margin-bottom:10px}
+.mn-campo.mn-full{flex-basis:100%}
+.mn-campo label{font-family:'Cinzel',serif;font-size:.58rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+.mn-campo input,.mn-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s;width:100%}
+.mn-campo textarea{min-height:70px;resize:vertical;font-family:'DM Sans',sans-serif;line-height:1.5}
+.mn-campo input:focus,.mn-campo textarea:focus{border-color:var(--terra);box-shadow:0 0 0 3px rgba(140,58,26,.1);background:#fff}
+
+.es-rel-modal{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:14px;padding:26px;width:min(440px,92vw);box-shadow:0 8px 40px rgba(196,57,107,.18);animation:cpPop .22s cubic-bezier(.3,1.3,.4,1)}
+.es-rel-modal h3{font-family:'Playfair Display',serif;font-weight:600;font-size:1.1rem;margin-bottom:6px}
+.es-rel-modal p{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px}
+.es-rel-textarea{width:100%;min-height:220px;border:1px solid var(--border);border-radius:10px;padding:14px;font-family:'DM Sans',monospace;font-size:12.5px;line-height:1.6;color:var(--text);background:var(--rosa-dim);resize:vertical;outline:none;white-space:pre-wrap}
+.es-rel-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.es-btn-whats{background:#25D366;color:#fff;border:none;border-radius:9px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:7px;transition:transform .12s}
+
+/* ══ RESUMO MENSAL ══ */
+.rm-frame{background:linear-gradient(180deg,#fff 0%,#fff8f4 100%);border:1.5px solid rgba(196,57,107,.18);border-radius:22px;padding:0;margin:0 auto 26px;max-width:520px;box-shadow:0 10px 40px rgba(196,57,107,.13);overflow:hidden;position:relative}
+.rm-header{background:linear-gradient(135deg,#c4396b 0%,#a52c58 55%,#8a1a40 100%);padding:7px 16px 6px;text-align:center;position:relative;overflow:hidden}
+.rm-header::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:22px;background:
+  radial-gradient(circle at 10% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 30% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 50% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 70% 100%, #fff 0 9px, transparent 10px),
+  radial-gradient(circle at 90% 100%, #fff 0 9px, transparent 10px);
+  background-size:20% 100%;}
+.rm-header-eyebrow{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:1px}
+.rm-header-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);line-height:1.1}
+.rm-header-sub{font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:rgba(255,255,255,.8);margin-top:4px}
+.rm-body{padding:6px 10px 7px;display:flex;flex-direction:column;gap:4px}
+.rm-secao{background:#fff;border:1px solid var(--border);border-radius:9px;padding:5px 8px;position:relative}
+.rm-secao-titulo{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.76rem;letter-spacing:.03em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:3px}
+.rm-secao-titulo .ic{font-size:1.05rem}
+.rm-edit-btn{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:13px;padding:3px 6px;border-radius:6px;transition:all .15s}
+.rm-edit-btn:hover{color:var(--rosa);background:var(--rosa-dim)}
+
+.rm-tesouraria-mes{font-family:'Crimson Pro',serif;font-size:.82rem;font-style:italic;color:var(--text-dim);margin-bottom:3px}
+
+.rm-secao-recado{background:linear-gradient(135deg,rgba(196,57,107,.06),rgba(196,90,30,.04));border-color:rgba(196,57,107,.2)}
+.rm-secao-recado.rm-secao-recado-vazia{padding:0;background:none;border:none;box-shadow:none}
+.rm-recado-add{width:100%;background:rgba(196,57,107,.05);border:1px dashed rgba(196,57,107,.3);border-radius:12px;padding:11px;font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--rosa);cursor:pointer;transition:background .15s}
+.rm-recado-add:hover{background:rgba(196,57,107,.1)}
+.rm-recado-texto{font-family:'Playfair Display',serif;font-size:1.02rem;font-style:italic;color:var(--text);line-height:1.6;white-space:pre-wrap}
+.rm-recado-vazio{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic}
+.rm-tes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:3px}
+.rm-tes-pill{text-align:center;background:var(--rosa-dim);border-radius:8px;padding:4px 5px}
+.rm-tes-pill.entrada{background:var(--green-dim)}
+.rm-tes-pill.saida{background:#fdecea}
+.rm-tes-pill.saldo{background:linear-gradient(135deg,rgba(196,57,107,.12),rgba(196,90,30,.08))}
+.rm-tes-label{font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:4px}
+.rm-tes-valor{font-family:'Cinzel',serif;font-size:1.15rem;font-weight:700;color:var(--text)}
+.rm-tes-pill.entrada .rm-tes-valor{color:var(--green)}
+.rm-tes-pill.saida .rm-tes-valor{color:#c0392b}
+.rm-tes-pill.saldo .rm-tes-valor{color:var(--rosa)}
+.rm-tes-obs{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;line-height:1.5}
+
+.rm-lista{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.rm-linha{display:flex;flex-direction:column;gap:0;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);padding:4px 8px;background:var(--rosa-dim);border-radius:7px;overflow:hidden;min-width:0;line-height:1.25}
+.rm-linha>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.rm-linha-tag{font-family:'Cinzel',serif;font-size:.72rem;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm-lista-1col{grid-template-columns:1fr}
+.rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
+
+.rm-footer{text-align:center;padding:4px 16px 5px;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.rm-footer .sub{display:block;font-family:'Crimson Pro',serif;font-size:.75rem;letter-spacing:0;text-transform:none;font-style:italic;margin-top:3px;color:rgba(196,90,30,.5)}
+
+.rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
+.rm-btn-whats:hover{transform:translateY(-2px)}
+.rm-btn-mes{background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff;border:none;border-radius:11px;padding:12px 20px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.06em;box-shadow:0 4px 16px rgba(196,57,107,.25);transition:transform .15s}
+.rm-btn-mes:hover{transform:translateY(-2px)}
+
+.rm-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+
+@media(max-width:480px){
+  .rm-tes-grid{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .rm-tes-valor{font-size:.85rem}
+  .rm-header-titulo{font-size:1.35rem}
+}
+</style>
+</head>
+<body>
+
+<div id="login-bar">
+  <span id="login-status">Entrando...</span>
+  <img id="login-avatar">
+  <button id="login-btn" style="display:none">Entrar com Google</button>
+  <button id="logout-btn">Sair</button>
+</div>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">📋 Resumo Mensal</div>
+  <p class="section-sub">Tudo num só lugar — pronto pra printar e mandar no grupo ✦</p>
+
+  <div class="rm-topo-acoes">
+    <button class="rm-btn-mes" id="rm-btn-mes-editar">📅 Escolher mês</button>
+    <button class="rm-btn-whats" id="rm-btn-whats">📱 Gerar mensagem pro WhatsApp</button>
+    <button class="rm-btn-mes" id="rm-btn-imagem" style="background:linear-gradient(135deg,#8c5a00,#c88c00)">📸 Gerar Imagem</button>
+    <button class="rm-btn-mes" id="rm-btn-tela-cheia" style="background:linear-gradient(135deg,#4a6fa5,#2f4d75)">🔍 Ver tela cheia</button>
+  </div>
+
+  <div class="rm-frame" id="rm-frame">
+    <div class="rm-header">
+      <button class="rm-edit-btn" id="rm-header-editar" style="color:rgba(255,255,255,.75)" title="Escolher mês">✎</button>
+      <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+      <div class="rm-header-titulo" id="rm-mes-titulo">—</div>
+      <div class="rm-header-sub">Um espaço de fé, axé e comunidade</div>
+    </div>
+
+    <div class="rm-body">
+      <!-- RECADO DO MÊS (opcional — fica compacto quando vazio) -->
+      <div class="rm-secao rm-secao-recado" id="rm-secao-recado-wrap">
+        <button class="rm-edit-btn" id="rm-recado-editar" title="Editar">✎</button>
+        <div class="rm-secao-titulo"><span class="ic">💌</span> Recado do Mês</div>
+        <div class="rm-recado-texto" id="rm-recado-texto"></div>
+      </div>
+
+      <!-- TESOURARIA -->
+      <div class="rm-secao">
+        <button class="rm-edit-btn" id="rm-tes-editar" title="Editar">✎</button>
+        <div class="rm-secao-titulo"><span class="ic">💰</span> Tesouraria — mês passado</div>
+        <div class="rm-tesouraria-mes" id="rm-tes-mes">Ainda não preenchido</div>
+        <div class="rm-tes-grid" style="grid-template-columns:1fr 1fr;margin-bottom:6px">
+          <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">👥 Pagantes</span><span class="rm-tes-valor" id="rm-tes-pct-pag" style="color:var(--rosa);font-size:1.2rem">0%</span><div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:1px" id="rm-tes-pag-sub"></div></div>
+          <div class="rm-tes-pill" style="background:rgba(196,57,107,.06)"><span class="rm-tes-label">💰 Coberto</span><span class="rm-tes-valor" id="rm-tes-pct-cob" style="color:var(--rosa);font-size:1.2rem">0%</span></div>
+        </div>
+        <div class="rm-tes-grid">
+          <div class="rm-tes-pill entrada"><span class="rm-tes-label">Entradas</span><span class="rm-tes-valor" id="rm-tes-entradas">R$ 0</span></div>
+          <div class="rm-tes-pill saida"><span class="rm-tes-label">Saídas</span><span class="rm-tes-valor" id="rm-tes-saidas">R$ 0</span></div>
+          <div class="rm-tes-pill saldo"><span class="rm-tes-label">Saldo</span><span class="rm-tes-valor" id="rm-tes-saldo">R$ 0</span></div>
+        </div>
+        <div class="rm-tes-obs" id="rm-tes-obs"></div>
+      </div>
+
+      <!-- PRÓXIMAS SESSÕES -->
+      <div class="rm-secao">
+        <div class="rm-secao-titulo"><span class="ic">📅</span> Próximas Sessões</div>
+        <div class="rm-lista rm-lista-1col" id="rm-sessoes-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+      </div>
+
+      <!-- ANIVERSARIANTES -->
+      <div class="rm-secao">
+        <div class="rm-secao-titulo"><span class="ic">🎂</span> Aniversariantes do Mês</div>
+        <div class="rm-lista" id="rm-aniv-lista"></div>
+      </div>
+
+      <!-- MANUTENÇÃO -->
+      <div class="rm-secao">
+        <div class="rm-secao-titulo"><span class="ic">🔧</span> Manutenção</div>
+        <div class="rm-lista" id="rm-manut-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+      </div>
+
+      <!-- LISTA DE COMPRAS -->
+      <div class="rm-secao">
+        <a class="rm-edit-btn" href="/" title="Editar na Necessidades da Casa">✎</a>
+        <div class="rm-secao-titulo"><span class="ic">🛒</span> Itens Faltando</div>
+        <div class="rm-lista" id="rm-compras-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+      </div>
+    </div>
+
+    <div class="rm-footer">Terreiro Bolhas de Luz<span class="sub">Porto Alegre, RS · bolhasdeluz.ong.br</span></div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR RECADO DO MÊS -->
+<div class="mn-modal-bg" id="rm-recado-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>💌 Recado do Mês</h3>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Orientações, avisos ou mensagem breve pra casa</label><textarea id="rm-recado-inp" placeholder="Ex: Este mês pedimos atenção redobrada com os horários das sessões..." style="min-height:120px"></textarea></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-recado-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-recado-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TESOURARIA -->
+<div class="mn-modal-bg" id="rm-tes-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>💰 Observação da Tesouraria</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Entradas, saídas e saldo agora vêm direto da sua Tesouraria — só a observação é digitada aqui.</p>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Observação (opcional)</label><textarea id="rm-tes-inp-obs" placeholder="Ex: inclui doação especial da Semana Caldeira..."></textarea></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-tes-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-tes-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO WHATSAPP RESUMO -->
+<div class="mn-modal-bg" id="rm-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📋 Mensagem do Resumo Mensal</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="rm-rel-texto" style="min-height:320px"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="rm-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="rm-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESCOLHER MÊS DO RESUMO -->
+<div class="mn-modal-bg" id="rm-mes-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>📅 Qual mês este resumo representa?</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Isso muda o título do cartão e os aniversariantes exibidos.</p>
+    <div class="mn-campo mn-full" style="margin-bottom:6px"><label>Mês / ano</label><input type="month" id="rm-mes-inp"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="rm-mes-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="rm-mes-salvar">Usar este mês ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TELA CHEIA DO RESUMO -->
+<div id="rm-full-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:#fdeef2;overflow-y:auto;padding:20px 14px 60px">
+  <button id="rm-full-fechar" style="position:fixed;top:16px;right:16px;z-index:1000;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer">×</button>
+  <div id="rm-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+  } else {
+    statusEl.textContent = 'Não conectada';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+  }
+});
+
+// mesma lógica de normalização de status usada na Manutenção (manutencao.html) —
+// se mudar aqui, replica lá também
+const MN_ICONE_STATUS = { pendente: '🔧', aguardando: '⏳', agendada: '📅', andamento: '🔄', concluida: '✅' };
+const MN_LABEL_STATUS = { pendente: '🔧 Pendente', aguardando: '⏳ Aguardando', agendada: '📅 Agendada', andamento: '🔄 Em Andamento', concluida: '✅ Concluída' };
+function mnStatusReal(item) {
+  const s = (item.status || 'pendente').toLowerCase().trim();
+  if (['pendente','aguardando','agendada','andamento','concluida'].includes(s)) return s;
+  return 'pendente';
+}
+
+// mesma lista fixa de aniversários usada na Início (index.html) — se editar
+// uma data por ali, edita aqui também, ou os dois saem de sincronia.
+const ANIVERSARIOS = [
+  { mes:1,  dia:16, nome:'Jaque' },
+  { mes:1,  dia:30, nome:'Diego do Tambor' },
+  { mes:2,  dia:18, nome:'Saints Mom' },
+  { mes:3,  dia:19, nome:'Stephani' },
+  { mes:3,  dia:29, nome:'Dona Helena' },
+  { mes:4,  dia:16, nome:'Vanessa' },
+  { mes:6,  dia:10, nome:'Manuella' },
+  { mes:6,  dia:25, nome:'Anne' },
+  { mes:7,  dia:2,  nome:'Brenda' },
+  { mes:7,  dia:9,  nome:'Alex' },
+  { mes:7,  dia:30, nome:'Vitória' },
+  { mes:8,  dia:26, nome:'Tranca Ruas' },
+  { mes:9,  dia:11, nome:'Gabi' },
+  { mes:9,  dia:26, nome:'Thali' },
+  { mes:10, dia:10, nome:'Nicole' },
+  { mes:10, dia:30, nome:'Terreira' },
+  { mes:11, dia:3,  nome:'Marcia' },
+  { mes:11, dia:13, nome:'Tassiana' },
+  { mes:12, dia:24, nome:'Dona Olívia' },
+];
+
+// ══ RESUMO MENSAL ══
+(function initResumoMensal() {
+  const MESES_RM = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  let rmTesouraria = null;
+  let rmTesEntradas = 0, rmTesSaidas = 0, rmTesMesLabel = '';
+  let rmTesPctPag = 0, rmTesNPag = 0, rmTesTotalMembros = 0, rmTesPctCob = 0;
+  // mesma lista de membros da Tesouraria real (não vem de API — é fixa lá também).
+  // se alguém sair da casa por lá, espelhar aqui também em RM_MEMBROS_SAIDA.
+  const RM_MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+  const RM_MEMBROS_SAIDA = { 'Juliana': '2026-07' };
+  function rmMembrosAtivos(mesRef) {
+    return RM_MEMBROS_TODOS.filter(m => { const s = RM_MEMBROS_SAIDA[m]; return !s || mesRef < s; });
+  }
+  let rmRecado = null;
+  let rmSessoes = [];
+  let rmManutencao = [];
+  let rmCompras = [];
+  const hojeISO = new Date();
+  let rmMesEscolhido = `${hojeISO.getFullYear()}-${String(hojeISO.getMonth()+1).padStart(2,'0')}`; // 'YYYY-MM'
+
+  function rmNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
+  function rmFmtMoeda(v) { return 'R$ ' + (parseFloat(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function rmFmtDataISO(dataStr) {
+    if (!dataStr) return '';
+    const [y,m,d] = dataStr.split('-');
+    const dataObj = new Date(parseInt(y), parseInt(m)-1, parseInt(d));
+    const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    const MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
+  }
+  function rmMesNumero() { return parseInt(rmMesEscolhido.split('-')[1], 10); } // 1-12
+  function rmAnoNumero() { return parseInt(rmMesEscolhido.split('-')[0], 10); }
+
+  function rmTitulo() {
+    const el = document.getElementById('rm-mes-titulo');
+    const m = rmMesNumero(), a = rmAnoNumero();
+    if (el) el.textContent = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
+  }
+  rmTitulo();
+
+  // ── ESCOLHER MÊS (Firestore config/resumo_config) ──
+  async function rmCarregarMesEscolhido() {
+    try {
+      const snap = await getDocs(collection(db, 'config'));
+      const d = snap.docs.find(x => x.id === 'resumo_config');
+      if (d && d.data().mesRef) rmMesEscolhido = d.data().mesRef;
+    } catch(e) { console.warn('resumo_config load:', e); }
+    rmTitulo();
+    rmRenderAniversariantes();
+    rmCarregarSessoes();
+    rmCarregarTesouraria();
+  }
+  async function rmSalvarMesEscolhido(novoMes) {
+    rmMesEscolhido = novoMes;
+    rmTitulo();
+    rmRenderAniversariantes();
+    rmCarregarSessoes();
+    rmCarregarTesouraria();
+    try { await setDoc(doc(db, 'config', 'resumo_config'), { mesRef: novoMes }); } catch(e) { console.warn('resumo_config save:', e); }
+  }
+  document.getElementById('rm-btn-mes-editar')?.addEventListener('click', () => {
+    document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+    document.getElementById('rm-mes-modal').style.display = 'flex';
+  });
+  document.getElementById('rm-header-editar')?.addEventListener('click', () => {
+    document.getElementById('rm-mes-inp').value = rmMesEscolhido;
+    document.getElementById('rm-mes-modal').style.display = 'flex';
+  });
+  document.getElementById('rm-mes-cancelar')?.addEventListener('click', () => { document.getElementById('rm-mes-modal').style.display = 'none'; });
+  document.getElementById('rm-mes-salvar')?.addEventListener('click', () => {
+    const v = document.getElementById('rm-mes-inp').value;
+    if (!v) return;
+    rmSalvarMesEscolhido(v);
+    document.getElementById('rm-mes-modal').style.display = 'none';
+  });
+
+  // ── VER TELA CHEIA ──
+  document.getElementById('rm-btn-tela-cheia')?.addEventListener('click', () => {
+    const frame = document.getElementById('rm-frame');
+    const destino = document.getElementById('rm-full-conteudo');
+    destino.innerHTML = '';
+    const clone = frame.cloneNode(true);
+    clone.removeAttribute('id');
+    clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+    destino.appendChild(clone);
+    document.getElementById('rm-full-overlay').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  });
+  document.getElementById('rm-full-fechar')?.addEventListener('click', () => {
+    document.getElementById('rm-full-overlay').style.display = 'none';
+    document.body.style.overflow = '';
+  });
+
+  // ── GERAR IMAGEM (PNG) — pra mandar direto no WhatsApp, sem precisar printar ──
+  document.getElementById('rm-btn-imagem')?.addEventListener('click', async () => {
+    const btn = document.getElementById('rm-btn-imagem');
+    const textoOriginal = btn.textContent;
+    btn.textContent = '⏳ Gerando...';
+    btn.disabled = true;
+    try {
+      const frame = document.getElementById('rm-frame');
+      const clone = frame.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('.rm-edit-btn').forEach(b => b.remove());
+      const recadoEl = clone.querySelector('#rm-secao-recado-wrap');
+      if (recadoEl) recadoEl.remove();
+      const subEl = clone.querySelector('.rm-header-sub');
+      if (subEl) subEl.remove();
+      clone.style.margin = '0';
+      clone.style.width = '420px';
+      clone.style.maxWidth = '420px';
+
+      const palco = document.createElement('div');
+      palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:452px;';
+      palco.appendChild(clone);
+      document.body.appendChild(palco);
+
+      const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
+      document.body.removeChild(palco);
+
+      const recadoTexto = (rmRecado && rmRecado.texto && rmRecado.texto.trim()) ? rmRecado.texto.trim() : '';
+      const textoCompartilhar = (recadoTexto ? `💌 ${recadoTexto}\n\n` : '') + '🌸 Terreiro Bolhas de Luz';
+
+      canvas.toBlob(async (blob) => {
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+        if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+        const nomeArquivo = `resumo-${rmMesEscolhido}.png`;
+        const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+          try {
+            await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz', text: textoCompartilhar });
+            return;
+          } catch(e) { /* usuária cancelou o compartilhamento — segue pro download */ }
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = nomeArquivo; a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    } catch(e) {
+      console.warn('erro ao gerar imagem do resumo:', e);
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      alert('Não deu pra gerar a imagem. Tenta de novo.');
+    }
+  });
+
+  // ── RECADO DO MÊS (Firestore config/resumo_recado) ──
+  async function rmCarregarRecado() {
+    try {
+      const snap = await getDocs(collection(db, 'config'));
+      const d = snap.docs.find(x => x.id === 'resumo_recado');
+      rmRecado = d ? d.data() : null;
+    } catch(e) { console.warn('recado load:', e); }
+    rmRenderRecado();
+  }
+  function rmRenderRecado() {
+    const wrap = document.getElementById('rm-secao-recado-wrap');
+    const texto = (rmRecado && rmRecado.texto) ? rmRecado.texto.trim() : '';
+    if (texto) {
+      wrap.classList.remove('rm-secao-recado-vazia');
+      wrap.innerHTML = `
+        <button class="rm-edit-btn" id="rm-recado-editar" title="Editar">✎</button>
+        <div class="rm-secao-titulo"><span class="ic">💌</span> Recado do Mês</div>
+        <div class="rm-recado-texto" id="rm-recado-texto">${texto}</div>`;
+    } else {
+      wrap.classList.add('rm-secao-recado-vazia');
+      wrap.innerHTML = `<button class="rm-recado-add" id="rm-recado-editar">💌 + Adicionar recado do mês (opcional)</button>`;
+    }
+    document.getElementById('rm-recado-editar')?.addEventListener('click', rmAbrirEditarRecado);
+  }
+  function rmAbrirEditarRecado() {
+    document.getElementById('rm-recado-inp').value = (rmRecado && rmRecado.texto) || '';
+    document.getElementById('rm-recado-modal').style.display = 'flex';
+  }
+  function rmFecharEditarRecado() { document.getElementById('rm-recado-modal').style.display = 'none'; }
+  async function rmSalvarRecado() {
+    const dados = {
+      texto: document.getElementById('rm-recado-inp').value.trim(),
+      atualizadoEm: serverTimestamp(), atualizadoPor: rmNomeAtual()
+    };
+    try {
+      await setDoc(doc(db, 'config', 'resumo_recado'), dados);
+      rmRecado = dados;
+      rmRenderRecado();
+      rmFecharEditarRecado();
+    } catch(e) { alert('Erro ao salvar recado.'); }
+  }
+
+  // ── TESOURARIA (Firestore config/resumo_tesouraria) ──
+  function rmMesPassadoInfo() {
+    let m = rmMesNumero() - 1, a = rmAnoNumero();
+    if (m < 1) { m = 12; a -= 1; }
+    const mesRef = `${a}-${String(m).padStart(2,'0')}`;
+    const label = MESES_RM[m-1].charAt(0).toUpperCase() + MESES_RM[m-1].slice(1) + ' de ' + a;
+    return { mesRef, label };
+  }
+  async function rmCarregarTesouraria() {
+    try {
+      const snap = await getDocs(collection(db, 'config'));
+      const d = snap.docs.find(x => x.id === 'resumo_tesouraria');
+      rmTesouraria = d ? d.data() : null;
+    } catch(e) { console.warn('tesouraria load:', e); rmTesouraria = null; }
+
+    const { mesRef, label } = rmMesPassadoInfo();
+    rmTesMesLabel = label;
+    try {
+      const res = await fetch('/api/dados?chave=lancamentos');
+      const lancamentos = await res.json();
+      const lista = Array.isArray(lancamentos) ? lancamentos : [];
+      const doMes = lista.filter(l => {
+        const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : '');
+        return ref === mesRef;
+      });
+      rmTesEntradas = doMes.filter(l => l.tipo === 'entrada').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+      rmTesSaidas = doMes.filter(l => l.tipo === 'gasto').reduce((a,c) => a + (parseFloat(c.valor)||0), 0);
+
+      const pagantes = {};
+      doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra' && l.membro).forEach(l => { pagantes[l.membro] = true; });
+      rmTesNPag = Object.keys(pagantes).length;
+      rmTesTotalMembros = rmMembrosAtivos(mesRef).length;
+      rmTesPctPag = rmTesTotalMembros > 0 ? Math.round(rmTesNPag / rmTesTotalMembros * 100) : 0;
+
+      rmTesPctCob = rmTesSaidas > 0 ? Math.round(rmTesEntradas / rmTesSaidas * 100) : (rmTesEntradas > 0 ? 100 : 0);
+    } catch(e) {
+      console.warn('lancamentos (tesouraria real) load:', e);
+      rmTesEntradas = 0; rmTesSaidas = 0; rmTesPctPag = 0; rmTesPctCob = 0; rmTesNPag = 0; rmTesTotalMembros = 0;
+    }
+
+    rmRenderTesouraria();
+  }
+  function rmRenderTesouraria() {
+    const t = rmTesouraria || {};
+    document.getElementById('rm-tes-mes').textContent = rmTesMesLabel || '';
+    document.getElementById('rm-tes-entradas').textContent = rmFmtMoeda(rmTesEntradas || 0);
+    document.getElementById('rm-tes-saidas').textContent = rmFmtMoeda(rmTesSaidas || 0);
+    document.getElementById('rm-tes-saldo').textContent = rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0));
+    document.getElementById('rm-tes-obs').textContent = t.observacao || '';
+    document.getElementById('rm-tes-pct-pag').textContent = (rmTesPctPag || 0) + '%';
+    document.getElementById('rm-tes-pag-sub').textContent = rmTesTotalMembros ? (rmTesNPag + '/' + rmTesTotalMembros + ' membros') : '';
+    document.getElementById('rm-tes-pct-cob').textContent = (rmTesPctCob || 0) + '%';
+  }
+  function rmAbrirEditarTesouraria() {
+    const t = rmTesouraria || {};
+    document.getElementById('rm-tes-inp-obs').value = t.observacao || '';
+    document.getElementById('rm-tes-modal').style.display = 'flex';
+  }
+  function rmFecharEditarTesouraria() { document.getElementById('rm-tes-modal').style.display = 'none'; }
+  async function rmSalvarTesouraria() {
+    const dados = {
+      observacao: document.getElementById('rm-tes-inp-obs').value.trim(),
+      atualizadoEm: serverTimestamp(), atualizadoPor: rmNomeAtual()
+    };
+    try {
+      await setDoc(doc(db, 'config', 'resumo_tesouraria'), dados);
+      rmTesouraria = dados;
+      rmRenderTesouraria();
+      rmFecharEditarTesouraria();
+    } catch(e) { alert('Erro ao salvar tesouraria.'); }
+  }
+
+  // ── PRÓXIMAS SESSÕES ──
+  async function rmCarregarSessoes() {
+    const wrap = document.getElementById('rm-sessoes-lista');
+    try {
+      const res = await fetch('/api/sessoes');
+      const sessoes = await res.json();
+      const ano = rmAnoNumero(), mes = rmMesNumero();
+      const inicioMes = `${ano}-${String(mes).padStart(2,'0')}-01`;
+      const ultimoDia = new Date(ano, mes, 0).getDate();
+      const fimMes = `${ano}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+      const hoje = new Date().toISOString().slice(0,10);
+      const limiteInferior = inicioMes > hoje ? inicioMes : hoje;
+      rmSessoes = sessoes.filter(s => s.data >= limiteInferior && s.data <= fimMes).sort((a,b) => a.data.localeCompare(b.data));
+    } catch(e) { rmSessoes = []; }
+    if (!wrap) return;
+    if (!rmSessoes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhuma sessão marcada para este mês</div>'; return; }
+    wrap.innerHTML = rmSessoes.map(s => `<div class="rm-linha"><span>${s.nome}</span><span class="rm-linha-tag">${rmFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
+  }
+
+  // ── ANIVERSARIANTES DO MÊS ──
+  function rmRenderAniversariantes() {
+    const wrap = document.getElementById('rm-aniv-lista');
+    if (!wrap) return;
+    const doMes = ANIVERSARIOS.filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
+    if (!doMes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum aniversariante este mês</div>'; return; }
+    wrap.innerHTML = doMes.map(a => `<div class="rm-linha"><span>${a.nome}</span><span class="rm-linha-tag">${a.dia} de ${MESES_RM[a.mes-1]}</span></div>`).join('');
+  }
+
+  // ── MANUTENÇÃO ATUAL ──
+  onSnapshot(collection(db, 'manutencao'), snap => {
+    rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => mnStatusReal(i) !== 'concluida');
+    const wrap = document.getElementById('rm-manut-lista');
+    if (!wrap) return;
+    if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
+    wrap.innerHTML = rmManutencao.map(m => {
+      const st = mnStatusReal(m);
+      const tag = st === 'agendada' && m.dataLimite ? rmFmtDataISO(m.dataLimite) : (MN_LABEL_STATUS[st] || st).replace(/^\S+\s/, '');
+      return `<div class="rm-linha"><span>${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}</span><span class="rm-linha-tag">${tag}</span></div>`;
+    }).join('');
+  }, err => console.warn('resumo manutencao:', err));
+
+  // ── LISTA DE COMPRAS (itens precisando) ──
+  onSnapshot(collection(db, 'lista_compras'), snap => {
+    rmCompras = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => i.precisando);
+    const wrap = document.getElementById('rm-compras-lista');
+    if (!wrap) return;
+    if (!rmCompras.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nada faltando — prateleira em dia ✦</div>'; return; }
+    wrap.innerHTML = rmCompras.map(c => `<div class="rm-linha"><span>🔴 ${c.nome}</span>${c.categoria ? `<span class="rm-linha-tag">${c.categoria}</span>` : ''}</div>`).join('');
+  }, err => console.warn('resumo compras:', err));
+
+  // ── MENSAGEM WHATSAPP ──
+  function rmGerarTexto() {
+    const mesAtual = MESES_RM[rmMesNumero()-1].charAt(0).toUpperCase() + MESES_RM[rmMesNumero()-1].slice(1) + ' de ' + rmAnoNumero();
+    const t = rmTesouraria || {};
+    let txt = `📋 *Resumo Mensal — Terreiro Bolhas de Luz*\n✦ ${mesAtual} ✦\n\n`;
+
+    if (rmRecado && rmRecado.texto && rmRecado.texto.trim()) {
+      txt += `💌 *Recado do mês:*\n${rmRecado.texto.trim()}\n\n`;
+    }
+
+    txt += `💰 *Tesouraria (${rmTesMesLabel || 'mês passado'}):*\n`;
+    txt += `👥 Pagantes: ${rmTesPctPag || 0}% (${rmTesNPag}/${rmTesTotalMembros})\n`;
+    txt += `💰 Coberto: ${rmTesPctCob || 0}%\n`;
+    txt += `Entradas: ${rmFmtMoeda(rmTesEntradas || 0)}\n`;
+    txt += `Saídas: ${rmFmtMoeda(rmTesSaidas || 0)}\n`;
+    txt += `Saldo: ${rmFmtMoeda((rmTesEntradas || 0) - (rmTesSaidas || 0))}\n`;
+    if (t.observacao) txt += `_${t.observacao}_\n`;
+    txt += `\n`;
+
+    txt += `📅 *Próximas Sessões:*\n`;
+    if (rmSessoes.length) rmSessoes.forEach(s => { txt += `• ${s.nome} — ${rmFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`; });
+    else txt += `Nenhuma sessão marcada no momento\n`;
+    txt += `\n`;
+
+    const doMes = ANIVERSARIOS.filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
+    txt += `🎂 *Aniversariantes do Mês:*\n`;
+    if (doMes.length) doMes.forEach(a => { txt += `• ${a.nome} — ${a.dia} de ${MESES_RM[a.mes-1]}\n`; });
+    else txt += `Ninguém este mês\n`;
+    txt += `\n`;
+
+    txt += `🔧 *Manutenção:*\n`;
+    if (rmManutencao.length) {
+      rmManutencao.forEach(m => { const st = mnStatusReal(m); txt += `• ${MN_ICONE_STATUS[st] || '🔧'} ${m.titulo}${st === 'agendada' && m.dataLimite ? ' — ' + rmFmtDataISO(m.dataLimite) : ''}\n`; });
+    } else txt += `Tudo em dia ✦\n`;
+    txt += `\n`;
+
+    txt += `🛒 *Itens Faltando:*\n`;
+    if (rmCompras.length) rmCompras.forEach(c => { txt += `• ${c.nome}\n`; });
+    else txt += `Nada faltando ✦\n`;
+
+    txt += `\n🌸 _Terreiro Bolhas de Luz · bolhasdeluz.ong.br_`;
+    return txt;
+  }
+  function rmAbrirRelatorio() {
+    document.getElementById('rm-rel-texto').value = rmGerarTexto();
+    document.getElementById('rm-rel-overlay').style.display = 'flex';
+  }
+  function rmFecharRelatorio() { document.getElementById('rm-rel-overlay').style.display = 'none'; }
+  function rmEnviarWhatsapp() {
+    const texto = document.getElementById('rm-rel-texto').value;
+    window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+  }
+
+  rmCarregarMesEscolhido();
+  rmCarregarRecado();
+
+  document.getElementById('rm-recado-cancelar')?.addEventListener('click', rmFecharEditarRecado);
+  document.getElementById('rm-recado-salvar')?.addEventListener('click', rmSalvarRecado);
+
+  document.getElementById('rm-tes-editar')?.addEventListener('click', rmAbrirEditarTesouraria);
+  document.getElementById('rm-tes-cancelar')?.addEventListener('click', rmFecharEditarTesouraria);
+  document.getElementById('rm-tes-salvar')?.addEventListener('click', rmSalvarTesouraria);
+  document.getElementById('rm-btn-whats')?.addEventListener('click', rmAbrirRelatorio);
+  document.getElementById('rm-rel-cancelar')?.addEventListener('click', rmFecharRelatorio);
+  document.getElementById('rm-rel-enviar')?.addEventListener('click', rmEnviarWhatsapp);
+})();
+</script>
+
+</body>
+</html>
