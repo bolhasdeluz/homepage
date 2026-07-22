@@ -191,29 +191,6 @@ body.logada{padding-top:62px}
 .event-day{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:600;color:var(--text);line-height:1}
 .event-name{font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;letter-spacing:.05em;color:var(--text)}
 
-/* faq */
-.faq-list{display:flex;flex-direction:column}
-.faq-item{border-bottom:1px solid var(--border)}
-.faq-item:first-child{border-top:1px solid var(--border)}
-.faq-btn{width:100%;background:none;border:none;text-align:left;padding:20px 0;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.faq-question{font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.05em;font-weight:600;color:var(--text)}
-.faq-chevron{font-size:1.1rem;color:var(--rosa);transition:transform .25s;flex-shrink:0}
-.faq-chevron.open{transform:rotate(180deg)}
-.faq-body{max-height:0;overflow:hidden;transition:max-height .35s ease}
-.faq-body.open{max-height:800px}
-.faq-content{padding:0 0 20px}
-.faq-content p{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text);line-height:1.75;margin-bottom:12px}
-.faq-content p:last-child{margin-bottom:0}
-.faq-content p.accent{color:var(--rosa);font-style:italic}
-.help-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-top:4px}
-.help-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 14px}
-.help-title{font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.06em;color:var(--text);margin-bottom:6px}
-.help-text{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);line-height:1.5}
-.pix-box{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:10px 12px;margin-top:10px}
-.pix-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px}
-.pix-key{font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:var(--text)}
-.badge-wip{display:inline-block;background:var(--amber-dim);border:1px solid var(--amber-border);color:var(--amber);border-radius:20px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;padding:3px 12px;margin-top:12px}
-
 /* modal */
 .overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
 .overlay.open{display:flex}
@@ -247,7 +224,6 @@ footer{
 
 @media(max-width:500px){
   .widgets-grid{grid-template-columns:1fr 1fr}
-  .help-grid{grid-template-columns:1fr}
 }
 
 /* ── GAVETÃO DE BAIXO (delicado) ── */
@@ -2014,7 +1990,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <span class="dashv-card-icon">🌙</span>
         <span class="dashv-card-txt">Como me preparar para ir na sessão</span>
       </a>
-      <a href="#" class="dashv-card" onclick="showPage('apoie');return false">
+      <a href="#" class="dashv-card" onclick="window.open('/apoie','_self')">
         <span class="dashv-card-icon">🤲</span>
         <span class="dashv-card-txt">Como ajudar a casa</span>
       </a>
@@ -2202,76 +2178,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 </div>
 
 <!-- PÁGINA APOIE -->
-<div id="page-apoie" class="page">
-  <div class="section-wrap narrow">
-    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
-    <div class="eyebrow">Apoie a Terreira</div>
-    <div class="section-title">Como posso ajudar?</div>
-    <p class="section-sub">Algumas dúvidas sobre a dinâmica financeira e como nos apoiar.</p>
-
-    <!-- PIX EM DESTAQUE -->
-    <div style="background:linear-gradient(135deg,var(--rosa),#e07a90);border-radius:14px;padding:20px 22px;margin-bottom:24px;box-shadow:0 6px 24px rgba(196,57,107,.25)">
-      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.8);margin-bottom:6px">✦ Doe via PIX</div>
-      <div style="font-family:'Crimson Pro',serif;font-size:.92rem;color:rgba(255,255,255,.92);font-style:italic;margin-bottom:14px;line-height:1.5">Qualquer valor é bem-vinda e será revertido às contas e manutenção da casa.</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:12px 14px">
-        <div style="min-width:0">
-          <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75);margin-bottom:2px">Chave PIX (copia e cola)</div>
-          <div style="font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:600;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bolhasdeluz@gmail.com</div>
-        </div>
-        <button onclick="copiarPix('btn-copiar-pix-topo')" id="btn-copiar-pix-topo" style="background:#fff;border:none;border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;font-weight:700;padding:10px 16px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button>
-      </div>
-    </div>
-
-    <div class="faq-list">
-      <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Não há cobrança de atendimentos</span><span class="faq-chevron">›</span></button>
-        <div class="faq-body"><div class="faq-content">
-          <p>Nenhum atendimento de gira, ou oriundo dela, é cobrado. Nem obrigação, reforço, cruzamentos, axés ou limpezas.</p>
-          <p>O seu gasto será com o material utilizado e, se houver, o deslocamento da corrente. A exceção são axés muito específicos pedidos por vontade própria, sem orientação ou necessidade da espiritualidade.</p>
-          <p class="accent">A casa não realiza trabalhos de dano.</p>
-        </div></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Quais são as arrecadações?</span><span class="faq-chevron">›</span></button>
-        <div class="faq-body"><div class="faq-content">
-          <p>A casa vive de doações — tanto das filhas quanto de visitantes — e das mensalidades das integrantes da corrente, destinadas à manutenção da casa.</p>
-          <p>Os valores arrecadados não cobrem todas as contas hoje, então contamos com doações espontâneas. Eventualmente realizamos rifas, vendas de camisetas e similares.</p>
-        </div></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Como ajudar?</span><span class="faq-chevron open">›</span></button>
-        <div class="faq-body open"><div class="faq-content">
-          <div class="help-grid">
-            <div class="help-card"><div class="help-title">Velas</div><div class="help-text">Doações de velas são sempre bem-vindas. Na dúvida, branco nunca erra. Temos uma listinha de guias e cores.</div></div>
-            <div class="help-card"><div class="help-title">Alimentos</div><div class="help-text">Nas sessões, oferecemos oferendas que são divididas com os presentes.</div></div>
-            <div class="help-card"><div class="help-title">Produtos</div><div class="help-text">Visite nossa lojinha! Camisetas, ecobags, velas, incensos e outros.</div></div>
-            <div class="help-card"><div class="help-title">PIX</div><div class="help-text">Doações financeiras revertidas às contas e manutenções da casa.</div><div class="pix-box" style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div><div class="pix-label">Chave PIX</div><div class="pix-key">bolhasdeluz@gmail.com</div></div><button onclick="copiarPix()" id="btn-copiar-pix" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.06em;font-weight:700;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s">Copiar</button></div></div>
-          </div>
-        </div></div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-btn" onclick="toggleFaq(this)"><span class="faq-question">Doações mensais</span><span class="faq-chevron">›</span></button>
-        <div class="faq-body"><div class="faq-content"><span class="badge-wip">✦ Em construção</span></div></div>
-      </div>
-    </div>
-    <div style="background:var(--green-dim);border:1px solid var(--green-border);border-radius:10px;padding:16px 18px;margin-top:20px">
-      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--green);margin-bottom:8px">Doações de Alimentos</div>
-      <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic;margin-bottom:12px;line-height:1.6">Em nossas sessões, preparamos oferendas que são compartilhadas com todos os presentes. Adoramos receber:</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🍿 Pipoca</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌽 Canjica branca</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌾 Canjica amarela</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫘 Feijão</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌿 Lentilha</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🫙 Óleo</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🕯️ Velas brancas</div>
-        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.6);border-radius:6px;padding:7px 10px;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">🌸 Flores</div>
-      </div>
-      <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:10px">Na dúvida sobre velas: branco nunca erra! 🕯️</p>
-    </div>
-  </div>
-</div>
-
 <!-- PÁGINA PIX PARA DOAÇÕES — card direto, pra quem chega pelo QR code do portão -->
 <div id="page-pix" class="page">
   <div class="section-wrap narrow">
@@ -3911,7 +3817,7 @@ function getDefaultMenu() {
         { id: 'historia', label: 'Nossa História',    type: 'external', url: '/historia', showCard: true, showMenu: true },
         { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
         { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
-        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
+        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'external', url: '/apoie',    showCard: true, showMenu: true },
         { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true },
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
         { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
@@ -4044,7 +3950,7 @@ function renderDrawerItem(item, ctx) {
 
   // ── widget especial: Apoie o Terreiro ──
   if (item.id === 'apoie') {
-    return drawerTile(item, `onclick="showPage('apoie');closeDrawer()"`, 'Como nos ajudar');
+    return drawerTile(item, `onclick="window.open('/apoie','_self')"`, 'Como nos ajudar');
   }
 
   // ── widget especial: Filhas da Casa ──
@@ -4146,7 +4052,7 @@ function renderCards() {
         return;
       }
       if (item.id === 'apoie') {
-        html += widgetTile(item, `onclick="showPage('apoie');return false"`, 'Como nos ajudar');
+        html += widgetTile(item, `onclick="window.open('/apoie','_self')"`, 'Como nos ajudar');
         return;
       }
       if (item.id === 'filhas') {
@@ -5051,11 +4957,6 @@ window.abrirApoie = function() {
   document.getElementById('modal-apoie-overlay').style.display = 'flex';
 };
 
-function toggleFaq(btn){  const ch=btn.querySelector('.faq-chevron'),body=btn.closest('.faq-item').querySelector('.faq-body'),open=body.classList.contains('open');
-  document.querySelectorAll('.faq-body.open').forEach(b=>b.classList.remove('open'));
-  document.querySelectorAll('.faq-chevron.open').forEach(c=>c.classList.remove('open'));
-  if(!open){body.classList.add('open');ch.classList.add('open')}
-}
 async function checkAdminSenha(){
   const input=document.getElementById('admin-senha-input'),erro=document.getElementById('admin-senha-erro');
   const senha = input.value;
@@ -12587,7 +12488,7 @@ function dashvRenderApresentacao() {
     const { icone, texto } = drawerIconeLabel(item);
     let onclick;
     if (item.id === 'sessoes' || item.id === 'calendario') onclick = `showPage('calendario');return false`;
-    else if (item.id === 'apoie') onclick = `showPage('apoie');return false`;
+    else if (item.id === 'apoie') onclick = `window.open('/apoie','_self')`;
     else if (item.id === 'historia') onclick = `window.open('/historia','_self')`;
     else if (item.type === 'internal') onclick = `showPage('${item.page}');return false`;
     else if (item.url && item.url.includes('blogbolhas.pages.dev')) onclick = `showPage('blog');return false`;
