@@ -13270,10 +13270,13 @@ function dashvAbrirPreparoSessao() {
 // gpMostrarInfo do portal de jogos), porque aquele modal fica aninhado
 // dentro de #page-jogos e some quando chamado de outra página, como a
 // Início
-function abrirInfoJogoCartas() {
+// (window.* aqui porque esse <script> é type="module" — declaração
+// comum de function não vira global, e o onclick inline no HTML não
+// ia enxergar essas funções)
+window.abrirInfoJogoCartas = function() {
   document.getElementById('jogo-cartas-overlay').classList.add('open');
 }
-function fecharInfoJogoCartas() {
+window.fecharInfoJogoCartas = function() {
   document.getElementById('jogo-cartas-overlay').classList.remove('open');
 }
 window.dashEditarFrase = async function(email, fraseAtual) {
