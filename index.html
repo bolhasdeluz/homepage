@@ -11916,6 +11916,19 @@ const auth = getAuth(app);
 let currentUser = null;
 let perfilData  = {};
 let perfilAlteracoes = {};
+
+// pra telas que salvam no /api/perfil e também podem estar sendo vistas via
+// "Simular visão de outra pessoa" — sem isso, salvar enquanto simula gravava
+// os dados por cima do perfil de quem está logada de verdade (admin), em vez
+// do perfil de quem está sendo simulada
+function alvoSalvarPerfil() {
+  const emSimulacao = _modoSimulacao !== null && !!window._simUsuario;
+  return {
+    emSimulacao,
+    perfilBase: emSimulacao ? (window._simUsuario._perfil || {}) : perfilData,
+    emailAlvo: emSimulacao ? window._simUsuario.email : (currentUser?.email || null),
+  };
+}
 // expor globalmente para scripts fora do módulo
 // já nasce consciente do modo simulação (evita que a simulação de usuário fique "pela metade")
 // "Peninha das Matas" — a identidade de quem entra pela senha de admin (sem
@@ -12928,16 +12941,22 @@ window.dashEditarFrase = async function(email, fraseAtual) {
 
 window.toggleTimelineItem = async function(key) {
   if (!currentUser) return;
-  const ocultos = perfilData.timelineOcultos ? [...perfilData.timelineOcultos] : [];
+  const { perfilBase, emailAlvo, emSimulacao } = alvoSalvarPerfil();
+  const ocultos = perfilBase.timelineOcultos ? [...perfilBase.timelineOcultos] : [];
   const idx = ocultos.indexOf(key);
   if (idx >= 0) ocultos.splice(idx,1); else ocultos.push(key);
-  perfilData.timelineOcultos = ocultos;
+  const payload = { ...perfilBase, email: emailAlvo, timelineOcultos: ocultos, solicitacao:'' };
   await fetch('/api/perfil', {
     method:'POST',
-    headers:{'Content-Type':'application/json','X-User-Email':currentUser.email},
-    body:JSON.stringify({...perfilData, solicitacao:''})
+    headers:{
+      'Content-Type':'application/json',
+      'X-User-Email':emailAlvo,
+      ...(emSimulacao ? { 'X-Admin-Password': 'admin' } : {})
+    },
+    body:JSON.stringify(payload)
   });
-  renderTimeline(perfilData);
+  if (emSimulacao) { window._simUsuario._perfil = payload; } else { perfilData = payload; }
+  renderTimeline(payload);
 };
 
 
@@ -13087,10 +13106,18 @@ window.salvarSuaHistoria = async function() {
   const btn = document.getElementById('sh-btn-enviar');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
+  // durante "Simular visão de outra pessoa", essa tela edita e deve salvar
+  // no perfil de QUEM ESTÁ SENDO SIMULADA — não no perfil de quem está
+  // logada de verdade (senão os dados da pessoa simulada acabavam sendo
+  // gravados por cima do próprio perfil do admin)
+  const emSimulacao = _modoSimulacao !== null && !!window._simUsuario;
+  const perfilBase = emSimulacao ? (window._simUsuario._perfil || {}) : perfilData;
+  const emailAlvo = emSimulacao ? window._simUsuario.email : currentUser.email;
+
   // coleta todos os inputs visíveis nas fichas
-  const H = { ...perfilData.historia };
-  const G = { ...perfilData.guias };
-  const C = { ...perfilData.cruzamentos };
+  const H = { ...perfilBase.historia };
+  const G = { ...perfilBase.guias };
+  const C = { ...perfilBase.cruzamentos };
 
   document.querySelectorAll('#mh-grid-historia input, #mh-grid-guias input, #mh-grid-cruzamentos input').forEach(inp => {
     const k = inp.dataset.key;
@@ -13114,10 +13141,11 @@ window.salvarSuaHistoria = async function() {
 
   // observações / pedido à Mãe da Casa (bug corrigido: antes essa textarea não era salva)
   const notasEl = document.getElementById('sh-edit-notas');
-  const notas = notasEl ? notasEl.value.trim() : (perfilData.notas || '');
+  const notas = notasEl ? notasEl.value.trim() : (perfilBase.notas || '');
 
   const payload = {
-    ...perfilData,
+    ...perfilBase,
+    email: emailAlvo,
     historia: H, guias: G, cruzamentos: C,
     notas,
     // filtra cortes vazios (sem data nem aves) antes de salvar
@@ -13126,23 +13154,33 @@ window.salvarSuaHistoria = async function() {
     cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
     // filtra guias extras vazios (sem tipo, nome nem data)
     guiasExtras: (_mhGuiasExtrasEditando || []).filter(g => g.tipo || g.nome || g.data),
-    solicitacao: 'Edição direta pela filha'
+    solicitacao: emSimulacao ? 'Edição feita pelo admin (via Simular visão)' : 'Edição direta pela filha'
   };
 
   try {
     const res = await fetch('/api/perfil', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Email': emailAlvo,
+        ...(emSimulacao ? { 'X-Admin-Password': 'admin' } : {})
+      },
       body: JSON.stringify(payload)
     });
     const data = await res.json();
     if (data.ok) {
-      perfilData = payload;
+      if (emSimulacao) {
+        window._simUsuario._perfil = payload;
+      } else {
+        perfilData = payload;
+      }
       // volta modo leitura e atualiza tudo
-      renderMinhaHistoria(perfilData, currentUser);
-      window.renderDashPessoal?.(perfilData, currentUser);
+      renderMinhaHistoria(payload, emSimulacao ? window._simUsuario : currentUser);
+      window.renderDashPessoal?.(payload, emSimulacao ? window._simUsuario : currentUser);
       const ok = document.getElementById('sh-msg-ok');
       if (ok) { ok.style.display = 'block'; setTimeout(() => ok.style.display = 'none', 3000); }
+    } else {
+      alert('Erro ao salvar: ' + (data.error || 'motivo desconhecido'));
     }
   } catch(e) { alert('Erro ao salvar.'); }
 
