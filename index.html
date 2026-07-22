@@ -2152,6 +2152,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <span class="dashv-card-txt">Gostaria de conhecer mais a Umbanda e me aproximar da minha espiritualidade, mas não sei como</span>
       </a>
     </div>
+
+    <!-- apresentação do site: mostra só o que já está liberado pro grupo Visitante -->
+    <div class="dash-section-title" style="margin-top:28px">✦ O que você vai encontrar por aqui</div>
+    <div class="dashv-cards" id="dashv-apresentacao-lista"></div>
   </div>
 
   <!-- PAINEL DA ASSISTÊNCIA — presença, agendinha pessoal e informativos -->
@@ -4154,6 +4158,7 @@ async function loadMenu() {
   }
   renderDrawer();
   renderCards();
+  window.dashvRenderApresentacao?.();
 }
 
 function getDefaultMenu() {
@@ -13039,7 +13044,46 @@ function renderDashVisitante(p, user) {
   // header) — só copia o que já foi calculado pra cá, igual sincronizarMiniCardsPerfil()
   // faz pros mini-cards da filha da casa, em vez de buscar tudo de novo
   sincronizarMiniCardsPerfil();
+  dashvRenderApresentacao();
 }
+
+// mostra pra quem loga como visitante uma prévia dos cards que já estão
+// liberados pro grupo dela — mesma checagem de visibilidade do renderCards(),
+// só que como uma lista de apresentação em vez da grade de ferramentas
+function dashvRenderApresentacao() {
+  const el = document.getElementById('dashv-apresentacao-lista');
+  if (!el || !menuData) return;
+  const itens = [];
+  menuData.sections.forEach(sec => {
+    sec.items.forEach(item => {
+      if (!item.showCard) return;
+      if (item.adminOnly) return;
+      if (item.type === 'members') return; // área restrita, não é "o que você vai encontrar"
+      const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
+      if (!grupos.includes('visitante')) return;
+      itens.push(item);
+    });
+  });
+  if (!itens.length) { el.innerHTML = ''; return; }
+  el.innerHTML = itens.map(item => {
+    const { icone, texto } = drawerIconeLabel(item);
+    let onclick;
+    if (item.id === 'sessoes' || item.id === 'calendario') onclick = `showPage('calendario');return false`;
+    else if (item.id === 'apoie') onclick = `showPage('apoie');return false`;
+    else if (item.type === 'internal') onclick = `showPage('${item.page}');return false`;
+    else if (item.url && item.url.includes('blogbolhas.pages.dev')) onclick = `showPage('blog');return false`;
+    else onclick = `window.open('${item.url}','_blank');return false`;
+    const desc = item.desc ? `<br><span style="font-size:.8rem;color:var(--text-dim);font-style:italic">${item.desc}</span>` : '';
+    return `<a href="#" class="dashv-card" onclick="${onclick}">
+      <span class="dashv-card-icon">${icone}</span>
+      <span class="dashv-card-txt">${texto}${desc}</span>
+    </a>`;
+  }).join('');
+}
+// exposta em window porque loadMenu() roda no <script> normal (fora do
+// module), e precisa conseguir chamar essa função pra atualizar a lista
+// assim que o menu carrega, mesmo se o dashboard já tiver renderizado antes
+window.dashvRenderApresentacao = dashvRenderApresentacao;
 
 // painel próprio da Assistência: além da próxima sessão em destaque (igual ao
 // de visitante), mostra presença auto-declarada nas próximas sessões, uma
