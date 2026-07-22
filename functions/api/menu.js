@@ -17,7 +17,7 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true, desc: 'Catálogo com player de áudio e letras' },
       { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev', showCard: true, showMenu: true, desc: 'Artigos religiosos recomendados' },
       { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', showCard: true, showMenu: true, desc: 'Veja o que a casa está precisando' },
-      { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', showCard: true, showMenu: true, desc: 'Chave: bolhasdeluz@gmail.com' },
+      { id: 'pix',      label: 'Pix para doações',   type: 'external', url: '/pix', showCard: true, showMenu: true, desc: 'Chave: bolhasdeluz@gmail.com' },
       { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', showCard: true, showMenu: true, desc: 'Tarefas e reparos da casa' },
       { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', showCard: true, showMenu: true, desc: 'Teste seus conhecimentos, com ranking da casa' },
       { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', showCard: true, showMenu: true, desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa' },
