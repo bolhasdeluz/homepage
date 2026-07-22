@@ -13,7 +13,7 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'historia', label: 'Nossa História',    type: 'external', url: '/historia', showCard: true, showMenu: true, desc: 'A fundação do Bolhas de Luz' },
       { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true, desc: 'Sessões e eventos da casa' },
       { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
-      { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true, desc: 'Como nos ajudar' },
+      { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'external', url: '/apoie',    showCard: true, showMenu: true, desc: 'Como nos ajudar' },
       { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true, desc: 'Catálogo com player de áudio e letras' },
       { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev', showCard: true, showMenu: true, desc: 'Artigos religiosos recomendados' },
       { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', showCard: true, showMenu: true, desc: 'Veja o que a casa está precisando' },
