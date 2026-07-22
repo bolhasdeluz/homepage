@@ -3422,7 +3422,13 @@ async function iniciarSimulacao() {
       opt.textContent = (p.nome || p.email.split('@')[0]) + (p.cargo ? ' · ' + p.cargo : '');
       group.appendChild(opt);
     });
-  } catch(e) {}
+  } catch(e) {
+    console.error('erro ao listar perfis pra simular:', e);
+    const opt = document.createElement('option');
+    opt.disabled = true;
+    opt.textContent = '⚠ Erro ao carregar a lista — tenta de novo';
+    group.appendChild(opt);
+  }
   document.getElementById('sim-bar').classList.add('active');
   document.getElementById('sim-select').value = 'publico';
   mudarSimulacao('publico');
@@ -3434,58 +3440,63 @@ function mudarSimulacao(valor) {
   const badge = document.getElementById('sim-badge');
 
   function aplicarSimulacao(simUser, simPerfil) {
-    window._simUsuario = simUser;
-    // em simulação, retorna o perfil simulado; fora, retorna o real via closure do módulo
-    window._getPerfilData = simPerfil ? () => simPerfil : window._getPerfilDataReal || (() => ({}));
+    try {
+      window._simUsuario = simUser;
+      // em simulação, retorna o perfil simulado; fora, retorna o real via closure do módulo
+      window._getPerfilData = simPerfil ? () => simPerfil : window._getPerfilDataReal || (() => ({}));
 
-    // atualiza badge
-    if (simPerfil) {
-      badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
-    } else {
-      badge.textContent = 'Visitante (não logada)';
-    }
+      // atualiza badge
+      if (simPerfil) {
+        badge.textContent = (simPerfil.nome || valor.split('@')[0]) + (simPerfil.cargo ? ' · ' + simPerfil.cargo : '');
+      } else {
+        badge.textContent = 'Visitante (não logada)';
+      }
 
-    // volta para o início para ver a visão da pessoa
-    showPage('inicio');
+      // volta para o início para ver a visão da pessoa
+      showPage('inicio');
 
-    // re-renderiza tudo
-    renderCards();
-    renderDrawer();
+      // re-renderiza tudo
+      renderCards();
+      renderDrawer();
 
-    // atualiza barra de boas-vindas
-    if (simPerfil && simUser) {
-      const primeiroNome = (simPerfil.nome || '').split(' ')[0];
-      const cargo = simPerfil.cargo || '';
-      const emoji = simPerfil.emoji || '✦';
-      const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
-      const avatar = document.getElementById('user-avatar');
-      if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
-      document.getElementById('bv-emoji').textContent = emoji;
-      document.getElementById('bv-nome').textContent  = primeiroNome;
-      document.getElementById('bv-cargo').textContent = cargo;
-      document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
-      document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
-      document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
-      document.getElementById('bv-guest').style.display = 'none';
-      document.getElementById('bv-logged').style.display = 'flex';
-      document.getElementById('boas-vindas').style.display = 'block';
-      document.body.classList.add('logada');
-      window.renderDashPessoal?.(simPerfil, simUser);
-    } else {
-      document.getElementById('bv-logged').style.display = 'none';
-      document.getElementById('bv-guest').style.display = 'flex';
-      document.getElementById('boas-vindas').style.display = 'block';
-      document.body.classList.remove('logada');
-      const dashEl = document.getElementById('dash-pessoal');
-      if (dashEl) dashEl.style.display = 'none';
-    }
-    window.ajustarTopoFixo?.();
+      // atualiza barra de boas-vindas
+      if (simPerfil && simUser) {
+        const primeiroNome = (simPerfil.nome || '').split(' ')[0];
+        const cargo = simPerfil.cargo || '';
+        const emoji = simPerfil.emoji || '✦';
+        const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
+        const avatar = document.getElementById('user-avatar');
+        if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
+        document.getElementById('bv-emoji').textContent = emoji;
+        document.getElementById('bv-nome').textContent  = primeiroNome;
+        document.getElementById('bv-cargo').textContent = cargo;
+        document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+        document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
+        document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+        document.getElementById('bv-guest').style.display = 'none';
+        document.getElementById('bv-logged').style.display = 'flex';
+        document.getElementById('boas-vindas').style.display = 'block';
+        document.body.classList.add('logada');
+        window.renderDashPessoal?.(simPerfil, simUser);
+      } else {
+        document.getElementById('bv-logged').style.display = 'none';
+        document.getElementById('bv-guest').style.display = 'flex';
+        document.getElementById('boas-vindas').style.display = 'block';
+        document.body.classList.remove('logada');
+        const dashEl = document.getElementById('dash-pessoal');
+        if (dashEl) dashEl.style.display = 'none';
+      }
+      window.ajustarTopoFixo?.();
 
-    // re-renderiza calendário se estiver aberto
-    const calPage = document.getElementById('page-calendario');
-    if (calPage?.classList.contains('active')) {
-      calAtualizarControlesAdmin();
-      calRenderLista();
+      // re-renderiza calendário se estiver aberto
+      const calPage = document.getElementById('page-calendario');
+      if (calPage?.classList.contains('active')) {
+        calAtualizarControlesAdmin();
+        calRenderLista();
+      }
+    } catch (e) {
+      console.error('erro ao simular:', e);
+      alert('Deu erro ao simular: ' + (e?.message || e) + '\n\nTira um print dessa mensagem e manda pro Claude — isso ajuda a achar o bug.');
     }
   }
 
@@ -3501,7 +3512,10 @@ function mudarSimulacao(valor) {
   } else {
     // email específico — busca perfil real
     fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('API de perfil respondeu ' + r.status);
+        return r.json();
+      })
       .then(p => {
         // uid salvo no perfil (guardado no primeiro login real dessa pessoa depois desse
         // recurso existir) — sem ele, a aba de Jogos/Terreirinho simulada não tem como
@@ -3510,6 +3524,10 @@ function mudarSimulacao(valor) {
           { uid: p.uid || null, email: valor, displayName: p.nome || '', photoURL: p.foto || null, _perfil: p },
           p
         );
+      })
+      .catch(e => {
+        console.error('erro ao buscar perfil pra simular:', e);
+        alert('Não consegui buscar o perfil pra simular: ' + (e?.message || e) + '\n\nTira um print dessa mensagem e manda pro Claude — isso ajuda a achar o bug.');
       });
   }
 }
