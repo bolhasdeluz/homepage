@@ -2534,6 +2534,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+<!-- MODAL INFORMATIVO — JOGO DE CARTAS -->
+<div id="jogo-cartas-overlay" class="overlay" onclick="if(event.target===this)fecharInfoJogoCartas()">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharInfoJogoCartas()">×</button>
+    <div class="modal-title">🃏 Jogo de Cartas</div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);line-height:1.65;white-space:pre-wrap;margin-top:8px">É uma conversa de orientação espiritual guiadas pelas cartas e guias da nossa casa: aponta caminhos, reforça o que já está sendo trabalhado e ajuda a enxergar melhor uma situação, as cartas aconselham dentro dos cenários que você apresentar à elas.
+
+Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminhada de quem está perguntando, não sobre curiosidade com a vida alheia. Não insista.
+
+É um jogo de aconselhamento, sua vida, escolhas e caminhos serão tratados com respeito e discrição. ✦</p>
+  </div>
+</div>
+
 <!-- BOAS-VINDAS -->
 <div id="boas-vindas">
   <div id="boas-vindas-inner">
@@ -13253,14 +13266,15 @@ function dashvAbrirPreparoSessao() {
   );
 }
 
-// popup informativo do "Jogo de Cartas"
+// popup informativo do "Jogo de Cartas" — usa seu próprio modal (não o
+// gpMostrarInfo do portal de jogos), porque aquele modal fica aninhado
+// dentro de #page-jogos e some quando chamado de outra página, como a
+// Início
 function abrirInfoJogoCartas() {
-  gpMostrarInfo(
-    '🃏 Jogo de Cartas',
-    'É uma conversa de orientação espiritual guiadas pelas cartas e guias da nossa casa: aponta caminhos, reforça o que já está sendo trabalhado e ajuda a enxergar melhor uma situação, as cartas aconselham dentro dos cenários que você apresentar à elas.\n\n' +
-    'Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminhada de quem está perguntando, não sobre curiosidade com a vida alheia. Não insista.\n\n' +
-    'É um jogo de aconselhamento, sua vida, escolhas e caminhos serão tratados com respeito e discrição. ✦'
-  );
+  document.getElementById('jogo-cartas-overlay').classList.add('open');
+}
+function fecharInfoJogoCartas() {
+  document.getElementById('jogo-cartas-overlay').classList.remove('open');
 }
 window.dashEditarFrase = async function(email, fraseAtual) {
   if (!email) return;
