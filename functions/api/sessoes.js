@@ -1,15 +1,16 @@
 // Cloudflare Pages Function: /api/sessoes
 // CRUD de sessões via KV (SESSOES_KV)
-// Escrita protegida pelo mesmo cabeçalho X-Admin-Password usado nos outros
-// endpoints administrativos do site — antes pedia uma senha própria digitada
-// na hora (por evento), o que era redundante pra quem já está logada como
-// admin de verdade (o botão de editar só aparece pra ela)
+// Escrita protegida por login de admin de verdade (token do Firebase Auth,
+// conferido contra a lista de e-mails admin em _lib/auth.js) — antes pedia
+// uma senha própria digitada na hora (por evento), o que era redundante pra
+// quem já está logada como admin.
 
-const ADMIN_PASSWORD = 'admin';
+import { requireAdmin } from './_lib/auth.js';
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Firebase-Api-Key',
   'Content-Type': 'application/json',
 };
 
@@ -38,9 +39,9 @@ export async function onRequest(context) {
       return json(sessoes);
     }
 
-    if (request.headers.get('X-Admin-Password') !== ADMIN_PASSWORD) {
-      return json({ error: 'Não autorizado' }, 403);
-    }
+    const admin = await requireAdmin(request, env);
+    if (!admin) return json({ error: 'Não autorizado' }, 401);
+
     const body = await request.json();
 
     // CREATE — POST
@@ -61,8 +62,22 @@ export async function onRequest(context) {
       return json(sessao);
     }
 
-    // UPDATE — PUT
+    // UPDATE — PUT (item único, ou em lote via bulkIds/bulkFields)
     if (method === 'PUT') {
+      if (Array.isArray(body.bulkIds)) {
+        const fields = body.bulkFields && typeof body.bulkFields === 'object' ? body.bulkFields : {};
+        const { id: _ignoreId, ...safeFields } = fields;
+        const updated = [];
+        for (const id of body.bulkIds) {
+          const existing = await KV.get(id, { type: 'json' });
+          if (!existing) continue;
+          const merged = { ...existing, ...safeFields, id };
+          await KV.put(id, JSON.stringify(merged));
+          updated.push(merged);
+        }
+        return json(updated);
+      }
+
       const { id, ...fields } = body;
       if (!id) return json({ error: 'id obrigatório' }, 400);
       const existing = await KV.get(id, { type: 'json' });
@@ -72,8 +87,12 @@ export async function onRequest(context) {
       return json(updated);
     }
 
-    // DELETE — DELETE
+    // DELETE — item único, ou em lote via ids
     if (method === 'DELETE') {
+      if (Array.isArray(body.ids)) {
+        await Promise.all(body.ids.map(id => KV.delete(id)));
+        return json({ ok: true, count: body.ids.length });
+      }
       const { id } = body;
       if (!id) return json({ error: 'id obrigatório' }, 400);
       await KV.delete(id);
