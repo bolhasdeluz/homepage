@@ -19,11 +19,14 @@ function base64url(bytes) {
 }
 
 function pemToArrayBuffer(pem) {
-  const b64 = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, '')
-    .replace(/-----END PRIVATE KEY-----/, '')
-    .replace(/\s+/g, '');
-  const raw = atob(b64);
+  // remove tudo que não é base64 válido — cobre aspas coladas na hora de
+  // copiar do .json, \r, cabeçalho PEM, espaços etc, sem depender de o
+  // valor colado estar "limpo"
+  const b64 = pem.replace(/-----BEGIN PRIVATE KEY-----/g, '').replace(/-----END PRIVATE KEY-----/g, '').replace(/[^A-Za-z0-9+/=]/g, '');
+  if (!b64) throw new Error('FIREBASE_SA_PRIVATE_KEY vazia depois de limpar — confira o valor salvo no Cloudflare');
+  let raw;
+  try { raw = atob(b64); }
+  catch (e) { throw new Error('FIREBASE_SA_PRIVATE_KEY não é uma chave PEM válida (base64 inválido depois de limpar)'); }
   const buf = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
   return buf.buffer;
