@@ -271,6 +271,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div id="admin-secao-chutes" style="display:none">
     <div class="admin-titulo">📝 Relatório de Chutes (Acesso Admin)</div>
+    <div style="display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center;">
+      <button class="admin-btn-mini" id="btn-dia-anterior" style="margin-top:0;">◀</button>
+      <input type="number" id="admin-dia-filtro" class="admin-input-busca" style="max-width:90px; text-align:center;" min="0" placeholder="Dia">
+      <button class="admin-btn-mini" id="btn-dia-proximo" style="margin-top:0;">▶</button>
+      <span id="admin-dia-data" style="font-size:12px; color:#888;"></span>
+      <button class="admin-btn-mini" id="btn-ver-dia" style="margin-top:0;">📅 Ver respostas desse dia</button>
+    </div>
     <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
       <input type="text" id="auditoria-nome" list="lista-nomes-auditoria" class="admin-input-busca" placeholder="Auditar por nome do jogador...">
       <datalist id="lista-nomes-auditoria"></datalist>
@@ -351,7 +358,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp, doc, getDoc, setDoc, runTransaction }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp, doc, getDoc, setDoc, deleteDoc, runTransaction }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1623,6 +1630,8 @@ onAuthStateChanged(auth, (user) => {
     carregarChutesAdmin();
     carregarListaNomesAuditoria();
     carregarDificuldadeAdmin();
+    document.getElementById('admin-dia-filtro').value = diaIndiceDeHoje();
+    atualizarLabelDiaAdmin();
   }
 
   // Troca de conta (ou login/logout) muda a chave do histórico e do deslocamento pessoal.
@@ -2196,14 +2205,52 @@ document.getElementById('btn-salvar-edicao').addEventListener('click', async () 
   }
 });
 
+// monta o HTML de uma linha do relatório de chutes — reaproveitado tanto na
+// busca por nome/recentes quanto no filtro por dia, com botões pra apagar a
+// resposta inteira (libera a pessoa pra jogar de novo aquele dia) e pra
+// editar a palavra correspondente (reaproveita o mesmo modal usado nos
+// relatórios de erro, já que ele acha a posição original pelo texto)
+function renderLinhaChuteAdmin(docSnap) {
+  const r = docSnap.data();
+  const dataFormatada = r.data ? new Date(r.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
+  const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
+  const chutesHtml = Array.isArray(r.chutes) && r.chutes.length
+    ? r.chutes.map((c, i) => {
+        const suspeita = pareceTypo(c, r.palavra || '');
+        return `
+          <span class="chute-chip${suspeita ? ' chute-suspeito' : ''}">${i + 1}. ${c}${suspeita ? ' ⚠️' : ''}
+            <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
+          </span>
+        `;
+      }).join('')
+    : '—';
+  const palavraEscapada = (r.palavra || '').replace(/'/g, "\\'");
+  return `
+    <div class="admin-erro-item" id="chute-admin-${docSnap.id}">
+      <strong style="color:var(--rosa);">${r.nome || 'Anônimo'}</strong> — dia ${r.diaIndice ?? '?'} — ${r.palavra || '?'} — ${resultadoTxt} <br>
+      <span style="color:#555;">Chutes:</span><br>${chutesHtml} <br>
+      <em style="font-size:11px; color:#888;">${dataFormatada}</em><br>
+      <button class="admin-btn-mini" style="margin-top:6px" onclick="abrirEdicaoPalavra('${palavraEscapada}')">✏️ Editar essa palavra</button>
+      <button class="admin-btn-mini" style="margin-top:6px;color:#a5362a" onclick="apagarResultadoPalavra('${docSnap.id}')">🗑 Apagar resposta</button>
+    </div>
+  `;
+}
+
 // ── CARREGAR CHUTES ADMIN ──
-async function carregarChutesAdmin(filtroNome) {
+async function carregarChutesAdmin(filtroNome, diaIndice) {
   const wrap = document.getElementById('admin-lista-chutes');
   wrap.innerHTML = 'Carregando...';
   try {
     let docsChutes;
 
-    if (filtroNome) {
+    if (typeof diaIndice === 'number' && !isNaN(diaIndice)) {
+      // Ver respostas de UM dia específico — a partir do dia 11, cada pessoa
+      // tem sua própria palavra (rodízio pessoal), então aqui aparece quem
+      // respondeu esse dia com a palavra que caiu pra cada uma delas.
+      const q = query(collection(db, 'palavra_dia_resultados'), where('diaIndice', '==', diaIndice));
+      const snap = await getDocs(q);
+      docsChutes = snap.docs.slice().sort((a, b) => (a.data().nome || '').localeCompare(b.data().nome || ''));
+    } else if (filtroNome) {
       // Auditoria por pessoa: busca em TODO o histórico (não só os 200 mais recentes),
       // comparando nome normalizado pra não perder por causa de maiúscula/acento.
       const snapTodos = await getDocs(collection(db, 'palavra_dia_resultados'));
@@ -2217,40 +2264,68 @@ async function carregarChutesAdmin(filtroNome) {
     }
 
     if (docsChutes.length === 0) {
-      wrap.innerHTML = filtroNome
-        ? `Nenhuma jogada encontrada pra "${filtroNome}".`
-        : 'Nenhum resultado registrado ainda.';
+      wrap.innerHTML = typeof diaIndice === 'number'
+        ? `Ninguém respondeu o dia ${diaIndice} ainda.`
+        : filtroNome
+          ? `Nenhuma jogada encontrada pra "${filtroNome}".`
+          : 'Nenhum resultado registrado ainda.';
       return;
     }
 
-    wrap.innerHTML = docsChutes.map(docSnap => {
-      const r = docSnap.data();
-      const dataFormatada = r.data ? new Date(r.data.toDate()).toLocaleDateString('pt-BR') : 'Data desconhecida';
-      const resultadoTxt = r.venceu ? `✓ Acertou (${r.tentativas ?? '?'}/${VIDAS_TOTAL})` : '✗ Errou';
-      const chutesHtml = Array.isArray(r.chutes) && r.chutes.length
-        ? r.chutes.map((c, i) => {
-            const suspeita = pareceTypo(c, r.palavra || '');
-            return `
-              <span class="chute-chip${suspeita ? ' chute-suspeito' : ''}">${i + 1}. ${c}${suspeita ? ' ⚠️' : ''}
-                <button title="Marcar como correto e recontar" onclick="marcarChuteCorreto('${docSnap.id}', ${i})">✓</button>
-              </span>
-            `;
-          }).join('')
-        : '—';
-      return `
-        <div class="admin-erro-item">
-          <strong style="color:var(--rosa);">${r.nome || 'Anônimo'}</strong> — ${r.palavra || '?'} — ${resultadoTxt} <br>
-          <span style="color:#555;">Chutes:</span><br>${chutesHtml} <br>
-          <em style="font-size:11px; color:#888;">${dataFormatada}</em>
-        </div>
-      `;
-    }).join('');
+    wrap.innerHTML = docsChutes.map(renderLinhaChuteAdmin).join('');
 
   } catch (e) {
     console.error('Erro chutes admin:', e.code || '', e.message || e);
     wrap.innerHTML = 'Erro ao carregar chutes.';
   }
 }
+
+// apaga a resposta de alguém pra um dia específico — some com o registro,
+// então a pessoa pode responder esse dia de novo se voltar no jogo
+async function apagarResultadoPalavra(docId) {
+  if (!confirm('Apagar essa resposta? A pessoa vai poder responder esse dia de novo.')) return;
+  try {
+    await deleteDoc(doc(db, 'palavra_dia_resultados', docId));
+    document.getElementById('chute-admin-' + docId)?.remove();
+  } catch (e) {
+    console.error('apagar resultado palavra:', e);
+    alert('Não consegui apagar agora.');
+  }
+}
+
+function diaIndiceDeHoje() {
+  const diffDias = Math.floor((Date.now() - DATA_INICIO) / 86400000);
+  return Math.max(0, diffDias) + DIAS_EXTRA_ABERTOS;
+}
+
+function atualizarLabelDiaAdmin() {
+  const input = document.getElementById('admin-dia-filtro');
+  const label = document.getElementById('admin-dia-data');
+  const dia = parseInt(input.value, 10);
+  if (isNaN(dia)) { label.textContent = ''; return; }
+  const dataDia = new Date(DATA_INICIO + (dia - DIAS_EXTRA_ABERTOS) * 86400000);
+  label.textContent = dataDia.toLocaleDateString('pt-BR');
+}
+
+document.getElementById('admin-dia-filtro').addEventListener('input', atualizarLabelDiaAdmin);
+document.getElementById('btn-dia-anterior').addEventListener('click', () => {
+  const input = document.getElementById('admin-dia-filtro');
+  input.value = Math.max(0, (parseInt(input.value, 10) || 0) - 1);
+  atualizarLabelDiaAdmin();
+  carregarChutesAdmin(null, parseInt(input.value, 10));
+});
+document.getElementById('btn-dia-proximo').addEventListener('click', () => {
+  const input = document.getElementById('admin-dia-filtro');
+  input.value = (parseInt(input.value, 10) || 0) + 1;
+  atualizarLabelDiaAdmin();
+  carregarChutesAdmin(null, parseInt(input.value, 10));
+});
+document.getElementById('btn-ver-dia').addEventListener('click', () => {
+  const dia = parseInt(document.getElementById('admin-dia-filtro').value, 10);
+  if (isNaN(dia)) { alert('Escolhe um dia primeiro.'); return; }
+  document.getElementById('auditoria-nome').value = '';
+  carregarChutesAdmin(null, dia);
+});
 
 async function carregarListaNomesAuditoria() {
   try {

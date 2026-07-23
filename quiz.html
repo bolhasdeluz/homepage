@@ -101,6 +101,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .qz-admin-resposta-nome{flex:1}
 .qz-admin-resposta-valor{color:var(--text-dim);font-size:.75rem}
 .qz-admin-resposta-status{font-weight:700;width:16px;text-align:center}
+.qz-admin-resposta-apagar{background:none;border:none;cursor:pointer;font-size:.85rem;opacity:.5;padding:0 4px}
+.qz-admin-resposta-apagar:hover{opacity:1}
 .qz-admin-resposta-vazio{font-size:.8rem;color:var(--text-dim);font-style:italic}
 
 @keyframes cpEntra{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
@@ -412,7 +414,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc }
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, getDoc, setDoc, deleteField }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1927,7 +1929,7 @@ async function qzCarregarDadosAdmin() {
       const nome = dados.nome || 'Anônimo';
       Object.entries(dados.respondidas || {}).forEach(([perguntaId, r]) => {
         if (!qzAdminRespostasPorPergunta[perguntaId]) qzAdminRespostasPorPergunta[perguntaId] = [];
-        qzAdminRespostasPorPergunta[perguntaId].push({ nome, escolha: r.escolha, certa: r.certa });
+        qzAdminRespostasPorPergunta[perguntaId].push({ nome, escolha: r.escolha, certa: r.certa, uid: d.id });
       });
     });
   } catch (e) { console.warn('admin: carregar respostas:', e); }
@@ -1959,6 +1961,7 @@ function qzRenderAdmin() {
           <span class="qz-admin-resposta-nome">${r.nome}</span>
           <span class="qz-admin-resposta-valor">${r.escolha ? 'Verdadeiro' : 'Falso'}</span>
           <span class="qz-admin-resposta-status">${r.certa ? '✓' : '✗'}</span>
+          <button class="qz-admin-resposta-apagar" title="Apagar essa resposta" onclick="qzApagarResposta(${p.id}, '${r.uid}', this)">🗑</button>
         </div>`).join('')
       : '<div class="qz-admin-resposta-vazio">Ninguém respondeu ainda.</div>';
     const badgeErro = erros.length ? `<span class="qz-admin-erro-badge">⚠️ ${erros.length} aviso${erros.length > 1 ? 's' : ''}</span>` : '';
@@ -2032,6 +2035,26 @@ async function qzSalvarEdicaoPergunta(id) {
     qzRenderAdmin();
     qzRenderCategorias();
   } catch (e) { console.warn('salvar edição pergunta:', e); alert('Não consegui salvar agora.'); }
+}
+
+// apaga a resposta de UMA pessoa pra UMA pergunta específica — remove só essa
+// chave do mapa "respondidas" dela (deleteField), sem mexer nas outras
+// respostas que ela já deu; libera pra ela responder de novo essa pergunta
+async function qzApagarResposta(perguntaId, uid, botaoEl) {
+  if (!uid || uid === 'undefined') { alert('Não achei quem respondeu — recarregue a página e tenta de novo.'); return; }
+  if (!confirm('Apagar essa resposta? A pessoa vai poder responder essa pergunta de novo.')) return;
+  try {
+    await setDoc(doc(db, 'quiz_fundamentos_progresso', uid), {
+      respondidas: { [perguntaId]: deleteField() }
+    }, { merge: true });
+    if (qzAdminRespostasPorPergunta[perguntaId]) {
+      qzAdminRespostasPorPergunta[perguntaId] = qzAdminRespostasPorPergunta[perguntaId].filter(r => r.uid !== uid);
+    }
+    if (botaoEl) botaoEl.closest('.qz-admin-resposta-row')?.remove();
+  } catch (e) {
+    console.warn('apagar resposta:', e);
+    alert('Não consegui apagar agora.');
+  }
 }
 </script>
 </body>
