@@ -4154,30 +4154,20 @@ async function abrirComHandoff(url, target) {
   };
   try {
     const idToken = window._getFreshIdToken && await window._getFreshIdToken();
-    if (!idToken) {
-      // TEMP debug: alerta visível pra diagnosticar em celular sem devtools —
-      // remover depois que o handoff estiver confirmado funcionando.
-      alert('DEBUG handoff: sem idToken (auth.currentUser vazio no momento do clique). Abrindo link normal.');
-      irPara(url);
-      return;
-    }
+    if (!idToken) { irPara(url); return; }
     const res = await fetch('/api/mint-handoff-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken })
     });
-    if (!res.ok) {
-      const corpo = await res.text().catch(() => '');
-      throw new Error(`mint-handoff-token respondeu ${res.status}: ${corpo}`);
-    }
+    if (!res.ok) throw new Error(`mint-handoff-token respondeu ${res.status}`);
     const { customToken } = await res.json();
     if (!customToken) throw new Error('resposta OK mas sem customToken');
     const destino = new URL(url);
     destino.hash = 'ct=' + encodeURIComponent(customToken);
     irPara(destino.toString());
   } catch (e) {
-    // TEMP debug — remover depois que o handoff estiver confirmado funcionando.
-    alert('DEBUG handoff falhou: ' + (e?.message || e));
+    console.error('Handoff de login automático falhou, abrindo link normal:', e);
     irPara(url);
   }
 }
