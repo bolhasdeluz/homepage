@@ -4122,6 +4122,10 @@ function renderDrawerItem(item, ctx) {
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
     return drawerTile(item, `onclick="showPage('blog');closeDrawer()"`);
   }
+  // Pontos Cantados — puxa login automático de quem já está logada aqui
+  if (item.id === 'pontos') {
+    return drawerTile(item, `onclick="abrirComHandoff('${item.url}','_blank');closeDrawer()"`);
+  }
   // link externo
   return drawerTile(item, `onclick="window.open('${item.url}','_blank');closeDrawer()"`);
 }
@@ -4132,6 +4136,31 @@ function toggleSubmenu(btn) {
   document.querySelectorAll('.drawer-submenu.open').forEach(s => s.classList.remove('open'));
   document.querySelectorAll('.drawer-submenu-toggle.open').forEach(b => b.classList.remove('open'));
   if (!isOpen) { sub.classList.add('open'); btn.classList.add('open'); }
+}
+
+// ── HANDOFF DE LOGIN AUTOMÁTICO PRA OUTROS SITES DO TERREIRO ──
+// pega o idToken atual, troca por um custom token de curta duração via
+// /api/mint-handoff-token e anexa no #ct= da URL de destino. Se qualquer
+// passo falhar (não logada, endpoint fora do ar etc.) cai pro link normal.
+async function abrirComHandoff(url, target) {
+  try {
+    const idToken = window._getFreshIdToken && await window._getFreshIdToken();
+    if (!idToken) { window.open(url, target); return; }
+    const res = await fetch('/api/mint-handoff-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken })
+    });
+    if (!res.ok) throw new Error('mint-handoff-token falhou');
+    const { customToken } = await res.json();
+    if (!customToken) throw new Error('sem customToken');
+    const destino = new URL(url);
+    destino.hash = 'ct=' + encodeURIComponent(customToken);
+    window.open(destino.toString(), target);
+  } catch (e) {
+    console.error('Handoff de login automático falhou, abrindo link normal:', e);
+    window.open(url, target);
+  }
 }
 
 // ── RENDERIZAR CARDS ──
@@ -4219,6 +4248,8 @@ function renderCards() {
       }
       else if (item.url && item.url.includes('blogbolhas.pages.dev'))
         onclick = `onclick="showPage('blog');return false"`;
+      else if (item.id === 'pontos')
+        onclick = `onclick="abrirComHandoff('${item.url}','_blank');return false"`;
       else onclick = `onclick="window.open('${item.url}','_blank')"`;
       html += widgetTile(item, onclick);
     });
@@ -10547,7 +10578,7 @@ window.addEventListener('resize', () => {
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getRedirectResult }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getRedirectResult, getIdToken }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, doc, getDoc, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, onSnapshot, serverTimestamp, getDocs }
@@ -10566,6 +10597,15 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
   const db   = getFirestore(app);
+
+  // usado pro handoff de login automático pra outros sites do terreiro (ex:
+  // Pontos Cantados) — só devolve token de quem está de fato logada via
+  // Firebase, nunca de sessões simuladas/admin por senha
+  window._getFreshIdToken = async () => {
+    if (!auth.currentUser) return null;
+    try { return await getIdToken(auth.currentUser); }
+    catch { return null; }
+  };
 
   // ── Funções Firestore para o blog ──
   window._blogLoadPosts = (cb) => {
