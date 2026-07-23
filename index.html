@@ -6925,18 +6925,23 @@ async function gpVerificarStatusReal() {
   }
 }
 
-// ── carrega os rankings reais (palavra_dia_resultados + quiz_fundamentos_resultados) ──
-// visibilidade é configurada pelo admin (seção "Visibilidade no ranking" logo abaixo) e
-// vale pros três lugares: ranking geral daqui, ranking de cada jogo aqui, e o ranking
-// que o próprio palavra.html/quiz.html mostra — todos leem a mesma coleção no Firestore.
+// ── carrega os rankings reais (palavra_dia_resultados + quiz_fundamentos_resultados +
+// completa_ponto_resultados) ── visibilidade é configurada pelo admin (seção
+// "Visibilidade no ranking" logo abaixo) e vale pros três lugares: ranking geral
+// daqui, ranking de cada jogo aqui, e o ranking que o próprio palavra.html/quiz.html
+// mostra — todos leem a mesma coleção no Firestore.
+// Obs: "Completa o Ponto" não tem login próprio (joga por nome digitado, sem uid),
+// então a posição individual ("sua posição") desse jogo sempre aparece vazia — só o
+// ranking geral por nome é afetado por ele.
 async function gpCarregarRankingsReais() {
-  if (!window._gpBrutoPalavra || !window._gpBrutoQuiz || !window._gpVisibilidadeRanking) return;
+  if (!window._gpBrutoPalavra || !window._gpBrutoQuiz || !window._gpBrutoComplete || !window._gpVisibilidadeRanking) return;
   const user = window._getCurrentUser && window._getCurrentUser();
   const uid = user ? user.uid : null;
 
-  const [brutoPalavra, brutoQuiz, vis] = await Promise.all([
+  const [brutoPalavra, brutoQuiz, brutoComplete, vis] = await Promise.all([
     window._gpBrutoPalavra(),
     window._gpBrutoQuiz(),
+    window._gpBrutoComplete(),
     window._gpVisibilidadeRanking()
   ]);
 
@@ -6946,12 +6951,16 @@ async function gpCarregarRankingsReais() {
 
   const listaPalavra = brutoPalavra.filter(p => !oculto(p, 'palavra')).sort((a, b) => b.pontos - a.pontos);
   const listaQuiz = brutoQuiz.filter(p => !oculto(p, 'verdadeiro')).sort((a, b) => b.pontos - a.pontos);
-  const posPalavra = listaPalavra.findIndex(p => p.uid === uid) + 1;
-  const posQuiz = listaQuiz.findIndex(p => p.uid === uid) + 1;
-  gpRenderMiniRanks({ palavra: posPalavra || null, verdadeiro: posQuiz || null });
+  const listaComplete = brutoComplete.filter(p => !oculto(p, 'complete')).sort((a, b) => b.pontos - a.pontos);
+  // sem uid (não logada) nunca "encontra" posição — senão bateria por acidente
+  // com a primeira entrada anônima (uid null === uid null)
+  const posPalavra = uid ? listaPalavra.findIndex(p => p.uid === uid) + 1 : 0;
+  const posQuiz = uid ? listaQuiz.findIndex(p => p.uid === uid) + 1 : 0;
+  const posComplete = uid ? listaComplete.findIndex(p => p.uid === uid) + 1 : 0;
+  gpRenderMiniRanks({ palavra: posPalavra || null, verdadeiro: posQuiz || null, complete: posComplete || null });
 
   const geral = {};
-  [...brutoPalavra.filter(p => !oculto(p, 'geral')), ...brutoQuiz.filter(p => !oculto(p, 'geral'))].forEach(p => {
+  [...brutoPalavra.filter(p => !oculto(p, 'geral')), ...brutoQuiz.filter(p => !oculto(p, 'geral')), ...brutoComplete.filter(p => !oculto(p, 'geral'))].forEach(p => {
     if (!p.chave) return;
     if (!geral[p.chave]) geral[p.chave] = { uid: p.uid, nome: p.nome, pontos: 0 };
     geral[p.chave].pontos += p.pontos;
@@ -6981,6 +6990,7 @@ async function gpAtualizarSecaoAdmin() {
         <button class="toggle-pill ${p.vis.geral ? 'on' : ''}" data-chave="${p.chave}" data-campo="geral">Ocultar do geral</button>
         <button class="toggle-pill ${p.vis.palavra ? 'on' : ''}" data-chave="${p.chave}" data-campo="palavra">Ocultar de Palavra</button>
         <button class="toggle-pill ${p.vis.verdadeiro ? 'on' : ''}" data-chave="${p.chave}" data-campo="verdadeiro">Ocultar de V ou F</button>
+        <button class="toggle-pill ${p.vis.complete ? 'on' : ''}" data-chave="${p.chave}" data-campo="complete">Ocultar de Complete</button>
       </div>
     </div>`).join('');
   lista.querySelectorAll('button[data-chave]').forEach(btn => {
@@ -10681,6 +10691,24 @@ const auth = getAuth(app);
     } catch (e) { console.warn('gp bruto quiz:', e); return []; }
   };
 
+  // jogo "Completa o Ponto" (pontoscantados.pages.dev/jogo.html) — sem login
+  // próprio, sempre grava anônimo por nome (uid null), mesma convenção da
+  // parte "anônima" de palavra/quiz.
+  window._gpBrutoComplete = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'completa_ponto_resultados'));
+      const porPessoa = {};
+      snap.forEach(d => {
+        const r = d.data();
+        if (!r.uid && !r.nome) return;
+        const chave = gpChaveVisibilidade(r.uid, r.nome);
+        if (!porPessoa[chave]) porPessoa[chave] = { chave, uid: r.uid || null, nome: r.nome, pontos: 0 };
+        porPessoa[chave].pontos += (r.pontos || 0);
+      });
+      return Object.values(porPessoa);
+    } catch (e) { console.warn('gp bruto complete:', e); return []; }
+  };
+
   // { [chave]: { geral, palavra, verdadeiro } } — true = oculto daquele ranking.
   // Configurado pela seção de admin da tela de Jogos; palavra.html e quiz.html
   // leem a mesma coleção pros próprios rankings individuais.
@@ -10701,11 +10729,11 @@ const auth = getAuth(app);
   // junta quem já jogou Palavra ou Quiz (logada ou anônima), pro admin escolher visibilidade
   window._gpListarPerfisRanking = async () => {
     try {
-      const [brutoPalavra, brutoQuiz, vis] = await Promise.all([
-        window._gpBrutoPalavra(), window._gpBrutoQuiz(), window._gpVisibilidadeRanking()
+      const [brutoPalavra, brutoQuiz, brutoComplete, vis] = await Promise.all([
+        window._gpBrutoPalavra(), window._gpBrutoQuiz(), window._gpBrutoComplete(), window._gpVisibilidadeRanking()
       ]);
       const pessoas = new Map();
-      [...brutoPalavra, ...brutoQuiz].forEach(p => { if (p.nome) pessoas.set(p.chave, p.nome); });
+      [...brutoPalavra, ...brutoQuiz, ...brutoComplete].forEach(p => { if (p.nome) pessoas.set(p.chave, p.nome); });
       return [...pessoas.entries()]
         .map(([chave, nome]) => ({ chave, nome, vis: vis[chave] || {} }))
         .sort((a, b) => a.nome.localeCompare(b.nome));
