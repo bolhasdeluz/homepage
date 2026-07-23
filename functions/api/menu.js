@@ -15,6 +15,7 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
       { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true, desc: 'Como nos ajudar' },
       { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true, desc: 'Catálogo com player de áudio e letras' },
+      { id: 'completaponto', label: '🎮 Completa o Ponto', type: 'external', url: 'https://pontoscantados.pages.dev/jogo.html', showCard: true, showMenu: true, desc: 'Jogo de roda pra jogar na espera da terreirinha' },
       { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev', showCard: true, showMenu: true, desc: 'Artigos religiosos recomendados' },
       { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', showCard: true, showMenu: true, desc: 'Veja o que a casa está precisando' },
       { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', showCard: true, showMenu: true, desc: 'Chave: bolhasdeluz@gmail.com' },
