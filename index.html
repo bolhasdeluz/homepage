@@ -6841,13 +6841,21 @@ const gpCardIds = {
 
 // palavra.html e quiz.html abrem numa aba nova e cada um cuida do próprio jogo —
 // aqui a gente só reflete se a pessoa realmente jogou hoje, sem simular nada.
+// completa o ponto mora no site do Pontos Cantados — mesmo handoff de login
+// automático usado no link do menu, pra já chegar logada lá.
 function gpPlayGame(jogo) {
   if (jogo === 'palavra') { window.open('/palavra.html', '_blank'); return; }
   if (jogo === 'verdadeiro') { window.open('/quiz.html', '_blank'); return; }
   if (jogo === 'clicker') { window.open('/clicker.html', '_blank'); return; }
+  if (jogo === 'complete') {
+    const url = 'https://pontoscantados.pages.dev/jogo.html';
+    if (window.abrirComHandoff) abrirComHandoff(url, '_blank');
+    else window.open(url, '_blank');
+    return;
+  }
 
   if (gpState.jogadoHoje[jogo]) return;
-  // TODO: 'complete' e 'quem' ainda não têm jogo implementado — protótipo visual.
+  // TODO: 'quem' ainda não tem jogo implementado — protótipo visual.
   gpRegistrarResultado(jogo, { acertou: true, pontos: 10 });
 }
 
