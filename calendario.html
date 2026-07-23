@@ -100,6 +100,10 @@ body.logada{padding-top:28px}
 .cal-btn-add{background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:9px 16px;cursor:pointer;white-space:nowrap;transition:all .2s}
 .cal-btn-add:hover{background:var(--rosa-l)}
 .filhas-only{display:none}
+.admin-only{display:none}
+body.logada .filhas-only{display:block}
+body.is-admin .admin-only{display:inline-flex}
+.cal-toggle.danger:hover{border-color:#b84040;color:#b84040}
 
 /* vista toggle */
 .vista-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;backdrop-filter:blur(4px)}
@@ -132,7 +136,7 @@ body.logada{padding-top:28px}
 .dia-evento.tipo-reuniao{background:var(--reuniao)}
 .dia-evento.tipo-default{background:var(--rosa)}
 .dia-mais{font-family:'Cinzel',serif;font-size:.5rem;color:var(--text-dim);letter-spacing:.04em}
-max-width:680px;margin:0 auto 200px;padding:0 20px;position:relative;z-index:10}
+.cal-main{max-width:680px;margin:0 auto 200px;padding:0 20px;position:relative;z-index:10}
 .mes-header{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.2em;color:var(--rosa);text-transform:uppercase;padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:4px}
 .sessoes-list{display:flex;flex-direction:column;gap:10px;margin-bottom:8px}
 
@@ -176,7 +180,7 @@ max-width:680px;margin:0 auto 200px;padding:0 20px;position:relative;z-index:10}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* modais */
-.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:680;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .overlay.open{display:flex}
 .modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:26px 22px;position:relative}
 .modal h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:20px}
@@ -191,15 +195,14 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .btn-save{background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
 .btn-close-modal{position:absolute;top:14px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
 .senha-err{color:#b84040;font-size:12px;margin-top:5px;display:none;font-family:'DM Sans',sans-serif}
-.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:680;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .confirm-overlay.open{display:flex}
 .confirm-modal{background:#fff;border:1px solid rgba(184,64,64,.25);border-top:3px solid #b84040;border-radius:12px;box-shadow:0 8px 40px rgba(184,64,64,.15);width:100%;max-width:380px;padding:26px 22px}
 .confirm-modal h3{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
 .confirm-modal p{font-size:14px;color:var(--text-dim);line-height:1.55;margin-bottom:16px;font-family:'DM Sans',sans-serif}
-.confirm-senha-row{margin-bottom:14px}
 .confirm-footer{display:flex;justify-content:flex-end;gap:8px}
 .btn-del-confirm{background:#b84040;border:none;color:#fff;padding:9px 18px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.1em;text-transform:uppercase;font-weight:700}
-.import-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:600;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.import-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:680;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .import-overlay.open{display:flex}
 .import-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;padding:24px 22px;position:relative}
 .import-modal h2{font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px}
@@ -215,6 +218,27 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 .btn-sel-all{background:var(--surface);border:1px solid var(--border);color:var(--text-dim);padding:6px 12px;border-radius:20px;cursor:pointer;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .toast{position:fixed;bottom:22px;right:22px;background:#fff;border:1px solid var(--rosa);color:var(--text);box-shadow:0 4px 20px rgba(196,57,107,.15);padding:10px 18px;border-radius:7px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;z-index:700;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
 .toast.show{opacity:1;transform:translateY(0)}
+
+/* seleção em lote */
+.si-check{display:none;align-items:center;padding-right:2px}
+.modo-selecao .si-check{display:flex}
+.si-check input{width:17px;height:17px;accent-color:var(--rosa);cursor:pointer}
+.batch-bar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:650;background:linear-gradient(135deg,#2e1a0e,#4a2a18);padding:12px 16px;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.2)}
+.batch-bar.open{display:flex}
+.batch-info{color:#fff;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;margin-right:4px;white-space:nowrap}
+.batch-select{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:6px;padding:7px 8px;font-family:'DM Sans',sans-serif;font-size:12px}
+.batch-select option{color:#2e1a0e}
+.batch-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:6px;color:#fff;cursor:pointer;font-family:'Cinzel',serif;font-size:9px;letter-spacing:.06em;padding:8px 12px;white-space:nowrap;transition:background .18s}
+.batch-btn:hover{background:rgba(255,255,255,.28)}
+.batch-btn.danger{background:rgba(184,64,64,.5);border-color:rgba(184,64,64,.7)}
+.batch-btn.danger:hover{background:rgba(184,64,64,.7)}
+
+/* painel de visibilidade por tipo */
+.vis-tipo-row{border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.vis-tipo-nome{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
+.vis-grupos{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.vis-grupo-check{display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer}
+.vis-grupo-check input{accent-color:var(--rosa);width:14px;height:14px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -303,8 +327,10 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   <input class="cal-search" id="searchInput" type="text" placeholder="Buscar…" oninput="onSearch(this.value)">
   <button class="cal-toggle" id="btnPassadas" onclick="togglePassadas()">📜 Passadas</button>
   <input type="file" id="icsInput" accept=".ics" style="display:none" onchange="importarICS(this)">
-  <button class="cal-btn-add filhas-only" onclick="document.getElementById('icsInput').click()">⬆ .ics</button>
-  <button class="cal-btn-add filhas-only" onclick="openModal()">+ Nova</button>
+  <button class="cal-toggle admin-only" onclick="abrirPainelVisibilidade()">⚙ Visibilidade</button>
+  <button class="cal-toggle admin-only" id="btnSelecao" onclick="toggleModoSelecao()">☑ Selecionar</button>
+  <button class="cal-btn-add admin-only" onclick="document.getElementById('icsInput').click()">⬆ .ics</button>
+  <button class="cal-btn-add admin-only" onclick="openModal()">+ Nova</button>
 </div>
 
 <!-- GRADE MENSAL -->
@@ -358,26 +384,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
         <option value="nao">❌ Não vai ter</option>
       </select>
     </div>
-    <div class="form-row filhas-only"><label>Visibilidade</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px" id="vis-checkboxes">
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
-          <input type="checkbox" id="vis-visitante" style="accent-color:var(--rosa);width:14px;height:14px"> 🌍 Visitante
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
-          <input type="checkbox" id="vis-amigos" style="accent-color:var(--rosa);width:14px;height:14px"> 🤝 Amigos
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
-          <input type="checkbox" id="vis-filhas" style="accent-color:var(--rosa);width:14px;height:14px"> 🌸 Filhas
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
-          <input type="checkbox" id="vis-tamboreiro" style="accent-color:var(--rosa);width:14px;height:14px"> 🥁 Tamboreiro
-        </label>
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:14px;text-transform:none;letter-spacing:0;color:var(--text);cursor:pointer">
-          <input type="checkbox" id="vis-assistencia" style="accent-color:var(--rosa);width:14px;height:14px"> 🤲 Assistência
-        </label>
-      </div>
-    </div>
-    <div class="form-row"><label>Senha</label><input type="password" id="fSenha"><div class="senha-err" id="senhaErr">Senha incorreta.</div></div>
+    <div class="form-row" style="margin-bottom:0"><span style="font-family:'Crimson Pro',serif;font-size:12.5px;color:var(--text-dim);font-style:italic">A visibilidade de quem vê essa sessão é definida por tipo, no painel "⚙ Visibilidade".</span></div>
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-save" onclick="salvar()">Salvar</button>
@@ -388,13 +395,8 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 <!-- MODAL EXCLUSÃO -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-modal">
-    <h3>Excluir sessão</h3>
-    <p>Tem certeza? <span id="confirmNome" style="font-weight:600;font-family:'Crimson Pro',serif;font-style:italic"></span></p>
-    <div class="confirm-senha-row">
-      <label>Senha</label>
-      <input type="password" id="confirmSenha">
-      <div class="senha-err" id="confirmSenhaErr">Senha incorreta.</div>
-    </div>
+    <h3 id="confirmTitulo">Excluir sessão</h3>
+    <p id="confirmTexto">Tem certeza? <span id="confirmNome" style="font-weight:600;font-family:'Crimson Pro',serif;font-style:italic"></span></p>
     <div class="confirm-footer">
       <button class="btn-cancel" onclick="fecharConfirm()">Cancelar</button>
       <button class="btn-del-confirm" onclick="confirmarDelete()">Excluir</button>
@@ -415,11 +417,47 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
       <span class="import-count" id="importCount"></span>
     </div>
     <div class="import-footer">
-      <input type="password" class="import-senha" id="importSenha" placeholder="Senha do terreiro">
       <button class="btn-cancel" onclick="fecharImport()">Cancelar</button>
       <button class="btn-save" onclick="confirmarImport()">Importar</button>
     </div>
   </div>
+</div>
+
+<!-- PAINEL DE VISIBILIDADE POR TIPO -->
+<div class="overlay" id="visOverlay">
+  <div class="modal">
+    <button class="btn-close-modal" onclick="fecharPainelVisibilidade()">✕</button>
+    <h2>Visibilidade por tipo de sessão</h2>
+    <p style="font-family:'Crimson Pro',serif;font-size:13.5px;color:var(--text-dim);font-style:italic;margin:-12px 0 18px">Define quem enxerga cada tipo de sessão. Vale para todas as sessões daquele tipo — não dá pra configurar sessão por sessão.</p>
+    <div id="vis-tipos-list"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="fecharPainelVisibilidade()">Cancelar</button>
+      <button class="btn-save" onclick="salvarVisibilidade()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- BARRA DE SELEÇÃO EM LOTE -->
+<div class="batch-bar" id="batchBar">
+  <span class="batch-info" id="batchInfo">0 selecionadas</span>
+  <select class="batch-select" id="batchTipo">
+    <option value="">Mudar tipo para…</option>
+    <option value="Interna">Sessão Interna</option>
+    <option value="Atendimento">Sessão com Atendimento</option>
+    <option value="Visita">Sessão de Visita</option>
+    <option value="Familia">Sessão da Família</option>
+    <option value="Reuniao">Reunião</option>
+  </select>
+  <button class="batch-btn" onclick="aplicarBulkTipo()">Aplicar tipo</button>
+  <select class="batch-select" id="batchTambor">
+    <option value="">Mudar tambor para…</option>
+    <option value="confirmado">✅ Confirmado</option>
+    <option value="arrecadacao">🪘 Depende de arrecadação</option>
+    <option value="nao">❌ Não vai ter</option>
+  </select>
+  <button class="batch-btn" onclick="aplicarBulkTambor()">Aplicar tambor</button>
+  <button class="batch-btn danger" onclick="excluirSelecionados()">✕ Excluir selecionadas</button>
+  <button class="batch-btn" onclick="toggleModoSelecao()">Cancelar</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -439,6 +477,13 @@ const app = initializeApp({
 });
 const auth = getAuth(app);
 
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+window.isAdminEmail = (email) => ADMIN_EMAILS.includes((email || '').toLowerCase());
+window.getIdToken = async () => {
+  if (!auth.currentUser) return '';
+  try { return await auth.currentUser.getIdToken(); } catch { return ''; }
+};
+
 window.logoutGoogle = async () => { await signOut(auth); };
 
 onAuthStateChanged(auth, async user => {
@@ -450,7 +495,9 @@ onAuthStateChanged(auth, async user => {
   const bvBanner = document.getElementById('boas-vindas');
   const bannerPub = document.getElementById('banner-publico');
   const drawerCorrente = document.getElementById('drawer-corrente');
-  const filhasOnly = document.querySelectorAll('.filhas-only');
+  const souAdmin = !!(user && window.isAdminEmail(user.email));
+  document.body.classList.toggle('is-admin', souAdmin);
+  if (!souAdmin && typeof sairModoSelecao === 'function') sairModoSelecao();
 
   if (user) {
     // busca perfil pra saber o cargo/grupo
@@ -463,7 +510,6 @@ onAuthStateChanged(auth, async user => {
     avatar.style.display = 'block';
     avatarWrap.style.display = 'flex';
     drawerCorrente.style.display = 'block';
-    filhasOnly.forEach(el => el.style.display = '');
     bannerPub.style.display = 'none';
     document.body.classList.add('logada');
 
@@ -495,7 +541,6 @@ onAuthStateChanged(auth, async user => {
     avatar.style.display = 'none';
     avatarWrap.style.display = 'none';
     drawerCorrente.style.display = 'none';
-    filhasOnly.forEach(el => el.style.display = 'none');
     bannerPub.style.display = 'block';
     bvBanner.style.display = 'none';
     document.body.classList.remove('logada');
@@ -507,6 +552,9 @@ onAuthStateChanged(auth, async user => {
 </script>
 
 <script>
+function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+const hoje=new Date(), todayStr=fmtDate(hoje);
+
 // ── VISTA ────────────────────────────────────────────────────
 let vistaAtual = 'lista';
 let mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -598,24 +646,58 @@ function clicarDia(dataStr) {
 }
 
 
+const API = '/api/sessoes';
+const VISTIPO_API = '/api/sessoes-visibilidade-tipo';
 let sessoes=[], filtroTipo='', buscaTexto='', mostrarPassadas=false, deletarId=null;
-const hoje=new Date(), todayStr=fmtDate(hoje);
+let modoSelecao=false, selecionados=new Set();
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const TIPO_LABEL={Interna:'Sessão Interna',Atendimento:'Sessão com Atendimento',Visita:'Sessão de Visita',Familia:'Sessão da Família',Reuniao:'Reunião'};
 const TAMBOR_LABEL={confirmado:'✅ Tambor confirmado',arrecadacao:'🪘 Depende de arrecadação',nao:'❌ Sem tambor'};
+const GRUPO_LABEL={publico:'🌍 Público',visitante:'👋 Visitante',amigos:'🤝 Amigos',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',assistencia:'🤲 Assistência'};
+
+// visibilidade por tipo — mesma configuração usada pelo index.html (painel
+// "Visibilidade" em /api/sessoes-visibilidade-tipo), pra não ter dois lugares
+// diferentes definindo a mesma coisa. tipoVisibilidadeFull guarda a forma
+// completa {grupos, parcial} como o endpoint devolve; tipoVisibilidade deriva
+// só os grupos, que é tudo que sessaoVisivel() precisa.
+let tipoVisibilidadeFull = {};
+let tipoVisibilidade = {
+  Atendimento: ['publico','visitante','amigos','filhas','tamboreiro'],
+  Visita:      ['publico','visitante','amigos','filhas','tamboreiro'],
+  Interna:     ['filhas','tamboreiro'],
+  Familia:     ['filhas','tamboreiro'],
+  Reuniao:     ['filhas','tamboreiro'],
+};
+async function carregarConfigVisibilidade() {
+  try {
+    const res = await fetch(VISTIPO_API);
+    tipoVisibilidadeFull = await res.json();
+    const derivado = {};
+    Object.keys(tipoVisibilidadeFull).forEach(tipo => {
+      derivado[tipo] = tipoVisibilidadeFull[tipo]?.grupos || [];
+    });
+    tipoVisibilidade = derivado;
+  } catch {}
+}
 
 function getGrupoUsuario() {
   if (!window.usuarioLogado) return 'publico';
   const email = window.usuarioLogado.email || '';
-  if (email === 'bolhasdeluz@gmail.com') return 'admin';
+  if (window.isAdminEmail && window.isAdminEmail(email)) return 'admin';
   return window._perfilUsuario?.grupo || 'visitante';
+}
+
+function nivelSessao(s) {
+  if (s.tipo === 'Visita') return 'visita';
+  if (s.tipo === 'Atendimento') return 'publico';
+  return 'interna';
 }
 
 function sessaoVisivel(s) {
   const grupo = getGrupoUsuario();
   if (grupo === 'admin') return true;
-  const grupos = s.grupos || ['publico','visitante','filhas','tamboreiro'];
+  const grupos = tipoVisibilidade[s.tipo] || ['publico','visitante','amigos','filhas','tamboreiro'];
   return grupos.includes(grupo);
 }
 
@@ -629,7 +711,10 @@ function sessaoPublica(s) {
 }
 
 async function load(){
-  try{const res=await fetch(API);sessoes=await res.json();renderLista();renderMes();}
+  try{
+    const [res] = await Promise.all([fetch(API), carregarConfigVisibilidade()]);
+    sessoes=await res.json();renderLista();renderMes();
+  }
   catch{document.getElementById('cal-main').innerHTML='<div class="empty">Erro ao carregar.</div>';}
 }
 
@@ -639,7 +724,9 @@ window.togglePassadas=()=>{mostrarPassadas=!mostrarPassadas;document.getElementB
 
 window.renderLista=function(){
   const logada=!!window.usuarioLogado;
-  const isAdmin=window.usuarioLogado?.email==='bolhasdeluz@gmail.com';
+  const isAdmin=!!(window.usuarioLogado && window.isAdminEmail && window.isAdminEmail(window.usuarioLogado.email));
+  const selecaoAtiva=modoSelecao&&isAdmin;
+  document.getElementById('cal-main').classList.toggle('modo-selecao', selecaoAtiva);
   let lista=sessoes.filter(s=>{
     if(!sessaoVisivel(s))return false;
     if(filtroTipo&&s.tipo!==filtroTipo)return false;
@@ -672,9 +759,11 @@ window.renderLista=function(){
       const resp=logada&&s.responsavel?`<div class="si-resp">Resp.: ${esc(s.responsavel)}</div>`:'';
       // ações de edição: só admin
       const acoesAdmin=isAdmin?`<button class="icon-btn" onclick="openEdit('${s.id}')">✎</button><button class="icon-btn del" onclick="abrirConfirmDelete('${s.id}')">✕</button>`:'';
+      const check=`<label class="si-check"><input type="checkbox" ${selecionados.has(s.id)?'checked':''} onchange="toggleSelecionado('${s.id}',this.checked)" onclick="event.stopPropagation()"></label>`;
       html+=`<div class="sessao-item ${tc} ${passada} ${restrito}">
         <div class="si-header">
           <div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0;overflow:hidden">
+            ${check}
             <div class="si-date" style="flex-shrink:0"><div class="si-day-num">${sd}</div><div><div class="si-dow">${dow}</div><div class="si-time">${logada?(s.hora||''):''}</div></div></div>
             <div style="flex:1;min-width:0;overflow:hidden">
               <div class="si-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.nome)}</div>
@@ -696,21 +785,20 @@ window.renderLista=function(){
   el.innerHTML=html;
 };
 
+async function authFetch(url, opts={}) {
+  const token = window.getIdToken ? await window.getIdToken() : '';
+  opts.headers = {...(opts.headers||{}), 'Content-Type':'application/json', ...(token?{'Authorization':'Bearer '+token}:{})};
+  return fetch(url, opts);
+}
+
 window.openModal=()=>{
   document.getElementById('modalTitle').textContent='Nova Sessão';
   document.getElementById('editId').value='';
-  ['fNome','fDesc','fResp','fSenha'].forEach(id=>document.getElementById(id).value='');
+  ['fNome','fDesc','fResp'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('fData').value=todayStr;
   document.getElementById('fHora').value='20:30';
   document.getElementById('fTipo').value=filtroTipo||'';
   document.getElementById('fTambor').value='';
-  document.getElementById('senhaErr').style.display='none';
-  // visibilidade padrão: visitante + filhas + tamboreiro
-  document.getElementById('vis-visitante').checked=true;
-  document.getElementById('vis-amigos').checked=false;
-  document.getElementById('vis-filhas').checked=true;
-  document.getElementById('vis-tamboreiro').checked=true;
-  document.getElementById('vis-assistencia').checked=false;
   document.getElementById('overlay').classList.add('open');
   setTimeout(()=>document.getElementById('fNome').focus(),80);
 };
@@ -725,15 +813,6 @@ window.openEdit=(id)=>{
   document.getElementById('fDesc').value=s.descricao||'';
   document.getElementById('fResp').value=s.responsavel||'';
   document.getElementById('fTambor').value=s.tambor||'';
-  document.getElementById('fSenha').value='';
-  document.getElementById('senhaErr').style.display='none';
-  // visibilidade
-  const grupos = s.grupos || ['visitante','filhas','tamboreiro'];
-  document.getElementById('vis-visitante').checked=grupos.includes('visitante');
-  document.getElementById('vis-amigos').checked=grupos.includes('amigos');
-  document.getElementById('vis-filhas').checked=grupos.includes('filhas');
-  document.getElementById('vis-tamboreiro').checked=grupos.includes('tamboreiro');
-  document.getElementById('vis-assistencia').checked=grupos.includes('assistencia');
   document.getElementById('overlay').classList.add('open');
 };
 window.closeModal=()=>document.getElementById('overlay').classList.remove('open');
@@ -742,40 +821,49 @@ window.salvar=async()=>{
   const data=document.getElementById('fData').value;
   const tipo=document.getElementById('fTipo').value;
   if(!nome||!data||!tipo){alert('Preencha nome, data e tipo.');return;}
-  const grupos=[];
-  ['visitante','amigos','filhas','tamboreiro','assistencia'].forEach(g=>{
-    if(document.getElementById('vis-'+g)?.checked) grupos.push(g);
-  });
   const payload={nome,data,hora:document.getElementById('fHora').value,tipo,
     descricao:document.getElementById('fDesc').value.trim(),
     responsavel:document.getElementById('fResp').value.trim(),
-    tambor:document.getElementById('fTambor').value,
-    grupos,
-    senha:document.getElementById('fSenha').value};
+    tambor:document.getElementById('fTambor').value};
   const editId=document.getElementById('editId').value;
   if(editId)payload.id=editId;
-  const res=await fetch(API,{method:editId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const res=await authFetch(API,{method:editId?'PUT':'POST',body:JSON.stringify(payload)});
+  if(res.status===401){toast('Entre com uma conta de admin para editar.');return;}
   const json=await res.json();
-  if(res.status===403){document.getElementById('senhaErr').style.display='block';return;}
   if(editId){const idx=sessoes.findIndex(x=>x.id===editId);if(idx>=0)sessoes[idx]=json;}
   else{sessoes.push(json);sessoes.sort((a,b)=>a.data.localeCompare(b.data));}
   closeModal();renderLista();renderMes();toast(editId?'Sessão atualizada!':'Sessão adicionada!');
 };
+let deletarIds=null;
 window.abrirConfirmDelete=(id)=>{
   const s=sessoes.find(x=>x.id===id);if(!s)return;
-  deletarId=id;document.getElementById('confirmNome').textContent=`"${s.nome}"`;
-  document.getElementById('confirmSenha').value='';document.getElementById('confirmSenhaErr').style.display='none';
+  deletarId=id;deletarIds=null;
+  document.getElementById('confirmTitulo').textContent='Excluir sessão';
+  document.getElementById('confirmTexto').firstChild.textContent='Tem certeza? ';
+  document.getElementById('confirmNome').textContent=`"${s.nome}"`;
   document.getElementById('confirmOverlay').classList.add('open');
-  setTimeout(()=>document.getElementById('confirmSenha').focus(),80);
 };
-window.fecharConfirm=()=>{document.getElementById('confirmOverlay').classList.remove('open');deletarId=null;};
+window.abrirConfirmDeleteLote=()=>{
+  if(!selecionados.size)return;
+  deletarId=null;deletarIds=[...selecionados];
+  document.getElementById('confirmTitulo').textContent='Excluir sessões selecionadas';
+  document.getElementById('confirmTexto').firstChild.textContent='Tem certeza? ';
+  document.getElementById('confirmNome').textContent=`${deletarIds.length} sessões serão excluídas.`;
+  document.getElementById('confirmOverlay').classList.add('open');
+};
+window.fecharConfirm=()=>{document.getElementById('confirmOverlay').classList.remove('open');deletarId=null;deletarIds=null;};
 window.confirmarDelete=async()=>{
+  if(deletarIds){
+    const res=await authFetch(API,{method:'DELETE',body:JSON.stringify({ids:deletarIds})});
+    if(res.status===401){toast('Entre com uma conta de admin para excluir.');return;}
+    sessoes=sessoes.filter(x=>!deletarIds.includes(x.id));
+    fecharConfirm();sairModoSelecao();renderLista();renderMes();toast('Sessões excluídas');
+    return;
+  }
   if(!deletarId)return;
-  const senha=document.getElementById('confirmSenha').value;
-  if(!senha){document.getElementById('confirmSenha').focus();return;}
-  const res=await fetch(API,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:deletarId,senha})});
-  if(res.status===403){document.getElementById('confirmSenhaErr').style.display='block';return;}
-  sessoes=sessoes.filter(x=>x.id!==deletarId);fecharConfirm();renderLista();toast('Sessão excluída');
+  const res=await authFetch(API,{method:'DELETE',body:JSON.stringify({id:deletarId})});
+  if(res.status===401){toast('Entre com uma conta de admin para excluir.');return;}
+  sessoes=sessoes.filter(x=>x.id!==deletarId);fecharConfirm();renderLista();renderMes();toast('Sessão excluída');
 };
 
 let importEventos=[];
@@ -790,14 +878,91 @@ function mostrarImport(){document.getElementById('importOverlay').classList.add(
 function atualizarContadorImport(){const t=importEventos.length;const s=document.querySelectorAll('#importList input:checked').length;document.getElementById('importCount').textContent=`${s} de ${t}`;}
 window.atualizarContador=atualizarContadorImport;
 window.selecionarTodos=v=>document.querySelectorAll('#importList input[type=checkbox]').forEach(c=>c.checked=v);
-window.fecharImport=()=>{document.getElementById('importOverlay').classList.remove('open');document.getElementById('importSenha').value='';};
+window.fecharImport=()=>{document.getElementById('importOverlay').classList.remove('open');};
 window.confirmarImport=async()=>{
-  const senha=document.getElementById('importSenha').value;if(!senha){alert('Digite a senha.');return;}
   const cbs=document.querySelectorAll('#importList input[type=checkbox]');
   const sel=importEventos.filter((_,i)=>cbs[i]?.checked);if(!sel.length){alert('Selecione ao menos um.');return;}
   const btn=document.querySelector('.import-overlay .btn-save');btn.textContent='Importando…';btn.disabled=true;
-  let ok=0,err=0;for(const ev of sel){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...ev,senha})});if(r.status===403){alert('Senha incorreta.');btn.textContent='Importar';btn.disabled=false;return;}if(r.ok){sessoes.push(await r.json());ok++;}else err++;}catch{err++;}}
-  sessoes.sort((a,b)=>a.data.localeCompare(b.data));fecharImport();renderLista();btn.textContent='Importar';btn.disabled=false;toast(`${ok} importada(s)!`);
+  let ok=0,err=0;for(const ev of sel){try{const r=await authFetch(API,{method:'POST',body:JSON.stringify(ev)});if(r.status===401){toast('Entre com uma conta de admin para importar.');btn.textContent='Importar';btn.disabled=false;return;}if(r.ok){sessoes.push(await r.json());ok++;}else err++;}catch{err++;}}
+  sessoes.sort((a,b)=>a.data.localeCompare(b.data));fecharImport();renderLista();renderMes();btn.textContent='Importar';btn.disabled=false;toast(`${ok} importada(s)!`);
+};
+
+// ── SELEÇÃO EM LOTE ─────────────────────────────────────────
+window.toggleModoSelecao=()=>{
+  modoSelecao=!modoSelecao;
+  if(!modoSelecao) selecionados.clear();
+  document.getElementById('btnSelecao').classList.toggle('active',modoSelecao);
+  atualizarBatchBar();
+  renderLista();
+};
+window.sairModoSelecao=()=>{
+  modoSelecao=false;selecionados.clear();
+  document.getElementById('btnSelecao')?.classList.remove('active');
+  atualizarBatchBar();
+};
+window.toggleSelecionado=(id,checked)=>{
+  if(checked) selecionados.add(id); else selecionados.delete(id);
+  atualizarBatchBar();
+};
+function atualizarBatchBar(){
+  const bar=document.getElementById('batchBar');
+  bar.classList.toggle('open',modoSelecao&&selecionados.size>0);
+  document.getElementById('batchInfo').textContent=`${selecionados.size} selecionada${selecionados.size===1?'':'s'}`;
+}
+window.aplicarBulkTipo=async()=>{
+  const tipo=document.getElementById('batchTipo').value;
+  if(!tipo||!selecionados.size)return;
+  const res=await authFetch(API,{method:'PUT',body:JSON.stringify({bulkIds:[...selecionados],bulkFields:{tipo}})});
+  if(res.status===401){toast('Entre com uma conta de admin.');return;}
+  const atualizadas=await res.json();
+  atualizadas.forEach(u=>{const idx=sessoes.findIndex(x=>x.id===u.id);if(idx>=0)sessoes[idx]=u;});
+  document.getElementById('batchTipo').value='';
+  renderLista();renderMes();toast(`${atualizadas.length} sessões atualizadas`);
+};
+window.aplicarBulkTambor=async()=>{
+  const tambor=document.getElementById('batchTambor').value;
+  if(!tambor||!selecionados.size)return;
+  const res=await authFetch(API,{method:'PUT',body:JSON.stringify({bulkIds:[...selecionados],bulkFields:{tambor}})});
+  if(res.status===401){toast('Entre com uma conta de admin.');return;}
+  const atualizadas=await res.json();
+  atualizadas.forEach(u=>{const idx=sessoes.findIndex(x=>x.id===u.id);if(idx>=0)sessoes[idx]=u;});
+  document.getElementById('batchTambor').value='';
+  renderLista();toast(`${atualizadas.length} sessões atualizadas`);
+};
+window.excluirSelecionados=()=>abrirConfirmDeleteLote();
+
+// ── VISIBILIDADE POR TIPO (painel admin) ────────────────────
+const TIPOS_ORDEM=['Interna','Atendimento','Visita','Familia','Reuniao'];
+const GRUPOS_ORDEM=['publico','visitante','amigos','filhas','tamboreiro','assistencia'];
+window.abrirPainelVisibilidade=()=>{
+  const el=document.getElementById('vis-tipos-list');
+  el.innerHTML=TIPOS_ORDEM.map(tipo=>{
+    const ativos=tipoVisibilidade[tipo]||[];
+    const checks=GRUPOS_ORDEM.map(g=>`
+      <label class="vis-grupo-check">
+        <input type="checkbox" data-tipo="${tipo}" data-grupo="${g}" ${ativos.includes(g)?'checked':''}>
+        ${GRUPO_LABEL[g]}
+      </label>`).join('');
+    return `<div class="vis-tipo-row">
+      <div class="vis-tipo-nome">${TIPO_LABEL[tipo]||tipo}</div>
+      <div class="vis-grupos">${checks}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('visOverlay').classList.add('open');
+};
+window.fecharPainelVisibilidade=()=>document.getElementById('visOverlay').classList.remove('open');
+window.salvarVisibilidade=async()=>{
+  // manda o formato completo {grupos, parcial} que o endpoint espera,
+  // preservando o "parcial" que já estava salvo (esse painel só edita grupos)
+  const novoConfig={};
+  TIPOS_ORDEM.forEach(tipo=>{
+    const grupos=[...document.querySelectorAll(`input[data-tipo="${tipo}"]:checked`)].map(cb=>cb.dataset.grupo);
+    novoConfig[tipo]={grupos, parcial: tipoVisibilidadeFull[tipo]?.parcial || []};
+  });
+  const res=await authFetch(VISTIPO_API,{method:'POST',body:JSON.stringify(novoConfig)});
+  if(res.status===401){toast('Entre com uma conta de admin.');return;}
+  await carregarConfigVisibilidade();
+  fecharPainelVisibilidade();renderLista();renderMes();toast('Visibilidade salva!');
 };
 
 window.gerarICS=(id)=>{
@@ -809,7 +974,6 @@ window.gerarICS=(id)=>{
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download=s.nome.replace(/[^a-z0-9]/gi,'-')+'.ics';a.click();
 };
 
-function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2400);}
 
@@ -818,7 +982,6 @@ function closeDrawer(){document.getElementById('drawer').classList.remove('open'
 
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(document.getElementById('confirmOverlay').classList.contains('open')){fecharConfirm();return;}if(document.getElementById('importOverlay').classList.contains('open')){fecharImport();return;}if(document.getElementById('overlay').classList.contains('open')){closeModal();return;}closeDrawer();});
 document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
-document.getElementById('confirmSenha').addEventListener('keydown',e=>{if(e.key==='Enter')confirmarDelete();});
 
 // jardim
 const canvas=document.getElementById('jardim'),ctx=canvas.getContext('2d');

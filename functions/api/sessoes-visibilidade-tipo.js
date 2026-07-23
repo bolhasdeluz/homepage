@@ -11,13 +11,20 @@
  * chave separada ("config:visibilidade-tipo") que não colide com as chaves
  * "sessao:..." (a listagem de sessões usa KV.list({prefix:'sessao:'}), então
  * essa chave de config nunca aparece misturada nelas).
+ *
+ * Escrita aceita tanto o X-Admin-Password (padrão usado pelo index.html)
+ * quanto um token de admin do Firebase Auth (padrão usado pelo
+ * calendario.html) — os dois liberam a mesma ação, sem quebrar quem já usava
+ * a senha.
  */
+
+import { requireAdmin } from './_lib/auth.js';
 
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password, Authorization, X-Firebase-Api-Key',
   'Content-Type': 'application/json',
 };
 
@@ -49,7 +56,8 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'POST') {
-    if (request.headers.get('X-Admin-Password') !== ADMIN_PASSWORD) {
+    const senhaOk = request.headers.get('X-Admin-Password') === ADMIN_PASSWORD;
+    if (!senhaOk && !(await requireAdmin(request, env))) {
       return json({ error: 'Não autorizado' }, 401);
     }
     const body = await request.json();
