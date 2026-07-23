@@ -6799,15 +6799,17 @@ const gpCardIds = {
   quem: 'gp-passo-quem'
 };
 
-// palavra.html e quiz.html abrem numa aba nova e cada um cuida do próprio jogo —
-// aqui a gente só reflete se a pessoa realmente jogou hoje, sem simular nada.
+// palavra.html, quiz.html e o Completa o Ponto abrem numa aba nova e cada um
+// cuida do próprio jogo — aqui a gente só reflete se a pessoa realmente jogou
+// hoje, sem simular nada.
 function gpPlayGame(jogo) {
   if (jogo === 'palavra') { window.open('/palavra.html', '_blank'); return; }
   if (jogo === 'verdadeiro') { window.open('/quiz.html', '_blank'); return; }
   if (jogo === 'clicker') { window.open('/clicker.html', '_blank'); return; }
+  if (jogo === 'complete') { window.open('https://pontoscantados.pages.dev/jogo.html', '_blank'); return; }
 
   if (gpState.jogadoHoje[jogo]) return;
-  // TODO: 'complete' e 'quem' ainda não têm jogo implementado — protótipo visual.
+  // TODO: 'quem' ainda não tem jogo implementado — protótipo visual.
   gpRegistrarResultado(jogo, { acertou: true, pontos: 10 });
 }
 
