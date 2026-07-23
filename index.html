@@ -12318,7 +12318,9 @@ function abrirLinhaDoTempoModal() {
   if (!overlay) return;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  renderTimeline(perfilData || {}, 'dash-timeline');
+  // durante "Simular visão de outra pessoa", mostra a linha do tempo de quem
+  // está sendo simulada, não a da admin logada de verdade
+  renderTimeline(alvoSalvarPerfil().perfilBase || {}, 'dash-timeline');
 }
 window.abrirLinhaDoTempoModal = abrirLinhaDoTempoModal;
 
@@ -13345,7 +13347,7 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
   const grid = document.getElementById(gridId);
   if (!grid) return;
   grid.innerHTML = '';
-  const ocultos = perfilData.timelineOcultos || [];
+  const ocultos = alvoSalvarPerfil().perfilBase.timelineOcultos || [];
 
   const CHAVES_TIMELINE = new Set([
     'data_entrada','apronte','coroacao','cacicamento','madrinha_data',
