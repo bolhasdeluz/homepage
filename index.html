@@ -4142,10 +4142,19 @@ function toggleSubmenu(btn) {
 // pega o idToken atual, troca por um custom token de curta duração via
 // /api/mint-handoff-token e anexa no #ct= da URL de destino. Se qualquer
 // passo falhar (não logada, endpoint fora do ar etc.) cai pro link normal.
+// abre a aba/janela ANTES de qualquer await — Safari/iOS trata window.open
+// chamado depois de uma espera assíncrona como pop-up não confiável e
+// bloqueia (ou ignora) a navegação; abrindo em branco na hora do clique e
+// só preenchendo o endereço depois, evita esse bloqueio.
 async function abrirComHandoff(url, target) {
+  const janela = target === '_self' ? null : window.open('', target);
+  const irPara = (destino) => {
+    if (janela) { try { janela.location.href = destino; return; } catch {} }
+    window.open(destino, target);
+  };
   try {
     const idToken = window._getFreshIdToken && await window._getFreshIdToken();
-    if (!idToken) { window.open(url, target); return; }
+    if (!idToken) { irPara(url); return; }
     const res = await fetch('/api/mint-handoff-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -4156,10 +4165,10 @@ async function abrirComHandoff(url, target) {
     if (!customToken) throw new Error('sem customToken');
     const destino = new URL(url);
     destino.hash = 'ct=' + encodeURIComponent(customToken);
-    window.open(destino.toString(), target);
+    irPara(destino.toString());
   } catch (e) {
     console.error('Handoff de login automático falhou, abrindo link normal:', e);
-    window.open(url, target);
+    irPara(url);
   }
 }
 
