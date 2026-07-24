@@ -331,6 +331,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <button onclick="qzAdminAdicionarPergunta()">+ Adicionar pergunta</button>
     </div>
 
+    <div class="qz-admin-edit-form" style="display:flex">
+      <strong style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.05em">📅 Ver respostas de um dia</strong>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="qz-admin-dia-filtro">
+        <button onclick="qzVerRespostasPorDia()">Ver respostas desse dia</button>
+      </div>
+      <div id="qz-admin-lista-dia"></div>
+    </div>
+
     <div class="qz-admin-topo">
       <input type="text" id="qz-admin-busca" placeholder="Buscar por texto da pergunta...">
       <select id="qz-admin-filtro-categoria"><option value="todas">Todas as categorias</option></select>
@@ -1875,7 +1884,53 @@ function qzAbrirAdmin() {
   document.getElementById('qz-tela-admin').style.display = 'block';
   qzMontarFiltroCategoriaAdmin();
   document.getElementById('qz-admin-lista').innerHTML = '<div class="qz-ranking-vazio">Carregando...</div>';
+  document.getElementById('qz-admin-dia-filtro').value = dataLocalYMD(new Date());
+  document.getElementById('qz-admin-lista-dia').innerHTML = '';
   qzCarregarDadosAdmin().then(() => qzRenderAdmin());
+}
+
+// formata uma data no fuso local (não UTC) como "AAAA-MM-DD", igual ao valor
+// que um <input type="date"> usa — pra comparar sem escorregar de dia por
+// causa de fuso horário
+function dataLocalYMD(data) {
+  const y = data.getFullYear();
+  const m = String(data.getMonth() + 1).padStart(2, '0');
+  const d = String(data.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// "Verdadeiro ou Falso" não tem uma pergunta fixa por dia (é um banco de
+// perguntas com limite de tentativas diárias) — então "respostas de um dia"
+// aqui quer dizer todas as respostas (de qualquer pergunta) que alguém deu
+// naquela data específica, juntando tudo numa lista só
+function qzVerRespostasPorDia() {
+  const dataAlvo = document.getElementById('qz-admin-dia-filtro').value;
+  const wrap = document.getElementById('qz-admin-lista-dia');
+  if (!dataAlvo) { wrap.innerHTML = ''; return; }
+  if (!qzAdminRespostasPorPergunta) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ainda carregando...</div>'; return; }
+
+  const linhas = [];
+  Object.entries(qzAdminRespostasPorPergunta).forEach(([perguntaId, respostas]) => {
+    const pergunta = QZ_PERGUNTAS.find(p => p.id === parseInt(perguntaId, 10));
+    respostas.forEach(r => {
+      if (!r.data) return;
+      const quando = r.data.toDate ? r.data.toDate() : new Date(r.data);
+      if (dataLocalYMD(quando) !== dataAlvo) return;
+      linhas.push({ perguntaId, pergunta, r, quando });
+    });
+  });
+
+  if (!linhas.length) { wrap.innerHTML = '<div class="qz-ranking-vazio">Ninguém respondeu nada nesse dia.</div>'; return; }
+
+  linhas.sort((a, b) => a.quando - b.quando);
+  wrap.innerHTML = linhas.map(({ perguntaId, pergunta, r, quando }) => `
+    <div class="qz-admin-resposta-row ${r.certa ? 'certa' : 'errada'}" id="qz-dia-resposta-${perguntaId}-${r.uid}">
+      <span class="qz-admin-resposta-nome">${r.nome}${pergunta ? ' — ' + pergunta.afirmacao : ' (pergunta #' + perguntaId + ')'}</span>
+      <span class="qz-admin-resposta-valor">${r.escolha ? 'Verdadeiro' : 'Falso'} · ${quando.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'})}</span>
+      <span class="qz-admin-resposta-status">${r.certa ? '✓' : '✗'}</span>
+      <button class="qz-admin-resposta-apagar" title="Apagar essa resposta" onclick="qzApagarResposta(${perguntaId}, '${r.uid}', this)">🗑</button>
+    </div>
+  `).join('');
 }
 
 function qzMontarFiltroCategoriaAdmin() {
@@ -1929,7 +1984,7 @@ async function qzCarregarDadosAdmin() {
       const nome = dados.nome || 'Anônimo';
       Object.entries(dados.respondidas || {}).forEach(([perguntaId, r]) => {
         if (!qzAdminRespostasPorPergunta[perguntaId]) qzAdminRespostasPorPergunta[perguntaId] = [];
-        qzAdminRespostasPorPergunta[perguntaId].push({ nome, escolha: r.escolha, certa: r.certa, uid: d.id });
+        qzAdminRespostasPorPergunta[perguntaId].push({ nome, escolha: r.escolha, certa: r.certa, uid: d.id, data: r.data });
       });
     });
   } catch (e) { console.warn('admin: carregar respostas:', e); }
