@@ -1637,9 +1637,11 @@ onAuthStateChanged(auth, (user) => {
   // Troca de conta (ou login/logout) muda a chave do histórico e do deslocamento pessoal.
   progressoDias = carregarProgressoDias();
   offsetPessoal = null;
+  progressoSincronizadoFirestore = false;
   renderizarCalendario();
 
   sincronizarPendentes();
+  if (user) sincronizarProgressoDoFirestore();
 });
 
 // ── RENDERIZAÇÃO DO CALENDÁRIO ──
@@ -1791,6 +1793,7 @@ async function iniciarJogo(indiceDia) {
   if (!nomeJogador) { document.getElementById('qz-inp-nome').focus(); return; }
 
   sincronizarPendentes();
+  await sincronizarProgressoDoFirestore();
 
   if (progressoDias[indiceDia]) {
     alert('Você já jogou este dia! Escolha um dia pendente.');
@@ -1928,6 +1931,48 @@ async function finalizarJogo(venceu) {
   // Atualiza o ranking para incluir a nova pontuação, se houver
   carregarRanking();
   atualizarNavegacaoResultado();
+}
+
+// ── TRAZ DE VOLTA O HISTÓRICO JÁ SALVO NO FIRESTORE ──
+// O calendário (progressoDias) vive só no localStorage do aparelho. Se a pessoa troca
+// de aparelho, limpa o navegador ou alterna entre jogar logada/anônima, esse histórico
+// local some e os dias já respondidos voltam a aparecer como "pendente" — o que deixava
+// jogar de novo um dia já feito e gerar uma palavra diferente da que tinha ficado
+// registrada (o cálculo pessoal usa o total de palavras ATUAL, que cresce toda vez que uma
+// palavra nova é cadastrada). Essa função busca o que já existe no Firestore pra esse nome
+// e completa o que estiver faltando no localStorage, sem sobrescrever o que já tem lá.
+let progressoSincronizadoFirestore = false;
+
+async function sincronizarProgressoDoFirestore() {
+  if (progressoSincronizadoFirestore) return;
+  const nome = currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador;
+  if (!nome) return;
+  progressoSincronizadoFirestore = true;
+  try {
+    const snap = await getDocs(query(collection(db, 'palavra_dia_resultados'), where('nome', '==', nome)));
+    let mudou = false;
+    snap.forEach(d => {
+      const r = d.data();
+      if (progressoDias[r.diaIndice]) return; // já tem localmente — não sobrescreve
+      progressoDias[r.diaIndice] = {
+        venceu: r.venceu,
+        tentativas: r.tentativas,
+        pontos: r.venceu ? Math.max(0, VIDAS_TOTAL - (r.tentativas - 1)) : 0,
+        palavra: r.palavra,
+        nome: r.nome,
+        chutes: r.chutes || [],
+        sincronizado: true
+      };
+      mudou = true;
+    });
+    if (mudou) {
+      localStorage.setItem(chaveProgresso(), JSON.stringify(progressoDias));
+      renderizarCalendario();
+    }
+  } catch (e) {
+    console.error('sincronizar progresso do firestore:', e.code || '', e.message || e);
+    progressoSincronizadoFirestore = false; // deixa tentar de novo mais tarde
+  }
 }
 
 // ── SINCRONIZAÇÃO COM O FIRESTORE (com retomada automática) ──
