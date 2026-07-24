@@ -10595,7 +10595,7 @@ window.addEventListener('resize', () => {
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getRedirectResult, getIdToken }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getRedirectResult, getIdToken, signInWithCustomToken }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, doc, getDoc, setDoc, updateDoc, deleteDoc,
   query, where, orderBy, onSnapshot, serverTimestamp, getDocs }
@@ -10623,6 +10623,33 @@ const auth = getAuth(app);
     try { return await getIdToken(auth.currentUser); }
     catch { return null; }
   };
+
+  // ── recebe o handoff de volta de outros sites do terreiro (ex: "Voltar
+  // ao site" do Pontos Cantados) — captura #ct=<token>&pagina=<nome> assim
+  // que a página carrega, antes de qualquer outra coisa mexer no hash, loga
+  // com o token e já abre direto na página pedida (a terreirinha) ──
+  let handoffPaginaAlvo = null;
+  (function capturarHandoffToken() {
+    try {
+      const hash = window.location.hash || '';
+      const params = new URLSearchParams(hash.replace(/^#/, ''));
+      const token = params.get('ct');
+      const pagina = params.get('pagina');
+      if (pagina) handoffPaginaAlvo = pagina;
+      if (token || pagina) {
+        params.delete('ct');
+        params.delete('pagina');
+        const resto = params.toString();
+        history.replaceState(null, '', window.location.pathname + window.location.search + (resto ? '#' + resto : ''));
+      }
+      if (token) {
+        signInWithCustomToken(auth, token).catch(e => console.error('Handoff de login (voltar pro site) falhou:', e));
+      }
+    } catch (e) {}
+  })();
+  if (handoffPaginaAlvo && window.showPage) {
+    showPage(handoffPaginaAlvo);
+  }
 
   // ── Funções Firestore para o blog ──
   window._blogLoadPosts = (cb) => {
