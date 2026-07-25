@@ -10,6 +10,45 @@
 :root{--gold:#c4396b;--gold-light:#e8688a;--gold-dim:rgba(196,57,107,.08);--bg:#fff5f7;--surface:#fff;--border:rgba(196,57,107,.15);--text:#2a1a22;--text-dim:rgba(80,30,50,.5)}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
 
+/* BOAS-VINDAS — identificação de quem está logada */
+#boas-vindas{display:none;position:fixed;top:0;left:0;right:0;z-index:200;
+  background:rgba(255,245,247,.96);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(8px);padding:5px 60px;box-shadow:0 1px 8px rgba(196,90,30,.06);}
+#boas-vindas-inner{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;max-width:700px;margin:0 auto;}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
+#bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
+#bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--gold);font-style:italic}
+body.logada{padding-top:28px}
+
+/* AVATAR */
+#user-avatar-wrap{position:fixed;top:10px;left:16px;z-index:400;display:none;align-items:center;gap:8px}
+#user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);display:none}
+#user-logout-btn{font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;color:var(--text-dim);background:rgba(255,245,247,.92);border:1px solid var(--border);border-radius:16px;padding:3px 9px;cursor:pointer}
+
+/* HAMBURGUER + GAVETÃO — mesma navegação usada no resto do site */
+#menu-toggle{position:fixed;top:10px;right:16px;z-index:400;background:rgba(255,245,247,.92);border:1px solid var(--border);border-radius:10px;width:38px;height:38px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 2px 12px rgba(196,90,30,.1);backdrop-filter:blur(6px);cursor:pointer}
+#menu-toggle span{display:block;width:16px;height:1.5px;background:var(--text);border-radius:2px;transition:all .3s}
+#menu-toggle.open span:nth-child(1){transform:translateY(5.5px) rotate(45deg)}
+#menu-toggle.open span:nth-child(2){opacity:0}
+#menu-toggle.open span:nth-child(3){transform:translateY(-5.5px) rotate(-45deg)}
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:350;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{position:fixed;top:0;left:0;bottom:0;z-index:360;width:min(290px,85vw);background:var(--bg);border-right:1px solid var(--border);box-shadow:4px 0 32px rgba(46,26,14,.12);transform:translateX(-100%);transition:transform .32s cubic-bezier(.4,0,.2,1);overflow-y:auto;display:flex;flex-direction:column;}
+#drawer.open{transform:translateX(0)}
+.drawer-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.drawer-logo{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--text);letter-spacing:.1em}
+.drawer-close{background:none;border:none;font-size:1.3rem;color:var(--text-dim);cursor:pointer}
+.drawer-section{padding:16px 20px 4px}
+.drawer-section-label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.drawer-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.drawer-link{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid rgba(196,90,30,.07);font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.05em;color:var(--text);background:none;border-left:none;border-right:none;border-top:none;width:100%;text-align:left;cursor:pointer;transition:color .2s;text-decoration:none}
+.drawer-link:hover{color:var(--gold)}
+.drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
+.drawer-dot.mem{background:rgba(196,57,107,.28)}
+.drawer-footer{margin-top:auto;padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;text-align:center}
+
 /* HEADER */
 header{background:linear-gradient(135deg,#c0405a,#d4607a 60%,#e07a90);padding:40px 28px 32px;box-shadow:0 2px 20px rgba(180,60,90,.25);text-align:center}
 .logo{font-size:1.5rem;margin-bottom:10px}
@@ -157,6 +196,52 @@ header{background:linear-gradient(135deg,#c0405a,#d4607a 60%,#e07a90);padding:40
 </style>
 </head>
 <body>
+
+<!-- BOAS-VINDAS — identificação de quem está logada -->
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <span id="bv-emoji"></span>
+    <span id="bv-nome"></span>
+    <span id="bv-sep">·</span>
+    <span id="bv-cargo"></span>
+    <span id="bv-sep2">·</span>
+    <span id="bv-tempo"></span>
+  </div>
+</div>
+
+<!-- AVATAR -->
+<div id="user-avatar-wrap">
+  <img id="user-avatar" src="" alt="">
+  <button id="user-logout-btn" onclick="logoutGoogle()">Sair</button>
+</div>
+
+<!-- HAMBÚRGUER -->
+<button id="menu-toggle" onclick="toggleDrawer()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
+<!-- GAVETÃO -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-header">
+    <span class="drawer-logo">Bolhas de Luz</span>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-section">
+    <div class="drawer-section-label">Público</div>
+    <a class="drawer-link" href="/"><span class="drawer-dot"></span>← Voltar ao site</a>
+    <a class="drawer-link" href="/calendario.html"><span class="drawer-dot"></span>Calendário</a>
+    <a class="drawer-link" href="https://pontoscantados.pages.dev" target="_blank"><span class="drawer-dot"></span>Pontos Cantados</a>
+    <a class="drawer-link" href="/floraselojas" target="_blank"><span class="drawer-dot"></span>Guia de Lojas</a>
+  </div>
+  <div class="drawer-section" id="drawer-corrente" style="display:none">
+    <div class="drawer-section-label">Corrente</div>
+    <a class="drawer-link" href="/tesouraria"><span class="drawer-dot mem"></span>Tesouraria</a>
+    <a class="drawer-link" href="/filhas"><span class="drawer-dot mem"></span>Filhas da Casa</a>
+    <a class="drawer-link" href="/regimentointerno.html"><span class="drawer-dot mem"></span>Regimento Interno</a>
+  </div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
 
 <header>
   <a class="hback" href="/">← Voltar ao site principal</a>
@@ -545,6 +630,82 @@ function selectArt(artId){
 }
 
 render();
+</script>
+
+<script>
+function toggleDrawer(){const d=document.getElementById('drawer'),o=document.getElementById('drawer-overlay'),t=document.getElementById('menu-toggle');d.classList.toggle('open');o.classList.toggle('open');t.classList.toggle('open');document.body.style.overflow=d.classList.contains('open')?'hidden':'';}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawer-overlay').classList.remove('open');document.getElementById('menu-toggle').classList.remove('open');document.body.style.overflow='';}
+</script>
+
+<!-- LOGIN — mesma identificação (Google) usada no resto do site -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const app = initializeApp({
+  apiKey:"AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain:"terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId:"terreiro-bolhas-de-luz",
+  storageBucket:"terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId:"179602931861",
+  appId:"1:179602931861:web:5cf336e9077334cee05b9c"
+});
+const auth = getAuth(app);
+
+window.logoutGoogle = async () => { await signOut(auth); };
+
+onAuthStateChanged(auth, async user => {
+  window.usuarioLogado = user || null;
+
+  const avatar = document.getElementById('user-avatar');
+  const avatarWrap = document.getElementById('user-avatar-wrap');
+  const bvBanner = document.getElementById('boas-vindas');
+  const drawerCorrente = document.getElementById('drawer-corrente');
+
+  if (user) {
+    let perfil = {};
+    try {
+      const res = await fetch(`/api/perfil?email=${encodeURIComponent(user.email)}`);
+      perfil = await res.json();
+    } catch(e) {}
+
+    avatar.src = user.photoURL || '';
+    avatar.style.display = 'block';
+    avatarWrap.style.display = 'flex';
+    drawerCorrente.style.display = 'block';
+    document.body.classList.add('logada');
+
+    const primeiroNome = (perfil.nome || user.displayName || '').split(' ')[0];
+    const cargo = perfil.cargo || '';
+    const emoji = perfil.emoji || '✦';
+    const dataEntrada = perfil.historia?.data_entrada;
+    let tempo = '';
+    if (dataEntrada) {
+      const inicio = new Date(dataEntrada + 'T12:00:00');
+      const hj = new Date();
+      let anos = hj.getFullYear() - inicio.getFullYear();
+      let meses = hj.getMonth() - inicio.getMonth();
+      if (meses < 0) { anos--; meses += 12; }
+      const p = [];
+      if (anos > 0) p.push(anos + (anos===1?' ano':' anos'));
+      if (meses > 0) p.push(meses + (meses===1?' mês':' meses'));
+      tempo = p.join(' e ');
+    }
+    document.getElementById('bv-emoji').textContent = emoji;
+    document.getElementById('bv-nome').textContent = primeiroNome;
+    document.getElementById('bv-cargo').textContent = cargo;
+    document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+    document.getElementById('bv-sep').style.display = cargo ? '' : 'none';
+    document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+    bvBanner.style.display = 'block';
+  } else {
+    avatar.style.display = 'none';
+    avatarWrap.style.display = 'none';
+    drawerCorrente.style.display = 'none';
+    bvBanner.style.display = 'none';
+    document.body.classList.remove('logada');
+  }
+});
 </script>
 </body>
 </html>
