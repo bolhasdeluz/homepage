@@ -274,7 +274,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
 <!-- HEADER -->
 <div class="cal-header">
   <a class="cal-back" href="/">← Voltar ao site principal</a>
-  <div class="cal-eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="cal-eyebrow" id="cal-eyebrow">Terreiro Bolhas de Luz</div>
   <h1 class="cal-title">Calendário de Sessões</h1>
 </div>
 
@@ -501,6 +501,7 @@ onAuthStateChanged(auth, async user => {
     document.body.classList.remove('logada');
   }
 
+  window.carregarTerreiroAtual?.();
   renderLista();
   renderMes();
 });
@@ -605,10 +606,36 @@ const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feir
 const TIPO_LABEL={Interna:'Sessão Interna',Atendimento:'Sessão com Atendimento',Visita:'Sessão de Visita',Familia:'Sessão da Família',Reuniao:'Reunião'};
 const TAMBOR_LABEL={confirmado:'✅ Tambor confirmado',arrecadacao:'🪘 Depende de arrecadação',nao:'❌ Sem tambor'};
 
+// ── TERREIRO — agenda é por casa; ?terreiroId= na URL escolhe qual (padrão: Bolhas de Luz) ──
+const API='/api/sessoes';
+const ADMIN_EMAILS_CAL=['bolhasdeluz@gmail.com','annagomes.bdl@gmail.com'];
+const TERREIRO_ATUAL=new URLSearchParams(location.search).get('terreiroId')||'bolhas-de-luz';
+function authHeadersCal(senhaDigitada){
+  const h={'Content-Type':'application/json'};
+  if(window.usuarioLogado?.email)h['X-User-Email']=window.usuarioLogado.email;
+  if(senhaDigitada)h['X-Admin-Password']=senhaDigitada;
+  else if(ADMIN_EMAILS_CAL.includes(window.usuarioLogado?.email)||window.souAdminDesteTerreiro)h['X-Admin-Password']='admin';
+  return h;
+}
+async function carregarTerreiroAtual(){
+  try{
+    const headers={};
+    if(window.usuarioLogado?.email)headers['X-User-Email']=window.usuarioLogado.email;
+    const res=await fetch(`/api/terreiros?id=${encodeURIComponent(TERREIRO_ATUAL)}`,{headers});
+    const t=await res.json();
+    if(res.ok){
+      window.souAdminDesteTerreiro=!!t.souAdmin;
+      const eyebrow=document.getElementById('cal-eyebrow');
+      if(eyebrow&&t.nome)eyebrow.textContent='Terreiro '+t.nome;
+    }
+  }catch(e){}
+  window.renderLista?.();
+}
+
 function getGrupoUsuario() {
   if (!window.usuarioLogado) return 'publico';
   const email = window.usuarioLogado.email || '';
-  if (email === 'bolhasdeluz@gmail.com') return 'admin';
+  if (ADMIN_EMAILS_CAL.includes(email) || window.souAdminDesteTerreiro) return 'admin';
   return window._perfilUsuario?.grupo || 'visitante';
 }
 
@@ -629,7 +656,7 @@ function sessaoPublica(s) {
 }
 
 async function load(){
-  try{const res=await fetch(API);sessoes=await res.json();renderLista();renderMes();}
+  try{const res=await fetch(`${API}?terreiroId=${encodeURIComponent(TERREIRO_ATUAL)}`);sessoes=await res.json();renderLista();renderMes();}
   catch{document.getElementById('cal-main').innerHTML='<div class="empty">Erro ao carregar.</div>';}
 }
 
@@ -639,7 +666,7 @@ window.togglePassadas=()=>{mostrarPassadas=!mostrarPassadas;document.getElementB
 
 window.renderLista=function(){
   const logada=!!window.usuarioLogado;
-  const isAdmin=window.usuarioLogado?.email==='bolhasdeluz@gmail.com';
+  const isAdmin=ADMIN_EMAILS_CAL.includes(window.usuarioLogado?.email)||window.souAdminDesteTerreiro;
   let lista=sessoes.filter(s=>{
     if(!sessaoVisivel(s))return false;
     if(filtroTipo&&s.tipo!==filtroTipo)return false;
@@ -750,11 +777,11 @@ window.salvar=async()=>{
     descricao:document.getElementById('fDesc').value.trim(),
     responsavel:document.getElementById('fResp').value.trim(),
     tambor:document.getElementById('fTambor').value,
-    grupos,
-    senha:document.getElementById('fSenha').value};
+    grupos, terreiroId:TERREIRO_ATUAL};
+  const senhaDigitada=document.getElementById('fSenha').value;
   const editId=document.getElementById('editId').value;
   if(editId)payload.id=editId;
-  const res=await fetch(API,{method:editId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const res=await fetch(API,{method:editId?'PUT':'POST',headers:authHeadersCal(senhaDigitada),body:JSON.stringify(payload)});
   const json=await res.json();
   if(res.status===403){document.getElementById('senhaErr').style.display='block';return;}
   if(editId){const idx=sessoes.findIndex(x=>x.id===editId);if(idx>=0)sessoes[idx]=json;}
@@ -772,8 +799,8 @@ window.fecharConfirm=()=>{document.getElementById('confirmOverlay').classList.re
 window.confirmarDelete=async()=>{
   if(!deletarId)return;
   const senha=document.getElementById('confirmSenha').value;
-  if(!senha){document.getElementById('confirmSenha').focus();return;}
-  const res=await fetch(API,{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:deletarId,senha})});
+  if(!senha&&!ADMIN_EMAILS_CAL.includes(window.usuarioLogado?.email)&&!window.souAdminDesteTerreiro){document.getElementById('confirmSenha').focus();return;}
+  const res=await fetch(API,{method:'DELETE',headers:authHeadersCal(senha),body:JSON.stringify({id:deletarId})});
   if(res.status===403){document.getElementById('confirmSenhaErr').style.display='block';return;}
   sessoes=sessoes.filter(x=>x.id!==deletarId);fecharConfirm();renderLista();toast('Sessão excluída');
 };
@@ -792,11 +819,12 @@ window.atualizarContador=atualizarContadorImport;
 window.selecionarTodos=v=>document.querySelectorAll('#importList input[type=checkbox]').forEach(c=>c.checked=v);
 window.fecharImport=()=>{document.getElementById('importOverlay').classList.remove('open');document.getElementById('importSenha').value='';};
 window.confirmarImport=async()=>{
-  const senha=document.getElementById('importSenha').value;if(!senha){alert('Digite a senha.');return;}
+  const senha=document.getElementById('importSenha').value;
+  if(!senha&&!ADMIN_EMAILS_CAL.includes(window.usuarioLogado?.email)&&!window.souAdminDesteTerreiro){alert('Digite a senha.');return;}
   const cbs=document.querySelectorAll('#importList input[type=checkbox]');
   const sel=importEventos.filter((_,i)=>cbs[i]?.checked);if(!sel.length){alert('Selecione ao menos um.');return;}
   const btn=document.querySelector('.import-overlay .btn-save');btn.textContent='Importando…';btn.disabled=true;
-  let ok=0,err=0;for(const ev of sel){try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...ev,senha})});if(r.status===403){alert('Senha incorreta.');btn.textContent='Importar';btn.disabled=false;return;}if(r.ok){sessoes.push(await r.json());ok++;}else err++;}catch{err++;}}
+  let ok=0,err=0;for(const ev of sel){try{const r=await fetch(API,{method:'POST',headers:authHeadersCal(senha),body:JSON.stringify({...ev,terreiroId:TERREIRO_ATUAL})});if(r.status===403){alert('Senha incorreta.');btn.textContent='Importar';btn.disabled=false;return;}if(r.ok){sessoes.push(await r.json());ok++;}else err++;}catch{err++;}}
   sessoes.sort((a,b)=>a.data.localeCompare(b.data));fecharImport();renderLista();btn.textContent='Importar';btn.disabled=false;toast(`${ok} importada(s)!`);
 };
 

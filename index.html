@@ -302,6 +302,14 @@ footer{
 .drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
 .drawer-dot.mem{background:rgba(196,57,107,.28)}
 .drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
+/* ── MEU TERREIRO — widget de auto-atendimento no gavetão de ferramentas ── */
+.mt-card{margin:0 16px 12px;padding:14px 16px;background:rgba(255,255,255,.6);border:1px solid var(--border);border-radius:12px}
+.mt-eyebrow{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rosa);margin-bottom:6px}
+.mt-nome{font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)}
+.mt-endereco,.mt-membros{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);margin-top:2px}
+.mt-pendente{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);font-style:italic;margin-bottom:8px}
+.mt-acoes{display:flex;gap:12px;margin-top:10px;flex-wrap:wrap}
+.mt-link{background:none;border:none;padding:0;font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--rosa);text-decoration:underline;cursor:pointer}
 .drawer-submenu-toggle{display:flex;align-items:center;justify-content:space-between;padding:4px 4px 8px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(196,90,30,.5);background:none;border:none;width:100%;text-align:left;cursor:default}
 .drawer-submenu-toggle .dsm-arrow{display:none}
 .drawer-submenu{
@@ -3703,25 +3711,30 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
     <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
-      <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
+      <button class="admin-menu-item admin-menu-global-only" onclick="adminAbrirSecao('menu')">
         <span class="admin-menu-item-icon">📋</span>
         <span class="admin-menu-item-label">Menu do Site</span>
         <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
       </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
+      <button class="admin-menu-item admin-menu-global-only" onclick="adminAbrirSecao('historia')">
         <span class="admin-menu-item-icon">📜</span>
         <span class="admin-menu-item-label">Sua História</span>
         <span class="admin-menu-item-desc">Quem pode ver o card</span>
       </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')">
+      <button class="admin-menu-item admin-menu-global-only" onclick="adminAbrirSecao('avisos')">
         <span class="admin-menu-item-icon">📢</span>
         <span class="admin-menu-item-label">Avisos / Comunicados</span>
         <span class="admin-menu-item-desc">Escreva avisos pra cada grupo</span>
       </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')">
+      <button class="admin-menu-item admin-menu-global-only" onclick="adminAbrirSecao('filhas')">
         <span class="admin-menu-item-icon">🌸</span>
         <span class="admin-menu-item-label">Filhas da Casa</span>
         <span class="admin-menu-item-desc">Perfis e fichas</span>
+      </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('terreiros')">
+        <span class="admin-menu-item-icon">🏛</span>
+        <span class="admin-menu-item-label">Terreiros</span>
+        <span class="admin-menu-item-desc">Endereço, agenda e pedidos de entrada</span>
       </button>
     </div>
 
@@ -3792,6 +3805,35 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <div class="admin-filhas-grid" id="admin-filhas-grid">
             <div class="admin-filhas-vazio">Carregando perfis...</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TERREIROS — admin global cria casas e define quem administra cada uma;
+         a aprovação de pedidos de entrada em si é feita pela admin da casa,
+         que também tem acesso a essa mesma seção (ver renderTerreirosAdmin) -->
+    <div id="admin-sub-terreiros" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">Terreiros</span>
+          <div style="display:flex;gap:6px">
+            <button class="admin-btn" onclick="terreiroAdminAbrirCriar()">+ Criar terreiro</button>
+            <button class="admin-btn" onclick="renderTerreirosAdmin()">↺ Atualizar</button>
+          </div>
+        </div>
+        <div id="terreiro-admin-criar-form" style="display:none;padding:14px 16px;border-bottom:1px solid var(--border)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <input type="text" class="form-input" id="ta-criar-id" placeholder="id (ex: ile-da-mae-oxum)">
+            <input type="text" class="form-input" id="ta-criar-nome" placeholder="Nome do terreiro">
+            <input type="text" class="form-input" id="ta-criar-logradouro" placeholder="Endereço">
+            <input type="text" class="form-input" id="ta-criar-cidade" placeholder="Cidade/UF">
+            <input type="email" class="form-input" id="ta-criar-admin" placeholder="E-mail da admin da casa" style="grid-column:1/-1">
+          </div>
+          <button class="btn-add" onclick="terreiroAdminCriar()">✓ Criar</button>
+        </div>
+        <div style="padding:16px" id="admin-terreiros-lista">
+          <div class="admin-filhas-vazio">Carregando terreiros...</div>
         </div>
       </div>
     </div>
@@ -4009,7 +4051,10 @@ function renderDrawer() {
     grupoUsuario = 'admin';
   }
 
-  // card especial do Painel Admin, sempre no topo, fora das seções
+  // card especial do Painel Admin, sempre no topo, fora das seções — admin de
+  // terreiro (não-global, ex: a admin de uma casa que não é a Bolhas de Luz)
+  // também vê esse card, só que levando direto pra seção "Terreiros"
+  const souAdminTerreiro = !emSimulacao && window._souAdminDoMeuTerreiro === true;
   const adminCardHtml = ehAdmin
     ? `<div class="drawer-section" style="padding-bottom:0">
          <button class="drawer-card admin-card" style="width:100%" onclick="showPage('admin');closeDrawer()">
@@ -4018,7 +4063,15 @@ function renderDrawer() {
            <span class="drawer-card-tag tag-mem">admin</span>
          </button>
        </div>`
-    : '';
+    : (souAdminTerreiro
+    ? `<div class="drawer-section" style="padding-bottom:0">
+         <button class="drawer-card admin-card" style="width:100%" onclick="showPage('admin');closeDrawer()">
+           <span class="drawer-card-name">🏛 Minha Casa (admin)</span>
+           <span class="drawer-card-desc">Endereço, agenda e pedidos de entrada</span>
+           <span class="drawer-card-tag tag-mem">admin</span>
+         </button>
+       </div>`
+    : '');
 
   const sectionsHtml = menuData.sections.map(sec => {
     const visibleItems = sec.items.filter(i => {
@@ -4268,7 +4321,7 @@ function renderCards() {
 
 // ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
 // empilhado numa rolagem só ──
-const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'filhas'];
+const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'filhas', 'terreiros'];
 function adminAbrirSecao(nome) {
   document.getElementById('admin-menu-principal').style.display = 'none';
   ADMIN_SUBSECOES.forEach(n => {
@@ -4698,6 +4751,133 @@ async function carregarFilhasAdmin() {
   } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
 }
 
+// ── PAINEL — TERREIROS ──
+// Visível tanto pra admin global (cria terreiros, define quem administra cada
+// um) quanto pra admin de uma casa específica (só edita/aprova a sua, ver
+// souAdmin em cada item da resposta de /api/terreiros?id=X)
+function terreiroAdminHeaders() {
+  const h = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+  const u = window._getCurrentUser && window._getCurrentUser();
+  if (u?.email) h['X-User-Email'] = u.email;
+  return h;
+}
+
+function terreiroAdminAbrirCriar() {
+  const f = document.getElementById('terreiro-admin-criar-form');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function terreiroAdminCriar() {
+  const id = document.getElementById('ta-criar-id').value.trim();
+  const nome = document.getElementById('ta-criar-nome').value.trim();
+  const logradouro = document.getElementById('ta-criar-logradouro').value.trim();
+  const cidade = document.getElementById('ta-criar-cidade').value.trim();
+  const adminEmail = document.getElementById('ta-criar-admin').value.trim().toLowerCase();
+  if (!id || !nome) { alert('Preencha ao menos id e nome.'); return; }
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'POST',
+      headers: terreiroAdminHeaders(),
+      body: JSON.stringify({
+        action: 'criar', id, nome,
+        endereco: { logradouro, cidade },
+        adminEmails: adminEmail ? [adminEmail] : [],
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não foi possível criar.'); return; }
+    document.getElementById('terreiro-admin-criar-form').style.display = 'none';
+    ['id','nome','logradouro','cidade','admin'].forEach(k => document.getElementById('ta-criar-'+k).value = '');
+    terreirosCache = null;
+    renderTerreirosAdmin();
+  } catch(e) { alert('Não foi possível criar.'); }
+}
+
+async function renderTerreirosAdmin() {
+  const wrap = document.getElementById('admin-terreiros-lista');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="admin-filhas-vazio">Carregando terreiros...</div>';
+  try {
+    const resumo = await terreirosListar(true);
+    const detalhes = await Promise.all(resumo.map(t =>
+      fetch(`/api/terreiros?id=${encodeURIComponent(t.id)}`, { headers: terreiroAdminHeaders() }).then(r => r.json())
+    ));
+    if (!detalhes.length) { wrap.innerHTML = '<div class="admin-filhas-vazio">Nenhum terreiro cadastrado.</div>'; return; }
+
+    wrap.innerHTML = detalhes.map(t => `
+      <div class="admin-section-block" style="margin-bottom:14px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">${t.nome} <span style="font-weight:400;font-size:.75rem;color:var(--text-dim)">(${t.membroCount} membro${t.membroCount===1?'':'s'})</span></span>
+        </div>
+        <div style="padding:14px 16px">
+          ${t.souAdmin ? `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <input type="text" class="form-input" id="ta-nome-${t.id}" value="${t.nome||''}" placeholder="Nome">
+              <input type="text" class="form-input" id="ta-logradouro-${t.id}" value="${t.endereco?.logradouro||''}" placeholder="Endereço">
+              <input type="text" class="form-input" id="ta-cidade-${t.id}" value="${t.endereco?.cidade||''}" placeholder="Cidade/UF" style="grid-column:1/-1">
+            </div>
+            <button class="admin-btn" onclick="terreiroAdminSalvar('${t.id}')" style="margin-bottom:14px">✓ Salvar dados da casa</button>
+            <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Pedidos pendentes</div>
+            ${t.pendentes?.length ? t.pendentes.map(p => `
+              <div class="gp-admin-perfil-row">
+                <span class="gp-admin-perfil-nome">${p.nome || p.email}</span>
+                <div class="gp-admin-perfil-toggles">
+                  <button class="admin-btn" onclick="terreiroAdminAprovar('${t.id}','${p.email}')">✓ Aprovar</button>
+                  <button class="admin-btn" style="background:var(--text-dim)" onclick="terreiroAdminRejeitar('${t.id}','${p.email}')">✕ Rejeitar</button>
+                </div>
+              </div>`).join('') : '<div class="admin-filhas-vazio">Nenhum pedido pendente.</div>'}
+            <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin:14px 0 8px">Membros aprovados</div>
+            ${t.membros?.length ? t.membros.map(m => `<div class="gp-admin-perfil-row"><span class="gp-admin-perfil-nome">${m.emoji||'✦'} ${m.nome||m.email}</span></div>`).join('') : '<div class="admin-filhas-vazio">Ainda sem membros.</div>'}
+          ` : `
+            <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim)">
+              📍 ${[t.endereco?.logradouro, t.endereco?.cidade].filter(Boolean).join(' · ') || 'Endereço não informado'}
+            </div>
+          `}
+        </div>
+      </div>`).join('');
+  } catch(e) { wrap.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar terreiros.</div>'; }
+}
+
+async function terreiroAdminSalvar(id) {
+  const nome = document.getElementById(`ta-nome-${id}`).value.trim();
+  const logradouro = document.getElementById(`ta-logradouro-${id}`).value.trim();
+  const cidade = document.getElementById(`ta-cidade-${id}`).value.trim();
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'PUT',
+      headers: terreiroAdminHeaders(),
+      body: JSON.stringify({ id, nome, endereco: { logradouro, cidade } })
+    });
+    if (!res.ok) { const d = await res.json(); alert(d.error || 'Não foi possível salvar.'); return; }
+    terreirosCache = null;
+    renderTerreirosAdmin();
+  } catch(e) { alert('Não foi possível salvar.'); }
+}
+
+async function terreiroAdminAprovar(terreiroId, email) {
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'POST', headers: terreiroAdminHeaders(),
+      body: JSON.stringify({ action: 'aprovar', terreiroId, email })
+    });
+    if (!res.ok) { const d = await res.json(); alert(d.error || 'Não foi possível aprovar.'); return; }
+    terreirosCache = null;
+    renderTerreirosAdmin();
+  } catch(e) { alert('Não foi possível aprovar.'); }
+}
+
+async function terreiroAdminRejeitar(terreiroId, email) {
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'POST', headers: terreiroAdminHeaders(),
+      body: JSON.stringify({ action: 'rejeitar', terreiroId, email })
+    });
+    if (!res.ok) { const d = await res.json(); alert(d.error || 'Não foi possível rejeitar.'); return; }
+    terreirosCache = null;
+    renderTerreirosAdmin();
+  } catch(e) { alert('Não foi possível rejeitar.'); }
+}
+
 // marcos padrão da linha do tempo — declarado aqui para estar disponível em abrirFicha e renderTimeline
 const MH_MARCOS_DEF = [
   { key:'data_entrada', label:'Entrada na Casa', cor:'#c4396b', tipo:'data' },
@@ -5048,7 +5228,14 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
-  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); }
+  if (name === 'admin') {
+    adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar();
+    const userNow = window._getCurrentUser && window._getCurrentUser();
+    const ehAdminGlobal = souAdminAtivo(userNow);
+    document.querySelectorAll('.admin-menu-global-only').forEach(b => b.style.display = ehAdminGlobal ? '' : 'none');
+    if (!ehAdminGlobal) adminAbrirSecao('terreiros');
+    renderTerreirosAdmin();
+  }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
@@ -13088,6 +13275,7 @@ onAuthStateChanged(auth, async (user) => {
     const avatar = document.getElementById('user-avatar');
     if (avatar) avatar.style.display = 'none';
     document.getElementById('drawer-user-section').style.display = 'none';
+    document.getElementById('drawer-user-section').innerHTML = '';
     perfilData = {};
     atualizarWidgetHistoria(false);
     if (menuData) renderCards();
@@ -13327,7 +13515,115 @@ async function carregarPerfil(email) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
   }
   atualizarBoasVindas();
+  renderMeuTerreiro();
 }
+
+// ── MEU TERREIRO — escolher/solicitar entrada, ver status e dados da casa ──
+// perfil sem terreiroId é tratado como Bolhas de Luz (aprovado), o mesmo
+// fallback usado no backend (functions/api/terreiros.js) — ver comentário lá
+let terreirosCache = null;
+async function terreirosListar(forcar) {
+  if (terreirosCache && !forcar) return terreirosCache;
+  try {
+    const res = await fetch('/api/terreiros');
+    terreirosCache = await res.json();
+  } catch(e) { terreirosCache = []; }
+  return terreirosCache;
+}
+
+async function renderMeuTerreiro() {
+  const el = document.getElementById('drawer-user-section');
+  if (!el || !currentUser) return;
+
+  const meuId = perfilData.terreiroId || 'bolhas-de-luz';
+  const meuStatus = perfilData.terreiroId ? (perfilData.terreiroStatus || 'aprovado') : 'aprovado';
+  const terreiros = await terreirosListar();
+  const meuTerreiro = terreiros.find(t => t.id === meuId);
+
+  // descobre se a pessoa administra o próprio terreiro, pra exibir (ou não) o
+  // atalho "Minha Casa (admin)" no gavetão — ver renderDrawer()
+  if (meuStatus === 'aprovado') {
+    fetch(`/api/terreiros?id=${encodeURIComponent(meuId)}`, { headers: { 'X-User-Email': currentUser.email } })
+      .then(r => r.json())
+      .then(d => { window._souAdminDoMeuTerreiro = !!d.souAdmin; renderDrawer(); })
+      .catch(() => {});
+  }
+
+  if (meuStatus === 'pendente') {
+    el.innerHTML = `
+      <div class="mt-card">
+        <div class="mt-eyebrow">Meu Terreiro</div>
+        <div class="mt-pendente">⏳ Pedido de entrada em <b>${meuTerreiro?.nome || meuId}</b> aguardando aprovação da admin da casa.</div>
+        <button class="mt-link" onclick="terreiroCancelar()">Cancelar pedido</button>
+      </div>`;
+    return;
+  }
+
+  const endereco = meuTerreiro?.endereco || {};
+  const enderecoTxt = [endereco.logradouro, endereco.cidade, endereco.estado].filter(Boolean).join(' · ');
+  const outros = terreiros.filter(t => t.id !== meuId);
+
+  el.innerHTML = `
+    <div class="mt-card">
+      <div class="mt-eyebrow">Meu Terreiro</div>
+      <div class="mt-nome">${meuTerreiro?.nome || '—'}</div>
+      ${enderecoTxt ? `<div class="mt-endereco">📍 ${enderecoTxt}</div>` : ''}
+      <div class="mt-membros">${meuTerreiro?.membroCount ?? '—'} pessoa(s) na casa</div>
+      <div class="mt-acoes">
+        <a class="mt-link" href="/calendario.html?terreiroId=${meuId}">Ver agenda</a>
+        ${outros.length ? `<button class="mt-link" onclick="terreiroAbrirPicker()">Trocar de terreiro</button>` : ''}
+      </div>
+      ${outros.length ? `
+      <div id="mt-picker" style="display:none;margin-top:10px">
+        <select class="form-input" id="mt-select" style="font-family:'Crimson Pro',serif;font-size:13px;margin-bottom:6px;width:100%">
+          ${outros.map(t => `<option value="${t.id}">${t.nome}</option>`).join('')}
+        </select>
+        <button class="mt-link" onclick="terreiroSolicitar()">Solicitar entrada</button>
+      </div>` : ''}
+    </div>`;
+}
+window.renderMeuTerreiro = renderMeuTerreiro;
+
+window.terreiroAbrirPicker = function() {
+  const p = document.getElementById('mt-picker');
+  if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
+};
+
+window.terreiroSolicitar = async function() {
+  const sel = document.getElementById('mt-select');
+  const terreiroId = sel?.value;
+  if (!terreiroId || !currentUser) return;
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+      body: JSON.stringify({ action: 'solicitar', email: currentUser.email, terreiroId })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não foi possível enviar o pedido.'); return; }
+    perfilData.terreiroId = data.terreiroId;
+    perfilData.terreiroStatus = data.terreiroStatus;
+    await terreirosListar(true);
+    renderMeuTerreiro();
+  } catch(e) { alert('Não foi possível enviar o pedido.'); }
+};
+
+window.terreiroCancelar = async function() {
+  if (!currentUser) return;
+  try {
+    const res = await fetch('/api/terreiros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': currentUser.email },
+      body: JSON.stringify({ action: 'rejeitar', email: currentUser.email })
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não foi possível cancelar.'); return; }
+    perfilData.terreiroId = null;
+    perfilData.terreiroStatus = null;
+    await terreirosListar(true);
+    renderMeuTerreiro();
+  } catch(e) { alert('Não foi possível cancelar.'); }
+};
 
 window.salvarBoasVindas = async function() {
   if (!currentUser) return;
