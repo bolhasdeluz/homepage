@@ -3568,6 +3568,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <option value="assistencia">Assistência</option>
         </select>
       </div>
+      <div><label class="form-label">Terreiro</label>
+        <select class="form-input" id="cp-terreiro" style="font-family:'Crimson Pro',serif;font-size:15px">
+          <option value="bolhas-de-luz">Bolhas de Luz</option>
+        </select>
+      </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
       <div><label class="form-label">🎂 Data de Aniversário</label><input type="date" class="form-input" id="cp-data_nascimento"></div>
     </div>
@@ -5014,12 +5019,24 @@ function abrirCriarPerfil(emailParaEditar) {
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
   cpPerfilOriginal = null;
 
+  // terreiro: tanto perfis novos quanto os que já existem (sem terreiroId salvo)
+  // vêm com Bolhas de Luz selecionado por padrão
+  const perfilPromise = emailParaEditar
+    ? fetch(`/api/perfil?email=${encodeURIComponent(emailParaEditar)}`, { headers: {'X-Admin-Password':'admin'} }).then(r => r.json())
+    : Promise.resolve(null);
+  Promise.all([terreirosListar(), perfilPromise]).then(([terreiros, p]) => {
+    const sel = document.getElementById('cp-terreiro');
+    if (sel) {
+      const lista = terreiros.length ? terreiros : [{ id: 'bolhas-de-luz', nome: 'Bolhas de Luz' }];
+      sel.innerHTML = lista.map(t => `<option value="${t.id}">${t.nome}</option>`).join('');
+      sel.value = p?.terreiroId || 'bolhas-de-luz';
+    }
+    if (p) { cpPerfilOriginal = p; preencherFormPerfil(p); }
+  });
+
   // se editar, preencher
   if (emailParaEditar) {
     document.getElementById('criar-modal-titulo').textContent = 'Editar Perfil';
-    fetch(`/api/perfil?email=${encodeURIComponent(emailParaEditar)}`, { headers: {'X-Admin-Password':'admin'} })
-      .then(r => r.json())
-      .then(p => { cpPerfilOriginal = p; preencherFormPerfil(p); });
     document.getElementById('cp-email').value = emailParaEditar;
     document.getElementById('cp-email').disabled = true;
   }
@@ -5066,6 +5083,9 @@ async function salvarPerfilAdmin() {
     nome:  document.getElementById('cp-nome').value.trim(),
     cargo: document.getElementById('cp-cargo').value,
     grupo: document.getElementById('cp-grupo').value || 'visitante',
+    terreiroId: document.getElementById('cp-terreiro')?.value || 'bolhas-de-luz',
+    terreiroStatus: 'aprovado',
+    terreiroAprovadoEm: base.terreiroAprovadoEm || Date.now(),
     emoji: document.getElementById('cp-emoji').value.trim(),
     dataNascimento: document.getElementById('cp-data_nascimento').value || '',
     historia: { ...(base.historia || {}) },
