@@ -7,7 +7,7 @@
 // hoje continuam funcionando sem precisar de uma migração em massa no KV.
 
 const ADMIN_PASSWORD = 'admin';
-const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com'];
 const TERREIRO_PADRAO = 'bolhas-de-luz';
 
 const CORS = {
@@ -57,7 +57,7 @@ const TERREIROS_SEED = [
     id: 'bolhas-de-luz',
     nome: 'Bolhas de Luz',
     endereco: { logradouro: 'Rua Ary Tarrago, 2155', cidade: 'Porto Alegre', estado: 'RS' },
-    adminEmails: ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'],
+    adminEmails: ['annagomes.bdl@gmail.com'],
   },
   {
     id: 'ile-da-mae-oxum',

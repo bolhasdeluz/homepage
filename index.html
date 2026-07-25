@@ -3982,7 +3982,7 @@ function logoutSenhaPadrao() {
 let menuData = null;
 
 // ── E-MAILS COM ACESSO ADMIN ──
-const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com'];
 function isEmailAdmin(email) { return !!email && ADMIN_EMAILS.includes(email); }
 
 
@@ -4804,6 +4804,9 @@ async function renderTerreirosAdmin() {
     ));
     if (!detalhes.length) { wrap.innerHTML = '<div class="admin-filhas-vazio">Nenhum terreiro cadastrado.</div>'; return; }
 
+    const userNow = window._getCurrentUser && window._getCurrentUser();
+    const ehAdminGlobal = souAdminAtivo(userNow);
+
     wrap.innerHTML = detalhes.map(t => `
       <div class="admin-section-block" style="margin-bottom:14px">
         <div class="admin-section-header">
@@ -4815,6 +4818,7 @@ async function renderTerreirosAdmin() {
               <input type="text" class="form-input" id="ta-nome-${t.id}" value="${t.nome||''}" placeholder="Nome">
               <input type="text" class="form-input" id="ta-logradouro-${t.id}" value="${t.endereco?.logradouro||''}" placeholder="Endereço">
               <input type="text" class="form-input" id="ta-cidade-${t.id}" value="${t.endereco?.cidade||''}" placeholder="Cidade/UF" style="grid-column:1/-1">
+              ${ehAdminGlobal ? `<input type="text" class="form-input" id="ta-admins-${t.id}" value="${(t.adminEmails||[]).join(', ')}" placeholder="E-mails admin da casa, separados por vírgula" style="grid-column:1/-1">` : ''}
             </div>
             <button class="admin-btn" onclick="terreiroAdminSalvar('${t.id}')" style="margin-bottom:14px">✓ Salvar dados da casa</button>
             <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">Pedidos pendentes</div>
@@ -4842,11 +4846,14 @@ async function terreiroAdminSalvar(id) {
   const nome = document.getElementById(`ta-nome-${id}`).value.trim();
   const logradouro = document.getElementById(`ta-logradouro-${id}`).value.trim();
   const cidade = document.getElementById(`ta-cidade-${id}`).value.trim();
+  const payload = { id, nome, endereco: { logradouro, cidade } };
+  const adminsInput = document.getElementById(`ta-admins-${id}`);
+  if (adminsInput) payload.adminEmails = adminsInput.value.split(',').map(e => e.trim().toLowerCase()).filter(Boolean);
   try {
     const res = await fetch('/api/terreiros', {
       method: 'PUT',
       headers: terreiroAdminHeaders(),
-      body: JSON.stringify({ id, nome, endereco: { logradouro, cidade } })
+      body: JSON.stringify(payload)
     });
     if (!res.ok) { const d = await res.json(); alert(d.error || 'Não foi possível salvar.'); return; }
     terreirosCache = null;
