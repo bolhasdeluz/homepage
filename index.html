@@ -11572,9 +11572,10 @@ const auth = getAuth(app);
       wrap.innerHTML = doMes.map(a => `<div class="rm-linha"><span>${a.nome}</span><span class="rm-linha-tag">${a.dia} de ${MESES_RM[a.mes-1]}</span></div>`).join('');
     }
 
-    // ── MANUTENÇÃO ATUAL ──
+    // ── MANUTENÇÃO ATUAL (não mostra concluída nem aguardando — só o que já tem
+    // encaminhamento de verdade: pendente, agendada ou em andamento) ──
     onSnapshot(collection(db, 'manutencao'), snap => {
-      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => mnStatusReal(i) !== 'concluida');
+      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !['concluida', 'aguardando'].includes(mnStatusReal(i)));
       const wrap = document.getElementById('rm-manut-lista');
       if (!wrap) return;
       if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
