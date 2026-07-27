@@ -1120,13 +1120,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
 /* listas genéricas dentro das seções */
 .rm-lista{display:grid;grid-template-columns:1fr 1fr;gap:3px}
-.rm-linha{display:flex;flex-direction:column;gap:1px;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);padding:5px 8px;background:var(--rosa-dim);border-radius:7px;min-width:0}
-.rm-linha>span:first-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;line-height:1.5}
-/* Cinzel é uma fonte decorativa com métrica vertical maior que o comum — com
-   line-height apertado, o overflow:hidden (necessário pro "..." de texto longo)
-   acaba cortando a própria letra em alguns celulares/navegadores. Line-height
-   bem folgado aqui evita isso sem mudar a aparência no resto. */
-.rm-linha-tag{font-family:'Cinzel',serif;font-size:.72rem;line-height:1.9;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+/* bloco simples empilhando as duas linhas (título em cima, subtítulo embaixo) —
+   trocado de flexbox por bloco puro porque o cálculo de altura automática do
+   flex-direction:column em alguns celulares/navegadores saía menor que o
+   conteúdo de verdade, cortando a segunda linha mesmo com o line-height certo */
+.rm-linha{display:block;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);padding:5px 8px;background:var(--rosa-dim);border-radius:7px;min-width:0}
+.rm-linha>span:first-child{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;line-height:1.5}
+.rm-linha-tag{display:block;font-family:'Cinzel',serif;font-size:.72rem;line-height:1.7;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .rm-lista-1col{grid-template-columns:1fr}
 .rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
