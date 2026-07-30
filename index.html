@@ -1123,10 +1123,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 /* bloco simples empilhando as duas linhas (título em cima, subtítulo embaixo) —
    trocado de flexbox por bloco puro porque o cálculo de altura automática do
    flex-direction:column em alguns celulares/navegadores saía menor que o
-   conteúdo de verdade, cortando a segunda linha mesmo com o line-height certo */
+   conteúdo de verdade, cortando a segunda linha mesmo com o line-height certo.
+   Sem white-space:nowrap/overflow:hidden/text-overflow:ellipsis aqui também —
+   esse combo (pro "..." de texto muito comprido) tava cortando a base de
+   letras com descendente (g, q, ç) na hora de gerar a imagem, em qualquer
+   navegador. Texto muito comprido agora quebra pra segunda linha em vez de
+   truncar — a caixa só cresce, nunca corta letra. */
 .rm-linha{display:block;font-family:'DM Sans',sans-serif;font-size:.92rem;color:var(--text);padding:5px 8px;background:var(--rosa-dim);border-radius:7px;min-width:0}
-.rm-linha>span:first-child{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;line-height:1.5}
-.rm-linha-tag{display:block;font-family:'Cinzel',serif;font-size:.72rem;line-height:1.7;color:var(--rosa);font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.rm-linha>span:first-child{display:block;font-weight:600;line-height:1.5}
+.rm-linha-tag{display:block;font-family:'Cinzel',serif;font-size:.72rem;line-height:1.7;color:var(--rosa);font-weight:700;margin-top:1px}
 .rm-lista-1col{grid-template-columns:1fr}
 .rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
