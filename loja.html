@@ -450,12 +450,23 @@ window.ljEmojiCategoria = ljEmojiCategoria;
 window._ljDb = db;
 window._ljFirestore = { collection, addDoc, getDocs, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp };
 window._ljEhAdmin = ljEhAdmin;
+window._ljFirebasePronto = true;
+window.dispatchEvent(new Event('lj-firebase-pronto'));
 </script>
 <script>
 // o resto da lógica (carrinho, prateleiras, admin) roda em cima do que foi
 // exposto em window pelo módulo Firebase acima — script clássico, pra poder
 // usar onclick="" inline nos botões sem precisar expor cada função com
-// window.nome = ... uma por uma
+// window.nome = ... uma por uma.
+// IMPORTANTE: um <script type="module"> SEMPRE roda depois de um <script>
+// comum na mesma página, não importa a ordem em que aparecem no HTML nem
+// se esse aqui tem "defer" (testado e confirmado) — então esse script não
+// pode simplesmente assumir que window._ljDb/_ljFirestore já existem.
+// Em vez de depender de ordem de execução, tudo fica dentro de
+// ljIniciarApp() e só roda quando o módulo Firebase avisa que terminou
+// (evento "lj-firebase-pronto"), ou imediatamente se esse aviso já tiver
+// acontecido antes desse script rodar.
+function ljIniciarApp() {
 const db = window._ljDb;
 const { collection, addDoc, getDocs, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp } = window._ljFirestore;
 const ljFormatarPreco = window.ljFormatarPreco;
@@ -1178,6 +1189,10 @@ async function ljConferirRetornoPagamento() {
   ljRenderPrateleiras();
   ljConferirRetornoPagamento();
 })();
+} // fim de ljIniciarApp
+
+if (window._ljFirebasePronto) ljIniciarApp();
+else window.addEventListener('lj-firebase-pronto', ljIniciarApp, { once: true });
 </script>
 </body>
 </html>
