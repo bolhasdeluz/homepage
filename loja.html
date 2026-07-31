@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flora — Loja do Terreiro Bolhas de Luz</title>
+<meta name="description" content="Flora — a lojinha do Terreiro Bolhas de Luz. Velas, ervas, guias e mais.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flora — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);
+  --gold:#b8860b;--gold-dim:rgba(184,134,11,.1);
+  --madeira:#8a5a34;--madeira-escura:#6b4423;--madeira-clara:#a97c50;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden;padding-bottom:90px}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+/* ── HEADER ── */
+.lj-header{background:linear-gradient(135deg,#c4396b 0%,#a52c58 55%,#8a1a40 100%);padding:18px 20px 22px;text-align:center;position:relative;box-shadow:0 4px 20px rgba(196,57,107,.25)}
+.lj-header-eyebrow{font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.lj-header-titulo{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);margin-top:2px}
+.lj-header-sub{font-family:'Crimson Pro',serif;font-size:.95rem;font-style:italic;color:rgba(255,255,255,.82);margin-top:4px}
+.lj-header-voltar{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.78rem;padding:6px 14px;font-family:'DM Sans',sans-serif}
+.lj-header-admin{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.72rem;padding:6px 12px;font-family:'DM Sans',sans-serif}
+
+/* ── LOJA (estante virtual) ── */
+.lj-loja{max-width:900px;margin:0 auto;padding:26px 16px}
+.lj-vazio{text-align:center;padding:60px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1.05rem}
+
+.lj-prateleira-secao{margin-bottom:34px}
+.lj-prateleira-titulo{font-family:'Cinzel',serif;font-size:1rem;letter-spacing:.05em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.lj-prateleira-titulo .ic{font-size:1.3rem}
+
+.lj-prateleira{position:relative;padding:22px 14px 26px;background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.15));border-radius:14px}
+.lj-prateleira-itens{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:16px 12px;position:relative;z-index:1}
+.lj-prateleira-tabua{position:absolute;left:6px;right:6px;bottom:10px;height:16px;background:linear-gradient(180deg,var(--madeira-clara),var(--madeira) 40%,var(--madeira-escura));border-radius:3px;box-shadow:0 6px 10px rgba(107,68,35,.35),inset 0 1px 2px rgba(255,255,255,.3)}
+
+.lj-produto-item{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s;position:relative;z-index:2}
+.lj-produto-item:hover{transform:translateY(-4px)}
+.lj-produto-icone-wrap{width:76px;height:76px;background:radial-gradient(circle at 35% 30%,#fff,#fdf0f3 70%);border:1.5px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(140,58,26,.1);position:relative;overflow:hidden}
+.lj-produto-icone-wrap img{width:100%;height:100%;object-fit:cover}
+.lj-produto-icone{font-size:2.1rem}
+.lj-produto-desconto-selo{position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:8px;box-shadow:0 2px 6px rgba(196,57,107,.4)}
+.lj-produto-nome{font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;text-align:center;line-height:1.25;max-width:110px}
+.lj-produto-preco{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa)}
+.lj-produto-preco-de{font-size:.68rem;color:var(--text-dim);text-decoration:line-through;margin-right:4px}
+
+/* ── CARRINHO FLUTUANTE ── */
+.lj-carrinho-flutuante{position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;border:none;border-radius:30px;padding:13px 20px;font-family:'Cinzel',serif;font-size:.78rem;font-weight:700;letter-spacing:.03em;box-shadow:0 8px 26px rgba(196,57,107,.4);display:flex;align-items:center;gap:9px;z-index:600;transition:transform .15s}
+.lj-carrinho-flutuante:hover{transform:translateY(-2px)}
+.lj-carrinho-flutuante .qtd{background:#fff;color:var(--rosa);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.7rem}
+.lj-carrinho-flutuante[hidden]{display:none}
+
+/* ── MODAIS ── */
+.lj-modal-bg{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:16px;overflow-y:auto}
+.lj-modal-bg.aberto{display:flex}
+.lj-modal{background:#fff;border-radius:18px;padding:0;width:460px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 12px 50px rgba(140,58,26,.22);margin:auto;animation:ljPop .2s cubic-bezier(.3,1.3,.4,1)}
+@keyframes ljPop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+.lj-modal-topo{background:linear-gradient(135deg,#c4396b,#a52c58);padding:18px 20px;position:relative}
+.lj-modal-topo h3{font-family:'Playfair Display',serif;font-size:1.2rem;color:#fff;font-weight:700}
+.lj-modal-fechar{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:26px;height:26px;font-size:14px}
+.lj-modal-corpo{padding:20px}
+.lj-campo{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.lj-campo label{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em}
+.lj-campo input[type=text],.lj-campo input[type=number],.lj-campo input[type=tel],.lj-campo input[type=date],.lj-campo select,.lj-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);outline:none;transition:border-color .15s;width:100%}
+.lj-campo input:focus,.lj-campo select:focus,.lj-campo textarea:focus{border-color:var(--terra);background:#fff}
+.lj-campo textarea{min-height:60px;resize:vertical}
+.lj-row{display:flex;gap:8px;flex-wrap:wrap}
+.lj-row>*{flex:1;min-width:100px}
+
+.lj-btn{border:none;border-radius:10px;padding:11px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
+.lj-btn:hover{transform:translateY(-1px)}
+.lj-btn-primario{background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff}
+.lj-btn-secundario{background:var(--rosa-dim);color:var(--rosa)}
+.lj-btn-full{width:100%}
+.lj-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* opções (cor/tamanho) no modal de produto */
+.lj-opcoes-grupo{margin-bottom:14px}
+.lj-opcoes-titulo{font-family:'Cinzel',serif;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);margin-bottom:7px}
+.lj-opcoes-lista{display:flex;flex-wrap:wrap;gap:7px}
+.lj-opcao-btn{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:6px 13px;font-size:.78rem;color:var(--text);transition:all .15s}
+.lj-opcao-btn.selecionada{background:var(--rosa);border-color:var(--rosa);color:#fff}
+.lj-opcao-cor{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);padding:0;position:relative}
+.lj-opcao-cor.selecionada{border-color:var(--rosa);box-shadow:0 0 0 2px #fff,0 0 0 4px var(--rosa)}
+.lj-qtd-controle{display:flex;align-items:center;gap:12px;justify-content:center}
+.lj-qtd-controle button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:#fff;font-size:1.1rem;color:var(--rosa)}
+.lj-qtd-controle span{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;min-width:28px;text-align:center}
+
+/* carrinho */
+.lj-carrinho-item{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.lj-carrinho-item:last-child{border-bottom:none}
+.lj-carrinho-item-icone{width:48px;height:48px;background:var(--rosa-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;overflow:hidden}
+.lj-carrinho-item-icone img{width:100%;height:100%;object-fit:cover}
+.lj-carrinho-item-info{flex:1;min-width:0}
+.lj-carrinho-item-nome{font-weight:600;font-size:.86rem}
+.lj-carrinho-item-var{font-size:.72rem;color:var(--text-dim)}
+.lj-carrinho-item-preco{font-family:'Cinzel',serif;font-weight:700;color:var(--rosa);font-size:.85rem;white-space:nowrap}
+.lj-carrinho-item-remover{background:none;border:none;color:#a5362a;font-size:.9rem;padding:4px}
+.lj-carrinho-vazio{text-align:center;padding:30px 10px;color:var(--text-dim);font-style:italic;font-family:'Crimson Pro',serif}
+.lj-carrinho-total-linha{display:flex;justify-content:space-between;padding:6px 0;font-size:.86rem}
+.lj-carrinho-total-linha.total{font-family:'Cinzel',serif;font-weight:700;font-size:1.05rem;color:var(--rosa);border-top:1.5px solid var(--border);margin-top:6px;padding-top:12px}
+
+/* frete */
+.lj-frete-opcao{border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .15s;display:flex;gap:12px;align-items:flex-start}
+.lj-frete-opcao.selecionada{border-color:var(--rosa);background:var(--rosa-dim)}
+.lj-frete-opcao .ic{font-size:1.4rem}
+.lj-frete-opcao-titulo{font-weight:700;font-size:.88rem}
+.lj-frete-opcao-desc{font-size:.75rem;color:var(--text-dim);margin-top:2px}
+
+.lj-toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--terra);color:#fff;padding:10px 20px;border-radius:20px;font-size:.82rem;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s}
+.lj-toast.mostrar{opacity:1}
+
+/* ── ADMIN ── */
+#lj-tela-admin{display:none;max-width:760px;margin:0 auto;padding:26px 16px}
+.lj-admin-voltar{background:none;border:1px solid var(--border);border-radius:10px;padding:8px 16px;font-size:.8rem;color:var(--text);margin-bottom:18px}
+.lj-admin-secao{background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.07)}
+.lj-admin-secao h2{font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:14px;color:var(--text)}
+.lj-admin-lista-dinamica{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.lj-admin-lista-linha{display:flex;gap:8px;align-items:center}
+.lj-admin-lista-linha input[type=color]{width:40px;height:36px;border:1px solid var(--border);border-radius:8px;padding:2px;background:#fff;flex-shrink:0}
+.lj-admin-lista-linha button{background:none;border:none;color:#a5362a;font-size:1rem;padding:4px 8px;flex-shrink:0}
+.lj-admin-add-mini{background:var(--rosa-dim);border:1px dashed var(--rosa);color:var(--rosa);border-radius:8px;padding:7px 12px;font-size:.75rem;align-self:flex-start}
+.lj-admin-produto-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lj-admin-produto-card.inativo{opacity:.5}
+.lj-admin-produto-card-info{flex:1;min-width:0}
+.lj-admin-produto-card-nome{font-weight:700;font-size:.9rem}
+.lj-admin-produto-card-meta{font-size:.72rem;color:var(--text-dim)}
+.lj-admin-produto-card-acoes{display:flex;gap:6px;flex-shrink:0}
+.lj-admin-mini-btn{background:var(--rosa-dim);border:none;color:var(--rosa);border-radius:8px;padding:6px 10px;font-size:.72rem;font-weight:600}
+.lj-checkbox-linha{display:flex;align-items:center;gap:8px;font-size:.82rem}
+.lj-checkbox-linha input{width:16px;height:16px}
+.lj-admin-pedido-card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.lj-admin-pedido-topo{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.lj-admin-pedido-nome{font-weight:700;font-size:.88rem}
+.lj-admin-pedido-total{font-family:'Cinzel',serif;font-weight:700;color:var(--rosa)}
+.lj-admin-pedido-status{font-size:.7rem;padding:3px 9px;border-radius:20px;background:var(--gold-dim);color:var(--gold);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.lj-admin-pedido-detalhe{font-size:.78rem;color:var(--text-dim);line-height:1.5}
+.lj-admin-vazio{text-align:center;color:var(--text-dim);font-style:italic;padding:20px;font-family:'Crimson Pro',serif}
+
+#lj-login-status{position:fixed;top:8px;left:50%;transform:translateX(-50%);font-size:.6rem;color:rgba(255,255,255,.6);z-index:700}
+
+@media(max-width:480px){
+  .lj-header-titulo{font-size:1.6rem}
+  .lj-prateleira-itens{grid-template-columns:repeat(auto-fill,minmax(105px,1fr))}
+  .lj-produto-icone-wrap{width:64px;height:64px}
+}
+</style>
+</head>
+<body>
+
+<div class="lj-header">
+  <a href="/index.html" class="lj-header-voltar">← Voltar ao site</a>
+  <button class="lj-header-admin" id="lj-btn-admin" style="display:none">⚙️ Admin</button>
+  <div class="lj-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+  <div class="lj-header-titulo">🌿 Flora</div>
+  <div class="lj-header-sub">nossa lojinha — venha dar uma olhada nas prateleiras</div>
+</div>
+
+<!-- ═══ TELA DA LOJA (estante virtual) ═══ -->
+<div id="lj-tela-loja">
+  <div class="lj-loja">
+    <div id="lj-status-pagamento" style="display:none;background:var(--gold-dim);color:var(--gold);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-weight:600;text-align:center;font-size:.88rem"></div>
+    <div id="lj-prateleiras"><div class="lj-vazio">Abrindo a loja...</div></div>
+  </div>
+</div>
+
+<button class="lj-carrinho-flutuante" id="lj-btn-carrinho" hidden onclick="ljAbrirCarrinho()">
+  🧺 Carrinho <span class="qtd" id="lj-carrinho-qtd">0</span>
+</button>
+
+<!-- ═══ MODAL: PRODUTO ═══ -->
+<div class="lj-modal-bg" id="lj-modal-produto-bg">
+  <div class="lj-modal">
+    <div class="lj-modal-topo">
+      <h3 id="lj-produto-modal-nome">—</h3>
+      <button class="lj-modal-fechar" onclick="ljFecharModal('lj-modal-produto-bg')">✕</button>
+    </div>
+    <div class="lj-modal-corpo">
+      <p id="lj-produto-modal-desc" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);margin-bottom:14px"></p>
+      <div id="lj-produto-modal-kit-itens" style="display:none;background:var(--rosa-dim);border-radius:10px;padding:10px 12px;font-size:.8rem;margin-bottom:14px;white-space:pre-wrap"></div>
+      <div class="lj-opcoes-grupo" id="lj-produto-modal-cores-wrap" style="display:none">
+        <div class="lj-opcoes-titulo">Cor</div>
+        <div class="lj-opcoes-lista" id="lj-produto-modal-cores"></div>
+      </div>
+      <div class="lj-opcoes-grupo" id="lj-produto-modal-tamanhos-wrap" style="display:none">
+        <div class="lj-opcoes-titulo">Tamanho</div>
+        <div class="lj-opcoes-lista" id="lj-produto-modal-tamanhos"></div>
+      </div>
+      <div class="lj-opcoes-grupo">
+        <div class="lj-opcoes-titulo">Quantidade</div>
+        <div class="lj-qtd-controle">
+          <button onclick="ljMudarQtdModal(-1)">−</button>
+          <span id="lj-produto-modal-qtd">1</span>
+          <button onclick="ljMudarQtdModal(1)">+</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin:16px 0"><span id="lj-produto-modal-preco-de" class="lj-produto-preco-de" style="display:none"></span><span id="lj-produto-modal-preco" style="font-family:'Cinzel',serif;font-size:1.4rem;font-weight:700;color:var(--rosa)"></span></div>
+      <button class="lj-btn lj-btn-primario lj-btn-full" onclick="ljAdicionarAoCarrinho()">Adicionar ao carrinho</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: CARRINHO ═══ -->
+<div class="lj-modal-bg" id="lj-modal-carrinho-bg">
+  <div class="lj-modal">
+    <div class="lj-modal-topo">
+      <h3>🧺 Seu carrinho</h3>
+      <button class="lj-modal-fechar" onclick="ljFecharModal('lj-modal-carrinho-bg')">✕</button>
+    </div>
+    <div class="lj-modal-corpo">
+      <div id="lj-carrinho-itens"></div>
+      <div id="lj-carrinho-totais" style="margin-top:10px"></div>
+      <button class="lj-btn lj-btn-primario lj-btn-full" id="lj-btn-continuar-frete" style="margin-top:16px" onclick="ljAbrirFrete()">Continuar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: FRETE ═══ -->
+<div class="lj-modal-bg" id="lj-modal-frete-bg">
+  <div class="lj-modal">
+    <div class="lj-modal-topo">
+      <h3>📦 Como você quer receber?</h3>
+      <button class="lj-modal-fechar" onclick="ljFecharModal('lj-modal-frete-bg')">✕</button>
+    </div>
+    <div class="lj-modal-corpo">
+      <div class="lj-frete-opcao" id="lj-frete-opcao-retirar" onclick="ljEscolherFrete('retirar')">
+        <span class="ic">🏠</span>
+        <div>
+          <div class="lj-frete-opcao-titulo">Retirar na Terreira</div>
+          <div class="lj-frete-opcao-desc">Sem custo — combine o dia de retirada com a gente.</div>
+        </div>
+      </div>
+      <div class="lj-frete-opcao" id="lj-frete-opcao-entrega" onclick="ljEscolherFrete('entrega')">
+        <span class="ic">🚚</span>
+        <div>
+          <div class="lj-frete-opcao-titulo">Agendar entrega</div>
+          <div class="lj-frete-opcao-desc" id="lj-frete-entrega-desc">Escolha dia, horário e endereço.</div>
+        </div>
+      </div>
+
+      <div id="lj-frete-entrega-form" style="display:none;margin-top:14px">
+        <div class="lj-row">
+          <div class="lj-campo"><label>Rua</label><input type="text" id="lj-end-rua"></div>
+          <div class="lj-campo" style="max-width:90px"><label>Número</label><input type="text" id="lj-end-numero"></div>
+        </div>
+        <div class="lj-row">
+          <div class="lj-campo"><label>Bairro</label><input type="text" id="lj-end-bairro"></div>
+          <div class="lj-campo"><label>Complemento</label><input type="text" id="lj-end-complemento"></div>
+        </div>
+        <div class="lj-row">
+          <div class="lj-campo"><label>Cidade</label><input type="text" id="lj-end-cidade" value="Porto Alegre"></div>
+          <div class="lj-campo" style="max-width:120px"><label>CEP</label><input type="text" id="lj-end-cep"></div>
+        </div>
+        <div class="lj-row">
+          <div class="lj-campo"><label>Dia da entrega</label>
+            <select id="lj-end-dia"></select>
+          </div>
+          <div class="lj-campo"><label>Horário</label>
+            <select id="lj-end-horario"></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="lj-campo" style="margin-top:14px"><label>Seu nome</label><input type="text" id="lj-cliente-nome"></div>
+      <div class="lj-campo"><label>Telefone (WhatsApp)</label><input type="tel" id="lj-cliente-telefone" placeholder="(51) 9....."></div>
+
+      <div id="lj-frete-totais" style="margin:14px 0"></div>
+      <button class="lj-btn lj-btn-primario lj-btn-full" onclick="ljFinalizarPedido()" id="lj-btn-finalizar">Finalizar pedido</button>
+      <div id="lj-frete-status" style="text-align:center;font-size:.78rem;margin-top:8px;color:var(--text-dim)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TELA ADMIN ═══ -->
+<div id="lj-tela-admin">
+  <button class="lj-admin-voltar" onclick="ljFecharAdmin()">← Voltar pra loja</button>
+
+  <div class="lj-admin-secao">
+    <h2>➕ Novo produto / editar</h2>
+    <div class="lj-campo"><label>Nome</label><input type="text" id="lj-adm-nome"></div>
+    <div class="lj-row">
+      <div class="lj-campo"><label>Categoria</label><input type="text" id="lj-adm-categoria" list="lj-adm-categorias-existentes" placeholder="Ex: Velas, Ervas, Guias..."></div>
+      <div class="lj-campo" style="max-width:130px"><label>Ordem</label><input type="number" id="lj-adm-ordem" value="0"></div>
+    </div>
+    <datalist id="lj-adm-categorias-existentes"></datalist>
+    <div class="lj-campo"><label>Descrição</label><textarea id="lj-adm-descricao"></textarea></div>
+    <div class="lj-campo"><label>Imagem (caminho opcional — em branco usa ícone da categoria)</label><input type="text" id="lj-adm-imagem" placeholder="assets/loja/vela-branca.png"></div>
+    <div class="lj-campo"><label>Preço base (R$)</label><input type="number" id="lj-adm-preco" step="0.01" min="0"></div>
+
+    <div class="lj-checkbox-linha" style="margin-bottom:10px"><input type="checkbox" id="lj-adm-ehkit" onchange="ljAdminToggleKit()"><label for="lj-adm-ehkit">Este produto é um kit</label></div>
+    <div class="lj-campo" id="lj-adm-kit-itens-wrap" style="display:none"><label>O que tem no kit (uma coisa por linha)</label><textarea id="lj-adm-kit-itens"></textarea></div>
+
+    <div class="lj-opcoes-titulo">Cores disponíveis</div>
+    <div class="lj-admin-lista-dinamica" id="lj-adm-cores-lista"></div>
+    <button class="lj-admin-add-mini" onclick="ljAdminAddCor()">+ Adicionar cor</button>
+
+    <div class="lj-opcoes-titulo" style="margin-top:16px">Tamanhos disponíveis</div>
+    <div class="lj-admin-lista-dinamica" id="lj-adm-tamanhos-lista"></div>
+    <button class="lj-admin-add-mini" onclick="ljAdminAddTamanho()">+ Adicionar tamanho</button>
+
+    <div class="lj-opcoes-titulo" style="margin-top:16px">Desconto</div>
+    <div class="lj-row">
+      <div class="lj-campo"><label>Tipo</label>
+        <select id="lj-adm-desconto-tipo"><option value="percentual">% percentual</option><option value="fixo">R$ fixo</option></select>
+      </div>
+      <div class="lj-campo"><label>Valor</label><input type="number" id="lj-adm-desconto-valor" step="0.01" min="0" value="0"></div>
+    </div>
+    <div class="lj-checkbox-linha"><input type="checkbox" id="lj-adm-desconto-ativo"><label for="lj-adm-desconto-ativo">Desconto ativo</label></div>
+
+    <div class="lj-checkbox-linha" style="margin:14px 0"><input type="checkbox" id="lj-adm-ativo" checked><label for="lj-adm-ativo">Produto visível na loja</label></div>
+
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button class="lj-btn lj-btn-primario" onclick="ljAdminSalvarProduto()" style="flex:1">💾 Salvar produto</button>
+      <button class="lj-btn lj-btn-secundario" onclick="ljAdminLimparForm()">Limpar</button>
+    </div>
+    <div id="lj-adm-status" style="font-size:.78rem;margin-top:8px;color:var(--text-dim)"></div>
+  </div>
+
+  <div class="lj-admin-secao">
+    <h2>📋 Produtos cadastrados</h2>
+    <div id="lj-adm-lista-produtos"><div class="lj-admin-vazio">Carregando...</div></div>
+  </div>
+
+  <div class="lj-admin-secao">
+    <h2>🚚 Configuração de entrega</h2>
+    <div class="lj-campo"><label>Taxa de entrega (R$)</label><input type="number" id="lj-adm-taxa-entrega" step="0.01" min="0"></div>
+    <div class="lj-opcoes-titulo">Dias da semana disponíveis pra entrega</div>
+    <div class="lj-opcoes-lista" id="lj-adm-dias-semana" style="margin-bottom:14px"></div>
+    <div class="lj-opcoes-titulo">Horários disponíveis</div>
+    <div class="lj-admin-lista-dinamica" id="lj-adm-horarios-lista"></div>
+    <button class="lj-admin-add-mini" onclick="ljAdminAddHorario()">+ Adicionar horário</button>
+    <div class="lj-campo" style="margin-top:14px"><label>Observação (aparece pro cliente)</label><textarea id="lj-adm-frete-obs" placeholder="Ex: entregamos só na região de Porto Alegre"></textarea></div>
+    <button class="lj-btn lj-btn-primario" onclick="ljAdminSalvarFrete()" style="margin-top:6px">💾 Salvar configuração</button>
+    <div id="lj-adm-frete-status" style="font-size:.78rem;margin-top:8px;color:var(--text-dim)"></div>
+  </div>
+
+  <div class="lj-admin-secao">
+    <h2>🧾 Pedidos recentes</h2>
+    <div id="lj-adm-lista-pedidos"><div class="lj-admin-vazio">Carregando...</div></div>
+  </div>
+</div>
+
+<div class="lj-toast" id="lj-toast"></div>
+<div id="lj-login-status"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+const db = getFirestore(app);
+
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+let currentUser = null;
+
+function ljEhAdmin() {
+  return !!(currentUser && ADMIN_EMAILS.includes(currentUser.email));
+}
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  document.getElementById('lj-btn-admin').style.display = ljEhAdmin() ? 'inline-block' : 'none';
+  document.getElementById('lj-login-status').textContent = user ? (user.email || '') : '';
+});
+
+document.getElementById('lj-btn-admin').addEventListener('click', () => {
+  if (!currentUser) { signInWithPopup(auth, provider).catch(e => console.warn('login:', e)); return; }
+  if (!ljEhAdmin()) { alert('Essa conta não tem acesso ao admin da loja.'); return; }
+  ljAbrirAdmin();
+});
+
+// ══════════════════════════════════════════════════════════════
+// CATEGORIAS — emoji padrão pra quando o produto não tem foto
+// ══════════════════════════════════════════════════════════════
+const LJ_EMOJI_CATEGORIA = {
+  'velas': '🕯️', 'ervas': '🌿', 'guias': '📿', 'defumação': '🪔', 'defumacao': '🪔',
+  'incensos': '🕯️', 'estatuetas': '🗿', 'imagens': '🗿', 'bebidas rituais': '🍯',
+  'kits': '🎁', 'roupas': '👗', 'ferramentas': '🔨', 'flores': '💐', 'perfumes': '🌸'
+};
+function ljEmojiCategoria(categoria) {
+  return LJ_EMOJI_CATEGORIA[(categoria || '').trim().toLowerCase()] || '📦';
+}
+
+window.ljFormatarPreco = function(v) {
+  return 'R$ ' + (v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// ══════════════════════════════════════════════════════════════
+// CÁLCULO DE PREÇO — preço base + tamanho escolhido, com desconto aplicado
+// ══════════════════════════════════════════════════════════════
+window.ljPrecoBase = function(produto, nomeTamanho) {
+  let preco = Number(produto.precoBase) || 0;
+  if (nomeTamanho && Array.isArray(produto.tamanhos)) {
+    const t = produto.tamanhos.find(t => t.nome === nomeTamanho);
+    if (t) preco += Number(t.precoExtra) || 0;
+  }
+  return preco;
+};
+
+window.ljPrecoComDesconto = function(produto, nomeTamanho) {
+  const base = ljPrecoBase(produto, nomeTamanho);
+  if (!produto.desconto || !produto.desconto.ativo) return base;
+  let preco = base;
+  if (produto.desconto.tipo === 'percentual') preco -= base * ((Number(produto.desconto.valor) || 0) / 100);
+  else preco -= (Number(produto.desconto.valor) || 0);
+  return Math.max(0, preco);
+};
+
+window.ljTemDesconto = function(produto) {
+  return !!(produto.desconto && produto.desconto.ativo && Number(produto.desconto.valor) > 0);
+};
+
+window.ljEmojiCategoria = ljEmojiCategoria;
+
+window._ljDb = db;
+window._ljFirestore = { collection, addDoc, getDocs, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp };
+window._ljEhAdmin = ljEhAdmin;
+</script>
+<script>
+// o resto da lógica (carrinho, prateleiras, admin) roda em cima do que foi
+// exposto em window pelo módulo Firebase acima — script clássico, pra poder
+// usar onclick="" inline nos botões sem precisar expor cada função com
+// window.nome = ... uma por uma
+const db = window._ljDb;
+const { collection, addDoc, getDocs, query, orderBy, doc, getDoc, setDoc, deleteDoc, serverTimestamp } = window._ljFirestore;
+const ljFormatarPreco = window.ljFormatarPreco;
+const ljPrecoBase = window.ljPrecoBase;
+const ljPrecoComDesconto = window.ljPrecoComDesconto;
+const ljTemDesconto = window.ljTemDesconto;
+const ljEmojiCategoria = window.ljEmojiCategoria;
+
+let ljProdutos = [];
+let ljConfigFrete = { taxaEntregaFixa: 0, diasDisponiveis: [1,2,3,4,5,6], horariosDisponiveis: ['14:00','15:00','16:00'], observacao: '' };
+let ljCarrinho = [];
+let ljProdutoModalAtual = null;
+let ljModalCorSelecionada = null;
+let ljModalTamanhoSelecionado = null;
+let ljModalQtd = 1;
+let ljFreteEscolhido = null;
+
+const LJ_DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+// ══════════════════════════════════════════════════════════════
+// CARREGAMENTO
+// ══════════════════════════════════════════════════════════════
+async function ljCarregarProdutos() {
+  try {
+    const snap = await getDocs(query(collection(db, 'loja_produtos'), orderBy('ordem', 'asc')));
+    ljProdutos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) { console.warn('carregar produtos:', e); ljProdutos = []; }
+}
+
+async function ljCarregarConfigFrete() {
+  try {
+    const snap = await getDoc(doc(db, 'loja_config', 'frete'));
+    if (snap.exists()) ljConfigFrete = { ...ljConfigFrete, ...snap.data() };
+  } catch (e) { console.warn('carregar config frete:', e); }
+}
+
+// ══════════════════════════════════════════════════════════════
+// ESTANTE VIRTUAL — prateleiras agrupadas por categoria
+// ══════════════════════════════════════════════════════════════
+function ljRenderPrateleiras() {
+  const wrap = document.getElementById('lj-prateleiras');
+  const ativos = ljProdutos.filter(p => p.ativo !== false);
+  if (!ativos.length) { wrap.innerHTML = '<div class="lj-vazio">A loja ainda tá se organizando — volte em breve! 🌿</div>'; return; }
+
+  const porCategoria = {};
+  ativos.forEach(p => {
+    const cat = p.categoria || 'Outros';
+    if (!porCategoria[cat]) porCategoria[cat] = [];
+    porCategoria[cat].push(p);
+  });
+
+  wrap.innerHTML = Object.entries(porCategoria).map(([cat, produtos]) => `
+    <div class="lj-prateleira-secao">
+      <div class="lj-prateleira-titulo"><span class="ic">${ljEmojiCategoria(cat)}</span> ${cat}</div>
+      <div class="lj-prateleira">
+        <div class="lj-prateleira-tabua"></div>
+        <div class="lj-prateleira-itens">
+          ${produtos.map(p => ljRenderProdutoItem(p)).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ljRenderProdutoItem(p) {
+  const primeiroTamanho = (p.tamanhos && p.tamanhos[0]) ? p.tamanhos[0].nome : null;
+  const temDesconto = ljTemDesconto(p);
+  const precoExibir = ljPrecoComDesconto(p, primeiroTamanho);
+  const precoOriginal = ljPrecoBase(p, primeiroTamanho);
+  const iconeHtml = p.imagem ? `<img src="${p.imagem}" alt="">` : `<span class="lj-produto-icone">${ljEmojiCategoria(p.categoria)}</span>`;
+  return `
+    <div class="lj-produto-item" onclick="ljAbrirProduto('${p.id}')">
+      <div class="lj-produto-icone-wrap">
+        ${iconeHtml}
+        ${temDesconto ? '<span class="lj-produto-desconto-selo">OFERTA</span>' : ''}
+      </div>
+      <div class="lj-produto-nome">${p.nome}</div>
+      <div class="lj-produto-preco">${temDesconto ? `<span class="lj-produto-preco-de">${ljFormatarPreco(precoOriginal)}</span>` : ''}${ljFormatarPreco(precoExibir)}</div>
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
+// MODAL DE PRODUTO
+// ══════════════════════════════════════════════════════════════
+function ljAbrirModal(id) { document.getElementById(id).classList.add('aberto'); }
+window.ljFecharModal = function(id) { document.getElementById(id).classList.remove('aberto'); };
+
+function ljMostrarToast(msg) {
+  const t = document.getElementById('lj-toast');
+  t.textContent = msg;
+  t.classList.add('mostrar');
+  setTimeout(() => t.classList.remove('mostrar'), 2200);
+}
+
+window.ljAbrirProduto = function(id) {
+  const p = ljProdutos.find(x => x.id === id);
+  if (!p) return;
+  ljProdutoModalAtual = p;
+  ljModalCorSelecionada = (p.cores && p.cores[0]) ? p.cores[0].nome : null;
+  ljModalTamanhoSelecionado = (p.tamanhos && p.tamanhos[0]) ? p.tamanhos[0].nome : null;
+  ljModalQtd = 1;
+
+  document.getElementById('lj-produto-modal-nome').textContent = p.nome;
+  document.getElementById('lj-produto-modal-desc').textContent = p.descricao || '';
+
+  const kitWrap = document.getElementById('lj-produto-modal-kit-itens');
+  if (p.ehKit && p.itensKit) { kitWrap.style.display = 'block'; kitWrap.textContent = '🎁 ' + p.itensKit; }
+  else { kitWrap.style.display = 'none'; }
+
+  const coresWrap = document.getElementById('lj-produto-modal-cores-wrap');
+  if (Array.isArray(p.cores) && p.cores.length) {
+    coresWrap.style.display = 'block';
+    document.getElementById('lj-produto-modal-cores').innerHTML = p.cores.map(c => `
+      <button class="lj-opcao-cor ${c.nome === ljModalCorSelecionada ? 'selecionada' : ''}" style="background:${c.hex}" title="${c.nome}" onclick="ljEscolherCor('${(c.nome||'').replace(/'/g,"\\'")}')"></button>
+    `).join('');
+  } else { coresWrap.style.display = 'none'; }
+
+  const tamWrap = document.getElementById('lj-produto-modal-tamanhos-wrap');
+  if (Array.isArray(p.tamanhos) && p.tamanhos.length) {
+    tamWrap.style.display = 'block';
+    document.getElementById('lj-produto-modal-tamanhos').innerHTML = p.tamanhos.map(t => `
+      <button class="lj-opcao-btn ${t.nome === ljModalTamanhoSelecionado ? 'selecionada' : ''}" onclick="ljEscolherTamanho('${(t.nome||'').replace(/'/g,"\\'")}')">${t.nome}</button>
+    `).join('');
+  } else { tamWrap.style.display = 'none'; }
+
+  document.getElementById('lj-produto-modal-qtd').textContent = ljModalQtd;
+  ljAtualizarPrecoModal();
+  ljAbrirModal('lj-modal-produto-bg');
+};
+
+window.ljEscolherCor = function(nome) {
+  ljModalCorSelecionada = nome;
+  document.querySelectorAll('#lj-produto-modal-cores .lj-opcao-cor').forEach(el => {
+    el.classList.toggle('selecionada', el.title === nome);
+  });
+};
+
+window.ljEscolherTamanho = function(nome) {
+  ljModalTamanhoSelecionado = nome;
+  document.querySelectorAll('#lj-produto-modal-tamanhos .lj-opcao-btn').forEach(el => {
+    el.classList.toggle('selecionada', el.textContent === nome);
+  });
+  ljAtualizarPrecoModal();
+};
+
+window.ljMudarQtdModal = function(delta) {
+  ljModalQtd = Math.max(1, ljModalQtd + delta);
+  document.getElementById('lj-produto-modal-qtd').textContent = ljModalQtd;
+};
+
+function ljAtualizarPrecoModal() {
+  const p = ljProdutoModalAtual;
+  if (!p) return;
+  const temDesconto = ljTemDesconto(p);
+  const precoFinal = ljPrecoComDesconto(p, ljModalTamanhoSelecionado);
+  const precoOriginal = ljPrecoBase(p, ljModalTamanhoSelecionado);
+  document.getElementById('lj-produto-modal-preco').textContent = ljFormatarPreco(precoFinal);
+  const deEl = document.getElementById('lj-produto-modal-preco-de');
+  if (temDesconto) { deEl.style.display = 'inline'; deEl.textContent = ljFormatarPreco(precoOriginal); }
+  else { deEl.style.display = 'none'; }
+}
+
+window.ljAdicionarAoCarrinho = function() {
+  const p = ljProdutoModalAtual;
+  if (!p) return;
+  const precoUnitario = ljPrecoComDesconto(p, ljModalTamanhoSelecionado);
+  ljCarrinho.push({
+    produtoId: p.id, nome: p.nome, categoria: p.categoria, imagem: p.imagem || '',
+    cor: ljModalCorSelecionada, tamanho: ljModalTamanhoSelecionado, ehKit: !!p.ehKit,
+    quantidade: ljModalQtd, precoUnitario
+  });
+  ljAtualizarBotaoCarrinho();
+  ljFecharModal('lj-modal-produto-bg');
+  ljMostrarToast('Adicionado ao carrinho ✦');
+};
+
+// ══════════════════════════════════════════════════════════════
+// CARRINHO
+// ══════════════════════════════════════════════════════════════
+function ljAtualizarBotaoCarrinho() {
+  const btn = document.getElementById('lj-btn-carrinho');
+  const totalQtd = ljCarrinho.reduce((a,i) => a + i.quantidade, 0);
+  document.getElementById('lj-carrinho-qtd').textContent = totalQtd;
+  btn.hidden = totalQtd === 0;
+}
+
+function ljSubtotalCarrinho() {
+  return ljCarrinho.reduce((a,i) => a + i.precoUnitario * i.quantidade, 0);
+}
+
+window.ljAbrirCarrinho = function() {
+  ljRenderCarrinho();
+  ljAbrirModal('lj-modal-carrinho-bg');
+};
+
+function ljRenderCarrinho() {
+  const wrap = document.getElementById('lj-carrinho-itens');
+  if (!ljCarrinho.length) {
+    wrap.innerHTML = '<div class="lj-carrinho-vazio">Seu carrinho tá vazio ainda.</div>';
+    document.getElementById('lj-carrinho-totais').innerHTML = '';
+    document.getElementById('lj-btn-continuar-frete').disabled = true;
+    return;
+  }
+  document.getElementById('lj-btn-continuar-frete').disabled = false;
+  wrap.innerHTML = ljCarrinho.map((item, idx) => {
+    const variacoes = [item.cor, item.tamanho].filter(Boolean).join(' · ');
+    const iconeHtml = item.imagem ? `<img src="${item.imagem}" alt="">` : ljEmojiCategoria(item.categoria);
+    return `
+      <div class="lj-carrinho-item">
+        <div class="lj-carrinho-item-icone">${iconeHtml}</div>
+        <div class="lj-carrinho-item-info">
+          <div class="lj-carrinho-item-nome">${item.nome} ${item.quantidade > 1 ? '× ' + item.quantidade : ''}</div>
+          ${variacoes ? `<div class="lj-carrinho-item-var">${variacoes}</div>` : ''}
+        </div>
+        <div class="lj-carrinho-item-preco">${ljFormatarPreco(item.precoUnitario * item.quantidade)}</div>
+        <button class="lj-carrinho-item-remover" onclick="ljRemoverDoCarrinho(${idx})">🗑</button>
+      </div>
+    `;
+  }).join('');
+
+  const subtotal = ljSubtotalCarrinho();
+  document.getElementById('lj-carrinho-totais').innerHTML = `
+    <div class="lj-carrinho-total-linha total"><span>Subtotal</span><span>${ljFormatarPreco(subtotal)}</span></div>
+  `;
+}
+
+window.ljRemoverDoCarrinho = function(idx) {
+  ljCarrinho.splice(idx, 1);
+  ljRenderCarrinho();
+  ljAtualizarBotaoCarrinho();
+};
+
+// ══════════════════════════════════════════════════════════════
+// FRETE — Retirar na Terreira vs Agendar Entrega
+// ══════════════════════════════════════════════════════════════
+window.ljAbrirFrete = function() {
+  if (!ljCarrinho.length) return;
+  ljFecharModal('lj-modal-carrinho-bg');
+  ljFreteEscolhido = null;
+  document.getElementById('lj-frete-opcao-retirar').classList.remove('selecionada');
+  document.getElementById('lj-frete-opcao-entrega').classList.remove('selecionada');
+  document.getElementById('lj-frete-entrega-form').style.display = 'none';
+  document.getElementById('lj-btn-finalizar').disabled = false;
+  document.getElementById('lj-btn-finalizar').textContent = 'Finalizar pedido';
+  document.getElementById('lj-frete-status').textContent = '';
+  ljMontarSelectsFrete();
+  ljAtualizarTotaisFrete();
+  ljAbrirModal('lj-modal-frete-bg');
+};
+
+function ljDataYMD(d) {
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), dia = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dia}`;
+}
+
+function ljMontarSelectsFrete() {
+  const selDia = document.getElementById('lj-end-dia');
+  const dias = ljConfigFrete.diasDisponiveis || [];
+  const opcoesDias = [];
+  const hoje = new Date();
+  for (let i = 0; i < 21 && opcoesDias.length < 8; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
+    if (dias.includes(d.getDay())) opcoesDias.push(d);
+  }
+  selDia.innerHTML = opcoesDias.map(d => `<option value="${ljDataYMD(d)}">${LJ_DIAS_SEMANA[d.getDay()]}, ${d.getDate()}/${d.getMonth()+1}</option>`).join('') || '<option value="">Nenhum dia disponível — fala com a gente</option>';
+
+  const selHora = document.getElementById('lj-end-horario');
+  const horarios = ljConfigFrete.horariosDisponiveis || [];
+  selHora.innerHTML = horarios.map(h => `<option value="${h}">${h}</option>`).join('') || '<option value="">A combinar</option>';
+}
+
+window.ljEscolherFrete = function(tipo) {
+  ljFreteEscolhido = tipo;
+  document.getElementById('lj-frete-opcao-retirar').classList.toggle('selecionada', tipo === 'retirar');
+  document.getElementById('lj-frete-opcao-entrega').classList.toggle('selecionada', tipo === 'entrega');
+  document.getElementById('lj-frete-entrega-form').style.display = tipo === 'entrega' ? 'block' : 'none';
+  ljAtualizarTotaisFrete();
+};
+
+function ljAtualizarTotaisFrete() {
+  const subtotal = ljSubtotalCarrinho();
+  const taxa = ljFreteEscolhido === 'entrega' ? (Number(ljConfigFrete.taxaEntregaFixa) || 0) : 0;
+  const total = subtotal + taxa;
+  document.getElementById('lj-frete-totais').innerHTML = `
+    <div class="lj-carrinho-total-linha"><span>Subtotal</span><span>${ljFormatarPreco(subtotal)}</span></div>
+    ${ljFreteEscolhido === 'entrega' ? `<div class="lj-carrinho-total-linha"><span>Taxa de entrega</span><span>${ljFormatarPreco(taxa)}</span></div>` : ''}
+    <div class="lj-carrinho-total-linha total"><span>Total</span><span>${ljFormatarPreco(total)}</span></div>
+  `;
+  const descEl = document.getElementById('lj-frete-entrega-desc');
+  if (descEl) descEl.textContent = taxa > 0 ? `Taxa de ${ljFormatarPreco(taxa)} — escolha dia, horário e endereço.` : 'Escolha dia, horário e endereço.';
+}
+
+// ══════════════════════════════════════════════════════════════
+// FINALIZAR PEDIDO — cria o registro e tenta abrir o pagamento (Mercado
+// Pago). Enquanto a chave de acesso não estiver configurada no Cloudflare
+// Pages (env.MP_ACCESS_TOKEN), o endpoint /api/loja-criar-pagamento não
+// existe/retorna erro, e aqui a gente cai no combinado manual por
+// WhatsApp — o pedido já fica salvo do mesmo jeito.
+// ══════════════════════════════════════════════════════════════
+window.ljFinalizarPedido = async function() {
+  const statusEl = document.getElementById('lj-frete-status');
+  statusEl.style.color = 'var(--text-dim)';
+  if (!ljFreteEscolhido) { statusEl.textContent = 'Escolhe como você quer receber primeiro.'; return; }
+  const nome = document.getElementById('lj-cliente-nome').value.trim();
+  const telefone = document.getElementById('lj-cliente-telefone').value.trim();
+  if (!nome || !telefone) { statusEl.textContent = 'Preenche seu nome e telefone.'; return; }
+
+  let endereco = null, dataAgendada = null, horarioAgendado = null;
+  if (ljFreteEscolhido === 'entrega') {
+    endereco = {
+      rua: document.getElementById('lj-end-rua').value.trim(),
+      numero: document.getElementById('lj-end-numero').value.trim(),
+      bairro: document.getElementById('lj-end-bairro').value.trim(),
+      complemento: document.getElementById('lj-end-complemento').value.trim(),
+      cidade: document.getElementById('lj-end-cidade').value.trim(),
+      cep: document.getElementById('lj-end-cep').value.trim(),
+    };
+    if (!endereco.rua || !endereco.numero || !endereco.bairro) { statusEl.textContent = 'Preenche pelo menos rua, número e bairro.'; return; }
+    dataAgendada = document.getElementById('lj-end-dia').value;
+    horarioAgendado = document.getElementById('lj-end-horario').value;
+  }
+
+  const subtotal = ljSubtotalCarrinho();
+  const taxa = ljFreteEscolhido === 'entrega' ? (Number(ljConfigFrete.taxaEntregaFixa) || 0) : 0;
+  const total = subtotal + taxa;
+
+  const btn = document.getElementById('lj-btn-finalizar');
+  btn.disabled = true;
+  statusEl.textContent = '⏳ Registrando pedido...';
+
+  try {
+    const pedidoRef = await addDoc(collection(db, 'loja_pedidos'), {
+      itens: ljCarrinho,
+      subtotal, taxaEntrega: taxa, total,
+      frete: { tipo: ljFreteEscolhido, endereco, dataAgendada, horarioAgendado },
+      cliente: { nome, telefone },
+      status: 'aguardando_pagamento',
+      pagamento: { provedor: 'mercadopago', status: 'pendente' },
+      criadoEm: serverTimestamp()
+    });
+
+    let redirecionou = false;
+    try {
+      const resp = await fetch('/api/loja-criar-pagamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pedidoId: pedidoRef.id, total, itens: ljCarrinho, cliente: { nome, telefone } })
+      });
+      if (resp.ok) {
+        const dados = await resp.json();
+        if (dados.initPoint) { window.location.href = dados.initPoint; redirecionou = true; }
+      }
+    } catch (e) { console.warn('pagamento ainda não configurado:', e); }
+
+    if (!redirecionou) {
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = '✔ Pedido registrado! Em breve entraremos em contato pelo WhatsApp pra combinar o pagamento.';
+      ljCarrinho = [];
+      ljAtualizarBotaoCarrinho();
+      btn.textContent = 'Pedido registrado ✦';
+    }
+  } catch (e) {
+    console.warn('finalizar pedido:', e);
+    statusEl.style.color = '#a5362a';
+    statusEl.textContent = 'Não consegui registrar o pedido agora. Tenta de novo.';
+    btn.disabled = false;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN — CRUD de produtos
+// ══════════════════════════════════════════════════════════════
+let ljAdminEditandoId = null;
+let ljAdminCores = [];
+let ljAdminTamanhos = [];
+let ljAdminHorarios = [];
+
+window.ljAbrirAdmin = function() {
+  document.getElementById('lj-tela-loja').style.display = 'none';
+  document.getElementById('lj-btn-carrinho').style.display = 'none';
+  document.getElementById('lj-tela-admin').style.display = 'block';
+  ljAdminMontarCategoriasDatalist();
+  ljAdminRenderListaProdutos();
+  ljAdminMontarFormFrete();
+  ljAdminCarregarPedidos();
+  window.scrollTo({ top: 0 });
+};
+
+window.ljFecharAdmin = function() {
+  document.getElementById('lj-tela-admin').style.display = 'none';
+  document.getElementById('lj-tela-loja').style.display = 'block';
+  document.getElementById('lj-btn-carrinho').style.display = '';
+  ljAtualizarBotaoCarrinho();
+};
+
+function ljAdminMontarCategoriasDatalist() {
+  const set = new Set(ljProdutos.map(p => p.categoria).filter(Boolean));
+  document.getElementById('lj-adm-categorias-existentes').innerHTML = [...set].map(c => `<option value="${c}"></option>`).join('');
+}
+
+window.ljAdminToggleKit = function() {
+  document.getElementById('lj-adm-kit-itens-wrap').style.display = document.getElementById('lj-adm-ehkit').checked ? 'block' : 'none';
+};
+
+function ljAdminRenderCoresLista() {
+  document.getElementById('lj-adm-cores-lista').innerHTML = ljAdminCores.map((c, i) => `
+    <div class="lj-admin-lista-linha">
+      <input type="color" value="${c.hex}" onchange="ljAdminAtualizarCor(${i}, 'hex', this.value)">
+      <input type="text" placeholder="Nome da cor" value="${c.nome}" style="flex:1" onchange="ljAdminAtualizarCor(${i}, 'nome', this.value)">
+      <button onclick="ljAdminRemoverCor(${i})">🗑</button>
+    </div>
+  `).join('');
+}
+window.ljAdminAddCor = function() { ljAdminCores.push({ nome: '', hex: '#c4396b' }); ljAdminRenderCoresLista(); };
+window.ljAdminAtualizarCor = function(i, campo, valor) { ljAdminCores[i][campo] = valor; };
+window.ljAdminRemoverCor = function(i) { ljAdminCores.splice(i,1); ljAdminRenderCoresLista(); };
+
+function ljAdminRenderTamanhosLista() {
+  document.getElementById('lj-adm-tamanhos-lista').innerHTML = ljAdminTamanhos.map((t, i) => `
+    <div class="lj-admin-lista-linha">
+      <input type="text" placeholder="Nome (ex: Pequena)" value="${t.nome}" style="flex:2" onchange="ljAdminAtualizarTamanho(${i}, 'nome', this.value)">
+      <input type="number" placeholder="Preço extra" value="${t.precoExtra || 0}" step="0.01" style="flex:1" onchange="ljAdminAtualizarTamanho(${i}, 'precoExtra', this.value)">
+      <button onclick="ljAdminRemoverTamanho(${i})">🗑</button>
+    </div>
+  `).join('');
+}
+window.ljAdminAddTamanho = function() { ljAdminTamanhos.push({ nome: '', precoExtra: 0 }); ljAdminRenderTamanhosLista(); };
+window.ljAdminAtualizarTamanho = function(i, campo, valor) { ljAdminTamanhos[i][campo] = campo === 'precoExtra' ? (parseFloat(valor) || 0) : valor; };
+window.ljAdminRemoverTamanho = function(i) { ljAdminTamanhos.splice(i,1); ljAdminRenderTamanhosLista(); };
+
+window.ljAdminLimparForm = function() {
+  ljAdminEditandoId = null;
+  document.getElementById('lj-adm-nome').value = '';
+  document.getElementById('lj-adm-categoria').value = '';
+  document.getElementById('lj-adm-ordem').value = 0;
+  document.getElementById('lj-adm-descricao').value = '';
+  document.getElementById('lj-adm-imagem').value = '';
+  document.getElementById('lj-adm-preco').value = '';
+  document.getElementById('lj-adm-ehkit').checked = false;
+  document.getElementById('lj-adm-kit-itens').value = '';
+  document.getElementById('lj-adm-kit-itens-wrap').style.display = 'none';
+  document.getElementById('lj-adm-desconto-tipo').value = 'percentual';
+  document.getElementById('lj-adm-desconto-valor').value = 0;
+  document.getElementById('lj-adm-desconto-ativo').checked = false;
+  document.getElementById('lj-adm-ativo').checked = true;
+  ljAdminCores = [];
+  ljAdminTamanhos = [];
+  ljAdminRenderCoresLista();
+  ljAdminRenderTamanhosLista();
+  document.getElementById('lj-adm-status').textContent = '';
+};
+
+window.ljAdminEditarProduto = function(id) {
+  const p = ljProdutos.find(x => x.id === id);
+  if (!p) return;
+  ljAdminEditandoId = id;
+  document.getElementById('lj-adm-nome').value = p.nome || '';
+  document.getElementById('lj-adm-categoria').value = p.categoria || '';
+  document.getElementById('lj-adm-ordem').value = p.ordem || 0;
+  document.getElementById('lj-adm-descricao').value = p.descricao || '';
+  document.getElementById('lj-adm-imagem').value = p.imagem || '';
+  document.getElementById('lj-adm-preco').value = p.precoBase || 0;
+  document.getElementById('lj-adm-ehkit').checked = !!p.ehKit;
+  document.getElementById('lj-adm-kit-itens').value = p.itensKit || '';
+  document.getElementById('lj-adm-kit-itens-wrap').style.display = p.ehKit ? 'block' : 'none';
+  document.getElementById('lj-adm-desconto-tipo').value = (p.desconto && p.desconto.tipo) || 'percentual';
+  document.getElementById('lj-adm-desconto-valor').value = (p.desconto && p.desconto.valor) || 0;
+  document.getElementById('lj-adm-desconto-ativo').checked = !!(p.desconto && p.desconto.ativo);
+  document.getElementById('lj-adm-ativo').checked = p.ativo !== false;
+  ljAdminCores = Array.isArray(p.cores) ? JSON.parse(JSON.stringify(p.cores)) : [];
+  ljAdminTamanhos = Array.isArray(p.tamanhos) ? JSON.parse(JSON.stringify(p.tamanhos)) : [];
+  ljAdminRenderCoresLista();
+  ljAdminRenderTamanhosLista();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.ljAdminSalvarProduto = async function() {
+  const nome = document.getElementById('lj-adm-nome').value.trim();
+  const categoria = document.getElementById('lj-adm-categoria').value.trim();
+  const preco = parseFloat(document.getElementById('lj-adm-preco').value);
+  const statusEl = document.getElementById('lj-adm-status');
+  if (!nome || !categoria || isNaN(preco)) { statusEl.textContent = 'Preenche nome, categoria e preço base.'; return; }
+
+  const dados = {
+    nome, categoria,
+    ordem: parseInt(document.getElementById('lj-adm-ordem').value, 10) || 0,
+    descricao: document.getElementById('lj-adm-descricao').value.trim(),
+    imagem: document.getElementById('lj-adm-imagem').value.trim(),
+    precoBase: preco,
+    ehKit: document.getElementById('lj-adm-ehkit').checked,
+    itensKit: document.getElementById('lj-adm-kit-itens').value.trim(),
+    cores: ljAdminCores.filter(c => (c.nome||'').trim()),
+    tamanhos: ljAdminTamanhos.filter(t => (t.nome||'').trim()),
+    desconto: {
+      tipo: document.getElementById('lj-adm-desconto-tipo').value,
+      valor: parseFloat(document.getElementById('lj-adm-desconto-valor').value) || 0,
+      ativo: document.getElementById('lj-adm-desconto-ativo').checked
+    },
+    ativo: document.getElementById('lj-adm-ativo').checked,
+    atualizadoEm: serverTimestamp()
+  };
+
+  try {
+    statusEl.textContent = '⏳ Salvando...';
+    if (ljAdminEditandoId) {
+      await setDoc(doc(db, 'loja_produtos', ljAdminEditandoId), dados, { merge: true });
+    } else {
+      dados.criadoEm = serverTimestamp();
+      await addDoc(collection(db, 'loja_produtos'), dados);
+    }
+    await ljCarregarProdutos();
+    ljRenderPrateleiras();
+    ljAdminRenderListaProdutos();
+    ljAdminMontarCategoriasDatalist();
+    ljAdminLimparForm();
+    statusEl.textContent = '✔ Produto salvo!';
+  } catch (e) {
+    console.warn('salvar produto:', e);
+    statusEl.textContent = '❌ Não consegui salvar agora.';
+  }
+};
+
+window.ljAdminExcluirProduto = async function(id) {
+  if (!confirm('Excluir esse produto da loja?')) return;
+  try {
+    await deleteDoc(doc(db, 'loja_produtos', id));
+    await ljCarregarProdutos();
+    ljRenderPrateleiras();
+    ljAdminRenderListaProdutos();
+  } catch (e) { console.warn('excluir produto:', e); alert('Não consegui excluir agora.'); }
+};
+
+function ljAdminRenderListaProdutos() {
+  const wrap = document.getElementById('lj-adm-lista-produtos');
+  if (!ljProdutos.length) { wrap.innerHTML = '<div class="lj-admin-vazio">Nenhum produto cadastrado ainda.</div>'; return; }
+  wrap.innerHTML = ljProdutos.map(p => `
+    <div class="lj-admin-produto-card ${p.ativo === false ? 'inativo' : ''}">
+      <div class="lj-admin-produto-card-info">
+        <div class="lj-admin-produto-card-nome">${p.nome}</div>
+        <div class="lj-admin-produto-card-meta">${p.categoria || '—'} · ${ljFormatarPreco(p.precoBase)}${p.ativo === false ? ' · oculto' : ''}</div>
+      </div>
+      <div class="lj-admin-produto-card-acoes">
+        <button class="lj-admin-mini-btn" onclick="ljAdminEditarProduto('${p.id}')">✏️ Editar</button>
+        <button class="lj-admin-mini-btn" style="color:#a5362a" onclick="ljAdminExcluirProduto('${p.id}')">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN — configuração de frete/agenda
+// ══════════════════════════════════════════════════════════════
+function ljAdminMontarFormFrete() {
+  document.getElementById('lj-adm-taxa-entrega').value = ljConfigFrete.taxaEntregaFixa || 0;
+  document.getElementById('lj-adm-frete-obs').value = ljConfigFrete.observacao || '';
+  ljAdminHorarios = Array.isArray(ljConfigFrete.horariosDisponiveis) ? [...ljConfigFrete.horariosDisponiveis] : [];
+  ljAdminRenderHorariosLista();
+
+  const dias = ljConfigFrete.diasDisponiveis || [];
+  document.getElementById('lj-adm-dias-semana').innerHTML = LJ_DIAS_SEMANA.map((nome, i) => `
+    <button class="lj-opcao-btn ${dias.includes(i) ? 'selecionada' : ''}" onclick="ljAdminToggleDia(${i})" data-dia="${i}">${nome.slice(0,3)}</button>
+  `).join('');
+}
+
+window.ljAdminToggleDia = function(i) {
+  const dias = ljConfigFrete.diasDisponiveis || [];
+  const idx = dias.indexOf(i);
+  if (idx === -1) dias.push(i); else dias.splice(idx, 1);
+  ljConfigFrete.diasDisponiveis = dias;
+  document.querySelector(`#lj-adm-dias-semana [data-dia="${i}"]`).classList.toggle('selecionada');
+};
+
+function ljAdminRenderHorariosLista() {
+  document.getElementById('lj-adm-horarios-lista').innerHTML = ljAdminHorarios.map((h, i) => `
+    <div class="lj-admin-lista-linha">
+      <input type="text" value="${h}" placeholder="14:00" style="flex:1" onchange="ljAdminAtualizarHorario(${i}, this.value)">
+      <button onclick="ljAdminRemoverHorario(${i})">🗑</button>
+    </div>
+  `).join('');
+}
+window.ljAdminAddHorario = function() { ljAdminHorarios.push(''); ljAdminRenderHorariosLista(); };
+window.ljAdminAtualizarHorario = function(i, v) { ljAdminHorarios[i] = v; };
+window.ljAdminRemoverHorario = function(i) { ljAdminHorarios.splice(i,1); ljAdminRenderHorariosLista(); };
+
+window.ljAdminSalvarFrete = async function() {
+  const statusEl = document.getElementById('lj-adm-frete-status');
+  const dados = {
+    taxaEntregaFixa: parseFloat(document.getElementById('lj-adm-taxa-entrega').value) || 0,
+    diasDisponiveis: ljConfigFrete.diasDisponiveis || [],
+    horariosDisponiveis: ljAdminHorarios.filter(h => (h||'').trim()),
+    observacao: document.getElementById('lj-adm-frete-obs').value.trim()
+  };
+  try {
+    statusEl.textContent = '⏳ Salvando...';
+    await setDoc(doc(db, 'loja_config', 'frete'), dados, { merge: true });
+    ljConfigFrete = { ...ljConfigFrete, ...dados };
+    statusEl.textContent = '✔ Configuração salva!';
+  } catch (e) {
+    console.warn('salvar frete:', e);
+    statusEl.textContent = '❌ Não consegui salvar agora.';
+  }
+};
+
+// ══════════════════════════════════════════════════════════════
+// ADMIN — pedidos
+// ══════════════════════════════════════════════════════════════
+const LJ_STATUS_LABEL = {
+  aguardando_pagamento: '⏳ Aguardando pagamento',
+  pago: '✅ Pago',
+  preparando: '📦 Preparando',
+  pronto: '🎁 Pronto',
+  entregue: '🚚 Entregue/retirado',
+  cancelado: '✗ Cancelado'
+};
+const LJ_STATUS_PROXIMO = {
+  aguardando_pagamento: 'pago',
+  pago: 'preparando',
+  preparando: 'pronto',
+  pronto: 'entregue'
+};
+
+async function ljAdminCarregarPedidos() {
+  const wrap = document.getElementById('lj-adm-lista-pedidos');
+  wrap.innerHTML = '<div class="lj-admin-vazio">Carregando...</div>';
+  try {
+    const snap = await getDocs(query(collection(db, 'loja_pedidos'), orderBy('criadoEm', 'desc')));
+    const pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!pedidos.length) { wrap.innerHTML = '<div class="lj-admin-vazio">Nenhum pedido ainda.</div>'; return; }
+    wrap.innerHTML = pedidos.map(ped => ljRenderPedidoAdmin(ped)).join('');
+  } catch (e) {
+    console.warn('carregar pedidos:', e);
+    wrap.innerHTML = '<div class="lj-admin-vazio">Não consegui carregar os pedidos.</div>';
+  }
+}
+
+function ljRenderPedidoAdmin(ped) {
+  const dataFmt = (ped.criadoEm && ped.criadoEm.toDate) ? new Date(ped.criadoEm.toDate()).toLocaleString('pt-BR') : '—';
+  const itensTxt = (ped.itens || []).map(i => `${i.quantidade}× ${i.nome}${i.tamanho ? ' ('+i.tamanho+')' : ''}${i.cor ? ' — ' + i.cor : ''}`).join(', ');
+  const freteTxt = (ped.frete && ped.frete.tipo === 'entrega')
+    ? `Entrega em ${[ped.frete.endereco?.rua, ped.frete.endereco?.numero, ped.frete.endereco?.bairro].filter(Boolean).join(', ')} — ${ped.frete.dataAgendada || '?'} ${ped.frete.horarioAgendado || ''}`
+    : 'Retirar na Terreira';
+  const proximo = LJ_STATUS_PROXIMO[ped.status];
+  return `
+    <div class="lj-admin-pedido-card">
+      <div class="lj-admin-pedido-topo">
+        <span class="lj-admin-pedido-nome">${(ped.cliente && ped.cliente.nome) || 'Anônimo'}</span>
+        <span class="lj-admin-pedido-total">${ljFormatarPreco(ped.total)}</span>
+      </div>
+      <div class="lj-admin-pedido-detalhe">${itensTxt}</div>
+      <div class="lj-admin-pedido-detalhe">${freteTxt}</div>
+      <div class="lj-admin-pedido-detalhe">📞 ${(ped.cliente && ped.cliente.telefone) || '—'} · ${dataFmt}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+        <span class="lj-admin-pedido-status">${LJ_STATUS_LABEL[ped.status] || ped.status}</span>
+        ${proximo ? `<button class="lj-admin-mini-btn" onclick="ljAdminAvancarStatus('${ped.id}', '${proximo}')">➜ ${LJ_STATUS_LABEL[proximo]}</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+window.ljAdminAvancarStatus = async function(id, novoStatus) {
+  try {
+    await setDoc(doc(db, 'loja_pedidos', id), { status: novoStatus }, { merge: true });
+    ljAdminCarregarPedidos();
+  } catch (e) { console.warn('avançar status:', e); alert('Não consegui atualizar agora.'); }
+};
+
+// ══════════════════════════════════════════════════════════════
+// RETORNO DO MERCADO PAGO — depois do Checkout Pro, a pessoa volta pra cá
+// com ?pagamento=sucesso|pendente|falhou&pedido=ID&payment_id=XXX na URL.
+// Nunca confia direto nesses parâmetros: confere de verdade com o Mercado
+// Pago (server-side, via /api/loja-verificar-pagamento) antes de marcar o
+// pedido como pago no Firestore.
+// ══════════════════════════════════════════════════════════════
+async function ljConferirRetornoPagamento() {
+  const params = new URLSearchParams(window.location.search);
+  const pagamento = params.get('pagamento');
+  const pedidoId = params.get('pedido');
+  const paymentId = params.get('payment_id');
+  if (!pagamento || !pedidoId) return;
+
+  const banner = document.getElementById('lj-status-pagamento');
+  banner.style.display = 'block';
+
+  if (pagamento === 'sucesso' && paymentId) {
+    banner.textContent = '⏳ Confirmando seu pagamento...';
+    try {
+      const resp = await fetch(`/api/loja-verificar-pagamento?payment_id=${encodeURIComponent(paymentId)}&pedido=${encodeURIComponent(pedidoId)}`);
+      const dados = await resp.json();
+      if (dados.ok) {
+        await setDoc(doc(db, 'loja_pedidos', pedidoId), {
+          status: 'pago',
+          pagamento: { provedor: 'mercadopago', status: 'aprovado', paymentId }
+        }, { merge: true });
+        banner.style.background = 'var(--green-dim)';
+        banner.style.color = 'var(--green)';
+        banner.textContent = '✔ Pagamento confirmado! Muito obrigada — seu pedido já está com a gente ✦';
+      } else {
+        banner.textContent = '⚠️ Não consegui confirmar o pagamento ainda. Se você já pagou, fala com a gente pelo WhatsApp.';
+      }
+    } catch (e) {
+      console.warn('conferir pagamento:', e);
+      banner.textContent = '⚠️ Não consegui confirmar o pagamento agora. Se você já pagou, fala com a gente pelo WhatsApp.';
+    }
+  } else if (pagamento === 'pendente') {
+    banner.textContent = '⏳ Seu pagamento está pendente de confirmação — avisamos assim que for aprovado.';
+  } else if (pagamento === 'falhou') {
+    banner.textContent = '✗ O pagamento não foi concluído. Você pode tentar de novo quando quiser, seu pedido continua salvo.';
+  }
+
+  // limpa os parâmetros da URL pra não reprocessar se a pessoa recarregar a página
+  window.history.replaceState({}, '', window.location.pathname);
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+(async function ljInit() {
+  await Promise.all([ljCarregarProdutos(), ljCarregarConfigFrete()]);
+  ljRenderPrateleiras();
+  ljConferirRetornoPagamento();
+})();
+</script>
+</body>
+</html>
