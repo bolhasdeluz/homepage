@@ -700,6 +700,13 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .mh-corte-del{position:absolute;top:10px;right:10px;background:none;border:none;color:rgba(184,64,64,.4);font-size:.85rem;cursor:pointer;padding:2px 6px;transition:color .2s}
 .mh-corte-del:hover{color:#b84040}
 .mh-corte-empty{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:10px 0}
+
+/* ── PONTOS RISCADOS ── */
+.mh-ponto-foto-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
+.mh-ponto-foto{width:84px;height:84px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:#fff}
+.mh-ponto-foto-vazia{width:84px;height:84px;border-radius:10px;border:1px dashed var(--border);background:rgba(196,57,107,.04);display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:var(--text-dim)}
+.mh-ponto-foto-btn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.06em;color:var(--rosa);cursor:pointer;white-space:nowrap}
+.mh-ponto-foto-btn:hover{background:rgba(196,57,107,.06)}
 .mh-corte-grid.mh-corte-grid-2{grid-template-columns:1fr 1fr}
 @media(max-width:480px){.mh-corte-grid.mh-corte-grid-2{grid-template-columns:1fr}}
 
@@ -2223,6 +2230,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
             </div>
             <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
             <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
+          </div>
+          <!-- Pontos Riscados — foto e data de cada ponto riscado da pessoa -->
+          <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:14px">
+              <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Pontos Riscados</div>
+              <button id="mh-pontos-btn-add" onclick="mhAdicionarPontoRiscado()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar ponto riscado</button>
+            </div>
+            <div id="mh-pontos-lista" style="display:flex;flex-direction:column;gap:10px"></div>
+            <div id="mh-pontos-status" style="font-family:'Cinzel',serif;font-size:.62rem;color:var(--text-dim);margin-top:8px"></div>
           </div>
           <!-- Sobre você e observações — sempre editável -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -12223,6 +12239,7 @@ function renderMinhaHistoria(p, user) {
   mhRenderCortes(p.cortes || [], true);
   mhRenderCruzamentosExtras(p.cruzamentosExtras || [], true);
   mhRenderGuiasExtras(p.guiasExtras || [], true);
+  mhRenderPontosRiscados(p.pontosRiscados || [], true);
 
   // descrição e observações — sempre visíveis e prontas pra editar
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -13370,6 +13387,8 @@ window.salvarSuaHistoria = async function() {
     cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
     // filtra guias extras vazios (sem tipo, nome nem data)
     guiasExtras: (_mhGuiasExtrasEditando || []).filter(g => g.tipo || g.nome || g.data),
+    // filtra pontos riscados vazios (sem data, foto nem descrição)
+    pontosRiscados: (_mhPontosEditando || []).filter(p => p.data || p.foto || p.descricao),
     solicitacao: emSimulacao ? 'Edição feita pelo admin (via Simular visão)' : 'Edição direta pela filha'
   };
 
@@ -13700,6 +13719,117 @@ window.mhRemoverCorte = function(i) {
 window.mhAtualizarCorte = function(i, campo, valor) {
   if (!_mhCortesEditando[i]) return;
   _mhCortesEditando[i][campo] = valor;
+};
+
+// ── PONTOS RISCADOS ──
+// estrutura: perfilData.pontosRiscados = [{ data:'YYYY-MM-DD', foto:'data:image/jpeg;base64,...', descricao:'texto livre' }, ...]
+// a foto fica guardada como data URL (base64) direto no perfil — não existe upload
+// pra um storage próprio no site, então a foto é redimensionada/comprimida no
+// navegador antes de entrar no JSON, pra não pesar demais o perfil salvo.
+let _mhPontosEditando = [];
+const MH_PONTO_FOTO_LADO_MAX = 900;
+const MH_PONTO_FOTO_QUALIDADE = 0.72;
+
+function mhRenderPontosRiscados(pontos, editavel) {
+  const lista = document.getElementById('mh-pontos-lista');
+  const btnAdd = document.getElementById('mh-pontos-btn-add');
+  if (!lista) return;
+  pontos = pontos || [];
+
+  if (editavel) {
+    _mhPontosEditando = pontos.map(p => ({ ...p }));
+    if (btnAdd) btnAdd.style.display = '';
+  } else if (btnAdd) {
+    btnAdd.style.display = 'none';
+  }
+
+  const dadosParaExibir = editavel ? _mhPontosEditando : pontos;
+
+  if (!dadosParaExibir.length) {
+    lista.innerHTML = '<div class="mh-corte-empty">Nenhum ponto riscado registrado ainda.</div>';
+    return;
+  }
+
+  lista.innerHTML = dadosParaExibir.map((p, i) => {
+    const fotoHtml = p.foto
+      ? `<img src="${p.foto}" class="mh-ponto-foto" alt="Ponto riscado">`
+      : `<div class="mh-ponto-foto-vazia">📷</div>`;
+    if (editavel) {
+      return `<div class="mh-corte-card">
+        <button type="button" class="mh-corte-del" onclick="mhRemoverPontoRiscado(${i})" title="Remover este ponto riscado">✕</button>
+        <div class="mh-corte-num">Ponto riscado</div>
+        <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+          <div class="mh-ponto-foto-wrap">
+            ${fotoHtml}
+            <input type="file" accept="image/*" id="mh-ponto-file-${i}" style="display:none" onchange="mhUploadFotoPontoRiscado(${i}, this)">
+            <button type="button" class="mh-ponto-foto-btn" onclick="document.getElementById('mh-ponto-file-${i}').click()">${p.foto ? 'Trocar foto' : '+ Foto'}</button>
+          </div>
+          <div style="flex:1;min-width:170px">
+            <label class="form-label">Data</label>
+            <input type="date" class="form-input" style="margin-bottom:8px" value="${p.data||''}" oninput="mhAtualizarPontoRiscado(${i},'data',this.value)">
+            <label class="form-label">Descrição (opcional)</label>
+            <input type="text" class="form-input" style="margin-bottom:0" value="${blogEscAttr(p.descricao||'')}" placeholder="Ex: Ponto de Ogum, riscado na sessão de..." oninput="mhAtualizarPontoRiscado(${i},'descricao',this.value)">
+          </div>
+        </div>
+      </div>`;
+    }
+    return `<div class="mh-corte-card">
+      <div class="mh-corte-num">${p.data ? fmtData(p.data) : 'Ponto riscado'}</div>
+      <div style="display:flex;gap:14px;align-items:flex-start">
+        ${fotoHtml}
+        <div class="valor">${p.descricao || '—'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.mhAdicionarPontoRiscado = function() {
+  _mhPontosEditando.push({ data: '', foto: '', descricao: '' });
+  mhRenderPontosRiscados(_mhPontosEditando, true);
+};
+
+window.mhRemoverPontoRiscado = function(i) {
+  _mhPontosEditando.splice(i, 1);
+  mhRenderPontosRiscados(_mhPontosEditando, true);
+};
+
+window.mhAtualizarPontoRiscado = function(i, campo, valor) {
+  if (!_mhPontosEditando[i]) return;
+  _mhPontosEditando[i][campo] = valor;
+};
+
+// redimensiona/comprime a foto no navegador (lado maior até 900px, JPEG 72%)
+// antes de guardar como base64 — sem isso, uma foto de celular (vários MB)
+// deixaria o perfil pesado demais rapidinho
+window.mhUploadFotoPontoRiscado = function(i, inputEl) {
+  const arquivo = inputEl.files && inputEl.files[0];
+  if (!arquivo) return;
+  if (!arquivo.type.startsWith('image/')) { alert('Escolhe um arquivo de imagem.'); return; }
+
+  const status = document.getElementById('mh-pontos-status');
+  if (status) status.textContent = '⏳ Preparando a foto...';
+
+  const leitor = new FileReader();
+  leitor.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let w = img.width, h = img.height;
+      if (w > h && w > MH_PONTO_FOTO_LADO_MAX) { h = Math.round(h * MH_PONTO_FOTO_LADO_MAX / w); w = MH_PONTO_FOTO_LADO_MAX; }
+      else if (h > MH_PONTO_FOTO_LADO_MAX) { w = Math.round(w * MH_PONTO_FOTO_LADO_MAX / h); h = MH_PONTO_FOTO_LADO_MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const dataUrl = canvas.toDataURL('image/jpeg', MH_PONTO_FOTO_QUALIDADE);
+      if (!_mhPontosEditando[i]) return;
+      _mhPontosEditando[i].foto = dataUrl;
+      mhRenderPontosRiscados(_mhPontosEditando, true);
+      if (status) status.textContent = '';
+    };
+    img.onerror = () => { if (status) status.textContent = '❌ Não consegui abrir essa imagem.'; };
+    img.src = e.target.result;
+  };
+  leitor.onerror = () => { if (status) status.textContent = '❌ Não consegui ler o arquivo.'; };
+  leitor.readAsDataURL(arquivo);
 };
 
 // ── CRUZAMENTOS EXTRAS ──
