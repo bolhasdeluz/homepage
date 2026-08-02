@@ -55,6 +55,7 @@ export async function onRequest(context) {
         descricao: body.descricao || '',
         responsavel: body.responsavel || '',
         tambor: body.tambor || '',
+        driveLink: body.driveLink || '',
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(sessao));

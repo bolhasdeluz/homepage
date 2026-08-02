@@ -3494,6 +3494,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <option value="nao">❌ Não vai ter</option>
       </select>
     </div>
+    <div style="margin-bottom:12px"><label class="form-label">Link da pasta do Drive</label><input type="url" class="form-input" id="cal-fDriveLink" placeholder="https://drive.google.com/..."></div>
     <!-- a visibilidade e as informações para visitantes não são mais marcadas
          evento por evento — agora são definidas por TIPO de sessão, em painéis
          próprios (⚙️ Visibilidade por tipo e 📋 Informações por tipo, ao lado
@@ -3519,6 +3520,9 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="cal-info-sub" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:14px"></div>
     <div id="cal-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:14px"></div>
     <div id="cal-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.6;white-space:pre-wrap"></div>
+    <div id="cal-info-drive" style="display:none;margin-top:16px;text-align:center">
+      <a href="#" id="cal-info-drive-link" target="_blank" rel="noopener" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);text-decoration:none;border:1px solid var(--rosa);padding:8px 16px;border-radius:6px;display:inline-block">📁 Abrir pasta do Drive</a>
+    </div>
     <div id="cal-info-ir-calendario" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center">
       <a href="#" onclick="calVerProximasSessoes();return false" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);text-decoration:none">Clique para ver as próximas sessões →</a>
     </div>
@@ -5547,6 +5551,7 @@ function calOpenModal() {
   document.getElementById('cal-fDesc').value = '';
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
+  document.getElementById('cal-fDriveLink').value = '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5562,6 +5567,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fDesc').value = s.descricao || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
+  document.getElementById('cal-fDriveLink').value = s.driveLink || '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5608,6 +5614,16 @@ async function calPreencherInfoModal(s, mostrarLinkCalendario) {
   if (s.descricao) corpo += (corpo ? '\n\n' : '') + calEsc(s.descricao);
   document.getElementById('cal-info-corpo').innerHTML = corpo || '<span style="font-style:italic;color:var(--text-dim)">Sem informações adicionais por enquanto.</span>';
 
+  // link da pasta do Drive — só pra quem está logada, e só depois que a
+  // sessão já aconteceu (é onde ficam as fotos/registros dela)
+  const todayStr = calFmtDate(new Date());
+  const mostrarDrive = isLogada && s.driveLink && s.data < todayStr;
+  const driveEl = document.getElementById('cal-info-drive');
+  if (driveEl) {
+    driveEl.style.display = mostrarDrive ? 'block' : 'none';
+    if (mostrarDrive) document.getElementById('cal-info-drive-link').href = s.driveLink;
+  }
+
   const linkCalendario = document.getElementById('cal-info-ir-calendario');
   if (linkCalendario) linkCalendario.style.display = mostrarLinkCalendario ? 'block' : 'none';
 
@@ -5633,6 +5649,7 @@ async function calSalvar() {
     tipo, descricao: document.getElementById('cal-fDesc').value.trim(),
     responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
+    driveLink: document.getElementById('cal-fDriveLink').value.trim(),
   };
   const editId = document.getElementById('cal-edit-id').value;
   if (editId) payload.id = editId;
