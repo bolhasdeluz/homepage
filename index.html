@@ -3917,7 +3917,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <button class="bm-toggle-btn active" id="bm-btn-original" onclick="blogSwitchVersion('original')">📋 Original</button>
         <button class="bm-toggle-btn" id="bm-btn-formatado" onclick="blogSwitchVersion('formatado')">✨ Formatado</button>
       </div>
-      <button class="bm-close" onclick="blogCloseModal()">✕</button>
+      <button class="bm-close" id="bm-btn-compartilhar" onclick="blogCompartilharPost()" title="Copiar link deste post" style="margin-left:auto">🔗</button>
+      <button class="bm-close" onclick="blogCloseModal()" style="margin-left:0">✕</button>
     </div>
     <div class="bm-body">
       <h1 class="bm-title" id="bm-title"></h1>
@@ -6109,9 +6110,22 @@ function blogIsAdmin() {
   return souAdminAtivo(u);
 }
 
+// se chegou aqui por um link compartilhado de um post específico (?post=ID),
+// abre esse post assim que ele estiver disponível na lista carregada — e só
+// uma vez (limpa o alvo depois, pra não reabrir sozinho se os posts mudarem
+// de novo por causa do realtime do Firestore)
+function blogAbrirPostDoLinkSePendente() {
+  const idAlvo = window._blogPostAlvoDoLink;
+  if (!idAlvo) return;
+  if (_blogPosts.some(p => p.id === idAlvo)) {
+    window._blogPostAlvoDoLink = null;
+    blogOpenPost(idAlvo);
+  }
+}
+
 function blogInit() {
   document.getElementById('blog-compose').style.display = blogIsAdmin() ? '' : 'none';
-  if (_blogInited) { blogRenderCatBar(); blogPopularFiltroAnos(); blogRenderList(); return; }
+  if (_blogInited) { blogRenderCatBar(); blogPopularFiltroAnos(); blogRenderList(); blogAbrirPostDoLinkSePendente(); return; }
   _blogInited = true;
   if (window._blogLoadCats) {
     window._blogLoadCats().then(cats => {
@@ -6125,6 +6139,7 @@ function blogInit() {
       blogPopularFiltroAnos();
       blogRenderList();
       blogRenderSidebar();
+      blogAbrirPostDoLinkSePendente();
     });
   } else {
     _blogPosts = [];
@@ -6480,6 +6495,34 @@ function blogCloseModal(e) {
   document.body.style.overflow = '';
   if (_blogUnsubCm) { _blogUnsubCm(); _blogUnsubCm = null; }
   _blogModal = null;
+}
+
+// gera um link direto pro post aberto (?post=ID) e copia/compartilha —
+// no celular tenta abrir o menu de compartilhar nativo (WhatsApp já
+// aparece como opção); no computador (ou se a pessoa cancelar o
+// compartilhar), cai pra copiar o link direto na área de transferência
+async function blogCompartilharPost() {
+  if (!_blogModal) return;
+  const url = `${window.location.origin}${window.location.pathname}?post=${encodeURIComponent(_blogModal.id)}`;
+  const btn = document.getElementById('bm-btn-compartilhar');
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: _blogModal.title, text: _blogModal.excerpt || '', url });
+      return;
+    } catch (e) { /* cancelou o compartilhar — cai pro copiar abaixo */ }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    }
+  } catch (e) {
+    prompt('Copia o link do post:', url);
+  }
 }
 
 function blogUpdateCommentUI() {
@@ -10793,6 +10836,24 @@ const auth = getAuth(app);
     const q = query(collection(db,'posts'), orderBy('dateSort','desc'));
     return onSnapshot(q, snap => cb(snap.docs.map(d => ({ id:d.id, ...d.data() }))));
   };
+
+  // ── link direto pra um post do blog (?post=ID na URL) — quem recebe o
+  // link compartilhado cai direto no post, sem precisar procurar. Guarda o
+  // id alvo em window (pra blogInit, que mora no <script> comum, conseguir
+  // ler) e já abre a página do blog; o post em si só abre quando os posts
+  // de verdade chegarem do Firestore (ver blogInit em window._blogLoadPosts).
+  (function capturarLinkDePost() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const postId = params.get('post');
+      if (!postId) return;
+      window._blogPostAlvoDoLink = postId;
+      params.delete('post');
+      const resto = params.toString();
+      history.replaceState(null, '', window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+      if (window.showPage) showPage('blog');
+    } catch (e) {}
+  })();
   window._blogSavePosts = async (posts) => {
     for (const p of posts) await setDoc(doc(db,'posts',p.id), p);
   };
