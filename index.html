@@ -764,6 +764,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .blog-card-body{padding:.9rem 1rem .8rem;}
 .blog-card-title{font-family:'Playfair Display',serif;font-size:.97rem;font-weight:600;color:var(--text);margin-bottom:.3rem;line-height:1.35;}
 .blog-card-excerpt{font-family:'Crimson Pro',Georgia,serif;font-size:.9rem;color:var(--text-dim);line-height:1.5;}
+.blog-busca-marca{background:rgba(196,57,107,.22);color:var(--text);border-radius:3px;padding:0 2px;font-weight:600;}
+.blog-card-trecho{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);font-style:italic;line-height:1.5;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border);}
 .blog-card-footer{padding:.55rem 1rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .blog-read-more{font-family:'Cinzel',serif;font-size:.57rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);}
 .blog-admin-btns{display:flex;gap:.3rem;}
@@ -6187,6 +6189,48 @@ function blogLimparFiltroData() {
 // ── Busca por palavra (título, resumo e corpo do post) ──
 function blogNormBusca(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
 
+// normaliza um texto igual blogNormBusca, mas guarda um mapa de volta pra
+// posicao original -- precisa disso porque tirar acento pode mudar o
+// "comprimento" durante a normalizacao (e assim que da pra achar o trecho
+// de verdade no texto original, com acento e tudo, a partir de uma posicao
+// encontrada no texto sem acento)
+function blogNormalizarComMapa(original) {
+  let normStr = '';
+  const mapa = [];
+  for (let i = 0; i < original.length; i++) {
+    const parte = original[i].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    for (const ch of parte) { normStr += ch; mapa.push(i); }
+  }
+  return { normStr, mapa };
+}
+
+// acha o termo buscado (ja normalizado) dentro de "texto" (com acento,
+// original) e devolve HTML com <mark> em volta do trecho encontrado.
+// Com comElipse=true, corta o texto ao redor do termo (pra usar como
+// "previa" de um corpo de post longo); com false, destaca o termo dentro
+// do texto inteiro (titulo/resumo, que ja sao curtos). Devolve null se o
+// termo nao aparece em "texto" (so relevante no modo com elipse).
+function blogDestacarTermo(texto, termoNorm, comElipse) {
+  texto = texto || '';
+  if (!termoNorm) return blogEscAttr(texto);
+  const { normStr, mapa } = blogNormalizarComMapa(texto);
+  const idx = normStr.indexOf(termoNorm);
+  if (idx === -1) return comElipse ? null : blogEscAttr(texto);
+  const inicio = mapa[idx];
+  const fimIdxNorm = idx + termoNorm.length - 1;
+  const fim = (mapa[Math.min(fimIdxNorm, mapa.length - 1)] ?? inicio) + 1;
+
+  if (!comElipse) {
+    return blogEscAttr(texto.slice(0, inicio)) + '<mark class="blog-busca-marca">' + blogEscAttr(texto.slice(inicio, fim)) + '</mark>' + blogEscAttr(texto.slice(fim));
+  }
+  const janela = 55;
+  const antes = Math.max(0, inicio - janela);
+  const depois = Math.min(texto.length, fim + janela);
+  const prefixo = antes > 0 ? '…' : '';
+  const sufixo = depois < texto.length ? '…' : '';
+  return prefixo + blogEscAttr(texto.slice(antes, inicio)) + '<mark class="blog-busca-marca">' + blogEscAttr(texto.slice(inicio, fim)) + '</mark>' + blogEscAttr(texto.slice(fim, depois)) + sufixo;
+}
+
 function blogBuscar() {
   _blogBusca = document.getElementById('blog-busca')?.value || '';
   _blogPage = 0;
@@ -6245,7 +6289,23 @@ function blogRenderList() {
   const page  = lista.slice(start, start + BLOG_PAGE_SZ);
   const total = lista.length;
   const isAdm = blogIsAdmin();
-  el.innerHTML = page.map(p => `
+  const termoBusca = _blogBusca.trim() ? blogNormBusca(_blogBusca) : '';
+  el.innerHTML = page.map(p => {
+    // com busca ativa: destaca o termo no título/resumo, e se ele só
+    // aparece no corpo do post (não visível no card), mostra uma prévia
+    // do trecho onde a palavra foi encontrada
+    const tituloHtml = termoBusca ? blogDestacarTermo(p.title, termoBusca, false) : p.title;
+    const excerptHtml = termoBusca ? blogDestacarTermo(p.excerpt || '', termoBusca, false) : (p.excerpt || '');
+    let trechoHtml = '';
+    if (termoBusca) {
+      const jaApareceAcima = blogNormBusca(p.title).includes(termoBusca) || blogNormBusca(p.excerpt || '').includes(termoBusca);
+      if (!jaApareceAcima) {
+        const corpoTexto = (p.body || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        const destacado = blogDestacarTermo(corpoTexto, termoBusca, true);
+        if (destacado) trechoHtml = `<div class="blog-card-trecho">📄 ${destacado}</div>`;
+      }
+    }
+    return `
     <div class="blog-post-card" data-pid="${blogEscAttr(p.id)}">
       <div class="blog-card-top">
         <span class="blog-cat-badge">${p.category||'Geral'}</span>
@@ -6253,8 +6313,9 @@ function blogRenderList() {
         <span class="blog-post-date">${p.date||''}</span>
       </div>
       <div class="blog-card-body">
-        <div class="blog-card-title">${p.title}</div>
-        <div class="blog-card-excerpt">${p.excerpt||''}</div>
+        <div class="blog-card-title">${tituloHtml}</div>
+        <div class="blog-card-excerpt">${excerptHtml}</div>
+        ${trechoHtml}
       </div>
       <div class="blog-card-footer">
         <span style="font-size:.7rem;color:var(--text-dim);">💬 comentários</span>
@@ -6266,7 +6327,8 @@ function blogRenderList() {
           <span class="blog-read-more">Ler mais →</span>
         </div>
       </div>
-    </div>`).join('') + `
+    </div>`;
+  }).join('') + `
   <div class="blog-pagination">
     <span class="blog-page-info">${start+1}–${Math.min(start+BLOG_PAGE_SZ,total)} de ${total}</span>
     <div class="blog-page-btns">
