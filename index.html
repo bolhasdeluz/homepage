@@ -6884,13 +6884,6 @@ function atualizarAniversarioCard() {
   const dataEl= document.getElementById('aniversario-data');
   if (!card) return;
 
-  // card público removido da Início a pedido da admin — agora o site é
-  // acessado via QR code no portão, e a tela deslogada é só pra informação
-  // direta de visitante (mantém o resto da função pronto pra religar depois,
-  // se um dia quiserem o card de volta)
-  card.style.display = 'none';
-  return;
-
   const hoje = new Date();
   const hm = hoje.getMonth() + 1, hd = hoje.getDate();
 
@@ -6915,9 +6908,14 @@ function atualizarAniversarioCard() {
     dataEl.textContent = `${proximo.dia} de ${MESES_ANIV[proximo.mes-1]}`;
   } else {
     card.style.display = 'none';
+    sincronizarMiniCardsPerfil();
     return;
   }
-  card.style.display = 'block';
+  // card público removido da Início a pedido da admin — agora o site é
+  // acessado via QR code no portão, e a tela deslogada é só pra informação
+  // direta de visitante; os valores acima seguem calculados normalmente pra
+  // alimentar o mini-card de aniversário do dashboard de quem está logada
+  card.style.display = 'none';
   sincronizarMiniCardsPerfil();
 }
 atualizarAniversarioCard();
@@ -11799,10 +11797,38 @@ const auth = getAuth(app);
       wrap.innerHTML = doMes.map(a => `<div class="rm-linha"><span>${a.nome}</span><span class="rm-linha-tag">${a.dia} de ${MESES_RM[a.mes-1]}</span></div>`).join('');
     }
 
+    // ── CARD "PRÓXIMA MANUTENÇÃO" da tela inicial — mesma prioridade usada
+    // em manutencao.html: agendada com data mais próxima > em andamento >
+    // aguardando > pendente
+    function mnProximaInfoInicio(itens) {
+      const agendadas = itens.filter(i => mnStatusReal(i) === 'agendada' && i.dataLimite).sort((a,b) => a.dataLimite.localeCompare(b.dataLimite));
+      if (agendadas.length) { const p = agendadas[0]; return { titulo: p.titulo, sub: rmFmtDataISO(p.dataLimite) + (p.responsavel ? ' · ' + p.responsavel : '') }; }
+      const andamento = itens.filter(i => mnStatusReal(i) === 'andamento');
+      if (andamento.length) return { titulo: andamento[0].titulo, sub: andamento.length > 1 ? `+ ${andamento.length - 1} outra(s) em andamento` : 'Sendo cuidada agora' };
+      const aguardando = itens.filter(i => mnStatusReal(i) === 'aguardando');
+      if (aguardando.length) return { titulo: aguardando[0].titulo, sub: aguardando.length > 1 ? `+ ${aguardando.length - 1} outra(s) aguardando` : 'Sem data definida ainda' };
+      const pendentes = itens.filter(i => mnStatusReal(i) === 'pendente');
+      if (pendentes.length) return { titulo: pendentes[0].titulo, sub: pendentes.length > 1 ? `+ ${pendentes.length - 1} outra(s) pendente(s)` : 'Ainda não começou' };
+      return null;
+    }
+    function atualizarManutencaoCard(itens) {
+      const card = document.getElementById('proxima-manutencao-card');
+      const txt = document.getElementById('manutencao-card-txt');
+      const sub = document.getElementById('manutencao-card-sub');
+      if (!card) return;
+      const info = mnProximaInfoInicio(itens);
+      if (info) { txt.textContent = info.titulo; sub.textContent = info.sub; }
+      else { txt.textContent = 'Tudo em dia ✦'; sub.textContent = 'Nenhuma manutenção pendente'; }
+      card.style.display = 'block';
+      if (window.sincronizarMiniCardsPerfil) sincronizarMiniCardsPerfil();
+    }
+
     // ── MANUTENÇÃO ATUAL (não mostra concluída nem aguardando — só o que já tem
     // encaminhamento de verdade: pendente, agendada ou em andamento) ──
     onSnapshot(collection(db, 'manutencao'), snap => {
-      rmManutencao = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(i => !['concluida', 'aguardando'].includes(mnStatusReal(i)));
+      const todosItens = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      rmManutencao = todosItens.filter(i => !['concluida', 'aguardando'].includes(mnStatusReal(i)));
+      atualizarManutencaoCard(todosItens);
       const wrap = document.getElementById('rm-manut-lista');
       if (!wrap) return;
       if (!rmManutencao.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Tudo em dia — nenhuma manutenção pendente ✦</div>'; return; }
