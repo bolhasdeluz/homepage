@@ -744,6 +744,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   cursor:pointer;transition:all .16s;
 }
 .blog-date-clear:hover{border-color:var(--rosa);color:var(--rosa);}
+.blog-search-wrap{position:relative;flex:1;min-width:180px;max-width:340px;}
+.blog-search-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:.82rem;
+  padding:8px 30px 8px 12px;outline:none;transition:border-color .16s;
+}
+.blog-search-input:focus,.blog-search-input:hover{border-color:rgba(196,57,107,.35);}
+.blog-search-input::placeholder{color:var(--text-dim);}
+.blog-search-icon{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:.85rem;pointer-events:none;}
 .blog-list-layout{display:grid;grid-template-columns:1fr 240px;gap:1.5rem;align-items:start;}
 @media(max-width:720px){.blog-list-layout{grid-template-columns:1fr}.blog-sidebar-wrap{display:none}}
 #blog-post-list{display:grid;gap:1rem;}
@@ -3848,6 +3857,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="blog-cat-bar" id="blog-cat-bar"></div>
 
     <div class="blog-date-filter" id="blog-date-filter">
+      <div class="blog-search-wrap">
+        <input type="text" class="blog-search-input" id="blog-busca" placeholder="Buscar por palavra..." oninput="blogBuscar()">
+        <span class="blog-search-icon">🔍</span>
+      </div>
+      <button class="blog-date-clear" id="blog-busca-clear" onclick="blogLimparBusca()" style="display:none">✕ Limpar busca</button>
       <select class="blog-date-select" id="blog-filtro-ano" onchange="blogFiltrarData()">
         <option value="">Todos os anos</option>
       </select>
@@ -6060,6 +6074,7 @@ let _blogCats    = ['Doutrina e Fundamentos','Desenvolvimento Mediúnico','Prát
 let _blogFilter  = 'todas';
 let _blogFiltroAno = '';
 let _blogFiltroMes = '';
+let _blogBusca = '';
 let _blogPage    = 0;
 let _blogModal   = null;
 let _blogModalV  = 'original';
@@ -6169,6 +6184,27 @@ function blogLimparFiltroData() {
   blogRenderList();
 }
 
+// ── Busca por palavra (título, resumo e corpo do post) ──
+function blogNormBusca(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+
+function blogBuscar() {
+  _blogBusca = document.getElementById('blog-busca')?.value || '';
+  _blogPage = 0;
+  const clearBtn = document.getElementById('blog-busca-clear');
+  if (clearBtn) clearBtn.style.display = _blogBusca.trim() ? '' : 'none';
+  blogRenderList();
+}
+
+function blogLimparBusca() {
+  _blogBusca = '';
+  const inp = document.getElementById('blog-busca');
+  if (inp) inp.value = '';
+  const clearBtn = document.getElementById('blog-busca-clear');
+  if (clearBtn) clearBtn.style.display = 'none';
+  _blogPage = 0;
+  blogRenderList();
+}
+
 function blogAddCat() {
   const inp = document.getElementById('blog-cat-input');
   const v = (inp.value||'').trim();
@@ -6192,9 +6228,17 @@ function blogRenderList() {
   let lista = _blogFilter === 'todas' ? _blogPosts : _blogPosts.filter(p => blogNormCat(p.category) === blogNormCat(_blogFilter));
   if (_blogFiltroAno) lista = lista.filter(p => (p.dateSort || '').slice(0, 4) === _blogFiltroAno);
   if (_blogFiltroMes) lista = lista.filter(p => (p.dateSort || '').slice(5, 7) === _blogFiltroMes);
+  if (_blogBusca.trim()) {
+    const termo = blogNormBusca(_blogBusca);
+    lista = lista.filter(p => {
+      const corpo = blogNormBusca((p.body || '').replace(/<[^>]+>/g, ' '));
+      return blogNormBusca(p.title).includes(termo) || blogNormBusca(p.excerpt).includes(termo) || corpo.includes(termo);
+    });
+  }
   if (!lista.length) {
-    const motivoData = (_blogFiltroAno || _blogFiltroMes) ? ' neste período' : '';
-    el.innerHTML = `<p class="blog-empty">Nenhum post nesta categoria${motivoData} ainda. 🌙</p>`;
+    let motivo = (_blogFiltroAno || _blogFiltroMes) ? ' neste período' : '';
+    if (_blogBusca.trim()) motivo += ` com "${blogEscAttr(_blogBusca.trim())}"`;
+    el.innerHTML = `<p class="blog-empty">Nenhum post nesta categoria${motivo} ainda. 🌙</p>`;
     return;
   }
   const start = _blogPage * BLOG_PAGE_SZ;
