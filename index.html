@@ -5570,7 +5570,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fDesc').value = s.descricao || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
-  document.getElementById('cal-fDriveLink').value = s.driveLink || '';
+  document.getElementById('cal-fDriveLink').value = s.driveLink || CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5618,13 +5618,15 @@ async function calPreencherInfoModal(s, mostrarLinkCalendario) {
   document.getElementById('cal-info-corpo').innerHTML = corpo || '<span style="font-style:italic;color:var(--text-dim)">Sem informações adicionais por enquanto.</span>';
 
   // link da pasta do Drive — só pra quem está logada, e só depois que a
-  // sessão já aconteceu (é onde ficam as fotos/registros dela)
+  // sessão já aconteceu (é onde ficam as fotos/registros dela); sessões
+  // que ainda não têm uma pasta específica caem na pasta padrão
   const todayStr = calFmtDate(new Date());
-  const mostrarDrive = isLogada && s.driveLink && s.data < todayStr;
+  const linkDrive = s.driveLink || CAL_DRIVE_LINK_PADRAO;
+  const mostrarDrive = isLogada && linkDrive && s.data < todayStr;
   const driveEl = document.getElementById('cal-info-drive');
   if (driveEl) {
     driveEl.style.display = mostrarDrive ? 'block' : 'none';
-    if (mostrarDrive) document.getElementById('cal-info-drive-link').href = s.driveLink;
+    if (mostrarDrive) document.getElementById('cal-info-drive-link').href = linkDrive;
   }
 
   const linkCalendario = document.getElementById('cal-info-ir-calendario');
