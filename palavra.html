@@ -2047,16 +2047,22 @@ window.reportarErro = async function() {
   
   if (!motivo || motivo.trim() === '') return;
 
+  const relatadoPor = currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador || 'Anônimo';
   try {
     await addDoc(collection(db, 'relatorios_erros'), {
       palavra: palavraAtual,
       motivo: motivo,
-      relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : nomeJogador || 'Anônimo',
+      relatadoPor,
       data: serverTimestamp(),
       status: 'pendente'
     });
     alert("Obrigada por ajudar a revisar! Erro relatado com sucesso e enviado para a administração. ✦");
     if (currentUser && ADMIN_EMAILS.includes(currentUser.email)) carregarErrosAdmin();
+    fetch('/api/relatorio-erro-jogo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogo: 'Palavra do Dia', item: palavraAtual, motivo, relatadoPor })
+    }).catch(e => console.warn('e-mail de relatório de erro:', e));
   } catch (e) {
     console.error("Erro ao salvar relatório:", e);
     alert("Ops, não conseguimos enviar. Tente novamente mais tarde.");

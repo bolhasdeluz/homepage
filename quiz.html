@@ -1641,17 +1641,23 @@ async function qzReportarErro() {
   if (!p) return;
   const motivo = prompt('O que tá errado nessa pergunta? (afirmação, explicação ou gabarito)');
   if (!motivo || !motivo.trim()) return;
+  const relatadoPor = currentUser ? (currentUser.displayName || currentUser.email) : (qzNome || 'Anônimo');
   try {
     await addDoc(collection(db, 'quiz_relatorios_erros'), {
       perguntaId: p.id,
       afirmacao: p.afirmacao,
       motivo: motivo.trim(),
-      relatadoPor: currentUser ? (currentUser.displayName || currentUser.email) : (qzNome || 'Anônimo'),
+      relatadoPor,
       uid: currentUser ? currentUser.uid : null,
       data: serverTimestamp(),
       status: 'pendente'
     });
     alert('Aviso enviado! Obrigada por ajudar a manter o quiz certinho ✦');
+    fetch('/api/relatorio-erro-jogo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jogo: 'Quiz', item: p.afirmacao, motivo: motivo.trim(), relatadoPor })
+    }).catch(e => console.warn('e-mail de relatório de erro:', e));
   } catch (e) {
     console.warn('reportar erro quiz:', e);
     alert('Não consegui enviar agora, tenta de novo mais tarde.');
