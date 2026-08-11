@@ -542,6 +542,15 @@ body{padding-bottom:64px}
   <div id="painel-resumo" class="panel">
     <div class="resumo-table" id="resumo-membros"><div class="rt-header"><div class="rt-header-text">Entradas por Membro</div></div></div>
     <div class="resumo-table" id="resumo-contas"><div class="rt-header"><div class="rt-header-text">Gastos por Conta</div></div></div>
+    <div class="resumo-table" id="resumo-vinculos">
+      <div class="rt-header"><div class="rt-header-text">Vínculo de e-mails — "Meus Pagamentos"</div></div>
+      <div style="padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.5">Vincule o e-mail de login de cada uma ao nome usado aqui na Tesouraria, pra ela conseguir ver o próprio extrato na página "Meus Pagamentos".</div>
+      <div id="lista-vinculos" style="padding:0 14px 12px"></div>
+      <div style="padding:0 14px 14px">
+        <button onclick="salvarVinculos()" style="background:var(--gold);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:8px 16px;cursor:pointer;">✓ Salvar vínculos</button>
+        <span id="vinculos-status" style="margin-left:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--green);"></span>
+      </div>
+    </div>
   </div>
 
   <!-- CAIXA (pré-lançamentos a categorizar) -->
@@ -1002,6 +1011,7 @@ body{padding-bottom:64px}
 
   // ── STATE ─────────────────────────────────────────────────
   var lancamentos = [];
+  var vinculoMembros = {}; // { 'Ness': 'ness@gmail.com', ... } — usado pra "Meus Pagamentos" achar o extrato de cada uma
   var filtroAtivo = 'todos';
   var inicioFiltro = 'todos';
 
@@ -1039,10 +1049,11 @@ body{padding-bottom:64px}
     var mapa = { 'lancamentos': 'bdl-tesouraria', 'ag_pgtos': 'ag_pgtos', 'ag_gastos': 'ag_gastos', 'ag_cats': 'ag_cats' };
     var chaveLocal = mapa[chave];
     if (chaveLocal) { try { localStorage.setItem(chaveLocal, JSON.stringify(valor)); } catch(e){} }
-    // Tenta salvar no KV
+    // Tenta salvar no KV — protegido por senha de admin no backend (mesmo
+    // header usado nos outros endpoints administrativos do site)
     return fetch('/api/dados?chave=' + chave, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
       body: JSON.stringify(valor)
     }).catch(function(e){ console.warn('KV save error (usando localStorage):', e); });
   }
@@ -1671,6 +1682,39 @@ body{padding-bottom:64px}
           + '</div>';
       });
     }
+  }
+
+  // ── VÍNCULO DE E-MAILS ("Meus Pagamentos") ──────────────────
+  function renderVinculos() {
+    var el = document.getElementById('lista-vinculos');
+    if (!el) return;
+    el.innerHTML = MEMBROS_TODOS.map(function(m){
+      var email = vinculoMembros[m] || '';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;flex-wrap:wrap;">'
+        + '<div style="width:80px;flex-shrink:0;font-family:\'Crimson Pro\',serif;font-weight:600;color:var(--text);">'+m+'</div>'
+        + '<input type="email" class="vinculo-input" data-membro="'+m+'" value="'+email+'" placeholder="e-mail de login…" style="flex:1;min-width:180px;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:\'DM Sans\',sans-serif;font-size:.8rem;">'
+        + '</div>';
+    }).join('');
+  }
+
+  function salvarVinculos() {
+    var novo = {};
+    document.querySelectorAll('.vinculo-input').forEach(function(inp){
+      var email = inp.value.trim().toLowerCase();
+      if (email) novo[inp.dataset.membro] = email;
+    });
+    vinculoMembros = novo;
+    var statusEl = document.getElementById('vinculos-status');
+    fetch('/api/dados?chave=vinculo_membros', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify(vinculoMembros)
+    }).then(function(r){
+      if (!r.ok) throw new Error('falhou');
+      if (statusEl) { statusEl.textContent = '✓ Salvo!'; setTimeout(function(){ statusEl.textContent = ''; }, 2500); }
+    }).catch(function(){
+      if (statusEl) statusEl.textContent = 'Erro ao salvar — tenta de novo.';
+    });
   }
 
   // ── CLONE ─────────────────────────────────────────────────
@@ -2928,6 +2972,18 @@ body{padding-bottom:64px}
       } else if (contasFixas.length > 0) {
         // KV vazio mas temos os padrões locais — envia pro KV
         kvSet('contas_fixas', contasFixas);
+      }
+    })
+    .catch(function(){});
+
+  // Busca o vínculo de e-mails (pra "Meus Pagamentos") do KV
+  renderVinculos();
+  fetchComTimeout('/api/dados?chave=vinculo_membros', 8000)
+    .then(function(r){ if(!r.ok) throw new Error('sem KV'); return r.json(); })
+    .then(function(dadosKV){
+      if (dadosKV && typeof dadosKV === 'object') {
+        vinculoMembros = dadosKV;
+        renderVinculos();
       }
     })
     .catch(function(){});
