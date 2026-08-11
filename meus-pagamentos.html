@@ -202,6 +202,9 @@ document.getElementById('logout-btn').addEventListener('click', () => signOut(au
 function fmt(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
 const MESES_NOMES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+// não faz sentido puxar histórico de antes da casa começar a registrar
+// mensalidade por aqui — corta tudo de 2025 pra trás
+const MES_MINIMO_HISTORICO = '2026-01';
 function fmtCompetencia(ref) {
   if (!ref) return '';
   const [ano, mes] = ref.split('-');
@@ -257,7 +260,7 @@ function renderMesesAnteriores(lista, mesAtual) {
   const refs = new Set();
   lista.forEach(l => {
     const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0, 7) : '');
-    if (ref && ref < mesAtual) refs.add(ref);
+    if (ref && ref >= MES_MINIMO_HISTORICO && ref < mesAtual) refs.add(ref);
   });
   const meses = [...refs].sort().reverse();
   const wrap = document.getElementById('mp-meses-anteriores-wrap');
@@ -337,7 +340,7 @@ function mesesSemMensalidade(pagamentos) {
   const mesesPagos = new Set(mensalidades.map(l => l.competencia || (l.data ? l.data.slice(0, 7) : '')).filter(Boolean));
   if (!mesesPagos.size) return [];
 
-  const primeiro = [...mesesPagos].sort()[0];
+  const primeiro = [...mesesPagos].sort()[0] < MES_MINIMO_HISTORICO ? MES_MINIMO_HISTORICO : [...mesesPagos].sort()[0];
   const hoje = today().slice(0, 7);
   let [ano, mes] = primeiro.split('-').map(Number);
   const [anoFim, mesFim] = hoje.split('-').map(Number);
@@ -363,6 +366,7 @@ async function carregarExtratoPorNome(nome) {
 
     const meusPagamentos = (Array.isArray(lancamentos) ? lancamentos : [])
       .filter(l => l.tipo === 'entrada' && l.membro === nome)
+      .filter(l => (l.competencia || (l.data ? l.data.slice(0, 7) : '')) >= MES_MINIMO_HISTORICO)
       .sort((a, b) => {
         const refA = a.competencia || a.data || '';
         const refB = b.competencia || b.data || '';
