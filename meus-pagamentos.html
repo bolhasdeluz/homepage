@@ -73,6 +73,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-mes-resumo-stats{display:flex;gap:14px;flex-shrink:0}
 .mp-mes-resumo-stat{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);white-space:nowrap}
 .mp-mes-resumo-stat-val{font-weight:700;color:var(--rosa)}
+.mp-toggle-arrow{display:inline-block;transition:transform .2s;font-size:.7rem}
+.mp-lista-titulo.mp-toggle.aberto .mp-toggle-arrow{transform:rotate(90deg)}
 
 .mp-vazio{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
 .mp-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
@@ -141,8 +143,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="mp-meses-anteriores-wrap" style="display:none;margin-bottom:22px">
-    <div class="mp-lista-titulo" style="margin-top:0">📅 Meses anteriores</div>
-    <div id="mp-meses-anteriores"></div>
+    <div class="mp-lista-titulo mp-toggle" style="margin-top:0;cursor:pointer" onclick="toggleMesesAnteriores()"><span class="mp-toggle-arrow">▸</span> 📅 Meses anteriores</div>
+    <div id="mp-meses-anteriores" style="display:none"></div>
   </div>
 
   <div id="mp-admin-picker" style="display:none;background:#fff;border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:22px;box-shadow:0 2px 10px rgba(196,57,107,.06)">
@@ -273,6 +275,14 @@ function renderMesesAnteriores(lista, mesAtual) {
   }).join('');
   wrap.style.display = 'block';
 }
+
+window.toggleMesesAnteriores = function() {
+  const lista = document.getElementById('mp-meses-anteriores');
+  const titulo = document.querySelector('#mp-meses-anteriores-wrap .mp-toggle');
+  const abrindo = lista.style.display === 'none';
+  lista.style.display = abrindo ? 'block' : 'none';
+  titulo.classList.toggle('aberto', abrindo);
+};
 
 // ── CARD COLETIVO DO MÊS — mesmo cálculo do card "Pagantes/Coberto" da
 // Tesouraria, mas sem expor os nomes de quem ainda não pagou (só a
