@@ -68,6 +68,12 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
 
+.mp-mes-resumo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:7px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
+.mp-mes-resumo-nome{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:var(--text)}
+.mp-mes-resumo-stats{display:flex;gap:14px;flex-shrink:0}
+.mp-mes-resumo-stat{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);white-space:nowrap}
+.mp-mes-resumo-stat-val{font-weight:700;color:var(--rosa)}
+
 .mp-vazio{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
 .mp-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
 </style>
@@ -132,6 +138,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       </div>
     </div>
     <div id="mp-card-faltam" style="margin-top:7px;font-family:'DM Sans',sans-serif;font-size:.67rem;color:rgba(255,255,255,.45);"></div>
+  </div>
+
+  <div id="mp-meses-anteriores-wrap" style="display:none;margin-bottom:22px">
+    <div class="mp-lista-titulo" style="margin-top:0">📅 Meses anteriores</div>
+    <div id="mp-meses-anteriores"></div>
   </div>
 
   <div id="mp-admin-picker" style="display:none;background:#fff;border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:22px;box-shadow:0 2px 10px rgba(196,57,107,.06)">
@@ -221,6 +232,48 @@ function lancamentosDoMes(lista, mes) {
   });
 }
 
+// mesmo cálculo do card "Pagantes/Coberto" da Tesouraria, isolado num mês —
+// usado tanto pro card do mês atual quanto pra lista de meses anteriores
+function calcularStatsMes(lista, mes) {
+  const doMes = lancamentosDoMes(lista, mes);
+  const totalE = doMes.filter(l => l.tipo === 'entrada').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+  const totalG = doMes.filter(l => l.tipo === 'gasto').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+  const membrosAtivos = getMembrosAtivos(mes);
+  const pagaram = {};
+  doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra').forEach(l => { if (l.membro) pagaram[l.membro] = true; });
+  const nPag = Object.keys(pagaram).length;
+  const nTot = membrosAtivos.length;
+  const pctPag = nTot ? Math.round(nPag / nTot * 100) : 0;
+  const pctCob = totalG > 0 ? Math.round(totalE / totalG * 100) : (totalE > 0 ? 100 : 0);
+  const nFaltam = membrosAtivos.filter(m => !pagaram[m]).length;
+  return { pctPag, nPag, nTot, pctCob, entradas: totalE, gastos: totalG, saldo: totalE - totalG, nFaltam };
+}
+
+// lista compacta dos meses anteriores ao atual que já têm algum lançamento —
+// mesmos % de Pagantes/Coberto do card, um por linha
+function renderMesesAnteriores(lista, mesAtual) {
+  const refs = new Set();
+  lista.forEach(l => {
+    const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0, 7) : '');
+    if (ref && ref < mesAtual) refs.add(ref);
+  });
+  const meses = [...refs].sort().reverse();
+  const wrap = document.getElementById('mp-meses-anteriores-wrap');
+  if (!meses.length) { wrap.style.display = 'none'; return; }
+
+  document.getElementById('mp-meses-anteriores').innerHTML = meses.map(ref => {
+    const d = calcularStatsMes(lista, ref);
+    return `<div class="mp-mes-resumo">
+      <div class="mp-mes-resumo-nome">${fmtCompetencia(ref)}</div>
+      <div class="mp-mes-resumo-stats">
+        <span class="mp-mes-resumo-stat">👥 <span class="mp-mes-resumo-stat-val">${d.pctPag}%</span></span>
+        <span class="mp-mes-resumo-stat">💰 <span class="mp-mes-resumo-stat-val">${d.pctCob}%</span></span>
+      </div>
+    </div>`;
+  }).join('');
+  wrap.style.display = 'block';
+}
+
 // ── CARD COLETIVO DO MÊS — mesmo cálculo do card "Pagantes/Coberto" da
 // Tesouraria, mas sem expor os nomes de quem ainda não pagou (só a
 // quantidade), já que aqui quem vê é qualquer pessoa logada, não só a admin
@@ -231,42 +284,31 @@ async function carregarCardMensalidade() {
     const lista = Array.isArray(todos) ? todos : [];
     const mes = today().slice(0, 7);
 
-    const doMes = lancamentosDoMes(lista, mes);
-    const totalE = doMes.filter(l => l.tipo === 'entrada').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const totalG = doMes.filter(l => l.tipo === 'gasto').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
-    const saldo = totalE - totalG;
-
-    const membrosAtivos = getMembrosAtivos(mes);
-    const pagaram = {};
-    doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra').forEach(l => { if (l.membro) pagaram[l.membro] = true; });
-    const nPag = Object.keys(pagaram).length;
-    const nTot = membrosAtivos.length;
-    const pctPag = nTot ? Math.round(nPag / nTot * 100) : 0;
-    const pctCob = totalG > 0 ? Math.round(totalE / totalG * 100) : (totalE > 0 ? 100 : 0);
-    const nFaltam = membrosAtivos.filter(m => !pagaram[m]).length;
+    const d = calcularStatsMes(lista, mes);
 
     const [ano, mesNum] = mes.split('-');
     document.getElementById('mp-card-mes-label').textContent = MESES_NOMES[parseInt(mesNum, 10) - 1] + ' ' + ano;
-    document.getElementById('mp-card-pct-pag').textContent = pctPag + '%';
-    document.getElementById('mp-card-pag-sub').textContent = nPag + '/' + nTot + ' membros';
-    document.getElementById('mp-card-pct-cob').textContent = pctCob + '%';
-    document.getElementById('mp-card-cob-sub').textContent = fmt(totalE) + ' / ' + fmt(totalG);
-    document.getElementById('mp-card-bar-cob').style.width = Math.min(pctCob, 100) + '%';
-    document.getElementById('mp-card-entradas').textContent = fmt(totalE);
-    document.getElementById('mp-card-gastos').textContent = fmt(totalG);
-    document.getElementById('mp-card-faltam').textContent = nFaltam
-      ? 'Faltam: ' + nFaltam + (nFaltam === 1 ? ' pessoa' : ' pessoas')
+    document.getElementById('mp-card-pct-pag').textContent = d.pctPag + '%';
+    document.getElementById('mp-card-pag-sub').textContent = d.nPag + '/' + d.nTot + ' membros';
+    document.getElementById('mp-card-pct-cob').textContent = d.pctCob + '%';
+    document.getElementById('mp-card-cob-sub').textContent = fmt(d.entradas) + ' / ' + fmt(d.gastos);
+    document.getElementById('mp-card-bar-cob').style.width = Math.min(d.pctCob, 100) + '%';
+    document.getElementById('mp-card-entradas').textContent = fmt(d.entradas);
+    document.getElementById('mp-card-gastos').textContent = fmt(d.gastos);
+    document.getElementById('mp-card-faltam').textContent = d.nFaltam
+      ? 'Faltam: ' + d.nFaltam + (d.nFaltam === 1 ? ' pessoa' : ' pessoas')
       : '✓ Todas pagaram';
 
     const saldoLinha = document.getElementById('mp-card-saldo-linha');
-    if (saldo < 0) {
+    if (d.saldo < 0) {
       saldoLinha.style.display = 'flex';
-      document.getElementById('mp-card-saldo-val').textContent = fmt(saldo);
+      document.getElementById('mp-card-saldo-val').textContent = fmt(d.saldo);
     } else {
       saldoLinha.style.display = 'none';
     }
 
     document.getElementById('mp-card-mes').style.display = 'block';
+    renderMesesAnteriores(lista, mes);
   } catch (e) {
     console.warn('card mensalidade:', e);
   }
@@ -412,6 +454,7 @@ onAuthStateChanged(auth, (user) => {
   document.getElementById('mp-conteudo').style.display = 'none';
   document.getElementById('mp-admin-picker').style.display = 'none';
   document.getElementById('mp-card-mes').style.display = 'none';
+  document.getElementById('mp-meses-anteriores-wrap').style.display = 'none';
 
   if (user) {
     statusEl.textContent = user.displayName || user.email;
