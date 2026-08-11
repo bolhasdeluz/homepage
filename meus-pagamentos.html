@@ -96,6 +96,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     Fala com a <strong>Mãe da Casa</strong> pra ela fazer esse vínculo, daí seu extrato aparece aqui ✦
   </div>
 
+  <div id="mp-admin-picker" style="display:none;background:#fff;border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:22px;box-shadow:0 2px 10px rgba(196,57,107,.06)">
+    <div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">👁 Ver como (admin)</div>
+    <select id="mp-admin-select" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);background:var(--rosa-dim)">
+      <option value="">— Escolher pessoa —</option>
+    </select>
+  </div>
+
   <div id="mp-conteudo" style="display:none">
     <div class="mp-resumo">
       <div class="mp-resumo-card">
@@ -157,30 +164,23 @@ function fmtData(d) {
   return dia + '/' + mes + '/' + ano;
 }
 
-async function carregarExtrato(email) {
+// e-mails com acesso de admin — mesma lista usada na Tesouraria (blIsEmailAdmin)
+const BL_ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+// lista completa histórica de membros — mesma da Tesouraria (MEMBROS_TODOS); se
+// alguém sair ou entrar na casa por lá, espelhar aqui também
+const MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
+
+async function carregarExtratoPorNome(nome) {
+  document.getElementById('mp-sem-vinculo').style.display = 'none';
   document.getElementById('mp-carregando').style.display = 'block';
   try {
-    const [resVinculo, resLancamentos] = await Promise.all([
-      fetch('/api/dados?chave=vinculo_membros'),
-      fetch('/api/dados?chave=lancamentos'),
-    ]);
-    const vinculo = await resVinculo.json();
+    const resLancamentos = await fetch('/api/dados?chave=lancamentos');
     const lancamentos = await resLancamentos.json();
-
-    const emailAlvo = (email || '').toLowerCase();
-    const meuNome = vinculo && typeof vinculo === 'object'
-      ? Object.keys(vinculo).find(nome => (vinculo[nome] || '').toLowerCase() === emailAlvo)
-      : null;
 
     document.getElementById('mp-carregando').style.display = 'none';
 
-    if (!meuNome) {
-      document.getElementById('mp-sem-vinculo').style.display = 'block';
-      return;
-    }
-
     const meusPagamentos = (Array.isArray(lancamentos) ? lancamentos : [])
-      .filter(l => l.tipo === 'entrada' && l.membro === meuNome)
+      .filter(l => l.tipo === 'entrada' && l.membro === nome)
       .sort((a, b) => {
         const refA = a.competencia || a.data || '';
         const refB = b.competencia || b.data || '';
@@ -222,6 +222,43 @@ async function carregarExtrato(email) {
   }
 }
 
+async function carregarExtratoPorEmail(email) {
+  document.getElementById('mp-carregando').style.display = 'block';
+  try {
+    const resVinculo = await fetch('/api/dados?chave=vinculo_membros');
+    const vinculo = await resVinculo.json();
+    const emailAlvo = (email || '').toLowerCase();
+    const meuNome = vinculo && typeof vinculo === 'object'
+      ? Object.keys(vinculo).find(nome => (vinculo[nome] || '').toLowerCase() === emailAlvo)
+      : null;
+
+    if (!meuNome) {
+      document.getElementById('mp-carregando').style.display = 'none';
+      document.getElementById('mp-sem-vinculo').style.display = 'block';
+      return;
+    }
+    await carregarExtratoPorNome(meuNome);
+  } catch (e) {
+    console.error('carregar vínculo:', e);
+    document.getElementById('mp-carregando').style.display = 'none';
+    document.getElementById('mp-sem-vinculo').innerHTML = 'Não consegui carregar seu extrato agora. Tenta de novo em instantes ✦';
+    document.getElementById('mp-sem-vinculo').style.display = 'block';
+  }
+}
+
+// ── ADMIN: "ver como" qualquer pessoa, sem depender do vínculo de e-mail ──
+function montarSeletorAdmin() {
+  const sel = document.getElementById('mp-admin-select');
+  sel.innerHTML = '<option value="">— Escolher pessoa —</option>'
+    + MEMBROS_TODOS.map(m => `<option value="${m}">${m}</option>`).join('');
+  sel.onchange = () => {
+    document.getElementById('mp-sem-vinculo').style.display = 'none';
+    document.getElementById('mp-conteudo').style.display = 'none';
+    if (sel.value) carregarExtratoPorNome(sel.value);
+  };
+  document.getElementById('mp-admin-picker').style.display = 'block';
+}
+
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   const statusEl = document.getElementById('login-status');
@@ -232,6 +269,7 @@ onAuthStateChanged(auth, (user) => {
   document.getElementById('mp-deslogada').style.display = 'none';
   document.getElementById('mp-sem-vinculo').style.display = 'none';
   document.getElementById('mp-conteudo').style.display = 'none';
+  document.getElementById('mp-admin-picker').style.display = 'none';
 
   if (user) {
     statusEl.textContent = user.displayName || user.email;
@@ -239,7 +277,13 @@ onAuthStateChanged(auth, (user) => {
     avatarEl.style.display = user.photoURL ? 'block' : 'none';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
-    carregarExtrato(user.email);
+    if (BL_ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
+      // admin não costuma ter vínculo próprio — mostra o seletor direto,
+      // em vez de tentar achar o extrato dela mesma
+      montarSeletorAdmin();
+    } else {
+      carregarExtratoPorEmail(user.email);
+    }
   } else {
     statusEl.textContent = 'Não conectada';
     avatarEl.style.display = 'none';
