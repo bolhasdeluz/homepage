@@ -56,14 +56,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .saldo-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:4px}
 .mp-aviso strong{color:var(--text);font-style:normal}
 
-.mp-resumo{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px}
-.mp-resumo-card{flex:1 1 160px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));border-radius:14px;padding:18px 20px;box-shadow:0 4px 20px rgba(196,57,107,.2);color:#fff}
-.mp-resumo-label{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin-bottom:4px}
-.mp-resumo-valor{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600}
-
 .mp-lista-titulo{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:26px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
 .mp-item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--border);border-left:4px solid var(--green-border);border-radius:12px;padding:13px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(196,57,107,.05);animation:cpEntra .25s ease both}
-.mp-item.faltando{border-left-color:rgba(192,57,43,.35);background:rgba(192,57,43,.03)}
+.mp-item.faltando{border-left-color:var(--border)}
 .mp-item-mes{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600;color:var(--text)}
 .mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
@@ -155,18 +150,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="mp-conteudo" style="display:none">
-    <div class="mp-resumo">
-      <div class="mp-resumo-card">
-        <div class="mp-resumo-label">Total pago</div>
-        <div class="mp-resumo-valor" id="mp-total">R$ 0,00</div>
-      </div>
-      <div class="mp-resumo-card" style="background:linear-gradient(135deg,var(--terra),#5c2a10)">
-        <div class="mp-resumo-label">Meses de mensalidade</div>
-        <div class="mp-resumo-valor" id="mp-meses">0</div>
-      </div>
-    </div>
-
-    <div class="mp-lista-titulo">Histórico</div>
+    <div class="mp-lista-titulo" style="margin-top:0">Histórico</div>
     <div id="mp-lista"></div>
     <div id="mp-vazio" class="mp-vazio" style="display:none">Nenhum pagamento registrado no seu nome ainda.</div>
   </div>
@@ -375,11 +359,6 @@ async function carregarExtratoPorNome(nome) {
 
     document.getElementById('mp-conteudo').style.display = 'block';
 
-    const total = meusPagamentos.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
-    const mesesMensalidade = meusPagamentos.filter(l => l.subTipo !== 'extra').length;
-    document.getElementById('mp-total').textContent = fmt(total);
-    document.getElementById('mp-meses').textContent = mesesMensalidade;
-
     // meses sem mensalidade entram na mesma lista, misturados por data, com
     // valor zerado — em vez de uma caixa de aviso separada
     const faltando = mesesSemMensalidade(meusPagamentos).map(ref => ({
@@ -402,13 +381,12 @@ async function carregarExtratoPorNome(nome) {
     listaEl.innerHTML = listaCompleta.map(l => {
       const rotulo = l.competencia ? fmtCompetencia(l.competencia) : (l.data ? fmtData(l.data) : '—');
       const extra = l.subTipo === 'extra' ? ' <span style="font-size:.65rem;background:#fffbe8;border:1px solid #e8d080;color:#8c5a00;border-radius:4px;padding:1px 5px;">✨ Extra</span>' : '';
-      const naoPago = l.faltando ? ' <span style="font-size:.65rem;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);color:#a5362a;border-radius:4px;padding:1px 5px;">⚠️ Não pago</span>' : '';
       return `<div class="mp-item${l.faltando ? ' faltando' : ''}">
         <div>
-          <div class="mp-item-mes">${rotulo}${extra}${naoPago}</div>
+          <div class="mp-item-mes">${rotulo}${extra}</div>
           ${l.obs ? `<div class="mp-item-obs">${l.obs}</div>` : ''}
         </div>
-        <div class="mp-item-valor" style="${l.faltando ? 'color:#a5362a' : ''}">${fmt(l.valor)}</div>
+        <div class="mp-item-valor" style="${l.faltando ? 'color:var(--text-dim)' : ''}">${fmt(l.valor)}</div>
       </div>`;
     }).join('');
   } catch (e) {
