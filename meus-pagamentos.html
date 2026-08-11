@@ -51,6 +51,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-faixa span{font-size:1.5rem;opacity:.7}
 
 .mp-aviso{background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px 24px;text-align:center;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;line-height:1.6;box-shadow:0 4px 20px rgba(196,57,107,.07)}
+
+.saldo-card{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));border-radius:14px;padding:20px 22px;margin-bottom:22px;box-shadow:0 4px 20px rgba(196,57,107,.25)}
+.saldo-label{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:4px}
 .mp-aviso strong{color:var(--text);font-style:normal}
 
 .mp-resumo{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px}
@@ -94,6 +97,40 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <div id="mp-sem-vinculo" class="mp-aviso" style="display:none">
     Sua conta ainda não foi vinculada ao seu nome na Tesouraria.<br>
     Fala com a <strong>Mãe da Casa</strong> pra ela fazer esse vínculo, daí seu extrato aparece aqui ✦
+  </div>
+
+  <div id="mp-card-mes" class="saldo-card" style="display:none">
+    <div class="saldo-label" id="mp-card-mes-label">Mês</div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">👥 Pagantes</div>
+        <div id="mp-card-pct-pag" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:600;color:#fff;line-height:1;">0%</div>
+        <div id="mp-card-pag-sub" style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;"></div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">💰 Coberto</div>
+        <div id="mp-card-pct-cob" style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:600;color:#fff;line-height:1;">0%</div>
+        <div id="mp-card-cob-sub" style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.55);margin-top:2px;"></div>
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,.15);border-radius:4px;height:3px;overflow:hidden;margin-top:10px;">
+      <div id="mp-card-bar-cob" style="height:100%;border-radius:4px;transition:width .4s;width:0%;background:rgba(255,255,255,.85);"></div>
+    </div>
+    <div id="mp-card-saldo-linha" style="display:none;margin-top:8px;justify-content:space-between;align-items:center;">
+      <span style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:rgba(255,255,255,.45);">coberto pela mãe de santo 🕯️</span>
+      <span id="mp-card-saldo-val" style="font-family:'Crimson Pro',serif;font-size:.88rem;font-weight:600;color:rgba(255,255,255,.6);"></span>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:10px;">
+      <div style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">↑ Entradas</div>
+        <div id="mp-card-entradas" style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>
+      </div>
+      <div style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;">
+        <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">↓ Gastos</div>
+        <div id="mp-card-gastos" style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>
+      </div>
+    </div>
+    <div id="mp-card-faltam" style="margin-top:7px;font-family:'DM Sans',sans-serif;font-size:.67rem;color:rgba(255,255,255,.45);"></div>
   </div>
 
   <div id="mp-admin-picker" style="display:none;background:#fff;border:1px solid var(--border);border-left:4px solid var(--gold);border-radius:12px;padding:14px 16px;margin-bottom:22px;box-shadow:0 2px 10px rgba(196,57,107,.06)">
@@ -162,6 +199,76 @@ function fmtData(d) {
   if (!d) return '';
   const [ano, mes, dia] = d.split('-');
   return dia + '/' + mes + '/' + ano;
+}
+
+// mesma lista/lógica de "membros ativos" da Tesouraria — se alguém sair ou
+// entrar na casa por lá, espelhar aqui também
+const MEMBROS_SAIDA = { 'Juliana': '2026-07' };
+function today() { return new Date().toISOString().slice(0, 10); }
+function getMembrosAtivos(mesRef) {
+  const ref = mesRef || today().slice(0, 7);
+  return MEMBROS_TODOS.filter(m => { const s = MEMBROS_SAIDA[m]; return !s || ref < s; });
+}
+function lancamentosDoMes(lista, mes) {
+  return lista.filter(l => {
+    if (l.status === 'pendente' && !l.data && !l.vencimento) return true;
+    const ref = (l.tipo === 'entrada' && l.competencia)
+      ? l.competencia
+      : (l.data ? l.data.slice(0, 7) : (l.vencimento ? l.vencimento.slice(0, 7) : ''));
+    if (!ref) return true;
+    return ref === mes;
+  });
+}
+
+// ── CARD COLETIVO DO MÊS — mesmo cálculo do card "Pagantes/Coberto" da
+// Tesouraria, mas sem expor os nomes de quem ainda não pagou (só a
+// quantidade), já que aqui quem vê é qualquer pessoa logada, não só a admin
+async function carregarCardMensalidade() {
+  try {
+    const res = await fetch('/api/dados?chave=lancamentos');
+    const todos = await res.json();
+    const lista = Array.isArray(todos) ? todos : [];
+    const mes = today().slice(0, 7);
+
+    const doMes = lancamentosDoMes(lista, mes);
+    const totalE = doMes.filter(l => l.tipo === 'entrada').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+    const totalG = doMes.filter(l => l.tipo === 'gasto').reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+    const saldo = totalE - totalG;
+
+    const membrosAtivos = getMembrosAtivos(mes);
+    const pagaram = {};
+    doMes.filter(l => l.tipo === 'entrada' && l.subTipo !== 'extra').forEach(l => { if (l.membro) pagaram[l.membro] = true; });
+    const nPag = Object.keys(pagaram).length;
+    const nTot = membrosAtivos.length;
+    const pctPag = nTot ? Math.round(nPag / nTot * 100) : 0;
+    const pctCob = totalG > 0 ? Math.round(totalE / totalG * 100) : (totalE > 0 ? 100 : 0);
+    const nFaltam = membrosAtivos.filter(m => !pagaram[m]).length;
+
+    const [ano, mesNum] = mes.split('-');
+    document.getElementById('mp-card-mes-label').textContent = MESES_NOMES[parseInt(mesNum, 10) - 1] + ' ' + ano;
+    document.getElementById('mp-card-pct-pag').textContent = pctPag + '%';
+    document.getElementById('mp-card-pag-sub').textContent = nPag + '/' + nTot + ' membros';
+    document.getElementById('mp-card-pct-cob').textContent = pctCob + '%';
+    document.getElementById('mp-card-cob-sub').textContent = fmt(totalE) + ' / ' + fmt(totalG);
+    document.getElementById('mp-card-bar-cob').style.width = Math.min(pctCob, 100) + '%';
+    document.getElementById('mp-card-entradas').textContent = fmt(totalE);
+    document.getElementById('mp-card-gastos').textContent = fmt(totalG);
+    document.getElementById('mp-card-faltam').textContent = nFaltam
+      ? 'Faltam: ' + nFaltam + (nFaltam === 1 ? ' pessoa' : ' pessoas')
+      : '✓ Todas pagaram';
+
+    const saldoLinha = document.getElementById('mp-card-saldo-linha');
+    if (saldo < 0) {
+      saldoLinha.style.display = 'flex';
+      document.getElementById('mp-card-saldo-val').textContent = fmt(saldo);
+    } else {
+      saldoLinha.style.display = 'none';
+    }
+
+    document.getElementById('mp-card-mes').style.display = 'block';
+  } catch (e) {
+    console.warn('card mensalidade:', e);
+  }
 }
 
 // e-mails com acesso de admin — mesma lista usada na Tesouraria (blIsEmailAdmin)
@@ -270,6 +377,7 @@ onAuthStateChanged(auth, (user) => {
   document.getElementById('mp-sem-vinculo').style.display = 'none';
   document.getElementById('mp-conteudo').style.display = 'none';
   document.getElementById('mp-admin-picker').style.display = 'none';
+  document.getElementById('mp-card-mes').style.display = 'none';
 
   if (user) {
     statusEl.textContent = user.displayName || user.email;
@@ -277,6 +385,7 @@ onAuthStateChanged(auth, (user) => {
     avatarEl.style.display = user.photoURL ? 'block' : 'none';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
+    carregarCardMensalidade();
     if (BL_ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
       // admin não costuma ter vínculo próprio — mostra o seletor direto,
       // em vez de tentar achar o extrato dela mesma
