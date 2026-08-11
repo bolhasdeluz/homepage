@@ -63,11 +63,14 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
 
-.mp-mes-resumo{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:7px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
+.mp-mes-resumo{background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:7px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
+.mp-mes-resumo-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .mp-mes-resumo-nome{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:var(--text)}
 .mp-mes-resumo-stats{display:flex;gap:14px;flex-shrink:0}
 .mp-mes-resumo-stat{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);white-space:nowrap}
 .mp-mes-resumo-stat-val{font-weight:700;color:var(--rosa)}
+.mp-mes-resumo-saldo{display:flex;justify-content:space-between;gap:10px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim)}
+.mp-mes-resumo-saldo-val{font-weight:700;color:#a5362a}
 .mp-toggle-arrow{display:inline-block;transition:transform .2s;font-size:.7rem}
 .mp-lista-titulo.mp-toggle.aberto .mp-toggle-arrow{transform:rotate(90deg)}
 
@@ -252,12 +255,18 @@ function renderMesesAnteriores(lista, mesAtual) {
 
   document.getElementById('mp-meses-anteriores').innerHTML = meses.map(ref => {
     const d = calcularStatsMes(lista, ref);
+    const saldoHtml = d.saldo < 0
+      ? `<div class="mp-mes-resumo-saldo"><span>coberto pela mãe de santo 🕯️</span><span class="mp-mes-resumo-saldo-val">${fmt(d.saldo)}</span></div>`
+      : '';
     return `<div class="mp-mes-resumo">
-      <div class="mp-mes-resumo-nome">${fmtCompetencia(ref)}</div>
-      <div class="mp-mes-resumo-stats">
-        <span class="mp-mes-resumo-stat">👥 <span class="mp-mes-resumo-stat-val">${d.pctPag}%</span></span>
-        <span class="mp-mes-resumo-stat">💰 <span class="mp-mes-resumo-stat-val">${d.pctCob}%</span></span>
+      <div class="mp-mes-resumo-topo">
+        <div class="mp-mes-resumo-nome">${fmtCompetencia(ref)}</div>
+        <div class="mp-mes-resumo-stats">
+          <span class="mp-mes-resumo-stat">👥 <span class="mp-mes-resumo-stat-val">${d.pctPag}%</span></span>
+          <span class="mp-mes-resumo-stat">💰 <span class="mp-mes-resumo-stat-val">${d.pctCob}%</span></span>
+        </div>
       </div>
+      ${saldoHtml}
     </div>`;
   }).join('');
   wrap.style.display = 'block';
