@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Pagamentos — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — extrato pessoal de mensalidades e outros valores pagos.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meus Pagamentos — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;--gold:#c8a000;
+  --creme:#fff5f7;--surface:rgba(255,255,255,.72);
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:760px;margin:0 auto;padding:32px 24px 120px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px}
+.section-title{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--text);margin-bottom:8px}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:32px;line-height:1.6}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;margin-bottom:28px;transition:color .2s;}
+.back-btn:hover{color:var(--rosa)}
+
+#login-bar{display:flex;align-items:center;justify-content:flex-end;gap:10px;max-width:760px;margin:0 auto;padding:16px 24px 0}
+#login-bar img{width:34px;height:34px;border-radius:50%;display:none}
+#login-btn{background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+#login-status{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+#logout-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:6px 14px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);display:none}
+
+@keyframes cpEntra{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.mp-faixa{display:flex;justify-content:center;gap:22px;padding:14px 0;margin-bottom:24px;background:linear-gradient(90deg,transparent,rgba(140,58,26,.06),transparent);border-radius:14px}
+.mp-faixa span{font-size:1.5rem;opacity:.7}
+
+.mp-aviso{background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px 24px;text-align:center;font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;line-height:1.6;box-shadow:0 4px 20px rgba(196,57,107,.07)}
+.mp-aviso strong{color:var(--text);font-style:normal}
+
+.mp-resumo{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:26px}
+.mp-resumo-card{flex:1 1 160px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));border-radius:14px;padding:18px 20px;box-shadow:0 4px 20px rgba(196,57,107,.2);color:#fff}
+.mp-resumo-label{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin-bottom:4px}
+.mp-resumo-valor{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600}
+
+.mp-lista-titulo{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:26px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.mp-item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--border);border-left:4px solid var(--green-border);border-radius:12px;padding:13px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(196,57,107,.05);animation:cpEntra .25s ease both}
+.mp-item-mes{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600;color:var(--text)}
+.mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
+
+.mp-vazio{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+.mp-carregando{text-align:center;padding:40px 0;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic}
+</style>
+</head>
+<body>
+
+<div id="login-bar">
+  <span id="login-status">Entrando...</span>
+  <img id="login-avatar">
+  <button id="login-btn" style="display:none">Entrar com Google</button>
+  <button id="logout-btn">Sair</button>
+</div>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">💰 Meus Pagamentos</div>
+  <p class="section-sub">Seu extrato pessoal de mensalidades e outros valores pagos à casa ✦</p>
+
+  <div class="mp-faixa">
+    <span>🕯</span><span>💚</span><span>🪘</span><span>✦</span>
+  </div>
+
+  <div id="mp-deslogada" class="mp-aviso" style="display:none">
+    Entra com sua conta do Google (ali em cima) pra ver seu extrato ✦
+  </div>
+
+  <div id="mp-sem-vinculo" class="mp-aviso" style="display:none">
+    Sua conta ainda não foi vinculada ao seu nome na Tesouraria.<br>
+    Fala com a <strong>Mãe da Casa</strong> pra ela fazer esse vínculo, daí seu extrato aparece aqui ✦
+  </div>
+
+  <div id="mp-conteudo" style="display:none">
+    <div class="mp-resumo">
+      <div class="mp-resumo-card">
+        <div class="mp-resumo-label">Total pago</div>
+        <div class="mp-resumo-valor" id="mp-total">R$ 0,00</div>
+      </div>
+      <div class="mp-resumo-card" style="background:linear-gradient(135deg,var(--terra),#5c2a10)">
+        <div class="mp-resumo-label">Meses de mensalidade</div>
+        <div class="mp-resumo-valor" id="mp-meses">0</div>
+      </div>
+    </div>
+
+    <div class="mp-lista-titulo">Histórico</div>
+    <div id="mp-lista"></div>
+    <div id="mp-vazio" class="mp-vazio" style="display:none">Nenhum pagamento registrado no seu nome ainda.</div>
+  </div>
+
+  <div id="mp-carregando" class="mp-carregando" style="display:none">Carregando seu extrato...</div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+let currentUser = null;
+
+document.getElementById('login-btn').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(e => console.warn('login:', e));
+});
+document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+function fmt(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+const MESES_NOMES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function fmtCompetencia(ref) {
+  if (!ref) return '';
+  const [ano, mes] = ref.split('-');
+  const idx = parseInt(mes, 10) - 1;
+  const nomeMes = MESES_NOMES[idx] || ref;
+  return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1) + ' de ' + ano;
+}
+function fmtData(d) {
+  if (!d) return '';
+  const [ano, mes, dia] = d.split('-');
+  return dia + '/' + mes + '/' + ano;
+}
+
+async function carregarExtrato(email) {
+  document.getElementById('mp-carregando').style.display = 'block';
+  try {
+    const [resVinculo, resLancamentos] = await Promise.all([
+      fetch('/api/dados?chave=vinculo_membros'),
+      fetch('/api/dados?chave=lancamentos'),
+    ]);
+    const vinculo = await resVinculo.json();
+    const lancamentos = await resLancamentos.json();
+
+    const emailAlvo = (email || '').toLowerCase();
+    const meuNome = vinculo && typeof vinculo === 'object'
+      ? Object.keys(vinculo).find(nome => (vinculo[nome] || '').toLowerCase() === emailAlvo)
+      : null;
+
+    document.getElementById('mp-carregando').style.display = 'none';
+
+    if (!meuNome) {
+      document.getElementById('mp-sem-vinculo').style.display = 'block';
+      return;
+    }
+
+    const meusPagamentos = (Array.isArray(lancamentos) ? lancamentos : [])
+      .filter(l => l.tipo === 'entrada' && l.membro === meuNome)
+      .sort((a, b) => {
+        const refA = a.competencia || a.data || '';
+        const refB = b.competencia || b.data || '';
+        return refB.localeCompare(refA);
+      });
+
+    document.getElementById('mp-conteudo').style.display = 'block';
+
+    const total = meusPagamentos.reduce((s, l) => s + (parseFloat(l.valor) || 0), 0);
+    const mesesMensalidade = meusPagamentos.filter(l => l.subTipo !== 'extra').length;
+    document.getElementById('mp-total').textContent = fmt(total);
+    document.getElementById('mp-meses').textContent = mesesMensalidade;
+
+    const listaEl = document.getElementById('mp-lista');
+    const vazioEl = document.getElementById('mp-vazio');
+    if (!meusPagamentos.length) {
+      vazioEl.style.display = 'block';
+      listaEl.innerHTML = '';
+      return;
+    }
+    vazioEl.style.display = 'none';
+    listaEl.innerHTML = meusPagamentos.map(l => {
+      const ref = l.competencia || (l.data ? l.data.slice(0, 7) : '');
+      const rotulo = l.competencia ? fmtCompetencia(l.competencia) : (l.data ? fmtData(l.data) : '—');
+      const extra = l.subTipo === 'extra' ? ' <span style="font-size:.65rem;background:#fffbe8;border:1px solid #e8d080;color:#8c5a00;border-radius:4px;padding:1px 5px;">✨ Extra</span>' : '';
+      return `<div class="mp-item">
+        <div>
+          <div class="mp-item-mes">${rotulo}${extra}</div>
+          ${l.obs ? `<div class="mp-item-obs">${l.obs}</div>` : ''}
+        </div>
+        <div class="mp-item-valor">${fmt(l.valor)}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.error('carregar extrato:', e);
+    document.getElementById('mp-carregando').style.display = 'none';
+    document.getElementById('mp-sem-vinculo').innerHTML = 'Não consegui carregar seu extrato agora. Tenta de novo em instantes ✦';
+    document.getElementById('mp-sem-vinculo').style.display = 'block';
+  }
+}
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  const statusEl = document.getElementById('login-status');
+  const avatarEl = document.getElementById('login-avatar');
+  const loginBtn = document.getElementById('login-btn');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  document.getElementById('mp-deslogada').style.display = 'none';
+  document.getElementById('mp-sem-vinculo').style.display = 'none';
+  document.getElementById('mp-conteudo').style.display = 'none';
+
+  if (user) {
+    statusEl.textContent = user.displayName || user.email;
+    avatarEl.src = user.photoURL || '';
+    avatarEl.style.display = user.photoURL ? 'block' : 'none';
+    loginBtn.style.display = 'none';
+    logoutBtn.style.display = 'inline-block';
+    carregarExtrato(user.email);
+  } else {
+    statusEl.textContent = 'Não conectada';
+    avatarEl.style.display = 'none';
+    loginBtn.style.display = 'inline-block';
+    logoutBtn.style.display = 'none';
+    document.getElementById('mp-deslogada').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>
