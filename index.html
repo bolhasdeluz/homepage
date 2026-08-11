@@ -137,10 +137,11 @@ body.logada #menu-hint{top:28px}
 body{padding-top:34px}
 body.logada{padding-top:62px}
 
-/* drag and drop */
-.admin-item-row{cursor:grab}
-.admin-item-row.dragging{opacity:.4;cursor:grabbing}
-.admin-item-row.drag-over{border-top:2px solid var(--rosa)}
+/* reordenar itens do menu (setinhas) */
+.admin-move-btns{display:flex;flex-direction:column;gap:1px;flex-shrink:0}
+.admin-move-btn{background:none;border:none;color:rgba(196,90,30,.45);font-size:.65rem;line-height:1;padding:2px 5px;cursor:pointer;transition:color .2s}
+.admin-move-btn:hover:not(:disabled){color:var(--terra)}
+.admin-move-btn:disabled{opacity:.2;cursor:default}
 
 
 /* widgets */
@@ -4352,12 +4353,11 @@ function renderAdminPanel() {
       </div>
       <div id="sortable-${si}" data-section="${si}">
       ${sec.items.map((item, ii) => `
-        <div class="admin-item-row" draggable="true" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}"
-          ondragstart="dragStart(event,${si},${ii})"
-          ondragover="dragOver(event)"
-          ondrop="dragDrop(event,${si},${ii})"
-          ondragend="dragEnd(event)">
-          <span style="color:var(--text-dim);font-size:.8rem;cursor:grab;padding:0 4px;flex-shrink:0">⠿</span>
+        <div class="admin-item-row" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}">
+          <div class="admin-move-btns">
+            <button class="admin-move-btn" onclick="moveItem(${si},${ii},-1)" ${ii===0?'disabled':''} title="Mover para cima">▲</button>
+            <button class="admin-move-btn" onclick="moveItem(${si},${ii},1)" ${ii===sec.items.length-1?'disabled':''} title="Mover para baixo">▼</button>
+          </div>
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
           <div class="admin-item-actions">
@@ -4415,36 +4415,17 @@ function renderAdminPanel() {
     </div>`).join('');
 }
 
-// ── DRAG AND DROP ──
-let dragSrc = null;
-
-function dragStart(e, si, ii) {
-  dragSrc = { si, ii };
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function dragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
-  e.currentTarget.classList.add('drag-over');
-}
-function dragDrop(e, si, ii) {
-  e.preventDefault();
-  if (!dragSrc || (dragSrc.si === si && dragSrc.ii === ii)) return;
-  if (dragSrc.si !== si) return; // só dentro da mesma seção por ora
+// ── REORDENAR ITENS (setinhas — arrastar não funcionava bem no celular) ──
+function moveItem(si, ii, dir) {
   const items = menuData.sections[si].items;
-  const [moved] = items.splice(dragSrc.ii, 1);
-  items.splice(ii, 0, moved);
+  const novoIndex = ii + dir;
+  if (novoIndex < 0 || novoIndex >= items.length) return;
+  const [moved] = items.splice(ii, 1);
+  items.splice(novoIndex, 0, moved);
   renderAdminPanel();
   renderDrawer();
   renderCards();
   agendarSalvarMenu();
-}
-function dragEnd(e) {
-  e.currentTarget.classList.remove('dragging');
-  document.querySelectorAll('.admin-item-row.drag-over').forEach(el => el.classList.remove('drag-over'));
-  dragSrc = null;
 }
 
 // ── VISIBILIDADE POR ESTADO ──
