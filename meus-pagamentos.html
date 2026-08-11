@@ -151,6 +151,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="mp-conteudo" style="display:none">
+    <div id="mp-card-obrigacao" class="saldo-card" style="display:none">
+      <div class="saldo-label">🕯️ Obrigação dos Exus — Agosto</div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">🕯️ Obrigação</div>
+          <div id="mp-obr-valor" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:#fff;line-height:1;">R$ 0 / R$ 0</div>
+        </div>
+        <div style="flex:1;background:rgba(255,255,255,.12);border-radius:8px;padding:9px 12px;text-align:center;">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.65rem;color:rgba(255,255,255,.6);margin-bottom:2px;">🐓 Aves</div>
+          <div id="mp-aves-valor" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:#fff;line-height:1;">R$ 0 / R$ 0</div>
+        </div>
+      </div>
+      <div id="mp-obrigacao-status" style="margin-top:8px;font-family:'DM Sans',sans-serif;font-size:.68rem;color:rgba(255,255,255,.75);text-align:center;"></div>
+    </div>
+
     <div class="mp-lista-titulo" style="margin-top:0">Histórico</div>
     <div id="mp-lista"></div>
     <div id="mp-vazio" class="mp-vazio" style="display:none">Nenhum pagamento registrado no seu nome ainda.</div>
@@ -346,7 +361,48 @@ function mesesSemMensalidade(pagamentos) {
   return faltando;
 }
 
+// ── OBRIGAÇÃO DOS EXUS (Agosto) — mesma lógica de agAvesVal/agObrigacaoDe
+// da Tesouraria, mas só do valor dessa pessoa
+async function carregarObrigacaoExus(nome) {
+  const card = document.getElementById('mp-card-obrigacao');
+  try {
+    const [resPessoas, resPgtos] = await Promise.all([
+      fetch('/api/dados?chave=ag_pessoas'),
+      fetch('/api/dados?chave=ag_pgtos'),
+    ]);
+    const pessoas = await resPessoas.json();
+    const pgtos = await resPgtos.json();
+
+    const pessoa = (Array.isArray(pessoas) ? pessoas : []).find(p => p.nome === nome);
+    if (!pessoa) { card.style.display = 'none'; return; }
+
+    const precos = (pgtos && pgtos.__precos) || { galo: 58, galinha: 53 };
+    const pg = (pgtos && pgtos[nome]) || { obr: 0, aves: 0 };
+
+    const obrDevida = pessoa.isento ? 0 : 270;
+    const avesDevida = (pessoa.galos || 0) * precos.galo + (pessoa.galinhas || 0) * precos.galinha;
+
+    document.getElementById('mp-obr-valor').textContent = pessoa.isento
+      ? 'Isenta'
+      : fmt(pg.obr) + ' / ' + fmt(obrDevida);
+    document.getElementById('mp-aves-valor').textContent = fmt(pg.aves) + ' / ' + fmt(avesDevida);
+
+    const faltaObr = Math.max(obrDevida - (pg.obr || 0), 0);
+    const faltaAves = Math.max(avesDevida - (pg.aves || 0), 0);
+    const faltaTotal = faltaObr + faltaAves;
+    document.getElementById('mp-obrigacao-status').textContent = faltaTotal <= 0
+      ? '✓ Tudo quitado ✦'
+      : 'Falta ' + fmt(faltaTotal) + ' no total';
+
+    card.style.display = 'block';
+  } catch (e) {
+    console.warn('obrigação dos exus:', e);
+    card.style.display = 'none';
+  }
+}
+
 async function carregarExtratoPorNome(nome) {
+  carregarObrigacaoExus(nome);
   document.getElementById('mp-sem-vinculo').style.display = 'none';
   document.getElementById('mp-carregando').style.display = 'block';
   try {
