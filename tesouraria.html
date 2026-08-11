@@ -547,6 +547,7 @@ body{padding-bottom:64px}
       <div style="padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.5">Vincule o e-mail de login de cada uma ao nome usado aqui na Tesouraria, pra ela conseguir ver o próprio extrato na página "Meus Pagamentos".</div>
       <div id="lista-vinculos" style="padding:0 14px 12px"></div>
       <div style="padding:0 14px 14px">
+        <button onclick="buscarEmailsDosPerfis()" style="background:none;border:1px solid var(--gold);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:8px 16px;cursor:pointer;margin-right:8px;">🔄 Buscar dos perfis</button>
         <button onclick="salvarVinculos()" style="background:var(--gold);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:8px 16px;cursor:pointer;">✓ Salvar vínculos</button>
         <span id="vinculos-status" style="margin-left:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--green);"></span>
       </div>
@@ -1695,6 +1696,41 @@ body{padding-bottom:64px}
         + '<input type="email" class="vinculo-input" data-membro="'+m+'" value="'+email+'" placeholder="e-mail de login…" style="flex:1;min-width:180px;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-family:\'DM Sans\',sans-serif;font-size:.8rem;">'
         + '</div>';
     }).join('');
+  }
+
+  // tenta casar automaticamente o nome curto da Tesouraria (ex.: "Ness") com o
+  // nome de login salvo no perfil (ex.: "Vanessa Silva") — funciona bem porque
+  // os apelidos daqui costumam ser um pedaço do nome de verdade
+  function vinculoNormalizar(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
+
+  function buscarEmailsDosPerfis() {
+    var statusEl = document.getElementById('vinculos-status');
+    if (statusEl) statusEl.textContent = 'Buscando perfis...';
+    fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
+      .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
+      .then(function(perfis){
+        var candidatos = (Array.isArray(perfis) ? perfis : [])
+          .filter(function(p){ return p && p.nome && p.email; })
+          .map(function(p){ return { nome: vinculoNormalizar(p.nome), email: p.email }; });
+
+        var achados = 0;
+        MEMBROS_TODOS.forEach(function(m){
+          var inp = document.querySelector('.vinculo-input[data-membro="'+m+'"]');
+          if (!inp || inp.value.trim()) return; // não sobrescreve o que já tem preenchido
+          var apelido = vinculoNormalizar(m);
+          var achado = candidatos.find(function(c){ return c.nome.indexOf(apelido) !== -1; });
+          if (achado) { inp.value = achado.email; achados++; }
+        });
+
+        if (statusEl) statusEl.textContent = achados
+          ? '✓ Preenchi ' + achados + ' automaticamente — revise e clique em "Salvar vínculos".'
+          : 'Não encontrei nenhum nome novo pra casar. Confira manualmente.';
+      })
+      .catch(function(){
+        if (statusEl) statusEl.textContent = 'Não consegui buscar os perfis agora.';
+      });
   }
 
   function salvarVinculos() {
