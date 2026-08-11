@@ -62,8 +62,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-resumo-valor{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:600}
 
 .mp-lista-titulo{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-dim);margin:26px 0 10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
-.mp-mes-faltando{font-family:'DM Sans',sans-serif;font-size:.75rem;color:#a5362a;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);border-radius:20px;padding:5px 12px}
 .mp-item{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid var(--border);border-left:4px solid var(--green-border);border-radius:12px;padding:13px 16px;margin-bottom:8px;box-shadow:0 2px 10px rgba(196,57,107,.05);animation:cpEntra .25s ease both}
+.mp-item.faltando{border-left-color:rgba(192,57,43,.35);background:rgba(192,57,43,.03)}
 .mp-item-mes{font-family:'Playfair Display',serif;font-size:.98rem;font-weight:600;color:var(--text)}
 .mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
@@ -151,11 +151,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
         <div class="mp-resumo-label">Meses de mensalidade</div>
         <div class="mp-resumo-valor" id="mp-meses">0</div>
       </div>
-    </div>
-
-    <div id="mp-meses-faltando-wrap" style="display:none">
-      <div class="mp-lista-titulo" style="color:#a5362a;border-bottom-color:rgba(192,57,43,.25)">⚠️ Meses sem mensalidade</div>
-      <div id="mp-meses-faltando" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
     </div>
 
     <div class="mp-lista-titulo">Histórico</div>
@@ -329,35 +324,35 @@ async function carregarExtratoPorNome(nome) {
     document.getElementById('mp-total').textContent = fmt(total);
     document.getElementById('mp-meses').textContent = mesesMensalidade;
 
-    const faltando = mesesSemMensalidade(meusPagamentos);
-    const faltandoWrap = document.getElementById('mp-meses-faltando-wrap');
-    if (faltando.length) {
-      document.getElementById('mp-meses-faltando').innerHTML = faltando
-        .map(ref => `<span class="mp-mes-faltando">${fmtCompetencia(ref)}</span>`)
-        .join('');
-      faltandoWrap.style.display = 'block';
-    } else {
-      faltandoWrap.style.display = 'none';
-    }
+    // meses sem mensalidade entram na mesma lista, misturados por data, com
+    // valor zerado — em vez de uma caixa de aviso separada
+    const faltando = mesesSemMensalidade(meusPagamentos).map(ref => ({
+      competencia: ref, valor: 0, faltando: true,
+    }));
+    const listaCompleta = [...meusPagamentos, ...faltando].sort((a, b) => {
+      const refA = a.competencia || a.data || '';
+      const refB = b.competencia || b.data || '';
+      return refB.localeCompare(refA);
+    });
 
     const listaEl = document.getElementById('mp-lista');
     const vazioEl = document.getElementById('mp-vazio');
-    if (!meusPagamentos.length) {
+    if (!listaCompleta.length) {
       vazioEl.style.display = 'block';
       listaEl.innerHTML = '';
       return;
     }
     vazioEl.style.display = 'none';
-    listaEl.innerHTML = meusPagamentos.map(l => {
-      const ref = l.competencia || (l.data ? l.data.slice(0, 7) : '');
+    listaEl.innerHTML = listaCompleta.map(l => {
       const rotulo = l.competencia ? fmtCompetencia(l.competencia) : (l.data ? fmtData(l.data) : '—');
       const extra = l.subTipo === 'extra' ? ' <span style="font-size:.65rem;background:#fffbe8;border:1px solid #e8d080;color:#8c5a00;border-radius:4px;padding:1px 5px;">✨ Extra</span>' : '';
-      return `<div class="mp-item">
+      const naoPago = l.faltando ? ' <span style="font-size:.65rem;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);color:#a5362a;border-radius:4px;padding:1px 5px;">⚠️ Não pago</span>' : '';
+      return `<div class="mp-item${l.faltando ? ' faltando' : ''}">
         <div>
-          <div class="mp-item-mes">${rotulo}${extra}</div>
+          <div class="mp-item-mes">${rotulo}${extra}${naoPago}</div>
           ${l.obs ? `<div class="mp-item-obs">${l.obs}</div>` : ''}
         </div>
-        <div class="mp-item-valor">${fmt(l.valor)}</div>
+        <div class="mp-item-valor" style="${l.faltando ? 'color:#a5362a' : ''}">${fmt(l.valor)}</div>
       </div>`;
     }).join('');
   } catch (e) {
