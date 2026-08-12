@@ -3835,6 +3835,10 @@ function agRenderPessoas() {
     var sO = p.isento ? 'isento' : (pg.obr>=AG_OBRIGACAO?'ok':(pg.obr>0?'pend':'nao'));
     var sA=tAves===0?'ok':(pg.aves>=tAves?'ok':(pg.aves>0?'pend':'nao'));
     var statusIcon = tPago>=tDeve ? '✅' : tPago>0 ? '🔶' : '❌';
+    // sinaliza quando o valor pago de aves é maior que a cota calculada (galo/galinha
+    // dessa pessoa) — é o que faz o "% pago" geral de aves passar de 100%, então
+    // vale a pena destacar pra achar rápido quem foi
+    var avesAMais = pg.aves > tAves;
     var card=document.createElement('div');
     card.className='ag-pessoa'; card.id='ag-pc-'+p.nome;
     card.innerHTML='<div class="ag-pessoa-hdr" onclick="agTogglePessoa(\''+p.nome+'\')">'
@@ -3843,6 +3847,7 @@ function agRenderPessoas() {
       +'<input type="text" value="'+(pg.dataPrevista||'')+'" placeholder="data prevista…" maxlength="30" onclick="event.stopPropagation()" onchange="agSetDataPrevista(\''+p.nome+'\',this.value)" style="width:78px;background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.15);border-radius:5px;font-family:\'DM Sans\',sans-serif;font-size:.66rem;color:rgba(80,30,50,.65);padding:3px 5px;flex-shrink:0;">'
       +'<span class="ag-pill ag-pill-'+sO+'">'+(p.isento?'Isenta':'Obr')+'</span>'
       +(tAves>0?'<span class="ag-pill ag-pill-'+sA+'">Aves</span>':'')
+      +(avesAMais?'<span class="ag-pill" style="background:#fff3cd;color:#8c5a00;border-color:#e8c060" title="Pagou mais aves do que a cota calculada (galo/galinha) dessa pessoa">⚠️ Aves a mais</span>':'')
       +'<span class="ag-pessoa-total">'+(tPago>0?agFmt(tPago):'')+'</span>'
       +'<span class="ag-chevron">▾</span></div>'
       +'<div class="ag-pessoa-body">'
@@ -3856,11 +3861,11 @@ function agRenderPessoas() {
           +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.obr+'" onchange="agSetPgto(\''+p.nome+'\',\'obr\',this.value)"></div>'
           +'<div class="ag-pgto-sub">'+agFmt(pg.obr)+' / '+agFmt(AG_OBRIGACAO)+' '+(pg.obr>=AG_OBRIGACAO?'✅':'— falta '+agFmt(AG_OBRIGACAO-pg.obr))+'</div>')
       +'</div>'
-      +(tAves>0
+      +(tAves>0 || pg.aves>0
         ?'<div class="ag-pgto-grp" style="margin-top:8px"><div class="ag-pgto-grp-title">Aves — Galo: '+p.galos+' + Galinha: '+p.galinhas+' = '+agFmt(tAves)+'</div>'
          +'<div class="ag-pgto-row"><span class="ag-pgto-label">Já pagou:</span>'
          +'<input class="ag-pgto-input" type="number" step="0.01" value="'+pg.aves+'" onchange="agSetPgto(\''+p.nome+'\',\'aves\',this.value)"></div>'
-         +'<div class="ag-pgto-sub">'+agFmt(pg.aves)+' / '+agFmt(tAves)+' '+(pg.aves>=tAves?'✅':'— falta '+agFmt(tAves-pg.aves))+'</div></div>'
+         +'<div class="ag-pgto-sub">'+agFmt(pg.aves)+' / '+agFmt(tAves)+' '+(pg.aves>tAves?'⚠️ '+agFmt(pg.aves-tAves)+' a mais que a cota':(pg.aves===tAves?'✅':'— falta '+agFmt(tAves-pg.aves)))+'</div></div>'
         :'<div class="ag-info" style="margin-top:8px">Sem aves registradas</div>')
       +'<div class="ag-info" style="margin-top:8px">Total: <span>'+agFmt(tPago)+'</span> de <span>'+agFmt(tDeve)+'</span>'
       +(tPago>=tDeve?' ✅ Quitado!':' — falta '+agFmt(tDeve-tPago))+'</div>'
