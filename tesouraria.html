@@ -3329,6 +3329,7 @@ body{padding-bottom:64px}
       <p class="ag-sec-title" style="margin:0">Pagamentos por Pessoa</p>
       <button onclick="agAbrirGerenciarPessoas()" style="background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;">👥 Gerenciar Pessoas</button>
     </div>
+    <div id="ag-pessoas-duplicadas" style="display:none;background:#fff3cd;border:1px solid #e8c060;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:#8c5a00;"></div>
     <div id="ag-pessoas-list"></div>
   </div>
 
@@ -3827,9 +3828,24 @@ function agTogglePrio(ci, si, ii) {
 }
 
 // ── PESSOAS ──────────────────────────────────────────────────
+// nome repetido na lista faz o pagamento dela ser somado mais de uma vez no
+// total geral (a soma percorre agPessoas, não um conjunto de nomes únicos) —
+// avisa isso de cara em vez de deixar a admin catar uma por uma
+function agAvisarNomesDuplicados() {
+  var aviso = document.getElementById('ag-pessoas-duplicadas');
+  if (!aviso) return;
+  var contagem = {};
+  agPessoas.forEach(function(p){ contagem[p.nome] = (contagem[p.nome]||0) + 1; });
+  var duplicados = Object.keys(contagem).filter(function(nome){ return contagem[nome] > 1; });
+  if (!duplicados.length) { aviso.style.display = 'none'; return; }
+  aviso.textContent = '⚠️ Nome repetido na lista (conta em dobro no total pago): ' + duplicados.join(', ') + '. Remova a duplicata em "👥 Gerenciar Pessoas".';
+  aviso.style.display = 'block';
+}
+
 function agRenderPessoas() {
   var list=document.getElementById('ag-pessoas-list');
   list.innerHTML='';
+  agAvisarNomesDuplicados();
   agPessoas.forEach(function(p) {
     var pg=agPgtos[p.nome], tAves=agAvesVal(p), obrDevida=agObrigacaoDe(p), tDeve=obrDevida+tAves, tPago=pg.obr+pg.aves;
     var sO = p.isento ? 'isento' : (pg.obr>=AG_OBRIGACAO?'ok':(pg.obr>0?'pend':'nao'));
