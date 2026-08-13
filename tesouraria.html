@@ -3351,7 +3351,10 @@ body{padding-bottom:64px}
   <!-- Sec Gastos -->
   <div class="ag-sec" id="ag-sec-gastos">
     <button class="ag-add-btn" onclick="agOpenGastoModal()">+ REGISTRAR GASTO</button>
-    <p class="ag-sec-title">Gastos Registrados</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <p class="ag-sec-title" style="margin:0">Gastos Registrados</p>
+      <button onclick="agExportarGastosWpp()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;white-space:nowrap;">💬 Exportar</button>
+    </div>
     <div id="ag-gastos-list"></div>
   </div>
 
@@ -4012,6 +4015,30 @@ function agRenderGastos() {
     });
     list.appendChild(div);
   });
+}
+
+// mesmo agrupamento por categoria da tela, em formato de texto pra
+// compartilhar no WhatsApp — mesmo padrão das exportações de Aves
+function agExportarGastosWpp() {
+  if (!agGastos.length) { showToast('Nenhum gasto registrado ainda'); return; }
+  var grupos = {};
+  agGastos.forEach(function(g){ if(!grupos[g.categoria]) grupos[g.categoria]=[]; grupos[g.categoria].push(g); });
+
+  var msg = '🧾 *GASTOS — OBRIGAÇÃO DE AGOSTO*\n\n';
+  var total = 0;
+  Object.keys(grupos).forEach(function(cat){
+    var itens = grupos[cat];
+    var catTotal = itens.reduce(function(s,g){ return s+g.valor; }, 0);
+    total += catTotal;
+    msg += '*' + cat + ':*\n';
+    itens.forEach(function(g){
+      msg += '• ' + g.desc + (g.responsavel ? ' (' + g.responsavel + ')' : '') + ' — ' + agFmt(g.valor) + '\n';
+    });
+    msg += 'Subtotal: ' + agFmt(catTotal) + '\n\n';
+  });
+  msg += '📊 *TOTAL GASTO:* ' + agFmt(total);
+
+  agCompartilharOuCopiar(msg);
 }
 
 // ── ORÇAMENTO ────────────────────────────────────────────────
