@@ -212,12 +212,6 @@ function fmtCompetencia(ref) {
   const nomeMes = MESES_NOMES[idx] || ref;
   return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1) + ' de ' + ano;
 }
-function fmtData(d) {
-  if (!d) return '';
-  const [ano, mes, dia] = d.split('-');
-  return dia + '/' + mes + '/' + ano;
-}
-
 // mesma lista/lógica de "membros ativos" da Tesouraria — se alguém sair ou
 // entrar na casa por lá, espelhar aqui também
 const MEMBROS_SAIDA = { 'Juliana': '2026-07' };
@@ -442,7 +436,9 @@ async function carregarExtratoPorNome(nome) {
     }
     vazioEl.style.display = 'none';
     listaEl.innerHTML = listaCompleta.map(l => {
-      const rotulo = l.competencia ? fmtCompetencia(l.competencia) : (l.data ? fmtData(l.data) : '—');
+      // sempre mês/ano, nunca o dia exato — mesmo pra lançamentos sem
+      // "competencia" preenchida (usa o mês da data como se fosse a competência)
+      const rotulo = l.competencia ? fmtCompetencia(l.competencia) : (l.data ? fmtCompetencia(l.data.slice(0, 7)) : '—');
       const extra = l.subTipo === 'extra' ? ' <span style="font-size:.65rem;background:#fffbe8;border:1px solid #e8d080;color:#8c5a00;border-radius:4px;padding:1px 5px;">✨ Extra</span>' : '';
       return `<div class="mp-item${l.faltando ? ' faltando' : ''}">
         <div>
