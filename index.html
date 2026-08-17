@@ -5427,7 +5427,7 @@ function calNavMes(dir) {
 // quanto pra "marcar todos filtrados" no modo de seleção em lote
 function calItensFiltrados() {
   const todayStr = calFmtDate(new Date());
-  return calSessoes.filter(s => {
+  const filtradas = calSessoes.filter(s => {
     const vis = calSessaoVisivel(s);
     if (!vis) return false;
     if (calFiltro && s.tipo !== calFiltro) return false;
@@ -5437,7 +5437,12 @@ function calItensFiltrados() {
       if (!h.includes(calBusca)) return false;
     }
     return true;
-  }).sort((a, b) => a.data.localeCompare(b.data));
+  });
+  // futuras (incluindo hoje): mais próxima primeiro. Passadas: mais recente
+  // primeiro — não faz sentido abrir a lista de passadas com a mais antiga no topo
+  const futuras = filtradas.filter(s => s.data >= todayStr).sort((a, b) => a.data.localeCompare(b.data));
+  const passadas = filtradas.filter(s => s.data < todayStr).sort((a, b) => b.data.localeCompare(a.data));
+  return [...futuras, ...passadas];
 }
 
 function calRenderLista() {
@@ -5454,19 +5459,23 @@ function calRenderLista() {
     return;
   }
 
-  // agrupar por mês
-  const grupos = {};
+  // agrupar por mês mantendo a ordem que já veio de calItensFiltrados() —
+  // futuras em blocos crescentes, passadas em blocos decrescentes — em vez de
+  // reordenar as chaves dos grupos (o que sempre colocava o mês mais antigo
+  // primeiro, mesmo na lista de passadas)
+  const grupos = [];
   lista.forEach(s => {
     const key = s.data.slice(0, 7);
-    if (!grupos[key]) grupos[key] = [];
-    grupos[key].push(s);
+    let grupo = grupos[grupos.length - 1];
+    if (!grupo || grupo.key !== key) { grupo = { key, itens: [] }; grupos.push(grupo); }
+    grupo.itens.push(s);
   });
 
   let html = '';
-  Object.keys(grupos).sort().forEach(mesKey => {
+  grupos.forEach(({ key: mesKey, itens }) => {
     const [y, m] = mesKey.split('-');
     html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">${CAL_MESES[parseInt(m)-1]} ${y}</div>`;
-    grupos[mesKey].forEach(s => {
+    itens.forEach(s => {
       const vis = calSessaoVisivel(s);
       const isParcial = vis === 'parcial';
       const [, sm, sd] = s.data.split('-');
