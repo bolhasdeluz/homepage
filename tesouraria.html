@@ -3494,7 +3494,7 @@ body{padding-bottom:64px}
 <!-- Modal gasto Agosto -->
 <div class="ag-gasto-modal-overlay" id="ag-gasto-modal">
   <div class="ag-gasto-modal">
-    <h3>Registrar Gasto</h3>
+    <h3 id="ag-gasto-modal-titulo">Registrar Gasto</h3>
     <div class="ag-form-row"><label>Descrição</label><input id="ag-g-desc" placeholder="Ex: Velas brancas…"></div>
     <div class="ag-form-row"><label>Valor (R$)</label><input id="ag-g-val" type="number" step="0.01" placeholder="0,00"></div>
     <div class="ag-form-row"><label>Categoria</label><input id="ag-g-cat" placeholder="Ex: Rituais, Transporte…"></div>
@@ -3972,12 +3972,16 @@ function agRemoverPessoa(idx) {
 }
 
 // ── GASTOS ───────────────────────────────────────────────────
-function agOpenGastoModal() {
-  document.getElementById('ag-g-desc').value='';
-  document.getElementById('ag-g-val').value='';
-  document.getElementById('ag-g-cat').value='';
-  document.getElementById('ag-g-data').value=new Date().toISOString().split('T')[0];
-  document.getElementById('ag-g-resp').value='';
+var agGastoEditIdx = -1;
+function agOpenGastoModal(idx) {
+  agGastoEditIdx = (typeof idx === 'number') ? idx : -1;
+  var g = agGastoEditIdx >= 0 ? agGastos[agGastoEditIdx] : null;
+  document.getElementById('ag-gasto-modal-titulo').textContent = g ? 'Editar Gasto' : 'Registrar Gasto';
+  document.getElementById('ag-g-desc').value = g ? g.desc : '';
+  document.getElementById('ag-g-val').value = g ? g.valor : '';
+  document.getElementById('ag-g-cat').value = g ? g.categoria : '';
+  document.getElementById('ag-g-data').value = g ? g.data : new Date().toISOString().split('T')[0];
+  document.getElementById('ag-g-resp').value = g ? (g.responsavel||'') : '';
   document.getElementById('ag-gasto-modal').classList.add('open');
 }
 function agSalvarGasto() {
@@ -3987,9 +3991,16 @@ function agSalvarGasto() {
   var data=document.getElementById('ag-g-data').value;
   var resp=document.getElementById('ag-g-resp').value;
   if(!desc||!val){showToast('Preencha descrição e valor');return;}
-  agGastos.push({desc:desc,valor:val,categoria:cat,data:data,responsavel:resp});
+  if (agGastoEditIdx >= 0) {
+    var atual = agGastos[agGastoEditIdx];
+    atual.desc=desc; atual.valor=val; atual.categoria=cat; atual.data=data; atual.responsavel=resp;
+  } else {
+    agGastos.push({desc:desc,valor:val,categoria:cat,data:data,responsavel:resp});
+  }
+  var editou = agGastoEditIdx >= 0;
+  agGastoEditIdx = -1;
   agSalvar(); document.getElementById('ag-gasto-modal').classList.remove('open');
-  agRenderGastos(); agAtualizarSaldo(); showToast('Gasto registrado ✓');
+  agRenderGastos(); agAtualizarSaldo(); showToast(editou ? 'Gasto atualizado ✓' : 'Gasto registrado ✓');
 }
 function agDelGasto(i) {
   agGastos.splice(i,1); agSalvar(); agRenderGastos(); agAtualizarSaldo();
@@ -4010,6 +4021,7 @@ function agRenderGastos() {
       item.className='ag-gasto-item';
       item.innerHTML='<div style="flex:1"><div class="ag-gasto-desc">'+g.desc+'</div><div class="ag-gasto-meta">'+[g.data,g.responsavel].filter(Boolean).join(' · ')+'</div></div>'
         +'<div class="ag-gasto-val">'+agFmt(g.valor)+'</div>'
+        +'<button class="ag-gasto-del" onclick="agOpenGastoModal('+g.idx+')" style="color:#8a6d7a">✎</button>'
         +'<button class="ag-gasto-del" onclick="agDelGasto('+g.idx+')">🗑</button>';
       div.appendChild(item);
     });
