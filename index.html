@@ -11578,15 +11578,31 @@ const auth = getAuth(app);
         // sem o subtítulo, o título ficava colado nas bolinhas decorativas do
         // rodapé do cabeçalho — devolve um respiro só aqui na imagem
         const headerEl = clone.querySelector('.rm-header');
-        if (headerEl) headerEl.style.paddingBottom = '18px';
+        if (headerEl) headerEl.style.paddingBottom = '10px';
+        // a imagem inteira precisa caber numa tela de celular sem precisar abrir
+        // (senão a prévia no WhatsApp corta antes do fim, como aconteceu num
+        // envio real) — aperta os espaçamentos só aqui na versão exportada,
+        // sem mexer no visual da página normal
+        clone.classList.add('rm-export-compacto');
+        const estiloCompacto = document.createElement('style');
+        estiloCompacto.textContent = `
+          .rm-export-compacto .rm-body{gap:1px}
+          .rm-export-compacto .rm-secao{padding:3px 7px}
+          .rm-export-compacto .rm-secao-titulo{margin-bottom:2px}
+          .rm-export-compacto .rm-linha{padding:4px 7px}
+          .rm-export-compacto .rm-linha-tag{line-height:1.4;margin-top:0}
+        `;
+        clone.prepend(estiloCompacto);
+        clone.querySelectorAll('.rm-tes-grid').forEach(g => { g.style.marginBottom = '3px'; });
         clone.style.margin = '0';
-        // largura de celular de verdade (não mais larga que isso) — gerar mais largo do que
-        // a tela onde vai ser vista faz o texto encolher mais do que devia ao exibir
-        clone.style.width = '420px';
-        clone.style.maxWidth = '420px';
+        // um pouco mais larga que a tela (mas não exagerado) pra baixar a altura
+        // total em relação à largura — é essa proporção que decide se cabe
+        // tudo numa tela do WhatsApp sem precisar abrir a imagem
+        clone.style.width = '480px';
+        clone.style.maxWidth = '480px';
 
         const palco = document.createElement('div');
-        palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:452px;';
+        palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:512px;';
         palco.appendChild(clone);
         document.body.appendChild(palco);
 
