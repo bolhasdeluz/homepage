@@ -12834,7 +12834,9 @@ function extrairEventosPessoa(p) {
     if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const nomeSrc = def.nomeSrc ? srcs[def.nomeSrc] : {};
     const nome = def.nomeFn ? def.nomeFn(dados) : (def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '');
-    eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
+    // cambonagem = esteve no ritual mas ainda não foi feito(a) — não conta como "feito" nas contagens
+    const cambonagem = def.key === 'corte_1' ? !!dados.corte_1_cambonagem : false;
+    eventos.push({ ...def, data, nome, cambonagem, oculto: ocultos.includes(def.key) });
   });
 
   // cortes adicionais (2º em diante) — vêm do array p.cortes — grupo Quimbanda
@@ -12844,7 +12846,7 @@ function extrairEventosPessoa(p) {
     const aves = c.cambonagem ? '🤝 Cambonagem' : ((c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '');
     eventos.push({
       key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b', grupo:'quimbanda',
-      data: c.data, nome: aves,
+      data: c.data, nome: aves, cambonagem: !!c.cambonagem,
       oculto: ocultos.includes(`corte_extra_${i}`)
     });
   });
@@ -12854,7 +12856,7 @@ function extrairEventosPessoa(p) {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     eventos.push({
       key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
-      data: c.data, nome: '',
+      data: c.data, nome: c.cambonagem ? '🤝 Cambonagem' : '', cambonagem: !!c.cambonagem,
       oculto: ocultos.includes(`cruz_extra_${i}`)
     });
   });
@@ -13151,9 +13153,11 @@ function dashBadgesCruzamentosExtrasHtml(extras) {
   if (!extras || !extras.length) return '';
   return extras.map(c => {
     if (!c.data) return '';
+    const subtexto = c.cambonagem ? '<div class="dash-badge-sub">🤝 Cambonagem</div>' : '';
     return `<div class="dash-badge unlocked">
       <div class="dash-badge-icon" style="background:#4a6fa522">✨</div>
       <div class="dash-badge-name">${c.nome || 'Cruzamento'}</div>
+      ${subtexto}
       <div class="dash-badge-data">${fmtData(c.data)}</div>
     </div>`;
   }).join('');
@@ -13458,10 +13462,10 @@ function renderDashPessoal(p, user) {
     btnEditarFrase.style.display = 'none';
   }
 
-  // stats rápidos
-  const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
-  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
-  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
+  // stats rápidos — cambonagem não conta como feito, só quem já foi cortado(a)/cruzado(a) de verdade
+  const totalCortesExtra = (p.cortes || []).filter(c => c.data && !c.cambonagem).length;
+  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey] && !(b.cambKey && hist[b.cambKey])).length + totalCortesExtra;
+  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data && !c.cambonagem).length;
   // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
   // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
   const totalCruzConga = hist.cruz_conga ? 1 : 0;
@@ -13546,6 +13550,7 @@ function terreiroRenderStats(perfis) {
   let cortes = 0, cruzamentos = 0, guias = 0;
   perfis.forEach(p => {
     extrairEventosPessoa(p).forEach(e => {
+      if (e.cambonagem) return; // só conta feitos, cambonagem ainda não é
       if (e.key === 'corte_1' || e.key.startsWith('corte_extra_')) cortes++;
       else if (e.grupo === 'cruzamentos') cruzamentos++;
       else if (e.grupo === 'guias') guias++;
@@ -14632,6 +14637,10 @@ function mhRenderCruzamentosExtras(extras, editavel) {
       return `<div class="mh-corte-card">
         <button type="button" class="mh-corte-del" onclick="mhRemoverCruzamentoExtra(${i})" title="Remover este cruzamento">✕</button>
         <div class="mh-corte-num">Cruzamento Extra</div>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);cursor:pointer;margin-bottom:8px">
+          <input type="checkbox" ${c.cambonagem?'checked':''} onchange="mhToggleCambonagemCruzamento(${i},this.checked)">
+          Cambonagem — esteve no cruzamento, mas ainda não foi cruzado(a)
+        </label>
         <div class="mh-corte-grid mh-corte-grid-2">
           <div>
             <label>Tipo</label>
@@ -14650,9 +14659,10 @@ function mhRenderCruzamentosExtras(extras, editavel) {
     }
     return `<div class="mh-corte-card">
       <div class="mh-corte-num">${c.nome || 'Cruzamento'}</div>
-      <div class="mh-corte-grid mh-corte-grid-2">
+      <div class="mh-corte-grid${c.cambonagem ? '' : ' mh-corte-grid-2'}">
         <div><label>Tipo</label><div class="valor">${c.nome || '—'}</div></div>
         <div><label>Data</label><div class="valor">${c.data ? fmtData(c.data) : '—'}</div></div>
+        ${c.cambonagem ? `<div><label>Cambonagem</label><div class="valor">Sim</div></div>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -14677,13 +14687,20 @@ window.mhTipoCruzamentoMudou = function(i, tipo) {
 };
 
 window.mhAdicionarCruzamentoExtra = function() {
-  _mhCruzExtrasEditando.push({ nome:'', data:'' });
+  _mhCruzExtrasEditando.push({ nome:'', data:'', cambonagem:false });
   mhRenderCruzamentosExtras(_mhCruzExtrasEditando, true);
 };
 
 window.mhRemoverCruzamentoExtra = function(i) {
   _mhCruzExtrasEditando.splice(i, 1);
   mhRenderCruzamentosExtras(_mhCruzExtrasEditando, true);
+};
+
+// Cambonagem no cruzamento: esteve no ritual, mas ainda não foi cruzado(a) —
+// mesma lógica do 1º Corte, não conta como cruzamento feito nas contagens
+window.mhToggleCambonagemCruzamento = function(i, checked) {
+  if (!_mhCruzExtrasEditando[i]) return;
+  _mhCruzExtrasEditando[i].cambonagem = checked;
 };
 
 window.mhAtualizarCruzamentoExtra = function(i, campo, valor) {
