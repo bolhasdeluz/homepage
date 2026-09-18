@@ -12841,7 +12841,10 @@ function extrairEventosPessoa(p) {
     { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
-    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos', cambKey:'cruz_conga_cambonagem',
+    // Conga é o primeiro cruzamento — cambonagem nele ainda conta no total de
+    // cruzamentos (por isso sem cambKey aqui, diferente do 1º Corte), só não
+    // aparece como "a data do primeiro" — o selo 🤝 Cambonagem já deixa isso claro
+    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos',
       nomeFn:(dados)=> dados.cruz_conga_cambonagem ? '🤝 Cambonagem' : '' },
     { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda', cambKey:'corte_1_cambonagem',
       nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
@@ -13488,8 +13491,10 @@ function renderDashPessoal(p, user) {
   const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey] && !(b.cambKey && hist[b.cambKey])).length + totalCortesExtra;
   const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data && !c.cambonagem).length;
   // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
-  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
-  const totalCruzConga = (hist.cruz_conga && !hist.cruz_conga_cambonagem) ? 1 : 0;
+  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos.
+  // conta mesmo se marcado como Cambonagem — só o corte e os cruzamentos extras
+  // é que ficam de fora quando são cambonagem, já que a Conga é o próprio primeiro
+  const totalCruzConga = hist.cruz_conga ? 1 : 0;
   const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
 
   // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
