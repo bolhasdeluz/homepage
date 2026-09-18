@@ -3453,9 +3453,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           </select>
           <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--rosa);pointer-events:none;font-size:.8rem">›</span>
         </div>
+        <div style="position:relative;min-width:110px">
+          <select id="cal-filtro-ano" onchange="calSetAno(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;color:var(--text);outline:none;backdrop-filter:blur(4px)">
+            <option value="">Todos os anos</option>
+          </select>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--rosa);pointer-events:none;font-size:.8rem">›</span>
+        </div>
         <input id="cal-busca" type="text" placeholder="Buscar…" oninput="calOnSearch(this.value)"
           style="flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;backdrop-filter:blur(4px)">
         <button id="cal-btn-passadas" onclick="calTogglePassadas()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)">📜 Passadas</button>
+        <button id="cal-btn-visao-anual" onclick="calAlternarVisaoAnual()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);cursor:pointer;white-space:nowrap;backdrop-filter:blur(4px)">🗓️ Visão Anual</button>
       </div>
     </div>
 
@@ -3477,8 +3484,15 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <!-- LAYOUT LADO A LADO -->
     <!-- LISTA COM CABEÇALHOS DE MÊS -->
-    <div class="cal-lista-col" style="max-width:680px;margin:0 auto">
+    <div class="cal-lista-col" style="max-width:680px;margin:0 auto" id="cal-lista-wrap">
       <div id="cal-lista"></div>
+    </div>
+
+    <!-- VISÃO ANUAL — opcional, alterna com a lista acima (mesmo filtro de
+         ano). Feriados calculados na hora, sem precisar de um ano fixo -->
+    <div id="cal-visao-anual-wrap" style="display:none;max-width:1150px;margin:0 auto">
+      <div class="cal-anual-legenda" id="cal-anual2-legenda"></div>
+      <div class="cal-anual-grid" id="cal-anual2-grade"></div>
     </div>
   </div>
 </div>
@@ -5384,6 +5398,7 @@ const CAL_INFOTIPO_API = '/api/sessoes-info-tipo';
 let calInfoTipo = null;
 let calProximaSessaoObj = null;
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
+let calAnoFiltro = '', calVisaoAnual = false;
 let calModoLote = false;
 let calSelecaoLote = new Set();
 let calMesAtual = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -5445,6 +5460,7 @@ async function calLoad() {
   try {
     const res = await fetch(CAL_API);
     calSessoes = await res.json();
+    calPopularFiltroAno();
     // se não há sessões futuras no mês atual, avança pro próximo com sessões
     const todayStr = calFmtDate(new Date());
     const ano = calMesAtual.getFullYear();
@@ -5545,15 +5561,22 @@ function calItensFiltrados() {
     const vis = calSessaoVisivel(s);
     if (!vis) return false;
     if (calFiltro && s.tipo !== calFiltro) return false;
-    if (!calPassadas && s.data < todayStr) return false;
+    if (calAnoFiltro && s.data.slice(0, 4) !== calAnoFiltro) return false;
+    // escolher um ano específico já é um pedido explícito de ver aquele ano
+    // inteiro — não faz sentido esconder o que já passou dentro dele
+    if (!calAnoFiltro && !calPassadas && s.data < todayStr) return false;
     if (calBusca) {
       const h = [s.nome, s.descricao, s.responsavel].join(' ').toLowerCase();
       if (!h.includes(calBusca)) return false;
     }
     return true;
   });
-  // futuras (incluindo hoje): mais próxima primeiro. Passadas: mais recente
-  // primeiro — não faz sentido abrir a lista de passadas com a mais antiga no topo
+  // com um ano específico escolhido, ordem cronológica simples conta melhor
+  // a história do ano do que separar futuras/passadas
+  if (calAnoFiltro) return filtradas.sort((a, b) => a.data.localeCompare(b.data));
+  // sem ano escolhido: futuras (incluindo hoje) mais próxima primeiro, passadas
+  // mais recente primeiro — não faz sentido abrir a lista de passadas com a
+  // mais antiga no topo
   const futuras = filtradas.filter(s => s.data >= todayStr).sort((a, b) => a.data.localeCompare(b.data));
   const passadas = filtradas.filter(s => s.data < todayStr).sort((a, b) => b.data.localeCompare(a.data));
   return [...futuras, ...passadas];
@@ -5792,8 +5815,10 @@ async function calSalvar() {
 
   if (editId) { const idx = calSessoes.findIndex(x => x.id === editId); if (idx >= 0) calSessoes[idx] = json; }
   else { calSessoes.push(json); calSessoes.sort((a,b) => a.data.localeCompare(b.data)); }
+  calPopularFiltroAno();
   calCloseModal(); calRenderGrade(); calRenderLista();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
 async function calDelete(id) {
@@ -5801,8 +5826,10 @@ async function calDelete(id) {
   const res = await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id }) });
   if (!res.ok) { alert('Não consegui excluir — tenta de novo.'); return; }
   calSessoes = calSessoes.filter(x => x.id !== id);
+  calPopularFiltroAno();
   calRenderGrade(); calRenderLista();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
 function calFmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -6021,38 +6048,35 @@ function calFeriadosDoAno(ano) {
   return feriados;
 }
 
-function calAnualAbrir() {
-  document.getElementById('cal-anual-overlay').style.display = 'flex';
-  const legenda = document.getElementById('cal-anual-legenda');
-  legenda.innerHTML = Object.keys(CAL_LADO_COR).map(l =>
+function calAnualLegendaHtml() {
+  return Object.keys(CAL_LADO_COR).map(l =>
     `<div class="cal-anual-legenda-item"><span class="cal-anual-legenda-cor" style="background:${CAL_LADO_COR[l]}"></span>${CAL_LADO_LABEL[l]}</div>`
   ).join('') + `<div class="cal-anual-legenda-item"><span class="cal-anual-legenda-cor" style="background:#c9963c;opacity:.4"></span>Feriado</div>`;
-  calAnualRender();
 }
-function calAnualFechar() { document.getElementById('cal-anual-overlay').style.display = 'none'; }
-function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); }
 
-function calAnualRender() {
-  const grade = document.getElementById('cal-anual-grade');
-  if (!grade) return;
-  document.getElementById('cal-anual-titulo').textContent = `Planejamento Anual — ${calAnualAno}`;
-  const feriados = calFeriadosDoAno(calAnualAno);
+// grade dos 12 meses de um ano — reaproveitada tanto pelo modal de
+// Planejamento Anual (admin) quanto pela Visão Anual opcional do Calendário
+// de Sessões. Só entram sessões que a pessoa logada pode ver (calSessaoVisivel) —
+// pra admin isso sempre dá "total", então não muda nada pra ela
+function calAnualGradeHtml(ano) {
+  const feriados = calFeriadosDoAno(ano);
   const todayStr = calFmtDate(new Date());
 
   let html = '';
   for (let mes = 0; mes < 12; mes++) {
-    const primeiroDia = new Date(calAnualAno, mes, 1).getDay();
-    const ultimoDia = new Date(calAnualAno, mes + 1, 0).getDate();
+    const primeiroDia = new Date(ano, mes, 1).getDay();
+    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
     let diasHtml = CAL_DIAS.map(d => `<div class="cal-anual-dow">${d[0]}</div>`).join('');
     for (let i = 0; i < primeiroDia; i++) diasHtml += `<div class="cal-anual-dia vazio"></div>`;
     for (let d = 1; d <= ultimoDia; d++) {
-      const dataStr = `${calAnualAno}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const feriado = feriados[dataStr];
-      const eventos = calSessoes.filter(s => s.data === dataStr);
+      const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
       const pontos = eventos.slice(0, 6).map(s =>
         `<span class="cal-anual-ponto" style="background:${CAL_LADO_COR[s.lado] || 'var(--rosa)'}"></span>`
       ).join('');
-      const titulo = feriado ? feriado.nome : (eventos.length ? eventos.map(s => s.nome).join(', ') : '');
+      const nomesEventos = eventos.map(s => calSessaoVisivel(s) === 'parcial' ? 'Sessão fechada' : s.nome);
+      const titulo = feriado ? feriado.nome : nomesEventos.join(', ');
       diasHtml += `<div class="cal-anual-dia${dataStr===todayStr?' hoje':''}${feriado?' feriado':''}" onclick="calAnualClicarDia('${dataStr}')" title="${calEsc(titulo)}">
         <div class="cal-anual-dia-num">${d}</div>
         <div class="cal-anual-pontos">${pontos}</div>
@@ -6063,16 +6087,69 @@ function calAnualRender() {
       <div class="cal-anual-dias">${diasHtml}</div>
     </div>`;
   }
-  grade.innerHTML = html;
+  return html;
 }
 
-// clique num dia da visão anual — se já tem sessão, abre a primeira pra
-// editar; se não tem nenhuma, abre já com a data preenchida pra criar
+function calAnualAbrir() {
+  document.getElementById('cal-anual-overlay').style.display = 'flex';
+  document.getElementById('cal-anual-legenda').innerHTML = calAnualLegendaHtml();
+  calAnualRender();
+}
+function calAnualFechar() { document.getElementById('cal-anual-overlay').style.display = 'none'; }
+function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); }
+
+function calAnualRender() {
+  const grade = document.getElementById('cal-anual-grade');
+  if (!grade) return;
+  document.getElementById('cal-anual-titulo').textContent = `Planejamento Anual — ${calAnualAno}`;
+  grade.innerHTML = calAnualGradeHtml(calAnualAno);
+}
+
+// ── VISÃO ANUAL (opcional, dentro do Calendário de Sessões) ──────────────
+function calPopularFiltroAno() {
+  const sel = document.getElementById('cal-filtro-ano');
+  if (!sel) return;
+  const anos = [...new Set(calSessoes.map(s => s.data.slice(0, 4)))].sort();
+  const valorAtual = sel.value;
+  sel.innerHTML = '<option value="">Todos os anos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = anos.includes(valorAtual) ? valorAtual : '';
+}
+
+function calSetAno(valor) {
+  calAnoFiltro = valor;
+  calRenderLista();
+  if (calVisaoAnual) calRenderVisaoAnualInline();
+}
+
+function calAlternarVisaoAnual() {
+  calVisaoAnual = !calVisaoAnual;
+  document.getElementById('cal-lista-wrap').style.display = calVisaoAnual ? 'none' : '';
+  document.getElementById('cal-visao-anual-wrap').style.display = calVisaoAnual ? 'block' : 'none';
+  const btn = document.getElementById('cal-btn-visao-anual');
+  btn.textContent = calVisaoAnual ? '📋 Ver lista' : '🗓️ Visão Anual';
+  if (calVisaoAnual) calRenderVisaoAnualInline();
+}
+
+function calRenderVisaoAnualInline() {
+  const grade = document.getElementById('cal-anual2-grade');
+  if (!grade) return;
+  const ano = calAnoFiltro ? parseInt(calAnoFiltro) : new Date().getFullYear();
+  document.getElementById('cal-anual2-legenda').innerHTML = calAnualLegendaHtml();
+  grade.innerHTML = calAnualGradeHtml(ano);
+}
+
+// clique num dia da visão anual (modal ou embutida) — admin edita a sessão
+// existente ou já cria uma nova com a data preenchida; quem não é admin só
+// abre as informações da sessão, se puder vê-la
 function calAnualClicarDia(dataStr) {
-  const existente = calSessoes.find(s => s.data === dataStr);
-  calDiaSelecionado = dataStr;
-  if (existente) calOpenEdit(existente.id);
-  else calOpenModal();
+  const doDia = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
+  if (calGetGrupo() === 'admin') {
+    calDiaSelecionado = dataStr;
+    if (doDia.length) calOpenEdit(doDia[0].id);
+    else calOpenModal();
+    return;
+  }
+  if (doDia.length) calAbrirInfo(doDia[0].id);
 }
 
 // inicializar calendário quando a página abrir
