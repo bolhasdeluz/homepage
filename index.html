@@ -2026,6 +2026,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Cruzamentos e Axés</div>
     <div class="dash-badges-grid dash-collapsible" id="dash-badges-cruz" style="display:none"></div>
 
+    <div class="dash-section-title dash-toggle" onclick="dashToggleSecao(this)"><span class="dash-toggle-arrow">▸</span> Pontos Riscados</div>
+    <div class="dash-badges-grid dash-collapsible" id="dash-pontos-riscados" style="display:none"></div>
+
     <div style="text-align:center;margin-top:22px">
       <button class="btn-rosa" style="cursor:pointer" onclick="showSuaHistoria()">✎ Editar minha ficha</button>
     </div>
@@ -12690,6 +12693,23 @@ function dashBadgesGuiasExtrasHtml(extras) {
   }).join('');
 }
 
+// gera cards para os Pontos Riscados, vindos do array p.pontosRiscados —
+// igual em conceito aos badges de cortes/cruzamentos, mas com foto no lugar
+// do ícone (mesma estrutura salva pela edição em mhRenderPontosRiscados)
+function dashPontosRiscadosHtml(pontos) {
+  if (!pontos || !pontos.length) return '';
+  return pontos.map(p => {
+    const foto = p.foto
+      ? `<img src="${p.foto}" alt="Ponto riscado" style="width:42px;height:42px;border-radius:10px;object-fit:cover;margin:0 auto 8px;display:block">`
+      : `<div class="dash-badge-icon">📷</div>`;
+    return `<div class="dash-badge unlocked">
+      ${foto}
+      <div class="dash-badge-name">${p.descricao ? blogEscAttr(p.descricao) : 'Ponto riscado'}</div>
+      ${p.data ? `<div class="dash-badge-data">${fmtData(p.data)}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 function abrirLinhaDoTempoModal() {
   const overlay = document.getElementById('dash-timeline-modal-overlay');
   if (!overlay) return;
@@ -12991,6 +13011,8 @@ function renderDashPessoal(p, user) {
   document.getElementById('dash-badges-quimbanda').innerHTML =
     DASH_BADGES_QUIMBANDA.map(b => dashBadgeHtml(b, hist)).join('') +
     dashBadgesCortesHtml(p.cortes || []);
+  const pontosEl = document.getElementById('dash-pontos-riscados');
+  if (pontosEl) pontosEl.innerHTML = dashPontosRiscadosHtml(p.pontosRiscados || []);
 
   wrap.style.display = 'block';
 }
