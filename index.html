@@ -12841,12 +12841,11 @@ function extrairEventosPessoa(p) {
     { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
-    // Conga é o primeiro cruzamento — cambonagem nele ainda conta no total de
-    // cruzamentos (por isso sem cambKey aqui, diferente do 1º Corte), só não
-    // aparece como "a data do primeiro" — o selo 🤝 Cambonagem já deixa isso claro
+    // cambonagem (esteve no ritual, mas ainda não foi feito(a)) é só um selo
+    // visual — conta normalmente nos totais de cruzamentos/cortes
     { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos',
       nomeFn:(dados)=> dados.cruz_conga_cambonagem ? '🤝 Cambonagem' : '' },
-    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda', cambKey:'corte_1_cambonagem',
+    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
       nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
 
@@ -12858,9 +12857,7 @@ function extrairEventosPessoa(p) {
     if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const nomeSrc = def.nomeSrc ? srcs[def.nomeSrc] : {};
     const nome = def.nomeFn ? def.nomeFn(dados) : (def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '');
-    // cambonagem = esteve no ritual mas ainda não foi feito(a) — não conta como "feito" nas contagens
-    const cambonagem = def.cambKey ? !!dados[def.cambKey] : false;
-    eventos.push({ ...def, data, nome, cambonagem, oculto: ocultos.includes(def.key) });
+    eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
   });
 
   // cortes adicionais (2º em diante) — vêm do array p.cortes — grupo Quimbanda
@@ -12870,7 +12867,7 @@ function extrairEventosPessoa(p) {
     const aves = c.cambonagem ? '🤝 Cambonagem' : ((c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '');
     eventos.push({
       key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b', grupo:'quimbanda',
-      data: c.data, nome: aves, cambonagem: !!c.cambonagem,
+      data: c.data, nome: aves,
       oculto: ocultos.includes(`corte_extra_${i}`)
     });
   });
@@ -12880,7 +12877,7 @@ function extrairEventosPessoa(p) {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     eventos.push({
       key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
-      data: c.data, nome: c.cambonagem ? '🤝 Cambonagem' : '', cambonagem: !!c.cambonagem,
+      data: c.data, nome: c.cambonagem ? '🤝 Cambonagem' : '',
       oculto: ocultos.includes(`cruz_extra_${i}`)
     });
   });
@@ -13486,14 +13483,12 @@ function renderDashPessoal(p, user) {
     btnEditarFrase.style.display = 'none';
   }
 
-  // stats rápidos — cambonagem não conta como feito, só quem já foi cortado(a)/cruzado(a) de verdade
-  const totalCortesExtra = (p.cortes || []).filter(c => c.data && !c.cambonagem).length;
-  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey] && !(b.cambKey && hist[b.cambKey])).length + totalCortesExtra;
-  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data && !c.cambonagem).length;
+  // stats rápidos — cambonagem é só um selo visual, conta normalmente nos totais
+  const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
+  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
+  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
   // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
-  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos.
-  // conta mesmo se marcado como Cambonagem — só o corte e os cruzamentos extras
-  // é que ficam de fora quando são cambonagem, já que a Conga é o próprio primeiro
+  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
   const totalCruzConga = hist.cruz_conga ? 1 : 0;
   const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
 
@@ -13576,7 +13571,6 @@ function terreiroRenderStats(perfis) {
   let cortes = 0, cruzamentos = 0, guias = 0;
   perfis.forEach(p => {
     extrairEventosPessoa(p).forEach(e => {
-      if (e.cambonagem) return; // só conta feitos, cambonagem ainda não é
       if (e.key === 'corte_1' || e.key.startsWith('corte_extra_')) cortes++;
       else if (e.grupo === 'cruzamentos') cruzamentos++;
       else if (e.grupo === 'guias') guias++;
