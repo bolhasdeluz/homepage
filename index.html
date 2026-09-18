@@ -3465,6 +3465,23 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- PÁGINA LINHA DO TEMPO GERAL — admin, junta a história de todas as
+     filhas da casa com as sessões passadas do calendário, tudo numa volta
+     no passado só -->
+<div id="page-linha-geral" class="page">
+  <div class="cal-wrap">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('admin')" style="position:relative;z-index:10">← Voltar</button>
+      <div class="eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="section-title" style="margin-bottom:6px">Linha do Tempo Geral</div>
+      <p class="section-sub" style="margin-bottom:16px">Uma volta no passado — a história de todas as filhas da casa e as sessões do calendário, juntas.</p>
+    </div>
+    <div class="cal-lista-col" style="max-width:680px;margin:0 auto">
+      <div id="lg-lista"><div class="cal-empty">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SESSÃO (calendário) -->
 <div id="cal-modal-overlay" onclick="if(event.target===this)calCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
@@ -3770,6 +3787,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-icon">🌸</span>
         <span class="admin-menu-item-label">Filhas da Casa</span>
         <span class="admin-menu-item-desc">Perfis e fichas</span>
+      </button>
+      <button class="admin-menu-item" onclick="showPage('linha-geral')">
+        <span class="admin-menu-item-icon">🕰️</span>
+        <span class="admin-menu-item-label">Linha do Tempo Geral</span>
+        <span class="admin-menu-item-desc">Uma volta no passado — todas as filhas e o calendário</span>
       </button>
     </div>
 
@@ -5114,6 +5136,11 @@ function showPage(name) {
   if (name === 'guias') {
     if (!guiasData.length) guiasLoad();
     else guiasRenderGrid(guiasData);
+  }
+  if (name === 'linha-geral') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    window.lgCarregar?.();
   }
   if (name === 'orientacoes') {
     // recarrega a próxima sessão sempre que a página abrir — antes só carregava
@@ -12403,14 +12430,10 @@ window.timelineToggleFiltro = function(elId, grupo) {
   renderTimeline(timelineDadosCache[elId], elId);
 };
 
-function renderTimeline(p, elId) {
-  elId = elId || 'mh-timeline';
-  const el = document.getElementById(elId);
-  if (!el) return;
-  timelineDadosCache[elId] = p;
-  if (!timelineFiltros[elId]) timelineFiltros[elId] = { guias: true, cruzamentos: true, quimbanda: true };
-  const filtro = timelineFiltros[elId];
-
+// extrai a lista de eventos com data de um perfil (marcos, quimbanda, guias,
+// cruzamentos — fixos e extras) — usada tanto na Linha do Tempo pessoal
+// (renderTimeline) quanto na Linha do Tempo Geral (todas as filhas + calendário)
+function extrairEventosPessoa(p) {
   const hist = p.historia || {};
   const guias = p.guias || {};
   const cruz = p.cruzamentos || {};
@@ -12485,8 +12508,20 @@ function renderTimeline(p, elId) {
     });
   });
 
+  return eventos;
+}
+
+function renderTimeline(p, elId) {
+  elId = elId || 'mh-timeline';
+  const el = document.getElementById(elId);
+  if (!el) return;
+  timelineDadosCache[elId] = p;
+  if (!timelineFiltros[elId]) timelineFiltros[elId] = { guias: true, cruzamentos: true, quimbanda: true };
+  const filtro = timelineFiltros[elId];
+  const hist = p.historia || {};
+
   // filtro por grupo — "marcos" é sempre exibido; os demais respeitam os botões do topo
-  eventos = eventos.filter(e => e.grupo === 'marcos' || filtro[e.grupo]);
+  let eventos = extrairEventosPessoa(p).filter(e => e.grupo === 'marcos' || filtro[e.grupo]);
 
   const filtroHtml = `
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
@@ -12581,6 +12616,89 @@ function renderTimeline(p, elId) {
       ${marcadorHoje}
       ${itensHtml}
     </div>`;
+}
+
+// ── LINHA DO TEMPO GERAL (admin) — junta a história de todas as filhas
+// da casa (mesmos eventos da Linha do Tempo pessoal, via extrairEventosPessoa)
+// com as sessões passadas do calendário, tudo numa lista só, mais recente primeiro
+const LG_MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const LG_TIPO_LABEL = { Interna:'Interna', Atendimento:'Atendimento', Visita:'Visita', Familia:'Família', Reuniao:'Reunião' };
+
+window.lgCarregar = async function() {
+  const lista = document.getElementById('lg-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="cal-empty">Carregando...</div>';
+  try {
+    const [perfisRes, sessoesRes] = await Promise.all([
+      fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/sessoes')
+    ]);
+    const perfis = await perfisRes.json();
+    const sessoesTodas = await sessoesRes.json();
+    lgRenderLista(Array.isArray(perfis) ? perfis : [], Array.isArray(sessoesTodas) ? sessoesTodas : []);
+  } catch (e) {
+    console.warn('linha do tempo geral:', e);
+    lista.innerHTML = '<div class="cal-empty">Não foi possível carregar a linha do tempo.</div>';
+  }
+};
+
+function lgRenderLista(perfis, sessoesTodas) {
+  const lista = document.getElementById('lg-lista');
+  if (!lista) return;
+  const hojeStr = new Date().toISOString().slice(0, 10);
+
+  // eventos pessoais de cada filha da casa — mesma extração usada na
+  // Linha do Tempo pessoal de cada ficha, só que de todo mundo junto
+  let itens = [];
+  perfis.forEach(p => {
+    const nome = p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
+    extrairEventosPessoa(p).forEach(e => {
+      if (e.oculto) return;
+      itens.push({ data: e.data, cor: e.cor, titulo: e.label + (e.nome ? ' — ' + e.nome : ''), quem: nome });
+    });
+  });
+
+  // sessões já realizadas do calendário (não mostra as futuras — isso aqui é
+  // uma volta no passado, não uma agenda)
+  (sessoesTodas || []).forEach(s => {
+    if (!s.data || s.data > hojeStr) return;
+    itens.push({ data: s.data, cor: '#c4396b', titulo: s.nome || 'Sessão', quem: LG_TIPO_LABEL[s.tipo] || s.tipo || 'Sessão' });
+  });
+
+  if (!itens.length) {
+    lista.innerHTML = '<div class="cal-empty">Nenhum evento registrado ainda.</div>';
+    return;
+  }
+
+  // mais recente primeiro — mesmo critério já usado nas sessões passadas do calendário
+  itens.sort((a, b) => b.data.localeCompare(a.data));
+
+  // agrupa por mês mantendo a ordem já vinda da lista (mesma técnica de calRenderLista)
+  const grupos = [];
+  itens.forEach(it => {
+    const key = it.data.slice(0, 7);
+    let grupo = grupos[grupos.length - 1];
+    if (!grupo || grupo.key !== key) { grupo = { key, itens: [] }; grupos.push(grupo); }
+    grupo.itens.push(it);
+  });
+
+  let html = '';
+  grupos.forEach(({ key, itens: itensDoMes }) => {
+    const [y, m] = key.split('-');
+    html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">${LG_MESES[parseInt(m) - 1]} ${y}</div>`;
+    itensDoMes.forEach(it => {
+      const dd = it.data.split('-')[2];
+      html += `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
+        <div style="flex-shrink:0;width:30px;text-align:center;font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700;color:var(--rosa)">${dd}</div>
+        <div style="flex:1;border-left:2px solid ${it.cor};padding-left:12px">
+          <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text)">${calEsc(it.titulo)}</div>
+          <div style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">${calEsc(it.quem)}</div>
+        </div>
+      </div>`;
+    });
+  });
+
+  lista.innerHTML = html;
 }
 
 // ── DASHBOARD PESSOAL NA HOME ──
