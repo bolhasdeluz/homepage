@@ -580,6 +580,8 @@ footer{
 .cal-anual-dia-num{font-family:'Cinzel',serif;font-size:.56rem;font-weight:600;color:var(--text);width:16px;height:16px;line-height:16px;text-align:center}
 .cal-anual-eventos{display:flex;flex-direction:column;gap:1px;width:100%}
 .cal-anual-evento{font-family:'DM Sans',sans-serif;font-size:.42rem;line-height:1.25;color:#fff;border-radius:2px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.cal-anual-evento[draggable=true]{cursor:grab}
+.cal-anual-evento[draggable=true]:active{cursor:grabbing}
 .cal-anual-mais{font-family:'Cinzel',serif;font-size:.4rem;color:var(--text-dim);text-align:center}
 .cal-anual-legenda{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-bottom:16px}
 .cal-anual-legenda-item{display:flex;align-items:center;gap:5px}
@@ -3578,9 +3580,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="margin-bottom:12px;font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">
       ✦ A visibilidade e as informações para visitantes dessa sessão são definidas pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo" e "📋 Informações por tipo".
     </div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px">
-      <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
-      <button onclick="calSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px">
+      <button id="cal-btn-clonar" onclick="calClonarSessao()" style="display:none;background:none;border:1px dashed var(--border);color:var(--rosa);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase">📋 Clonar pra outra data</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+        <button onclick="calSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5698,6 +5703,7 @@ function calOpenModal() {
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
   document.getElementById('cal-fDriveLink').value = CAL_DRIVE_LINK_PADRAO;
+  document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5723,7 +5729,18 @@ function calOpenEdit(id) {
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
   document.getElementById('cal-fDriveLink').value = s.driveLink || CAL_DRIVE_LINK_PADRAO;
+  document.getElementById('cal-btn-clonar').style.display = '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+// mantém todos os campos já preenchidos, mas vira uma criação (sem
+// cal-edit-id) — só falta escolher a nova data e salvar, sem precisar
+// redigitar a sessão inteira de novo
+function calClonarSessao() {
+  document.getElementById('cal-edit-id').value = '';
+  document.getElementById('cal-modal-titulo').textContent = 'Clonar Sessão — escolha a nova data';
+  document.getElementById('cal-btn-clonar').style.display = 'none';
+  document.getElementById('cal-fData').focus();
 }
 
 function calCloseModal() { document.getElementById('cal-modal-overlay').style.display = 'none'; }
@@ -6064,7 +6081,10 @@ function calAnualLegendaHtml() {
 // Planejamento Anual (admin) quanto pela Visão Anual opcional do Calendário
 // de Sessões. Só entram sessões que a pessoa logada pode ver (calSessaoVisivel) —
 // pra admin isso sempre dá "total", então não muda nada pra ela
-function calAnualGradeHtml(ano) {
+// "interativo" liga o arrastar-pra-mudar-data e o clique direto em cada
+// sessão — só faz sentido no Planejamento Anual (admin); a Visão Anual
+// geral (aberta pra qualquer pessoa) fica só de leitura
+function calAnualGradeHtml(ano, interativo) {
   const feriados = calFeriadosDoAno(ano);
   const todayStr = calFmtDate(new Date());
 
@@ -6078,18 +6098,23 @@ function calAnualGradeHtml(ano) {
       const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const feriado = feriados[dataStr];
       const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
-      // mostra o nome de cada sessão (não só um pontinho colorido) — só assim
-      // dá pra saber o que é sem precisar passar o mouse por cima
+      // mostra o Lado de cada sessão (não o nome nem um pontinho anônimo) —
+      // dá pra ler rapidinho o que é sem precisar passar o mouse por cima
       const visiveis = eventos.slice(0, 2);
       let eventosHtml = visiveis.map(s => {
-        const nome = calSessaoVisivel(s) === 'parcial' ? '🔒 Fechada' : calEsc(s.nome);
+        const vis = calSessaoVisivel(s);
+        const rotulo = vis === 'parcial' ? '🔒 Fechada' : (CAL_LADO_LABEL[s.lado] || s.lado || '—');
         const cor = CAL_LADO_COR[s.lado] || 'var(--rosa)';
-        return `<div class="cal-anual-evento" style="background:${cor}">${nome}</div>`;
+        const podeEditar = interativo && vis === 'total';
+        const arrastar = podeEditar ? ` draggable="true" ondragstart="calAnualDragStart(event,'${s.id}')"` : '';
+        const clique = podeEditar ? ` onclick="event.stopPropagation();calOpenEdit('${s.id}')"` : '';
+        return `<div class="cal-anual-evento" style="background:${cor}"${arrastar}${clique}>${calEsc(rotulo)}</div>`;
       }).join('');
       if (eventos.length > 2) eventosHtml += `<div class="cal-anual-mais">+${eventos.length - 2} mais</div>`;
       const nomesEventos = eventos.map(s => calSessaoVisivel(s) === 'parcial' ? 'Sessão fechada' : s.nome);
       const titulo = feriado ? feriado.nome : nomesEventos.join(', ');
-      diasHtml += `<div class="cal-anual-dia${dataStr===todayStr?' hoje':''}${feriado?' feriado':''}" onclick="calAnualClicarDia('${dataStr}')" title="${calEsc(titulo)}">
+      const dropAttrs = interativo ? ` ondragover="event.preventDefault()" ondrop="calAnualDropNoDia(event,'${dataStr}')"` : '';
+      diasHtml += `<div class="cal-anual-dia${dataStr===todayStr?' hoje':''}${feriado?' feriado':''}" onclick="calAnualClicarDia('${dataStr}')" title="${calEsc(titulo)}"${dropAttrs}>
         <div class="cal-anual-dia-num">${d}</div>
         <div class="cal-anual-eventos">${eventosHtml}</div>
       </div>`;
@@ -6100,6 +6125,30 @@ function calAnualGradeHtml(ano) {
     </div>`;
   }
   return html;
+}
+
+// arrastar uma sessão pra outro dia — só no Planejamento Anual (admin)
+function calAnualDragStart(ev, id) {
+  ev.dataTransfer.setData('text/plain', id);
+  ev.dataTransfer.effectAllowed = 'move';
+}
+
+async function calAnualDropNoDia(ev, dataStr) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  const id = ev.dataTransfer.getData('text/plain');
+  if (!id) return;
+  const s = calSessoes.find(x => x.id === id);
+  if (!s || s.data === dataStr) return;
+  const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, data: dataStr }) });
+  if (!res.ok) { alert('Não consegui mover a sessão — tenta de novo.'); return; }
+  const json = await res.json();
+  const idx = calSessoes.findIndex(x => x.id === id);
+  if (idx >= 0) calSessoes[idx] = json;
+  calPopularFiltroAno();
+  calRenderGrade(); calRenderLista();
+  calAnualRender();
+  if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
 function calAnualAbrir() {
@@ -6114,7 +6163,7 @@ function calAnualRender() {
   const grade = document.getElementById('cal-anual-grade');
   if (!grade) return;
   document.getElementById('cal-anual-titulo').textContent = `Planejamento Anual — ${calAnualAno}`;
-  grade.innerHTML = calAnualGradeHtml(calAnualAno);
+  grade.innerHTML = calAnualGradeHtml(calAnualAno, true);
 }
 
 // ── VISÃO ANUAL (opcional, dentro do Calendário de Sessões) ──────────────
@@ -6147,7 +6196,7 @@ function calRenderVisaoAnualInline() {
   if (!grade) return;
   const ano = calAnoFiltro ? parseInt(calAnoFiltro) : new Date().getFullYear();
   document.getElementById('cal-anual2-legenda').innerHTML = calAnualLegendaHtml();
-  grade.innerHTML = calAnualGradeHtml(ano);
+  grade.innerHTML = calAnualGradeHtml(ano, false);
 }
 
 // clique num dia da visão anual (modal ou embutida) — admin edita a sessão
