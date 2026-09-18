@@ -628,6 +628,12 @@ footer{
 .admin-filha-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .admin-filha-nome{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--text);margin-bottom:3px;line-height:1.3}
 .admin-filha-guia{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic}
+
+/* PERFIL DA TERREIRA — totais da casa somando todas as fichas */
+.dash-terreiro-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
+.dash-terreiro-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 8px;text-align:center;backdrop-filter:blur(4px)}
+.dash-terreiro-stat .valor{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--rosa);line-height:1.1}
+.dash-terreiro-stat .label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
 .admin-filhas-vazio{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;padding:12px 0}
 /* modal ficha */
 #modal-ficha-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
@@ -2134,6 +2140,34 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
         <div id="dasa-avisos-lista"></div>
       </div>
     </div>
+  </div>
+
+  <!-- PERFIL DA TERREIRA — só pra conta bolhasdeluz@gmail.com. Em vez do
+       dashboard pessoal de uma filha, mostra os dados centralizados da casa
+       inteira: totais, próximas sessões e a grade de todas as filhas (clicar
+       numa abre a ficha dela, com os guias e datas) -->
+  <div id="dash-perfil-terreira" class="dash-wrap" style="display:none">
+    <div class="dash-card">
+      <div class="dash-eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="dash-nome">Visão Geral da Casa</div>
+      <p class="dash-frase">Tudo que a casa já viveu, somado ✦</p>
+    </div>
+
+    <div class="dash-terreiro-stats">
+      <div class="dash-terreiro-stat"><div class="valor" id="dt-total-filhas">—</div><div class="label">Filhas da Casa</div></div>
+      <div class="dash-terreiro-stat"><div class="valor" id="dt-total-cortes">—</div><div class="label">Cortes</div></div>
+      <div class="dash-terreiro-stat"><div class="valor" id="dt-total-cruz">—</div><div class="label">Cruzamentos</div></div>
+      <div class="dash-terreiro-stat"><div class="valor" id="dt-total-guias">—</div><div class="label">Guias</div></div>
+    </div>
+
+    <div class="dash-section-title" style="margin-top:24px">📅 Próximas Sessões</div>
+    <div class="rm-lista" id="dt-sessoes-lista" style="margin-bottom:10px"><div class="rm-vazio-secao">Carregando...</div></div>
+    <div style="text-align:center;margin-bottom:28px">
+      <button class="btn-rosa" style="cursor:pointer" onclick="showPage('calendario')">Ver calendário completo →</button>
+    </div>
+
+    <div class="dash-section-title">🌸 Filhas da Casa <span style="font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--text-dim)">— clique numa pra ver os guias e datas dela</span></div>
+    <div class="admin-filhas-grid" id="dt-filhas-grid"><div class="admin-filhas-vazio">Carregando...</div></div>
   </div>
 
   <!-- MODAL LINHA DO TEMPO (chamado pelo botão no card acima) -->
@@ -13285,17 +13319,36 @@ async function qdCarregarBadge() {
   }
 }
 
+// única conta que vê o Perfil da Terreira em vez do dashboard pessoal —
+// mantida em duplicado aqui de propósito (mesma convenção de ADMIN_EMAILS
+// no <script> comum) já que os dois scripts não compartilham escopo
+const TERREIRO_EMAIL = 'bolhasdeluz@gmail.com';
+
 function renderDashPessoal(p, user) {
   const wrap = document.getElementById('dash-pessoal');
   const wrapVisitante = document.getElementById('dash-visitante');
   const wrapAssistencia = document.getElementById('dash-assistencia');
+  const wrapTerreiro = document.getElementById('dash-perfil-terreira');
   if (!wrap) return;
   if (!user) {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
+    if (wrapTerreiro) wrapTerreiro.style.display = 'none';
     return;
   }
+
+  // bolhasdeluz@gmail.com é a conta da casa, não de uma filha específica —
+  // em vez do dashboard pessoal, mostra os dados centralizados da casa
+  if (user.email === TERREIRO_EMAIL) {
+    wrap.style.display = 'none';
+    if (wrapVisitante) wrapVisitante.style.display = 'none';
+    if (wrapAssistencia) wrapAssistencia.style.display = 'none';
+    renderDashTerreiro();
+    return;
+  }
+  if (wrapTerreiro) wrapTerreiro.style.display = 'none';
+
   p = p || {};
   const grupoAtual = p.grupo || 'visitante';
 
@@ -13462,6 +13515,72 @@ function renderDashPessoal(p, user) {
   wrap.style.display = 'block';
 }
 window.renderDashPessoal = renderDashPessoal;
+
+// ── PERFIL DA TERREIRA (bolhasdeluz@gmail.com) ────────────────────────────
+// centraliza os dados de todas as filhas da casa: totais de cortes,
+// cruzamentos e guias (reaproveitando a mesma extração de eventos usada na
+// Linha do Tempo Geral), próximas sessões e a grade de filhas — clicar numa
+// abre a ficha dela (mesmo visualizador que o admin já usa em "Filhas da Casa")
+async function renderDashTerreiro() {
+  const wrap = document.getElementById('dash-perfil-terreira');
+  if (!wrap) return;
+  wrap.style.display = 'block';
+
+  try {
+    const [perfisRes, sessoesRes] = await Promise.all([
+      fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/sessoes'),
+    ]);
+    const perfis = await perfisRes.json();
+    const sessoesTodas = await sessoesRes.json();
+    terreiroRenderStats(Array.isArray(perfis) ? perfis : []);
+    terreiroRenderSessoes(Array.isArray(sessoesTodas) ? sessoesTodas : []);
+    terreiroRenderFilhasGrid(Array.isArray(perfis) ? perfis : []);
+  } catch (e) {
+    console.warn('Perfil da Terreira:', e);
+  }
+}
+
+function terreiroRenderStats(perfis) {
+  const ativas = perfis.filter(p => p.nome && p.ativo !== false);
+  let cortes = 0, cruzamentos = 0, guias = 0;
+  perfis.forEach(p => {
+    extrairEventosPessoa(p).forEach(e => {
+      if (e.key === 'corte_1' || e.key.startsWith('corte_extra_')) cortes++;
+      else if (e.grupo === 'cruzamentos') cruzamentos++;
+      else if (e.grupo === 'guias') guias++;
+    });
+  });
+  document.getElementById('dt-total-filhas').textContent = ativas.length;
+  document.getElementById('dt-total-cortes').textContent = cortes;
+  document.getElementById('dt-total-cruz').textContent = cruzamentos;
+  document.getElementById('dt-total-guias').textContent = guias;
+}
+
+function terreiroRenderSessoes(sessoesTodas) {
+  const lista = document.getElementById('dt-sessoes-lista');
+  if (!lista) return;
+  const hojeStr = calFmtDate(new Date());
+  const proximas = sessoesTodas
+    .filter(s => s.data >= hojeStr)
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .slice(0, 6);
+  if (!proximas.length) { lista.innerHTML = '<div class="rm-vazio-secao">Nenhuma sessão marcada ainda</div>'; return; }
+  lista.innerHTML = proximas.map(s => `<div class="rm-linha"><span>${calEsc(s.nome)}</span><span class="rm-linha-tag">${fmtData(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
+}
+
+function terreiroRenderFilhasGrid(perfis) {
+  const grid = document.getElementById('dt-filhas-grid');
+  if (!grid) return;
+  if (!perfis.length) { grid.innerHTML = '<div class="admin-filhas-vazio">Nenhum perfil salvo ainda.</div>'; return; }
+  const ordenados = [...perfis].sort((a, b) => (a.ativo === false ? 1 : 0) - (b.ativo === false ? 1 : 0));
+  grid.innerHTML = ordenados.map(p => `
+    <div class="admin-filha-card" style="${p.ativo === false ? 'opacity:.5' : ''}" onclick="abrirFicha('${p.email}')">
+      <div class="admin-filha-foto">${p.foto ? `<img src="${p.foto}" alt="">` : '👤'}</div>
+      <div class="admin-filha-nome">${calEsc(p.nome || p.email.split('@')[0])}${p.ativo === false ? ' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>' : ''}</div>
+      <div class="admin-filha-guia">${calEsc(p.guias?.caboclo || p.historia?.guia_chefe || 'sem guia')}</div>
+    </div>`).join('');
+}
 
 // dashboard simplificado de quem loga como visitante (ainda sem ficha de filha
 // da casa) — próxima sessão em destaque + caminhos de "primeiros passos" na casa
