@@ -2206,10 +2206,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
                 <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galinhas" style="margin-bottom:0" placeholder="0"></div>
                 <div><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galos" style="margin-bottom:0" placeholder="0"></div>
               </div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer;margin-bottom:8px">
+                <input type="checkbox" id="mh-edit-corte_1_cambonagem" onchange="mhToggleCorte1Cambonagem(this.checked)">
+                Cambonagem — esteve no corte, mas ainda não foi cortado(a)
+              </label>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="mh-corte-1-grid">
                 <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="mh-edit-corte_1" style="margin-bottom:0"></div>
-                <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galinhas" style="margin-bottom:0" placeholder="0"></div>
-                <div><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galos" style="margin-bottom:0" placeholder="0"></div>
+                <div id="mh-corte-1-galinhas-wrap"><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galinhas" style="margin-bottom:0" placeholder="0"></div>
+                <div id="mh-corte-1-galos-wrap"><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galos" style="margin-bottom:0" placeholder="0"></div>
               </div>
             </div>
             <!-- Cortes Adicionais (2º em diante) -->
@@ -3616,8 +3620,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
       <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
       <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
-      <div><label class="form-label">1º Corte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-corte_1_galinhas" placeholder="0"></div>
-      <div><label class="form-label">1º Corte — Galos</label><input type="number" min="0" class="form-input" id="cp-corte_1_galos" placeholder="0"></div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:2px">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer">
+          <input type="checkbox" id="cp-corte_1_cambonagem" onchange="cpToggleCambonagem(this.checked)">
+          Cambonagem — esteve no corte, mas ainda não foi cortado(a)
+        </label>
+      </div>
+      <div id="cp-corte_1-galinhas-wrap"><label class="form-label">1º Corte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-corte_1_galinhas" placeholder="0"></div>
+      <div id="cp-corte_1-galos-wrap"><label class="form-label">1º Corte — Galos</label><input type="number" min="0" class="form-input" id="cp-corte_1_galos" placeholder="0"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Guias e Guardiões</div>
@@ -4693,7 +4703,8 @@ const camposLabels = {
   cruz_conga:'Conga', cruz_mata:'Mata', cruz_praia:'Praia',
   cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte',
   apronte_galinhas:'Apronte — Galinhas', apronte_galos:'Apronte — Galos',
-  corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos'
+  corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos',
+  corte_1_cambonagem:'1º Corte — Cambonagem'
 };
 
 function fmtDataAdmin(v) {
@@ -4754,7 +4765,7 @@ async function abrirFicha(email) {
     ficha.innerHTML =
       mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
-      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_galinhas','corte_1_galos']) +
+      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_cambonagem','corte_1_galinhas','corte_1_galos']) +
       mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
       (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
         <div class="mf-section"><div class="mf-section-title">🌸 Boas-vindas</div>
@@ -4814,7 +4825,7 @@ function mfSection(titulo, dados, keys) {
       const isDataKey = k.includes('_data') || k === 'data_entrada' || k.startsWith('cruz') || k === 'corte_1';
       const isDataVal = v && /^\d{4}-\d{2}-\d{2}$/.test(v);
       const display = v
-        ? (isDataKey || isDataVal ? fmtDataAdmin(v) : v)
+        ? (k === 'corte_1_cambonagem' ? 'Sim' : (isDataKey || isDataVal ? fmtDataAdmin(v) : v))
         : '<span style="opacity:.25">—</span>';
       return `<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${display}</div></div>`;
     }).join('')
@@ -4847,6 +4858,8 @@ function abrirCriarPerfil(emailParaEditar) {
   document.getElementById('cp-email').disabled = false;
   document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
+  const cambEl = document.getElementById('cp-corte_1_cambonagem');
+  if (cambEl) { cambEl.checked = false; cpToggleCambonagem(false); }
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -4867,6 +4880,15 @@ function fecharCriarPerfil() {
   cpPerfilOriginal = null;
 }
 
+// Cambonagem no 1º Corte: esconde os campos de Galinhas/Galos, já que quem
+// só fez cambonagem ainda não foi cortado(a) — não faz sentido contar aves
+function cpToggleCambonagem(checked) {
+  const g = document.getElementById('cp-corte_1-galinhas-wrap');
+  const o = document.getElementById('cp-corte_1-galos-wrap');
+  if (g) g.style.display = checked ? 'none' : '';
+  if (o) o.style.display = checked ? 'none' : '';
+}
+
 function preencherFormPerfil(p) {
   if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
   if (p.cargo) { const sel = document.getElementById('cp-cargo'); if (sel) sel.value = p.cargo; }
@@ -4877,6 +4899,8 @@ function preencherFormPerfil(p) {
     const dados = p[grupo] || {};
     keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
   });
+  const cambEl = document.getElementById('cp-corte_1_cambonagem');
+  if (cambEl) { cambEl.checked = !!(p.historia||{}).corte_1_cambonagem; cpToggleCambonagem(cambEl.checked); }
   // campos cacique
   const c = p.cacique || {};
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
@@ -4929,6 +4953,11 @@ async function salvarPerfilAdmin() {
       else delete payload[grupo][k];
     });
   });
+  const cambEl = document.getElementById('cp-corte_1_cambonagem');
+  if (cambEl) {
+    if (cambEl.checked) payload.historia.corte_1_cambonagem = true;
+    else delete payload.historia.corte_1_cambonagem;
+  }
 
   status.textContent = 'Salvando...';
   try {
@@ -12407,7 +12436,7 @@ function renderTimeline(p, elId) {
     { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos' },
     { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
-      nomeFn:(dados)=>{ const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
+      nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
 
   const srcs = { historia: hist, guias, cruz, cacique: p.cacique || {} };
@@ -12425,7 +12454,7 @@ function renderTimeline(p, elId) {
   (p.cortes || []).forEach((c, i) => {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     const numCorte = i + 2;
-    const aves = (c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '';
+    const aves = c.cambonagem ? '🤝 Cambonagem' : ((c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '');
     eventos.push({
       key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b', grupo:'quimbanda',
       data: c.data, nome: aves,
@@ -12585,7 +12614,7 @@ const DASH_BADGES_HISTORIA = [
 // Quimbanda — apronte e cortes, cada um com contagem de aves
 const DASH_BADGES_QUIMBANDA = [
   { dataKey:'apronte',  label:'Apronte',  emoji:'🌱', cor:'#6a9e6a', avesKeyGalinhas:'apronte_galinhas', avesKeyGalos:'apronte_galos' },
-  { dataKey:'corte_1',  label:'1º Corte', emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos' },
+  { dataKey:'corte_1',  label:'1º Corte', emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos', cambKey:'corte_1_cambonagem' },
 ];
 
 function dashBadgeHtml(b, dados) {
@@ -12599,9 +12628,12 @@ function dashBadgeHtml(b, dados) {
       <div class="dash-badge-sub">—</div>
     </div>`;
   }
-  // subtexto especial: quantidade de aves, quando o badge é um corte
+  // subtexto especial: quantidade de aves, quando o badge é um corte —
+  // exceto se foi cambonagem, já que aí a pessoa ainda não foi cortada
   let subtexto = nome ? `<div class="dash-badge-sub">${nome}</div>` : '';
-  if (b.avesKeyGalinhas || b.avesKeyGalos) {
+  if (b.cambKey && dados[b.cambKey]) {
+    subtexto = `<div class="dash-badge-sub">🤝 Cambonagem</div>`;
+  } else if (b.avesKeyGalinhas || b.avesKeyGalos) {
     const galinhas = dados[b.avesKeyGalinhas] || 0;
     const galos = dados[b.avesKeyGalos] || 0;
     if (galinhas || galos) {
@@ -12622,10 +12654,11 @@ function dashBadgesCortesHtml(cortes) {
   return cortes.map((c, i) => {
     const numCorte = i + 2;
     if (!c.data) return '';
+    const subtexto = c.cambonagem ? '🤝 Cambonagem' : `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}`;
     return `<div class="dash-badge unlocked">
       <div class="dash-badge-icon" style="background:#c4396b22">⚔️</div>
       <div class="dash-badge-name">${numCorte}º Corte</div>
-      <div class="dash-badge-sub">🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}</div>
+      <div class="dash-badge-sub">${subtexto}</div>
       <div class="dash-badge-data">${fmtData(c.data)}</div>
     </div>`;
   }).join('');
@@ -13480,6 +13513,8 @@ window.salvarSuaHistoria = async function() {
     const el = document.getElementById('mh-edit-' + k);
     if (el) H[k] = el.value.trim();
   });
+  const camb1El = document.getElementById('mh-edit-corte_1_cambonagem');
+  if (camb1El) { if (camb1El.checked) H.corte_1_cambonagem = true; else delete H.corte_1_cambonagem; }
 
   // campo de descrição
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -13494,8 +13529,8 @@ window.salvarSuaHistoria = async function() {
     email: emailAlvo,
     historia: H, guias: G, cruzamentos: C,
     notas,
-    // filtra cortes vazios (sem data nem aves) antes de salvar
-    cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos),
+    // filtra cortes vazios (sem data, aves nem cambonagem) antes de salvar
+    cortes: (_mhCortesEditando || []).filter(c => c.data || c.galinhas || c.galos || c.cambonagem),
     // filtra cruzamentos extras vazios (sem nome nem data)
     cruzamentosExtras: (_mhCruzExtrasEditando || []).filter(c => c.nome || c.data),
     // filtra guias extras vazios (sem tipo, nome nem data)
@@ -13768,7 +13803,22 @@ function mhRenderQuimbanda(hist) {
   setIfExists('mh-edit-corte_1', hist.corte_1);
   setIfExists('mh-edit-corte_1_galinhas', hist.corte_1_galinhas);
   setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
+  const cambEl = document.getElementById('mh-edit-corte_1_cambonagem');
+  if (cambEl) { cambEl.checked = !!hist.corte_1_cambonagem; window.mhToggleCorte1Cambonagem(cambEl.checked); }
 }
+
+// Cambonagem no 1º Corte: esconde Galinhas/Galos, já que quem só fez
+// cambonagem ainda não foi cortado(a) — não faz sentido contar aves
+// (window.* aqui porque esse <script> é type="module" — declaração comum
+// não fica acessível pro onchange inline do checkbox no HTML)
+window.mhToggleCorte1Cambonagem = function(checked) {
+  const grid = document.getElementById('mh-corte-1-grid');
+  const g = document.getElementById('mh-corte-1-galinhas-wrap');
+  const o = document.getElementById('mh-corte-1-galos-wrap');
+  if (g) g.style.display = checked ? 'none' : '';
+  if (o) o.style.display = checked ? 'none' : '';
+  if (grid) grid.style.gridTemplateColumns = checked ? '1fr' : '1fr 1fr 1fr';
+};
 
 // ── CORTES ADICIONAIS (2º corte em diante) ──
 // estrutura: perfilData.cortes = [{ data:'YYYY-MM-DD', galinhas:'0', galos:'0' }, ...]
@@ -13801,26 +13851,38 @@ function mhRenderCortes(cortes, editavel) {
       return `<div class="mh-corte-card">
         <button type="button" class="mh-corte-del" onclick="mhRemoverCorte(${i})" title="Remover este corte">✕</button>
         <div class="mh-corte-num">${numCorte}º Corte</div>
-        <div class="mh-corte-grid">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);cursor:pointer;margin-bottom:8px">
+          <input type="checkbox" ${c.cambonagem?'checked':''} onchange="mhToggleCambonagemCorte(${i},this.checked)">
+          Cambonagem — esteve no corte, mas ainda não foi cortado(a)
+        </label>
+        <div class="mh-corte-grid"${c.cambonagem ? ' style="grid-template-columns:1fr"' : ''}>
           <div><label>Data</label><input type="date" class="form-input" style="margin-bottom:0" value="${c.data||''}" oninput="mhAtualizarCorte(${i},'data',this.value)"></div>
+          ${c.cambonagem ? '' : `
           <div><label>Galinhas</label><input type="number" min="0" class="form-input" style="margin-bottom:0" value="${c.galinhas||''}" placeholder="0" oninput="mhAtualizarCorte(${i},'galinhas',this.value)"></div>
-          <div><label>Galos</label><input type="number" min="0" class="form-input" style="margin-bottom:0" value="${c.galos||''}" placeholder="0" oninput="mhAtualizarCorte(${i},'galos',this.value)"></div>
+          <div><label>Galos</label><input type="number" min="0" class="form-input" style="margin-bottom:0" value="${c.galos||''}" placeholder="0" oninput="mhAtualizarCorte(${i},'galos',this.value)"></div>`}
         </div>
       </div>`;
     }
     return `<div class="mh-corte-card">
       <div class="mh-corte-num">${numCorte}º Corte</div>
-      <div class="mh-corte-grid">
+      <div class="mh-corte-grid${c.cambonagem ? ' mh-corte-grid-2' : ''}">
         <div><label>Data</label><div class="valor">${c.data ? fmtData(c.data) : '—'}</div></div>
-        <div><label>Galinhas</label><div class="valor">${c.galinhas || '—'}</div></div>
-        <div><label>Galos</label><div class="valor">${c.galos || '—'}</div></div>
+        ${c.cambonagem
+          ? `<div><label>Cambonagem</label><div class="valor">Sim</div></div>`
+          : `<div><label>Galinhas</label><div class="valor">${c.galinhas || '—'}</div></div><div><label>Galos</label><div class="valor">${c.galos || '—'}</div></div>`}
       </div>
     </div>`;
   }).join('');
 }
 
 window.mhAdicionarCorte = function() {
-  _mhCortesEditando.push({ data:'', galinhas:'', galos:'' });
+  _mhCortesEditando.push({ data:'', galinhas:'', galos:'', cambonagem:false });
+  mhRenderCortes(_mhCortesEditando, true);
+};
+
+window.mhToggleCambonagemCorte = function(i, checked) {
+  if (!_mhCortesEditando[i]) return;
+  _mhCortesEditando[i].cambonagem = checked;
   mhRenderCortes(_mhCortesEditando, true);
 };
 
