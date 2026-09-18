@@ -12841,10 +12841,6 @@ function extrairEventosPessoa(p) {
     { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
-    // cambonagem (esteve no ritual, mas ainda não foi feito(a)) é só um selo
-    // visual — conta normalmente nos totais de cruzamentos/cortes
-    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos',
-      nomeFn:(dados)=> dados.cruz_conga_cambonagem ? '🤝 Cambonagem' : '' },
     { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
       nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
@@ -12859,6 +12855,41 @@ function extrairEventosPessoa(p) {
     const nome = def.nomeFn ? def.nomeFn(dados) : (def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '');
     eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
   });
+
+  // Assentamento — marco de jornada: a data do primeiro corte que de fato
+  // aconteceu (sem contar cambonagem), olhando o 1º Corte e os adicionais
+  const candidatosAssentamento = [];
+  if (hist.corte_1 && hist.corte_1.match(/^\d{4}-\d{2}-\d{2}$/) && !hist.corte_1_cambonagem) candidatosAssentamento.push(hist.corte_1);
+  (p.cortes || []).forEach(c => { if (c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem) candidatosAssentamento.push(c.data); });
+  if (candidatosAssentamento.length) {
+    eventos.push({
+      key: 'assentamento', label: 'Assentamento', cor: '#c4396b', grupo: 'marcos',
+      data: candidatosAssentamento.sort()[0], nome: '',
+      oculto: ocultos.includes('assentamento')
+    });
+  }
+
+  // Conga — marco de jornada: a data do primeiro cruzamento que de fato
+  // aconteceu (sem contar cambonagem), olhando a Conga e os demais cruzamentos
+  // (fixos e extras) — por isso vira marco (sempre exibido), no lugar do
+  // campo literal de história que só mostrava a data da Conga em si
+  // "deConga: true" só quando vem literalmente do campo Conga — os demais
+  // tipos (Mata, Praia, Rio, Pedreira, extras) já são contados como seus
+  // próprios eventos de cruzamento acima, então esse marco não pode contar
+  // de novo pra não duplicar o total
+  const candidatosConga = [];
+  if (hist.cruz_conga && hist.cruz_conga.match(/^\d{4}-\d{2}-\d{2}$/) && !hist.cruz_conga_cambonagem) candidatosConga.push({ data: hist.cruz_conga, deConga: true });
+  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira'].forEach(k => { if (cruz[k] && cruz[k].match(/^\d{4}-\d{2}-\d{2}$/)) candidatosConga.push({ data: cruz[k], deConga: false }); });
+  (p.cruzamentosExtras || []).forEach(c => { if (c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem) candidatosConga.push({ data: c.data, deConga: false }); });
+  if (candidatosConga.length) {
+    candidatosConga.sort((a, b) => a.data.localeCompare(b.data));
+    const escolhido = candidatosConga[0];
+    eventos.push({
+      key: 'conga', label: 'Conga', cor: '#5a8a5a', grupo: 'marcos',
+      data: escolhido.data, nome: '', contaComoCruzamento: escolhido.deConga,
+      oculto: ocultos.includes('conga')
+    });
+  }
 
   // cortes adicionais (2º em diante) — vêm do array p.cortes — grupo Quimbanda
   (p.cortes || []).forEach((c, i) => {
@@ -13572,7 +13603,10 @@ function terreiroRenderStats(perfis) {
   perfis.forEach(p => {
     extrairEventosPessoa(p).forEach(e => {
       if (e.key === 'corte_1' || e.key.startsWith('corte_extra_')) cortes++;
-      else if (e.grupo === 'cruzamentos') cruzamentos++;
+      // 'conga' virou marco de jornada (grupo 'marcos'), mas ainda conta como
+      // cruzamento quando representa a própria Conga — os outros tipos que ele
+      // pode usar como data (Mata, Praia...) já são contados no próprio evento
+      else if (e.grupo === 'cruzamentos' || (e.key === 'conga' && e.contaComoCruzamento)) cruzamentos++;
       else if (e.grupo === 'guias') guias++;
     });
   });
