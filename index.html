@@ -2245,6 +2245,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
             <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)">— História</div>
             <div class="perfil-grid" id="mh-grid-historia"></div>
+            <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer;margin-top:12px">
+              <input type="checkbox" id="mh-edit-cruz_conga_cambonagem">
+              Cambonagem no Cruzamento de Conga — esteve no ritual, mas ainda não foi cruzado(a)
+            </label>
           </div>
           <!-- Guias -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -3754,6 +3758,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" placeholder="Nome"></div>
       <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
       <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
+      <div style="display:flex;align-items:flex-end;padding-bottom:2px">
+        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer">
+          <input type="checkbox" id="cp-cruz_conga_cambonagem">
+          Cambonagem — esteve no cruzamento, mas ainda não foi cruzado(a)
+        </label>
+      </div>
       <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
       <div style="display:flex;align-items:flex-end;padding-bottom:2px">
         <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer">
@@ -4844,7 +4854,8 @@ const camposLabels = {
   cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte',
   apronte_galinhas:'Apronte — Galinhas', apronte_galos:'Apronte — Galos',
   corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos',
-  corte_1_cambonagem:'1º Corte — Cambonagem'
+  corte_1_cambonagem:'1º Corte — Cambonagem',
+  cruz_conga_cambonagem:'Conga — Cambonagem'
 };
 
 function fmtDataAdmin(v) {
@@ -4903,7 +4914,7 @@ async function abrirFicha(email) {
     if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
     const ficha = document.getElementById('mf-body-ficha');
     ficha.innerHTML =
-      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga']) +
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','cruz_conga_cambonagem']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
       mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_cambonagem','corte_1_galinhas','corte_1_galos']) +
       mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
@@ -4965,7 +4976,7 @@ function mfSection(titulo, dados, keys) {
       const isDataKey = k.includes('_data') || k === 'data_entrada' || k.startsWith('cruz') || k === 'corte_1';
       const isDataVal = v && /^\d{4}-\d{2}-\d{2}$/.test(v);
       const display = v
-        ? (k === 'corte_1_cambonagem' ? 'Sim' : (isDataKey || isDataVal ? fmtDataAdmin(v) : v))
+        ? ((k === 'corte_1_cambonagem' || k === 'cruz_conga_cambonagem') ? 'Sim' : (isDataKey || isDataVal ? fmtDataAdmin(v) : v))
         : '<span style="opacity:.25">—</span>';
       return `<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${display}</div></div>`;
     }).join('')
@@ -5000,6 +5011,8 @@ function abrirCriarPerfil(emailParaEditar) {
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
   const cambEl = document.getElementById('cp-corte_1_cambonagem');
   if (cambEl) { cambEl.checked = false; cpToggleCambonagem(false); }
+  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
+  if (cambCongaEl) cambCongaEl.checked = false;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -5041,6 +5054,8 @@ function preencherFormPerfil(p) {
   });
   const cambEl = document.getElementById('cp-corte_1_cambonagem');
   if (cambEl) { cambEl.checked = !!(p.historia||{}).corte_1_cambonagem; cpToggleCambonagem(cambEl.checked); }
+  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
+  if (cambCongaEl) cambCongaEl.checked = !!(p.historia||{}).cruz_conga_cambonagem;
   // campos cacique
   const c = p.cacique || {};
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
@@ -5097,6 +5112,11 @@ async function salvarPerfilAdmin() {
   if (cambEl) {
     if (cambEl.checked) payload.historia.corte_1_cambonagem = true;
     else delete payload.historia.corte_1_cambonagem;
+  }
+  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
+  if (cambCongaEl) {
+    if (cambCongaEl.checked) payload.historia.cruz_conga_cambonagem = true;
+    else delete payload.historia.cruz_conga_cambonagem;
   }
 
   status.textContent = 'Salvando...';
@@ -12821,8 +12841,9 @@ function extrairEventosPessoa(p) {
     { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
     { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
-    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos' },
-    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
+    { key:'cruz_conga',      label:'Conga',                  cor:'#5a8a5a', src:'historia', grupo:'cruzamentos', cambKey:'cruz_conga_cambonagem',
+      nomeFn:(dados)=> dados.cruz_conga_cambonagem ? '🤝 Cambonagem' : '' },
+    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda', cambKey:'corte_1_cambonagem',
       nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
   ];
 
@@ -12835,7 +12856,7 @@ function extrairEventosPessoa(p) {
     const nomeSrc = def.nomeSrc ? srcs[def.nomeSrc] : {};
     const nome = def.nomeFn ? def.nomeFn(dados) : (def.nomeKey ? (nomeSrc[def.nomeKey] || '') : '');
     // cambonagem = esteve no ritual mas ainda não foi feito(a) — não conta como "feito" nas contagens
-    const cambonagem = def.key === 'corte_1' ? !!dados.corte_1_cambonagem : false;
+    const cambonagem = def.cambKey ? !!dados[def.cambKey] : false;
     eventos.push({ ...def, data, nome, cambonagem, oculto: ocultos.includes(def.key) });
   });
 
@@ -13093,7 +13114,7 @@ const DASH_BADGES_HISTORIA = [
   { dataKey:'data_entrada', label:'Entrada na Casa', emoji:'🚪', cor:'#c4396b' },
   { dataKey:'coroacao',     label:'Coroação',        emoji:'👑', cor:'#4a6fa5' },
   { dataKey:'cacicamento',  label:'Cacicamento',     emoji:'⭐', cor:'#9e6a9e' },
-  { dataKey:'cruz_conga',   label:'Conga',           emoji:'🌳', cor:'#5a8a5a' },
+  { dataKey:'cruz_conga',   label:'Conga',           emoji:'🌳', cor:'#5a8a5a', cambKey:'cruz_conga_cambonagem' },
 ];
 // Quimbanda — apronte e cortes, cada um com contagem de aves
 const DASH_BADGES_QUIMBANDA = [
@@ -13468,7 +13489,7 @@ function renderDashPessoal(p, user) {
   const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data && !c.cambonagem).length;
   // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
   // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
-  const totalCruzConga = hist.cruz_conga ? 1 : 0;
+  const totalCruzConga = (hist.cruz_conga && !hist.cruz_conga_cambonagem) ? 1 : 0;
   const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
 
   // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
@@ -14106,6 +14127,8 @@ window.salvarSuaHistoria = async function() {
   });
   const camb1El = document.getElementById('mh-edit-corte_1_cambonagem');
   if (camb1El) { if (camb1El.checked) H.corte_1_cambonagem = true; else delete H.corte_1_cambonagem; }
+  const cambCongaEl = document.getElementById('mh-edit-cruz_conga_cambonagem');
+  if (cambCongaEl) { if (cambCongaEl.checked) H.cruz_conga_cambonagem = true; else delete H.cruz_conga_cambonagem; }
 
   // campo de descrição
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -14396,6 +14419,8 @@ function mhRenderQuimbanda(hist) {
   setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
   const cambEl = document.getElementById('mh-edit-corte_1_cambonagem');
   if (cambEl) { cambEl.checked = !!hist.corte_1_cambonagem; window.mhToggleCorte1Cambonagem(cambEl.checked); }
+  const cambCongaEl = document.getElementById('mh-edit-cruz_conga_cambonagem');
+  if (cambCongaEl) cambCongaEl.checked = !!hist.cruz_conga_cambonagem;
 }
 
 // Cambonagem no 1º Corte: esconde Galinhas/Galos, já que quem só fez
