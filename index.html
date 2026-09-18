@@ -567,19 +567,20 @@ footer{
 .cal-dia-mais{font-family:'Cinzel',serif;font-size:.48rem;color:var(--text-dim);padding:0 2px}
 
 /* PLANEJAMENTO ANUAL — visão ampla dos 12 meses de uma vez, com feriados */
-.cal-anual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.cal-anual-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
 .cal-anual-mes{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;backdrop-filter:blur(4px)}
 .cal-anual-mes-titulo{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);text-align:center;margin-bottom:6px}
 .cal-anual-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
 .cal-anual-dow{font-family:'Cinzel',serif;font-size:.45rem;text-align:center;color:var(--text-dim);padding-bottom:2px}
-.cal-anual-dia{min-height:30px;border-radius:5px;padding:2px 1px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;align-items:center}
+.cal-anual-dia{min-height:44px;border-radius:5px;padding:2px 1px;cursor:pointer;transition:background .15s;display:flex;flex-direction:column;align-items:center}
 .cal-anual-dia:hover{background:var(--rosa-dim)}
 .cal-anual-dia.vazio{cursor:default;visibility:hidden}
 .cal-anual-dia.hoje .cal-anual-dia-num{background:var(--rosa);color:#fff;border-radius:50%}
 .cal-anual-dia.feriado{background:rgba(201,150,60,.14)}
 .cal-anual-dia-num{font-family:'Cinzel',serif;font-size:.56rem;font-weight:600;color:var(--text);width:16px;height:16px;line-height:16px;text-align:center}
-.cal-anual-pontos{display:flex;gap:1px;flex-wrap:wrap;justify-content:center;min-height:5px}
-.cal-anual-ponto{width:5px;height:5px;border-radius:50%}
+.cal-anual-eventos{display:flex;flex-direction:column;gap:1px;width:100%}
+.cal-anual-evento{font-family:'DM Sans',sans-serif;font-size:.42rem;line-height:1.25;color:#fff;border-radius:2px;padding:1px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.cal-anual-mais{font-family:'Cinzel',serif;font-size:.4rem;color:var(--text-dim);text-align:center}
 .cal-anual-legenda{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-bottom:16px}
 .cal-anual-legenda-item{display:flex;align-items:center;gap:5px}
 .cal-anual-legenda-cor{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -5688,9 +5689,11 @@ function calOpenModal() {
   document.getElementById('cal-fHora').value = '20:30';
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
-  document.getElementById('cal-fOnde').value = '';
+  // "Salão" é onde a imensa maioria das sessões acontece — deixa pré-marcado
+  // pra só precisar trocar quando for diferente
+  document.getElementById('cal-fOnde').value = 'Salão';
   document.getElementById('cal-fOndeOutro').value = '';
-  calToggleOndeOutro('');
+  calToggleOndeOutro('Salão');
   document.getElementById('cal-fDesc').value = '';
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
@@ -5708,10 +5711,13 @@ function calOpenEdit(id) {
   document.getElementById('cal-fHora').value = s.hora || '';
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
-  // se o valor salvo não bate com nenhuma opção fixa, trata como "Outro" com o texto customizado
-  const ondeFixo = s.onde && CAL_ONDE_OPCOES.includes(s.onde) ? s.onde : (s.onde ? 'Outro' : '');
+  // sessões antigas (de antes desse campo existir) não tem "onde" salvo —
+  // trata como "Salão" também, já que é onde a maioria acontece. Se o valor
+  // salvo não bate com nenhuma opção fixa, trata como "Outro" com o texto customizado
+  const ondeSalvo = s.onde || 'Salão';
+  const ondeFixo = CAL_ONDE_OPCOES.includes(ondeSalvo) ? ondeSalvo : 'Outro';
   document.getElementById('cal-fOnde').value = ondeFixo;
-  document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? s.onde : '';
+  document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? ondeSalvo : '';
   calToggleOndeOutro(ondeFixo);
   document.getElementById('cal-fDesc').value = s.descricao || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
@@ -6072,14 +6078,20 @@ function calAnualGradeHtml(ano) {
       const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const feriado = feriados[dataStr];
       const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
-      const pontos = eventos.slice(0, 6).map(s =>
-        `<span class="cal-anual-ponto" style="background:${CAL_LADO_COR[s.lado] || 'var(--rosa)'}"></span>`
-      ).join('');
+      // mostra o nome de cada sessão (não só um pontinho colorido) — só assim
+      // dá pra saber o que é sem precisar passar o mouse por cima
+      const visiveis = eventos.slice(0, 2);
+      let eventosHtml = visiveis.map(s => {
+        const nome = calSessaoVisivel(s) === 'parcial' ? '🔒 Fechada' : calEsc(s.nome);
+        const cor = CAL_LADO_COR[s.lado] || 'var(--rosa)';
+        return `<div class="cal-anual-evento" style="background:${cor}">${nome}</div>`;
+      }).join('');
+      if (eventos.length > 2) eventosHtml += `<div class="cal-anual-mais">+${eventos.length - 2} mais</div>`;
       const nomesEventos = eventos.map(s => calSessaoVisivel(s) === 'parcial' ? 'Sessão fechada' : s.nome);
       const titulo = feriado ? feriado.nome : nomesEventos.join(', ');
       diasHtml += `<div class="cal-anual-dia${dataStr===todayStr?' hoje':''}${feriado?' feriado':''}" onclick="calAnualClicarDia('${dataStr}')" title="${calEsc(titulo)}">
         <div class="cal-anual-dia-num">${d}</div>
-        <div class="cal-anual-pontos">${pontos}</div>
+        <div class="cal-anual-eventos">${eventosHtml}</div>
       </div>`;
     }
     html += `<div class="cal-anual-mes">
