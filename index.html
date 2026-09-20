@@ -650,6 +650,14 @@ footer{
 .arvore-nodo .arvore-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .arvore-nodo .arvore-nome{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;letter-spacing:.03em;color:var(--text)}
 .arvore-nodo.arvore-inativa{opacity:.5}
+
+/* HIERARQUIA DA CASA — pirâmide por cargo, do mais alto ao mais amplo,
+   com uma linha central conectando um nível ao próximo */
+.hierarquia-nivel{text-align:center;position:relative;padding-top:20px}
+.hierarquia-nivel:first-child{padding-top:0}
+.hierarquia-nivel:not(:first-child)::before{content:'';position:absolute;top:0;left:50%;width:2px;height:20px;background:var(--border);transform:translateX(-50%)}
+.hierarquia-titulo{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.hierarquia-pessoas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 auto 22px}
 /* modal ficha */
 #modal-ficha-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 #modal-ficha-overlay.open{display:flex}
@@ -2180,6 +2188,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
     <div style="text-align:center;margin-bottom:28px">
       <button class="btn-rosa" style="cursor:pointer" onclick="showPage('calendario')">Ver calendário completo →</button>
     </div>
+
+    <div class="dash-section-title">🔺 Hierarquia da Casa <span style="font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--text-dim)">— quem está em cada cargo, clique pra ver a ficha</span></div>
+    <div id="dt-hierarquia" style="margin-bottom:28px"><div class="admin-filhas-vazio">Carregando...</div></div>
 
     <div class="dash-section-title">🌳 Árvore Genealógica <span style="font-style:italic;font-weight:400;text-transform:none;letter-spacing:0;font-size:.8rem;color:var(--text-dim)">— madrinhas e afilhadas, clique pra ver a ficha</span></div>
     <div id="dt-arvore" style="margin-bottom:28px;overflow-x:auto;padding-bottom:4px"><div class="admin-filhas-vazio">Carregando...</div></div>
@@ -13674,6 +13685,7 @@ async function renderDashTerreiro() {
     const sessoesTodas = await sessoesRes.json();
     terreiroRenderStats(Array.isArray(perfis) ? perfis : []);
     terreiroRenderSessoes(Array.isArray(sessoesTodas) ? sessoesTodas : []);
+    terreiroRenderHierarquia(Array.isArray(perfis) ? perfis : []);
     terreiroRenderArvore(Array.isArray(perfis) ? perfis : []);
     terreiroRenderFilhasGrid(Array.isArray(perfis) ? perfis : []);
   } catch (e) {
@@ -13710,6 +13722,48 @@ function terreiroRenderSessoes(sessoesTodas) {
     .slice(0, 6);
   if (!proximas.length) { lista.innerHTML = '<div class="rm-vazio-secao">Nenhuma sessão marcada ainda</div>'; return; }
   lista.innerHTML = proximas.map(s => `<div class="rm-linha"><span>${calEsc(s.nome)}</span><span class="rm-linha-tag">${fmtData(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
+}
+
+// ── HIERARQUIA DA CASA — pirâmide por cargo ──
+// ordem hierárquica igual à do seletor "Cargo" no cadastro do admin, do mais
+// alto pro mais amplo; quem não tem cargo definido entra no nível da base
+const CARGO_ORDEM = ['Mãe da Casa', 'Cacique', 'Tamoio', 'Naurú', 'Cambona', 'Tamboreiro', 'Curumim'];
+
+function terreiroNodoHierarquiaHtml(p) {
+  const foto = p.foto ? `<img src="${p.foto}" alt="">` : '👤';
+  return `<div class="arvore-nodo${p.ativo === false ? ' arvore-inativa' : ''}" onclick="abrirFicha('${p.email}')">
+    <div class="arvore-foto">${foto}</div>
+    <div class="arvore-nome">${calEsc(p.nome)}</div>
+  </div>`;
+}
+
+function terreiroRenderHierarquia(perfis) {
+  const wrap = document.getElementById('dt-hierarquia');
+  if (!wrap) return;
+  const validos = perfis.filter(p => p.nome && p.email);
+  const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
+
+  const niveis = CARGO_ORDEM
+    .map(cargo => ({ titulo: cargo, pessoas: validos.filter(p => p.cargo === cargo).sort(porNome) }))
+    .filter(n => n.pessoas.length);
+
+  const semCargo = validos.filter(p => !p.cargo || !CARGO_ORDEM.includes(p.cargo)).sort(porNome);
+  if (semCargo.length) niveis.push({ titulo: 'Filhas da Casa', pessoas: semCargo });
+
+  if (!niveis.length) {
+    wrap.innerHTML = '<div class="admin-filhas-vazio">Ainda não encontrei cargos preenchidos nas fichas.</div>';
+    return;
+  }
+
+  // cada nível vai ficando mais largo — é o que dá o efeito de pirâmide
+  const larguraBase = 200, larguraPasso = 55;
+  wrap.innerHTML = niveis.map((n, i) => `
+    <div class="hierarquia-nivel">
+      <div class="hierarquia-titulo">${calEsc(n.titulo)}</div>
+      <div class="hierarquia-pessoas" style="max-width:${larguraBase + i * larguraPasso}px">
+        ${n.pessoas.map(terreiroNodoHierarquiaHtml).join('')}
+      </div>
+    </div>`).join('');
 }
 
 // monta a árvore madrinha → afilhadas a partir dos campos de texto livre
