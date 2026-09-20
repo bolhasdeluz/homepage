@@ -3676,7 +3676,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       ✦ A visibilidade e as informações para visitantes dessa sessão são definidas pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo" e "📋 Informações por tipo".
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px">
-      <button id="cal-btn-clonar" onclick="calClonarSessao()" style="display:none;background:none;border:1px dashed var(--border);color:var(--rosa);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase">📋 Clonar pra outra data</button>
+      <div style="display:flex;gap:8px">
+        <button id="cal-btn-clonar" onclick="calClonarSessao()" style="display:none;background:none;border:1px dashed var(--border);color:var(--rosa);padding:9px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase">📋 Clonar pra outra data</button>
+        <button id="cal-btn-excluir" onclick="calDelete(document.getElementById('cal-edit-id').value)" style="display:none;background:none;border:1px dashed #b33;color:#b33;padding:9px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase">🗑️ Excluir</button>
+      </div>
       <div style="display:flex;gap:8px;margin-left:auto">
         <button onclick="calCloseModal()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
         <button onclick="calSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
@@ -5868,6 +5871,7 @@ function calOpenModal() {
   document.getElementById('cal-fTambor').value = '';
   document.getElementById('cal-fDriveLink').value = CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = 'none';
+  document.getElementById('cal-btn-excluir').style.display = 'none';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5894,6 +5898,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fTambor').value = s.tambor || '';
   document.getElementById('cal-fDriveLink').value = s.driveLink || CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = '';
+  document.getElementById('cal-btn-excluir').style.display = '';
   document.getElementById('cal-modal-overlay').style.display = 'flex';
 }
 
@@ -5904,6 +5909,7 @@ function calClonarSessao() {
   document.getElementById('cal-edit-id').value = '';
   document.getElementById('cal-modal-titulo').textContent = 'Clonar Sessão — escolha a nova data';
   document.getElementById('cal-btn-clonar').style.display = 'none';
+  document.getElementById('cal-btn-excluir').style.display = 'none';
   document.getElementById('cal-fData').focus();
 }
 
@@ -6009,11 +6015,15 @@ async function calSalvar() {
 }
 
 async function calDelete(id) {
-  if (!confirm('Excluir esta sessão?')) return;
+  if (!id) return;
+  if (!confirm('Excluir esta sessão? Essa ação não pode ser desfeita.')) return;
   const res = await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id }) });
   if (!res.ok) { alert('Não consegui excluir — tenta de novo.'); return; }
   calSessoes = calSessoes.filter(x => x.id !== id);
   calPopularFiltroAno();
+  // se a sessão excluída é a que está aberta no modal (ex: excluindo pelo
+  // botão "🗑️ Excluir" dentro do próprio modal de edição), fecha ele também
+  if (document.getElementById('cal-edit-id').value === id) calCloseModal();
   calRenderGrade(); calRenderLista();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
   if (calVisaoAnual) calRenderVisaoAnualInline();
