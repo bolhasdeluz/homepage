@@ -13733,6 +13733,10 @@ function terreiroRenderSessoes(sessoesTodas) {
   lista.innerHTML = proximas.map(s => `<div class="rm-linha"><span>${calEsc(s.nome)}</span><span class="rm-linha-tag">${fmtData(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
 }
 
+// assistência e visitantes não são "filhas da casa" — não entram na
+// Hierarquia nem na Árvore Genealógica, só quem é filha da casa de fato
+const GRUPOS_FORA_DA_ARVORE = ['assistencia', 'visitante'];
+
 // ── HIERARQUIA DA CASA — pirâmide por cargo ──
 // escada hierárquica (desenvolvimento espiritual), do mais alto pro mais
 // amplo; quem não tem cargo definido entra no nível da base
@@ -13763,7 +13767,7 @@ function hierarquiaNivelHtml(titulo, pessoas, larguraMax, classeExtra) {
 function terreiroRenderHierarquia(perfis) {
   const wrap = document.getElementById('dt-hierarquia');
   if (!wrap) return;
-  const validos = perfis.filter(p => p.nome && p.email);
+  const validos = perfis.filter(p => p.nome && p.email && !GRUPOS_FORA_DA_ARVORE.includes(p.grupo));
   const porNome = (a, b) => a.nome.localeCompare(b.nome, 'pt-BR');
   const porCargo = cargo => validos.filter(p => p.cargo === cargo).sort(porNome);
 
@@ -13873,7 +13877,7 @@ function terreiroRamoArvoreHtml(email, filhosPorEmail, porEmail, visitados) {
 function terreiroRenderArvore(perfis) {
   const wrap = document.getElementById('dt-arvore');
   if (!wrap) return;
-  const validos = perfis.filter(p => p.nome && p.email);
+  const validos = perfis.filter(p => p.nome && p.email && !GRUPOS_FORA_DA_ARVORE.includes(p.grupo));
   const { raizes, filhosPorEmail, porEmail } = terreiroConstruirArvore(validos);
   if (!raizes.length) {
     wrap.innerHTML = '<div class="admin-filhas-vazio">Ainda não encontrei vínculos de madrinha/afilhada preenchidos nas fichas.</div>';
