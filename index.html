@@ -13776,10 +13776,9 @@ function terreiroRenderHierarquia(perfis) {
   const tamboreiro = porCargo(CARGO_LATERAL_DIREITA);
   const escadaResto = CARGO_ORDEM_RESTANTE.map(cargo => ({ titulo: cargo, pessoas: porCargo(cargo) })).filter(n => n.pessoas.length);
 
-  const cargosConhecidos = [CARGO_TOPO, CARGO_CENTRAL_COM_LATERAIS, CARGO_LATERAL_ESQUERDA, CARGO_LATERAL_DIREITA, ...CARGO_ORDEM_RESTANTE];
-  const semCargo = validos.filter(p => !p.cargo || !cargosConhecidos.includes(p.cargo)).sort(porNome);
-
-  if (!maeDaCasa.length && !cacique.length && !cambona.length && !tamboreiro.length && !escadaResto.length && !semCargo.length) {
+  // quem não tem um cargo da escada não entra na Hierarquia — ela é só sobre
+  // cargos; a lista completa de filhas da casa já está na grade logo abaixo
+  if (!maeDaCasa.length && !cacique.length && !cambona.length && !tamboreiro.length && !escadaResto.length) {
     wrap.innerHTML = '<div class="admin-filhas-vazio">Ainda não encontrei cargos preenchidos nas fichas.</div>';
     return;
   }
@@ -13807,8 +13806,6 @@ function terreiroRenderHierarquia(perfis) {
     html += hierarquiaNivelHtml(n.titulo, n.pessoas, larguraBase + nivel * larguraPasso);
     nivel++;
   });
-
-  if (semCargo.length) html += hierarquiaNivelHtml('Filhas da Casa', semCargo, larguraBase + nivel * larguraPasso);
 
   wrap.innerHTML = html;
 }
