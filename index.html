@@ -2246,6 +2246,11 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   </div>
 </div>
 
+<!-- lista compartilhada de nomes da casa — sugestão automática nos campos de
+     Madrinha/Afilhada (editar ficha e admin), pra evitar erro de digitação
+     que impede a Árvore Genealógica de casar os nomes. Populada em JS. -->
+<datalist id="lista-nomes-casa"></datalist>
+
 <!-- PÁGINA SUA HISTÓRIA -->
 <!-- MODAL EDITAR MINHA FICHA (abre pelo botão ✎ Editar no Início) -->
 <div id="mh-modal-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto">
@@ -3769,11 +3774,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Apronte — Galos</label><input type="number" min="0" class="form-input" id="cp-apronte_galos" placeholder="0"></div>
       <div><label class="form-label">Coroação</label><input type="date" class="form-input" id="cp-coroacao"></div>
       <div><label class="form-label">Cacicamento</label><input type="date" class="form-input" id="cp-cacicamento"></div>
-      <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="cp-madrinha" placeholder="Nome da madrinha"></div>
+      <div><label class="form-label">Madrinha</label><input type="text" class="form-input" id="cp-madrinha" list="lista-nomes-casa" placeholder="Nome da madrinha"></div>
       <div><label class="form-label">Data — Madrinha</label><input type="date" class="form-input" id="cp-madrinha_data"></div>
-      <div><label class="form-label">Afilhada 1</label><input type="text" class="form-input" id="cp-afilhada_1" placeholder="Nome"></div>
+      <div><label class="form-label">Afilhada 1</label><input type="text" class="form-input" id="cp-afilhada_1" list="lista-nomes-casa" placeholder="Nome"></div>
       <div><label class="form-label">Data — Afilhada 1</label><input type="date" class="form-input" id="cp-afilhada_1_data"></div>
-      <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" placeholder="Nome"></div>
+      <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" list="lista-nomes-casa" placeholder="Nome"></div>
       <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
       <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
       <div style="display:flex;align-items:flex-end;padding-bottom:2px">
@@ -5019,7 +5024,27 @@ const cpCampos = {
 // pra garantir que salvar não apague foto, notas, cortes extras, cruzamentos extras, marcos, etc.
 let cpPerfilOriginal = null;
 
+// popula a lista de sugestão de nomes usada nos campos de Madrinha/Afilhada
+// (editar ficha e criar/editar perfil admin) com as filhas já cadastradas —
+// escolher da lista garante que o texto salvo bate com o nome do perfil
+// dela, pra Árvore Genealógica (Perfil da Terreira) conseguir casar os dois.
+// Ainda dá pra digitar livre (ex: madrinha de outra casa, sem perfil aqui)
+let _listaNomesCasaCarregada = false;
+async function carregarListaNomesCasa() {
+  if (_listaNomesCasaCarregada) return;
+  const dl = document.getElementById('lista-nomes-casa');
+  if (!dl) return;
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const perfis = await res.json();
+    if (!Array.isArray(perfis)) return;
+    dl.innerHTML = perfis.filter(p => p.nome).map(p => `<option value="${calEsc(p.nome)}"></option>`).join('');
+    _listaNomesCasaCarregada = true;
+  } catch (e) { console.warn('lista de nomes da casa:', e); }
+}
+
 function abrirCriarPerfil(emailParaEditar) {
+  carregarListaNomesCasa();
   // limpar campos
   ['email','nome','cargo','data_nascimento'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
   Object.values(cpCampos).flat().forEach(k => { const el = document.getElementById('cp-'+k); if(el) el.value = ''; });
@@ -12759,6 +12784,7 @@ window._getPerfilDataReal = () => perfilData; // referência fixa para restaurar
 window.showSuaHistoria = function() {
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user) { openLogin(); return; }
+  carregarListaNomesCasa();
   // em modo simulação usa o perfil simulado
   const perfilParaUsar = (_modoSimulacao !== null && window._simUsuario?._perfil)
     ? window._simUsuario._perfil
@@ -13652,7 +13678,9 @@ function terreiroRenderSessoes(sessoesTodas) {
 // dois sentidos (a própria pessoa dizendo quem é a madrinha dela, e a
 // madrinha dizendo quem são as afilhadas dela) pra cobrir fichas incompletas
 function terreiroConstruirArvore(perfis) {
-  const normaliza = s => (s || '').trim().toLowerCase();
+  // tira acentos, espaços duplicados e espaços nas pontas antes de comparar —
+  // "José", "jose", "Jose " e "josé  " (com espaço duplo) todos casam entre si
+  const normaliza = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase().replace(/\s+/g, ' ');
   const porNome = new Map();
   perfis.forEach(p => { const k = normaliza(p.nome); if (k && !porNome.has(k)) porNome.set(k, p); });
 
@@ -14387,11 +14415,11 @@ const camposHistoria = [
   { label:'Guia Chefe',        key:'guia_chefe',     tipo:'texto' },
   { label:'Coroação',          key:'coroacao',       tipo:'data'  },
   { label:'Cacicamento',       key:'cacicamento',    tipo:'data'  },
-  { label:'Madrinha',          key:'madrinha',       tipo:'texto' },
+  { label:'Madrinha',          key:'madrinha',       tipo:'pessoa' },
   { label:'Data — Madrinha',   key:'madrinha_data',  tipo:'data'  },
-  { label:'Afilhada',          key:'afilhada_1',     tipo:'texto' },
+  { label:'Afilhada',          key:'afilhada_1',     tipo:'pessoa' },
   { label:'Data — Afilhada 1', key:'afilhada_1_data',tipo:'data'  },
-  { label:'Afilhada',          key:'afilhada_2',     tipo:'texto' },
+  { label:'Afilhada',          key:'afilhada_2',     tipo:'pessoa' },
   { label:'Data — Afilhada 2', key:'afilhada_2_data',tipo:'data'  },
   { label:'Cruzamento de Conga', key:'cruz_conga',   tipo:'data'  },
 ];
@@ -14509,6 +14537,11 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
       inp.style.cssText = 'width:100%;margin-top:4px;font-size:14px';
       inp.value = valor || '';
       inp.dataset.key = c.key;
+      // sugere os nomes já cadastrados na casa (madrinha/afilhada) — assim, ao
+      // escolher da lista, o texto salvo bate exatamente com o nome do perfil
+      // dela, e a Árvore Genealógica consegue casar os dois. Ainda dá pra
+      // digitar livre (ex: madrinha de outra casa, que não tem perfil aqui)
+      if (c.tipo === 'pessoa') inp.setAttribute('list', 'lista-nomes-casa');
       inp.addEventListener('input', () => {
         if (!perfilAlteracoes._campos) perfilAlteracoes._campos = {};
         if (inp.value) perfilAlteracoes._campos[c.key] = { label: c.label, valor: inp.value, grupo: c.grupo };
