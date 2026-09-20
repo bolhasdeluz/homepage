@@ -6216,15 +6216,17 @@ function calcularPascoa(ano) {
   return new Date(ano, mes - 1, dia);
 }
 
-// feriados nacionais + estaduais (RS) + municipais (Porto Alegre) de um ano,
-// pra marcar na visão anual — Corpus Christi é ponto facultativo na maior
-// parte do país, mas listado aqui do mesmo jeito, já que é muito observado
+// feriados nacionais + estaduais (RS) + municipais (Porto Alegre), mais datas
+// religiosas importantes pra casa (Dia de Iemanjá), de um ano, pra marcar na
+// visão anual — Corpus Christi é ponto facultativo na maior parte do país,
+// mas listado aqui do mesmo jeito, já que é muito observado
 function calFeriadosDoAno(ano) {
   if (_calFeriadosCache[ano]) return _calFeriadosCache[ano];
   const pascoa = calcularPascoa(ano);
   const comDias = (dias) => { const d = new Date(pascoa); d.setDate(d.getDate() + dias); return calFmtDate(d); };
   const feriados = {
     [`${ano}-01-01`]: { nome: 'Ano Novo', tipo: 'nacional' },
+    [`${ano}-02-02`]: { nome: 'Dia de Iemanjá', tipo: 'religioso' },
     [comDias(-48)]: { nome: 'Carnaval', tipo: 'nacional' },
     [comDias(-47)]: { nome: 'Carnaval', tipo: 'nacional' },
     [comDias(-2)]: { nome: 'Sexta-feira Santa', tipo: 'nacional' },
