@@ -6262,12 +6262,12 @@ function calAnualGradeHtml(ano, interativo) {
       const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const feriado = feriados[dataStr];
       const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
-      // mostra o Lado de cada sessão (não o nome nem um pontinho anônimo) —
-      // dá pra ler rapidinho o que é sem precisar passar o mouse por cima
+      // mostra o nome de cada sessão (cor do chip ainda indica o Lado) — pra
+      // quem não pode ver o nome (visibilidade parcial), mostra só que existe
       const visiveis = eventos.slice(0, 2);
       let eventosHtml = visiveis.map(s => {
         const vis = calSessaoVisivel(s);
-        const rotulo = vis === 'parcial' ? '🔒 Fechada' : (CAL_LADO_LABEL[s.lado] || s.lado || '—');
+        const rotulo = vis === 'parcial' ? '🔒 Fechada' : (s.nome || CAL_LADO_LABEL[s.lado] || s.lado || '—');
         const cor = CAL_LADO_COR[s.lado] || 'var(--rosa)';
         const podeEditar = interativo && vis === 'total';
         const arrastar = podeEditar ? ` draggable="true" ondragstart="calAnualDragStart(event,'${s.id}')"` : '';
