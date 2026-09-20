@@ -657,11 +657,17 @@ footer{
 .hierarquia-nivel:not(:first-child)::before{content:'';position:absolute;top:0;left:50%;width:2px;height:20px;background:var(--border);transform:translateX(-50%)}
 .hierarquia-titulo{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .hierarquia-pessoas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 auto 22px}
-/* nível composto: Cambona e Tamboreiro são funções, não um degrau da
-   escada — ficam lateralizadas junto do Cacique, no mesmo nível */
-.hierarquia-composto{display:flex;align-items:flex-start;justify-content:center;gap:16px;flex-wrap:wrap}
+/* nível composto: Cambona (ao lado da Mãe da Casa) e Tamboreiro (ao lado do
+   Cacique) são funções, não um degrau da escada. Grid de 3 colunas simétricas
+   (pontas sempre do mesmo tamanho) garante que o cargo central — Mãe da Casa
+   ou Cacique — fique sempre exatamente centralizado, tenha ou não gente do
+   lado */
+.hierarquia-composto{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;column-gap:16px}
 .hierarquia-composto .hierarquia-nivel{padding-top:0}
 .hierarquia-composto .hierarquia-nivel::before{display:none}
+.hierarquia-composto .hierarquia-lateral-esquerda{grid-column:1;justify-self:end}
+.hierarquia-composto .hierarquia-central{grid-column:2;justify-self:center}
+.hierarquia-composto .hierarquia-lateral-direita{grid-column:3;justify-self:start}
 .hierarquia-composto .hierarquia-lateral .hierarquia-titulo{font-size:.5rem;opacity:.75}
 .hierarquia-composto .hierarquia-lateral .arvore-nodo{padding:3px 10px 3px 3px}
 .hierarquia-composto .hierarquia-lateral .arvore-foto{width:22px;height:22px;font-size:.7rem}
@@ -13739,11 +13745,12 @@ const GRUPOS_FORA_DA_ARVORE = ['assistencia', 'visitante'];
 // escada hierárquica (desenvolvimento espiritual), do mais alto pro mais
 // amplo; quem não tem cargo definido entra no nível da base
 const CARGO_TOPO = 'Mãe da Casa';
-// Cambona e Tamboreiro são funções (não um degrau da escada), então ficam
-// lateralizadas junto do Cacique, no mesmo nível, em vez de empilhadas
-const CARGO_CENTRAL_COM_LATERAIS = 'Cacique';
-const CARGO_LATERAL_ESQUERDA = 'Cambona';
-const CARGO_LATERAL_DIREITA = 'Tamboreiro';
+const CARGO_CACIQUE = 'Cacique';
+// Cambona e Tamboreiro são funções (não um degrau da escada): Cambona fica
+// do lado da Mãe da Casa (trabalha ligada a ela), Tamboreiro fica do lado
+// do Cacique — nenhum dos dois empilhado como um degrau próprio
+const CARGO_CAMBONA = 'Cambona';
+const CARGO_TAMBOREIRO = 'Tamboreiro';
 const CARGO_ORDEM_RESTANTE = ['Tamoio', 'Naurú', 'Curumim'];
 
 function terreiroNodoHierarquiaHtml(p) {
@@ -13762,6 +13769,18 @@ function hierarquiaNivelHtml(titulo, pessoas, larguraMax, classeExtra) {
   </div>`;
 }
 
+// nível composto: o cargo central fica numa grade de 3 colunas (1fr auto 1fr)
+// — assim ele continua sempre exatamente centralizado, mesmo que só um dos
+// lados (ou nenhum) tenha gente, já que as colunas das pontas são simétricas
+function hierarquiaLinhaCompostaHtml(esquerdaTitulo, esquerdaPessoas, centralTitulo, centralPessoas, centralLargura, direitaTitulo, direitaPessoas) {
+  if (!esquerdaPessoas.length && !centralPessoas.length && !direitaPessoas.length) return '';
+  return `<div class="hierarquia-nivel hierarquia-composto">
+      ${hierarquiaNivelHtml(esquerdaTitulo, esquerdaPessoas, 140, 'hierarquia-lateral hierarquia-lateral-esquerda')}
+      ${hierarquiaNivelHtml(centralTitulo, centralPessoas, centralLargura, 'hierarquia-central')}
+      ${hierarquiaNivelHtml(direitaTitulo, direitaPessoas, 140, 'hierarquia-lateral hierarquia-lateral-direita')}
+    </div>`;
+}
+
 function terreiroRenderHierarquia(perfis) {
   const wrap = document.getElementById('dt-hierarquia');
   if (!wrap) return;
@@ -13770,9 +13789,9 @@ function terreiroRenderHierarquia(perfis) {
   const porCargo = cargo => validos.filter(p => p.cargo === cargo).sort(porNome);
 
   const maeDaCasa = porCargo(CARGO_TOPO);
-  const cacique = porCargo(CARGO_CENTRAL_COM_LATERAIS);
-  const cambona = porCargo(CARGO_LATERAL_ESQUERDA);
-  const tamboreiro = porCargo(CARGO_LATERAL_DIREITA);
+  const cacique = porCargo(CARGO_CACIQUE);
+  const cambona = porCargo(CARGO_CAMBONA);
+  const tamboreiro = porCargo(CARGO_TAMBOREIRO);
   const escadaResto = CARGO_ORDEM_RESTANTE.map(cargo => ({ titulo: cargo, pessoas: porCargo(cargo) })).filter(n => n.pessoas.length);
 
   // quem não tem um cargo da escada não entra na Hierarquia — ela é só sobre
@@ -13787,17 +13806,13 @@ function terreiroRenderHierarquia(perfis) {
   let nivel = 0;
   let html = '';
 
-  if (maeDaCasa.length) {
-    html += hierarquiaNivelHtml(CARGO_TOPO, maeDaCasa, larguraBase + nivel * larguraPasso);
+  if (maeDaCasa.length || cambona.length) {
+    html += hierarquiaLinhaCompostaHtml(CARGO_CAMBONA, cambona, CARGO_TOPO, maeDaCasa, larguraBase + nivel * larguraPasso, '', []);
     nivel++;
   }
 
-  if (cacique.length || cambona.length || tamboreiro.length) {
-    html += `<div class="hierarquia-nivel hierarquia-composto">
-        ${hierarquiaNivelHtml(CARGO_LATERAL_ESQUERDA, cambona, 140, 'hierarquia-lateral')}
-        ${hierarquiaNivelHtml(CARGO_CENTRAL_COM_LATERAIS, cacique, larguraBase + nivel * larguraPasso, 'hierarquia-central')}
-        ${hierarquiaNivelHtml(CARGO_LATERAL_DIREITA, tamboreiro, 140, 'hierarquia-lateral')}
-      </div>`;
+  if (cacique.length || tamboreiro.length) {
+    html += hierarquiaLinhaCompostaHtml('', [], CARGO_CACIQUE, cacique, larguraBase + nivel * larguraPasso, CARGO_TAMBOREIRO, tamboreiro);
     nivel++;
   }
 
