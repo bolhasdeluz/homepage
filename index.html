@@ -658,15 +658,15 @@ footer{
 .hierarquia-nivel:not(:first-child)::before{content:'';position:absolute;top:0;left:50%;width:2px;height:20px;background:var(--border);transform:translateX(-50%)}
 .hierarquia-titulo{display:inline-block;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;padding:3px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .hierarquia-pessoas{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:0 auto 22px}
-/* topo: Cambona e Tamboreiro são funções, não um degrau da escada — ficam
-   lateralizadas ao lado da Mãe da Casa, em vez de empilhadas */
-.hierarquia-topo{display:flex;align-items:flex-start;justify-content:center;gap:16px;flex-wrap:wrap}
-.hierarquia-topo .hierarquia-nivel{padding-top:0}
-.hierarquia-topo .hierarquia-nivel::before{display:none}
-.hierarquia-topo .hierarquia-lateral{padding-top:24px}
-.hierarquia-topo .hierarquia-lateral .hierarquia-titulo{font-size:.5rem;opacity:.75}
-.hierarquia-topo .hierarquia-lateral .arvore-nodo{padding:3px 10px 3px 3px}
-.hierarquia-topo .hierarquia-lateral .arvore-foto{width:22px;height:22px;font-size:.7rem}
+/* nível composto: Cambona e Tamboreiro são funções, não um degrau da
+   escada — ficam lateralizadas junto do Cacique, no mesmo nível */
+.hierarquia-composto{display:flex;align-items:flex-start;justify-content:center;gap:16px;flex-wrap:wrap}
+.hierarquia-composto .hierarquia-nivel{padding-top:0}
+.hierarquia-composto .hierarquia-nivel::before{display:none}
+.hierarquia-composto .hierarquia-lateral{padding-top:24px}
+.hierarquia-composto .hierarquia-lateral .hierarquia-titulo{font-size:.5rem;opacity:.75}
+.hierarquia-composto .hierarquia-lateral .arvore-nodo{padding:3px 10px 3px 3px}
+.hierarquia-composto .hierarquia-lateral .arvore-foto{width:22px;height:22px;font-size:.7rem}
 /* modal ficha */
 #modal-ficha-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto}
 #modal-ficha-overlay.open{display:flex}
@@ -13736,12 +13736,13 @@ function terreiroRenderSessoes(sessoesTodas) {
 // ── HIERARQUIA DA CASA — pirâmide por cargo ──
 // escada hierárquica (desenvolvimento espiritual), do mais alto pro mais
 // amplo; quem não tem cargo definido entra no nível da base
-const CARGO_ORDEM = ['Cacique', 'Tamoio', 'Naurú', 'Curumim'];
 const CARGO_TOPO = 'Mãe da Casa';
-// Cambona e Tamboreiro são funções (não um degrau da escada), por isso
-// ficam lateralizadas ao lado da Mãe da Casa, no topo, em vez de empilhadas
+// Cambona e Tamboreiro são funções (não um degrau da escada), então ficam
+// lateralizadas junto do Cacique, no mesmo nível, em vez de empilhadas
+const CARGO_CENTRAL_COM_LATERAIS = 'Cacique';
 const CARGO_LATERAL_ESQUERDA = 'Cambona';
 const CARGO_LATERAL_DIREITA = 'Tamboreiro';
+const CARGO_ORDEM_RESTANTE = ['Tamoio', 'Naurú', 'Curumim'];
 
 function terreiroNodoHierarquiaHtml(p) {
   const foto = p.foto ? `<img src="${p.foto}" alt="">` : '👤';
@@ -13767,33 +13768,46 @@ function terreiroRenderHierarquia(perfis) {
   const porCargo = cargo => validos.filter(p => p.cargo === cargo).sort(porNome);
 
   const maeDaCasa = porCargo(CARGO_TOPO);
+  const cacique = porCargo(CARGO_CENTRAL_COM_LATERAIS);
   const cambona = porCargo(CARGO_LATERAL_ESQUERDA);
   const tamboreiro = porCargo(CARGO_LATERAL_DIREITA);
+  const escadaResto = CARGO_ORDEM_RESTANTE.map(cargo => ({ titulo: cargo, pessoas: porCargo(cargo) })).filter(n => n.pessoas.length);
 
-  const niveis = CARGO_ORDEM.map(cargo => ({ titulo: cargo, pessoas: porCargo(cargo) })).filter(n => n.pessoas.length);
-
-  const cargosConhecidos = [CARGO_TOPO, CARGO_LATERAL_ESQUERDA, CARGO_LATERAL_DIREITA, ...CARGO_ORDEM];
+  const cargosConhecidos = [CARGO_TOPO, CARGO_CENTRAL_COM_LATERAIS, CARGO_LATERAL_ESQUERDA, CARGO_LATERAL_DIREITA, ...CARGO_ORDEM_RESTANTE];
   const semCargo = validos.filter(p => !p.cargo || !cargosConhecidos.includes(p.cargo)).sort(porNome);
-  if (semCargo.length) niveis.push({ titulo: 'Filhas da Casa', pessoas: semCargo });
 
-  if (!maeDaCasa.length && !cambona.length && !tamboreiro.length && !niveis.length) {
+  if (!maeDaCasa.length && !cacique.length && !cambona.length && !tamboreiro.length && !escadaResto.length && !semCargo.length) {
     wrap.innerHTML = '<div class="admin-filhas-vazio">Ainda não encontrei cargos preenchidos nas fichas.</div>';
     return;
   }
 
-  const topoHtml = (maeDaCasa.length || cambona.length || tamboreiro.length)
-    ? `<div class="hierarquia-topo">
-        ${hierarquiaNivelHtml(CARGO_LATERAL_ESQUERDA, cambona, 140, 'hierarquia-lateral')}
-        ${hierarquiaNivelHtml(CARGO_TOPO, maeDaCasa, 200, 'hierarquia-central')}
-        ${hierarquiaNivelHtml(CARGO_LATERAL_DIREITA, tamboreiro, 140, 'hierarquia-lateral')}
-      </div>`
-    : '';
-
   // cada nível da escada vai ficando mais largo — é o que dá o efeito de pirâmide
   const larguraBase = 200, larguraPasso = 55;
-  const niveisHtml = niveis.map((n, i) => hierarquiaNivelHtml(n.titulo, n.pessoas, larguraBase + (i + 1) * larguraPasso)).join('');
+  let nivel = 0;
+  let html = '';
 
-  wrap.innerHTML = topoHtml + niveisHtml;
+  if (maeDaCasa.length) {
+    html += hierarquiaNivelHtml(CARGO_TOPO, maeDaCasa, larguraBase + nivel * larguraPasso);
+    nivel++;
+  }
+
+  if (cacique.length || cambona.length || tamboreiro.length) {
+    html += `<div class="hierarquia-nivel hierarquia-composto">
+        ${hierarquiaNivelHtml(CARGO_LATERAL_ESQUERDA, cambona, 140, 'hierarquia-lateral')}
+        ${hierarquiaNivelHtml(CARGO_CENTRAL_COM_LATERAIS, cacique, larguraBase + nivel * larguraPasso, 'hierarquia-central')}
+        ${hierarquiaNivelHtml(CARGO_LATERAL_DIREITA, tamboreiro, 140, 'hierarquia-lateral')}
+      </div>`;
+    nivel++;
+  }
+
+  escadaResto.forEach(n => {
+    html += hierarquiaNivelHtml(n.titulo, n.pessoas, larguraBase + nivel * larguraPasso);
+    nivel++;
+  });
+
+  if (semCargo.length) html += hierarquiaNivelHtml('Filhas da Casa', semCargo, larguraBase + nivel * larguraPasso);
+
+  wrap.innerHTML = html;
 }
 
 // monta a árvore madrinha → afilhadas a partir dos campos de texto livre
