@@ -3699,6 +3699,9 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button onclick="calAnualNavAno(1)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--rosa);width:30px;height:30px;cursor:pointer;font-size:1rem">›</button>
     </div>
     <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Clique num dia pra criar ou editar a sessão dele.</p>
+    <div style="text-align:center;margin-bottom:14px">
+      <button onclick="calEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
+    </div>
     <div class="cal-anual-legenda" id="cal-anual-legenda"></div>
     <div class="cal-anual-grid" id="cal-anual-grade"></div>
   </div>
@@ -6321,6 +6324,46 @@ function calAnualAbrir() {
 }
 function calAnualFechar() { document.getElementById('cal-anual-overlay').style.display = 'none'; }
 function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); }
+
+// espelha todas as sessões de um ano pro mesmo dia/mês do ano seguinte —
+// pensado pra usar um ano já planejado (ex: 2026) como base pra montar o
+// próximo (2027). Pula sessões que já existirem no ano destino com o
+// mesmo nome e data, pra não duplicar se rodar de novo por engano
+async function calEspelharAno(anoOrigem, anoDestino) {
+  const origemStr = String(anoOrigem), destinoStr = String(anoDestino);
+  const doOrigem = calSessoes.filter(s => s.data && s.data.startsWith(origemStr + '-'));
+  if (!doOrigem.length) { alert(`Não encontrei nenhuma sessão de ${origemStr} pra espelhar.`); return; }
+
+  const doDestino = calSessoes.filter(s => s.data && s.data.startsWith(destinoStr + '-'));
+  const jaExiste = (nome, data) => doDestino.some(s => s.nome === nome && s.data === data);
+
+  const paraCriar = doOrigem
+    .map(s => {
+      const [, mes, dia] = s.data.split('-');
+      return { ...s, data: `${destinoStr}-${mes}-${dia}` };
+    })
+    .filter(s => !jaExiste(s.nome, s.data));
+
+  const puladas = doOrigem.length - paraCriar.length;
+  const msgConfirma = `Isso vai criar ${paraCriar.length} sessão(ões) nova(s) em ${destinoStr}, copiando de ${origemStr} (mesmo dia e mês, um ano depois).` +
+    (puladas ? `\n${puladas} já existem em ${destinoStr} com o mesmo nome e data, e serão puladas.` : '') +
+    `\n\nContinuar?`;
+  if (!paraCriar.length) { alert(`Todas as sessões de ${origemStr} já têm uma cópia em ${destinoStr}. Nada pra fazer.`); return; }
+  if (!confirm(msgConfirma)) return;
+
+  let criadas = 0, erros = 0;
+  for (const s of paraCriar) {
+    const { id, criadoEm, ...dadosNovo } = s;
+    try {
+      const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(dadosNovo) });
+      if (res.ok) criadas++; else erros++;
+    } catch (e) { erros++; }
+  }
+
+  await calLoad();
+  if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  alert(`Pronto! ${criadas} sessão(ões) criada(s) em ${destinoStr}.` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
+}
 
 function calAnualRender() {
   const grade = document.getElementById('cal-anual-grade');
