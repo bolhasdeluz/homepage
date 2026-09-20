@@ -583,6 +583,7 @@ footer{
 .cal-anual-evento[draggable=true]{cursor:grab}
 .cal-anual-evento[draggable=true]:active{cursor:grabbing}
 .cal-anual-mais{font-family:'Cinzel',serif;font-size:.4rem;color:var(--text-dim);text-align:center}
+.cal-anual-feriado-nome{font-family:'DM Sans',sans-serif;font-size:.4rem;font-weight:600;color:#8a6a1c;line-height:1.2;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;max-width:100%}
 .cal-anual-legenda{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-bottom:16px}
 .cal-anual-legenda-item{display:flex;align-items:center;gap:5px}
 .cal-anual-legenda-cor{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -6272,8 +6273,10 @@ function calAnualGradeHtml(ano, interativo) {
       const nomesEventos = eventos.map(s => calSessaoVisivel(s) === 'parcial' ? 'Sessão fechada' : s.nome);
       const titulo = feriado ? feriado.nome : nomesEventos.join(', ');
       const dropAttrs = interativo ? ` ondragover="event.preventDefault()" ondrop="calAnualDropNoDia(event,'${dataStr}')"` : '';
+      const feriadoHtml = feriado ? `<div class="cal-anual-feriado-nome">${calEsc(feriado.nome)}</div>` : '';
       diasHtml += `<div class="cal-anual-dia${dataStr===todayStr?' hoje':''}${feriado?' feriado':''}" onclick="calAnualClicarDia('${dataStr}')" title="${calEsc(titulo)}"${dropAttrs}>
         <div class="cal-anual-dia-num">${d}</div>
+        ${feriadoHtml}
         <div class="cal-anual-eventos">${eventosHtml}</div>
       </div>`;
     }
