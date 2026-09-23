@@ -1217,6 +1217,32 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rm-linha-tag{display:block;font-family:'Cinzel',serif;font-size:.72rem;line-height:1.7;color:var(--rosa);font-weight:700;margin-top:1px}
 .rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
+/* ═══ PÁGINA RIFA ═══ */
+.rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
+.rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
+.rf-premio-img img{width:100%;display:block}
+.rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
+.rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
+.rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.rf-vencedor-banner{background:linear-gradient(135deg,var(--rosa),var(--terra));color:#fff;border-radius:14px;padding:18px 16px;text-align:center;margin-bottom:20px;font-family:'DM Sans',sans-serif}
+.rf-vencedor-banner b{font-family:'Playfair Display',serif;font-size:1.2rem;display:block;margin-top:4px}
+.rf-legenda{display:flex;gap:16px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+.rf-legenda-item{display:flex;align-items:center;gap:6px}
+.rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.rf-dot-livre{background:#fff;border:1px solid var(--border)}
+.rf-dot-reservado{background:var(--amber)}
+.rf-dot-pago{background:var(--green)}
+.rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:8px}
+.rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
+.rf-numero:hover{transform:scale(1.06)}
+.rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber)}
+.rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
+.rf-numero-vencedor{background:linear-gradient(135deg,var(--rosa),var(--terra));border-color:var(--terra);color:#fff;animation:rfPulse 1.6s ease-in-out infinite}
+.rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
+@keyframes rfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.rf-detalhe-linha{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);margin-bottom:14px}
+.rf-detalhe-botoes{display:flex;flex-direction:column;gap:8px}
+
 .rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
 .rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
 .rm-btn-whats:hover{transform:translateY(-2px)}
@@ -2661,6 +2687,75 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="cp-lista-ok"></div>
     <div id="cp-carregando" class="cp-carregando">Carregando lista...</div>
     <div id="cp-vazio" class="cp-vazio" style="display:none"><div class="cp-vazio-icon">🛒</div><p>A prateleira está vazia. Adicione os itens fixos que a casa sempre usa!</p></div>
+  </div>
+</div>
+
+<!-- PÁGINA RIFA -->
+<div id="page-rifa" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">🎟️ Rifa</div>
+    <p class="section-sub">Escolha seu número e ajude o terreiro ✦</p>
+
+    <button class="rm-btn-mes" id="rf-btn-nova" style="display:none;margin-bottom:20px" onclick="rifaAbrirNova()">✨ Criar nova rifa</button>
+
+    <div id="rf-carregando" class="cp-carregando">Carregando rifa...</div>
+
+    <div id="rf-vazia" style="display:none;text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)">
+      Não há nenhuma rifa ativa no momento ✦
+    </div>
+
+    <div id="rf-conteudo" style="display:none">
+      <div class="rf-premio-frame">
+        <div class="rf-premio-img" id="rf-premio-img" style="display:none"></div>
+        <div class="rf-premio-titulo" id="rf-premio-titulo"></div>
+        <div class="rf-premio-desc" id="rf-premio-desc"></div>
+        <div class="rf-premio-meta" id="rf-premio-meta"></div>
+      </div>
+
+      <div id="rf-vencedor" class="rf-vencedor-banner" style="display:none"></div>
+
+      <div class="rf-legenda">
+        <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
+        <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
+        <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+      </div>
+
+      <div class="rf-grid" id="rf-grid"></div>
+
+      <button class="rm-btn-mes" id="rf-btn-sortear" style="display:none;margin-top:16px;width:100%;background:linear-gradient(135deg,#8c5a00,#c88c00)" onclick="rifaSortear()">🎲 Sortear entre os números pagos</button>
+    </div>
+  </div>
+</div>
+
+<div id="rf-numero-overlay" class="overlay" onclick="if(event.target===this)rifaFecharDetalhe()">
+  <div class="modal" style="max-width:340px">
+    <button class="modal-close" onclick="rifaFecharDetalhe()">×</button>
+    <div class="modal-title" id="rf-detalhe-titulo" style="font-size:1.3rem">Número</div>
+    <div class="modal-sub rf-detalhe-linha" id="rf-detalhe-sub"></div>
+    <div class="rf-detalhe-botoes" id="rf-detalhe-botoes"></div>
+  </div>
+</div>
+
+<div id="rf-nova-overlay" class="overlay" onclick="if(event.target===this)rifaFecharNova()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="rifaFecharNova()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">✨ Nova rifa</div>
+    <p class="modal-sub" id="rf-nova-aviso" style="display:none;color:#b84040">Criar uma nova rifa vai encerrar a rifa ativa atual.</p>
+    <label class="form-label">Título</label>
+    <input type="text" class="form-input" id="rf-nova-titulo" placeholder="Ex: Rifa de Setembro">
+    <label class="form-label">Prêmio</label>
+    <input type="text" class="form-input" id="rf-nova-premio" placeholder="Ex: Cesta de produtos">
+    <label class="form-label">Imagem do prêmio (link, opcional)</label>
+    <input type="text" class="form-input" id="rf-nova-imagem" placeholder="https://...">
+    <label class="form-label">Preço por número (R$)</label>
+    <input type="number" min="0" step="0.01" class="form-input" id="rf-nova-preco" placeholder="10">
+    <label class="form-label">Quantidade de números</label>
+    <input type="number" min="1" class="form-input" id="rf-nova-total" placeholder="100">
+    <label class="form-label">Data do sorteio (opcional)</label>
+    <input type="text" class="form-input" id="rf-nova-data" placeholder="Ex: 30/09, na sessão">
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaCriarNova()">Criar rifa</button>
   </div>
 </div>
 
@@ -4235,6 +4330,7 @@ function getDefaultMenu() {
         { id: 'completaponto', label: '🎮 Completa o Ponto', type: 'external', url: 'https://pontoscantados.pages.dev/jogo.html', desc: 'Jogo de roda pra jogar na espera da terreirinha', showCard: true, showMenu: true },
         { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
         { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
+        { id: 'rifa',     label: '🎟️ Rifa',  type: 'internal', page: 'rifa', desc: 'Escolha seu número e ajude o terreiro', showCard: true, showMenu: true },
         { id: 'flora',    label: '🌿 Flora — Nossa Loja', type: 'external', url: '/loja.html', desc: 'Velas, ervas, guias e mais — direto da nossa lojinha', showCard: true, showMenu: true },
         { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', desc: 'Chave: bolhasdeluz@gmail.com', showCard: true, showMenu: true },
         { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
@@ -5395,6 +5491,9 @@ function showPage(name) {
     // uma vez, quando o site era aberto pela primeira vez, e ficava desatualizada
     window.orCarregarProximaSessao?.();
   }
+  if (name === 'rifa') {
+    window.rifaLoad?.();
+  }
   if (name === 'jogos') {
     gpAtualizarPortal();
     const btnPadrao = document.getElementById('btn-sair-padrao-senha');
@@ -5914,6 +6013,210 @@ function calClonarSessao() {
 }
 
 function calCloseModal() { document.getElementById('cal-modal-overlay').style.display = 'none'; }
+
+// ═══════════════════════════ RIFA ═══════════════════════════════════════
+const RIFA_API = '/api/rifa';
+const RIFA_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+let rifaAtual = null;
+
+function rifaEhAdmin() { return souAdminAtivo(window._getCurrentUser && window._getCurrentUser()); }
+function rifaUsuarioAtual() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user) return null;
+  const perfil = (window._getPerfilData && window._getPerfilData()) || {};
+  return { email: (user.email || '').toLowerCase(), nome: perfil.nome || user.displayName || user.email || '' };
+}
+function rifaFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rifaLoad() {
+  document.getElementById('rf-carregando').style.display = '';
+  document.getElementById('rf-vazia').style.display = 'none';
+  document.getElementById('rf-conteudo').style.display = 'none';
+  try {
+    const res = await fetch(RIFA_API);
+    rifaAtual = res.ok ? await res.json() : null;
+  } catch (e) { rifaAtual = null; }
+  document.getElementById('rf-carregando').style.display = 'none';
+  document.getElementById('rf-btn-nova').style.display = rifaEhAdmin() ? '' : 'none';
+  if (!rifaAtual) { document.getElementById('rf-vazia').style.display = ''; return; }
+  document.getElementById('rf-conteudo').style.display = '';
+  rifaRenderPagina();
+}
+window.rifaLoad = rifaLoad;
+
+function rifaRenderPagina() {
+  const r = rifaAtual;
+  const imgWrap = document.getElementById('rf-premio-img');
+  if (r.imagemPremio) { imgWrap.style.display = ''; imgWrap.innerHTML = `<img src="${r.imagemPremio}" alt="${r.titulo}">`; }
+  else { imgWrap.style.display = 'none'; imgWrap.innerHTML = ''; }
+  document.getElementById('rf-premio-titulo').textContent = r.titulo || '';
+  document.getElementById('rf-premio-desc').textContent = r.premio || '';
+  const metaPartes = [`Número: ${rifaFormatarPreco(r.precoPorNumero)}`];
+  if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  document.getElementById('rf-premio-meta').textContent = metaPartes.join('  ·  ');
+
+  const vencedorEl = document.getElementById('rf-vencedor');
+  if (r.vencedor) {
+    vencedorEl.style.display = '';
+    vencedorEl.innerHTML = `🎉 Número sorteado: ${r.vencedor.numero} <b>${r.vencedor.nome || r.vencedor.email || '—'}</b>`;
+  } else {
+    vencedorEl.style.display = 'none';
+  }
+
+  rifaRenderGrid();
+
+  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago').length;
+  const btnSortear = document.getElementById('rf-btn-sortear');
+  btnSortear.style.display = (rifaEhAdmin() && !r.vencedor && pagos > 0) ? '' : 'none';
+}
+
+function rifaRenderGrid() {
+  const wrap = document.getElementById('rf-grid');
+  const r = rifaAtual;
+  const numerosOrdenados = Object.keys(r.numeros || {}).sort();
+  wrap.innerHTML = numerosOrdenados.map(numero => {
+    const info = r.numeros[numero];
+    const ehVencedor = r.vencedor && r.vencedor.numero === numero;
+    const classe = ehVencedor ? 'rf-numero-vencedor' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'reservado' ? 'rf-numero-reservado' : ''));
+    const nomeCurto = info.nome ? info.nome.split(' ')[0] : '';
+    return `<div class="rf-numero ${classe}" onclick="rifaClickNumero('${numero}')">
+        <span>${numero}</span>
+        ${nomeCurto ? `<span class="rf-numero-nome">${nomeCurto}</span>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function rifaFecharDetalhe() { document.getElementById('rf-numero-overlay').classList.remove('open'); }
+window.rifaFecharDetalhe = rifaFecharDetalhe;
+
+function rifaClickNumero(numero) {
+  const info = rifaAtual.numeros[numero];
+  const admin = rifaEhAdmin();
+  const usuario = rifaUsuarioAtual();
+  const dono = !!(usuario && info.email && info.email === usuario.email);
+
+  document.getElementById('rf-detalhe-titulo').textContent = `Número ${numero}`;
+  const sub = document.getElementById('rf-detalhe-sub');
+  const botoes = document.getElementById('rf-detalhe-botoes');
+  botoes.innerHTML = '';
+
+  if (info.status === 'livre') {
+    sub.textContent = `Esse número está livre — ${rifaFormatarPreco(rifaAtual.precoPorNumero)}.`;
+    if (!usuario) {
+      botoes.innerHTML = `<button class="btn-rosa" onclick="rifaFecharDetalhe();openLogin()">Entrar para reservar</button>`;
+    } else {
+      botoes.innerHTML = `<button class="btn-rosa" onclick="rifaReservar('${numero}')">Reservar este número</button>`;
+    }
+  } else {
+    sub.textContent = `${info.status === 'pago' ? '✅ Pago' : '⏳ Reservado'} — ${info.nome || 'sem nome'}${admin && info.email ? ' · ' + info.email : ''}`;
+    if (admin && info.status === 'reservado') {
+      botoes.innerHTML += `<button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>`;
+    }
+    if (dono && info.status === 'reservado') {
+      botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
+    }
+    if (admin) {
+      botoes.innerHTML += `<button class="rm-btn-mes" style="color:#b84040" onclick="rifaCancelar('${numero}')">Liberar número</button>`;
+    }
+  }
+  document.getElementById('rf-numero-overlay').classList.add('open');
+}
+window.rifaClickNumero = rifaClickNumero;
+
+async function rifaReservar(numero) {
+  const usuario = rifaUsuarioAtual();
+  if (!usuario) { openLogin(); return; }
+  if (!confirm(`Reservar o número ${numero} por ${rifaFormatarPreco(rifaAtual.precoPorNumero)}? A admin confirma o pagamento depois.`)) return;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-User-Email': usuario.email },
+      body: JSON.stringify({ acao: 'reservar', numero, nome: usuario.nome }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui reservar esse número.'); return; }
+    rifaAtual = data;
+    rifaFecharDetalhe();
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui reservar esse número — tenta de novo.'); }
+}
+window.rifaReservar = rifaReservar;
+
+async function rifaCancelar(numero) {
+  const admin = rifaEhAdmin();
+  const usuario = rifaUsuarioAtual();
+  if (!confirm(`Liberar o número ${numero}?`)) return;
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (admin) Object.assign(headers, RIFA_ADMIN_HEADERS);
+    else if (usuario) headers['X-User-Email'] = usuario.email;
+    const res = await fetch(RIFA_API, { method: 'PUT', headers, body: JSON.stringify({ acao: 'cancelar', numero }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui liberar esse número.'); return; }
+    rifaAtual = data;
+    rifaFecharDetalhe();
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui liberar esse número — tenta de novo.'); }
+}
+window.rifaCancelar = rifaCancelar;
+
+async function rifaConfirmarPagamento(numero) {
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'confirmar-pagamento', numero }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui confirmar o pagamento.'); return; }
+    rifaAtual = data;
+    rifaFecharDetalhe();
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui confirmar o pagamento — tenta de novo.'); }
+}
+window.rifaConfirmarPagamento = rifaConfirmarPagamento;
+
+async function rifaSortear() {
+  if (!confirm('Sortear um número entre os pagos? O resultado aparece na hora pra todo mundo.')) return;
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'sortear' }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui sortear.'); return; }
+    rifaAtual = data;
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui sortear — tenta de novo.'); }
+}
+window.rifaSortear = rifaSortear;
+
+function rifaAbrirNova() {
+  ['titulo','premio','imagem','preco','total','data'].forEach(c => { const el = document.getElementById('rf-nova-' + c); if (el) el.value = ''; });
+  document.getElementById('rf-nova-aviso').style.display = (rifaAtual && rifaAtual.status === 'ativa') ? '' : 'none';
+  document.getElementById('rf-nova-overlay').classList.add('open');
+}
+window.rifaAbrirNova = rifaAbrirNova;
+function rifaFecharNova() { document.getElementById('rf-nova-overlay').classList.remove('open'); }
+window.rifaFecharNova = rifaFecharNova;
+
+async function rifaCriarNova() {
+  const titulo = document.getElementById('rf-nova-titulo').value.trim();
+  const total = parseInt(document.getElementById('rf-nova-total').value, 10);
+  if (!titulo || !total) { alert('Preencha ao menos o título e a quantidade de números.'); return; }
+  const payload = {
+    titulo,
+    premio: document.getElementById('rf-nova-premio').value.trim(),
+    imagemPremio: document.getElementById('rf-nova-imagem').value.trim(),
+    precoPorNumero: parseFloat(document.getElementById('rf-nova-preco').value) || 0,
+    totalNumeros: total,
+    dataSorteio: document.getElementById('rf-nova-data').value.trim(),
+  };
+  try {
+    const res = await fetch(RIFA_API, { method: 'POST', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui criar a rifa.'); return; }
+    rifaAtual = data;
+    rifaFecharNova();
+    document.getElementById('rf-vazia').style.display = 'none';
+    document.getElementById('rf-conteudo').style.display = '';
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui criar a rifa — tenta de novo.'); }
+}
+window.rifaCriarNova = rifaCriarNova;
 
 // ── MODAL "SAIBA MAIS" ────────────────────────────────────────────────────
 async function calAbrirInfo(id) {
