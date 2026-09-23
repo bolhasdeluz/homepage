@@ -1231,17 +1231,26 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
 .rf-dot-livre{background:#fff;border:1px solid var(--border)}
 .rf-dot-reservado{background:var(--amber)}
+.rf-dot-atribuido{background:#4a6fa5}
 .rf-dot-pago{background:var(--green)}
 .rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:8px}
 .rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
 .rf-numero:hover{transform:scale(1.06)}
 .rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber)}
+.rf-numero-atribuido{background:rgba(74,111,165,.08);border-color:rgba(74,111,165,.25);color:#4a6fa5}
 .rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
 .rf-numero-vencedor{background:linear-gradient(135deg,var(--rosa),var(--terra));border-color:var(--terra);color:#fff;animation:rfPulse 1.6s ease-in-out infinite}
 .rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
 @keyframes rfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
 .rf-detalhe-linha{font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);margin-bottom:14px}
 .rf-detalhe-botoes{display:flex;flex-direction:column;gap:8px}
+
+/* modo de seleção pra atribuir números em lote */
+.rf-numero-selecionavel{box-shadow:0 0 0 2px rgba(196,57,107,.18) inset}
+.rf-numero-selecionado{background:var(--rosa-dim);border-color:var(--rosa);color:var(--rosa);box-shadow:0 0 0 2px var(--rosa) inset}
+.rf-barra-selecao{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--rosa-dim);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
+.rf-barra-selecao.open{display:flex}
+.rf-barra-selecao-botoes{display:flex;gap:8px}
 
 .rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
 .rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
@@ -2698,7 +2707,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="section-title">🎟️ Rifa</div>
     <p class="section-sub">Escolha seu número e ajude o terreiro ✦</p>
 
-    <button class="rm-btn-mes" id="rf-btn-nova" style="display:none;margin-bottom:20px" onclick="rifaAbrirNova()">✨ Criar nova rifa</button>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+      <button class="rm-btn-mes" id="rf-btn-nova" style="display:none" onclick="rifaAbrirNova()">✨ Criar nova rifa</button>
+      <button class="rm-btn-mes" id="rf-btn-atribuir" style="display:none" onclick="rifaToggleModoAtribuir()">🎫 Atribuir números</button>
+    </div>
 
     <div id="rf-carregando" class="cp-carregando">Carregando rifa...</div>
 
@@ -2719,7 +2731,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div class="rf-legenda">
         <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
         <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
+        <span class="rf-legenda-item"><span class="rf-dot rf-dot-atribuido"></span> Atribuído</span>
         <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+      </div>
+
+      <div class="rf-barra-selecao" id="rf-barra-selecao">
+        <span id="rf-barra-selecao-texto">0 números selecionados</span>
+        <div class="rf-barra-selecao-botoes">
+          <button class="rm-btn-mes" style="padding:8px 14px" onclick="rifaAbrirAtribuir()">Atribuir a alguém →</button>
+          <button class="rm-btn-mes" style="padding:8px 14px" onclick="rifaToggleModoAtribuir()">Cancelar</button>
+        </div>
       </div>
 
       <div class="rf-grid" id="rf-grid"></div>
@@ -2735,6 +2756,17 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title" id="rf-detalhe-titulo" style="font-size:1.3rem">Número</div>
     <div class="modal-sub rf-detalhe-linha" id="rf-detalhe-sub"></div>
     <div class="rf-detalhe-botoes" id="rf-detalhe-botoes"></div>
+  </div>
+</div>
+
+<div id="rf-atribuir-overlay" class="overlay" onclick="if(event.target===this)rifaFecharAtribuir()">
+  <div class="modal" style="max-width:360px">
+    <button class="modal-close" onclick="rifaFecharAtribuir()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🎫 Atribuir números</div>
+    <p class="modal-sub" id="rf-atribuir-resumo"></p>
+    <label class="form-label">Pessoa responsável</label>
+    <input type="text" class="form-input" id="rf-atribuir-nome" list="lista-nomes-casa" placeholder="Nome de quem vai vender">
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaConfirmarAtribuicao()">Confirmar atribuição</button>
   </div>
 </div>
 
@@ -6018,6 +6050,8 @@ function calCloseModal() { document.getElementById('cal-modal-overlay').style.di
 const RIFA_API = '/api/rifa';
 const RIFA_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
 let rifaAtual = null;
+let rifaModoAtribuir = false;
+let rifaSelecionados = new Set();
 
 function rifaEhAdmin() { return souAdminAtivo(window._getCurrentUser && window._getCurrentUser()); }
 function rifaUsuarioAtual() {
@@ -6029,6 +6063,10 @@ function rifaUsuarioAtual() {
 function rifaFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
 async function rifaLoad() {
+  rifaModoAtribuir = false;
+  rifaSelecionados.clear();
+  document.getElementById('rf-btn-atribuir').textContent = '🎫 Atribuir números';
+  document.getElementById('rf-barra-selecao').classList.remove('open');
   document.getElementById('rf-carregando').style.display = '';
   document.getElementById('rf-vazia').style.display = 'none';
   document.getElementById('rf-conteudo').style.display = 'none';
@@ -6038,7 +6076,7 @@ async function rifaLoad() {
   } catch (e) { rifaAtual = null; }
   document.getElementById('rf-carregando').style.display = 'none';
   document.getElementById('rf-btn-nova').style.display = rifaEhAdmin() ? '' : 'none';
-  if (!rifaAtual) { document.getElementById('rf-vazia').style.display = ''; return; }
+  if (!rifaAtual) { document.getElementById('rf-vazia').style.display = ''; document.getElementById('rf-btn-atribuir').style.display = 'none'; return; }
   document.getElementById('rf-conteudo').style.display = '';
   rifaRenderPagina();
 }
@@ -6068,6 +6106,7 @@ function rifaRenderPagina() {
   const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago').length;
   const btnSortear = document.getElementById('rf-btn-sortear');
   btnSortear.style.display = (rifaEhAdmin() && !r.vencedor && pagos > 0) ? '' : 'none';
+  document.getElementById('rf-btn-atribuir').style.display = rifaEhAdmin() ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -6077,7 +6116,8 @@ function rifaRenderGrid() {
   wrap.innerHTML = numerosOrdenados.map(numero => {
     const info = r.numeros[numero];
     const ehVencedor = r.vencedor && r.vencedor.numero === numero;
-    const classe = ehVencedor ? 'rf-numero-vencedor' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'reservado' ? 'rf-numero-reservado' : ''));
+    let classe = ehVencedor ? 'rf-numero-vencedor' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'atribuido' ? 'rf-numero-atribuido' : (info.status === 'reservado' ? 'rf-numero-reservado' : '')));
+    if (rifaModoAtribuir && info.status === 'livre') classe += rifaSelecionados.has(numero) ? ' rf-numero-selecionado' : ' rf-numero-selecionavel';
     const nomeCurto = info.nome ? info.nome.split(' ')[0] : '';
     return `<div class="rf-numero ${classe}" onclick="rifaClickNumero('${numero}')">
         <span>${numero}</span>
@@ -6091,6 +6131,13 @@ window.rifaFecharDetalhe = rifaFecharDetalhe;
 
 function rifaClickNumero(numero) {
   const info = rifaAtual.numeros[numero];
+  if (rifaModoAtribuir) {
+    if (!rifaEhAdmin() || !info || info.status !== 'livre') return;
+    if (rifaSelecionados.has(numero)) rifaSelecionados.delete(numero); else rifaSelecionados.add(numero);
+    rifaAtualizarBarraSelecao();
+    rifaRenderGrid();
+    return;
+  }
   const admin = rifaEhAdmin();
   const usuario = rifaUsuarioAtual();
   const dono = !!(usuario && info.email && info.email === usuario.email);
@@ -6108,8 +6155,9 @@ function rifaClickNumero(numero) {
       botoes.innerHTML = `<button class="btn-rosa" onclick="rifaReservar('${numero}')">Reservar este número</button>`;
     }
   } else {
-    sub.textContent = `${info.status === 'pago' ? '✅ Pago' : '⏳ Reservado'} — ${info.nome || 'sem nome'}${admin && info.email ? ' · ' + info.email : ''}`;
-    if (admin && info.status === 'reservado') {
+    const statusLabel = info.status === 'pago' ? '✅ Pago' : (info.status === 'atribuido' ? '🎫 Atribuído pra vender' : '⏳ Reservado');
+    sub.textContent = `${statusLabel} — ${info.nome || 'sem nome'}${admin && info.email ? ' · ' + info.email : ''}`;
+    if (admin && (info.status === 'reservado' || info.status === 'atribuido')) {
       botoes.innerHTML += `<button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>`;
     }
     if (dono && info.status === 'reservado') {
@@ -6185,6 +6233,63 @@ async function rifaSortear() {
   } catch (e) { alert('Não consegui sortear — tenta de novo.'); }
 }
 window.rifaSortear = rifaSortear;
+
+function rifaToggleModoAtribuir() {
+  if (!rifaEhAdmin()) return;
+  rifaModoAtribuir = !rifaModoAtribuir;
+  rifaSelecionados.clear();
+  document.getElementById('rf-btn-atribuir').textContent = rifaModoAtribuir ? '✕ Cancelar seleção' : '🎫 Atribuir números';
+  rifaAtualizarBarraSelecao();
+  rifaRenderGrid();
+}
+window.rifaToggleModoAtribuir = rifaToggleModoAtribuir;
+
+function rifaAtualizarBarraSelecao() {
+  const barra = document.getElementById('rf-barra-selecao');
+  if (rifaModoAtribuir && rifaSelecionados.size > 0) {
+    barra.classList.add('open');
+    const n = rifaSelecionados.size;
+    document.getElementById('rf-barra-selecao-texto').textContent = `${n} número${n > 1 ? 's' : ''} selecionado${n > 1 ? 's' : ''}`;
+  } else {
+    barra.classList.remove('open');
+  }
+}
+
+function rifaAbrirAtribuir() {
+  if (!rifaEhAdmin() || !rifaSelecionados.size) return;
+  const numeros = Array.from(rifaSelecionados).sort();
+  document.getElementById('rf-atribuir-resumo').textContent = `Números: ${numeros.join(', ')}`;
+  document.getElementById('rf-atribuir-nome').value = '';
+  carregarListaNomesCasa();
+  document.getElementById('rf-atribuir-overlay').classList.add('open');
+}
+window.rifaAbrirAtribuir = rifaAbrirAtribuir;
+
+function rifaFecharAtribuir() { document.getElementById('rf-atribuir-overlay').classList.remove('open'); }
+window.rifaFecharAtribuir = rifaFecharAtribuir;
+
+async function rifaConfirmarAtribuicao() {
+  if (!rifaEhAdmin() || !rifaSelecionados.size) return;
+  const nome = document.getElementById('rf-atribuir-nome').value.trim();
+  if (!nome) { alert('Digite o nome da pessoa responsável.'); return; }
+  const numeros = Array.from(rifaSelecionados);
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'atribuir', numeros, nome }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui atribuir os números.'); return; }
+    rifaAtual = data;
+    rifaFecharAtribuir();
+    rifaModoAtribuir = false;
+    rifaSelecionados.clear();
+    document.getElementById('rf-btn-atribuir').textContent = '🎫 Atribuir números';
+    rifaAtualizarBarraSelecao();
+    rifaRenderPagina();
+    if (data._ignorados && data._ignorados.length) {
+      alert(`Alguns números já não estavam mais livres e não foram atribuídos: ${data._ignorados.join(', ')}`);
+    }
+  } catch (e) { alert('Não consegui atribuir os números — tenta de novo.'); }
+}
+window.rifaConfirmarAtribuicao = rifaConfirmarAtribuicao;
 
 function rifaAbrirNova() {
   if (!rifaEhAdmin()) return;
