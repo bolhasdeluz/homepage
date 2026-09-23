@@ -6161,6 +6161,7 @@ async function rifaCancelar(numero) {
 window.rifaCancelar = rifaCancelar;
 
 async function rifaConfirmarPagamento(numero) {
+  if (!rifaEhAdmin()) return;
   try {
     const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'confirmar-pagamento', numero }) });
     const data = await res.json();
@@ -6173,6 +6174,7 @@ async function rifaConfirmarPagamento(numero) {
 window.rifaConfirmarPagamento = rifaConfirmarPagamento;
 
 async function rifaSortear() {
+  if (!rifaEhAdmin()) return;
   if (!confirm('Sortear um número entre os pagos? O resultado aparece na hora pra todo mundo.')) return;
   try {
     const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'sortear' }) });
@@ -6185,6 +6187,7 @@ async function rifaSortear() {
 window.rifaSortear = rifaSortear;
 
 function rifaAbrirNova() {
+  if (!rifaEhAdmin()) return;
   ['titulo','premio','imagem','preco','total','data'].forEach(c => { const el = document.getElementById('rf-nova-' + c); if (el) el.value = ''; });
   document.getElementById('rf-nova-aviso').style.display = (rifaAtual && rifaAtual.status === 'ativa') ? '' : 'none';
   document.getElementById('rf-nova-overlay').classList.add('open');
@@ -6194,6 +6197,7 @@ function rifaFecharNova() { document.getElementById('rf-nova-overlay').classList
 window.rifaFecharNova = rifaFecharNova;
 
 async function rifaCriarNova() {
+  if (!rifaEhAdmin()) return;
   const titulo = document.getElementById('rf-nova-titulo').value.trim();
   const total = parseInt(document.getElementById('rf-nova-total').value, 10);
   if (!titulo || !total) { alert('Preencha ao menos o título e a quantidade de números.'); return; }
