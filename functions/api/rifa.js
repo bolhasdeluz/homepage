@@ -142,6 +142,28 @@ export async function onRequest(context) {
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
 
+      // ATRIBUIR — a admin entrega um lote de números livres pra uma pessoa
+      // responsável vender por fora (não é a compradora final, só quem fica
+      // com os números até prestar contas)
+      if (acao === 'atribuir') {
+        const nome = (body.nome || '').trim();
+        const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
+        if (!nome || !numeros.length) return json({ error: 'Informe a pessoa responsável e ao menos um número.' }, 400);
+        const atribuidos = [];
+        const ignorados = [];
+        numeros.forEach(numero => {
+          const alvo = rifa.numeros[numero];
+          if (alvo && alvo.status === 'livre') {
+            rifa.numeros[numero] = { status: 'atribuido', nome, atribuidoEm: Date.now() };
+            atribuidos.push(numero);
+          } else {
+            ignorados.push(numero);
+          }
+        });
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ...rifa, _atribuidos: atribuidos, _ignorados: ignorados });
+      }
+
       if (acao === 'confirmar-pagamento') {
         const numero = String(body.numero || '');
         const alvo = rifa.numeros[numero];
