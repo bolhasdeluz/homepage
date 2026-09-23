@@ -142,6 +142,8 @@ body.logada{padding-top:62px}
 .admin-move-btn{background:none;border:none;color:rgba(196,90,30,.45);font-size:.65rem;line-height:1;padding:2px 5px;cursor:pointer;transition:color .2s}
 .admin-move-btn:hover:not(:disabled){color:var(--terra)}
 .admin-move-btn:disabled{opacity:.2;cursor:default}
+.admin-pos-input{width:34px;text-align:center;font-family:'DM Sans',sans-serif;font-size:.72rem;border:1px solid rgba(196,90,30,.2);border-radius:5px;padding:3px 0;background:#fff;color:var(--text);flex-shrink:0;-moz-appearance:textfield}
+.admin-pos-input::-webkit-inner-spin-button,.admin-pos-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 
 
 /* widgets */
@@ -4700,9 +4702,14 @@ function renderAdminPanel() {
       ${sec.items.map((item, ii) => `
         <div class="admin-item-row" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}">
           <div class="admin-move-btns">
+            <button class="admin-move-btn" onclick="moveItemToTop(${si},${ii})" ${ii===0?'disabled':''} title="Mover para o topo">⏫</button>
             <button class="admin-move-btn" onclick="moveItem(${si},${ii},-1)" ${ii===0?'disabled':''} title="Mover para cima">▲</button>
             <button class="admin-move-btn" onclick="moveItem(${si},${ii},1)" ${ii===sec.items.length-1?'disabled':''} title="Mover para baixo">▼</button>
+            <button class="admin-move-btn" onclick="moveItemToBottom(${si},${ii})" ${ii===sec.items.length-1?'disabled':''} title="Mover para o final">⏬</button>
           </div>
+          <input type="number" class="admin-pos-input" min="1" max="${sec.items.length}" value="${ii+1}" title="Posição — edite e aperte Enter pra pular direto pra lá"
+            onkeydown="if(event.key==='Enter'){moveItemToPosition(${si},${ii},this.value);this.blur()}"
+            onblur="moveItemToPosition(${si},${ii},this.value)">
           <span class="admin-item-label">${item.label}</span>
           <span class="admin-item-url">${item.url||item.page||''}</span>
           <div class="admin-item-actions">
@@ -4770,6 +4777,36 @@ function moveItem(si, ii, dir) {
   renderAdminPanel();
   renderDrawer();
   renderCards();
+  agendarSalvarMenu();
+}
+function moveItemToTop(si, ii) {
+  const items = menuData.sections[si].items;
+  if (ii <= 0) return;
+  const [moved] = items.splice(ii, 1);
+  items.unshift(moved);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+function moveItemToBottom(si, ii) {
+  const items = menuData.sections[si].items;
+  if (ii >= items.length - 1) return;
+  const [moved] = items.splice(ii, 1);
+  items.push(moved);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+// pular direto pra uma posição digitada (1-based na tela) — usado pelo campo
+// numérico ao lado das flechinhas, pra não precisar clicar várias vezes
+// pra mover um item de ponta a ponta da lista
+function moveItemToPosition(si, ii, posDigitada) {
+  const items = menuData.sections[si].items;
+  const alvo = parseInt(posDigitada, 10);
+  if (!alvo || isNaN(alvo)) { renderAdminPanel(); return; }
+  const novoIndex = Math.max(1, Math.min(items.length, alvo)) - 1;
+  if (novoIndex === ii) { renderAdminPanel(); return; }
+  const [moved] = items.splice(ii, 1);
+  items.splice(novoIndex, 0, moved);
+  renderAdminPanel(); renderDrawer(); renderCards();
   agendarSalvarMenu();
 }
 
