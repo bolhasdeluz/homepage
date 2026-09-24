@@ -178,6 +178,60 @@ export async function onRequest(context) {
         return json(rifa);
       }
 
+      // LANÇAR COMPRA EM LOTE — quando uma pessoa compra vários números de
+      // uma vez (livres, reservados ou atribuídos — qualquer um que ainda
+      // não esteja pago), marca todos como pagos pra ela numa tacada só
+      if (acao === 'confirmar-pagamento-lote') {
+        const nome = (body.nome || '').trim();
+        const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
+        if (!nome || !numeros.length) return json({ error: 'Informe o nome de quem comprou e ao menos um número.' }, 400);
+        const telefone = (body.telefone || '').trim();
+        const confirmados = [];
+        const ignorados = [];
+        numeros.forEach(numero => {
+          const alvo = rifa.numeros[numero];
+          if (alvo && alvo.status !== 'pago') {
+            rifa.numeros[numero] = { status: 'pago', nome, telefone, pagoEm: Date.now() };
+            confirmados.push(numero);
+          } else {
+            ignorados.push(numero);
+          }
+        });
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ...rifa, _confirmados: confirmados, _ignorados: ignorados });
+      }
+
+      // AUMENTAR NÚMEROS — cresce a quantidade de números da rifa ativa sem
+      // precisar encerrar e criar outra. Se a nova quantidade precisar de
+      // mais dígitos (ex: passar de 99 pra 150), re-chaveia os números que
+      // já existem pra manter o preenchimento com zero consistente
+      if (acao === 'aumentar-numeros') {
+        const novoTotal = parseInt(body.novoTotal, 10);
+        if (!novoTotal || novoTotal <= rifa.totalNumeros) {
+          return json({ error: 'Informe uma quantidade maior que a atual.' }, 400);
+        }
+        const larguraAtual = Math.max(2, String(rifa.totalNumeros).length);
+        const novaLargura = Math.max(2, String(novoTotal).length);
+        let numerosAtualizados = rifa.numeros;
+        if (novaLargura !== larguraAtual) {
+          numerosAtualizados = {};
+          Object.keys(rifa.numeros).forEach(k => {
+            const novaChave = String(parseInt(k, 10)).padStart(novaLargura, '0');
+            numerosAtualizados[novaChave] = rifa.numeros[k];
+          });
+          if (rifa.vencedor) {
+            rifa.vencedor.numero = String(parseInt(rifa.vencedor.numero, 10)).padStart(novaLargura, '0');
+          }
+        }
+        for (let i = rifa.totalNumeros + 1; i <= novoTotal; i++) {
+          numerosAtualizados[String(i).padStart(novaLargura, '0')] = { status: 'livre' };
+        }
+        rifa.numeros = numerosAtualizados;
+        rifa.totalNumeros = novoTotal;
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
       if (acao === 'sortear') {
         const pagos = Object.entries(rifa.numeros).filter(([, v]) => v.status === 'pago');
         if (!pagos.length) return json({ error: 'Ainda não há números pagos pra sortear.' }, 400);
