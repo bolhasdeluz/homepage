@@ -6254,12 +6254,13 @@ function rifaAbrirConfirmarPagamento(numero) {
   const info = rifaAtual.numeros[numero];
   if (!info) return;
   document.getElementById('rf-detalhe-sub').textContent = `Confirmando o pagamento do número ${numero}:`;
-  const esc = s => (s || '').replace(/"/g, '&quot;');
+  // sempre em branco — quem reservou/ficou responsável pelo número não é
+  // necessariamente quem de fato comprou, então não faz sentido pré-preencher
   document.getElementById('rf-detalhe-botoes').innerHTML = `
     <label class="form-label">Nome de quem comprou</label>
-    <input type="text" class="form-input" id="rf-pagamento-nome" value="${esc(info.nome)}" placeholder="Nome completo">
+    <input type="text" class="form-input" id="rf-pagamento-nome" placeholder="Nome completo">
     <label class="form-label">Telefone</label>
-    <input type="tel" class="form-input" id="rf-pagamento-telefone" value="${esc(info.telefone)}" placeholder="(51) 99999-9999">
+    <input type="tel" class="form-input" id="rf-pagamento-telefone" placeholder="(51) 99999-9999">
     <button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>
     <button class="rm-btn-mes" onclick="rifaClickNumero('${numero}')">Voltar</button>
   `;
