@@ -168,8 +168,12 @@ export async function onRequest(context) {
         const numero = String(body.numero || '');
         const alvo = rifa.numeros[numero];
         if (!alvo || alvo.status === 'livre') return json({ error: 'Esse número não está reservado.' }, 400);
+        const nome = (body.nome || '').trim();
+        if (!nome) return json({ error: 'Informe o nome de quem comprou.' }, 400);
         alvo.status = 'pago';
         alvo.pagoEm = Date.now();
+        alvo.nome = nome;
+        alvo.telefone = (body.telefone || '').trim();
         await KV.put(rifa.id, JSON.stringify(rifa));
         return json(rifa);
       }

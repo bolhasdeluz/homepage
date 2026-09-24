@@ -6193,9 +6193,10 @@ function rifaClickNumero(numero) {
     }
   } else {
     const statusLabel = info.status === 'pago' ? '✅ Pago' : (info.status === 'atribuido' ? '🎫 Atribuído pra vender' : '⏳ Reservado');
-    sub.textContent = `${statusLabel} — ${info.nome || 'sem nome'}${admin && info.email ? ' · ' + info.email : ''}`;
+    const contato = admin ? [info.email, info.telefone].filter(Boolean).join(' · ') : '';
+    sub.textContent = `${statusLabel} — ${info.nome || 'sem nome'}${contato ? ' · ' + contato : ''}`;
     if (admin && (info.status === 'reservado' || info.status === 'atribuido')) {
-      botoes.innerHTML += `<button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>`;
+      botoes.innerHTML += `<button class="btn-rosa" onclick="rifaAbrirConfirmarPagamento('${numero}')">Confirmar pagamento</button>`;
     }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
@@ -6245,10 +6246,34 @@ async function rifaCancelar(numero) {
 }
 window.rifaCancelar = rifaCancelar;
 
+// mostra o formulário de nome + telefone de quem comprou, em vez de
+// confirmar o pagamento na hora — a pessoa que comprou pode não ser a
+// mesma que estava com o número (reserva online ou atribuído pra vender)
+function rifaAbrirConfirmarPagamento(numero) {
+  if (!rifaEhAdmin()) return;
+  const info = rifaAtual.numeros[numero];
+  if (!info) return;
+  document.getElementById('rf-detalhe-sub').textContent = `Confirmando o pagamento do número ${numero}:`;
+  const esc = s => (s || '').replace(/"/g, '&quot;');
+  document.getElementById('rf-detalhe-botoes').innerHTML = `
+    <label class="form-label">Nome de quem comprou</label>
+    <input type="text" class="form-input" id="rf-pagamento-nome" value="${esc(info.nome)}" placeholder="Nome completo">
+    <label class="form-label">Telefone</label>
+    <input type="tel" class="form-input" id="rf-pagamento-telefone" value="${esc(info.telefone)}" placeholder="(51) 99999-9999">
+    <button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>
+    <button class="rm-btn-mes" onclick="rifaClickNumero('${numero}')">Voltar</button>
+  `;
+}
+window.rifaAbrirConfirmarPagamento = rifaAbrirConfirmarPagamento;
+
 async function rifaConfirmarPagamento(numero) {
   if (!rifaEhAdmin()) return;
+  const nomeEl = document.getElementById('rf-pagamento-nome');
+  const nome = nomeEl ? nomeEl.value.trim() : '';
+  const telefone = (document.getElementById('rf-pagamento-telefone')?.value || '').trim();
+  if (!nome) { alert('Digite o nome de quem comprou.'); return; }
   try {
-    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'confirmar-pagamento', numero }) });
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'confirmar-pagamento', numero, nome, telefone }) });
     const data = await res.json();
     if (!res.ok) { alert(data.error || 'Não consegui confirmar o pagamento.'); return; }
     rifaAtual = data;
