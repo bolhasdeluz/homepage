@@ -42,6 +42,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .cm-doces{text-align:center;font-size:2rem;margin-bottom:18px;letter-spacing:6px}
 
+.cm-tipo-toggle{display:flex;gap:8px;margin-bottom:18px}
+.cm-tipo-btn{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 10px;font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.04em;color:var(--text-dim);text-align:center;transition:all .15s}
+.cm-tipo-btn.active{background:var(--rosa);border-color:var(--rosa);color:#fff}
+
 .cm-form{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:26px 24px;margin-bottom:24px;box-shadow:0 8px 32px rgba(196,57,107,.1)}
 .cm-campo{margin-bottom:16px}
 .cm-campo label{display:block;font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
@@ -97,26 +101,31 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div class="cm-sucesso" id="cm-sucesso">
     <div class="cm-sucesso-titulo">✦ Inscrição feita! ✦</div>
-    <p>Anotamos direitinho. Se tiver mais uma criança pra inscrever, é só continuar ✦</p>
-    <button class="cm-btn-outra" onclick="cmNovaInscricao()">Inscrever outra criança</button>
+    <p>Anotamos direitinho. Se tiver mais alguém pra inscrever, é só continuar ✦</p>
+    <button class="cm-btn-outra" onclick="cmNovaInscricao()">Fazer outra inscrição</button>
+  </div>
+
+  <div class="cm-tipo-toggle" id="cm-tipo-toggle">
+    <button type="button" class="cm-tipo-btn active" id="cm-tipo-crianca" onclick="cmEscolherTipo('crianca')">🧒 Inscrever uma criança</button>
+    <button type="button" class="cm-tipo-btn" id="cm-tipo-adulto" onclick="cmEscolherTipo('adulto')">🧑 Vou sozinho(a), sou adulto</button>
   </div>
 
   <div class="cm-form" id="cm-form">
     <p class="cm-erro" id="cm-erro"></p>
     <div class="cm-campo">
-      <label>Nome da criança</label>
-      <input type="text" id="cm-nome-crianca" placeholder="Nome completo">
+      <label id="cm-label-nome">Nome da criança</label>
+      <input type="text" id="cm-nome" placeholder="Nome completo">
     </div>
-    <div class="cm-campo">
+    <div class="cm-campo" id="cm-campo-idade">
       <label>Idade</label>
       <input type="number" id="cm-idade" min="0" max="17" placeholder="Ex: 5">
     </div>
-    <div class="cm-campo">
+    <div class="cm-campo" id="cm-campo-responsavel">
       <label>Nome do responsável</label>
       <input type="text" id="cm-responsavel" placeholder="Nome completo">
     </div>
     <div class="cm-campo">
-      <label>Telefone do responsável</label>
+      <label id="cm-label-telefone">Telefone do responsável</label>
       <input type="tel" id="cm-telefone" placeholder="(51) 99999-9999">
       <div class="cm-campo-hint">Opcional — só usamos pra mandar um lembrete perto da festa</div>
     </div>
@@ -166,29 +175,51 @@ let cmInscricoes = [];
 
 function cmEsc(s) { return (s || '').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
+// tipo da inscrição atual — 'crianca' (padrão) ou 'adulto', pra quem vai
+// sozinho na festa e não precisa preencher idade nem responsável
+let cmTipoAtual = 'crianca';
+function cmEscolherTipo(tipo) {
+  cmTipoAtual = tipo;
+  document.getElementById('cm-tipo-crianca').classList.toggle('active', tipo === 'crianca');
+  document.getElementById('cm-tipo-adulto').classList.toggle('active', tipo === 'adulto');
+  document.getElementById('cm-campo-idade').style.display = tipo === 'crianca' ? '' : 'none';
+  document.getElementById('cm-campo-responsavel').style.display = tipo === 'crianca' ? '' : 'none';
+  document.getElementById('cm-label-nome').textContent = tipo === 'crianca' ? 'Nome da criança' : 'Seu nome';
+  document.getElementById('cm-label-telefone').textContent = tipo === 'crianca' ? 'Telefone do responsável' : 'Telefone';
+  document.getElementById('cm-btn-enviar').textContent = tipo === 'crianca' ? '✦ Inscrever criança' : '✦ Confirmar presença';
+  document.getElementById('cm-erro').style.display = 'none';
+}
+window.cmEscolherTipo = cmEscolherTipo;
+
 async function cmEnviar() {
-  const nomeCrianca = document.getElementById('cm-nome-crianca').value.trim();
+  const nome = document.getElementById('cm-nome').value.trim();
   const idade = document.getElementById('cm-idade').value.trim();
   const responsavel = document.getElementById('cm-responsavel').value.trim();
   const telefone = document.getElementById('cm-telefone').value.trim();
   const erroEl = document.getElementById('cm-erro');
   erroEl.style.display = 'none';
-  if (!nomeCrianca || !idade || !responsavel) {
-    erroEl.textContent = 'Preencha o nome da criança, a idade e o nome do responsável.';
+  if (cmTipoAtual === 'crianca') {
+    if (!nome || !idade || !responsavel) {
+      erroEl.textContent = 'Preencha o nome da criança, a idade e o nome do responsável.';
+      erroEl.style.display = 'block';
+      return;
+    }
+  } else if (!nome) {
+    erroEl.textContent = 'Preencha seu nome.';
     erroEl.style.display = 'block';
     return;
   }
   const btn = document.getElementById('cm-btn-enviar');
   btn.disabled = true;
   try {
-    const res = await fetch(CM_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nomeCrianca, idade, responsavel, telefone }) });
+    const res = await fetch(CM_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: cmTipoAtual, nome, idade, responsavel, telefone }) });
     const data = await res.json();
     if (!res.ok) { erroEl.textContent = data.error || 'Não consegui enviar — tenta de novo.'; erroEl.style.display = 'block'; btn.disabled = false; return; }
     document.getElementById('cm-form').style.display = 'none';
+    document.getElementById('cm-tipo-toggle').style.display = 'none';
     document.getElementById('cm-sucesso').style.display = 'block';
     // guarda responsável/telefone pra facilitar inscrever outro filho da mesma família
-    window._cmUltimoResponsavel = responsavel;
-    window._cmUltimoTelefone = telefone;
+    if (cmTipoAtual === 'crianca') { window._cmUltimoResponsavel = responsavel; window._cmUltimoTelefone = telefone; }
   } catch (e) {
     erroEl.textContent = 'Não consegui enviar — confere sua internet e tenta de novo.';
     erroEl.style.display = 'block';
@@ -198,12 +229,14 @@ async function cmEnviar() {
 window.cmEnviar = cmEnviar;
 
 function cmNovaInscricao() {
-  document.getElementById('cm-nome-crianca').value = '';
+  cmEscolherTipo('crianca');
+  document.getElementById('cm-nome').value = '';
   document.getElementById('cm-idade').value = '';
   document.getElementById('cm-responsavel').value = window._cmUltimoResponsavel || '';
   document.getElementById('cm-telefone').value = window._cmUltimoTelefone || '';
   document.getElementById('cm-erro').style.display = 'none';
   document.getElementById('cm-sucesso').style.display = 'none';
+  document.getElementById('cm-tipo-toggle').style.display = 'flex';
   document.getElementById('cm-form').style.display = 'block';
 }
 window.cmNovaInscricao = cmNovaInscricao;
@@ -279,7 +312,9 @@ function cmToggleLeituras() {
 window.cmToggleLeituras = cmToggleLeituras;
 
 function cmRenderLista() {
-  document.getElementById('cm-admin-stats').textContent = `${cmInscricoes.length} criança${cmInscricoes.length === 1 ? '' : 's'} inscrita${cmInscricoes.length === 1 ? '' : 's'}`;
+  const nCriancas = cmInscricoes.filter(i => i.tipo !== 'adulto').length;
+  const nAdultos = cmInscricoes.filter(i => i.tipo === 'adulto').length;
+  document.getElementById('cm-admin-stats').textContent = `${cmInscricoes.length} inscrito${cmInscricoes.length === 1 ? '' : 's'} (${nCriancas} criança${nCriancas === 1 ? '' : 's'}, ${nAdultos} adulto${nAdultos === 1 ? '' : 's'})`;
   const wrap = document.getElementById('cm-lista');
   if (!cmInscricoes.length) {
     wrap.innerHTML = '<div class="cm-lista-vazia">Ninguém se inscreveu ainda ✦</div>';
@@ -288,8 +323,9 @@ function cmRenderLista() {
   wrap.innerHTML = cmInscricoes.map(i => `
     <div class="cm-lista-item">
       <div class="cm-lista-info">
-        <b>${cmEsc(i.nomeCrianca)}</b> — ${cmEsc(i.idade)} anos<br>
-        Responsável: ${cmEsc(i.responsavel)}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}
+        ${i.tipo === 'adulto'
+          ? `🧑 <b>${cmEsc(i.nome)}</b> — adulto${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`
+          : `🧒 <b>${cmEsc(i.nome)}</b> — ${cmEsc(i.idade)} anos<br>Responsável: ${cmEsc(i.responsavel)}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`}
       </div>
       <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
     </div>`).join('');
@@ -312,7 +348,8 @@ function cmEnviarWhatsapp() {
     texto += 'Ninguém se inscreveu ainda.';
   } else {
     cmInscricoes.forEach((i, idx) => {
-      texto += `${idx + 1}. ${i.nomeCrianca} (${i.idade} anos) — responsável: ${i.responsavel}${i.telefone ? ' · ' + i.telefone : ''}\n`;
+      if (i.tipo === 'adulto') texto += `${idx + 1}. ${i.nome} (adulto)${i.telefone ? ' · ' + i.telefone : ''}\n`;
+      else texto += `${idx + 1}. ${i.nome} (${i.idade} anos) — responsável: ${i.responsavel}${i.telefone ? ' · ' + i.telefone : ''}\n`;
     });
     texto += `\nTotal: ${cmInscricoes.length}`;
   }

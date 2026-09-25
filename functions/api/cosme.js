@@ -44,17 +44,24 @@ export async function onRequest(context) {
     }
 
     // CREATE — POST (público)
+    // tipo "crianca" (padrão) exige nome+idade+responsável; tipo "adulto" —
+    // pra quem vai sozinho na festa — só exige o próprio nome
     if (method === 'POST') {
       const body = await request.json();
-      const nomeCrianca = (body.nomeCrianca || '').trim();
+      const tipo = body.tipo === 'adulto' ? 'adulto' : 'crianca';
+      const nome = (body.nome || '').trim();
       const idade = (body.idade ?? '').toString().trim();
       const responsavel = (body.responsavel || '').trim();
       const telefone = (body.telefone || '').trim();
-      if (!nomeCrianca || !idade || !responsavel) {
-        return json({ error: 'Nome da criança, idade e nome do responsável são obrigatórios.' }, 400);
+      if (tipo === 'crianca') {
+        if (!nome || !idade || !responsavel) {
+          return json({ error: 'Nome da criança, idade e nome do responsável são obrigatórios.' }, 400);
+        }
+      } else if (!nome) {
+        return json({ error: 'Informe seu nome.' }, 400);
       }
       const id = `cosme:inscricao:${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const inscricao = { id, nomeCrianca, idade, responsavel, telefone, criadoEm: Date.now() };
+      const inscricao = { id, tipo, nome, idade, responsavel, telefone, criadoEm: Date.now() };
       await KV.put(id, JSON.stringify(inscricao));
       return json(inscricao);
     }
