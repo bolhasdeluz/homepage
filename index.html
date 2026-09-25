@@ -13386,18 +13386,23 @@ const auth = getAuth(app);
     }
 
     // ── MENSAGEM WHATSAPP ──
+    // texto mais enxuto — um bloco por evento (nome em negrito, data numa
+    // linha só com um emoji, descrição solta embaixo), com uma linha em
+    // branco entre eventos, em vez de repetir emoji e juntar tudo numa
+    // linha só, que ficava poluído com vários eventos selecionados
     function edGerarTexto() {
-      let txt = `📌 *Eventos Selecionados — Terreiro Bolhas de Luz*\n\n`;
+      let txt = `📌 *Eventos Selecionados*\n\n`;
       if (!edEventos.length) {
         txt += 'Nenhum evento selecionado no momento.';
       } else {
-        edEventos.forEach(s => {
-          txt += `🗓️ *${s.nome || '—'}* — ${edFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`;
+        edEventos.forEach((s, idx) => {
+          if (idx > 0) txt += `\n`;
+          txt += `*${s.nome || '—'}*\n`;
+          txt += `📅 ${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}\n`;
           if (s.descricao && s.descricao.trim()) txt += `${s.descricao.trim()}\n`;
-          txt += `\n`;
         });
       }
-      txt += `🌸 _Terreiro Bolhas de Luz · bolhasdeluz.ong.br_`;
+      txt += `\n🌸 Terreiro Bolhas de Luz`;
       return txt;
     }
     function edAbrirRelatorio() {
