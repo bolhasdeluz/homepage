@@ -1254,6 +1254,17 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-barra-selecao.open{display:flex}
 .rf-barra-selecao-botoes{display:flex;gap:8px}
 
+/* ═══ PÁGINA EVENTOS SELECIONADOS ═══ */
+.ed-evento{background:var(--rosa-dim);border-radius:9px;padding:12px 14px;margin-bottom:8px;position:relative}
+.ed-evento-topo{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;padding-right:22px}
+.ed-evento-nome{font-family:'Playfair Display',serif;font-weight:600;font-size:.98rem;color:var(--text)}
+.ed-evento-data{font-family:'Cinzel',serif;font-size:.68rem;color:var(--rosa);font-weight:700;white-space:nowrap}
+.ed-evento-desc{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);white-space:pre-wrap;line-height:1.5}
+.ed-evento-remover{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-dim);font-size:.85rem;line-height:1}
+.ed-evento-remover:hover{color:#b84040}
+.ed-escolher-linha{display:flex;align-items:flex-start;gap:9px;padding:9px 4px;border-bottom:1px solid rgba(196,90,30,.08);font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
+.ed-escolher-linha input{margin-top:3px;flex-shrink:0}
+
 .rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
 .rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
 .rm-btn-whats:hover{transform:translateY(-2px)}
@@ -2953,6 +2964,66 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div id="rm-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
 </div>
 
+<!-- PÁGINA EVENTOS SELECIONADOS -->
+<div id="page-eventos" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">📌 Eventos Selecionados</div>
+    <p class="section-sub">Escolha eventos da agenda pra destacar, com a descrição interna ✦</p>
+
+    <div class="rm-topo-acoes">
+      <button class="rm-btn-mes" id="ed-btn-escolher">✅ Escolher eventos</button>
+      <button class="rm-btn-whats" id="ed-btn-whats">📱 Gerar mensagem pro WhatsApp</button>
+      <button class="rm-btn-mes" id="ed-btn-imagem" style="background:linear-gradient(135deg,#8c5a00,#c88c00)">📸 Gerar Imagem</button>
+      <button class="rm-btn-mes" id="ed-btn-tela-cheia" style="background:linear-gradient(135deg,#4a6fa5,#2f4d75)">🔍 Ver tela cheia</button>
+    </div>
+
+    <div class="rm-frame" id="ed-frame">
+      <div class="rm-header">
+        <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+        <div class="rm-header-titulo">📌 Eventos Selecionados</div>
+        <div class="rm-header-sub">Um espaço de fé, axé e comunidade</div>
+      </div>
+      <div class="rm-body">
+        <div class="ed-lista" id="ed-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESCOLHER EVENTOS -->
+<div class="mn-modal-bg" id="ed-escolher-modal" style="display:none">
+  <div class="mn-modal">
+    <h3>✅ Escolher eventos</h3>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Marque os eventos da agenda que quer destacar nessa página, com a descrição interna de cada um.</p>
+    <div id="ed-escolher-lista" style="max-height:320px;overflow-y:auto;margin-bottom:14px"></div>
+    <div class="mn-modal-btns">
+      <button class="cp-btn-cancelar" id="ed-escolher-cancelar">Cancelar</button>
+      <button class="cp-btn-confirmar" id="ed-escolher-salvar">Salvar ✦</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL RELATÓRIO WHATSAPP EVENTOS SELECIONADOS -->
+<div class="mn-modal-bg" id="ed-rel-overlay" style="display:none">
+  <div class="es-rel-modal">
+    <h3>📌 Mensagem dos Eventos Selecionados</h3>
+    <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
+    <textarea class="es-rel-textarea" id="ed-rel-texto" style="min-height:320px"></textarea>
+    <div class="es-rel-btns">
+      <button class="cp-btn-cancelar" id="ed-rel-cancelar">Fechar</button>
+      <button class="es-btn-whats" id="ed-rel-enviar">📱 Enviar no WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TELA CHEIA DOS EVENTOS SELECIONADOS -->
+<div id="ed-full-overlay" style="display:none;position:fixed;inset:0;z-index:999;background:#fdeef2;overflow-y:auto;padding:20px 14px 60px">
+  <button id="ed-full-fechar" style="position:fixed;top:16px;right:16px;z-index:1000;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer">×</button>
+  <div id="ed-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
+</div>
+
 <!-- PÁGINA ORIENTAÇÕES DA SESSÃO -->
 <div id="page-orientacoes" class="page">
   <div class="section-wrap">
@@ -4398,6 +4469,7 @@ function getDefaultMenu() {
         { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
         { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa', showCard: true, showMenu: true },
         { id: 'resumo', label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
+        { id: 'eventos', label: '📌 Eventos Selecionados', type: 'internal', page: 'eventos', desc: 'Eventos da agenda em destaque, com a descrição interna', showCard: true, showMenu: true },
         { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
       ]},
       { id: 'corrente', label: 'Corrente', items: [
@@ -13133,6 +13205,206 @@ const auth = getAuth(app);
     document.getElementById('rm-btn-whats')?.addEventListener('click', rmAbrirRelatorio);
     document.getElementById('rm-rel-cancelar')?.addEventListener('click', rmFecharRelatorio);
     document.getElementById('rm-rel-enviar')?.addEventListener('click', rmEnviarWhatsapp);
+  })();
+
+  // ══ EVENTOS SELECIONADOS ══
+  // mesmo esqueleto do Resumo Mensal (config persistida no Firestore, texto
+  // pro WhatsApp, gerar imagem, ver tela cheia) mas em vez de ser fixo no
+  // mês atual, a admin escolhe manualmente quais eventos da agenda aparecem
+  // aqui — e cada um mostra a descrição interna (o campo "descricao" da
+  // sessão), que normalmente só aparece pra quem está logada no calendário
+  (function initEventosSelecionados() {
+    if (!document.getElementById('ed-frame')) return;
+
+    let edSelecionadosIds = [];
+    let edSessoesTodas = [];
+    let edEventos = [];
+
+    function edFmtDataISO(dataStr) {
+      if (!dataStr) return '';
+      const [y, m, d] = dataStr.split('-');
+      const dataObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+      const MESES3 = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m) - 1]}`;
+    }
+
+    async function edCarregarConfig() {
+      try {
+        const snap = await getDocs(collection(db, 'config'));
+        const d = snap.docs.find(x => x.id === 'eventos_destacados_config');
+        edSelecionadosIds = (d && Array.isArray(d.data().sessaoIds)) ? d.data().sessaoIds : [];
+      } catch (e) { console.warn('eventos_destacados_config load:', e); edSelecionadosIds = []; }
+    }
+    async function edSalvarConfig() {
+      try { await setDoc(doc(db, 'config', 'eventos_destacados_config'), { sessaoIds: edSelecionadosIds }); }
+      catch (e) { console.warn('eventos_destacados_config save:', e); }
+    }
+
+    async function edCarregarSessoes() {
+      try { edSessoesTodas = await (await fetch('/api/sessoes')).json(); }
+      catch (e) { edSessoesTodas = []; }
+    }
+
+    function edRecalcularEventos() {
+      edEventos = edSessoesTodas.filter(s => edSelecionadosIds.includes(s.id)).sort((a, b) => a.data.localeCompare(b.data));
+    }
+
+    function edRenderEventos() {
+      const wrap = document.getElementById('ed-lista');
+      if (!edEventos.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum evento selecionado ainda — toque em "✅ Escolher eventos" ✦</div>'; return; }
+      wrap.innerHTML = edEventos.map(s => `
+        <div class="ed-evento">
+          <button class="ed-evento-remover" onclick="window._edRemover('${s.id}')" title="Remover da seleção">✕</button>
+          <div class="ed-evento-topo">
+            <span class="ed-evento-nome">${calEsc(s.nome) || '—'}</span>
+            <span class="ed-evento-data">${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span>
+          </div>
+          ${s.descricao ? `<div class="ed-evento-desc">${calEsc(s.descricao)}</div>` : ''}
+        </div>`).join('');
+    }
+
+    async function edCarregarTudo() {
+      document.getElementById('ed-lista').innerHTML = '<div class="rm-vazio-secao">Carregando...</div>';
+      await Promise.all([edCarregarConfig(), edCarregarSessoes()]);
+      edRecalcularEventos();
+      edRenderEventos();
+    }
+
+    window._edRemover = async function (id) {
+      edSelecionadosIds = edSelecionadosIds.filter(x => x !== id);
+      await edSalvarConfig();
+      edRecalcularEventos();
+      edRenderEventos();
+    };
+
+    // ── MODAL ESCOLHER EVENTOS ──
+    function edAbrirEscolher() {
+      const wrap = document.getElementById('ed-escolher-lista');
+      const hoje = new Date().toISOString().slice(0, 10);
+      const disponiveis = edSessoesTodas.filter(s => s.data >= hoje).sort((a, b) => a.data.localeCompare(b.data));
+      if (!disponiveis.length) {
+        wrap.innerHTML = '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:12px 0">Nenhum evento futuro cadastrado na agenda ainda.</p>';
+      } else {
+        wrap.innerHTML = disponiveis.map(s => `
+          <label class="ed-escolher-linha">
+            <input type="checkbox" value="${s.id}" ${edSelecionadosIds.includes(s.id) ? 'checked' : ''}>
+            <span>${calEsc(s.nome) || '—'} — ${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span>
+          </label>`).join('');
+      }
+      document.getElementById('ed-escolher-modal').style.display = 'flex';
+    }
+    function edFecharEscolher() { document.getElementById('ed-escolher-modal').style.display = 'none'; }
+    async function edSalvarEscolher() {
+      edSelecionadosIds = Array.from(document.querySelectorAll('#ed-escolher-lista input[type=checkbox]:checked')).map(el => el.value);
+      await edSalvarConfig();
+      edRecalcularEventos();
+      edRenderEventos();
+      edFecharEscolher();
+    }
+
+    // ── VER TELA CHEIA ──
+    function edAbrirTelaCheia() {
+      const frame = document.getElementById('ed-frame');
+      const destino = document.getElementById('ed-full-conteudo');
+      destino.innerHTML = '';
+      const clone = frame.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.querySelectorAll('.ed-evento-remover').forEach(b => b.remove());
+      destino.appendChild(clone);
+      document.getElementById('ed-full-overlay').style.display = 'block';
+      document.body.style.overflow = 'hidden';
+    }
+    function edFecharTelaCheia() {
+      document.getElementById('ed-full-overlay').style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    // ── GERAR IMAGEM (PNG) ──
+    async function edGerarImagem() {
+      const btn = document.getElementById('ed-btn-imagem');
+      const textoOriginal = btn.textContent;
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      try {
+        const frame = document.getElementById('ed-frame');
+        const clone = frame.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.querySelectorAll('.ed-evento-remover').forEach(b => b.remove());
+        clone.style.margin = '0';
+        clone.style.width = '480px';
+        clone.style.maxWidth = '480px';
+
+        const palco = document.createElement('div');
+        palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:512px;';
+        palco.appendChild(clone);
+        document.body.appendChild(palco);
+
+        if (document.fonts && document.fonts.ready) await document.fonts.ready;
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
+        document.body.removeChild(palco);
+
+        canvas.toBlob(async (blob) => {
+          btn.textContent = textoOriginal;
+          btn.disabled = false;
+          if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+          const nomeArquivo = 'eventos-selecionados.png';
+          const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+            try { await navigator.share({ files: [arquivo], title: 'Eventos Selecionados — Bolhas de Luz' }); return; }
+            catch (e) { /* cancelou o compartilhamento — segue pro download */ }
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url; a.download = nomeArquivo; a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      } catch (e) {
+        console.warn('erro ao gerar imagem dos eventos selecionados:', e);
+        btn.textContent = textoOriginal;
+        btn.disabled = false;
+        alert('Não deu pra gerar a imagem. Tenta de novo.');
+      }
+    }
+
+    // ── MENSAGEM WHATSAPP ──
+    function edGerarTexto() {
+      let txt = `📌 *Eventos Selecionados — Terreiro Bolhas de Luz*\n\n`;
+      if (!edEventos.length) {
+        txt += 'Nenhum evento selecionado no momento.';
+      } else {
+        edEventos.forEach(s => {
+          txt += `🗓️ *${s.nome || '—'}* — ${edFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`;
+          if (s.descricao && s.descricao.trim()) txt += `${s.descricao.trim()}\n`;
+          txt += `\n`;
+        });
+      }
+      txt += `🌸 _Terreiro Bolhas de Luz · bolhasdeluz.ong.br_`;
+      return txt;
+    }
+    function edAbrirRelatorio() {
+      document.getElementById('ed-rel-texto').value = edGerarTexto();
+      document.getElementById('ed-rel-overlay').style.display = 'flex';
+    }
+    function edFecharRelatorio() { document.getElementById('ed-rel-overlay').style.display = 'none'; }
+    function edEnviarWhatsapp() {
+      const texto = document.getElementById('ed-rel-texto').value;
+      window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+    }
+
+    document.getElementById('ed-btn-escolher')?.addEventListener('click', edAbrirEscolher);
+    document.getElementById('ed-escolher-cancelar')?.addEventListener('click', edFecharEscolher);
+    document.getElementById('ed-escolher-salvar')?.addEventListener('click', edSalvarEscolher);
+    document.getElementById('ed-btn-tela-cheia')?.addEventListener('click', edAbrirTelaCheia);
+    document.getElementById('ed-full-fechar')?.addEventListener('click', edFecharTelaCheia);
+    document.getElementById('ed-btn-imagem')?.addEventListener('click', edGerarImagem);
+    document.getElementById('ed-btn-whats')?.addEventListener('click', edAbrirRelatorio);
+    document.getElementById('ed-rel-cancelar')?.addEventListener('click', edFecharRelatorio);
+    document.getElementById('ed-rel-enviar')?.addEventListener('click', edEnviarWhatsapp);
+
+    edCarregarTudo();
   })();
 
   // ══ ORIENTAÇÕES DA SESSÃO ══

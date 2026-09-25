@@ -24,6 +24,7 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', showCard: true, showMenu: true, desc: 'Teste seus conhecimentos, com ranking da casa' },
       { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', showCard: true, showMenu: true, desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa' },
       { id: 'resumo',     label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', showCard: true, showMenu: true, desc: 'Tudo pronto pra printar e mandar no grupo' },
+      { id: 'eventos',    label: '📌 Eventos Selecionados', type: 'internal', page: 'eventos', showCard: true, showMenu: true, desc: 'Eventos da agenda em destaque, com a descrição interna' },
       { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', showCard: true, showMenu: true, desc: 'Monte o aviso da próxima sessão rapidinho' },
     ]},
     { id: 'corrente', label: 'Corrente', items: [
