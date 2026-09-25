@@ -1,7 +1,8 @@
 // Cloudflare Pages Function: /api/qr-contagem
-// Consulta as contagens de leitura dos links curtos de QR code (/ir/:slug),
-// guardadas em "qr:contagem:<slug>" no KV MENU_DATA. Só admin — os números
-// em si não são segredo, mas não faz sentido expor publicamente.
+// Consulta as leituras dos links curtos de QR code (/ir/:slug), guardadas
+// em "qr:leitura:<slug>:<timestamp>-<rand>" no KV MENU_DATA. Retorna, por
+// slug, a lista de horários de leitura (mais recente primeiro) — a
+// contagem é só o tamanho dessa lista. Só admin.
 
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
@@ -32,13 +33,19 @@ export async function onRequest(context) {
   if (!KV) return json({ error: 'KV não configurado.' }, 500);
 
   try {
-    const list = await KV.list({ prefix: 'qr:contagem:' });
-    const contagens = {};
-    await Promise.all(list.keys.map(async k => {
-      const slug = k.name.replace('qr:contagem:', '');
-      contagens[slug] = parseInt((await KV.get(k.name)) || '0', 10);
-    }));
-    return json(contagens);
+    const list = await KV.list({ prefix: 'qr:leitura:' });
+    const porSlug = {};
+    list.keys.forEach(k => {
+      // formato da chave: qr:leitura:<slug>:<timestamp>-<rand>
+      const resto = k.name.slice('qr:leitura:'.length);
+      const doisPontos = resto.lastIndexOf(':');
+      const slug = resto.slice(0, doisPontos);
+      const timestamp = parseInt(resto.slice(doisPontos + 1).split('-')[0], 10);
+      if (!porSlug[slug]) porSlug[slug] = [];
+      if (!isNaN(timestamp)) porSlug[slug].push(timestamp);
+    });
+    Object.values(porSlug).forEach(arr => arr.sort((a, b) => b - a));
+    return json(porSlug);
   } catch (e) {
     return json({ error: e.message }, 500);
   }
