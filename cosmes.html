@@ -141,6 +141,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <button class="modal-close" onclick="document.getElementById('cm-admin-overlay').classList.remove('open')">×</button>
     <div class="modal-title" style="font-size:1.2rem">🍬 Inscritos — Cosme e Damião</div>
     <div class="cm-admin-stats" id="cm-admin-stats">Carregando...</div>
+    <div class="cm-admin-stats" id="cm-qr-contagem" style="color:var(--text-dim);margin-top:-10px"></div>
     <div class="cm-admin-acoes">
       <button class="cm-admin-btn" onclick="cmEnviarWhatsapp()">📱 Mensagem pro WhatsApp</button>
       <button class="cm-admin-btn" onclick="cmMostrarQr()">📷 QR code da página</button>
@@ -148,7 +149,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     </div>
     <div class="cm-qr-wrap" id="cm-qr-wrap" style="display:none">
       <div id="cm-qr-canvas"></div>
-      <span class="cm-qr-link">https://bolhasdeluz.ong.br/cosmes</span>
+      <span class="cm-qr-link">https://bolhasdeluz.ong.br/ir/cosmes</span>
     </div>
     <div class="cm-lista" id="cm-lista"></div>
   </div>
@@ -236,6 +237,7 @@ async function cmAbrirPainelAdmin() {
   document.getElementById('cm-admin-overlay').classList.add('open');
   document.getElementById('cm-qr-wrap').style.display = 'none';
   document.getElementById('cm-admin-stats').textContent = 'Carregando...';
+  document.getElementById('cm-qr-contagem').textContent = '';
   document.getElementById('cm-lista').innerHTML = '';
   try {
     const res = await fetch(CM_API, { headers: CM_ADMIN_HEADERS });
@@ -245,6 +247,14 @@ async function cmAbrirPainelAdmin() {
   } catch (e) {
     document.getElementById('cm-admin-stats').textContent = 'Não consegui carregar a lista.';
   }
+  try {
+    const resQr = await fetch('/api/qr-contagem', { headers: CM_ADMIN_HEADERS });
+    if (resQr.ok) {
+      const contagens = await resQr.json();
+      const n = contagens.cosmes || 0;
+      document.getElementById('cm-qr-contagem').textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'}`;
+    }
+  } catch (e) { /* não trava o painel se essa parte falhar */ }
 }
 
 function cmRenderLista() {
@@ -294,7 +304,9 @@ function cmMostrarQr() {
   const canvasWrap = document.getElementById('cm-qr-canvas');
   if (wrap.style.display === 'none') {
     if (!canvasWrap.hasChildNodes()) {
-      new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/cosmes', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+      // aponta pro link curto /ir/cosmes (não direto pra página) — assim cada
+      // leitura do QR passa por um contador antes de cair na ficha
+      new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/cosmes', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
     }
     wrap.style.display = 'block';
   } else {
