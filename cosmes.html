@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Festa de Cosme e Damião — Bolhas de Luz</title>
+<meta name="description" content="Inscreva sua criança para a Festa de Cosme e Damião do Terreiro Bolhas de Luz.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cosme e Damião — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;--surface:rgba(255,255,255,.72);
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:640px;margin:0 auto;padding:40px 24px 100px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:10px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:32px;line-height:1.6;text-align:center}
+
+.cm-doces{text-align:center;font-size:2rem;margin-bottom:18px;letter-spacing:6px}
+
+.cm-form{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:26px 24px;margin-bottom:24px;box-shadow:0 8px 32px rgba(196,57,107,.1)}
+.cm-campo{margin-bottom:16px}
+.cm-campo label{display:block;font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.cm-campo input{width:100%;border:1px solid var(--border);border-radius:9px;padding:12px 14px;font-size:15px;color:var(--text);background:var(--rosa-dim);font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s,box-shadow .15s}
+.cm-campo input:focus{border-color:var(--rosa);box-shadow:0 0 0 3px rgba(196,57,107,.12);background:#fff}
+.cm-campo-hint{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;margin-top:5px}
+.cm-btn-enviar{width:100%;background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:14px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.08em;font-weight:700;text-transform:uppercase;transition:transform .15s,box-shadow .15s}
+.cm-btn-enviar:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(196,57,107,.3)}
+.cm-btn-enviar:disabled{opacity:.6;cursor:default;transform:none}
+
+.cm-sucesso{display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:20px;text-align:center;margin-bottom:24px}
+.cm-sucesso-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--green);margin-bottom:6px}
+.cm-sucesso p{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:14px}
+.cm-btn-outra{background:none;border:1px solid var(--green-border);color:var(--green);border-radius:9px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:.82rem}
+
+.cm-erro{display:none;font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;text-align:center;margin-bottom:14px}
+
+.cm-rodape-admin{text-align:center;margin-top:36px}
+.cm-link-admin{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--text-dim);opacity:.5;background:none;border:none}
+.cm-link-admin:hover{opacity:.9}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:30px 26px;width:100%;max-width:380px;position:relative;max-height:88vh;overflow-y:auto}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.3rem;color:var(--text-dim);line-height:1}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;margin-bottom:14px}
+.form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;width:100%;outline:none;margin-bottom:14px}
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.06em;font-weight:700}
+
+.cm-admin-stats{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;color:var(--terra);text-align:center;margin-bottom:16px}
+.cm-admin-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.cm-admin-btn{background:none;border:1px solid var(--border);border-radius:9px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text)}
+.cm-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.cm-lista-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--rosa-dim);border-radius:9px;padding:10px 12px}
+.cm-lista-info{font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);line-height:1.5}
+.cm-lista-info b{font-family:'Playfair Display',serif;font-weight:600}
+.cm-lista-del{background:none;border:none;color:#b84040;font-size:1rem;flex-shrink:0}
+.cm-lista-vazia{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:16px 0}
+.cm-qr-wrap{text-align:center;margin:14px 0}
+.cm-qr-wrap canvas,.cm-qr-wrap img{margin:0 auto}
+.cm-qr-link{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;text-align:center;display:block;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <div class="cm-doces">🍬🕯️🍬</div>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">Festa de Cosme e Damião</div>
+  <p class="section-sub">Inscreva sua criança pra receber os docinhos ✦</p>
+
+  <div class="cm-sucesso" id="cm-sucesso">
+    <div class="cm-sucesso-titulo">✦ Inscrição feita! ✦</div>
+    <p>Anotamos direitinho. Se tiver mais uma criança pra inscrever, é só continuar ✦</p>
+    <button class="cm-btn-outra" onclick="cmNovaInscricao()">Inscrever outra criança</button>
+  </div>
+
+  <div class="cm-form" id="cm-form">
+    <p class="cm-erro" id="cm-erro"></p>
+    <div class="cm-campo">
+      <label>Nome da criança</label>
+      <input type="text" id="cm-nome-crianca" placeholder="Nome completo">
+    </div>
+    <div class="cm-campo">
+      <label>Idade</label>
+      <input type="number" id="cm-idade" min="0" max="17" placeholder="Ex: 5">
+    </div>
+    <div class="cm-campo">
+      <label>Nome do responsável</label>
+      <input type="text" id="cm-responsavel" placeholder="Nome completo">
+    </div>
+    <div class="cm-campo">
+      <label>Telefone do responsável</label>
+      <input type="tel" id="cm-telefone" placeholder="(51) 99999-9999">
+      <div class="cm-campo-hint">Opcional — só usamos pra mandar um lembrete perto da festa</div>
+    </div>
+    <button class="cm-btn-enviar" id="cm-btn-enviar" onclick="cmEnviar()">✦ Inscrever criança</button>
+  </div>
+
+  <div class="cm-rodape-admin">
+    <button class="cm-link-admin" onclick="cmAbrirAdmin()">⚙ Painel</button>
+  </div>
+</div>
+
+<div id="cm-senha-overlay" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:300px">
+    <button class="modal-close" onclick="document.getElementById('cm-senha-overlay').classList.remove('open')">×</button>
+    <div class="modal-title" style="font-size:1.1rem">Admin</div>
+    <input type="password" class="form-input" id="cm-senha-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')cmChecarSenha()">
+    <div id="cm-senha-erro" style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:#b84040;margin-bottom:12px;display:none">Senha incorreta.</div>
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="cmChecarSenha()">Entrar</button>
+  </div>
+</div>
+
+<div id="cm-admin-overlay" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="document.getElementById('cm-admin-overlay').classList.remove('open')">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🍬 Inscritos — Cosme e Damião</div>
+    <div class="cm-admin-stats" id="cm-admin-stats">Carregando...</div>
+    <div class="cm-admin-acoes">
+      <button class="cm-admin-btn" onclick="cmEnviarWhatsapp()">📱 Mensagem pro WhatsApp</button>
+      <button class="cm-admin-btn" onclick="cmMostrarQr()">📷 QR code da página</button>
+      <button class="cm-admin-btn" onclick="cmSair()">🔑 Sair</button>
+    </div>
+    <div class="cm-qr-wrap" id="cm-qr-wrap" style="display:none">
+      <div id="cm-qr-canvas"></div>
+      <span class="cm-qr-link">https://bolhasdeluz.ong.br/cosmes</span>
+    </div>
+    <div class="cm-lista" id="cm-lista"></div>
+  </div>
+</div>
+
+<script>
+const CM_API = '/api/cosme';
+const CM_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+let cmSenhaAtiva = localStorage.getItem('cmSenhaAtiva') === '1';
+let cmInscricoes = [];
+
+function cmEsc(s) { return (s || '').toString().replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function cmEnviar() {
+  const nomeCrianca = document.getElementById('cm-nome-crianca').value.trim();
+  const idade = document.getElementById('cm-idade').value.trim();
+  const responsavel = document.getElementById('cm-responsavel').value.trim();
+  const telefone = document.getElementById('cm-telefone').value.trim();
+  const erroEl = document.getElementById('cm-erro');
+  erroEl.style.display = 'none';
+  if (!nomeCrianca || !idade || !responsavel) {
+    erroEl.textContent = 'Preencha o nome da criança, a idade e o nome do responsável.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('cm-btn-enviar');
+  btn.disabled = true;
+  try {
+    const res = await fetch(CM_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nomeCrianca, idade, responsavel, telefone }) });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui enviar — tenta de novo.'; erroEl.style.display = 'block'; btn.disabled = false; return; }
+    document.getElementById('cm-form').style.display = 'none';
+    document.getElementById('cm-sucesso').style.display = 'block';
+    // guarda responsável/telefone pra facilitar inscrever outro filho da mesma família
+    window._cmUltimoResponsavel = responsavel;
+    window._cmUltimoTelefone = telefone;
+  } catch (e) {
+    erroEl.textContent = 'Não consegui enviar — confere sua internet e tenta de novo.';
+    erroEl.style.display = 'block';
+  }
+  btn.disabled = false;
+}
+window.cmEnviar = cmEnviar;
+
+function cmNovaInscricao() {
+  document.getElementById('cm-nome-crianca').value = '';
+  document.getElementById('cm-idade').value = '';
+  document.getElementById('cm-responsavel').value = window._cmUltimoResponsavel || '';
+  document.getElementById('cm-telefone').value = window._cmUltimoTelefone || '';
+  document.getElementById('cm-erro').style.display = 'none';
+  document.getElementById('cm-sucesso').style.display = 'none';
+  document.getElementById('cm-form').style.display = 'block';
+}
+window.cmNovaInscricao = cmNovaInscricao;
+
+function cmAbrirAdmin() {
+  if (cmSenhaAtiva) { cmAbrirPainelAdmin(); return; }
+  document.getElementById('cm-senha-input').value = '';
+  document.getElementById('cm-senha-erro').style.display = 'none';
+  document.getElementById('cm-senha-overlay').classList.add('open');
+}
+window.cmAbrirAdmin = cmAbrirAdmin;
+
+function cmChecarSenha() {
+  const senha = document.getElementById('cm-senha-input').value;
+  if (senha !== 'admin') {
+    document.getElementById('cm-senha-erro').style.display = 'block';
+    return;
+  }
+  cmSenhaAtiva = true;
+  localStorage.setItem('cmSenhaAtiva', '1');
+  document.getElementById('cm-senha-overlay').classList.remove('open');
+  cmAbrirPainelAdmin();
+}
+window.cmChecarSenha = cmChecarSenha;
+
+function cmSair() {
+  cmSenhaAtiva = false;
+  localStorage.removeItem('cmSenhaAtiva');
+  document.getElementById('cm-admin-overlay').classList.remove('open');
+}
+window.cmSair = cmSair;
+
+async function cmAbrirPainelAdmin() {
+  document.getElementById('cm-admin-overlay').classList.add('open');
+  document.getElementById('cm-qr-wrap').style.display = 'none';
+  document.getElementById('cm-admin-stats').textContent = 'Carregando...';
+  document.getElementById('cm-lista').innerHTML = '';
+  try {
+    const res = await fetch(CM_API, { headers: CM_ADMIN_HEADERS });
+    if (!res.ok) throw new Error('não autorizado');
+    cmInscricoes = await res.json();
+    cmRenderLista();
+  } catch (e) {
+    document.getElementById('cm-admin-stats').textContent = 'Não consegui carregar a lista.';
+  }
+}
+
+function cmRenderLista() {
+  document.getElementById('cm-admin-stats').textContent = `${cmInscricoes.length} criança${cmInscricoes.length === 1 ? '' : 's'} inscrita${cmInscricoes.length === 1 ? '' : 's'}`;
+  const wrap = document.getElementById('cm-lista');
+  if (!cmInscricoes.length) {
+    wrap.innerHTML = '<div class="cm-lista-vazia">Ninguém se inscreveu ainda ✦</div>';
+    return;
+  }
+  wrap.innerHTML = cmInscricoes.map(i => `
+    <div class="cm-lista-item">
+      <div class="cm-lista-info">
+        <b>${cmEsc(i.nomeCrianca)}</b> — ${cmEsc(i.idade)} anos<br>
+        Responsável: ${cmEsc(i.responsavel)}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}
+      </div>
+      <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
+    </div>`).join('');
+}
+
+async function cmExcluir(id) {
+  if (!confirm('Remover essa inscrição?')) return;
+  try {
+    const res = await fetch(CM_API, { method: 'DELETE', headers: CM_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+    if (!res.ok) { alert('Não consegui remover — tenta de novo.'); return; }
+    cmInscricoes = cmInscricoes.filter(i => i.id !== id);
+    cmRenderLista();
+  } catch (e) { alert('Não consegui remover — tenta de novo.'); }
+}
+window.cmExcluir = cmExcluir;
+
+function cmEnviarWhatsapp() {
+  let texto = `🍬 *Inscritos — Festa de Cosme e Damião* 🍬\n\n`;
+  if (!cmInscricoes.length) {
+    texto += 'Ninguém se inscreveu ainda.';
+  } else {
+    cmInscricoes.forEach((i, idx) => {
+      texto += `${idx + 1}. ${i.nomeCrianca} (${i.idade} anos) — responsável: ${i.responsavel}${i.telefone ? ' · ' + i.telefone : ''}\n`;
+    });
+    texto += `\nTotal: ${cmInscricoes.length}`;
+  }
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+window.cmEnviarWhatsapp = cmEnviarWhatsapp;
+
+function cmMostrarQr() {
+  const wrap = document.getElementById('cm-qr-wrap');
+  const canvasWrap = document.getElementById('cm-qr-canvas');
+  if (wrap.style.display === 'none') {
+    if (!canvasWrap.hasChildNodes()) {
+      new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/cosmes', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+    }
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+window.cmMostrarQr = cmMostrarQr;
+</script>
+</body>
+</html>
