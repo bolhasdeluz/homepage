@@ -83,6 +83,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .cm-qr-wrap{text-align:center;margin:14px 0}
 .cm-qr-wrap canvas,.cm-qr-wrap img{margin:0 auto}
 .cm-qr-link{font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;text-align:center;display:block;margin-top:8px}
+.cm-qr-leituras{display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7}
+.cm-qr-leituras-toggle{background:none;border:none;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.05em;color:var(--text-dim);text-decoration:underline;margin-bottom:10px;display:block;text-align:center;width:100%}
 </style>
 </head>
 <body>
@@ -141,7 +143,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <button class="modal-close" onclick="document.getElementById('cm-admin-overlay').classList.remove('open')">×</button>
     <div class="modal-title" style="font-size:1.2rem">🍬 Inscritos — Cosme e Damião</div>
     <div class="cm-admin-stats" id="cm-admin-stats">Carregando...</div>
-    <div class="cm-admin-stats" id="cm-qr-contagem" style="color:var(--text-dim);margin-top:-10px"></div>
+    <button class="cm-qr-leituras-toggle" id="cm-qr-contagem" onclick="cmToggleLeituras()" style="display:none"></button>
+    <div class="cm-qr-leituras" id="cm-qr-leituras"></div>
     <div class="cm-admin-acoes">
       <button class="cm-admin-btn" onclick="cmEnviarWhatsapp()">📱 Mensagem pro WhatsApp</button>
       <button class="cm-admin-btn" onclick="cmMostrarQr()">📷 QR code da página</button>
@@ -233,11 +236,14 @@ function cmSair() {
 }
 window.cmSair = cmSair;
 
+let cmLeiturasQr = [];
+
 async function cmAbrirPainelAdmin() {
   document.getElementById('cm-admin-overlay').classList.add('open');
   document.getElementById('cm-qr-wrap').style.display = 'none';
   document.getElementById('cm-admin-stats').textContent = 'Carregando...';
-  document.getElementById('cm-qr-contagem').textContent = '';
+  document.getElementById('cm-qr-contagem').style.display = 'none';
+  document.getElementById('cm-qr-leituras').style.display = 'none';
   document.getElementById('cm-lista').innerHTML = '';
   try {
     const res = await fetch(CM_API, { headers: CM_ADMIN_HEADERS });
@@ -250,12 +256,27 @@ async function cmAbrirPainelAdmin() {
   try {
     const resQr = await fetch('/api/qr-contagem', { headers: CM_ADMIN_HEADERS });
     if (resQr.ok) {
-      const contagens = await resQr.json();
-      const n = contagens.cosmes || 0;
-      document.getElementById('cm-qr-contagem').textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'}`;
+      const porSlug = await resQr.json();
+      cmLeiturasQr = porSlug.cosmes || [];
+      const n = cmLeiturasQr.length;
+      const btn = document.getElementById('cm-qr-contagem');
+      btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
+      btn.style.display = n ? 'block' : 'none';
     }
   } catch (e) { /* não trava o painel se essa parte falhar */ }
 }
+
+function cmFormatarDataHora(ts) {
+  return new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function cmToggleLeituras() {
+  const wrap = document.getElementById('cm-qr-leituras');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = cmLeiturasQr.map(ts => `<div>${cmFormatarDataHora(ts)}</div>`).join('') || '<div>Nenhuma leitura ainda ✦</div>';
+  wrap.style.display = 'block';
+}
+window.cmToggleLeituras = cmToggleLeituras;
 
 function cmRenderLista() {
   document.getElementById('cm-admin-stats').textContent = `${cmInscricoes.length} criança${cmInscricoes.length === 1 ? '' : 's'} inscrita${cmInscricoes.length === 1 ? '' : 's'}`;
