@@ -20,6 +20,7 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', showCard: true, showMenu: true, desc: 'Veja o que a casa está precisando' },
       { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', showCard: true, showMenu: true, desc: 'Chave: bolhasdeluz@gmail.com' },
       { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', showCard: true, showMenu: true, desc: 'Tarefas e reparos da casa' },
+      { id: 'cosmes',     label: '🍬 Cosme e Damião',  type: 'external', url: '/cosmes', showCard: true, showMenu: true, desc: 'Inscreva sua criança para a festa' },
       { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', showCard: true, showMenu: true, desc: 'Teste seus conhecimentos, com ranking da casa' },
       { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', showCard: true, showMenu: true, desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa' },
       { id: 'resumo',     label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', showCard: true, showMenu: true, desc: 'Tudo pronto pra printar e mandar no grupo' },
