@@ -1264,6 +1264,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .ed-evento-remover:hover{color:#b84040}
 .ed-escolher-linha{display:flex;align-items:flex-start;gap:9px;padding:9px 4px;border-bottom:1px solid rgba(196,90,30,.08);font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
 .ed-escolher-linha input{margin-top:3px;flex-shrink:0}
+.ed-escolher-mes{font-family:'Cinzel',serif;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);padding:12px 4px 5px;position:sticky;top:0;background:#fff}
+.ed-escolher-mes:first-child{padding-top:0}
 
 .rm-topo-acoes{display:flex;justify-content:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
 .rm-btn-whats{background:#25D366;color:#fff;border:none;border-radius:11px;padding:12px 22px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(37,211,102,.3);transition:transform .15s}
@@ -13279,6 +13281,7 @@ const auth = getAuth(app);
     };
 
     // ── MODAL ESCOLHER EVENTOS ──
+    const ED_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
     function edAbrirEscolher() {
       const wrap = document.getElementById('ed-escolher-lista');
       const hoje = new Date().toISOString().slice(0, 10);
@@ -13286,11 +13289,24 @@ const auth = getAuth(app);
       if (!disponiveis.length) {
         wrap.innerHTML = '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:12px 0">Nenhum evento futuro cadastrado na agenda ainda.</p>';
       } else {
-        wrap.innerHTML = disponiveis.map(s => `
+        // agrupa por mês/ano pra facilitar de achar o evento certo numa lista longa
+        let html = '';
+        let mesAnoAtual = '';
+        disponiveis.forEach(s => {
+          const [ano, mes] = s.data.split('-');
+          const chave = `${ano}-${mes}`;
+          if (chave !== mesAnoAtual) {
+            mesAnoAtual = chave;
+            const nomeMes = ED_MESES[parseInt(mes, 10) - 1];
+            html += `<div class="ed-escolher-mes">${nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1)} de ${ano}</div>`;
+          }
+          html += `
           <label class="ed-escolher-linha">
             <input type="checkbox" value="${s.id}" ${edSelecionadosIds.includes(s.id) ? 'checked' : ''}>
             <span>${calEsc(s.nome) || '—'} — ${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span>
-          </label>`).join('');
+          </label>`;
+        });
+        wrap.innerHTML = html;
       }
       document.getElementById('ed-escolher-modal').style.display = 'flex';
     }
