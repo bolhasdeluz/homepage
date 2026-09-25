@@ -13397,7 +13397,9 @@ const auth = getAuth(app);
       } else {
         edEventos.forEach((s, idx) => {
           if (idx > 0) txt += `\n`;
-          txt += `*${s.nome || '—'}*\n`;
+          // 🛖 pras nossas sessões, 🏘️ quando é visita a outra casa
+          const emojiLado = s.lado === 'Visita' ? '🏘️' : '🛖';
+          txt += `${emojiLado} *${s.nome || '—'}*\n`;
           txt += `📅 ${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}\n`;
           if (s.descricao && s.descricao.trim()) txt += `${s.descricao.trim()}\n`;
         });
