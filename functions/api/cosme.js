@@ -56,6 +56,11 @@ export async function onRequest(context) {
       const telefone = (body.telefone || '').trim();
       const quantidadeNum = parseInt(body.quantidade, 10);
       const quantidade = (Number.isFinite(quantidadeNum) && quantidadeNum > 0) ? quantidadeNum : 1;
+      // adultos acompanhantes de uma inscrição de criança — o responsável já
+      // conta como 1, então o padrão é 1 se não vier preenchido/for inválido
+      const adultosNum = parseInt(body.adultos, 10);
+      const adultos = (Number.isFinite(adultosNum) && adultosNum > 0) ? adultosNum : 1;
+      const grupoId = (body.grupoId || '').toString().trim();
       if (tipo === 'crianca') {
         if (!nome || !idade || !responsavel) {
           return json({ error: 'Nome da criança, idade e nome do responsável são obrigatórios.' }, 400);
@@ -64,7 +69,7 @@ export async function onRequest(context) {
         return json({ error: 'Informe seu nome.' }, 400);
       }
       const id = `cosme:inscricao:${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      const inscricao = { id, tipo, nome, idade, responsavel, quantidade, telefone, criadoEm: Date.now() };
+      const inscricao = { id, tipo, nome, idade, responsavel, quantidade, adultos, grupoId, telefone, criadoEm: Date.now() };
       await KV.put(id, JSON.stringify(inscricao));
       return json(inscricao);
     }

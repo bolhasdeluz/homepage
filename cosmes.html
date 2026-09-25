@@ -135,6 +135,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <label>Nome do responsável</label>
       <input type="text" id="cm-responsavel" placeholder="Nome completo">
     </div>
+    <div class="cm-campo" id="cm-campo-adultos-crianca">
+      <label>Quantos adultos vieram junto?</label>
+      <input type="number" id="cm-adultos-crianca" min="1" value="1" placeholder="Ex: 2">
+      <div class="cm-campo-hint">O responsável já conta como 1 — aumente se vier mais gente</div>
+    </div>
     <div class="cm-campo" id="cm-campo-quantidade" style="display:none">
       <label>Quantas pessoas no grupo?</label>
       <input type="number" id="cm-quantidade" min="1" value="1" placeholder="Ex: 2">
@@ -203,6 +208,7 @@ function cmEscolherTipo(tipo) {
   document.getElementById('cm-criancas-lista').style.display = tipo === 'crianca' ? '' : 'none';
   document.getElementById('cm-campo-nome-adulto').style.display = tipo === 'adulto' ? '' : 'none';
   document.getElementById('cm-campo-responsavel').style.display = tipo === 'crianca' ? '' : 'none';
+  document.getElementById('cm-campo-adultos-crianca').style.display = tipo === 'crianca' ? '' : 'none';
   document.getElementById('cm-campo-quantidade').style.display = tipo === 'adulto' ? '' : 'none';
   document.getElementById('cm-label-telefone').textContent = tipo === 'crianca' ? 'Telefone do responsável' : 'Telefone';
   document.getElementById('cm-btn-enviar').textContent = tipo === 'crianca' ? '✦ Inscrever criança(s)' : '✦ Confirmar presença';
@@ -245,6 +251,7 @@ async function cmEnviar() {
 
   if (cmTipoAtual === 'crianca') {
     const responsavel = document.getElementById('cm-responsavel').value.trim();
+    const adultos = document.getElementById('cm-adultos-crianca').value.trim();
     const qtd = Math.max(1, parseInt(document.getElementById('cm-qtd-criancas').value, 10) || 1);
     const criancas = [];
     for (let i = 0; i < qtd; i++) {
@@ -261,9 +268,12 @@ async function cmEnviar() {
     btn.disabled = true;
     try {
       // uma inscrição por criança, pra cada uma ficar com seu próprio
-      // registro na lista/admin (todas com o mesmo responsável/telefone)
+      // registro na lista/admin (todas com o mesmo responsável/telefone) —
+      // o grupoId é compartilhado entre elas só pra não contar os adultos
+      // acompanhantes mais de uma vez na hora de somar o total de pessoas
+      const grupoId = `grupo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       for (const c of criancas) {
-        const res = await fetch(CM_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'crianca', nome: c.nome, idade: c.idade, responsavel, telefone }) });
+        const res = await fetch(CM_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tipo: 'crianca', nome: c.nome, idade: c.idade, responsavel, adultos, grupoId, telefone }) });
         if (!res.ok) { const data = await res.json(); throw new Error(data.error || 'Não consegui enviar — tenta de novo.'); }
       }
       document.getElementById('cm-form').style.display = 'none';
@@ -307,6 +317,7 @@ function cmNovaInscricao() {
   document.getElementById('cm-qtd-criancas').value = '1';
   document.getElementById('cm-nome').value = '';
   document.getElementById('cm-quantidade').value = '1';
+  document.getElementById('cm-adultos-crianca').value = '1';
   cmEscolherTipo('crianca');
   document.getElementById('cm-responsavel').value = window._cmUltimoResponsavel || '';
   document.getElementById('cm-telefone').value = window._cmUltimoTelefone || '';
@@ -392,10 +403,29 @@ window.cmToggleLeituras = cmToggleLeituras;
 // quantidade de pessoas de uma inscrição de adultos — padrão 1 se não
 // vier preenchido ou vier algo inválido
 function cmQtd(i) { const n = parseInt(i.quantidade, 10); return (Number.isFinite(n) && n > 0) ? n : 1; }
+// quantos adultos vieram junto de uma inscrição de criança — padrão 1
+// (o responsável já conta como 1)
+function cmAdultosCrianca(i) { const n = parseInt(i.adultos, 10); return (Number.isFinite(n) && n > 0) ? n : 1; }
+// soma os adultos acompanhantes das inscrições de criança sem contar
+// duplicado — várias crianças da mesma leva de inscrição compartilham o
+// mesmo grupoId e o mesmo número de adultos, então cada grupo conta só uma vez
+function cmSomaAdultosDosGrupos(lista) {
+  const porGrupo = new Map();
+  lista.forEach(i => {
+    const chave = i.grupoId || i.id; // sem grupoId (registro antigo) conta sozinho
+    if (!porGrupo.has(chave)) porGrupo.set(chave, cmAdultosCrianca(i));
+  });
+  let soma = 0;
+  porGrupo.forEach(v => { soma += v; });
+  return soma;
+}
 
 function cmRenderLista() {
-  const nCriancas = cmInscricoes.filter(i => i.tipo !== 'adulto').length;
-  const somaAdultos = cmInscricoes.filter(i => i.tipo === 'adulto').reduce((soma, i) => soma + cmQtd(i), 0);
+  const criancasInscritas = cmInscricoes.filter(i => i.tipo !== 'adulto');
+  const nCriancas = criancasInscritas.length;
+  const adultosDasCriancas = cmSomaAdultosDosGrupos(criancasInscritas);
+  const somaAdultosSozinhos = cmInscricoes.filter(i => i.tipo === 'adulto').reduce((soma, i) => soma + cmQtd(i), 0);
+  const somaAdultos = adultosDasCriancas + somaAdultosSozinhos;
   const total = nCriancas + somaAdultos;
   document.getElementById('cm-admin-stats').textContent = `${total} pessoa${total === 1 ? '' : 's'} confirmada${total === 1 ? '' : 's'} (${nCriancas} criança${nCriancas === 1 ? '' : 's'}, ${somaAdultos} adulto${somaAdultos === 1 ? '' : 's'})`;
   const wrap = document.getElementById('cm-lista');
@@ -408,7 +438,7 @@ function cmRenderLista() {
       <div class="cm-lista-info">
         ${i.tipo === 'adulto'
           ? `🧑 <b>${cmEsc(i.nome)}</b> — ${cmQtd(i)} pessoa${cmQtd(i) === 1 ? '' : 's'}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`
-          : `🧒 <b>${cmEsc(i.nome)}</b> — ${cmEsc(i.idade)} anos<br>Responsável: ${cmEsc(i.responsavel)}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`}
+          : `🧒 <b>${cmEsc(i.nome)}</b> — ${cmEsc(i.idade)} anos<br>Responsável: ${cmEsc(i.responsavel)}${cmAdultosCrianca(i) > 1 ? ` (+${cmAdultosCrianca(i) - 1} adulto${cmAdultosCrianca(i) - 1 === 1 ? '' : 's'})` : ''}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`}
       </div>
       <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
     </div>`).join('');
@@ -432,10 +462,13 @@ function cmEnviarWhatsapp() {
   } else {
     cmInscricoes.forEach((i, idx) => {
       if (i.tipo === 'adulto') texto += `${idx + 1}. ${i.nome} (${cmQtd(i)} pessoa${cmQtd(i) === 1 ? '' : 's'})${i.telefone ? ' · ' + i.telefone : ''}\n`;
-      else texto += `${idx + 1}. ${i.nome} (${i.idade} anos) — responsável: ${i.responsavel}${i.telefone ? ' · ' + i.telefone : ''}\n`;
+      else texto += `${idx + 1}. ${i.nome} (${i.idade} anos) — responsável: ${i.responsavel}${cmAdultosCrianca(i) > 1 ? ` (+${cmAdultosCrianca(i) - 1} adulto${cmAdultosCrianca(i) - 1 === 1 ? '' : 's'})` : ''}${i.telefone ? ' · ' + i.telefone : ''}\n`;
     });
-    const nCriancas = cmInscricoes.filter(i => i.tipo !== 'adulto').length;
-    const somaAdultos = cmInscricoes.filter(i => i.tipo === 'adulto').reduce((soma, i) => soma + cmQtd(i), 0);
+    const criancasInscritas = cmInscricoes.filter(i => i.tipo !== 'adulto');
+    const nCriancas = criancasInscritas.length;
+    const adultosDasCriancas = cmSomaAdultosDosGrupos(criancasInscritas);
+    const somaAdultosSozinhos = cmInscricoes.filter(i => i.tipo === 'adulto').reduce((soma, i) => soma + cmQtd(i), 0);
+    const somaAdultos = adultosDasCriancas + somaAdultosSozinhos;
     texto += `\nTotal: ${nCriancas + somaAdultos} pessoas (${nCriancas} crianças, ${somaAdultos} adultos)`;
   }
   window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
