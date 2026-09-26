@@ -1258,6 +1258,7 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .ed-evento{background:var(--rosa-dim);border-radius:9px;padding:12px 14px;margin-bottom:8px;position:relative}
 .ed-evento-topo{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;padding-right:22px}
 .ed-evento-nome{font-family:'Playfair Display',serif;font-weight:600;font-size:.98rem;color:var(--text)}
+.ed-evento-visita{display:inline-block;background:#4a6fa5;color:#fff;font-family:'Cinzel',serif;font-size:.52rem;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:middle}
 .ed-evento-data{font-family:'Cinzel',serif;font-size:.68rem;color:var(--rosa);font-weight:700;white-space:nowrap}
 .ed-evento-desc{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);white-space:pre-wrap;line-height:1.5}
 .ed-evento-remover{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text-dim);font-size:.85rem;line-height:1}
@@ -2971,7 +2972,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div class="section-wrap">
     <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
-    <div class="section-title">📌 Eventos Selecionados</div>
+    <div class="section-title">📌 Próximas Sessões</div>
     <p class="section-sub">Escolha eventos da agenda pra destacar, com a descrição interna ✦</p>
 
     <div class="rm-topo-acoes">
@@ -2984,7 +2985,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="rm-frame" id="ed-frame">
       <div class="rm-header">
         <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
-        <div class="rm-header-titulo">📌 Eventos Selecionados</div>
+        <div class="rm-header-titulo">📌 Próximas Sessões</div>
         <div class="rm-header-sub">Um espaço de fé, axé e comunidade</div>
       </div>
       <div class="rm-body">
@@ -3010,7 +3011,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <!-- MODAL RELATÓRIO WHATSAPP EVENTOS SELECIONADOS -->
 <div class="mn-modal-bg" id="ed-rel-overlay" style="display:none">
   <div class="es-rel-modal">
-    <h3>📌 Mensagem dos Eventos Selecionados</h3>
+    <h3>📌 Mensagem das Próximas Sessões</h3>
     <p>Revise o texto e mande direto pro grupo do WhatsApp.</p>
     <textarea class="es-rel-textarea" id="ed-rel-texto" style="min-height:320px"></textarea>
     <div class="es-rel-btns">
@@ -4471,7 +4472,7 @@ function getDefaultMenu() {
         { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
         { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa', showCard: true, showMenu: true },
         { id: 'resumo', label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
-        { id: 'eventos', label: '📌 Eventos Selecionados', type: 'internal', page: 'eventos', desc: 'Eventos da agenda em destaque, com a descrição interna', showCard: true, showMenu: true },
+        { id: 'eventos', label: '📌 Próximas Sessões', type: 'internal', page: 'eventos', desc: 'Eventos da agenda em destaque, com a descrição interna', showCard: true, showMenu: true },
         { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
       ]},
       { id: 'corrente', label: 'Corrente', items: [
@@ -13259,7 +13260,7 @@ const auth = getAuth(app);
         <div class="ed-evento">
           <button class="ed-evento-remover" onclick="window._edRemover('${s.id}')" title="Remover da seleção">✕</button>
           <div class="ed-evento-topo">
-            <span class="ed-evento-nome">${calEsc(s.nome) || '—'}</span>
+            <span class="ed-evento-nome">${calEsc(s.nome) || '—'}${s.lado === 'Visita' ? ' <span class="ed-evento-visita">VISITA</span>' : ''}</span>
             <span class="ed-evento-data">${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span>
           </div>
           ${s.descricao ? `<div class="ed-evento-desc">${calEsc(s.descricao)}</div>` : ''}
@@ -13366,10 +13367,10 @@ const auth = getAuth(app);
           btn.textContent = textoOriginal;
           btn.disabled = false;
           if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
-          const nomeArquivo = 'eventos-selecionados.png';
+          const nomeArquivo = 'proximas-sessoes.png';
           const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
           if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-            try { await navigator.share({ files: [arquivo], title: 'Eventos Selecionados — Bolhas de Luz' }); return; }
+            try { await navigator.share({ files: [arquivo], title: 'Próximas Sessões — Bolhas de Luz' }); return; }
             catch (e) { /* cancelou o compartilhamento — segue pro download */ }
           }
           const url = URL.createObjectURL(blob);
@@ -13391,7 +13392,7 @@ const auth = getAuth(app);
     // branco entre eventos, em vez de repetir emoji e juntar tudo numa
     // linha só, que ficava poluído com vários eventos selecionados
     function edGerarTexto() {
-      let txt = `📌 *Eventos Selecionados*\n\n`;
+      let txt = `📌 *Próximas Sessões*\n\n`;
       if (!edEventos.length) {
         txt += 'Nenhum evento selecionado no momento.';
       } else {
