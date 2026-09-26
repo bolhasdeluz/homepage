@@ -13391,21 +13391,23 @@ const auth = getAuth(app);
     // linha só com um emoji, descrição solta embaixo), com uma linha em
     // branco entre eventos, em vez de repetir emoji e juntar tudo numa
     // linha só, que ficava poluído com vários eventos selecionados
+    // sem emoji nas linhas — com muitos eventos selecionados, repetir o
+    // mesmo emoji em cada um só deixava a mensagem carregada sem ajudar em
+    // nada. "Visita" continua marcado, só que como texto simples
     function edGerarTexto() {
-      let txt = `📌 *Próximas Sessões*\n\n`;
+      let txt = `*Próximas Sessões*\n\n`;
       if (!edEventos.length) {
         txt += 'Nenhum evento selecionado no momento.';
       } else {
         edEventos.forEach((s, idx) => {
           if (idx > 0) txt += `\n`;
-          // 🛖 pras nossas sessões, 🏘️ quando é visita a outra casa
-          const emojiLado = s.lado === 'Visita' ? '🏘️' : '🛖';
-          txt += `${emojiLado} *${s.nome || '—'}*\n`;
-          txt += `📅 ${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}\n`;
+          const tagVisita = s.lado === 'Visita' ? ' (visita)' : '';
+          txt += `*${s.nome || '—'}*${tagVisita}\n`;
+          txt += `${edFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}\n`;
           if (s.descricao && s.descricao.trim()) txt += `${s.descricao.trim()}\n`;
         });
       }
-      txt += `\n🌸 Terreiro Bolhas de Luz`;
+      txt += `\nTerreiro Bolhas de Luz`;
       return txt;
     }
     function edAbrirRelatorio() {
