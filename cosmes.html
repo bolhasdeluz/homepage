@@ -89,6 +89,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .cm-lista{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
 .cm-lista-item{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--rosa-dim);border-radius:9px;padding:10px 12px}
 .cm-lista-info{font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);line-height:1.5}
+.cm-lista-data{font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:2px}
 .cm-lista-info b{font-family:'Playfair Display',serif;font-weight:600}
 .cm-lista-del{background:none;border:none;color:#b84040;font-size:1rem;flex-shrink:0}
 .cm-lista-vazia{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:16px 0}
@@ -439,6 +440,7 @@ function cmRenderLista() {
         ${i.tipo === 'adulto'
           ? `🧑 <b>${cmEsc(i.nome)}</b> — ${cmQtd(i)} pessoa${cmQtd(i) === 1 ? '' : 's'}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`
           : `🧒 <b>${cmEsc(i.nome)}</b> — ${cmEsc(i.idade)} anos<br>Responsável: ${cmEsc(i.responsavel)}${cmAdultosCrianca(i) > 1 ? ` (+${cmAdultosCrianca(i) - 1} adulto${cmAdultosCrianca(i) - 1 === 1 ? '' : 's'})` : ''}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`}
+        ${i.criadoEm ? `<div class="cm-lista-data">Inscrito(a) em ${cmFormatarDataHora(i.criadoEm)}</div>` : ''}
       </div>
       <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
     </div>`).join('');
