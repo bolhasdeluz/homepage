@@ -47,6 +47,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .cm-doces{text-align:center;font-size:2rem;margin-bottom:18px;letter-spacing:6px}
 
+.cm-btn-atracoes{display:block;width:100%;background:linear-gradient(135deg,var(--terra),#c88c00);color:#fff;border:none;border-radius:12px;padding:15px;font-family:'Cinzel',serif;font-size:.8rem;letter-spacing:.06em;font-weight:700;text-align:center;margin-bottom:22px;box-shadow:0 6px 20px rgba(140,58,26,.28);transition:transform .15s,box-shadow .15s}
+.cm-btn-atracoes:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(140,58,26,.35)}
+.cm-atracoes-hora{font-family:'Cinzel',serif;font-size:.72rem;font-weight:700;letter-spacing:.05em;color:var(--rosa);margin:16px 0 8px}
+.cm-atracoes-hora:first-child{margin-top:0}
+.cm-atracoes-item{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);line-height:1.5;padding-left:16px;position:relative;margin-bottom:8px}
+.cm-atracoes-item::before{content:'✦';position:absolute;left:0;top:2px;color:var(--rosa);font-size:.72rem}
+
 .cm-tipo-toggle{display:flex;gap:8px;margin-bottom:18px}
 .cm-tipo-btn{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 10px;font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.04em;color:var(--text-dim);text-align:center;transition:all .15s}
 .cm-tipo-btn.active{background:var(--rosa);border-color:var(--rosa);color:#fff}
@@ -110,6 +117,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <div class="cm-subtitulo">Sessão de Cosme e Damião</div>
   <p class="section-sub">Inscreva sua criança pra receber os docinhos ✦</p>
 
+  <button class="cm-btn-atracoes" onclick="document.getElementById('cm-atracoes-overlay').classList.add('open')">🎉 Veja as atrações</button>
+
   <div class="cm-sucesso" id="cm-sucesso">
     <div class="cm-sucesso-titulo">✦ Inscrição feita! ✦</div>
     <p>Anotamos direitinho. Se tiver mais alguém pra inscrever, é só continuar ✦</p>
@@ -157,6 +166,20 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div class="cm-rodape-admin">
     <button class="cm-link-admin" onclick="cmAbrirAdmin()">⚙ Painel</button>
+  </div>
+</div>
+
+<div id="cm-atracoes-overlay" class="overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-close" onclick="document.getElementById('cm-atracoes-overlay').classList.remove('open')">×</button>
+    <div class="modal-title" style="font-size:1.15rem">🎉 Atrações do dia</div>
+    <div class="cm-atracoes-hora">15h</div>
+    <div class="cm-atracoes-item">Abertura, com a participação da Ursa Bolhota e do fantoche PJ</div>
+    <div class="cm-atracoes-item">Brincadeira de pescaria, com doces de prêmio</div>
+    <div class="cm-atracoes-item">Brincadeiras diversas</div>
+    <div class="cm-atracoes-hora">17h</div>
+    <div class="cm-atracoes-item">Início da sessão de Cosme e Damião</div>
+    <div class="cm-atracoes-item">Distribuição de doces</div>
   </div>
 </div>
 
