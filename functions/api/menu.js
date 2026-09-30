@@ -30,6 +30,7 @@ const DEFAULT_MENU = JSON.stringify({
     { id: 'corrente', label: 'Corrente', items: [
       { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: '/tesouraria', showCard: true, showMenu: true, desc: 'Finanças e obrigações da casa' },
       { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true, desc: 'Perfis e guias espirituais' },
+      { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', showCard: true, showMenu: true, adminOnly: true, desc: 'Nome, cargo, tempo de casa e selos de Cruzamento/Corte — só admin' },
       { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true, desc: 'Normas e condutas da casa' },
     ]}
   ]

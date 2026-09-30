@@ -3839,6 +3839,21 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<div id="page-quadro-filhas" class="page">
+  <div class="cal-wrap">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('admin')" style="position:relative;z-index:10">← Voltar</button>
+      <div class="eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="section-title" style="margin-bottom:6px">Quadro das Filhas</div>
+      <p class="section-sub" style="margin-bottom:16px">Nome, cargo, tempo de casa e os selos de Cruzamento e Corte de cada uma ✦</p>
+    </div>
+    <div style="max-width:680px;margin:0 auto">
+      <input type="text" class="form-input" id="qf-busca" placeholder="Buscar por nome ou cargo..." oninput="qfFiltrar(this.value)" style="margin-bottom:14px">
+      <div id="qf-lista"><div class="cal-empty">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL SESSÃO (calendário) -->
 <div id="cal-modal-overlay" onclick="if(event.target===this)calCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
@@ -4631,6 +4646,7 @@ function getDefaultMenu() {
       { id: 'corrente', label: 'Corrente', items: [
         { id: 'tesouraria', label: '💰 Tesouraria',      type: 'external', url: '/tesouraria', desc: 'Extrato e separação de valores por categoria', showCard: true, showMenu: true },
         { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
+        { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo, tempo de casa e selos de Cruzamento/Corte — só admin', showCard: true, showMenu: true, adminOnly: true },
         { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
       ]}
     ]
@@ -5809,6 +5825,11 @@ function showPage(name) {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
     if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
     window.lgCarregar?.();
+  }
+  if (name === 'quadro-filhas') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    qfLoad();
   }
   if (name === 'orientacoes') {
     // recarrega a próxima sessão sempre que a página abrir — antes só carregava
@@ -7798,6 +7819,72 @@ function guiasFiltrar(busca) {
     const txt = [p.nome, p.cargo, p.guias?.caboclo, p.guias?.exu, p.guias?.pomba_gira, p.guias?.preto_velho, p.guias?.cigana, p.guias?.cosme].join(' ').toLowerCase();
     return txt.includes(b);
   }));
+}
+
+// ── QUADRO DAS FILHAS (só admin) — nome, cargo, tempo de casa e selos de
+// Cruzamento/Corte (ou cambonagem, se ainda não foi cruzada/cortada) ─────
+let qfDados = [];
+
+function qfSeloCruzamento(hist) {
+  if (!hist) return '';
+  if (hist.cruz_conga_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Cruz.</span>`;
+  if (hist.cruz_conga) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#dcecdc;color:#3a6b3a;border:1px solid #b8d8b8;white-space:nowrap">✅ Cruzamento</span>`;
+  return '';
+}
+function qfSeloCorte(hist) {
+  if (!hist) return '';
+  if (hist.corte_1_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Corte</span>`;
+  if (hist.corte_1) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#f3dbe5;color:#a13f63;border:1px solid #e3b6cc;white-space:nowrap">✅ Corte</span>`;
+  return '';
+}
+
+async function qfLoad() {
+  const lista = document.getElementById('qf-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="cal-empty">Carregando...</div>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const todos = await res.json();
+    qfDados = todos.filter(p => p.nome);
+    qfRender(qfDados);
+  } catch (e) {
+    lista.innerHTML = '<div class="cal-empty">Erro ao carregar.</div>';
+  }
+}
+
+function qfRender(items) {
+  const lista = document.getElementById('qf-lista');
+  if (!lista) return;
+  if (!items.length) { lista.innerHTML = '<div class="cal-empty">Nenhuma filha encontrada.</div>'; return; }
+
+  const CARGOS_ORDEM = ['Mãe da Casa','Cacique','Tamoio','Naurú','Cambona','Tamboreiro','Curumim','Visitante',''];
+  const ordenada = [...items].sort((a, b) => {
+    const ia = CARGOS_ORDEM.indexOf(a.cargo || '');
+    const ib = CARGOS_ORDEM.indexOf(b.cargo || '');
+    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a.nome || '').localeCompare(b.nome || '');
+  });
+
+  lista.innerHTML = ordenada.map(p => {
+    const hist = p.historia || {};
+    const tempo = window.calcTempo?.(hist.data_entrada);
+    const selos = [qfSeloCruzamento(hist), qfSeloCorte(hist)].filter(Boolean).join('');
+    return `<div onclick="abrirFicha('${p.email}')" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;${p.ativo === false ? 'opacity:.5' : ''}">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:'Playfair Display',serif;font-size:.92rem;color:var(--text)">${calEsc(p.nome)}${p.ativo === false ? ' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>' : ''}</div>
+        <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:2px">${calEsc(p.cargo) || '—'}</div>
+      </div>
+      <div style="flex:0 0 auto;text-align:right">
+        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic;margin-bottom:4px">${tempo ? tempo + ' de casa' : '—'}</div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${selos || '<span style="font-size:.68rem;color:var(--text-dim)">—</span>'}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function qfFiltrar(busca) {
+  const b = busca.toLowerCase().trim();
+  if (!b) { qfRender(qfDados); return; }
+  qfRender(qfDados.filter(p => [p.nome, p.cargo].join(' ').toLowerCase().includes(b)));
 }
 
 function guiasAbrirPainel(email) {
