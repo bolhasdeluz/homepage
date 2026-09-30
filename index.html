@@ -4005,7 +4005,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <button onclick="calFecharVincular()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
     <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🔗 Vincular sessões ao Google Agenda</h2>
     <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:16px">
-      Sessões criadas antes da sincronização automática — ainda sem vínculo com o Google Agenda. Escolha o evento correspondente que já existe lá pra cada uma (ou deixe em branco se não achar). Isso não cria nada novo no Google, só liga o que já existe.
+      Sessões criadas antes da sincronização automática — ainda sem vínculo com o Google Agenda. Pra cada uma: escolha o evento correspondente que já existe lá, ou "Criar novo evento" se não existir, ou "Ignorar" se não quiser sincronizar essa sessão. Deixe em branco pra decidir depois.
     </p>
     <div id="cal-vincular-lista"></div>
     <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
@@ -6830,7 +6830,7 @@ async function calAbrirVincular() {
   status.textContent = '';
   document.getElementById('cal-vincular-overlay').style.display = 'flex';
 
-  const semVinculo = calSessoes.filter(s => !s.googleEventId).sort((a, b) => a.data.localeCompare(b.data));
+  const semVinculo = calSessoes.filter(s => !s.googleEventId && !s.googleIgnorado).sort((a, b) => a.data.localeCompare(b.data));
   if (!semVinculo.length) {
     lista.innerHTML = '<p style="font-family:\'Crimson Pro\',serif;color:var(--text-dim)">Todas as sessões já estão vinculadas ✦</p>';
     return;
@@ -6863,6 +6863,8 @@ async function calAbrirVincular() {
       <select class="form-input cal-vincular-select" style="flex:0 0 auto;width:auto;max-width:220px">
         <option value="">— nenhuma —</option>
         ${opcoes}
+        <option value="__criar__">➕ Criar novo evento no Google</option>
+        <option value="__ignorar__">🚫 Ignorar (não sincronizar)</option>
       </select>
     </div>`;
   }).join('');
@@ -6873,24 +6875,28 @@ function calFecharVincular() { document.getElementById('cal-vincular-overlay').s
 async function calSalvarVincular() {
   const status = document.getElementById('cal-vincular-status');
   const itens = Array.from(document.querySelectorAll('.cal-vincular-item'))
-    .map(el => ({ id: el.dataset.sessaoId, googleEventId: el.querySelector('.cal-vincular-select').value }))
-    .filter(x => x.googleEventId);
+    .map(el => ({ id: el.dataset.sessaoId, valor: el.querySelector('.cal-vincular-select').value }))
+    .filter(x => x.valor);
 
-  if (!itens.length) { status.textContent = 'Nenhuma seleção pra vincular.'; return; }
+  if (!itens.length) { status.textContent = 'Nenhuma seleção pra salvar.'; return; }
 
-  const idsEscolhidos = itens.map(x => x.googleEventId);
-  const duplicados = idsEscolhidos.filter((id, i) => idsEscolhidos.indexOf(id) !== i);
+  const idsReais = itens.map(x => x.valor).filter(v => v !== '__criar__' && v !== '__ignorar__');
+  const duplicados = idsReais.filter((id, i) => idsReais.indexOf(id) !== i);
   if (duplicados.length) { status.textContent = '❌ Você escolheu o mesmo evento do Google pra mais de uma sessão — corrige antes de salvar.'; return; }
 
-  status.textContent = `Vinculando ${itens.length}...`;
+  status.textContent = `Salvando ${itens.length}...`;
   try {
     for (const item of itens) {
-      const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(item) });
+      const payload = item.valor === '__criar__' ? { id: item.id, criarNoGoogle: true }
+        : item.valor === '__ignorar__' ? { id: item.id, googleIgnorado: true }
+        : { id: item.id, googleEventId: item.valor };
+      const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(payload) });
       if (!res.ok) throw new Error('falhou');
+      const atualizado = await res.json();
       const idx = calSessoes.findIndex(x => x.id === item.id);
-      if (idx >= 0) calSessoes[idx].googleEventId = item.googleEventId;
+      if (idx >= 0) calSessoes[idx] = atualizado;
     }
-    const mensagemSucesso = `✅ ${itens.length} sessão(ões) vinculada(s)!`;
+    const mensagemSucesso = `✅ ${itens.length} sessão(ões) atualizada(s)!`;
     await calAbrirVincular();
     document.getElementById('cal-vincular-status').textContent = mensagemSucesso;
   } catch (e) {

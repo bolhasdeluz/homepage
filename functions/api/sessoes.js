@@ -77,12 +77,14 @@ export async function onRequest(context) {
 
     // UPDATE — PUT
     if (method === 'PUT') {
-      const { id, ...fields } = body;
+      const { id, criarNoGoogle, ...fields } = body;
       if (!id) return json({ error: 'id obrigatório' }, 400);
       const existing = await KV.get(id, { type: 'json' });
       if (!existing) return json({ error: 'Sessão não encontrada' }, 404);
       const updated = { ...existing, ...fields, id };
-      if (updated.googleEventId) {
+      if (criarNoGoogle && !updated.googleEventId) {
+        try { updated.googleEventId = await gcalCriarEvento(env, updated); } catch (e) {}
+      } else if (updated.googleEventId) {
         try { await gcalAtualizarEvento(env, updated); } catch (e) {}
       }
       await KV.put(id, JSON.stringify(updated));
