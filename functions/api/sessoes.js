@@ -137,7 +137,9 @@ async function gcalToken(env) {
   }));
   const entrada = `${cabecalho}.${claims}`;
 
-  const pemLimpo = chavePem.replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
+  // Aceita a chave colada tanto com quebras de linha reais quanto com "\n"
+  // literal (como aparece ao copiar direto de dentro do JSON baixado)
+  const pemLimpo = chavePem.replace(/\\n/g, '\n').replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
   const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
   const chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
   const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(entrada));
