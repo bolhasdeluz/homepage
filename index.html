@@ -3931,12 +3931,99 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <h2 id="cal-anual-titulo" style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text)">Planejamento Anual</h2>
       <button onclick="calAnualNavAno(1)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--rosa);width:30px;height:30px;cursor:pointer;font-size:1rem">›</button>
     </div>
-    <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Clique num dia pra criar ou editar a sessão dele.</p>
+    <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Arraste um modelo pra um dia pra criar a sessão, ou clique num dia pra criar/editar na mão.</p>
     <div style="text-align:center;margin-bottom:14px">
       <button onclick="calEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
     </div>
+
+    <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+        <div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)">🧩 Modelos de sessão — arraste pra um dia</div>
+        <button onclick="calAbrirModelos()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;white-space:nowrap">⚙️ Gerenciar</button>
+      </div>
+      <div id="cal-modelos-tray" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+    </div>
+
+    <div id="cal-avisos-anual" style="margin-bottom:14px"></div>
+
     <div class="cal-anual-legenda" id="cal-anual-legenda"></div>
     <div class="cal-anual-grid" id="cal-anual-grade"></div>
+  </div>
+</div>
+
+<!-- MODAL GERENCIAR MODELOS DE SESSÃO — cadastro das "peças" reaproveitáveis
+     usadas no Planejamento Anual (arrastar-pra-criar). Fica em modal
+     separado pra não poluir o quadro principal -->
+<div id="cal-modelos-overlay" onclick="if(event.target===this)calFecharModelos()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:510;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="calFecharModelos()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🧩 Modelos de sessão</h2>
+    <p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">
+      Sessões que se repetem (nome, tipo, lado, local...) prontas pra arrastar pro calendário no Planejamento Anual, sem digitar tudo de novo.
+    </p>
+    <div style="text-align:center;margin-bottom:16px">
+      <button onclick="calGerarModelosAutomatico()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:8px 14px;cursor:pointer">🪄 Gerar a partir do calendário atual</button>
+    </div>
+    <div id="cal-modelos-lista" style="margin-bottom:16px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px">+ Novo modelo</div>
+      <input type="hidden" id="cal-modelo-edit-id" value="">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="form-label">Nome</label><input type="text" class="form-input" id="cal-modelo-nome"></div>
+        <div><label class="form-label">Tambor</label>
+          <select class="form-input" id="cal-modelo-tambor">
+            <option value="">— Sem informação —</option>
+            <option value="confirmado">✅ Confirmado</option>
+            <option value="nao_confirmado">❌ Não confirmado</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="form-label">Tipo</label>
+          <select class="form-input" id="cal-modelo-tipo">
+            <option value="">— Selecionar —</option>
+            <option value="Interna">Sessão Interna</option>
+            <option value="Atendimento">Sessão com Atendimento</option>
+            <option value="Visita">Sessão de Visita</option>
+            <option value="Familia">Sessão da Família</option>
+            <option value="Reuniao">Reunião</option>
+          </select>
+        </div>
+        <div><label class="form-label">Lado</label>
+          <select class="form-input" id="cal-modelo-lado">
+            <option value="">— Selecionar —</option>
+            <option value="Umbanda">Umbanda</option>
+            <option value="Quimbanda">Quimbanda</option>
+            <option value="Oriente">Oriente</option>
+            <option value="Reuniao">Reunião</option>
+            <option value="Visita">Visita</option>
+            <option value="Desenvolvimento">Desenvolvimento</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label class="form-label">Onde</label>
+          <select class="form-input" id="cal-modelo-onde">
+            <option value="">— Selecionar —</option>
+            <option value="Salão">Salão</option>
+            <option value="Jardim">Jardim</option>
+            <option value="Praia">Praia</option>
+            <option value="Pedreira">Pedreira</option>
+            <option value="Cruzeiro">Cruzeiro</option>
+            <option value="Cemitério">Cemitério</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-modelo-endereco"></div>
+      </div>
+      <div style="margin-bottom:10px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-modelo-responsavel"></div>
+      <div style="margin-bottom:14px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-modelo-descricao" rows="2" style="resize:vertical"></textarea></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button onclick="calLimparFormModelo()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Limpar</button>
+        <button onclick="calSalvarModelo()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar modelo</button>
+      </div>
+      <div id="cal-modelo-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
+    </div>
   </div>
 </div>
 
@@ -5880,6 +5967,8 @@ const CAL_DRIVE_LINK_PADRAO = 'https://drive.google.com/drive/folders/1T-tJ9bSfc
 const CAL_VISTIPO_API = '/api/sessoes-visibilidade-tipo';
 const CAL_INFOTIPO_API = '/api/sessoes-info-tipo';
 const CAL_GOOGLE_EVENTOS_API = '/api/google-eventos';
+const CAL_MODELOS_API = '/api/sessoes-modelos';
+let calModelos = [];
 let calInfoTipo = null;
 let calProximaSessaoObj = null;
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
@@ -7249,14 +7338,40 @@ function calAnualGradeHtml(ano, interativo) {
 
 // arrastar uma sessão pra outro dia — só no Planejamento Anual (admin)
 function calAnualDragStart(ev, id) {
-  ev.dataTransfer.setData('text/plain', id);
+  ev.dataTransfer.setData('text/plain', JSON.stringify({ tipo: 'sessao', id }));
   ev.dataTransfer.effectAllowed = 'move';
+}
+
+// arrastar um modelo (peça reaproveitável) pra um dia — cria uma sessão nova
+function calModeloDragStart(ev, modeloId) {
+  ev.dataTransfer.setData('text/plain', JSON.stringify({ tipo: 'modelo', modeloId }));
+  ev.dataTransfer.effectAllowed = 'copy';
 }
 
 async function calAnualDropNoDia(ev, dataStr) {
   ev.preventDefault();
   ev.stopPropagation();
-  const id = ev.dataTransfer.getData('text/plain');
+  const bruto = ev.dataTransfer.getData('text/plain');
+  if (!bruto) return;
+  let dados;
+  try { dados = JSON.parse(bruto); } catch (e) { return; }
+
+  if (dados.tipo === 'modelo') {
+    const modelo = calModelos.find(m => m.id === dados.modeloId);
+    if (!modelo) return;
+    const { id, criadoEm, ...campos } = modelo;
+    const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ ...campos, data: dataStr }) });
+    if (!res.ok) { alert('Não consegui criar a sessão — tenta de novo.'); return; }
+    const criada = await res.json();
+    calSessoes.push(criada);
+    calPopularFiltroAno();
+    calRenderGrade(); calRenderLista();
+    calAnualRender(); calRenderAvisosAnual();
+    if (calVisaoAnual) calRenderVisaoAnualInline();
+    return;
+  }
+
+  const id = dados.id;
   if (!id) return;
   const s = calSessoes.find(x => x.id === id);
   if (!s || s.data === dataStr) return;
@@ -7267,17 +7382,231 @@ async function calAnualDropNoDia(ev, dataStr) {
   if (idx >= 0) calSessoes[idx] = json;
   calPopularFiltroAno();
   calRenderGrade(); calRenderLista();
-  calAnualRender();
+  calAnualRender(); calRenderAvisosAnual();
   if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
-function calAnualAbrir() {
+async function calAnualAbrir() {
   document.getElementById('cal-anual-overlay').style.display = 'flex';
   document.getElementById('cal-anual-legenda').innerHTML = calAnualLegendaHtml();
   calAnualRender();
+  if (!calModelos.length) await calCarregarModelos();
+  calRenderModelosTray();
+  calRenderAvisosAnual();
 }
 function calAnualFechar() { document.getElementById('cal-anual-overlay').style.display = 'none'; }
-function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); }
+function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); calRenderAvisosAnual(); }
+
+// ── MODELOS DE SESSÃO (peças reaproveitáveis pro Planejamento Anual) ─────
+async function calCarregarModelos() {
+  try {
+    const res = await fetch(CAL_MODELOS_API);
+    calModelos = res.ok ? await res.json() : [];
+  } catch (e) { calModelos = []; }
+}
+
+function calRenderModelosTray() {
+  const tray = document.getElementById('cal-modelos-tray');
+  if (!tray) return;
+  if (!calModelos.length) {
+    tray.innerHTML = `<div style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic">Nenhum modelo ainda — toque em "⚙️ Gerenciar" pra criar um.</div>`;
+    return;
+  }
+  tray.innerHTML = calModelos.map(m => {
+    const cor = CAL_LADO_COR[m.lado] || 'var(--rosa)';
+    return `<div draggable="true" ondragstart="calModeloDragStart(event,'${m.id}')" title="Arraste pra um dia do calendário" style="flex:0 0 auto;background:${cor};color:#fff;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;padding:8px 12px;border-radius:8px;cursor:grab;white-space:nowrap;user-select:none">🧩 ${calEsc(m.nome) || '—'}</div>`;
+  }).join('');
+}
+
+function calAbrirModelos() {
+  document.getElementById('cal-modelos-overlay').style.display = 'flex';
+  calLimparFormModelo();
+  calRenderModelosLista();
+}
+function calFecharModelos() { document.getElementById('cal-modelos-overlay').style.display = 'none'; }
+
+function calRenderModelosLista() {
+  const lista = document.getElementById('cal-modelos-lista');
+  if (!calModelos.length) { lista.innerHTML = '<div class="cal-lista-vazia">Nenhum modelo cadastrado ainda ✦</div>'; return; }
+  lista.innerHTML = calModelos.map(m => `
+    <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">
+      <span style="width:10px;height:10px;border-radius:50%;background:${CAL_LADO_COR[m.lado] || '#ccc'};flex:0 0 auto"></span>
+      <div style="flex:1;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text)">${calEsc(m.nome) || '—'} <span style="color:var(--text-dim);font-size:.72rem">${CAL_LADO_LABEL[m.lado] || m.lado || ''}</span></div>
+      <button onclick="calEditarModelo('${m.id}')" style="background:none;border:1px solid var(--border);border-radius:5px;color:var(--text-dim);padding:4px 9px;font-size:.7rem;cursor:pointer">✏️</button>
+      <button onclick="calExcluirModelo('${m.id}')" style="background:none;border:1px solid var(--border);border-radius:5px;color:#b33;padding:4px 9px;font-size:.7rem;cursor:pointer">🗑️</button>
+    </div>`).join('');
+}
+
+function calLimparFormModelo() {
+  document.getElementById('cal-modelo-edit-id').value = '';
+  document.getElementById('cal-modelo-nome').value = '';
+  document.getElementById('cal-modelo-tipo').value = '';
+  document.getElementById('cal-modelo-lado').value = '';
+  document.getElementById('cal-modelo-onde').value = '';
+  document.getElementById('cal-modelo-endereco').value = '';
+  document.getElementById('cal-modelo-responsavel').value = '';
+  document.getElementById('cal-modelo-tambor').value = '';
+  document.getElementById('cal-modelo-descricao').value = '';
+  document.getElementById('cal-modelo-status').textContent = '';
+}
+
+function calEditarModelo(id) {
+  const m = calModelos.find(x => x.id === id);
+  if (!m) return;
+  document.getElementById('cal-modelo-edit-id').value = m.id;
+  document.getElementById('cal-modelo-nome').value = m.nome || '';
+  document.getElementById('cal-modelo-tipo').value = m.tipo || '';
+  document.getElementById('cal-modelo-lado').value = m.lado || '';
+  document.getElementById('cal-modelo-onde').value = m.onde || '';
+  document.getElementById('cal-modelo-endereco').value = m.endereco || '';
+  document.getElementById('cal-modelo-responsavel').value = m.responsavel || '';
+  document.getElementById('cal-modelo-tambor').value = m.tambor || '';
+  document.getElementById('cal-modelo-descricao').value = m.descricao || '';
+}
+
+async function calSalvarModelo() {
+  const status = document.getElementById('cal-modelo-status');
+  const nome = document.getElementById('cal-modelo-nome').value.trim();
+  if (!nome) { status.textContent = 'Dá um nome pro modelo.'; return; }
+  const editId = document.getElementById('cal-modelo-edit-id').value;
+  const payload = {
+    nome,
+    tipo: document.getElementById('cal-modelo-tipo').value,
+    lado: document.getElementById('cal-modelo-lado').value,
+    onde: document.getElementById('cal-modelo-onde').value,
+    endereco: document.getElementById('cal-modelo-endereco').value.trim(),
+    responsavel: document.getElementById('cal-modelo-responsavel').value.trim(),
+    tambor: document.getElementById('cal-modelo-tambor').value,
+    descricao: document.getElementById('cal-modelo-descricao').value.trim(),
+  };
+  if (editId) payload.id = editId;
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch(CAL_MODELOS_API, { method: editId ? 'PUT' : 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(payload) });
+    if (!res.ok) throw new Error('falhou');
+    const salvo = await res.json();
+    if (editId) { const idx = calModelos.findIndex(x => x.id === editId); if (idx >= 0) calModelos[idx] = salvo; }
+    else calModelos.push(salvo);
+    calModelos.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+    calLimparFormModelo();
+    calRenderModelosLista();
+    calRenderModelosTray();
+    status.textContent = '✅ Modelo salvo!';
+  } catch (e) {
+    status.textContent = '❌ Não consegui salvar — tenta de novo.';
+  }
+}
+
+async function calExcluirModelo(id) {
+  if (!confirm('Excluir esse modelo? As sessões já criadas a partir dele não são afetadas.')) return;
+  const res = await fetch(CAL_MODELOS_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+  if (!res.ok) { alert('Não consegui excluir — tenta de novo.'); return; }
+  calModelos = calModelos.filter(x => x.id !== id);
+  calRenderModelosLista();
+  calRenderModelosTray();
+}
+
+// olha os nomes de sessão que mais se repetem no calendário atual e cria um
+// modelo pronto pra cada um (usando o tipo/lado/onde mais comum daquele
+// nome) — só pros nomes que ainda não têm modelo, pra poder rodar de novo
+// sem duplicar
+async function calGerarModelosAutomatico() {
+  const porNome = new Map();
+  calSessoes.forEach(s => {
+    if (!s.nome) return;
+    if (!porNome.has(s.nome)) porNome.set(s.nome, []);
+    porNome.get(s.nome).push(s);
+  });
+  const maisComum = (arr) => {
+    const contagem = new Map();
+    arr.forEach(v => { if (v) contagem.set(v, (contagem.get(v) || 0) + 1); });
+    let melhor = '', max = 0;
+    contagem.forEach((c, v) => { if (c > max) { max = c; melhor = v; } });
+    return melhor;
+  };
+  const nomesComModelo = new Set(calModelos.map(m => m.nome));
+  const candidatos = [...porNome.entries()].filter(([nome, lista]) => lista.length >= 2 && !nomesComModelo.has(nome));
+
+  if (!candidatos.length) { alert('Não achei sessões repetidas (2+ vezes) que ainda não tenham modelo.'); return; }
+  if (!confirm(`Vou criar ${candidatos.length} modelo(s) a partir dos nomes que mais se repetem no seu calendário. Continuar?`)) return;
+
+  let criados = 0;
+  for (const [nome, lista] of candidatos) {
+    const payload = {
+      nome,
+      tipo: maisComum(lista.map(s => s.tipo)),
+      lado: maisComum(lista.map(s => s.lado)),
+      onde: maisComum(lista.map(s => s.onde)),
+      endereco: maisComum(lista.map(s => s.endereco)),
+      responsavel: maisComum(lista.map(s => s.responsavel)),
+      tambor: '',
+      descricao: maisComum(lista.map(s => s.descricao)),
+    };
+    try {
+      const res = await fetch(CAL_MODELOS_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(payload) });
+      if (res.ok) { calModelos.push(await res.json()); criados++; }
+    } catch (e) {}
+  }
+  calModelos.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+  calRenderModelosLista();
+  calRenderModelosTray();
+  alert(`Pronto! ${criados} modelo(s) criado(s) — dá pra editar cada um se quiser ajustar algo.`);
+}
+
+// ── AVISOS DO PLANEJAMENTO ANUAL (proximidade e vácuo por linha/Lado) ────
+const CAL_AVISO_DIAS_PROXIMO = 7;   // 2 sessões do mesmo Lado com menos que isso entre elas
+const CAL_AVISO_DIAS_VACUO = 30;    // Lado sem nenhuma sessão há mais que isso
+
+function calCalcularAvisosAnual() {
+  const avisos = [];
+  const porLado = new Map();
+  calSessoes.forEach(s => {
+    if (!s.lado || !s.data) return;
+    if (!porLado.has(s.lado)) porLado.set(s.lado, []);
+    porLado.get(s.lado).push(s);
+  });
+
+  const hoje = new Date();
+  porLado.forEach((lista, lado) => {
+    const ordenada = [...lista].sort((a, b) => a.data.localeCompare(b.data));
+
+    // muito próximas — pares consecutivos com menos de N dias entre si
+    for (let i = 1; i < ordenada.length; i++) {
+      const d1 = new Date(ordenada[i - 1].data + 'T12:00:00');
+      const d2 = new Date(ordenada[i].data + 'T12:00:00');
+      const dias = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      if (dias >= 0 && dias < CAL_AVISO_DIAS_PROXIMO) {
+        avisos.push({ tipo: 'proximo', lado, texto: `${CAL_LADO_LABEL[lado] || lado}: "${ordenada[i-1].nome || '—'}" (${fmtDataAdmin(ordenada[i-1].data)}) e "${ordenada[i].nome || '—'}" (${fmtDataAdmin(ordenada[i].data)}) ficaram a só ${dias} dia(s) uma da outra.` });
+      }
+    }
+
+    // vácuo — da última sessão desse Lado até hoje (só avisa se a última já passou)
+    const ultima = ordenada[ordenada.length - 1];
+    if (ultima) {
+      const dataUltima = new Date(ultima.data + 'T12:00:00');
+      const diasSemUltima = Math.round((hoje - dataUltima) / (1000 * 60 * 60 * 24));
+      if (diasSemUltima >= CAL_AVISO_DIAS_VACUO) {
+        avisos.push({ tipo: 'vacuo', lado, texto: `${CAL_LADO_LABEL[lado] || lado}: já fazem ${diasSemUltima} dias desde a última sessão (${fmtDataAdmin(ultima.data)}), sem nenhuma nova marcada.` });
+      }
+    }
+  });
+
+  return avisos;
+}
+
+function calRenderAvisosAnual() {
+  const el = document.getElementById('cal-avisos-anual');
+  if (!el) return;
+  const avisos = calCalcularAvisosAnual();
+  if (!avisos.length) {
+    el.innerHTML = `<div style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;text-align:center">✦ Nenhum aviso — as linhas de trabalho estão bem espaçadas.</div>`;
+    return;
+  }
+  el.innerHTML = `<div style="border:1px solid #e8c988;background:#fdf6e6;border-radius:10px;padding:10px 14px">
+    <div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:#8a6d1a;margin-bottom:6px">⚠️ Avisos</div>
+    ${avisos.map(a => `<div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:#6b5418;margin-bottom:4px">${a.tipo === 'proximo' ? '⏱️' : '🕳️'} ${calEsc(a.texto)}</div>`).join('')}
+  </div>`;
+}
 
 // espelha todas as sessões de um ano pro mesmo dia/mês do ano seguinte —
 // pensado pra usar um ano já planejado (ex: 2026) como base pra montar o
