@@ -54,14 +54,14 @@ async function gcalToken(env) {
 
   const pemLimpo = gcalLimparChavePem(chavePem);
   if (pemLimpo.length < 500) {
-    throw new Error(`A GOOGLE_SA_PRIVATE_KEY ficou curta demais depois de limpa (${pemLimpo.length} caracteres) — parece que faltou colar um pedaço, ou as quebras de linha se perderam.`);
+    throw new Error(`A GOOGLE_SA_PRIVATE_KEY ficou curta demais depois de limpa (${pemLimpo.length} caracteres, esperado uns 1600) — parece que faltou colar um pedaço, ou as quebras de linha se perderam.`);
   }
   let chave;
   try {
     const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
     chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
   } catch (e) {
-    throw new Error('A GOOGLE_SA_PRIVATE_KEY parece estar num formato inválido (confere se copiou o valor inteiro, com -----BEGIN/END PRIVATE KEY-----).');
+    throw new Error(`A GOOGLE_SA_PRIVATE_KEY parece estar num formato inválido (${pemLimpo.length} caracteres depois de limpa, esperado uns 1600 — confere se copiou o valor inteiro, com -----BEGIN/END PRIVATE KEY-----). Erro técnico: ${e.message}`);
   }
   const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(entrada));
   const assinaturaB64 = btoa(String.fromCharCode(...new Uint8Array(assinatura))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
