@@ -3845,6 +3845,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <button onclick="calCloseModal()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
     <h2 id="cal-modal-titulo" style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:18px"></h2>
     <input type="hidden" id="cal-edit-id">
+    <div id="cal-fModelo-wrap" style="display:none;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <label class="form-label">🧩 Usar um modelo?</label>
+      <select class="form-input" id="cal-fModelo" onchange="calAplicarModelo(this.value)">
+        <option value="">— Preencher na mão —</option>
+      </select>
+    </div>
     <div style="margin-bottom:12px"><label class="form-label">Nome *</label><input type="text" class="form-input" id="cal-fNome"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Data *</label><input type="date" class="form-input" id="cal-fData"></div>
@@ -6273,7 +6279,7 @@ function calToggleOndeOutro(valor) {
   if (wrap) wrap.style.display = valor === 'Outro' ? '' : 'none';
 }
 
-function calOpenModal() {
+async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
   document.getElementById('cal-fNome').value = '';
@@ -6293,13 +6299,41 @@ function calOpenModal() {
   document.getElementById('cal-fDriveLink').value = CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-btn-excluir').style.display = 'none';
+
+  document.getElementById('cal-fModelo-wrap').style.display = '';
+  if (!calModelos.length) await calCarregarModelos();
+  const seletorModelo = document.getElementById('cal-fModelo');
+  seletorModelo.innerHTML = '<option value="">— Preencher na mão —</option>' +
+    calModelos.map(m => `<option value="${m.id}">${calEsc(m.nome) || '—'}</option>`).join('');
+
   document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+// preenche o formulário de Nova Sessão com os dados de um modelo — nome,
+// tipo, lado, local, responsável, tambor e descrição. Data/hora ficam como
+// estavam, já que são específicas de cada ocorrência
+function calAplicarModelo(modeloId) {
+  if (!modeloId) return;
+  const m = calModelos.find(x => x.id === modeloId);
+  if (!m) return;
+  document.getElementById('cal-fNome').value = m.nome || '';
+  document.getElementById('cal-fTipo').value = m.tipo || '';
+  document.getElementById('cal-fLado').value = m.lado || '';
+  const ondeFixo = CAL_ONDE_OPCOES.includes(m.onde) ? m.onde : (m.onde ? 'Outro' : 'Salão');
+  document.getElementById('cal-fOnde').value = ondeFixo;
+  document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? m.onde : '';
+  calToggleOndeOutro(ondeFixo);
+  document.getElementById('cal-fEndereco').value = m.endereco || '';
+  document.getElementById('cal-fResp').value = m.responsavel || '';
+  document.getElementById('cal-fTambor').value = m.tambor || '';
+  document.getElementById('cal-fDesc').value = m.descricao || '';
 }
 
 function calOpenEdit(id) {
   const s = calSessoes.find(x => x.id === id);
   if (!s) return;
   document.getElementById('cal-modal-titulo').textContent = 'Editar Sessão';
+  document.getElementById('cal-fModelo-wrap').style.display = 'none';
   document.getElementById('cal-edit-id').value = id;
   document.getElementById('cal-fNome').value = s.nome || '';
   document.getElementById('cal-fData').value = s.data || '';
