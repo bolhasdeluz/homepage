@@ -118,6 +118,17 @@ function gcalB64Url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+// Limpa a chave privada colada de forma tolerante a bagunça comum ao colar
+// pelo celular (crase sobrando, travessão no lugar de hífen, quebra de
+// linha perdida): converte "\n" literal em quebra de linha de verdade,
+// descarta as linhas de cabeçalho/rodapé pelo texto "PRIVATE KEY" (não
+// pelos hífens exatos) e no final fica só com caracteres válidos de base64.
+function gcalLimparChavePem(chavePem) {
+  const comQuebras = String(chavePem || '').replace(/\\n/g, '\n');
+  const linhas = comQuebras.split('\n').filter(l => !l.toUpperCase().includes('PRIVATE KEY'));
+  return linhas.join('').replace(/[^A-Za-z0-9+/=]/g, '');
+}
+
 // Autentica como a conta de serviço via JWT assinado (fluxo OAuth2 de
 // servidor-a-servidor do Google, sem interação humana) e troca por um
 // access token de curta duração.
@@ -137,9 +148,8 @@ async function gcalToken(env) {
   }));
   const entrada = `${cabecalho}.${claims}`;
 
-  // Aceita a chave colada tanto com quebras de linha reais quanto com "\n"
-  // literal (como aparece ao copiar direto de dentro do JSON baixado)
-  const pemLimpo = chavePem.replace(/\\n/g, '\n').replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
+  const pemLimpo = gcalLimparChavePem(chavePem);
+  if (pemLimpo.length < 500) return null;
   const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
   const chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
   const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(entrada));

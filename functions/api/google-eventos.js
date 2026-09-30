@@ -22,6 +22,17 @@ function gcalB64Url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+// Limpa a chave privada colada de forma tolerante a bagunça comum ao colar
+// pelo celular (crase sobrando, travessão no lugar de hífen, quebra de
+// linha perdida): converte "\n" literal em quebra de linha de verdade,
+// descarta as linhas de cabeçalho/rodapé pelo texto "PRIVATE KEY" (não
+// pelos hífens exatos) e no final fica só com caracteres válidos de base64.
+function gcalLimparChavePem(chavePem) {
+  const comQuebras = String(chavePem || '').replace(/\\n/g, '\n');
+  const linhas = comQuebras.split('\n').filter(l => !l.toUpperCase().includes('PRIVATE KEY'));
+  return linhas.join('').replace(/[^A-Za-z0-9+/=]/g, '');
+}
+
 async function gcalToken(env) {
   const email = env.GOOGLE_SA_EMAIL;
   const chavePem = env.GOOGLE_SA_PRIVATE_KEY;
@@ -41,7 +52,10 @@ async function gcalToken(env) {
   }));
   const entrada = `${cabecalho}.${claims}`;
 
-  const pemLimpo = chavePem.replace(/\\n/g, '\n').replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
+  const pemLimpo = gcalLimparChavePem(chavePem);
+  if (pemLimpo.length < 500) {
+    throw new Error(`A GOOGLE_SA_PRIVATE_KEY ficou curta demais depois de limpa (${pemLimpo.length} caracteres) — parece que faltou colar um pedaço, ou as quebras de linha se perderam.`);
+  }
   let chave;
   try {
     const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
