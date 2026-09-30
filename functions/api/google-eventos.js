@@ -25,7 +25,10 @@ function gcalB64Url(str) {
 async function gcalToken(env) {
   const email = env.GOOGLE_SA_EMAIL;
   const chavePem = env.GOOGLE_SA_PRIVATE_KEY;
-  if (!email || !chavePem) return null;
+  const faltando = [];
+  if (!email) faltando.push('GOOGLE_SA_EMAIL');
+  if (!chavePem) faltando.push('GOOGLE_SA_PRIVATE_KEY');
+  if (faltando.length) throw new Error(`Variável(is) não configurada(s) no Cloudflare: ${faltando.join(', ')}.`);
 
   const agora = Math.floor(Date.now() / 1000);
   const cabecalho = gcalB64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
@@ -39,8 +42,13 @@ async function gcalToken(env) {
   const entrada = `${cabecalho}.${claims}`;
 
   const pemLimpo = chavePem.replace(/\\n/g, '\n').replace(/-----BEGIN PRIVATE KEY-----/, '').replace(/-----END PRIVATE KEY-----/, '').replace(/\s/g, '');
-  const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
-  const chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  let chave;
+  try {
+    const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
+    chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  } catch (e) {
+    throw new Error('A GOOGLE_SA_PRIVATE_KEY parece estar num formato inválido (confere se copiou o valor inteiro, com -----BEGIN/END PRIVATE KEY-----).');
+  }
   const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(entrada));
   const assinaturaB64 = btoa(String.fromCharCode(...new Uint8Array(assinatura))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   const jwt = `${entrada}.${assinaturaB64}`;
@@ -50,9 +58,13 @@ async function gcalToken(env) {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${encodeURIComponent(jwt)}`,
   });
-  if (!resp.ok) return null;
+  if (!resp.ok) {
+    const textoErro = await resp.text().catch(() => '');
+    throw new Error(`Falha ao autenticar com o Google (status ${resp.status}): ${textoErro.slice(0, 300)}`);
+  }
   const dados = await resp.json();
-  return dados.access_token || null;
+  if (!dados.access_token) throw new Error('Google não retornou um token de acesso.');
+  return dados.access_token;
 }
 
 export async function onRequest(context) {
@@ -63,19 +75,23 @@ export async function onRequest(context) {
   if (request.headers.get('X-Admin-Password') !== ADMIN_PASSWORD) return json({ error: 'Não autorizado' }, 403);
 
   const calendarId = env.GOOGLE_CALENDAR_ID;
-  const token = await gcalToken(env);
-  if (!token || !calendarId) return json({ error: 'Google Agenda não configurado.' }, 500);
-
-  const url = new URL(request.url);
-  const timeMin = url.searchParams.get('timeMin') || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
-  const timeMax = url.searchParams.get('timeMax') || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
 
   try {
+    if (!calendarId) throw new Error('Variável GOOGLE_CALENDAR_ID não configurada no Cloudflare.');
+    const token = await gcalToken(env);
+
+    const url = new URL(request.url);
+    const timeMin = url.searchParams.get('timeMin') || new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const timeMax = url.searchParams.get('timeMax') || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString();
+
     const params = new URLSearchParams({ timeMin, timeMax, maxResults: '250', singleEvents: 'true', orderBy: 'startTime' });
     const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`, {
       headers: { 'Authorization': `Bearer ${token}` },
     });
-    if (!resp.ok) return json({ error: 'Não consegui consultar o Google Agenda.' }, 502);
+    if (!resp.ok) {
+      const textoErro = await resp.text().catch(() => '');
+      throw new Error(`O Google recusou a consulta à agenda "${calendarId}" (status ${resp.status}): ${textoErro.slice(0, 300)}`);
+    }
     const dados = await resp.json();
     const eventos = (dados.items || []).map(ev => ({
       id: ev.id,
