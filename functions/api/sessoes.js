@@ -63,6 +63,7 @@ export async function onRequest(context) {
         tipo: body.tipo || '',
         lado: body.lado || '',
         onde: body.onde || '',
+        endereco: body.endereco || '',
         descricao: body.descricao || '',
         responsavel: body.responsavel || '',
         tambor: body.tambor || '',
@@ -174,7 +175,7 @@ async function gcalToken(env) {
 function gcalEventoDe(sessao) {
   const evento = {
     summary: sessao.nome || 'Sessão',
-    location: sessao.onde || undefined,
+    location: sessao.endereco || sessao.onde || undefined,
     description: [sessao.descricao, sessao.responsavel ? `Responsável: ${sessao.responsavel}` : ''].filter(Boolean).join('\n\n') || undefined,
   };
   if (sessao.hora) {

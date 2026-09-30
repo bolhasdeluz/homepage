@@ -3886,6 +3886,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </div>
     </div>
     <div id="cal-fOndeOutro-wrap" style="display:none;margin-bottom:12px"><label class="form-label">Qual lugar?</label><input type="text" class="form-input" id="cal-fOndeOutro" placeholder="ex: Costa do Sol/Cidreira"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-fEndereco" placeholder="ex: Rua Exemplo, 123 - Bairro, Cidade"></div>
     <div style="margin-bottom:12px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
     <div style="margin-bottom:12px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-fResp"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tambor</label>
@@ -6157,6 +6158,7 @@ function calOpenModal() {
   document.getElementById('cal-fOnde').value = 'Salão';
   document.getElementById('cal-fOndeOutro').value = '';
   calToggleOndeOutro('Salão');
+  document.getElementById('cal-fEndereco').value = '';
   document.getElementById('cal-fDesc').value = '';
   document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
@@ -6184,6 +6186,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fOnde').value = ondeFixo;
   document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? ondeSalvo : '';
   calToggleOndeOutro(ondeFixo);
+  document.getElementById('cal-fEndereco').value = s.endereco || '';
   document.getElementById('cal-fDesc').value = s.descricao || '';
   document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
@@ -6699,6 +6702,7 @@ async function calSalvar() {
   const payload = { nome, data,
     hora: document.getElementById('cal-fHora').value,
     tipo, lado: document.getElementById('cal-fLado').value, onde,
+    endereco: document.getElementById('cal-fEndereco').value.trim(),
     descricao: document.getElementById('cal-fDesc').value.trim(),
     responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
