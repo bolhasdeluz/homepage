@@ -3944,8 +3944,6 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div id="cal-modelos-tray" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
     </div>
 
-    <div id="cal-avisos-anual" style="margin-bottom:14px"></div>
-
     <div class="cal-anual-legenda" id="cal-anual-legenda"></div>
     <div class="cal-anual-grid" id="cal-anual-grade"></div>
   </div>
@@ -7366,7 +7364,7 @@ async function calAnualDropNoDia(ev, dataStr) {
     calSessoes.push(criada);
     calPopularFiltroAno();
     calRenderGrade(); calRenderLista();
-    calAnualRender(); calRenderAvisosAnual();
+    calAnualRender();
     if (calVisaoAnual) calRenderVisaoAnualInline();
     return;
   }
@@ -7382,7 +7380,7 @@ async function calAnualDropNoDia(ev, dataStr) {
   if (idx >= 0) calSessoes[idx] = json;
   calPopularFiltroAno();
   calRenderGrade(); calRenderLista();
-  calAnualRender(); calRenderAvisosAnual();
+  calAnualRender();
   if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
@@ -7392,10 +7390,9 @@ async function calAnualAbrir() {
   calAnualRender();
   if (!calModelos.length) await calCarregarModelos();
   calRenderModelosTray();
-  calRenderAvisosAnual();
 }
 function calAnualFechar() { document.getElementById('cal-anual-overlay').style.display = 'none'; }
-function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); calRenderAvisosAnual(); }
+function calAnualNavAno(dir) { calAnualAno += dir; calAnualRender(); }
 
 // ── MODELOS DE SESSÃO (peças reaproveitáveis pro Planejamento Anual) ─────
 async function calCarregarModelos() {
@@ -7551,61 +7548,6 @@ async function calGerarModelosAutomatico() {
   calRenderModelosLista();
   calRenderModelosTray();
   alert(`Pronto! ${criados} modelo(s) criado(s) — dá pra editar cada um se quiser ajustar algo.`);
-}
-
-// ── AVISOS DO PLANEJAMENTO ANUAL (proximidade e vácuo por linha/Lado) ────
-const CAL_AVISO_DIAS_PROXIMO = 7;   // 2 sessões do mesmo Lado com menos que isso entre elas
-const CAL_AVISO_DIAS_VACUO = 30;    // Lado sem nenhuma sessão há mais que isso
-
-function calCalcularAvisosAnual() {
-  const avisos = [];
-  const porLado = new Map();
-  calSessoes.forEach(s => {
-    if (!s.lado || !s.data) return;
-    if (!porLado.has(s.lado)) porLado.set(s.lado, []);
-    porLado.get(s.lado).push(s);
-  });
-
-  const hoje = new Date();
-  porLado.forEach((lista, lado) => {
-    const ordenada = [...lista].sort((a, b) => a.data.localeCompare(b.data));
-
-    // muito próximas — pares consecutivos com menos de N dias entre si
-    for (let i = 1; i < ordenada.length; i++) {
-      const d1 = new Date(ordenada[i - 1].data + 'T12:00:00');
-      const d2 = new Date(ordenada[i].data + 'T12:00:00');
-      const dias = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
-      if (dias >= 0 && dias < CAL_AVISO_DIAS_PROXIMO) {
-        avisos.push({ tipo: 'proximo', lado, texto: `${CAL_LADO_LABEL[lado] || lado}: "${ordenada[i-1].nome || '—'}" (${fmtDataAdmin(ordenada[i-1].data)}) e "${ordenada[i].nome || '—'}" (${fmtDataAdmin(ordenada[i].data)}) ficaram a só ${dias} dia(s) uma da outra.` });
-      }
-    }
-
-    // vácuo — da última sessão desse Lado até hoje (só avisa se a última já passou)
-    const ultima = ordenada[ordenada.length - 1];
-    if (ultima) {
-      const dataUltima = new Date(ultima.data + 'T12:00:00');
-      const diasSemUltima = Math.round((hoje - dataUltima) / (1000 * 60 * 60 * 24));
-      if (diasSemUltima >= CAL_AVISO_DIAS_VACUO) {
-        avisos.push({ tipo: 'vacuo', lado, texto: `${CAL_LADO_LABEL[lado] || lado}: já fazem ${diasSemUltima} dias desde a última sessão (${fmtDataAdmin(ultima.data)}), sem nenhuma nova marcada.` });
-      }
-    }
-  });
-
-  return avisos;
-}
-
-function calRenderAvisosAnual() {
-  const el = document.getElementById('cal-avisos-anual');
-  if (!el) return;
-  const avisos = calCalcularAvisosAnual();
-  if (!avisos.length) {
-    el.innerHTML = `<div style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;text-align:center">✦ Nenhum aviso — as linhas de trabalho estão bem espaçadas.</div>`;
-    return;
-  }
-  el.innerHTML = `<div style="border:1px solid #e8c988;background:#fdf6e6;border-radius:10px;padding:10px 14px">
-    <div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:#8a6d1a;margin-bottom:6px">⚠️ Avisos</div>
-    ${avisos.map(a => `<div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:#6b5418;margin-bottom:4px">${a.tipo === 'proximo' ? '⏱️' : '🕳️'} ${calEsc(a.texto)}</div>`).join('')}
-  </div>`;
 }
 
 // espelha todas as sessões de um ano pro mesmo dia/mês do ano seguinte —
