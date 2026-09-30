@@ -6991,17 +6991,41 @@ async function calAbrirVerificarMudancas() {
 
   lista.innerHTML = comMudanca.map(item => `
     <div class="cal-verificar-item" data-sessao-id="${item.sessao.id}" data-diffs='${calEsc(JSON.stringify(item.diffs))}' style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px">
-      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-        <input type="checkbox" class="cal-verificar-check" checked style="margin-top:3px;accent-color:var(--rosa)">
-        <div style="flex:1">
-          <div style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--text);margin-bottom:4px">${calEsc(item.sessao.nome) || '—'}</div>
-          ${item.diffs.map(d => `<div style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim)"><b>${d.label}:</b> <span style="text-decoration:line-through">${calEsc(d.site)}</span> → <span style="color:var(--rosa)">${calEsc(d.google)}</span></div>`).join('')}
-        </div>
-      </label>
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;flex:1">
+          <input type="checkbox" class="cal-verificar-check" checked style="margin-top:3px;accent-color:var(--rosa)">
+          <div style="flex:1">
+            <div style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--text);margin-bottom:4px">${calEsc(item.sessao.nome) || '—'}</div>
+            ${item.diffs.map(d => `<div style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim)"><b>${d.label}:</b> <span style="text-decoration:line-through">${calEsc(d.site)}</span> → <span style="color:var(--rosa)">${calEsc(d.google)}</span></div>`).join('')}
+          </div>
+        </label>
+        <button onclick="calDesvincularSessao('${item.sessao.id}')" title="Esse vínculo parece errado — desfazer" style="flex:0 0 auto;background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:4px 8px;font-family:'DM Sans',sans-serif;font-size:.68rem;cursor:pointer;white-space:nowrap">🔓 Desvincular</button>
+      </div>
     </div>`).join('');
 }
 
 function calFecharVerificarMudancas() { document.getElementById('cal-verificar-overlay').style.display = 'none'; }
+
+// desfaz um vínculo que ligou errado (ex: numa ocorrência errada de um
+// evento recorrente, ou num evento de dia inteiro que coincidiu na mesma
+// data) — não mexe no Google, só limpa o googleEventId da sessão, que volta
+// a aparecer como "sem vínculo" pra ser religada certinho depois
+async function calDesvincularSessao(id) {
+  if (!confirm('Desfazer esse vínculo com o Google Agenda? A sessão volta a aparecer em "Vincular Google Agenda" pra ser ligada de novo, certinho.')) return;
+  const status = document.getElementById('cal-verificar-status');
+  status.textContent = 'Desvinculando...';
+  try {
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, googleEventId: '' }) });
+    if (!res.ok) throw new Error('falhou');
+    const atualizado = await res.json();
+    const idx = calSessoes.findIndex(x => x.id === id);
+    if (idx >= 0) calSessoes[idx] = atualizado;
+    await calAbrirVerificarMudancas();
+    document.getElementById('cal-verificar-status').textContent = '✅ Vínculo desfeito.';
+  } catch (e) {
+    status.textContent = '❌ Não consegui desvincular — tenta de novo.';
+  }
+}
 
 async function calAplicarMudancasSelecionadas() {
   const status = document.getElementById('cal-verificar-status');
