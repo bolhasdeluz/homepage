@@ -112,6 +112,7 @@ export async function onRequest(context) {
       summary: ev.summary || '(sem título)',
       data: (ev.start && (ev.start.date || (ev.start.dateTime || '').slice(0, 10))) || '',
       hora: (ev.start && ev.start.dateTime) ? ev.start.dateTime.slice(11, 16) : '',
+      location: ev.location || '',
     }));
     return json(eventos);
   } catch (e) {
