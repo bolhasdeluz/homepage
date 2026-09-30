@@ -3933,7 +3933,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
     <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Arraste um modelo pra um dia pra criar a sessão, ou clique num dia pra criar/editar na mão.</p>
     <div style="text-align:center;margin-bottom:14px">
-      <button onclick="calEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
+      <button onclick="calAbrirEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
     </div>
 
     <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
@@ -4022,6 +4022,27 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </div>
       <div id="cal-modelo-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL ESPELHAR SESSÕES PRO ANO SEGUINTE — lista as sessões do ano de
+     origem (que ainda não têm cópia no ano destino) pra escolher quais
+     copiar, em vez de ser tudo ou nada -->
+<div id="cal-espelhar-overlay" onclick="if(event.target===this)calFecharEspelharAno()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:510;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="calFecharEspelharAno()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🪞 Espelhar sessões</h2>
+    <p id="cal-espelhar-intro" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:12px"></p>
+    <div style="text-align:right;margin-bottom:8px">
+      <button onclick="calEspelharMarcarTodas(true)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer">Selecionar todas</button>
+      <button onclick="calEspelharMarcarTodas(false)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer">Nenhuma</button>
+    </div>
+    <div id="cal-espelhar-lista"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:18px">
+      <button onclick="calFecharEspelharAno()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+      <button onclick="calConfirmarEspelharAno()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Espelhar selecionadas</button>
+    </div>
+    <div id="cal-espelhar-status" style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:8px;text-align:right"></div>
   </div>
 </div>
 
@@ -7550,35 +7571,64 @@ async function calGerarModelosAutomatico() {
   alert(`Pronto! ${criados} modelo(s) criado(s) — dá pra editar cada um se quiser ajustar algo.`);
 }
 
-// espelha todas as sessões de um ano pro mesmo dia/mês do ano seguinte —
+// espelha sessões escolhidas de um ano pro mesmo dia/mês do ano seguinte —
 // pensado pra usar um ano já planejado (ex: 2026) como base pra montar o
-// próximo (2027). Pula sessões que já existirem no ano destino com o
-// mesmo nome e data, pra não duplicar se rodar de novo por engano
-async function calEspelharAno(anoOrigem, anoDestino) {
-  const origemStr = String(anoOrigem), destinoStr = String(anoDestino);
-  const doOrigem = calSessoes.filter(s => s.data && s.data.startsWith(origemStr + '-'));
-  if (!doOrigem.length) { alert(`Não encontrei nenhuma sessão de ${origemStr} pra espelhar.`); return; }
+// próximo (2027), mas deixando a admin escolher quais quer copiar em vez de
+// ser tudo ou nada. Nunca mostra sessões que já tenham cópia no ano destino
+// com o mesmo nome e data, pra não duplicar
+let calEspelharCandidatos = [];
 
+function calAbrirEspelharAno(anoOrigem, anoDestino) {
+  const origemStr = String(anoOrigem), destinoStr = String(anoDestino);
+  const doOrigem = calSessoes.filter(s => s.data && s.data.startsWith(origemStr + '-')).sort((a, b) => a.data.localeCompare(b.data));
   const doDestino = calSessoes.filter(s => s.data && s.data.startsWith(destinoStr + '-'));
   const jaExiste = (nome, data) => doDestino.some(s => s.nome === nome && s.data === data);
 
-  const paraCriar = doOrigem
+  calEspelharCandidatos = doOrigem
     .map(s => {
       const [, mes, dia] = s.data.split('-');
-      return { ...s, data: `${destinoStr}-${mes}-${dia}` };
+      return { sessao: s, dataDestino: `${destinoStr}-${mes}-${dia}` };
     })
-    .filter(s => !jaExiste(s.nome, s.data));
+    .filter(c => !jaExiste(c.sessao.nome, c.dataDestino));
 
-  const puladas = doOrigem.length - paraCriar.length;
-  const msgConfirma = `Isso vai criar ${paraCriar.length} sessão(ões) nova(s) em ${destinoStr}, copiando de ${origemStr} (mesmo dia e mês, um ano depois).` +
-    (puladas ? `\n${puladas} já existem em ${destinoStr} com o mesmo nome e data, e serão puladas.` : '') +
-    `\n\nContinuar?`;
-  if (!paraCriar.length) { alert(`Todas as sessões de ${origemStr} já têm uma cópia em ${destinoStr}. Nada pra fazer.`); return; }
-  if (!confirm(msgConfirma)) return;
+  document.getElementById('cal-espelhar-intro').textContent = `Escolha quais sessões de ${origemStr} você quer copiar pra ${destinoStr} (mesmo dia e mês, um ano depois). As que já têm cópia em ${destinoStr} não aparecem aqui.`;
+  const lista = document.getElementById('cal-espelhar-lista');
+  if (!calEspelharCandidatos.length) {
+    lista.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim)">Nenhuma sessão de ${origemStr} pra espelhar — ou já foram todas copiadas, ou não há nenhuma sessão nesse ano ainda.</p>`;
+  } else {
+    lista.innerHTML = calEspelharCandidatos.map((c, idx) => `
+      <label class="cal-espelhar-item" data-idx="${idx}" style="display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px;cursor:pointer">
+        <input type="checkbox" class="cal-espelhar-check" checked style="accent-color:var(--rosa)">
+        <div style="flex:1">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text)">${calEsc(c.sessao.nome) || '—'}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)">${fmtDataAdmin(c.sessao.data)} → ${fmtDataAdmin(c.dataDestino)}</div>
+        </div>
+      </label>`).join('');
+  }
+  document.getElementById('cal-espelhar-status').textContent = '';
+  document.getElementById('cal-espelhar-overlay').style.display = 'flex';
+}
 
+function calFecharEspelharAno() { document.getElementById('cal-espelhar-overlay').style.display = 'none'; }
+
+function calEspelharMarcarTodas(valor) {
+  document.querySelectorAll('.cal-espelhar-check').forEach(c => { c.checked = valor; });
+}
+
+async function calConfirmarEspelharAno() {
+  const status = document.getElementById('cal-espelhar-status');
+  const idxSelecionados = Array.from(document.querySelectorAll('.cal-espelhar-item'))
+    .filter(el => el.querySelector('.cal-espelhar-check').checked)
+    .map(el => parseInt(el.dataset.idx, 10));
+
+  if (!idxSelecionados.length) { status.textContent = 'Nenhuma sessão selecionada.'; return; }
+
+  status.textContent = `Criando ${idxSelecionados.length}...`;
   let criadas = 0, erros = 0;
-  for (const s of paraCriar) {
-    const { id, criadoEm, ...dadosNovo } = s;
+  for (const idx of idxSelecionados) {
+    const c = calEspelharCandidatos[idx];
+    const { id, criadoEm, googleEventId, ...dadosNovo } = c.sessao;
+    dadosNovo.data = c.dataDestino;
     try {
       const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(dadosNovo) });
       if (res.ok) criadas++; else erros++;
@@ -7587,7 +7637,8 @@ async function calEspelharAno(anoOrigem, anoDestino) {
 
   await calLoad();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
-  alert(`Pronto! ${criadas} sessão(ões) criada(s) em ${destinoStr}.` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
+  calFecharEspelharAno();
+  alert(`Pronto! ${criadas} sessão(ões) criada(s).` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
 }
 
 function calAnualRender() {
