@@ -6843,10 +6843,11 @@ async function calAbrirVincular() {
     const timeMax = new Date(`${datas[datas.length - 1]}T00:00:00-03:00`);
     timeMax.setDate(timeMax.getDate() + 3);
     const res = await fetch(`${CAL_GOOGLE_EVENTOS_API}?timeMin=${encodeURIComponent(timeMin.toISOString())}&timeMax=${encodeURIComponent(timeMax.toISOString())}`, { headers: CAL_ADMIN_HEADERS });
-    if (!res.ok) throw new Error('falhou');
-    calVincularEventosGoogle = await res.json();
+    const corpo = await res.json();
+    if (!res.ok) throw new Error(corpo.error || 'falhou');
+    calVincularEventosGoogle = corpo;
   } catch (e) {
-    lista.innerHTML = '<p style="font-family:\'Crimson Pro\',serif;color:#b33">❌ Não consegui consultar o Google Agenda — confere se as variáveis foram configuradas no Cloudflare.</p>';
+    lista.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:#b33">❌ ${calEsc(e.message)}</p>`;
     return;
   }
 
