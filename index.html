@@ -3848,7 +3848,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <p class="section-sub" style="margin-bottom:16px">Nome, cargo, tempo de casa e os selos de Cruzamento e Corte de cada uma ✦</p>
     </div>
     <div style="max-width:680px;margin:0 auto">
-      <input type="text" class="form-input" id="qf-busca" placeholder="Buscar por nome ou cargo..." oninput="qfFiltrar(this.value)" style="margin-bottom:14px">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" class="form-input" id="qf-busca" placeholder="Buscar por nome ou cargo..." oninput="qfFiltrar(this.value)" style="flex:1;margin-bottom:0">
+        <button id="qf-btn-imagem" onclick="qfGerarImagem()" style="flex:0 0 auto;background:var(--rosa);border:none;color:#fff;border-radius:8px;padding:0 14px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap">📤 Gerar Imagem</button>
+      </div>
       <div id="qf-lista"><div class="cal-empty">Carregando...</div></div>
     </div>
   </div>
@@ -7885,6 +7888,87 @@ function qfFiltrar(busca) {
   const b = busca.toLowerCase().trim();
   if (!b) { qfRender(qfDados); return; }
   qfRender(qfDados.filter(p => [p.nome, p.cargo].join(' ').toLowerCase().includes(b)));
+}
+
+// gera uma imagem pra compartilhar, no mesmo esquema do Resumo Mensal
+// (cartão fora da tela, largura fixa de 480px, html2canvas em escala 2) —
+// sem o cargo de cada uma, só nome + tempo de casa + selos
+async function qfGerarImagem() {
+  const btn = document.getElementById('qf-btn-imagem');
+  const textoOriginal = btn.textContent;
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const CARGOS_ORDEM = ['Mãe da Casa','Cacique','Tamoio','Naurú','Cambona','Tamboreiro','Curumim','Visitante',''];
+    const ordenada = [...qfDados].filter(p => p.ativo !== false).sort((a, b) => {
+      const ia = CARGOS_ORDEM.indexOf(a.cargo || '');
+      const ib = CARGOS_ORDEM.indexOf(b.cargo || '');
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a.nome || '').localeCompare(b.nome || '');
+    });
+
+    const linhasHtml = ordenada.map(p => {
+      const hist = p.historia || {};
+      const tempo = window.calcTempo?.(hist.data_entrada);
+      const selos = [qfSeloCruzamento(hist), qfSeloCorte(hist)].filter(Boolean).join('');
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border)">
+        <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(p.nome)}</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--rosa);font-style:italic;white-space:nowrap">${tempo ? tempo + ' de casa' : ''}</span>
+          ${selos}
+        </div>
+      </div>`;
+    }).join('');
+
+    const frame = document.createElement('div');
+    frame.className = 'rm-frame';
+    frame.style.margin = '0';
+    frame.style.width = '480px';
+    frame.style.maxWidth = '480px';
+    frame.innerHTML = `
+      <div class="rm-header">
+        <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+        <div class="rm-header-titulo">Quadro das Filhas</div>
+        <div class="rm-header-sub">Cruzamento e Corte de cada uma</div>
+      </div>
+      <div class="rm-body" style="padding:10px 12px;display:block">${linhasHtml}</div>
+    `;
+
+    const palco = document.createElement('div');
+    palco.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff5f2;padding:16px;width:512px;';
+    palco.appendChild(frame);
+    document.body.appendChild(palco);
+
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+    const canvas = await html2canvas(frame, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
+    document.body.removeChild(palco);
+
+    canvas.toBlob(async (blob) => {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
+      const nomeArquivo = 'quadro-filhas.png';
+      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try {
+          await navigator.share({ files: [arquivo], title: 'Quadro das Filhas — Bolhas de Luz' });
+          return;
+        } catch (e) { /* cancelou o compartilhamento — segue pro download */ }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    console.warn('erro ao gerar imagem do quadro das filhas:', e);
+    btn.textContent = textoOriginal;
+    btn.disabled = false;
+    alert('Não deu pra gerar a imagem. Tenta de novo.');
+  }
 }
 
 function guiasAbrirPainel(email) {
