@@ -3027,6 +3027,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div id="ed-full-conteudo" style="max-width:520px;margin:30px auto 0"></div>
 </div>
 
+<!-- PRÉVIA DE IMAGEM GERADA — modal genérico reaproveitado por todo botão
+     "Gerar Imagem" do site (Resumo Mensal, Próximas Sessões, Quadro das
+     Filhas...), pra conferir o resultado antes de compartilhar/baixar -->
+<div id="img-preview-overlay" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(40,10,20,.75);align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;max-width:420px;width:100%;max-height:92vh;overflow-y:auto;padding:16px;position:relative">
+    <button onclick="fecharPreviaImagem()" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;z-index:1">×</button>
+    <img id="img-preview-img" style="width:100%;border-radius:8px;display:block;margin-bottom:14px" alt="Prévia da imagem gerada">
+    <div style="display:flex;gap:8px">
+      <button onclick="fecharPreviaImagem()" style="flex:1;background:none;border:1px solid var(--border);color:var(--text-dim);padding:11px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase">Fechar</button>
+      <button id="img-preview-btn-compartilhar" style="flex:1;background:var(--rosa);border:none;color:#fff;padding:11px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700">📤 Compartilhar</button>
+    </div>
+  </div>
+</div>
+
 <!-- PÁGINA ORIENTAÇÕES DA SESSÃO -->
 <div id="page-orientacoes" class="page">
   <div class="section-wrap">
@@ -7890,6 +7904,41 @@ function qfFiltrar(busca) {
   qfRender(qfDados.filter(p => [p.nome, p.cargo].join(' ').toLowerCase().includes(b)));
 }
 
+// prévia de imagem gerada ("Gerar Imagem") — genérica, reaproveitada pelo
+// Resumo Mensal, Próximas Sessões e Quadro das Filhas: mostra a imagem
+// antes de compartilhar/baixar, em vez de ir direto pro compartilhamento
+window.mostrarPreviaImagem = function(blob, nomeArquivo, tituloCompartilhar, textoCompartilhar) {
+  const overlay = document.getElementById('img-preview-overlay');
+  const img = document.getElementById('img-preview-img');
+  const url = URL.createObjectURL(blob);
+  img.src = url;
+  overlay.dataset.urlAtual = url;
+  overlay.style.display = 'flex';
+
+  document.getElementById('img-preview-btn-compartilhar').onclick = async () => {
+    const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      try {
+        await navigator.share({ files: [arquivo], title: tituloCompartilhar, text: textoCompartilhar || undefined });
+        window.fecharPreviaImagem();
+      } catch (e) { /* cancelou — deixa a prévia aberta pra tentar de novo ou baixar */ }
+      return;
+    }
+    const linkUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = linkUrl; a.download = nomeArquivo; a.click();
+    URL.revokeObjectURL(linkUrl);
+    window.fecharPreviaImagem();
+  };
+};
+
+window.fecharPreviaImagem = function() {
+  const overlay = document.getElementById('img-preview-overlay');
+  overlay.style.display = 'none';
+  const url = overlay.dataset.urlAtual;
+  if (url) { URL.revokeObjectURL(url); delete overlay.dataset.urlAtual; }
+};
+
 // gera uma imagem pra compartilhar, no mesmo esquema do Resumo Mensal
 // (cartão fora da tela, largura fixa de 480px, html2canvas em escala 2) —
 // sem o cargo de cada uma, só nome + tempo de casa + selos
@@ -7944,24 +7993,11 @@ async function qfGerarImagem() {
     const canvas = await html2canvas(frame, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
     document.body.removeChild(palco);
 
-    canvas.toBlob(async (blob) => {
+    canvas.toBlob((blob) => {
       btn.textContent = textoOriginal;
       btn.disabled = false;
       if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
-      const nomeArquivo = 'quadro-filhas.png';
-      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
-
-      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-        try {
-          await navigator.share({ files: [arquivo], title: 'Quadro das Filhas — Bolhas de Luz' });
-          return;
-        } catch (e) { /* cancelou o compartilhamento — segue pro download */ }
-      }
-
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = nomeArquivo; a.click();
-      URL.revokeObjectURL(url);
+      window.mostrarPreviaImagem(blob, 'quadro-filhas.png', 'Quadro das Filhas — Bolhas de Luz');
     }, 'image/png');
   } catch (e) {
     console.warn('erro ao gerar imagem do quadro das filhas:', e);
@@ -13693,26 +13729,11 @@ const auth = getAuth(app);
         const recadoTexto = (rmRecado && rmRecado.texto && rmRecado.texto.trim()) ? rmRecado.texto.trim() : '';
         const textoCompartilhar = (recadoTexto ? `💌 ${recadoTexto}\n\n` : '') + '🌸 Terreiro Bolhas de Luz';
 
-        canvas.toBlob(async (blob) => {
+        canvas.toBlob((blob) => {
           btn.textContent = textoOriginal;
           btn.disabled = false;
           if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
-          const nomeArquivo = `resumo-${rmMesEscolhido}.png`;
-          const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
-
-          // no celular, tenta abrir direto o menu de compartilhar (WhatsApp já aparece como opção)
-          if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-            try {
-              await navigator.share({ files: [arquivo], title: 'Resumo Mensal — Bolhas de Luz', text: textoCompartilhar });
-              return;
-            } catch(e) { /* usuária cancelou o compartilhamento — segue pro download */ }
-          }
-
-          // fallback: baixa a imagem pra galeria/downloads, pra anexar manualmente
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = nomeArquivo; a.click();
-          URL.revokeObjectURL(url);
+          window.mostrarPreviaImagem(blob, `resumo-${rmMesEscolhido}.png`, 'Resumo Mensal — Bolhas de Luz', textoCompartilhar);
         }, 'image/png');
       } catch(e) {
         console.warn('erro ao gerar imagem do resumo:', e);
@@ -14148,20 +14169,11 @@ const auth = getAuth(app);
         const canvas = await html2canvas(clone, { scale: 2, backgroundColor: '#fff5f2', useCORS: true });
         document.body.removeChild(palco);
 
-        canvas.toBlob(async (blob) => {
+        canvas.toBlob((blob) => {
           btn.textContent = textoOriginal;
           btn.disabled = false;
           if (!blob) { alert('Não deu pra gerar a imagem. Tenta de novo.'); return; }
-          const nomeArquivo = 'proximas-sessoes.png';
-          const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
-            try { await navigator.share({ files: [arquivo], title: 'Próximas Sessões — Bolhas de Luz' }); return; }
-            catch (e) { /* cancelou o compartilhamento — segue pro download */ }
-          }
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url; a.download = nomeArquivo; a.click();
-          URL.revokeObjectURL(url);
+          window.mostrarPreviaImagem(blob, 'proximas-sessoes.png', 'Próximas Sessões — Bolhas de Luz');
         }, 'image/png');
       } catch (e) {
         console.warn('erro ao gerar imagem dos eventos selecionados:', e);
