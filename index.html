@@ -3862,9 +3862,13 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <p class="section-sub" style="margin-bottom:16px">Nome, cargo, tempo de casa e os selos de Cruzamento e Corte de cada uma ✦</p>
     </div>
     <div style="max-width:680px;margin:0 auto">
-      <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="display:flex;gap:8px;margin-bottom:10px">
         <input type="text" class="form-input" id="qf-busca" placeholder="Buscar por nome ou cargo..." oninput="qfFiltrar(this.value)" style="flex:1;margin-bottom:0">
         <button id="qf-btn-imagem" onclick="qfGerarImagem()" style="flex:0 0 auto;background:var(--rosa);border:none;color:#fff;border-radius:8px;padding:0 14px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;cursor:pointer;white-space:nowrap">📤 Gerar Imagem</button>
+      </div>
+      <div style="text-align:right;margin-bottom:10px">
+        <button onclick="qfMarcarTodas(true)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer">Selecionar todas</button>
+        <button onclick="qfMarcarTodas(false)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer">Nenhuma</button>
       </div>
       <div id="qf-lista"><div class="cal-empty">Carregando...</div></div>
     </div>
@@ -7841,6 +7845,39 @@ function guiasFiltrar(busca) {
 // ── QUADRO DAS FILHAS (só admin) — nome, cargo, tempo de casa e selos de
 // Cruzamento/Corte (ou cambonagem, se ainda não foi cruzada/cortada) ─────
 let qfDados = [];
+let qfSelecionados = new Set();
+let qfBuscaAtual = '';
+
+// ordem do mais velho (entrou primeiro) pro mais novo de casa — quem não
+// tem data de entrada registrada fica por último
+function qfOrdenarPorTempo(lista) {
+  return [...lista].sort((a, b) => {
+    const da = a.historia?.data_entrada || '9999-99-99';
+    const db = b.historia?.data_entrada || '9999-99-99';
+    return da.localeCompare(db) || (a.nome || '').localeCompare(b.nome || '');
+  });
+}
+
+function qfListaFiltradaAtual() {
+  const b = qfBuscaAtual.toLowerCase().trim();
+  if (!b) return qfDados;
+  return qfDados.filter(p => [p.nome, p.cargo].join(' ').toLowerCase().includes(b));
+}
+
+// "selecionar todas/nenhuma" vale só pra quem está visível na busca atual —
+// não mexe na seleção de quem está escondido por um filtro de busca
+function qfMarcarTodas(valor) {
+  qfListaFiltradaAtual().forEach(p => {
+    if (valor) qfSelecionados.add(p.email);
+    else qfSelecionados.delete(p.email);
+  });
+  qfRender(qfListaFiltradaAtual());
+}
+
+function qfToggleSelecionada(email, checked) {
+  if (checked) qfSelecionados.add(email);
+  else qfSelecionados.delete(email);
+}
 
 function qfSeloCruzamento(hist) {
   if (!hist) return '';
@@ -7863,6 +7900,7 @@ async function qfLoad() {
     const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
     const todos = await res.json();
     qfDados = todos.filter(p => p.nome);
+    qfSelecionados = new Set(qfDados.map(p => p.email));
     qfRender(qfDados);
   } catch (e) {
     lista.innerHTML = '<div class="cal-empty">Erro ao carregar.</div>';
@@ -7874,18 +7912,16 @@ function qfRender(items) {
   if (!lista) return;
   if (!items.length) { lista.innerHTML = '<div class="cal-empty">Nenhuma filha encontrada.</div>'; return; }
 
-  const CARGOS_ORDEM = ['Mãe da Casa','Cacique','Tamoio','Naurú','Cambona','Tamboreiro','Curumim','Visitante',''];
-  const ordenada = [...items].sort((a, b) => {
-    const ia = CARGOS_ORDEM.indexOf(a.cargo || '');
-    const ib = CARGOS_ORDEM.indexOf(b.cargo || '');
-    return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a.nome || '').localeCompare(b.nome || '');
-  });
+  const ordenada = qfOrdenarPorTempo(items);
 
   lista.innerHTML = ordenada.map(p => {
     const hist = p.historia || {};
     const tempo = window.calcTempo?.(hist.data_entrada);
     const selos = [qfSeloCruzamento(hist), qfSeloCorte(hist)].filter(Boolean).join('');
-    return `<div onclick="abrirFicha('${p.email}')" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;cursor:pointer;${p.ativo === false ? 'opacity:.5' : ''}">
+    const marcada = qfSelecionados.has(p.email);
+    return `<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;${p.ativo === false ? 'opacity:.5' : ''}">
+      <input type="checkbox" ${marcada ? 'checked' : ''} onchange="qfToggleSelecionada('${p.email}', this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--rosa);flex:0 0 auto">
+      <div onclick="abrirFicha('${p.email}')" style="flex:1;min-width:0;cursor:pointer;display:flex;align-items:center;gap:12px">
       <div style="flex:1;min-width:0">
         <div style="font-family:'Playfair Display',serif;font-size:.92rem;color:var(--text)">${calEsc(p.nome)}${p.ativo === false ? ' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>' : ''}</div>
         <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:2px">${calEsc(p.cargo) || '—'}</div>
@@ -7894,14 +7930,14 @@ function qfRender(items) {
         <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic;margin-bottom:4px">${tempo ? tempo + ' de casa' : '—'}</div>
         <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${selos || '<span style="font-size:.68rem;color:var(--text-dim)">—</span>'}</div>
       </div>
+      </div>
     </div>`;
   }).join('');
 }
 
 function qfFiltrar(busca) {
-  const b = busca.toLowerCase().trim();
-  if (!b) { qfRender(qfDados); return; }
-  qfRender(qfDados.filter(p => [p.nome, p.cargo].join(' ').toLowerCase().includes(b)));
+  qfBuscaAtual = busca;
+  qfRender(qfListaFiltradaAtual());
 }
 
 // prévia de imagem gerada ("Gerar Imagem") — genérica, reaproveitada pelo
@@ -7948,12 +7984,14 @@ async function qfGerarImagem() {
   btn.textContent = '⏳ Gerando...';
   btn.disabled = true;
   try {
-    const CARGOS_ORDEM = ['Mãe da Casa','Cacique','Tamoio','Naurú','Cambona','Tamboreiro','Curumim','Visitante',''];
-    const ordenada = [...qfDados].filter(p => p.ativo !== false).sort((a, b) => {
-      const ia = CARGOS_ORDEM.indexOf(a.cargo || '');
-      const ib = CARGOS_ORDEM.indexOf(b.cargo || '');
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a.nome || '').localeCompare(b.nome || '');
-    });
+    const selecionados = qfDados.filter(p => p.ativo !== false && qfSelecionados.has(p.email));
+    if (!selecionados.length) {
+      btn.textContent = textoOriginal;
+      btn.disabled = false;
+      alert('Nenhuma filha selecionada — marca pelo menos uma pra gerar a imagem.');
+      return;
+    }
+    const ordenada = qfOrdenarPorTempo(selecionados);
 
     const linhasHtml = ordenada.map(p => {
       const hist = p.historia || {};
