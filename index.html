@@ -1922,10 +1922,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .gp-celebrating{animation:gpCelebrate .6s ease-in-out}
 
 /* ── Planilha Geral — grade estilo planilha, só admin ── */
-.pg-tabela-wrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:10px;background:#fff}
+/* só rolagem horizontal aqui (tem muita coluna) — a vertical fica por conta
+   da rolagem normal da página, pra não ter "rolagem dentro de rolagem" */
+.pg-tabela-wrap{overflow-x:auto;overflow-y:visible;border:1px solid var(--border);border-radius:10px;background:#fff}
 table.pg-tabela{border-collapse:separate;border-spacing:0;font-size:.74rem;white-space:nowrap}
 table.pg-tabela th,table.pg-tabela td{padding:5px 8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
-table.pg-tabela thead th{position:sticky;top:0;background:var(--rosa);color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;z-index:2;text-align:left}
+/* top casa com a altura da barra fixa "Ferramentas" (body{padding-top:34px}/
+   body.logada{padding-top:62px}), senão o cabeçalho ficava escondido atrás dela */
+table.pg-tabela thead th{position:sticky;top:34px;background:var(--rosa);color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;z-index:2;text-align:left}
+body.logada table.pg-tabela thead th{top:62px}
 table.pg-tabela td.pg-col-fixa,table.pg-tabela th.pg-col-fixa{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05)}
 table.pg-tabela thead th.pg-col-fixa{z-index:3;background:var(--rosa)}
 /* a coluna do nome é sticky (fica por cima das outras ao rolar) — por isso
