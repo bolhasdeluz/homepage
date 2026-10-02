@@ -3859,7 +3859,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="back-btn" onclick="showPage('admin')" style="position:relative;z-index:10">← Voltar</button>
       <div class="eyebrow">Terreiro Bolhas de Luz</div>
       <div class="section-title" style="margin-bottom:6px">Quadro das Filhas</div>
-      <p class="section-sub" style="margin-bottom:16px">Nome, cargo, tempo de casa e os selos de Cruzamento e Corte de cada uma ✦</p>
+      <p class="section-sub" style="margin-bottom:16px">Nome, cargo e tempo de casa de cada uma ✦</p>
     </div>
     <div style="max-width:680px;margin:0 auto">
       <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -4667,7 +4667,7 @@ function getDefaultMenu() {
       { id: 'corrente', label: 'Corrente', items: [
         { id: 'tesouraria', label: '💰 Tesouraria',      type: 'external', url: '/tesouraria', desc: 'Extrato e separação de valores por categoria', showCard: true, showMenu: true },
         { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
-        { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo, tempo de casa e selos de Cruzamento/Corte — só admin', showCard: true, showMenu: true, adminOnly: true },
+        { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo e tempo de casa de cada uma — só admin', showCard: true, showMenu: true, adminOnly: true },
         { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
       ]}
     ]
@@ -7879,28 +7879,6 @@ function qfToggleSelecionada(email, checked) {
   else qfSelecionados.delete(email);
 }
 
-// olha tanto o campo legado (cruz_conga/corte_1, guardado em história) quanto os
-// arrays de cruzamentos/cortes extras — uma filha antiga pode ter o cruzamento ou
-// corte dela registrado só num desses lugares, dependendo de como foi cadastrado
-function qfSeloCruzamento(p) {
-  const hist = (p && p.historia) || {};
-  const extras = (p && p.cruzamentosExtras) || [];
-  if (hist.cruz_conga_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Cruz.</span>`;
-  if (hist.cruz_conga) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#dcecdc;color:#3a6b3a;border:1px solid #b8d8b8;white-space:nowrap">✅ Cruzamento</span>`;
-  if (extras.some(c => c.data && !c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#dcecdc;color:#3a6b3a;border:1px solid #b8d8b8;white-space:nowrap">✅ Cruzamento</span>`;
-  if (extras.some(c => c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Cruz.</span>`;
-  return '';
-}
-function qfSeloCorte(p) {
-  const hist = (p && p.historia) || {};
-  const cortes = (p && p.cortes) || [];
-  if (hist.corte_1_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Corte</span>`;
-  if (hist.corte_1) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#f3dbe5;color:#a13f63;border:1px solid #e3b6cc;white-space:nowrap">✅ Corte</span>`;
-  if (cortes.some(c => c.data && !c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#f3dbe5;color:#a13f63;border:1px solid #e3b6cc;white-space:nowrap">✅ Corte</span>`;
-  if (cortes.some(c => c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Corte</span>`;
-  return '';
-}
-
 async function qfLoad() {
   const lista = document.getElementById('qf-lista');
   if (!lista) return;
@@ -7926,7 +7904,6 @@ function qfRender(items) {
   lista.innerHTML = ordenada.map(p => {
     const hist = p.historia || {};
     const tempo = window.calcTempo?.(hist.data_entrada);
-    const selos = [qfSeloCruzamento(p), qfSeloCorte(p)].filter(Boolean).join('');
     const marcada = qfSelecionados.has(p.email);
     return `<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;${p.ativo === false ? 'opacity:.5' : ''}">
       <input type="checkbox" ${marcada ? 'checked' : ''} onchange="qfToggleSelecionada('${p.email}', this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--rosa);flex:0 0 auto">
@@ -7936,8 +7913,7 @@ function qfRender(items) {
         <div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:2px">${calEsc(p.cargo) || '—'}</div>
       </div>
       <div style="flex:0 0 auto;text-align:right">
-        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic;margin-bottom:4px">${tempo ? tempo + ' de casa' : '—'}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end">${selos || '<span style="font-size:.68rem;color:var(--text-dim)">—</span>'}</div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic">${tempo ? tempo + ' de casa' : '—'}</div>
       </div>
       </div>
     </div>`;
@@ -7986,7 +7962,7 @@ window.fecharPreviaImagem = function() {
 
 // gera uma imagem pra compartilhar, no mesmo esquema do Resumo Mensal
 // (cartão fora da tela, largura fixa de 480px, html2canvas em escala 2) —
-// sem o cargo de cada uma, só nome + tempo de casa + selos
+// sem o cargo de cada uma, só nome + tempo de casa
 async function qfGerarImagem() {
   const btn = document.getElementById('qf-btn-imagem');
   const textoOriginal = btn.textContent;
@@ -8005,13 +7981,9 @@ async function qfGerarImagem() {
     const linhasHtml = ordenada.map(p => {
       const hist = p.historia || {};
       const tempo = window.calcTempo?.(hist.data_entrada);
-      const selos = [qfSeloCruzamento(p), qfSeloCorte(p)].filter(Boolean).join('');
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border)">
         <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(p.nome)}</div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--rosa);font-style:italic;white-space:nowrap">${tempo ? tempo + ' de casa' : ''}</span>
-          ${selos}
-        </div>
+        <span style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--rosa);font-style:italic;white-space:nowrap">${tempo ? tempo + ' de casa' : ''}</span>
       </div>`;
     }).join('');
 
@@ -8024,7 +7996,7 @@ async function qfGerarImagem() {
       <div class="rm-header">
         <div class="rm-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
         <div class="rm-header-titulo">Quadro das Filhas</div>
-        <div class="rm-header-sub">Cruzamento e Corte de cada uma</div>
+        <div class="rm-header-sub">Cargo e tempo de casa de cada uma</div>
       </div>
       <div class="rm-body" style="padding:10px 12px;display:block">${linhasHtml}</div>
     `;
