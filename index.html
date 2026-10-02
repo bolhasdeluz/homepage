@@ -1928,9 +1928,13 @@ table.pg-tabela th,table.pg-tabela td{padding:5px 8px;border-right:1px solid var
 table.pg-tabela thead th{position:sticky;top:0;background:var(--rosa);color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;z-index:2;text-align:left}
 table.pg-tabela td.pg-col-fixa,table.pg-tabela th.pg-col-fixa{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05)}
 table.pg-tabela thead th.pg-col-fixa{z-index:3;background:var(--rosa)}
-table.pg-tabela tbody tr:nth-child(even) td.pg-col-fixa{background:var(--rosa-dim)}
+/* a coluna do nome é sticky (fica por cima das outras ao rolar) — por isso
+   o fundo dela precisa ser sólido, nunca rgba/var(--rosa-dim) (que é
+   translúcido): com transparência, o texto da coluna de trás "atravessa"
+   e fica com efeito fantasma por cima do nome */
+table.pg-tabela tbody tr:nth-child(even) td.pg-col-fixa{background:#faeff3}
 table.pg-tabela tbody tr:hover td{background:rgba(196,57,107,.05)}
-table.pg-tabela tbody tr:hover td.pg-col-fixa{background:rgba(196,57,107,.1)}
+table.pg-tabela tbody tr:hover td.pg-col-fixa{background:#f9ebf0}
 table.pg-tabela tr.pg-row-inativa td{opacity:.45}
 .pg-cel-input{width:100%;min-width:84px;border:1px solid transparent;background:transparent;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text);padding:3px 4px;border-radius:4px;outline:none}
 .pg-cel-input:hover{border-color:var(--border)}
