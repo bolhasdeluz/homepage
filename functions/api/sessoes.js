@@ -69,8 +69,8 @@ export async function onRequest(context) {
         tambor: body.tambor || '',
         driveLink: body.driveLink || '',
         // marca essa sessão como um Corte ou um Cruzamento (e qual tipo) —
-        // usado pela Pendências de Corte/Cruzamento pra saber que essa data
-        // conta como um evento da casa, sem precisar cadastrar na mão
+        // alimenta o catálogo de datas usado no atalho "Preencher com uma
+        // data já cadastrada" em Minha História, sem precisar cadastrar na mão
         marco: body.marco || '',
         marcoOutroNome: body.marcoOutroNome || '',
         googleEventId: '',

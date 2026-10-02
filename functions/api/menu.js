@@ -32,7 +32,6 @@ const DEFAULT_MENU = JSON.stringify({
       { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true, desc: 'Perfis e guias espirituais' },
       { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', showCard: true, showMenu: true, adminOnly: true, desc: 'Nome, cargo e tempo de casa de cada uma — só admin' },
       { id: 'planilha-geral', label: '🗂️ Planilha Geral', type: 'internal', page: 'planilha-geral', showCard: true, showMenu: true, adminOnly: true, desc: 'Visão em planilha de todos os campos das fichas — só admin' },
-      { id: 'pendencias', label: '📌 Pendências de Corte/Cruzamento', type: 'internal', page: 'pendencias', showCard: true, showMenu: true, adminOnly: true, desc: 'Datas da casa que faltam na ficha de cada uma — só admin' },
       { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true, desc: 'Normas e condutas da casa' },
     ]}
   ]
