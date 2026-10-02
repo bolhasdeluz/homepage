@@ -7879,16 +7879,25 @@ function qfToggleSelecionada(email, checked) {
   else qfSelecionados.delete(email);
 }
 
-function qfSeloCruzamento(hist) {
-  if (!hist) return '';
+// olha tanto o campo legado (cruz_conga/corte_1, guardado em história) quanto os
+// arrays de cruzamentos/cortes extras — uma filha antiga pode ter o cruzamento ou
+// corte dela registrado só num desses lugares, dependendo de como foi cadastrado
+function qfSeloCruzamento(p) {
+  const hist = (p && p.historia) || {};
+  const extras = (p && p.cruzamentosExtras) || [];
   if (hist.cruz_conga_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Cruz.</span>`;
   if (hist.cruz_conga) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#dcecdc;color:#3a6b3a;border:1px solid #b8d8b8;white-space:nowrap">✅ Cruzamento</span>`;
+  if (extras.some(c => c.data && !c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#dcecdc;color:#3a6b3a;border:1px solid #b8d8b8;white-space:nowrap">✅ Cruzamento</span>`;
+  if (extras.some(c => c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Cruz.</span>`;
   return '';
 }
-function qfSeloCorte(hist) {
-  if (!hist) return '';
+function qfSeloCorte(p) {
+  const hist = (p && p.historia) || {};
+  const cortes = (p && p.cortes) || [];
   if (hist.corte_1_cambonagem) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Corte</span>`;
   if (hist.corte_1) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#f3dbe5;color:#a13f63;border:1px solid #e3b6cc;white-space:nowrap">✅ Corte</span>`;
+  if (cortes.some(c => c.data && !c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#f3dbe5;color:#a13f63;border:1px solid #e3b6cc;white-space:nowrap">✅ Corte</span>`;
+  if (cortes.some(c => c.cambonagem)) return `<span style="font-size:.64rem;padding:2px 7px;border-radius:20px;background:#eee0c9;color:#7a5c1e;border:1px solid #d9c48a;white-space:nowrap">🤝 Cambona Corte</span>`;
   return '';
 }
 
@@ -7917,7 +7926,7 @@ function qfRender(items) {
   lista.innerHTML = ordenada.map(p => {
     const hist = p.historia || {};
     const tempo = window.calcTempo?.(hist.data_entrada);
-    const selos = [qfSeloCruzamento(hist), qfSeloCorte(hist)].filter(Boolean).join('');
+    const selos = [qfSeloCruzamento(p), qfSeloCorte(p)].filter(Boolean).join('');
     const marcada = qfSelecionados.has(p.email);
     return `<div style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:8px;${p.ativo === false ? 'opacity:.5' : ''}">
       <input type="checkbox" ${marcada ? 'checked' : ''} onchange="qfToggleSelecionada('${p.email}', this.checked)" onclick="event.stopPropagation()" style="accent-color:var(--rosa);flex:0 0 auto">
@@ -7996,7 +8005,7 @@ async function qfGerarImagem() {
     const linhasHtml = ordenada.map(p => {
       const hist = p.historia || {};
       const tempo = window.calcTempo?.(hist.data_entrada);
-      const selos = [qfSeloCruzamento(hist), qfSeloCorte(hist)].filter(Boolean).join('');
+      const selos = [qfSeloCruzamento(p), qfSeloCorte(p)].filter(Boolean).join('');
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border)">
         <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(p.nome)}</div>
         <div style="display:flex;align-items:center;gap:6px">
