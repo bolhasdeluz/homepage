@@ -1921,6 +1921,37 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 @keyframes gpCelebrate{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-8px) rotate(-4deg)}}
 .gp-celebrating{animation:gpCelebrate .6s ease-in-out}
 
+/* ── Planilha Geral — grade estilo planilha, só admin ── */
+.pg-tabela-wrap{overflow:auto;max-height:72vh;border:1px solid var(--border);border-radius:10px;background:#fff}
+table.pg-tabela{border-collapse:separate;border-spacing:0;font-size:.74rem;white-space:nowrap}
+table.pg-tabela th,table.pg-tabela td{padding:5px 8px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+table.pg-tabela thead th{position:sticky;top:0;background:var(--rosa);color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;z-index:2;text-align:left}
+table.pg-tabela td.pg-col-fixa,table.pg-tabela th.pg-col-fixa{position:sticky;left:0;background:#fff;z-index:1;box-shadow:2px 0 4px rgba(0,0,0,.05)}
+table.pg-tabela thead th.pg-col-fixa{z-index:3;background:var(--rosa)}
+table.pg-tabela tbody tr:nth-child(even) td.pg-col-fixa{background:var(--rosa-dim)}
+table.pg-tabela tbody tr:hover td{background:rgba(196,57,107,.05)}
+table.pg-tabela tbody tr:hover td.pg-col-fixa{background:rgba(196,57,107,.1)}
+table.pg-tabela tr.pg-row-inativa td{opacity:.45}
+.pg-cel-input{width:100%;min-width:84px;border:1px solid transparent;background:transparent;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text);padding:3px 4px;border-radius:4px;outline:none}
+.pg-cel-input:hover{border-color:var(--border)}
+.pg-cel-input:focus{border-color:var(--rosa);background:#fff}
+input.pg-cel-input[type=date]{min-width:118px}
+input.pg-cel-input[type=number]{min-width:60px}
+.pg-cel-check{accent-color:var(--rosa);width:16px;height:16px}
+.pg-cel-extra{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.04em;color:var(--rosa);cursor:pointer;background:var(--rosa-dim);border-radius:10px;padding:3px 8px;white-space:nowrap}
+.pg-cel-extra:hover{background:rgba(196,57,107,.18)}
+.pg-status{font-size:.62rem;margin-left:6px;color:var(--text-dim);white-space:nowrap}
+.pg-status.ok{color:var(--green)}
+.pg-status.erro{color:#a33}
+.pg-grupo-titulo{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pg-grupo-acoes{display:flex;gap:8px}
+.pg-grupo-acoes button{background:none;border:none;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;cursor:pointer;text-decoration:underline}
+.pg-grupo-acoes button:hover{color:var(--rosa)}
+.pg-check-linha{display:flex;align-items:center;gap:8px;padding:4px 2px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)}
+.pg-check-linha input{accent-color:var(--rosa);flex-shrink:0}
+.pg-modal-overlay{display:none;position:fixed;inset:0;z-index:900;background:rgba(40,10,20,.6);align-items:center;justify-content:center;padding:20px}
+.pg-modal-caixa{background:#fff;border-radius:14px;max-width:420px;width:100%;max-height:82vh;overflow-y:auto;padding:20px}
+
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -3875,6 +3906,59 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<div id="page-planilha-geral" class="page">
+  <div class="cal-wrap" style="max-width:1400px">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('admin')" style="position:relative;z-index:10">← Voltar</button>
+      <div class="eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="section-title" style="margin-bottom:6px">Planilha Geral</div>
+      <p class="section-sub" style="margin-bottom:16px">Visão geral de todas as fichas — clica em qualquer campo pra editar direto ✦</p>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <input type="text" class="form-input" id="pg-busca" placeholder="Buscar por nome ou cargo..." oninput="pgFiltrar(this.value)" style="flex:1;min-width:200px;margin-bottom:0">
+      <button onclick="pgAbrirColunas()" style="flex:0 0 auto;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:0 14px;cursor:pointer">📊 Colunas</button>
+      <button onclick="pgAbrirPessoas()" style="flex:0 0 auto;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:0 14px;cursor:pointer">👥 Filhas</button>
+    </div>
+    <div class="pg-tabela-wrap">
+      <table class="pg-tabela" id="pg-tabela">
+        <thead><tr><th class="pg-col-fixa">Carregando...</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- PLANILHA GERAL — modal de colunas -->
+<div id="pg-colunas-overlay" class="pg-modal-overlay" onclick="if(event.target===this)pgFecharColunas()">
+  <div class="pg-modal-caixa">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" style="font-size:1.1rem;margin-bottom:0">Colunas</div>
+      <button onclick="pgFecharColunas()" style="background:none;border:none;font-size:1.3rem;color:var(--text-dim);cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+      <button onclick="pgColunasMarcarTodas(true)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:4px 10px;cursor:pointer">Marcar todas</button>
+      <button onclick="pgColunasMarcarTodas(false)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:4px 10px;cursor:pointer">Nenhuma</button>
+    </div>
+    <div id="pg-colunas-lista"></div>
+  </div>
+</div>
+
+<!-- PLANILHA GERAL — modal de pessoas -->
+<div id="pg-pessoas-overlay" class="pg-modal-overlay" onclick="if(event.target===this)pgFecharPessoas()">
+  <div class="pg-modal-caixa">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" style="font-size:1.1rem;margin-bottom:0">Filhas</div>
+      <button onclick="pgFecharPessoas()" style="background:none;border:none;font-size:1.3rem;color:var(--text-dim);cursor:pointer;line-height:1">×</button>
+    </div>
+    <input type="text" class="form-input" id="pg-pessoas-busca" placeholder="Buscar..." oninput="pgRenderPessoasLista(this.value)" style="margin-bottom:10px">
+    <div style="display:flex;gap:10px;margin-bottom:10px">
+      <button onclick="pgPessoasMarcarTodas(true)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:4px 10px;cursor:pointer">Marcar todas</button>
+      <button onclick="pgPessoasMarcarTodas(false)" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.7rem;padding:4px 10px;cursor:pointer">Nenhuma</button>
+    </div>
+    <div id="pg-pessoas-lista"></div>
+  </div>
+</div>
+
 <!-- MODAL SESSÃO (calendário) -->
 <div id="cal-modal-overlay" onclick="if(event.target===this)calCloseModal()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
@@ -4668,6 +4752,7 @@ function getDefaultMenu() {
         { id: 'tesouraria', label: '💰 Tesouraria',      type: 'external', url: '/tesouraria', desc: 'Extrato e separação de valores por categoria', showCard: true, showMenu: true },
         { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
         { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo e tempo de casa de cada uma — só admin', showCard: true, showMenu: true, adminOnly: true },
+        { id: 'planilha-geral', label: '🗂️ Planilha Geral', type: 'internal', page: 'planilha-geral', desc: 'Visão em planilha de todos os campos das fichas — só admin', showCard: true, showMenu: true, adminOnly: true },
         { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
       ]}
     ]
@@ -5851,6 +5936,11 @@ function showPage(name) {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
     if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
     qfLoad();
+  }
+  if (name === 'planilha-geral') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    pgLoad();
   }
   if (name === 'orientacoes') {
     // recarrega a próxima sessão sempre que a página abrir — antes só carregava
@@ -7923,6 +8013,318 @@ function qfRender(items) {
 function qfFiltrar(busca) {
   qfBuscaAtual = busca;
   qfRender(qfListaFiltradaAtual());
+}
+
+// ── PLANILHA GERAL — visão em grade de todas as fichas, só admin ──
+// cada coluna sabe onde mora o campo dela (secao: 'historia'/'cruzamentos'/
+// 'guias', ou direto no perfil quando secao é omitido) e como editá-lo —
+// assim pgAtualizarCampo funciona genérico pra qualquer campo, sem precisar
+// de um caso especial por coluna
+const PG_GRUPOS = [
+  { key:'basico',      label:'Básico' },
+  { key:'familia',     label:'Família e Padrinhos' },
+  { key:'marcos',      label:'Marcos' },
+  { key:'conga',       label:'Cruzamento de Conga' },
+  { key:'cruzamentos', label:'Cruzamentos' },
+  { key:'quimbanda',   label:'Quimbanda' },
+  { key:'guias',       label:'Guias e Guardiões' },
+  { key:'extras',      label:'Extras (clique pra abrir a ficha)' },
+];
+
+const PG_CARGO_OPCOES = ['', 'Mãe da Casa', 'Cacique', 'Tamoio', 'Naurú', 'Cambona', 'Tamboreiro', 'Curumim'];
+const PG_GRUPO_ACESSO_OPCOES = [
+  ['visitante', 'Visitante (padrão)'], ['filhas', 'Filhas da Casa'],
+  ['tamboreiro', 'Tamboreiro'], ['amigos', 'Amigos'], ['assistencia', 'Assistência'],
+];
+
+const PG_COLUNAS = [
+  { grupo:'basico', key:'cargo', label:'Cargo', campo:'cargo', tipo:'select', opcoes:PG_CARGO_OPCOES },
+  { grupo:'basico', key:'grupoAcesso', label:'Grupo de Acesso', campo:'grupo', tipo:'select', opcoes:PG_GRUPO_ACESSO_OPCOES },
+  // ativo é tratado como "sim" quando o campo nem existe no perfil ainda — mesma
+  // convenção (ativo !== false) usada no resto do site, pra não mostrar como
+  // inativa uma filha que nunca teve esse campo definido
+  { grupo:'basico', key:'ativo', label:'Ativo', campo:'ativo', tipo:'checkbox', ler:p => p.ativo !== false },
+  { grupo:'basico', key:'data_entrada', label:'Data de Entrada', secao:'historia', campo:'data_entrada', tipo:'date' },
+  { grupo:'basico', key:'tempo_casa', label:'Tempo de Casa', tipo:'readonly', valor:p => window.calcTempo?.(p.historia?.data_entrada) },
+
+  { grupo:'familia', key:'guia_chefe', label:'Guia Chefe', secao:'historia', campo:'guia_chefe', tipo:'text' },
+  { grupo:'familia', key:'madrinha', label:'Madrinha', secao:'historia', campo:'madrinha', tipo:'text' },
+  { grupo:'familia', key:'madrinha_data', label:'Data — Madrinha', secao:'historia', campo:'madrinha_data', tipo:'date' },
+  { grupo:'familia', key:'afilhada_1', label:'Afilhada 1', secao:'historia', campo:'afilhada_1', tipo:'text' },
+  { grupo:'familia', key:'afilhada_1_data', label:'Data — Afilhada 1', secao:'historia', campo:'afilhada_1_data', tipo:'date' },
+  { grupo:'familia', key:'afilhada_2', label:'Afilhada 2', secao:'historia', campo:'afilhada_2', tipo:'text' },
+  { grupo:'familia', key:'afilhada_2_data', label:'Data — Afilhada 2', secao:'historia', campo:'afilhada_2_data', tipo:'date' },
+
+  { grupo:'marcos', key:'coroacao', label:'Coroação', secao:'historia', campo:'coroacao', tipo:'date' },
+  { grupo:'marcos', key:'cacicamento', label:'Cacicamento', secao:'historia', campo:'cacicamento', tipo:'date' },
+
+  { grupo:'conga', key:'cruz_conga', label:'Cruzamento de Conga', secao:'historia', campo:'cruz_conga', tipo:'date' },
+  { grupo:'conga', key:'cruz_conga_cambonagem', label:'Cambonagem — Conga', secao:'historia', campo:'cruz_conga_cambonagem', tipo:'checkbox' },
+
+  { grupo:'cruzamentos', key:'cruz_mata', label:'Cruz. Mata', secao:'cruzamentos', campo:'cruz_mata', tipo:'date' },
+  { grupo:'cruzamentos', key:'cruz_praia', label:'Cruz. Praia', secao:'cruzamentos', campo:'cruz_praia', tipo:'date' },
+  { grupo:'cruzamentos', key:'cruz_rio', label:'Cruz. Rio/Cachoeira', secao:'cruzamentos', campo:'cruz_rio', tipo:'date' },
+  { grupo:'cruzamentos', key:'cruz_pedreira', label:'Cruz. Pedreira', secao:'cruzamentos', campo:'cruz_pedreira', tipo:'date' },
+
+  { grupo:'quimbanda', key:'apronte', label:'Apronte', secao:'historia', campo:'apronte', tipo:'date' },
+  { grupo:'quimbanda', key:'apronte_galinhas', label:'Apronte — Galinhas', secao:'historia', campo:'apronte_galinhas', tipo:'number' },
+  { grupo:'quimbanda', key:'apronte_galos', label:'Apronte — Galos', secao:'historia', campo:'apronte_galos', tipo:'number' },
+  { grupo:'quimbanda', key:'corte_1', label:'1º Corte', secao:'historia', campo:'corte_1', tipo:'date' },
+  { grupo:'quimbanda', key:'corte_1_galinhas', label:'1º Corte — Galinhas', secao:'historia', campo:'corte_1_galinhas', tipo:'number' },
+  { grupo:'quimbanda', key:'corte_1_galos', label:'1º Corte — Galos', secao:'historia', campo:'corte_1_galos', tipo:'number' },
+  { grupo:'quimbanda', key:'corte_1_cambonagem', label:'Cambonagem — Corte', secao:'historia', campo:'corte_1_cambonagem', tipo:'checkbox' },
+
+  { grupo:'guias', key:'caboclo', label:'Caboclo', secao:'guias', campo:'caboclo', tipo:'text' },
+  { grupo:'guias', key:'caboclo_data', label:'Data — Caboclo', secao:'guias', campo:'caboclo_data', tipo:'date' },
+  { grupo:'guias', key:'exu', label:'Exu', secao:'guias', campo:'exu', tipo:'text' },
+  { grupo:'guias', key:'exu_data', label:'Data — Exu', secao:'guias', campo:'exu_data', tipo:'date' },
+  { grupo:'guias', key:'pomba_gira', label:'Pomba-Gira', secao:'guias', campo:'pomba_gira', tipo:'text' },
+  { grupo:'guias', key:'pomba_gira_data', label:'Data — Pomba-Gira', secao:'guias', campo:'pomba_gira_data', tipo:'date' },
+  { grupo:'guias', key:'preto_velho', label:'Preto-Velho', secao:'guias', campo:'preto_velho', tipo:'text' },
+  { grupo:'guias', key:'preto_velho_data', label:'Data — Preto-Velho', secao:'guias', campo:'preto_velho_data', tipo:'date' },
+  { grupo:'guias', key:'cigana', label:'Cigana', secao:'guias', campo:'cigana', tipo:'text' },
+  { grupo:'guias', key:'cigana_data', label:'Data — Cigana', secao:'guias', campo:'cigana_data', tipo:'date' },
+  { grupo:'guias', key:'cosme', label:'Cosme/Damião', secao:'guias', campo:'cosme', tipo:'text' },
+  { grupo:'guias', key:'cosme_data', label:'Data — Cosme/Damião', secao:'guias', campo:'cosme_data', tipo:'date' },
+
+  { grupo:'extras', key:'cortes_extra', label:'Cortes Extras', tipo:'extra', arrayKey:'cortes' },
+  { grupo:'extras', key:'cruzamentos_extra', label:'Cruzamentos Extras', tipo:'extra', arrayKey:'cruzamentosExtras' },
+  { grupo:'extras', key:'guias_extra', label:'Guias Extras', tipo:'extra', arrayKey:'guiasExtras' },
+  { grupo:'extras', key:'pontos_riscados', label:'Pontos Riscados', tipo:'extra', arrayKey:'pontosRiscados' },
+];
+
+let pgDados = [];
+let pgColunasVisiveis = new Set();
+let pgPessoasVisiveis = new Set();
+let pgBuscaAtual = '';
+
+// gera um id de DOM seguro a partir do e-mail (que tem @ e . , inválidos num id)
+function pgId(email) { return 'pg' + String(email).replace(/[^a-zA-Z0-9]/g, '_'); }
+// escapa pra uso dentro de atributo value="..." (calEsc não cobre aspas)
+function pgAttr(v) { return calEsc(v).replace(/"/g, '&quot;'); }
+
+function pgValor(p, col) {
+  if (col.ler) return col.ler(p);
+  if (col.tipo === 'readonly') return col.valor(p);
+  if (col.tipo === 'extra') return (p[col.arrayKey] || []).length;
+  const obj = col.secao ? (p[col.secao] || {}) : p;
+  return obj[col.campo];
+}
+
+function pgSetValor(p, col, valor) {
+  if (col.secao) {
+    if (!p[col.secao]) p[col.secao] = {};
+    p[col.secao][col.campo] = valor;
+  } else {
+    p[col.campo] = valor;
+  }
+}
+
+function pgCelulaHtml(p, col) {
+  const valor = pgValor(p, col);
+  if (col.tipo === 'readonly') {
+    return `<td>${valor ? calEsc(valor) : '<span style="color:var(--text-dim)">—</span>'}</td>`;
+  }
+  if (col.tipo === 'extra') {
+    return `<td><span class="pg-cel-extra" onclick="abrirFicha('${p.email}')">${valor ? valor + (valor === 1 ? ' item' : ' itens') : '— abrir ficha'}</span></td>`;
+  }
+  if (col.tipo === 'checkbox') {
+    return `<td style="text-align:center"><input type="checkbox" class="pg-cel-check" ${valor ? 'checked' : ''} onchange="pgAtualizarCampo('${p.email}','${col.key}', this.checked)"></td>`;
+  }
+  if (col.tipo === 'select') {
+    const opcoesHtml = col.opcoes.map(o => {
+      const [val, label] = Array.isArray(o) ? o : [o, o || '— Selecionar —'];
+      return `<option value="${pgAttr(val)}" ${(valor || '') === val ? 'selected' : ''}>${calEsc(label)}</option>`;
+    }).join('');
+    return `<td><select class="pg-cel-input" onchange="pgAtualizarCampo('${p.email}','${col.key}', this.value)">${opcoesHtml}</select></td>`;
+  }
+  if (col.tipo === 'number') {
+    return `<td><input type="number" min="0" class="pg-cel-input" value="${pgAttr(valor ?? '')}" onchange="pgAtualizarCampo('${p.email}','${col.key}', this.value)"></td>`;
+  }
+  if (col.tipo === 'date') {
+    return `<td><input type="date" class="pg-cel-input" value="${pgAttr(valor || '')}" onchange="pgAtualizarCampo('${p.email}','${col.key}', this.value)"></td>`;
+  }
+  return `<td><input type="text" class="pg-cel-input" value="${pgAttr(valor || '')}" onchange="pgAtualizarCampo('${p.email}','${col.key}', this.value)"></td>`;
+}
+
+function pgLinhaHtml(p) {
+  const colunas = PG_COLUNAS.filter(c => pgColunasVisiveis.has(c.key));
+  const idSeguro = pgId(p.email);
+  return `<tr id="pg-row-${idSeguro}"${p.ativo === false ? ' class="pg-row-inativa"' : ''}>
+    <td class="pg-col-fixa">${calEsc(p.nome)}<span class="pg-status" id="pg-status-${idSeguro}"></span></td>
+    ${colunas.map(c => pgCelulaHtml(p, c)).join('')}
+  </tr>`;
+}
+
+function pgRenderCabecalho() {
+  const thead = document.querySelector('#pg-tabela thead');
+  if (!thead) return;
+  const colunas = PG_COLUNAS.filter(c => pgColunasVisiveis.has(c.key));
+  thead.innerHTML = `<tr><th class="pg-col-fixa">Nome</th>${colunas.map(c => `<th>${calEsc(c.label)}</th>`).join('')}</tr>`;
+}
+
+function pgListaFiltradaAtual() {
+  const termo = (pgBuscaAtual || '').toLowerCase().trim();
+  return pgDados.filter(p => pgPessoasVisiveis.has(p.email) && (!termo || [p.nome, p.cargo].join(' ').toLowerCase().includes(termo)));
+}
+
+function pgRenderCorpo() {
+  const tbody = document.querySelector('#pg-tabela tbody');
+  if (!tbody) return;
+  const lista = qfOrdenarPorTempo(pgListaFiltradaAtual());
+  if (!lista.length) { tbody.innerHTML = '<tr><td class="pg-col-fixa">Nenhuma filha encontrada.</td></tr>'; return; }
+  tbody.innerHTML = lista.map(pgLinhaHtml).join('');
+}
+
+function pgFiltrar(busca) {
+  pgBuscaAtual = busca;
+  pgRenderCorpo();
+}
+
+async function pgLoad() {
+  const tbody = document.querySelector('#pg-tabela tbody');
+  if (tbody) tbody.innerHTML = '<tr><td class="pg-col-fixa">Carregando...</td></tr>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const todos = await res.json();
+    pgDados = todos.filter(p => p.nome);
+    pgColunasVisiveis = new Set(PG_COLUNAS.map(c => c.key));
+    pgPessoasVisiveis = new Set(pgDados.map(p => p.email));
+    pgBuscaAtual = '';
+    const buscaEl = document.getElementById('pg-busca');
+    if (buscaEl) buscaEl.value = '';
+    pgRenderCabecalho();
+    pgRenderCorpo();
+  } catch (e) {
+    if (tbody) tbody.innerHTML = '<tr><td class="pg-col-fixa">Erro ao carregar.</td></tr>';
+  }
+}
+
+function pgAtualizarCampo(email, colKey, valorBruto) {
+  const p = pgDados.find(x => x.email === email);
+  const col = PG_COLUNAS.find(c => c.key === colKey);
+  if (!p || !col) return;
+  let valor = valorBruto;
+  if (col.tipo === 'checkbox') valor = !!valorBruto;
+  else if (col.tipo === 'text' || col.tipo === 'number') valor = String(valorBruto).trim();
+  pgSetValor(p, col, valor);
+  pgAtualizarLinhaNoDom(p);
+  pgSalvarPerfil(p);
+}
+
+// troca só a <tr> dessa filha (recalcula tempo de casa etc.) sem re-renderizar a tabela inteira
+function pgAtualizarLinhaNoDom(p) {
+  const tr = document.getElementById('pg-row-' + pgId(p.email));
+  if (!tr) return;
+  const modelo = document.createElement('tbody');
+  modelo.innerHTML = pgLinhaHtml(p);
+  tr.replaceWith(modelo.firstElementChild);
+}
+
+async function pgSalvarPerfil(p) {
+  const statusEl = () => document.getElementById('pg-status-' + pgId(p.email));
+  const st = statusEl();
+  if (st) { st.textContent = ' 💾 salvando...'; st.className = 'pg-status'; }
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin', 'X-User-Email': p.email },
+      body: JSON.stringify({ ...p, solicitacao: 'Editado pelo admin via Planilha Geral' })
+    });
+    const data = await res.json();
+    const st2 = statusEl();
+    if (data.ok) {
+      if (st2) {
+        st2.textContent = ' ✓ salvo';
+        st2.className = 'pg-status ok';
+        setTimeout(() => { const s = statusEl(); if (s && s.textContent.includes('salvo')) { s.textContent = ''; s.className = 'pg-status'; } }, 1800);
+      }
+    } else if (st2) {
+      st2.textContent = ' ⚠ erro ao salvar';
+      st2.className = 'pg-status erro';
+    }
+  } catch (e) {
+    const st3 = statusEl();
+    if (st3) { st3.textContent = ' ⚠ erro de conexão'; st3.className = 'pg-status erro'; }
+  }
+}
+
+// ── filtro de colunas ──
+function pgAbrirColunas() {
+  pgRenderColunasLista();
+  document.getElementById('pg-colunas-overlay').style.display = 'flex';
+}
+function pgFecharColunas() {
+  document.getElementById('pg-colunas-overlay').style.display = 'none';
+}
+function pgRenderColunasLista() {
+  const wrap = document.getElementById('pg-colunas-lista');
+  if (!wrap) return;
+  wrap.innerHTML = PG_GRUPOS.map(g => {
+    const cols = PG_COLUNAS.filter(c => c.grupo === g.key);
+    return `<div class="pg-grupo-titulo">${calEsc(g.label)}
+        <span class="pg-grupo-acoes">
+          <button type="button" onclick="pgColunasMarcarGrupo('${g.key}', true)">todas</button>
+          <button type="button" onclick="pgColunasMarcarGrupo('${g.key}', false)">nenhuma</button>
+        </span>
+      </div>
+      ${cols.map(c => `<label class="pg-check-linha">
+        <input type="checkbox" ${pgColunasVisiveis.has(c.key) ? 'checked' : ''} onchange="pgToggleColuna('${c.key}', this.checked)">
+        ${calEsc(c.label)}
+      </label>`).join('')}`;
+  }).join('');
+}
+function pgToggleColuna(key, checked) {
+  if (checked) pgColunasVisiveis.add(key); else pgColunasVisiveis.delete(key);
+  pgRenderCabecalho();
+  pgRenderCorpo();
+}
+function pgColunasMarcarGrupo(grupoKey, valor) {
+  PG_COLUNAS.filter(c => c.grupo === grupoKey).forEach(c => { if (valor) pgColunasVisiveis.add(c.key); else pgColunasVisiveis.delete(c.key); });
+  pgRenderColunasLista();
+  pgRenderCabecalho();
+  pgRenderCorpo();
+}
+function pgColunasMarcarTodas(valor) {
+  PG_COLUNAS.forEach(c => { if (valor) pgColunasVisiveis.add(c.key); else pgColunasVisiveis.delete(c.key); });
+  pgRenderColunasLista();
+  pgRenderCabecalho();
+  pgRenderCorpo();
+}
+
+// ── filtro de pessoas ──
+function pgAbrirPessoas() {
+  const buscaEl = document.getElementById('pg-pessoas-busca');
+  if (buscaEl) buscaEl.value = '';
+  pgRenderPessoasLista('');
+  document.getElementById('pg-pessoas-overlay').style.display = 'flex';
+}
+function pgFecharPessoas() {
+  document.getElementById('pg-pessoas-overlay').style.display = 'none';
+}
+function pgPessoasFiltradasBusca(busca) {
+  const termo = (busca || '').toLowerCase().trim();
+  return qfOrdenarPorTempo(pgDados.filter(p => !termo || [p.nome, p.cargo].join(' ').toLowerCase().includes(termo)));
+}
+function pgRenderPessoasLista(busca) {
+  const wrap = document.getElementById('pg-pessoas-lista');
+  if (!wrap) return;
+  const lista = pgPessoasFiltradasBusca(busca);
+  if (!lista.length) { wrap.innerHTML = '<div class="cal-empty">Nenhuma encontrada.</div>'; return; }
+  wrap.innerHTML = lista.map(p => `<label class="pg-check-linha">
+      <input type="checkbox" ${pgPessoasVisiveis.has(p.email) ? 'checked' : ''} onchange="pgTogglePessoa('${p.email}', this.checked)">
+      ${calEsc(p.nome)}${p.cargo ? ` <span style="color:var(--text-dim);font-size:.75rem">— ${calEsc(p.cargo)}</span>` : ''}
+    </label>`).join('');
+}
+function pgTogglePessoa(email, checked) {
+  if (checked) pgPessoasVisiveis.add(email); else pgPessoasVisiveis.delete(email);
+  pgRenderCorpo();
+}
+function pgPessoasMarcarTodas(valor) {
+  const busca = document.getElementById('pg-pessoas-busca')?.value || '';
+  pgPessoasFiltradasBusca(busca).forEach(p => { if (valor) pgPessoasVisiveis.add(p.email); else pgPessoasVisiveis.delete(p.email); });
+  pgRenderPessoasLista(busca);
+  pgRenderCorpo();
 }
 
 // prévia de imagem gerada ("Gerar Imagem") — genérica, reaproveitada pelo
