@@ -8437,7 +8437,7 @@ window.fecharPreviaImagem = function() {
 
 // gera uma imagem pra compartilhar, no mesmo esquema do Resumo Mensal
 // (cartão fora da tela, largura fixa de 480px, html2canvas em escala 2) —
-// sem o cargo de cada uma, só nome + tempo de casa
+// nome + cargo de cada uma, com o tempo de casa alinhado à direita
 async function qfGerarImagem() {
   const btn = document.getElementById('qf-btn-imagem');
   const textoOriginal = btn.textContent;
@@ -8456,9 +8456,12 @@ async function qfGerarImagem() {
     const linhasHtml = ordenada.map(p => {
       const hist = p.historia || {};
       const tempo = window.calcTempo?.(hist.data_entrada);
-      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 4px;border-bottom:1px solid var(--border)">
-        <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(p.nome)}</div>
-        <span style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--rosa);font-style:italic;white-space:nowrap">${tempo ? tempo + ' de casa' : ''}</span>
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border)">
+        <div style="min-width:0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+          <span style="font-family:'Playfair Display',serif;font-size:.9rem;color:var(--text)">${calEsc(p.nome)}</span>
+          ${p.cargo ? `<span style="font-family:'Cinzel',serif;font-size:.6rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--rosa)">${calEsc(p.cargo)}</span>` : ''}
+        </div>
+        <span style="font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--rosa);font-style:italic;white-space:nowrap;flex:0 0 auto">${tempo ? tempo + ' de casa' : ''}</span>
       </div>`;
     }).join('');
 
