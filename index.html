@@ -15159,7 +15159,9 @@ function renderMinhaHistoria(p, user) {
   mhRenderCruzamentosExtras(window.obterCruzamentosCombinados(p), true);
   // busca o catálogo de datas de corte/cruzamento da casa (lista fixa + agenda) em
   // paralelo, sem travar o resto da renderização — assim que chegar, re-renderiza só
-  // essas duas listas de novo, agora com as opções de data prontas pra escolher
+  // essas duas listas de novo, agora com as opções de data prontas pra escolher.
+  // só mostra datas depois da entrada dela na casa, senão não faz sentido pra ela
+  _mhDataEntrada = (p.historia && p.historia.data_entrada) || '';
   mhCarregarCatalogo();
   mhRenderGuiasExtras(p.guiasExtras || [], true);
   mhRenderPontosRiscados(p.pontosRiscados || [], true);
@@ -16980,6 +16982,9 @@ let _mhCortesEditando = [];
 // em paralelo por mhCarregarCatalogo, ver renderMinhaHistoria
 let _mhCatalogoCortes = [];
 let _mhCatalogoCruzamentos = [];
+// data de entrada da pessoa na casa (historia.data_entrada) — o catálogo só
+// mostra datas depois dela, ver renderMinhaHistoria
+let _mhDataEntrada = '';
 
 async function mhCarregarCatalogo() {
   const catalogo = await window.carregarCatalogoCortesCruzamentos();
@@ -16995,7 +17000,9 @@ async function mhCarregarCatalogo() {
 // datas que outro corte desta mesma pessoa já está usando. O campo de Data
 // continua normal e editável embaixo, pra quem não usar o atalho
 function mhCorteCatalogoHtml(c, i) {
-  const catalogo = (_mhCatalogoCortes || []).filter(item => !_mhCortesEditando.some((x, xi) => xi !== i && x.data === item.data));
+  const catalogo = (_mhCatalogoCortes || [])
+    .filter(item => !_mhDataEntrada || item.data > _mhDataEntrada)
+    .filter(item => !_mhCortesEditando.some((x, xi) => xi !== i && x.data === item.data));
   if (!catalogo.length) return '';
   const opcoesHtml = catalogo.map(item => `<option value="${item.data}" ${item.data===c.data?'selected':''}>${fmtData(item.data)}</option>`).join('');
   return `<div style="margin-bottom:8px">
@@ -17212,7 +17219,9 @@ const MH_TIPOS_CRUZAMENTO = [
 // exclui as datas que outro cruzamento desta mesma pessoa já está usando. Os
 // campos de Tipo/Data continuam normais e editáveis embaixo, pra quem não usar
 function mhCruzamentoCatalogoHtml(c, i) {
-  const catalogo = (_mhCatalogoCruzamentos || []).filter(item => !_mhCruzExtrasEditando.some((x, xi) => xi !== i && x.data === item.data));
+  const catalogo = (_mhCatalogoCruzamentos || [])
+    .filter(item => !_mhDataEntrada || item.data > _mhDataEntrada)
+    .filter(item => !_mhCruzExtrasEditando.some((x, xi) => xi !== i && x.data === item.data));
   if (!catalogo.length) return '';
   const opcoesHtml = catalogo.map(item => `<option value="${item.data}" ${item.data===c.data?'selected':''}>${fmtData(item.data)} — ${item.tipo}</option>`).join('');
   return `<div style="margin-bottom:8px">
