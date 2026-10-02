@@ -3923,6 +3923,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<div id="page-pendencias" class="page">
+  <div class="cal-wrap">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('admin')" style="position:relative;z-index:10">← Voltar</button>
+      <div class="eyebrow">Terreiro Bolhas de Luz</div>
+      <div class="section-title" style="margin-bottom:6px">Pendências de Corte e Cruzamento</div>
+      <p class="section-sub" style="margin-bottom:16px">Datas que a casa já teve, depois da entrada de cada uma, que ainda não estão na ficha dela ✦</p>
+    </div>
+    <div style="max-width:680px;margin:0 auto">
+      <div id="pen-lista"><div class="cal-empty">Carregando...</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- PLANILHA GERAL — modal de colunas -->
 <div id="pg-colunas-overlay" class="pg-modal-overlay" onclick="if(event.target===this)pgFecharColunas()">
   <div class="pg-modal-caixa">
@@ -4460,6 +4474,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-label">Planilha Geral</span>
         <span class="admin-menu-item-desc">Visão em planilha de todos os campos das fichas</span>
       </button>
+      <button class="admin-menu-item" onclick="showPage('pendencias')">
+        <span class="admin-menu-item-icon">📌</span>
+        <span class="admin-menu-item-label">Pendências</span>
+        <span class="admin-menu-item-desc">Datas de corte/cruzamento da casa que faltam em cada ficha</span>
+      </button>
     </div>
 
     <!-- MENU DO SITE (cards + seções) -->
@@ -4730,6 +4749,7 @@ function getDefaultMenu() {
         { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
         { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo e tempo de casa de cada uma — só admin', showCard: true, showMenu: true, adminOnly: true },
         { id: 'planilha-geral', label: '🗂️ Planilha Geral', type: 'internal', page: 'planilha-geral', desc: 'Visão em planilha de todos os campos das fichas — só admin', showCard: true, showMenu: true, adminOnly: true },
+        { id: 'pendencias', label: '📌 Pendências de Corte/Cruzamento', type: 'internal', page: 'pendencias', desc: 'Datas da casa que faltam na ficha de cada uma — só admin', showCard: true, showMenu: true, adminOnly: true },
         { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
       ]}
     ]
@@ -5946,6 +5966,11 @@ function showPage(name) {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
     if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
     pgLoad();
+  }
+  if (name === 'pendencias') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    penLoad();
   }
   if (name === 'orientacoes') {
     // recarrega a próxima sessão sempre que a página abrir — antes só carregava
@@ -8316,6 +8341,130 @@ function pgPessoasMarcarTodas(valor) {
   pgPessoasFiltradasBusca(busca).forEach(p => { if (valor) pgPessoasVisiveis.add(p.email); else pgPessoasVisiveis.delete(p.email); });
   pgRenderPessoasLista(busca);
   pgRenderCorpo();
+}
+
+// ── PENDÊNCIAS DE CORTE E CRUZAMENTO — datas fixas que a casa já teve ──
+// lista fixa (Anna passou essas datas por mensagem) — pra adicionar uma nova
+// data no futuro, é só acrescentar aqui
+const PEN_CORTES = [
+  { data: '2021-11-26' }, { data: '2022-08-27' }, { data: '2023-08-26' },
+  { data: '2024-08-16' }, { data: '2025-08-16' }, { data: '2026-08-22' },
+];
+const PEN_CRUZAMENTOS = [
+  { data: '2021-10-16', tipo: 'Pedreira' }, { data: '2021-10-30', tipo: 'Conga' },
+  { data: '2022-01-24', tipo: 'Conga' }, { data: '2022-03-20', tipo: 'Praia' },
+  { data: '2022-07-23', tipo: 'Conga' }, { data: '2022-11-15', tipo: 'Pedreira' },
+  { data: '2023-01-20', tipo: 'Conga' }, { data: '2023-04-21', tipo: 'Rio/Cachoeira' },
+  { data: '2023-11-15', tipo: 'Pedreira' },
+  { data: '2024-03-09', tipo: 'Conga' }, { data: '2024-04-06', tipo: 'Praia' },
+  { data: '2024-11-15', tipo: 'Pedreira' },
+  { data: '2025-03-29', tipo: 'Conga' }, { data: '2025-04-12', tipo: 'Praia' },
+  { data: '2025-11-15', tipo: 'Rio/Cachoeira' },
+  { data: '2026-03-07', tipo: 'Conga' }, { data: '2026-04-25', tipo: 'Praia' },
+];
+
+let penDados = [];
+
+async function penLoad() {
+  const lista = document.getElementById('pen-lista');
+  if (!lista) return;
+  lista.innerHTML = '<div class="cal-empty">Carregando...</div>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const todos = await res.json();
+    // só quem tem data de entrada registrada — sem isso não dá pra saber se a
+    // data da casa é "depois dela"
+    penDados = todos.filter(p => p.nome && p.ativo !== false && p.historia?.data_entrada);
+    penRender();
+  } catch (e) {
+    lista.innerHTML = '<div class="cal-empty">Erro ao carregar.</div>';
+  }
+}
+
+// o que falta pra uma pessoa: datas da casa que vieram depois da entrada dela,
+// que ela ainda não tem registrada (olhando os arrays já combinados com os
+// campos legados) e que ela não marcou como "não participei"
+function penPendenciasPessoa(p) {
+  const entrada = p.historia?.data_entrada || '9999-99-99';
+  const ignoradas = new Set(p.cortesCruzIgnorados || []);
+  const datasCortesDela = new Set(window.obterCortesCombinados(p).map(c => c.data).filter(Boolean));
+  const datasCruzDela = new Set(window.obterCruzamentosCombinados(p).map(c => c.data).filter(Boolean));
+
+  const cortesFaltando = PEN_CORTES.filter(c => c.data >= entrada && !datasCortesDela.has(c.data) && !ignoradas.has('corte:' + c.data));
+  const cruzFaltando = PEN_CRUZAMENTOS.filter(c => c.data >= entrada && !datasCruzDela.has(c.data) && !ignoradas.has('cruz:' + c.data));
+  return { cortesFaltando, cruzFaltando };
+}
+
+function penRender() {
+  const lista = document.getElementById('pen-lista');
+  if (!lista) return;
+  const comPendencia = qfOrdenarPorTempo(penDados)
+    .map(p => ({ p, ...penPendenciasPessoa(p) }))
+    .filter(x => x.cortesFaltando.length || x.cruzFaltando.length);
+
+  if (!comPendencia.length) {
+    lista.innerHTML = '<div class="cal-empty">Nenhuma pendência — todo mundo está em dia ✦</div>';
+    return;
+  }
+
+  lista.innerHTML = comPendencia.map(({ p, cortesFaltando, cruzFaltando }) => `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px">
+      <div style="font-family:'Playfair Display',serif;font-size:.95rem;color:var(--text);margin-bottom:4px">${calEsc(p.nome)}</div>
+      ${cortesFaltando.map(c => penLinhaHtml(p.email, 'corte', c.data, 'Corte')).join('')}
+      ${cruzFaltando.map(c => penLinhaHtml(p.email, 'cruz', c.data, 'Cruzamento — ' + c.tipo)).join('')}
+    </div>
+  `).join('');
+}
+
+function penLinhaHtml(email, tipoAcao, data, label) {
+  const emailAttr = pgAttr(email);
+  const fezLabel = tipoAcao === 'corte' ? '✅ Fez' : '✅ Fez a obrigação';
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:8px 0;border-top:1px solid var(--border)">
+    <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${calEsc(label)} <span style="color:var(--text-dim);font-size:.76rem">— ${fmtDataAdmin(data)}</span></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button onclick="penMarcar('${emailAttr}','${tipoAcao}','${data}',false)" style="background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:5px 9px;cursor:pointer">${fezLabel}</button>
+      <button onclick="penMarcar('${emailAttr}','${tipoAcao}','${data}',true)" style="background:#eee0c9;border:1px solid #d9c48a;border-radius:6px;color:#7a5c1e;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:5px 9px;cursor:pointer">🤝 Cambona</button>
+      <button onclick="penIgnorar('${emailAttr}','${tipoAcao}','${data}')" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:5px 9px;cursor:pointer">— Não participou</button>
+    </div>
+  </div>`;
+}
+
+async function penMarcar(email, tipoAcao, data, cambonagem) {
+  const p = penDados.find(x => x.email === email);
+  if (!p) return;
+  if (tipoAcao === 'corte') {
+    if (!p.cortes) p.cortes = [];
+    p.cortes.push({ data, galinhas: '', galos: '', cambonagem });
+  } else {
+    const evento = PEN_CRUZAMENTOS.find(c => c.data === data);
+    if (!p.cruzamentosExtras) p.cruzamentosExtras = [];
+    p.cruzamentosExtras.push({ nome: evento ? evento.tipo : 'Cruzamento', data, cambonagem });
+  }
+  await penSalvar(p);
+}
+
+async function penIgnorar(email, tipoAcao, data) {
+  const p = penDados.find(x => x.email === email);
+  if (!p) return;
+  if (!p.cortesCruzIgnorados) p.cortesCruzIgnorados = [];
+  p.cortesCruzIgnorados.push(tipoAcao + ':' + data);
+  await penSalvar(p);
+}
+
+async function penSalvar(p) {
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin', 'X-User-Email': p.email },
+      body: JSON.stringify({ ...p, solicitacao: 'Marcado via Pendências de Corte/Cruzamento' })
+    });
+    const data = await res.json();
+    if (!data.ok) { alert('Erro ao salvar.'); return; }
+  } catch (e) {
+    alert('Erro de conexão ao salvar.');
+    return;
+  }
+  penRender();
 }
 
 // prévia de imagem gerada ("Gerar Imagem") — genérica, reaproveitada pelo
