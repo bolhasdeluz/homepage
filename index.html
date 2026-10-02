@@ -2391,10 +2391,6 @@ input.pg-cel-input[type=number]{min-width:60px}
               </select>
               <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Só aparecem perfis ativos que já têm Coroação registrada</div>
             </div>
-            <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer;margin-top:12px">
-              <input type="checkbox" id="mh-edit-cruz_conga_cambonagem">
-              Cambonagem no Cruzamento de Conga — esteve no ritual, mas ainda não foi cruzado(a)
-            </label>
           </div>
           <!-- Guias -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -2414,19 +2410,10 @@ input.pg-cel-input[type=number]{min-width:60px}
                 <div><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galinhas" style="margin-bottom:0" placeholder="0"></div>
                 <div><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-apronte_galos" style="margin-bottom:0" placeholder="0"></div>
               </div>
-              <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer;margin-bottom:8px">
-                <input type="checkbox" id="mh-edit-corte_1_cambonagem" onchange="mhToggleCorte1Cambonagem(this.checked)">
-                Cambonagem — esteve no corte, mas ainda não foi cortado(a)
-              </label>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="mh-corte-1-grid">
-                <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="mh-edit-corte_1" style="margin-bottom:0"></div>
-                <div id="mh-corte-1-galinhas-wrap"><label class="form-label">Galinhas</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galinhas" style="margin-bottom:0" placeholder="0"></div>
-                <div id="mh-corte-1-galos-wrap"><label class="form-label">Galos</label><input type="number" min="0" class="form-input" id="mh-edit-corte_1_galos" style="margin-bottom:0" placeholder="0"></div>
-              </div>
             </div>
-            <!-- Cortes Adicionais (2º em diante) -->
+            <!-- Cortes -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding-top:14px;margin-top:14px;border-top:1px solid var(--border)">
-              <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)">Cortes Adicionais</div>
+              <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim)">Cortes</div>
               <button id="mh-cortes-btn-add" onclick="mhAdicionarCorte()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar corte</button>
             </div>
             <div id="mh-cortes-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
@@ -2437,8 +2424,7 @@ input.pg-cel-input[type=number]{min-width:60px}
               <div style="font-family:'Playfair Display',serif;font-size:1rem;font-weight:600;color:var(--text)">— Cruzamentos e Axés</div>
               <button id="mh-cruz-btn-add" onclick="mhAdicionarCruzamentoExtra()" style="display:none;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;color:var(--rosa);cursor:pointer">+ Adicionar cruzamento</button>
             </div>
-            <div class="perfil-grid" id="mh-grid-cruzamentos"></div>
-            <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px;margin-top:14px"></div>
+            <div id="mh-cruz-extras-lista" style="display:flex;flex-direction:column;gap:10px"></div>
           </div>
           <!-- Pontos Riscados — foto e data de cada ponto riscado da pessoa -->
           <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 2px 12px rgba(180,60,90,.06)">
@@ -4331,23 +4317,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Data — Afilhada 1</label><input type="date" class="form-input" id="cp-afilhada_1_data"></div>
       <div><label class="form-label">Afilhada 2</label><input type="text" class="form-input" id="cp-afilhada_2" list="lista-nomes-casa" placeholder="Nome"></div>
       <div><label class="form-label">Data — Afilhada 2</label><input type="date" class="form-input" id="cp-afilhada_2_data"></div>
-      <div><label class="form-label">Cruzamento de Conga</label><input type="date" class="form-input" id="cp-cruz_conga"></div>
-      <div style="display:flex;align-items:flex-end;padding-bottom:2px">
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer">
-          <input type="checkbox" id="cp-cruz_conga_cambonagem">
-          Cambonagem — esteve no cruzamento, mas ainda não foi cruzado(a)
-        </label>
-      </div>
-      <div><label class="form-label">1º Corte</label><input type="date" class="form-input" id="cp-corte_1"></div>
-      <div style="display:flex;align-items:flex-end;padding-bottom:2px">
-        <label style="display:flex;align-items:center;gap:6px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);cursor:pointer">
-          <input type="checkbox" id="cp-corte_1_cambonagem" onchange="cpToggleCambonagem(this.checked)">
-          Cambonagem — esteve no corte, mas ainda não foi cortado(a)
-        </label>
-      </div>
-      <div id="cp-corte_1-galinhas-wrap"><label class="form-label">1º Corte — Galinhas</label><input type="number" min="0" class="form-input" id="cp-corte_1_galinhas" placeholder="0"></div>
-      <div id="cp-corte_1-galos-wrap"><label class="form-label">1º Corte — Galos</label><input type="number" min="0" class="form-input" id="cp-corte_1_galos" placeholder="0"></div>
     </div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin:-4px 0 12px">Cortes e Cruzamentos agora ficam numa tela própria — use "Simular visão" na ficha dela pra editar</div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Guias e Guardiões</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
@@ -4363,14 +4334,6 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-cigana_data"></div>
       <div><label class="form-label">Cosme</label><input type="text" class="form-input" id="cp-cosme" placeholder="Nome"></div>
       <div><label class="form-label">Chegada</label><input type="date" class="form-input" id="cp-cosme_data"></div>
-    </div>
-
-    <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Cruzamentos e Axés</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div><label class="form-label">Mata</label><input type="date" class="form-input" id="cp-cruz_mata"></div>
-      <div><label class="form-label">Praia</label><input type="date" class="form-input" id="cp-cruz_praia"></div>
-      <div><label class="form-label">Rio/Cachoeira</label><input type="date" class="form-input" id="cp-cruz_rio"></div>
-      <div><label class="form-label">Pedreira</label><input type="date" class="form-input" id="cp-cruz_pedreira"></div>
     </div>
 
     <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
@@ -5469,12 +5432,7 @@ const camposLabels = {
   preto_velho:'Preto Velho', preto_velho_data:'Chegada de P. Velho',
   cigana:'Cigana', cigana_data:'Chegada da Cigana',
   cosme:'Cosme', cosme_data:'Chegada do Cosme',
-  cruz_conga:'Conga', cruz_mata:'Mata', cruz_praia:'Praia',
-  cruz_rio:'Rio/Cachoeira', cruz_pedreira:'Pedreira', corte_1:'1º Corte',
   apronte_galinhas:'Apronte — Galinhas', apronte_galos:'Apronte — Galos',
-  corte_1_galinhas:'1º Corte — Galinhas', corte_1_galos:'1º Corte — Galos',
-  corte_1_cambonagem:'1º Corte — Cambonagem',
-  cruz_conga_cambonagem:'Conga — Cambonagem'
 };
 
 function fmtDataAdmin(v) {
@@ -5482,6 +5440,46 @@ function fmtDataAdmin(v) {
   const d = new Date(v + 'T12:00:00');
   return isNaN(d.getTime()) ? v : d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
 }
+
+// ── UNIFICAÇÃO DE CORTE E CRUZAMENTO ──
+// antes existiam campos soltos pro "1º Corte" (historia.corte_1*) e pro
+// "1º Cruzamento" (historia.cruz_conga*), separados dos arrays de cortes[]/
+// cruzamentosExtras[] (que só guardavam o 2º corte em diante / cruzamentos
+// além da Conga). Essas duas funções juntam tudo numa lista só, por pessoa,
+// SEM apagar nada do que já estava salvo: se os campos legados ainda têm
+// dado, viram mais um item da lista (não um item a mais no array já salvo —
+// isso só acontece de verdade quando a ficha é salva de novo, ver
+// window.salvarSuaHistoria, que apaga os campos legados do payload depois
+// de garantir que a info já está representada aqui). Expostas em window
+// porque o <script type="module"> (Minha História) também precisa delas.
+window.obterCortesCombinados = function(p) {
+  const hist = (p && p.historia) || {};
+  const cortes = ((p && p.cortes) || []).map(c => ({ ...c }));
+  if (hist.corte_1 || hist.corte_1_galinhas || hist.corte_1_galos || hist.corte_1_cambonagem) {
+    cortes.push({
+      data: hist.corte_1 || '',
+      galinhas: hist.corte_1_galinhas || '',
+      galos: hist.corte_1_galos || '',
+      cambonagem: !!hist.corte_1_cambonagem
+    });
+  }
+  cortes.sort((a, b) => (a.data || '9999-99-99').localeCompare(b.data || '9999-99-99'));
+  return cortes;
+};
+window.obterCruzamentosCombinados = function(p) {
+  const hist = (p && p.historia) || {};
+  const cruz = (p && p.cruzamentos) || {};
+  const extras = ((p && p.cruzamentosExtras) || []).map(c => ({ ...c }));
+  if (hist.cruz_conga || hist.cruz_conga_cambonagem) {
+    extras.push({ nome: 'Conga', data: hist.cruz_conga || '', cambonagem: !!hist.cruz_conga_cambonagem });
+  }
+  const LOCAIS_LEGADOS = { cruz_mata: 'Mata', cruz_praia: 'Praia', cruz_rio: 'Rio/Cachoeira', cruz_pedreira: 'Pedreira' };
+  Object.keys(LOCAIS_LEGADOS).forEach(k => {
+    if (cruz[k]) extras.push({ nome: LOCAIS_LEGADOS[k], data: cruz[k], cambonagem: false });
+  });
+  extras.sort((a, b) => (a.data || '9999-99-99').localeCompare(b.data || '9999-99-99'));
+  return extras;
+};
 
 async function carregarFilhasAdmin() {
   const grid = document.getElementById('admin-filhas-grid');
@@ -5533,10 +5531,11 @@ async function abrirFicha(email) {
     if (perfil.foto) document.getElementById('mf-foto').innerHTML = `<img src="${perfil.foto}" alt="">`;
     const ficha = document.getElementById('mf-body-ficha');
     ficha.innerHTML =
-      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','cruz_conga_cambonagem']) +
+      mfSection('História', perfil.historia||{}, ['data_entrada','guia_chefe','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data']) +
       mfSection('Guias e Guardiões', perfil.guias||{}, ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data']) +
-      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_cambonagem','corte_1_galinhas','corte_1_galos']) +
-      mfSection('Cruzamentos', perfil.cruzamentos||{}, ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']) +
+      mfSection('Quimbanda', perfil.historia||{}, ['apronte','apronte_galinhas','apronte_galos']) +
+      mfSectionCortes(window.obterCortesCombinados(perfil)) +
+      mfSectionCruzamentos(window.obterCruzamentosCombinados(perfil)) +
       (perfil.boasVindas?.comoConheceu || perfil.boasVindas?.tempoFrequenta ? `
         <div class="mf-section"><div class="mf-section-title">🌸 Boas-vindas</div>
           <div class="mf-grid">
@@ -5592,14 +5591,33 @@ function mfSection(titulo, dados, keys) {
   return `<div class="mf-section"><div class="mf-section-title">${titulo}</div><div class="mf-grid">${
     keys.map(k => {
       const v = dados[k];
-      const isDataKey = k.includes('_data') || k === 'data_entrada' || k.startsWith('cruz') || k === 'corte_1';
+      const isDataKey = k.includes('_data') || k === 'data_entrada';
       const isDataVal = v && /^\d{4}-\d{2}-\d{2}$/.test(v);
       const display = v
-        ? ((k === 'corte_1_cambonagem' || k === 'cruz_conga_cambonagem') ? 'Sim' : (isDataKey || isDataVal ? fmtDataAdmin(v) : v))
+        ? (isDataKey || isDataVal ? fmtDataAdmin(v) : v)
         : '<span style="opacity:.25">—</span>';
       return `<div class="mf-field"><label>${camposLabels[k]||k}</label><div class="v">${display}</div></div>`;
     }).join('')
   }</div></div>`;
+}
+
+// ficha somente-leitura: lista de Cortes/Cruzamentos já unificada (campos
+// legados + arrays), em ordem cronológica — ver window.obterCortesCombinados/
+// obterCruzamentosCombinados
+function mfSectionCortes(cortes) {
+  const linhas = cortes.length
+    ? cortes.map((c, i) => {
+        const sub = c.cambonagem ? 'Cambonagem' : ((c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '');
+        return `<div class="mf-field"><label>${i+1}º Corte</label><div class="v">${c.data ? fmtDataAdmin(c.data) : '—'}${sub ? ' · ' + sub : ''}</div></div>`;
+      }).join('')
+    : '<div class="mf-field"><div class="v" style="opacity:.25">Nenhum corte registrado</div></div>';
+  return `<div class="mf-section"><div class="mf-section-title">Cortes</div><div class="mf-grid">${linhas}</div></div>`;
+}
+function mfSectionCruzamentos(cruzamentos) {
+  const linhas = cruzamentos.length
+    ? cruzamentos.map(c => `<div class="mf-field"><label>${c.nome || 'Cruzamento'}</label><div class="v">${c.data ? fmtDataAdmin(c.data) : '—'}${c.cambonagem ? ' · Cambonagem' : ''}</div></div>`).join('')
+    : '<div class="mf-field"><div class="v" style="opacity:.25">Nenhum cruzamento registrado</div></div>';
+  return `<div class="mf-section"><div class="mf-section-title">Cruzamentos</div><div class="mf-grid">${linhas}</div></div>`;
 }
 
 function fecharFicha() { document.getElementById('modal-ficha-overlay').classList.remove('open'); }
@@ -5611,10 +5629,11 @@ function mfTab(tab, btn) {
 }
 
 // ── CRIAR / EDITAR PERFIL ADMIN ──
+// cruz_conga e corte_1 saíram daqui — cortes e cruzamentos agora só se editam
+// pela tela de "Simular visão" (mesmo editor da Minha História da própria filha)
 const cpCampos = {
-  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','cruz_conga','corte_1','corte_1_galinhas','corte_1_galos'],
+  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data'],
   guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
-  cruzamentos:  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira']
 };
 // guarda o perfil completo (todos os campos, inclusive os que não têm input neste formulário)
 // pra garantir que salvar não apague foto, notas, cortes extras, cruzamentos extras, marcos, etc.
@@ -5671,10 +5690,6 @@ function abrirCriarPerfil(emailParaEditar) {
   document.getElementById('cp-email').disabled = false;
   document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
-  const cambEl = document.getElementById('cp-corte_1_cambonagem');
-  if (cambEl) { cambEl.checked = false; cpToggleCambonagem(false); }
-  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
-  if (cambCongaEl) cambCongaEl.checked = false;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -5702,15 +5717,6 @@ function fecharCriarPerfil() {
   cpPerfilOriginal = null;
 }
 
-// Cambonagem no 1º Corte: esconde os campos de Galinhas/Galos, já que quem
-// só fez cambonagem ainda não foi cortado(a) — não faz sentido contar aves
-function cpToggleCambonagem(checked) {
-  const g = document.getElementById('cp-corte_1-galinhas-wrap');
-  const o = document.getElementById('cp-corte_1-galos-wrap');
-  if (g) g.style.display = checked ? 'none' : '';
-  if (o) o.style.display = checked ? 'none' : '';
-}
-
 function preencherFormPerfil(p) {
   if (p.nome)  document.getElementById('cp-nome').value  = p.nome;
   if (p.cargo) { const sel = document.getElementById('cp-cargo'); if (sel) sel.value = p.cargo; }
@@ -5721,10 +5727,6 @@ function preencherFormPerfil(p) {
     const dados = p[grupo] || {};
     keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
   });
-  const cambEl = document.getElementById('cp-corte_1_cambonagem');
-  if (cambEl) { cambEl.checked = !!(p.historia||{}).corte_1_cambonagem; cpToggleCambonagem(cambEl.checked); }
-  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
-  if (cambCongaEl) cambCongaEl.checked = !!(p.historia||{}).cruz_conga_cambonagem;
   // campos cacique
   const c = p.cacique || {};
   if (document.getElementById('cp-terreiro_titulo'))  document.getElementById('cp-terreiro_titulo').value  = c.terreiro_titulo  || '';
@@ -5777,17 +5779,6 @@ async function salvarPerfilAdmin() {
       else delete payload[grupo][k];
     });
   });
-  const cambEl = document.getElementById('cp-corte_1_cambonagem');
-  if (cambEl) {
-    if (cambEl.checked) payload.historia.corte_1_cambonagem = true;
-    else delete payload.historia.corte_1_cambonagem;
-  }
-  const cambCongaEl = document.getElementById('cp-cruz_conga_cambonagem');
-  if (cambCongaEl) {
-    if (cambCongaEl.checked) payload.historia.cruz_conga_cambonagem = true;
-    else delete payload.historia.cruz_conga_cambonagem;
-  }
-
   status.textContent = 'Salvando...';
   try {
     const res = await fetch('/api/perfil', {
@@ -8038,11 +8029,9 @@ const PG_GRUPOS = [
   { key:'basico',      label:'Básico' },
   { key:'familia',     label:'Família e Padrinhos' },
   { key:'marcos',      label:'Marcos' },
-  { key:'conga',       label:'Cruzamento de Conga' },
-  { key:'cruzamentos', label:'Cruzamentos' },
   { key:'quimbanda',   label:'Quimbanda' },
   { key:'guias',       label:'Guias e Guardiões' },
-  { key:'extras',      label:'Extras (clique pra abrir a ficha)' },
+  { key:'extras',      label:'Cortes e Cruzamentos (clique pra abrir a ficha)' },
 ];
 
 const PG_CARGO_OPCOES = ['', 'Mãe da Casa', 'Cacique', 'Tamoio', 'Naurú', 'Cambona', 'Tamboreiro', 'Curumim'];
@@ -8072,21 +8061,9 @@ const PG_COLUNAS = [
   { grupo:'marcos', key:'coroacao', label:'Coroação', secao:'historia', campo:'coroacao', tipo:'date' },
   { grupo:'marcos', key:'cacicamento', label:'Cacicamento', secao:'historia', campo:'cacicamento', tipo:'date' },
 
-  { grupo:'conga', key:'cruz_conga', label:'Cruzamento de Conga', secao:'historia', campo:'cruz_conga', tipo:'date' },
-  { grupo:'conga', key:'cruz_conga_cambonagem', label:'Cambonagem — Conga', secao:'historia', campo:'cruz_conga_cambonagem', tipo:'checkbox' },
-
-  { grupo:'cruzamentos', key:'cruz_mata', label:'Cruz. Mata', secao:'cruzamentos', campo:'cruz_mata', tipo:'date' },
-  { grupo:'cruzamentos', key:'cruz_praia', label:'Cruz. Praia', secao:'cruzamentos', campo:'cruz_praia', tipo:'date' },
-  { grupo:'cruzamentos', key:'cruz_rio', label:'Cruz. Rio/Cachoeira', secao:'cruzamentos', campo:'cruz_rio', tipo:'date' },
-  { grupo:'cruzamentos', key:'cruz_pedreira', label:'Cruz. Pedreira', secao:'cruzamentos', campo:'cruz_pedreira', tipo:'date' },
-
   { grupo:'quimbanda', key:'apronte', label:'Apronte', secao:'historia', campo:'apronte', tipo:'date' },
   { grupo:'quimbanda', key:'apronte_galinhas', label:'Apronte — Galinhas', secao:'historia', campo:'apronte_galinhas', tipo:'number' },
   { grupo:'quimbanda', key:'apronte_galos', label:'Apronte — Galos', secao:'historia', campo:'apronte_galos', tipo:'number' },
-  { grupo:'quimbanda', key:'corte_1', label:'1º Corte', secao:'historia', campo:'corte_1', tipo:'date' },
-  { grupo:'quimbanda', key:'corte_1_galinhas', label:'1º Corte — Galinhas', secao:'historia', campo:'corte_1_galinhas', tipo:'number' },
-  { grupo:'quimbanda', key:'corte_1_galos', label:'1º Corte — Galos', secao:'historia', campo:'corte_1_galos', tipo:'number' },
-  { grupo:'quimbanda', key:'corte_1_cambonagem', label:'Cambonagem — Corte', secao:'historia', campo:'corte_1_cambonagem', tipo:'checkbox' },
 
   { grupo:'guias', key:'caboclo', label:'Caboclo', secao:'guias', campo:'caboclo', tipo:'text' },
   { grupo:'guias', key:'caboclo_data', label:'Data — Caboclo', secao:'guias', campo:'caboclo_data', tipo:'date' },
@@ -8101,8 +8078,8 @@ const PG_COLUNAS = [
   { grupo:'guias', key:'cosme', label:'Cosme/Damião', secao:'guias', campo:'cosme', tipo:'text' },
   { grupo:'guias', key:'cosme_data', label:'Data — Cosme/Damião', secao:'guias', campo:'cosme_data', tipo:'date' },
 
-  { grupo:'extras', key:'cortes_extra', label:'Cortes Extras', tipo:'extra', arrayKey:'cortes' },
-  { grupo:'extras', key:'cruzamentos_extra', label:'Cruzamentos Extras', tipo:'extra', arrayKey:'cruzamentosExtras' },
+  { grupo:'extras', key:'cortes_extra', label:'Cortes', tipo:'extra', obter:p => window.obterCortesCombinados(p) },
+  { grupo:'extras', key:'cruzamentos_extra', label:'Cruzamentos', tipo:'extra', obter:p => window.obterCruzamentosCombinados(p) },
   { grupo:'extras', key:'guias_extra', label:'Guias Extras', tipo:'extra', arrayKey:'guiasExtras' },
   { grupo:'extras', key:'pontos_riscados', label:'Pontos Riscados', tipo:'extra', arrayKey:'pontosRiscados' },
 ];
@@ -8120,7 +8097,7 @@ function pgAttr(v) { return calEsc(v).replace(/"/g, '&quot;'); }
 function pgValor(p, col) {
   if (col.ler) return col.ler(p);
   if (col.tipo === 'readonly') return col.valor(p);
-  if (col.tipo === 'extra') return (p[col.arrayKey] || []).length;
+  if (col.tipo === 'extra') return (col.obter ? col.obter(p) : (p[col.arrayKey] || [])).length;
   const obj = col.secao ? (p[col.secao] || {}) : p;
   return obj[col.campo];
 }
@@ -8491,14 +8468,7 @@ function guiasRenderPainel(p, editavel) {
     {key:'cosme',      label:'Cosme',       dataKey:'cosme_data',      notaKey:'cosme_nota'},
   ];
 
-  const CRUZ_DEF = [
-    {key:'cruz_conga',label:'Conga'},{key:'cruz_mata',label:'Mata'},
-    {key:'cruz_praia',label:'Praia'},{key:'cruz_rio',label:'Rio/Cachoeira'},
-    {key:'cruz_pedreira',label:'Pedreira'},{key:'corte_1',label:'1º Corte'},
-  ];
-
   if (editavel) {
-    const C = p.cruzamentos || {};
     const camposHtml = [
       H.guia_chefe ? `<div style="margin-bottom:10px"><label class="form-label">Guia Chefe</label><input type="text" class="form-input" id="gpe-guia_chefe" value="${H.guia_chefe||''}"></div>` : '',
       ...GUIAS_DEF.map(d => `
@@ -8549,11 +8519,16 @@ function guiasRenderPainel(p, editavel) {
       ${G[d.notaKey] ? `<div style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-top:4px;line-height:1.5">${G[d.notaKey]}</div>` : ''}
     </div>`).join('');
 
-  const C = p.cruzamentos || {};
-  const cruzHtml = CRUZ_DEF.filter(d => C[d.key]).map(d => `
+  const cruzHtml = window.obterCruzamentosCombinados(p).filter(c => c.data).map(c => `
     <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(196,57,107,.07)">
-      <span style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim)">${d.label}</span>
-      <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${fmtData(C[d.key])}</span>
+      <span style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim)">${c.nome || 'Cruzamento'}${c.cambonagem ? ' (Cambonagem)' : ''}</span>
+      <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${fmtData(c.data)}</span>
+    </div>`).join('');
+
+  const corteHtml = window.obterCortesCombinados(p).filter(c => c.data).map((c, i) => `
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(196,57,107,.07)">
+      <span style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;color:var(--text-dim)">${i+1}º Corte${c.cambonagem ? ' (Cambonagem)' : ''}</span>
+      <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)">${fmtData(c.data)}</span>
     </div>`).join('');
 
   document.getElementById('gp-body').innerHTML = `
@@ -8561,7 +8536,8 @@ function guiasRenderPainel(p, editavel) {
     ${descricaoHtml}
     ${guiasHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;margin-top:4px">Guias e Guardiões</div>${guiasHtml}` : ''}
     ${cruzHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 8px">Cruzamentos</div>${cruzHtml}` : ''}
-    ${!guiasHtml && !cruzHtml && !histHtml && !descricaoHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}`;
+    ${corteHtml ? `<div style="font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 8px">Cortes</div>${corteHtml}` : ''}
+    ${!guiasHtml && !cruzHtml && !corteHtml && !histHtml && !descricaoHtml ? '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:20px 0">Nenhuma informação registrada ainda.</div>' : ''}`;
 }
 
 window.guiasToggleEditar = function() {
@@ -15091,12 +15067,14 @@ function renderMinhaHistoria(p, user) {
   // fichas
   renderCamposPerfil(camposHistoria,  'mh-grid-historia',    p.historia    || {}, true);
   renderCamposPerfil(camposGuias,     'mh-grid-guias',       p.guias       || {}, true);
-  renderCamposPerfil(camposCruz,      'mh-grid-cruzamentos', p.cruzamentos || {}, true);
 
-  // quimbanda (apronte + 1º corte) e cortes adicionais — sempre em modo edição, já que este modal É o editar
+  // quimbanda (só o apronte agora) e cortes/cruzamentos — sempre em modo edição, já que este modal É
+  // o editar. Cortes e Cruzamentos recebem a lista já combinada com os campos legados (corte_1,
+  // cruz_conga, cruz_mata/praia/rio/pedreira) — se a ficha for salva, esses campos somem e a info
+  // passa a viver só no array, mas nada se perde entre uma coisa e outra (ver window.obterCortesCombinados)
   mhRenderQuimbanda(p.historia || {});
-  mhRenderCortes(p.cortes || [], true);
-  mhRenderCruzamentosExtras(p.cruzamentosExtras || [], true);
+  mhRenderCortes(window.obterCortesCombinados(p), true);
+  mhRenderCruzamentosExtras(window.obterCruzamentosCombinados(p), true);
   mhRenderGuiasExtras(p.guiasExtras || [], true);
   mhRenderPontosRiscados(p.pontosRiscados || [], true);
 
@@ -15123,7 +15101,6 @@ window.timelineToggleFiltro = function(elId, grupo) {
 function extrairEventosPessoa(p) {
   const hist = p.historia || {};
   const guias = p.guias || {};
-  const cruz = p.cruzamentos || {};
   const ocultos = p.timelineOcultos || [];
 
   // "marcos" = fixos, sempre exibidos; os demais grupos passam pelo filtro no topo
@@ -15143,15 +15120,11 @@ function extrairEventosPessoa(p) {
     { key:'preto_velho_data',label:'Preto Velho',           cor:'#8a8a9a', src:'guias',   grupo:'guias', nomeKey:'preto_velho',nomeSrc:'guias' },
     { key:'cigana_data',     label:'Cigana',                cor:'#c9963c', src:'guias',   grupo:'guias', nomeKey:'cigana',     nomeSrc:'guias' },
     { key:'cosme_data',      label:'Cosme',                 cor:'#4a6fa5', src:'guias',   grupo:'guias', nomeKey:'cosme',      nomeSrc:'guias' },
-    { key:'cruz_mata',       label:'Mata',                  cor:'#4a7a4a', src:'cruz', grupo:'cruzamentos' },
-    { key:'cruz_praia',      label:'Praia',                 cor:'#4a6fa5', src:'cruz', grupo:'cruzamentos' },
-    { key:'cruz_rio',        label:'Rio/Cachoeira',         cor:'#5a9ab5', src:'cruz', grupo:'cruzamentos' },
-    { key:'cruz_pedreira',   label:'Pedreira',               cor:'#8a7a6a', src:'cruz', grupo:'cruzamentos' },
-    { key:'corte_1',         label:'1º Corte',              cor:'#c4396b', src:'historia', grupo:'quimbanda',
-      nomeFn:(dados)=>{ if (dados.corte_1_cambonagem) return '🤝 Cambonagem'; const g=dados.corte_1_galinhas, ga=dados.corte_1_galos; return (g||ga)?`🐔 ${g||0} · 🐓 ${ga||0}`:''; } },
+    // cruz_mata/praia/rio/pedreira e corte_1 saíram daqui — agora só existem
+    // como itens dos arrays combinados (cortes/cruzamentos), ver abaixo
   ];
 
-  const srcs = { historia: hist, guias, cruz, cacique: p.cacique || {} };
+  const srcs = { historia: hist, guias, cacique: p.cacique || {} };
   let eventos = [];
   EVENTOS_DEF.forEach(def => {
     const dados = srcs[def.src] || {};
@@ -15162,11 +15135,16 @@ function extrairEventosPessoa(p) {
     eventos.push({ ...def, data, nome, oculto: ocultos.includes(def.key) });
   });
 
+  // listas já combinadas com os campos legados (corte_1, cruz_conga,
+  // cruz_mata/praia/rio/pedreira) — ver window.obterCortesCombinados/obterCruzamentosCombinados
+  const cortesCombinados = window.obterCortesCombinados(p);
+  const cruzCombinados = window.obterCruzamentosCombinados(p);
+
   // Assentamento — marco de jornada: a data do primeiro corte que de fato
-  // aconteceu (sem contar cambonagem), olhando o 1º Corte e os adicionais
-  const candidatosAssentamento = [];
-  if (hist.corte_1 && hist.corte_1.match(/^\d{4}-\d{2}-\d{2}$/) && !hist.corte_1_cambonagem) candidatosAssentamento.push(hist.corte_1);
-  (p.cortes || []).forEach(c => { if (c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem) candidatosAssentamento.push(c.data); });
+  // aconteceu (sem contar cambonagem)
+  const candidatosAssentamento = cortesCombinados
+    .filter(c => c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem)
+    .map(c => c.data);
   if (candidatosAssentamento.length) {
     eventos.push({
       key: 'assentamento', label: 'Assentamento', cor: '#c4396b', grupo: 'marcos',
@@ -15176,31 +15154,23 @@ function extrairEventosPessoa(p) {
   }
 
   // Conga — marco de jornada: a data do primeiro cruzamento que de fato
-  // aconteceu (sem contar cambonagem), olhando a Conga e os demais cruzamentos
-  // (fixos e extras) — por isso vira marco (sempre exibido), no lugar do
-  // campo literal de história que só mostrava a data da Conga em si
-  // "deConga: true" só quando vem literalmente do campo Conga — os demais
-  // tipos (Mata, Praia, Rio, Pedreira, extras) já são contados como seus
-  // próprios eventos de cruzamento acima, então esse marco não pode contar
-  // de novo pra não duplicar o total
-  const candidatosConga = [];
-  if (hist.cruz_conga && hist.cruz_conga.match(/^\d{4}-\d{2}-\d{2}$/) && !hist.cruz_conga_cambonagem) candidatosConga.push({ data: hist.cruz_conga, deConga: true });
-  ['cruz_mata','cruz_praia','cruz_rio','cruz_pedreira'].forEach(k => { if (cruz[k] && cruz[k].match(/^\d{4}-\d{2}-\d{2}$/)) candidatosConga.push({ data: cruz[k], deConga: false }); });
-  (p.cruzamentosExtras || []).forEach(c => { if (c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem) candidatosConga.push({ data: c.data, deConga: false }); });
+  // aconteceu (sem contar cambonagem), de qualquer tipo — sempre exibido,
+  // além do próprio evento de cruzamento dele (logo abaixo)
+  const candidatosConga = cruzCombinados
+    .filter(c => c.data && c.data.match(/^\d{4}-\d{2}-\d{2}$/) && !c.cambonagem)
+    .map(c => c.data);
   if (candidatosConga.length) {
-    candidatosConga.sort((a, b) => a.data.localeCompare(b.data));
-    const escolhido = candidatosConga[0];
     eventos.push({
       key: 'conga', label: 'Conga', cor: '#5a8a5a', grupo: 'marcos',
-      data: escolhido.data, nome: '', contaComoCruzamento: escolhido.deConga,
+      data: candidatosConga.sort()[0], nome: '',
       oculto: ocultos.includes('conga')
     });
   }
 
-  // cortes adicionais (2º em diante) — vêm do array p.cortes — grupo Quimbanda
-  (p.cortes || []).forEach((c, i) => {
+  // cortes — vêm do array combinado — grupo Quimbanda
+  cortesCombinados.forEach((c, i) => {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
-    const numCorte = i + 2;
+    const numCorte = i + 1;
     const aves = c.cambonagem ? '🤝 Cambonagem' : ((c.galinhas || c.galos) ? `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}` : '');
     eventos.push({
       key: `corte_extra_${i}`, label: `${numCorte}º Corte`, cor:'#c4396b', grupo:'quimbanda',
@@ -15209,8 +15179,8 @@ function extrairEventosPessoa(p) {
     });
   });
 
-  // cruzamentos extras — vêm do array p.cruzamentosExtras — grupo Cruzamentos
-  (p.cruzamentosExtras || []).forEach((c, i) => {
+  // cruzamentos — vêm do array combinado — grupo Cruzamentos
+  cruzCombinados.forEach((c, i) => {
     if (!c.data || !c.data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
     eventos.push({
       key: `cruz_extra_${i}`, label: c.nome || 'Cruzamento', cor:'#4a6fa5', grupo:'cruzamentos',
@@ -15441,22 +15411,18 @@ const DASH_BADGES_GUIAS = [
   { key:'cigana',       dataKey:'cigana_data',      label:'Cigana',       emoji:'🔮', cor:'#c9963c' },
   { key:'cosme',        dataKey:'cosme_data',       label:'Cosme',        emoji:'🍬', cor:'#4a6fa5' },
 ];
-const DASH_BADGES_CRUZ = [
-  { dataKey:'cruz_mata',     label:'Mata',           emoji:'🌿', cor:'#4a7a4a' },
-  { dataKey:'cruz_praia',    label:'Praia',          emoji:'🌊', cor:'#4a6fa5' },
-  { dataKey:'cruz_rio',      label:'Rio/Cachoeira',  emoji:'💧', cor:'#5a9ab5' },
-  { dataKey:'cruz_pedreira', label:'Pedreira',       emoji:'⛰️', cor:'#8a7a6a' },
-];
+// os cruzamentos fixos (mata/praia/rio/pedreira) e a Conga saíram daqui — agora
+// só existem como itens do array de cruzamentos (ver dashBadgesCruzamentosExtrasHtml)
+const DASH_BADGES_CRUZ = [];
 const DASH_BADGES_HISTORIA = [
   { dataKey:'data_entrada', label:'Entrada na Casa', emoji:'🚪', cor:'#c4396b' },
   { dataKey:'coroacao',     label:'Coroação',        emoji:'👑', cor:'#4a6fa5' },
   { dataKey:'cacicamento',  label:'Cacicamento',     emoji:'⭐', cor:'#9e6a9e' },
-  { dataKey:'cruz_conga',   label:'Conga',           emoji:'🌳', cor:'#5a8a5a', cambKey:'cruz_conga_cambonagem' },
 ];
-// Quimbanda — apronte e cortes, cada um com contagem de aves
+// Quimbanda — só o Apronte; o(s) corte(s) saíram daqui, agora só existem
+// como itens do array de cortes (ver dashBadgesCortesHtml)
 const DASH_BADGES_QUIMBANDA = [
   { dataKey:'apronte',  label:'Apronte',  emoji:'🌱', cor:'#6a9e6a', avesKeyGalinhas:'apronte_galinhas', avesKeyGalos:'apronte_galos' },
-  { dataKey:'corte_1',  label:'1º Corte', emoji:'⚔️', cor:'#c4396b', avesKeyGalinhas:'corte_1_galinhas', avesKeyGalos:'corte_1_galos', cambKey:'corte_1_cambonagem' },
 ];
 
 function dashBadgeHtml(b, dados) {
@@ -15490,11 +15456,11 @@ function dashBadgeHtml(b, dados) {
   </div>`;
 }
 
-// gera badges para os cortes adicionais (2º em diante), vindos do array p.cortes
+// gera badges pra cada corte, vindos do array combinado (ver window.obterCortesCombinados)
 function dashBadgesCortesHtml(cortes) {
   if (!cortes || !cortes.length) return '';
   return cortes.map((c, i) => {
-    const numCorte = i + 2;
+    const numCorte = i + 1;
     if (!c.data) return '';
     const subtexto = c.cambonagem ? '🤝 Cambonagem' : `🐔 ${c.galinhas||0} · 🐓 ${c.galos||0}`;
     return `<div class="dash-badge unlocked">
@@ -15506,7 +15472,7 @@ function dashBadgesCortesHtml(cortes) {
   }).join('');
 }
 
-// gera badges para os cruzamentos extras, vindos do array p.cruzamentosExtras
+// gera badges pra cada cruzamento, vindos do array combinado (ver window.obterCruzamentosCombinados)
 function dashBadgesCruzamentosExtrasHtml(extras) {
   if (!extras || !extras.length) return '';
   return extras.map(c => {
@@ -15820,20 +15786,18 @@ function renderDashPessoal(p, user) {
     btnEditarFrase.style.display = 'none';
   }
 
-  // stats rápidos — cambonagem é só um selo visual, conta normalmente nos totais
-  const totalCortesExtra = (p.cortes || []).filter(c => c.data).length;
-  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + totalCortesExtra;
-  const totalCruzExtras = (p.cruzamentosExtras || []).filter(c => c.data).length;
-  // cruzamento de Conga fica guardado em história (é o primeiro, feito na entrada), mas
-  // ainda assim é um cruzamento — sem ele, o total do topo do perfil ficava sempre 1 a menos
-  const totalCruzConga = hist.cruz_conga ? 1 : 0;
-  const totalCruz  = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + totalCruzExtras + totalCruzConga;
+  // listas já combinadas com os campos legados (corte_1, cruz_conga, cruz_mata/praia/rio/pedreira)
+  const cortesCombinados = window.obterCortesCombinados(p);
+  const cruzCombinados = window.obterCruzamentosCombinados(p);
 
-  // total de aves: soma galinhas+galos do apronte, 1º corte e todos os cortes adicionais
+  // stats rápidos — cambonagem é só um selo visual, conta normalmente nos totais
+  const totalQuimbanda = DASH_BADGES_QUIMBANDA.filter(b => hist[b.dataKey]).length + cortesCombinados.filter(c => c.data).length;
+  const totalCruz = DASH_BADGES_CRUZ.filter(b => cruz[b.dataKey]).length + cruzCombinados.filter(c => c.data).length;
+
+  // total de aves: soma galinhas+galos do apronte e de todos os cortes
   const totalAves =
     (Number(hist.apronte_galinhas) || 0) + (Number(hist.apronte_galos) || 0) +
-    (Number(hist.corte_1_galinhas) || 0) + (Number(hist.corte_1_galos) || 0) +
-    (p.cortes || []).reduce((soma, c) => soma + (Number(c.galinhas) || 0) + (Number(c.galos) || 0), 0);
+    cortesCombinados.reduce((soma, c) => soma + (Number(c.galinhas) || 0) + (Number(c.galos) || 0), 0);
 
   document.getElementById('dash-stats').innerHTML = `
     <div class="dash-stat"><div class="dash-stat-num">${totalCruz}</div><div class="dash-stat-label">Cruzamentos</div></div>
@@ -15866,11 +15830,11 @@ function renderDashPessoal(p, user) {
     dashBadgesGuiasExtrasHtml(p.guiasExtras || []);
   document.getElementById('dash-badges-cruz').innerHTML =
     DASH_BADGES_CRUZ.map(b => dashBadgeHtml(b, cruz)).join('') +
-    dashBadgesCruzamentosExtrasHtml(p.cruzamentosExtras || []);
+    dashBadgesCruzamentosExtrasHtml(cruzCombinados);
   document.getElementById('dash-badges-historia').innerHTML = DASH_BADGES_HISTORIA.map(b => dashBadgeHtml(b, hist)).join('');
   document.getElementById('dash-badges-quimbanda').innerHTML =
     DASH_BADGES_QUIMBANDA.map(b => dashBadgeHtml(b, hist)).join('') +
-    dashBadgesCortesHtml(p.cortes || []);
+    dashBadgesCortesHtml(cortesCombinados);
   const pontosEl = document.getElementById('dash-pontos-riscados');
   if (pontosEl) pontosEl.innerHTML = dashPontosRiscadosHtml(p.pontosRiscados || []);
 
@@ -15910,11 +15874,10 @@ function terreiroRenderStats(perfis) {
   let cortes = 0, cruzamentos = 0, guias = 0;
   perfis.forEach(p => {
     extrairEventosPessoa(p).forEach(e => {
-      if (e.key === 'corte_1' || e.key.startsWith('corte_extra_')) cortes++;
-      // 'conga' virou marco de jornada (grupo 'marcos'), mas ainda conta como
-      // cruzamento quando representa a própria Conga — os outros tipos que ele
-      // pode usar como data (Mata, Praia...) já são contados no próprio evento
-      else if (e.grupo === 'cruzamentos' || (e.key === 'conga' && e.contaComoCruzamento)) cruzamentos++;
+      if (e.key.startsWith('corte_extra_')) cortes++;
+      // 'conga' é só o marco de jornada (grupo 'marcos') — o cruzamento em si já
+      // conta via seu próprio evento (grupo 'cruzamentos'), não precisa somar aqui
+      else if (e.grupo === 'cruzamentos') cruzamentos++;
       else if (e.grupo === 'guias') guias++;
     });
   });
@@ -16611,28 +16574,32 @@ window.salvarSuaHistoria = async function() {
   const G = { ...perfilBase.guias };
   const C = { ...perfilBase.cruzamentos };
 
-  document.querySelectorAll('#mh-grid-historia input, #mh-grid-guias input, #mh-grid-cruzamentos input').forEach(inp => {
+  document.querySelectorAll('#mh-grid-historia input, #mh-grid-guias input').forEach(inp => {
     const k = inp.dataset.key;
     if (!k) return;
     const v = inp.value.trim();
     if (camposHistoria.find(c=>c.key===k))   H[k] = v;
     else if (camposGuias.find(c=>c.key===k)) G[k] = v;
-    else if (camposCruz.find(c=>c.key===k))  C[k] = v;
   });
 
-  // campos de Quimbanda (apronte + 1º corte, com aves) — não fazem parte de camposHistoria genérico
-  const quimbandaKeys = ['apronte','apronte_galinhas','apronte_galos','corte_1','corte_1_galinhas','corte_1_galos'];
+  // campo de Quimbanda (só o apronte agora) — não faz parte de camposHistoria genérico
+  const quimbandaKeys = ['apronte','apronte_galinhas','apronte_galos'];
   quimbandaKeys.forEach(k => {
     const el = document.getElementById('mh-edit-' + k);
     if (el) H[k] = el.value.trim();
   });
-  const camb1El = document.getElementById('mh-edit-corte_1_cambonagem');
-  if (camb1El) { if (camb1El.checked) H.corte_1_cambonagem = true; else delete H.corte_1_cambonagem; }
-  const cambCongaEl = document.getElementById('mh-edit-cruz_conga_cambonagem');
-  if (cambCongaEl) { if (cambCongaEl.checked) H.cruz_conga_cambonagem = true; else delete H.cruz_conga_cambonagem; }
   // "Madrinha" tem seletor próprio (fora de camposHistoria genérico)
   const madrinhaEl = document.getElementById('mh-edit-madrinha');
   if (madrinhaEl) { if (madrinhaEl.value) H.madrinha = madrinhaEl.value; else delete H.madrinha; }
+
+  // migração: corte_1/cruz_conga/cruz_mata-praia-rio-pedreira (campos antigos, soltos)
+  // já estão representados dentro de _mhCortesEditando/_mhCruzExtrasEditando (ver
+  // renderMinhaHistoria, que combina tudo antes de abrir a ficha) — então, a partir
+  // de agora que a ficha foi salva, apaga os campos antigos pra não duplicar a
+  // informação da próxima vez que a ficha for aberta
+  delete H.corte_1; delete H.corte_1_galinhas; delete H.corte_1_galos; delete H.corte_1_cambonagem;
+  delete H.cruz_conga; delete H.cruz_conga_cambonagem;
+  delete C.cruz_mata; delete C.cruz_praia; delete C.cruz_rio; delete C.cruz_pedreira;
 
   // campo de descrição
   const descricaoEl = document.getElementById('sh-edit-descricao');
@@ -16776,7 +16743,6 @@ const camposHistoria = [
   { label:'Data — Afilhada 1', key:'afilhada_1_data',tipo:'data'  },
   { label:'Afilhada',          key:'afilhada_2',     tipo:'pessoa' },
   { label:'Data — Afilhada 2', key:'afilhada_2_data',tipo:'data'  },
-  { label:'Cruzamento de Conga', key:'cruz_conga',   tipo:'data'  },
 ];
 const camposGuias = [
   { label:'Caboclo',            key:'caboclo',        tipo:'texto' },
@@ -16792,13 +16758,6 @@ const camposGuias = [
   { label:'Cosme',              key:'cosme',          tipo:'texto' },
   { label:'Chegada do Cosme',   key:'cosme_data',     tipo:'data'  },
 ];
-const camposCruz = [
-  { label:'Cruzamento de Mata',     key:'cruz_mata',     tipo:'data' },
-  { label:'Cruzamento de Praia',    key:'cruz_praia',    tipo:'data' },
-  { label:'Cruzamento de Rio',      key:'cruz_rio',      tipo:'data' },
-  { label:'Cruzamento de Pedreira', key:'cruz_pedreira', tipo:'data' },
-];
-
 window.fmtData = function fmtData(v) {
   if (!v) return '';
   const d = new Date(v + 'T12:00:00');
@@ -16854,7 +16813,6 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
     'data_entrada','apronte','coroacao','cacicamento','madrinha_data',
     'afilhada_1_data','afilhada_2_data','terreiro_data',
     'caboclo_data','exu_data','pomba_gira_data','preto_velho_data','cigana_data','cosme_data',
-    'cruz_conga','cruz_mata','cruz_praia','cruz_rio','cruz_pedreira','corte_1'
   ]);
 
   campos.forEach(c => {
@@ -16918,38 +16876,19 @@ function renderCamposPerfil(campos, gridId, dados, editavel) {
   });
 }
 
-// ── QUIMBANDA — Apronte e 1º Corte, com contagem de aves ──
+// ── QUIMBANDA — só o Apronte; o(s) corte(s) agora vivem só no array cortes[] ──
 function mhRenderQuimbanda(hist) {
   hist = hist || {};
   const setIfExists = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   setIfExists('mh-edit-apronte', hist.apronte);
   setIfExists('mh-edit-apronte_galinhas', hist.apronte_galinhas);
   setIfExists('mh-edit-apronte_galos', hist.apronte_galos);
-  setIfExists('mh-edit-corte_1', hist.corte_1);
-  setIfExists('mh-edit-corte_1_galinhas', hist.corte_1_galinhas);
-  setIfExists('mh-edit-corte_1_galos', hist.corte_1_galos);
-  const cambEl = document.getElementById('mh-edit-corte_1_cambonagem');
-  if (cambEl) { cambEl.checked = !!hist.corte_1_cambonagem; window.mhToggleCorte1Cambonagem(cambEl.checked); }
-  const cambCongaEl = document.getElementById('mh-edit-cruz_conga_cambonagem');
-  if (cambCongaEl) cambCongaEl.checked = !!hist.cruz_conga_cambonagem;
 }
 
-// Cambonagem no 1º Corte: esconde Galinhas/Galos, já que quem só fez
-// cambonagem ainda não foi cortado(a) — não faz sentido contar aves
-// (window.* aqui porque esse <script> é type="module" — declaração comum
-// não fica acessível pro onchange inline do checkbox no HTML)
-window.mhToggleCorte1Cambonagem = function(checked) {
-  const grid = document.getElementById('mh-corte-1-grid');
-  const g = document.getElementById('mh-corte-1-galinhas-wrap');
-  const o = document.getElementById('mh-corte-1-galos-wrap');
-  if (g) g.style.display = checked ? 'none' : '';
-  if (o) o.style.display = checked ? 'none' : '';
-  if (grid) grid.style.gridTemplateColumns = checked ? '1fr' : '1fr 1fr 1fr';
-};
-
-// ── CORTES ADICIONAIS (2º corte em diante) ──
-// estrutura: perfilData.cortes = [{ data:'YYYY-MM-DD', galinhas:'0', galos:'0' }, ...]
-// o 1º corte continua em perfilData.historia.corte_1 (+ corte_1_galinhas/corte_1_galos)
+// ── CORTES ──
+// estrutura: perfilData.cortes = [{ data:'YYYY-MM-DD', galinhas:'0', galos:'0', cambonagem:false }, ...]
+// recebe a lista já combinada com o campo legado historia.corte_1 (se ainda
+// houver), via window.obterCortesCombinados — ver renderMinhaHistoria
 let _mhCortesEditando = [];
 
 function mhRenderCortes(cortes, editavel) {
@@ -16968,12 +16907,12 @@ function mhRenderCortes(cortes, editavel) {
   const dadosParaExibir = editavel ? _mhCortesEditando : cortes;
 
   if (!dadosParaExibir.length) {
-    lista.innerHTML = '<div class="mh-corte-empty">Nenhum corte adicional registrado ainda.</div>';
+    lista.innerHTML = '<div class="mh-corte-empty">Nenhum corte registrado ainda.</div>';
     return;
   }
 
   lista.innerHTML = dadosParaExibir.map((c, i) => {
-    const numCorte = i + 2; // o 1º corte já existe em História, então este é o 2º em diante
+    const numCorte = i + 1;
     if (editavel) {
       return `<div class="mh-corte-card">
         <button type="button" class="mh-corte-del" onclick="mhRemoverCorte(${i})" title="Remover este corte">✕</button>
