@@ -3995,6 +3995,21 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <option value="Reuniao">Reunião</option>
       </select>
     </div>
+    <div style="margin-bottom:12px"><label class="form-label">Marco de Corte/Cruzamento (opcional)</label>
+      <select class="form-input" id="cal-fMarco" onchange="calToggleMarcoOutro(this.value)" style="margin-bottom:0">
+        <option value="">— Nenhum —</option>
+        <option value="Corte">Corte</option>
+        <option value="Cruz:Conga">Cruzamento — Conga</option>
+        <option value="Cruz:Mata">Cruzamento — Mata</option>
+        <option value="Cruz:Praia">Cruzamento — Praia</option>
+        <option value="Cruz:Rio/Cachoeira">Cruzamento — Rio/Cachoeira</option>
+        <option value="Cruz:Pedreira">Cruzamento — Pedreira</option>
+        <option value="Cruz:Encruzilhada">Cruzamento — Encruzilhada</option>
+        <option value="Cruz:Outro">Cruzamento — Outro</option>
+      </select>
+      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Marca essa data pra entrar na lista de Pendências de Corte/Cruzamento</div>
+    </div>
+    <div id="cal-fMarcoOutro-wrap" style="display:none;margin-bottom:12px"><label class="form-label">Qual cruzamento?</label><input type="text" class="form-input" id="cal-fMarcoOutro" placeholder="ex: Mikael"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Lado</label>
         <select class="form-input" id="cal-fLado" style="margin-bottom:0">
@@ -6441,6 +6456,11 @@ function calToggleOndeOutro(valor) {
   if (wrap) wrap.style.display = valor === 'Outro' ? '' : 'none';
 }
 
+function calToggleMarcoOutro(valor) {
+  const wrap = document.getElementById('cal-fMarcoOutro-wrap');
+  if (wrap) wrap.style.display = valor === 'Cruz:Outro' ? '' : 'none';
+}
+
 async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
@@ -6449,6 +6469,9 @@ async function calOpenModal() {
   document.getElementById('cal-fHora').value = '20:30';
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
+  document.getElementById('cal-fMarco').value = '';
+  document.getElementById('cal-fMarcoOutro').value = '';
+  calToggleMarcoOutro('');
   // "Salão" é onde a imensa maioria das sessões acontece — deixa pré-marcado
   // pra só precisar trocar quando for diferente
   document.getElementById('cal-fOnde').value = 'Salão';
@@ -6502,6 +6525,9 @@ function calOpenEdit(id) {
   document.getElementById('cal-fHora').value = s.hora || '';
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
+  document.getElementById('cal-fMarco').value = s.marco || '';
+  document.getElementById('cal-fMarcoOutro').value = s.marcoOutroNome || '';
+  calToggleMarcoOutro(s.marco || '');
   // sessões antigas (de antes desse campo existir) não tem "onde" salvo —
   // trata como "Salão" também, já que é onde a maioria acontece. Se o valor
   // salvo não bate com nenhuma opção fixa, trata como "Outro" com o texto customizado
@@ -7022,6 +7048,7 @@ async function calSalvar() {
 
   const ondeSelecionado = document.getElementById('cal-fOnde').value;
   const onde = ondeSelecionado === 'Outro' ? document.getElementById('cal-fOndeOutro').value.trim() : ondeSelecionado;
+  const marco = document.getElementById('cal-fMarco').value;
 
   const payload = { nome, data,
     hora: document.getElementById('cal-fHora').value,
@@ -7031,6 +7058,8 @@ async function calSalvar() {
     responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
     driveLink: document.getElementById('cal-fDriveLink').value.trim(),
+    marco,
+    marcoOutroNome: marco === 'Cruz:Outro' ? document.getElementById('cal-fMarcoOutro').value.trim() : '',
   };
   const editId = document.getElementById('cal-edit-id').value;
   if (editId) payload.id = editId;
@@ -8365,17 +8394,44 @@ const PEN_CRUZAMENTOS = [
 ];
 
 let penDados = [];
+// listas efetivamente usadas — começam como a lista fixa e, no penLoad, ganham
+// as datas marcadas na agenda (campo "Marco de Corte/Cruzamento" da sessão)
+let penCortesTotal = PEN_CORTES;
+let penCruzamentosTotal = PEN_CRUZAMENTOS;
+
+// soma os itens de novaLista que ainda não têm a mesma data em listaBase —
+// evita duplicar se uma data já registrada na mão também for marcada na agenda
+function penMesclarPorData(listaBase, novaLista) {
+  const vistas = new Set(listaBase.map(x => x.data));
+  return listaBase.concat(novaLista.filter(x => x.data && !vistas.has(x.data)));
+}
 
 async function penLoad() {
   const lista = document.getElementById('pen-lista');
   if (!lista) return;
   lista.innerHTML = '<div class="cal-empty">Carregando...</div>';
   try {
-    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
-    const todos = await res.json();
+    const [resPerfis, resSessoes] = await Promise.all([
+      fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/sessoes'),
+    ]);
+    const todos = await resPerfis.json();
+    const sessoes = await resSessoes.json();
+
+    // datas marcadas direto na agenda (campo "Marco" da sessão) — somadas à lista fixa
+    const sessoesComMarco = Array.isArray(sessoes) ? sessoes : [];
+    const cortesDaAgenda = sessoesComMarco
+      .filter(s => s.marco === 'Corte' && s.data)
+      .map(s => ({ data: s.data }));
+    const cruzDaAgenda = sessoesComMarco
+      .filter(s => s.marco && s.marco.startsWith('Cruz:') && s.data)
+      .map(s => ({ data: s.data, tipo: s.marco === 'Cruz:Outro' ? (s.marcoOutroNome || 'Outro') : s.marco.slice(5) }));
+    penCortesTotal = penMesclarPorData(PEN_CORTES, cortesDaAgenda);
+    penCruzamentosTotal = penMesclarPorData(PEN_CRUZAMENTOS, cruzDaAgenda);
+
     // só quem tem data de entrada registrada — sem isso não dá pra saber se a
     // data da casa é "depois dela"
-    penDados = todos.filter(p => p.nome && p.ativo !== false && p.historia?.data_entrada);
+    penDados = (Array.isArray(todos) ? todos : []).filter(p => p.nome && p.ativo !== false && p.historia?.data_entrada);
     penRender();
   } catch (e) {
     lista.innerHTML = '<div class="cal-empty">Erro ao carregar.</div>';
@@ -8391,8 +8447,8 @@ function penPendenciasPessoa(p) {
   const datasCortesDela = new Set(window.obterCortesCombinados(p).map(c => c.data).filter(Boolean));
   const datasCruzDela = new Set(window.obterCruzamentosCombinados(p).map(c => c.data).filter(Boolean));
 
-  const cortesFaltando = PEN_CORTES.filter(c => c.data >= entrada && !datasCortesDela.has(c.data) && !ignoradas.has('corte:' + c.data));
-  const cruzFaltando = PEN_CRUZAMENTOS.filter(c => c.data >= entrada && !datasCruzDela.has(c.data) && !ignoradas.has('cruz:' + c.data));
+  const cortesFaltando = penCortesTotal.filter(c => c.data >= entrada && !datasCortesDela.has(c.data) && !ignoradas.has('corte:' + c.data));
+  const cruzFaltando = penCruzamentosTotal.filter(c => c.data >= entrada && !datasCruzDela.has(c.data) && !ignoradas.has('cruz:' + c.data));
   return { cortesFaltando, cruzFaltando };
 }
 
@@ -8437,7 +8493,7 @@ async function penMarcar(email, tipoAcao, data, cambonagem) {
     if (!p.cortes) p.cortes = [];
     p.cortes.push({ data, galinhas: '', galos: '', cambonagem });
   } else {
-    const evento = PEN_CRUZAMENTOS.find(c => c.data === data);
+    const evento = penCruzamentosTotal.find(c => c.data === data);
     if (!p.cruzamentosExtras) p.cruzamentosExtras = [];
     p.cruzamentosExtras.push({ nome: evento ? evento.tipo : 'Cruzamento', data, cambonagem });
   }
