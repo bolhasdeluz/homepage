@@ -7968,6 +7968,9 @@ function guiasFiltrar(busca) {
 
 // ── QUADRO DAS FILHAS (só admin) — nome, cargo, tempo de casa e selos de
 // Cruzamento/Corte (ou cambonagem, se ainda não foi cruzada/cortada) ─────
+// só entram cargos "de casa" (Curumim até Mãe da Casa, incluindo Cambona) —
+// Naurú, Tamboreiro e quem não tem cargo definido ficam de fora
+const QF_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Cacique', 'Mãe da Casa', 'Cambona'];
 let qfDados = [];
 let qfSelecionados = new Set();
 let qfBuscaAtual = '';
@@ -8010,7 +8013,7 @@ async function qfLoad() {
   try {
     const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
     const todos = await res.json();
-    qfDados = todos.filter(p => p.nome);
+    qfDados = todos.filter(p => p.nome && p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo));
     qfSelecionados = new Set(qfDados.map(p => p.email));
     qfRender(qfDados);
   } catch (e) {
