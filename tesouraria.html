@@ -679,9 +679,6 @@ body{padding-bottom:64px}
         <div class="field"><label class="field-label">Membro</label>
           <select id="edit-membro">
             <option value="">Selecionar membro…</option>
-            <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
-            <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-            <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           </select>
         </div>
         <div class="field"><label class="field-label">Mês de competência</label>
@@ -814,9 +811,6 @@ body{padding-bottom:64px}
         <div id="campo-membro" class="field"><label class="field-label">Membro</label>
           <select id="entrada-membro">
             <option value="">Selecionar membro…</option>
-            <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
-            <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-            <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           </select>
         </div>
         <div id="campo-extra" class="field" style="display:none;"><label class="field-label">Descrição</label>
@@ -924,9 +918,6 @@ body{padding-bottom:64px}
       <div class="field"><label class="field-label">De quem é?</label>
         <select id="caixa-membro">
           <option value="">Selecionar membro…</option>
-          <option>Ness</option><option>Thali</option><option>Jaque</option><option>Tassi</option>
-          <option>Brenda</option><option>Anne</option><option>Vitória</option><option>Manu</option>
-          <option>Gabi</option><option>Márcia</option><option>Nicole</option><option>Stephani</option>
           <option value="__externo">Externo / não é membro</option>
         </select>
       </div>
@@ -1010,6 +1001,7 @@ body{padding-bottom:64px}
         if (adicionados.length) {
           try { renderInicio(); } catch(e){}
           try { renderVinculos(); } catch(e){}
+          try { renderMembroSelects(); } catch(e){}
           showToast('✓ ' + adicionados.join(', ') + ' adicionada(s) automaticamente na Tesouraria');
         } else {
           try { renderInicio(); } catch(e){}
@@ -1027,6 +1019,36 @@ body{padding-bottom:64px}
       var saida = MEMBROS_SAIDA[m];
       return !saida || ref < saida;
     });
+  }
+
+  // preenche os <select> de "Membro" (nova entrada, editar lançamento, caixa)
+  // a partir de MEMBROS_TODOS — chamado no início e de novo sempre que a
+  // sincronização por cargo adiciona alguém, pra elas aparecerem sem
+  // precisar recarregar a página. Preserva o valor já escolhido, se ainda
+  // existir na lista nova.
+  function renderMembroSelects() {
+    var opcoesBase = MEMBROS_TODOS.map(function(m){ return '<option>'+m+'</option>'; }).join('');
+
+    var elEntrada = document.getElementById('entrada-membro');
+    if (elEntrada) {
+      var valEntrada = elEntrada.value;
+      elEntrada.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase;
+      elEntrada.value = valEntrada;
+    }
+
+    var elEdit = document.getElementById('edit-membro');
+    if (elEdit) {
+      var valEdit = elEdit.value;
+      elEdit.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase;
+      elEdit.value = valEdit;
+    }
+
+    var elCaixa = document.getElementById('caixa-membro');
+    if (elCaixa) {
+      var valCaixa = elCaixa.value;
+      elCaixa.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase + '<option value="__externo">Externo / não é membro</option>';
+      elCaixa.value = valCaixa;
+    }
   }
 
   function today() {
@@ -3001,6 +3023,7 @@ body{padding-bottom:64px}
   // ── INIT ──────────────────────────────────────────────────
   inicializarFiltroMes();
   blAtualizarBotaoNomes();
+  renderMembroSelects();
 
   // 1. Carrega localStorage IMEDIATAMENTE (sem esperar rede)
   try {
