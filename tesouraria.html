@@ -967,41 +967,63 @@ body{padding-bottom:64px}
   // mensalidade pra própria casa)
   var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Cambona'];
 
-  // busca os perfis do site e adiciona à lista quem tem um cargo de casa e
-  // ainda não está cadastrado aqui (ex.: alguém que acabou de entrar) — usa
-  // o primeiro nome como apelido e não mexe em quem já está na lista, pra
-  // não perder apelidos já em uso (tipo "Ness" pra Vanessa)
+  // apelidos marcados como isentas de mensalidade no perfil (admin > Isenta de
+  // mensalidade) — preenchido por sincronizarMembrosDosCargos() e consultado
+  // por getMembrosAtivos() pra elas não contarem mais nos cálculos/cobrança
+  var MEMBROS_ISENTOS = {};
+
+  // busca os perfis do site: (1) adiciona à lista quem tem um cargo de casa,
+  // está ativa, não é isenta e ainda não está cadastrada aqui (ex.: alguém
+  // que acabou de entrar) — usa o primeiro nome como apelido e não mexe em
+  // quem já está na lista, pra não perder apelidos já em uso (tipo "Ness"
+  // pra Vanessa); (2) atualiza quem já está na lista mas foi marcada como
+  // isenta, pra sumir da cobrança sem precisar sair da lista
   function sincronizarMembrosDosCargos() {
     fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
       .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
       .then(function(perfis){
-        var candidatos = (Array.isArray(perfis) ? perfis : [])
-          .filter(function(p){ return p && p.nome && p.ativo !== false && MEMBROS_CARGOS_PERMITIDOS.indexOf(p.cargo) !== -1; });
+        perfis = Array.isArray(perfis) ? perfis : [];
 
         var adicionados = [];
-        candidatos.forEach(function(p){
-          var normalizado = vinculoNormalizar(p.nome);
-          var jaTemAlguem = MEMBROS_TODOS.some(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-          if (jaTemAlguem) return;
-          var apelido = p.nome.trim().split(' ')[0];
-          if (MEMBROS_TODOS.indexOf(apelido) !== -1) return;
-          MEMBROS_TODOS.push(apelido);
-          adicionados.push(apelido);
-        });
+        perfis
+          .filter(function(p){ return p && p.nome && p.ativo !== false && !p.isento && MEMBROS_CARGOS_PERMITIDOS.indexOf(p.cargo) !== -1; })
+          .forEach(function(p){
+            var normalizado = vinculoNormalizar(p.nome);
+            var jaTemAlguem = MEMBROS_TODOS.some(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
+            if (jaTemAlguem) return;
+            var apelido = p.nome.trim().split(' ')[0];
+            if (MEMBROS_TODOS.indexOf(apelido) !== -1) return;
+            MEMBROS_TODOS.push(apelido);
+            adicionados.push(apelido);
+          });
+
+        var isentos = {};
+        perfis
+          .filter(function(p){ return p && p.nome && p.isento; })
+          .forEach(function(p){
+            var normalizado = vinculoNormalizar(p.nome);
+            var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
+            if (membro) isentos[membro] = true;
+          });
+        MEMBROS_ISENTOS = isentos;
 
         if (adicionados.length) {
           try { renderInicio(); } catch(e){}
           try { renderVinculos(); } catch(e){}
           showToast('✓ ' + adicionados.join(', ') + ' adicionada(s) automaticamente na Tesouraria');
+        } else {
+          try { renderInicio(); } catch(e){}
         }
       })
       .catch(function(){});
   }
 
   // Retorna a lista de membros ativos num dado mês (YYYY-MM). Sem argumento = ativos hoje.
+  // Isentas (ver MEMBROS_ISENTOS) nunca contam, independente do mês.
   function getMembrosAtivos(mesRef) {
     var ref = mesRef || today().slice(0,7);
     return MEMBROS_TODOS.filter(function(m){
+      if (MEMBROS_ISENTOS[m]) return false;
       var saida = MEMBROS_SAIDA[m];
       return !saida || ref < saida;
     });

@@ -4357,6 +4357,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         Perfil ativo (desmarque se a pessoa saiu da casa — some de tudo, mas os dados ficam guardados)
       </label>
     </div>
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-isento" style="accent-color:var(--rosa);width:16px;height:16px">
+        💰 Isenta de mensalidade (não entra na cobrança da Tesouraria)
+      </label>
+    </div>
     <!-- CAMPOS CACIQUE -->
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
       ✦ Cacique — campos especiais
@@ -5705,6 +5711,7 @@ function abrirCriarPerfil(emailParaEditar) {
   document.getElementById('cp-email').disabled = false;
   document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
+  if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = false;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -5748,6 +5755,7 @@ function preencherFormPerfil(p) {
   if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
   if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = p.ativo !== false;
+  if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = !!p.isento;
   if (document.getElementById('cp-visivelGuias')) document.getElementById('cp-visivelGuias').checked = !!p.visivelGuias;
 }
 
@@ -5774,6 +5782,7 @@ async function salvarPerfilAdmin() {
     criadoEm: base.criadoEm || Date.now(),
     solicitacao: 'Perfil criado/editado pelo admin',
     ativo: document.getElementById('cp-ativo')?.checked !== false,
+    isento: document.getElementById('cp-isento')?.checked || false,
     visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     cacique: {
       ...(base.cacique || {}),
@@ -8079,6 +8088,7 @@ const PG_COLUNAS = [
   // convenção (ativo !== false) usada no resto do site, pra não mostrar como
   // inativa uma filha que nunca teve esse campo definido
   { grupo:'basico', key:'ativo', label:'Ativo', campo:'ativo', tipo:'checkbox', ler:p => p.ativo !== false },
+  { grupo:'basico', key:'isento', label:'Isento de Mensalidade', campo:'isento', tipo:'checkbox', ler:p => !!p.isento },
   { grupo:'basico', key:'data_entrada', label:'Data de Entrada', secao:'historia', campo:'data_entrada', tipo:'date' },
   { grupo:'basico', key:'tempo_casa', label:'Tempo de Casa', tipo:'readonly', valor:p => window.calcTempo?.(p.historia?.data_entrada) },
 
