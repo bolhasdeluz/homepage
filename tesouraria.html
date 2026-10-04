@@ -957,8 +957,46 @@ body{padding-bottom:64px}
   // ── HELPERS ───────────────────────────────────────────────
   // Membros que saíram da casa, com o mês (YYYY-MM) a partir do qual não contam mais
   var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07' };
-  // Lista completa histórica (usada para não quebrar cálculos de meses antigos)
+  // Lista completa histórica (usada para não quebrar cálculos de meses antigos) —
+  // serve de base e é completada automaticamente por sincronizarMembrosDosCargos(),
+  // que busca no cadastro do site quem tem um cargo de casa e ainda não está aqui
   var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana'];
+
+  // cargos "de casa" que contam como membro pagante da Tesouraria — mesma
+  // escada usada no Quadro das Filhas, menos Mãe da Casa (ela não paga
+  // mensalidade pra própria casa)
+  var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Cambona'];
+
+  // busca os perfis do site e adiciona à lista quem tem um cargo de casa e
+  // ainda não está cadastrado aqui (ex.: alguém que acabou de entrar) — usa
+  // o primeiro nome como apelido e não mexe em quem já está na lista, pra
+  // não perder apelidos já em uso (tipo "Ness" pra Vanessa)
+  function sincronizarMembrosDosCargos() {
+    fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
+      .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
+      .then(function(perfis){
+        var candidatos = (Array.isArray(perfis) ? perfis : [])
+          .filter(function(p){ return p && p.nome && p.ativo !== false && MEMBROS_CARGOS_PERMITIDOS.indexOf(p.cargo) !== -1; });
+
+        var adicionados = [];
+        candidatos.forEach(function(p){
+          var normalizado = vinculoNormalizar(p.nome);
+          var jaTemAlguem = MEMBROS_TODOS.some(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
+          if (jaTemAlguem) return;
+          var apelido = p.nome.trim().split(' ')[0];
+          if (MEMBROS_TODOS.indexOf(apelido) !== -1) return;
+          MEMBROS_TODOS.push(apelido);
+          adicionados.push(apelido);
+        });
+
+        if (adicionados.length) {
+          try { renderInicio(); } catch(e){}
+          try { renderVinculos(); } catch(e){}
+          showToast('✓ ' + adicionados.join(', ') + ' adicionada(s) automaticamente na Tesouraria');
+        }
+      })
+      .catch(function(){});
+  }
 
   // Retorna a lista de membros ativos num dado mês (YYYY-MM). Sem argumento = ativos hoje.
   function getMembrosAtivos(mesRef) {
@@ -3023,6 +3061,10 @@ body{padding-bottom:64px}
       }
     })
     .catch(function(){});
+
+  // Completa a lista de membros com quem tem cargo de casa no cadastro e
+  // ainda não está aqui (ex.: alguém que acabou de entrar)
+  sincronizarMembrosDosCargos();
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════
