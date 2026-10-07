@@ -7051,22 +7051,23 @@ function rifaImprimirTalao(numeros, nomeVendedora) {
     <style>
       *{box-sizing:border-box}
       body{font-family:'DM Sans',Arial,sans-serif;margin:0;padding:10px;color:#2e1a0e}
-      .talao-ticket{display:flex;border:1px solid #000;margin-bottom:5px;page-break-inside:avoid}
-      .talao-canhoto{flex:0 0 26%;padding:6px 8px;border-right:1px dashed #000;font-size:9px}
-      .talao-ingresso{flex:1;padding:8px 12px;font-size:11px}
-      .talao-logo-pequeno{display:block;width:22px;height:22px;object-fit:contain;margin-bottom:3px}
-      .talao-cabecalho{display:flex;align-items:center;gap:6px;margin-bottom:2px}
-      .talao-logo{width:28px;height:28px;object-fit:contain;flex-shrink:0}
-      .talao-eyebrow{font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:#c4396b;font-weight:700;margin-bottom:2px}
-      .talao-titulo{font-size:13px;font-weight:700;margin-bottom:2px}
+      .talao-grid{display:flex;flex-wrap:wrap;gap:6px}
+      .talao-ticket{display:flex;width:calc(50% - 3px);border:1px solid #000;page-break-inside:avoid;break-inside:avoid}
+      .talao-canhoto{flex:0 0 36%;padding:5px 6px;border-right:1px dashed #000;font-size:7.5px}
+      .talao-ingresso{flex:1;padding:6px 8px;font-size:9px;min-width:0}
+      .talao-logo-pequeno{display:block;width:16px;height:16px;object-fit:contain;margin-bottom:2px}
+      .talao-cabecalho{display:flex;align-items:center;gap:4px;margin-bottom:2px}
+      .talao-logo{width:18px;height:18px;object-fit:contain;flex-shrink:0}
+      .talao-eyebrow{font-size:6.5px;letter-spacing:.05em;text-transform:uppercase;color:#c4396b;font-weight:700;margin-bottom:2px}
+      .talao-titulo{font-size:10.5px;font-weight:700;margin-bottom:2px}
       .talao-premio{font-weight:600;margin-bottom:2px}
       .talao-meta{color:#555;margin-bottom:2px}
-      .talao-numero{font-size:20px;font-weight:800;color:#c4396b;margin-top:2px}
-      .talao-campo-label{margin-top:5px;color:#555}
-      .talao-linha{border-bottom:1px solid #000;height:11px}
-      @media print{ body{padding:0} }
+      .talao-numero{font-size:16px;font-weight:800;color:#c4396b;margin-top:2px}
+      .talao-campo-label{margin-top:4px;color:#555}
+      .talao-linha{border-bottom:1px solid #000;height:9px}
+      @media print{ body{padding:0} .talao-grid{gap:0} .talao-ticket{width:50%} }
     </style></head>
-    <body>${ticketsHtml}</body></html>`;
+    <body><div class="talao-grid">${ticketsHtml}</div></body></html>`;
 
   const win = window.open('', '_blank');
   if (!win) { alert('O navegador bloqueou a janela de impressão — permite pop-ups pra esse site.'); return; }
