@@ -2761,6 +2761,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-nova" style="display:none" onclick="rifaAbrirNova()">✨ Criar nova rifa</button>
       <button class="rf-admin-btn" id="rf-btn-editar" style="display:none" onclick="rifaAbrirEditar()">✎ Editar rifa</button>
       <button class="rf-admin-btn" id="rf-btn-atribuir" style="display:none" onclick="rifaToggleModoAtribuir()">🎫 Atribuir números</button>
+      <button class="rf-admin-btn" id="rf-btn-lote100" style="display:none" onclick="rifaAbrirLote100()">📦 Atribuir em blocos de 100</button>
       <button class="rf-admin-btn" id="rf-btn-lote" style="display:none" onclick="rifaToggleModoLote()">🧾 Lançar compra</button>
       <button class="rf-admin-btn" id="rf-btn-aumentar" style="display:none" onclick="rifaAbrirAumentar()">➕ Aumentar números</button>
       <button class="rf-admin-btn" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
@@ -2843,6 +2844,17 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="btn-rosa" style="width:100%;text-align:center;margin-top:4px" onclick="rifaImprimirTalaoAtribuido()">🖨️ Imprimir talão desses números</button>
       <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharAtribuir()">Fechar</button>
     </div>
+  </div>
+</div>
+
+<div id="rf-lote100-overlay" class="overlay" onclick="if(event.target===this)rifaFecharLote100()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="rifaFecharLote100()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📦 Atribuir em blocos de 100</div>
+    <p class="modal-sub">Escolhe quem fica com cada janela de números ainda livres — confirma uma vez e já atribui tudo.</p>
+    <div id="rf-lote100-corpo" style="max-height:55vh;overflow-y:auto"></div>
+    <button class="btn-rosa" style="width:100%;text-align:center;margin-top:12px" onclick="rifaConfirmarLote100()">Confirmar atribuições</button>
+    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:8px" onclick="rifaFecharLote100()">Fechar</button>
   </div>
 </div>
 
@@ -6737,6 +6749,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -7046,6 +7059,97 @@ window.rifaSelecionarPessoaAtribuir = rifaSelecionarPessoaAtribuir;
 
 function rifaFecharAtribuir() { document.getElementById('rf-atribuir-overlay').classList.remove('open'); }
 window.rifaFecharAtribuir = rifaFecharAtribuir;
+
+// ── ATRIBUIR EM BLOCOS DE 100 — pra atribuir a rifa inteira de uma vez só:
+// mostra uma janela de 100 números por vez (fora da faixa da venda
+// digital), cada uma com um seletor de pra quem vai; confirma tudo junto
+function rifaAbrirLote100() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  carregarListaNomesCasa().then(rifaRenderLote100);
+  rifaRenderLote100();
+  document.getElementById('rf-lote100-overlay').classList.add('open');
+}
+window.rifaAbrirLote100 = rifaAbrirLote100;
+
+function rifaRenderLote100() {
+  const r = rifaAtual;
+  const largura = Math.max(2, String(r.totalNumeros).length);
+  const inicio = (r.limiteDigital || 0) + 1;
+  const elegiveis = (_perfisCasaCache || [])
+    .filter(p => p.nome && p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const opcoesHTML = '<option value="">— Pular esta janela —</option>' +
+    elegiveis.map(p => `<option value="${calEsc(p.email)}" data-nome="${calEsc(p.nome)}">${calEsc(p.nome)}${p.cargo ? ' · ' + calEsc(p.cargo) : ''}</option>`).join('');
+
+  const corpo = document.getElementById('rf-lote100-corpo');
+  if (inicio > r.totalNumeros) {
+    corpo.innerHTML = '<p class="cal-empty">Não há números fora da faixa da venda digital.</p>';
+    return;
+  }
+
+  const janelasHTML = [];
+  for (let de = inicio; de <= r.totalNumeros; de += 100) {
+    const ate = Math.min(de + 99, r.totalNumeros);
+    let livres = 0;
+    for (let n = de; n <= ate; n++) {
+      if ((r.numeros[String(n).padStart(largura, '0')] || {}).status === 'livre') livres++;
+    }
+    const total = ate - de + 1;
+    janelasHTML.push(`<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-weight:700">${String(de).padStart(largura, '0')}–${String(ate).padStart(largura, '0')}</span>
+          <span style="font-size:.78rem;color:var(--text-dim)">${livres} livre(s) de ${total}</span>
+        </div>
+        <select class="form-input rf-lote100-select" data-de="${de}" data-ate="${ate}" style="margin-bottom:0" ${livres === 0 ? 'disabled' : ''}>
+          ${opcoesHTML}
+        </select>
+      </div>`);
+  }
+  corpo.innerHTML = janelasHTML.join('');
+}
+window.rifaRenderLote100 = rifaRenderLote100;
+
+function rifaFecharLote100() { document.getElementById('rf-lote100-overlay').classList.remove('open'); }
+window.rifaFecharLote100 = rifaFecharLote100;
+
+async function rifaConfirmarLote100() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const selects = Array.from(document.querySelectorAll('.rf-lote100-select')).filter(s => s.value);
+  if (!selects.length) { alert('Escolhe pelo menos uma janela pra atribuir.'); return; }
+
+  const largura = Math.max(2, String(rifaAtual.totalNumeros).length);
+  let totalAtribuidos = 0;
+  const avisos = [];
+
+  for (const sel of selects) {
+    const de = parseInt(sel.dataset.de, 10);
+    const ate = parseInt(sel.dataset.ate, 10);
+    const email = sel.value;
+    const nome = sel.selectedOptions[0].dataset.nome;
+    const numeros = [];
+    for (let n = de; n <= ate; n++) {
+      const chave = String(n).padStart(largura, '0');
+      if ((rifaAtual.numeros[chave] || {}).status === 'livre') numeros.push(chave);
+    }
+    if (!numeros.length) continue;
+    try {
+      const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'atribuir', numeros, nome, email }) });
+      const data = await res.json();
+      if (!res.ok) { avisos.push(`${de}–${ate}: ${data.error || 'erro'}`); continue; }
+      rifaAtual = data;
+      totalAtribuidos += (data._atribuidos ? data._atribuidos.length : 0);
+    } catch (e) {
+      avisos.push(`${de}–${ate}: falha de conexão`);
+    }
+  }
+
+  rifaFecharLote100();
+  rifaRenderPagina();
+  let msg = `✓ ${totalAtribuidos} número(s) atribuído(s).`;
+  if (avisos.length) msg += '\n\nAlguns problemas:\n' + avisos.join('\n');
+  alert(msg);
+}
+window.rifaConfirmarLote100 = rifaConfirmarLote100;
 
 async function rifaConfirmarAtribuicao() {
   if (!rifaEhAdmin() || !rifaSelecionados.size) return;
