@@ -2754,6 +2754,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rm-btn-mes" id="rf-btn-atribuir" style="display:none" onclick="rifaToggleModoAtribuir()">🎫 Atribuir números</button>
       <button class="rm-btn-mes" id="rf-btn-lote" style="display:none" onclick="rifaToggleModoLote()">🧾 Lançar compra</button>
       <button class="rm-btn-mes" id="rf-btn-aumentar" style="display:none" onclick="rifaAbrirAumentar()">➕ Aumentar números</button>
+      <button class="rm-btn-mes" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
     </div>
 
     <div id="rf-carregando" class="cp-carregando">Carregando rifa...</div>
@@ -2835,6 +2836,23 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <label class="form-label">Novo total de números</label>
     <input type="number" class="form-input" id="rf-aumentar-novo-total" min="1" placeholder="Ex: 150">
     <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaConfirmarAumentar()">Aumentar</button>
+  </div>
+</div>
+
+<div id="rf-limite-overlay" class="overlay" onclick="if(event.target===this)rifaFecharLimite()">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="rifaFecharLimite()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🔗 Venda digital</div>
+    <p class="modal-sub">Até qual número vale pro link público (venda digital, sem passar pela admin). Os números depois dele só saem por atribuição.</p>
+    <p class="modal-sub" id="rf-limite-atual" style="font-weight:600"></p>
+    <label class="form-label">Vender digital até o número</label>
+    <input type="number" class="form-input" id="rf-limite-novo" min="0" placeholder="Ex: 500">
+    <button class="btn-rosa" style="width:100%;text-align:center;margin-bottom:12px" onclick="rifaConfirmarLimite()">Salvar</button>
+    <label class="form-label">Link da venda digital</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" class="form-input" id="rf-limite-link" readonly style="margin-bottom:0" onclick="this.select()">
+      <button class="rm-btn-mes" style="flex:0 0 auto" onclick="rifaCopiarLinkDigital()">Copiar</button>
+    </div>
   </div>
 </div>
 
@@ -6578,6 +6596,7 @@ async function rifaLoad() {
     document.getElementById('rf-btn-atribuir').style.display = 'none';
     document.getElementById('rf-btn-lote').style.display = 'none';
     document.getElementById('rf-btn-aumentar').style.display = 'none';
+    document.getElementById('rf-btn-limite').style.display = 'none';
     return;
   }
   document.getElementById('rf-conteudo').style.display = '';
@@ -6594,6 +6613,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-premio-desc').textContent = r.premio || '';
   const metaPartes = [`Número: ${rifaFormatarPreco(r.precoPorNumero)}`];
   if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  if (r.limiteDigital) metaPartes.push(`🔗 1–${r.limiteDigital} digital · ${r.limiteDigital+1}–${r.totalNumeros} atribuição`);
   document.getElementById('rf-premio-meta').textContent = metaPartes.join('  ·  ');
 
   const vencedorEl = document.getElementById('rf-vencedor');
@@ -6613,6 +6633,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-atribuir').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-lote').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-aumentar').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -6623,7 +6644,7 @@ function rifaRenderGrid() {
     const info = r.numeros[numero];
     const ehVencedor = r.vencedor && r.vencedor.numero === numero;
     let classe = ehVencedor ? 'rf-numero-vencedor' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'atribuido' ? 'rf-numero-atribuido' : (info.status === 'reservado' ? 'rf-numero-reservado' : '')));
-    if (rifaPodeSelecionar(info)) classe += rifaSelecionados.has(numero) ? ' rf-numero-selecionado' : ' rf-numero-selecionavel';
+    if (rifaPodeSelecionar(info, numero)) classe += rifaSelecionados.has(numero) ? ' rf-numero-selecionado' : ' rf-numero-selecionavel';
     const nomeCurto = info.nome ? info.nome.split(' ')[0] : '';
     return `<div class="rf-numero ${classe}" onclick="rifaClickNumero('${numero}')">
         <span>${numero}</span>
@@ -6636,11 +6657,12 @@ function rifaFecharDetalhe() { document.getElementById('rf-numero-overlay').clas
 window.rifaFecharDetalhe = rifaFecharDetalhe;
 
 // diz se um número pode ser marcado no modo de seleção atual — atribuir só
-// deixa marcar número livre (é entrega de estoque novo), lote deixa marcar
-// qualquer número que ainda não esteja pago (é a compra em si)
-function rifaPodeSelecionar(info) {
+// deixa marcar número livre fora da faixa digital (esses só saem pelo link
+// público, é entrega de estoque novo), lote deixa marcar qualquer número
+// que ainda não esteja pago (é a compra em si)
+function rifaPodeSelecionar(info, numero) {
   if (!rifaModo || !info) return false;
-  if (rifaModo === 'atribuir') return info.status === 'livre';
+  if (rifaModo === 'atribuir') return info.status === 'livre' && parseInt(numero, 10) > (rifaAtual.limiteDigital || 0);
   if (rifaModo === 'lote') return info.status !== 'pago';
   return false;
 }
@@ -6648,7 +6670,7 @@ function rifaPodeSelecionar(info) {
 function rifaClickNumero(numero) {
   const info = rifaAtual.numeros[numero];
   if (rifaModo) {
-    if (!rifaEhAdmin() || !rifaPodeSelecionar(info)) return;
+    if (!rifaEhAdmin() || !rifaPodeSelecionar(info, numero)) return;
     if (rifaSelecionados.has(numero)) rifaSelecionados.delete(numero); else rifaSelecionados.add(numero);
     rifaAtualizarBarraSelecao();
     rifaRenderGrid();
@@ -6920,6 +6942,47 @@ async function rifaConfirmarAumentar() {
   } catch (e) { alert('Não consegui aumentar a quantidade de números — tenta de novo.'); }
 }
 window.rifaConfirmarAumentar = rifaConfirmarAumentar;
+
+// link paralelo (fora do site, sem login) pra vender a faixa "digital" da
+// rifa direto — ver functions/api/rifa.js (ação comprar-digital) e
+// rifa-digital.html
+function rifaAbrirLimite() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const limite = rifaAtual.limiteDigital || 0;
+  document.getElementById('rf-limite-atual').textContent = limite
+    ? `Agora: 1–${String(limite).padStart(2,'0')} digital · ${limite+1}–${rifaAtual.totalNumeros} pra atribuir.`
+    : 'Venda digital ainda não está ativada pra essa rifa.';
+  document.getElementById('rf-limite-novo').value = limite || '';
+  document.getElementById('rf-limite-novo').max = rifaAtual.totalNumeros;
+  document.getElementById('rf-limite-link').value = new URL('rifa-digital.html', window.location.href).href;
+  document.getElementById('rf-limite-overlay').classList.add('open');
+}
+window.rifaAbrirLimite = rifaAbrirLimite;
+
+function rifaFecharLimite() { document.getElementById('rf-limite-overlay').classList.remove('open'); }
+window.rifaFecharLimite = rifaFecharLimite;
+
+async function rifaConfirmarLimite() {
+  if (!rifaEhAdmin()) return;
+  const limiteDigital = parseInt(document.getElementById('rf-limite-novo').value, 10) || 0;
+  if (limiteDigital < 0 || limiteDigital > rifaAtual.totalNumeros) { alert('Digite um número entre 0 e ' + rifaAtual.totalNumeros + '.'); return; }
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'definir-limite-digital', limiteDigital }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui salvar.'); return; }
+    rifaAtual = data;
+    rifaFecharLimite();
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui salvar — tenta de novo.'); }
+}
+window.rifaConfirmarLimite = rifaConfirmarLimite;
+
+function rifaCopiarLinkDigital() {
+  const inp = document.getElementById('rf-limite-link');
+  inp.select();
+  navigator.clipboard?.writeText(inp.value).then(() => alert('Link copiado!')).catch(() => {});
+}
+window.rifaCopiarLinkDigital = rifaCopiarLinkDigital;
 
 function rifaAbrirNova() {
   if (!rifaEhAdmin()) return;

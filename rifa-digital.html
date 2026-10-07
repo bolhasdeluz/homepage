@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rifa — Venda Digital — Bolhas de Luz</title>
+<meta name="description" content="Escolha e reserve o seu número da rifa do Terreiro Bolhas de Luz, direto por aqui.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rifa Digital — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:640px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+
+.cp-carregando, .rd-vazia{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
+.rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
+.rf-premio-img img{width:100%;display:block}
+.rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
+.rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
+.rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+
+.rf-legenda{display:flex;gap:16px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+.rf-legenda-item{display:flex;align-items:center;gap:6px}
+.rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
+.rf-dot-livre{background:#fff;border:1px solid var(--border)}
+.rf-dot-reservado{background:var(--amber)}
+.rf-dot-pago{background:var(--green)}
+
+.rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:8px}
+.rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
+.rf-numero:hover{transform:scale(1.06)}
+.rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber);cursor:default}
+.rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green);cursor:default}
+.rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
+
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px}
+.form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;width:100%;outline:none;margin-bottom:14px}
+.form-input:focus{border-color:var(--rosa)}
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block}
+.btn-rosa:hover{opacity:.92}
+
+.rd-sucesso{display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:20px;text-align:center;margin-bottom:24px}
+.rd-sucesso-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--green);margin-bottom:6px}
+.rd-sucesso p{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:30px 26px;width:100%;max-width:380px;position:relative;max-height:88vh;overflow-y:auto}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.3rem;color:var(--text-dim);line-height:1}
+.modal-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;margin-bottom:10px}
+.modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);margin-bottom:16px}
+.rd-erro{font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:10px;display:none}
+
+.rd-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
+.rd-saiba-mais a{color:var(--rosa);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎟️ Rifa — Venda Digital</div>
+  <p class="section-sub">Escolha seu número e garanta o seu já ✦</p>
+
+  <div id="rd-carregando" class="cp-carregando">Carregando rifa...</div>
+
+  <div id="rd-vazia" class="rd-vazia" style="display:none"></div>
+
+  <div id="rd-conteudo" style="display:none">
+    <div class="rf-premio-frame">
+      <div class="rf-premio-img" id="rd-premio-img" style="display:none"></div>
+      <div class="rf-premio-titulo" id="rd-premio-titulo"></div>
+      <div class="rf-premio-desc" id="rd-premio-desc"></div>
+      <div class="rf-premio-meta" id="rd-premio-meta"></div>
+    </div>
+
+    <div class="rd-sucesso" id="rd-sucesso">
+      <div class="rd-sucesso-titulo">✦ Número reservado! ✦</div>
+      <p id="rd-sucesso-texto"></p>
+    </div>
+
+    <div class="rf-legenda">
+      <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
+      <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
+      <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+    </div>
+
+    <div class="rf-grid" id="rd-grid"></div>
+  </div>
+
+  <p class="rd-saiba-mais">✦ Já comprou e quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
+</div>
+
+<div id="rd-overlay" class="overlay" onclick="if(event.target===this)rdFechar()">
+  <div class="modal">
+    <button class="modal-close" onclick="rdFechar()">×</button>
+    <div class="modal-title" id="rd-modal-titulo">Número</div>
+    <p class="modal-sub" id="rd-modal-sub"></p>
+    <p class="rd-erro" id="rd-erro"></p>
+    <label class="form-label">Seu nome</label>
+    <input type="text" class="form-input" id="rd-nome" placeholder="Nome completo">
+    <label class="form-label">Telefone</label>
+    <input type="tel" class="form-input" id="rd-telefone" placeholder="(51) 99999-9999">
+    <button class="btn-rosa" style="width:100%;text-align:center" id="rd-btn-confirmar" onclick="rdConfirmar()">Reservar este número</button>
+  </div>
+</div>
+
+<script>
+const RIFA_API = '/api/rifa';
+let rdRifa = null;
+let rdLargura = 2;
+let rdNumeroAtual = '';
+
+function rdFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rdCarregar() {
+  document.getElementById('rd-carregando').style.display = '';
+  document.getElementById('rd-vazia').style.display = 'none';
+  document.getElementById('rd-conteudo').style.display = 'none';
+  try {
+    const res = await fetch(RIFA_API);
+    rdRifa = res.ok ? await res.json() : null;
+  } catch (e) { rdRifa = null; }
+  document.getElementById('rd-carregando').style.display = 'none';
+
+  if (!rdRifa) {
+    document.getElementById('rd-vazia').style.display = '';
+    document.getElementById('rd-vazia').textContent = 'Não há nenhuma rifa ativa no momento ✦';
+    return;
+  }
+  if (!rdRifa.limiteDigital) {
+    document.getElementById('rd-vazia').style.display = '';
+    document.getElementById('rd-vazia').textContent = 'A venda digital ainda não está disponível pra essa rifa — fale com a administração ✦';
+    return;
+  }
+
+  rdLargura = Math.max(2, String(rdRifa.totalNumeros).length);
+  document.getElementById('rd-conteudo').style.display = '';
+  rdRenderPagina();
+}
+
+function rdRenderPagina() {
+  const r = rdRifa;
+  const imgWrap = document.getElementById('rd-premio-img');
+  if (r.imagemPremio) { imgWrap.style.display = ''; imgWrap.innerHTML = `<img src="${r.imagemPremio}" alt="${r.titulo}">`; }
+  else { imgWrap.style.display = 'none'; imgWrap.innerHTML = ''; }
+  document.getElementById('rd-premio-titulo').textContent = r.titulo || '';
+  document.getElementById('rd-premio-desc').textContent = r.premio || '';
+  const metaPartes = [`Número: ${rdFormatarPreco(r.precoPorNumero)}`];
+  if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  document.getElementById('rd-premio-meta').textContent = metaPartes.join('  ·  ');
+  rdRenderGrid();
+}
+
+function rdRenderGrid() {
+  const wrap = document.getElementById('rd-grid');
+  const r = rdRifa;
+  const html = [];
+  for (let i = 1; i <= r.limiteDigital; i++) {
+    const numero = String(i).padStart(rdLargura, '0');
+    const info = r.numeros[numero] || { status: 'livre' };
+    const ehVencedor = r.vencedor && r.vencedor.numero === numero;
+    let classe = ehVencedor ? 'rf-numero-pago' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'reservado' ? 'rf-numero-reservado' : ''));
+    const nomeCurto = info.status !== 'livre' && info.nome ? info.nome.split(' ')[0] : '';
+    html.push(`<div class="rf-numero ${classe}" onclick="rdClickNumero('${numero}')">
+        <span>${numero}</span>
+        ${nomeCurto ? `<span class="rf-numero-nome">${nomeCurto}</span>` : ''}
+      </div>`);
+  }
+  wrap.innerHTML = html.join('');
+}
+
+function rdClickNumero(numero) {
+  const info = rdRifa.numeros[numero] || { status: 'livre' };
+  if (info.status !== 'livre') return;
+  rdNumeroAtual = numero;
+  document.getElementById('rd-modal-titulo').textContent = `Número ${numero}`;
+  document.getElementById('rd-modal-sub').textContent = `${rdFormatarPreco(rdRifa.precoPorNumero)} — a administração confirma o pagamento depois.`;
+  document.getElementById('rd-erro').style.display = 'none';
+  document.getElementById('rd-nome').value = '';
+  document.getElementById('rd-telefone').value = '';
+  document.getElementById('rd-overlay').classList.add('open');
+}
+
+function rdFechar() { document.getElementById('rd-overlay').classList.remove('open'); }
+
+async function rdConfirmar() {
+  const nome = document.getElementById('rd-nome').value.trim();
+  const telefone = document.getElementById('rd-telefone').value.trim();
+  const erroEl = document.getElementById('rd-erro');
+  if (!nome) { erroEl.textContent = 'Digite seu nome.'; erroEl.style.display = ''; return; }
+  const btn = document.getElementById('rd-btn-confirmar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Reservando...'; btn.disabled = true;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'comprar-digital', numero: rdNumeroAtual, nome, telefone }),
+    });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui reservar esse número.'; erroEl.style.display = ''; btn.textContent = textoOriginal; btn.disabled = false; return; }
+    rdRifa = data;
+    rdFechar();
+    document.getElementById('rd-sucesso').style.display = '';
+    document.getElementById('rd-sucesso-texto').textContent = `Número ${rdNumeroAtual} reservado em nome de ${nome}. A administração confirma o pagamento em breve.`;
+    rdRenderGrid();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    erroEl.textContent = 'Não consegui reservar esse número — tenta de novo.'; erroEl.style.display = '';
+  }
+  btn.textContent = textoOriginal; btn.disabled = false;
+}
+
+rdCarregar();
+</script>
+
+</body>
+</html>
