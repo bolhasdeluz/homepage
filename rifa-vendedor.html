@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meus Números — Rifa — Bolhas de Luz</title>
+<meta name="description" content="Registre as vendas dos seus números da rifa do Terreiro Bolhas de Luz.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meus Números — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:560px;margin:0 auto;padding:40px 24px 100px}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+
+.cp-carregando, .rv-vazia{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
+.rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
+.rf-premio-img img{width:100%;display:block}
+.rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
+.rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
+.rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+
+.rv-resumo{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-around;text-align:center}
+.rv-resumo-num{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--rosa);font-weight:600}
+.rv-resumo-label{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+.rv-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.rv-card-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer}
+.rv-card-numero{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text)}
+.rv-card-status{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px}
+.rv-card-status.pendente{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-border)}
+.rv-card-status.vendido{background:var(--green-dim);color:var(--green);border:1px solid var(--green-border)}
+.rv-card-comprador{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:4px}
+
+.rv-card-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.rv-card-form.open{display:block}
+
+.form-label{display:block;font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px}
+.form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;width:100%;outline:none;margin-bottom:12px}
+.form-input:focus{border-color:var(--rosa)}
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+
+.rv-erro{font-family:'DM Sans',sans-serif;font-size:.8rem;color:#b84040;margin-bottom:10px;display:none}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎟️ Meus Números</div>
+  <p class="section-sub" id="rv-saudacao">Registre aqui quem comprou cada número ✦</p>
+
+  <div id="rv-carregando" class="cp-carregando">Carregando...</div>
+
+  <div id="rv-vazia" class="rv-vazia" style="display:none"></div>
+
+  <div id="rv-conteudo" style="display:none">
+    <div class="rf-premio-frame">
+      <div class="rf-premio-img" id="rv-premio-img" style="display:none"></div>
+      <div class="rf-premio-titulo" id="rv-premio-titulo"></div>
+      <div class="rf-premio-desc" id="rv-premio-desc"></div>
+      <div class="rf-premio-meta" id="rv-premio-meta"></div>
+    </div>
+
+    <div class="rv-resumo">
+      <div><div class="rv-resumo-num" id="rv-resumo-vendidos"></div><div class="rv-resumo-label">Vendidos</div></div>
+      <div><div class="rv-resumo-num" id="rv-resumo-pendentes"></div><div class="rv-resumo-label">Pendentes</div></div>
+      <div><div class="rv-resumo-num" id="rv-resumo-total"></div><div class="rv-resumo-label">Total seus</div></div>
+    </div>
+
+    <div id="rv-lista"></div>
+  </div>
+</div>
+
+<script>
+const RIFA_API = '/api/rifa';
+const token = new URLSearchParams(window.location.search).get('token') || '';
+let rvDados = null;
+
+function rvFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rvCarregar() {
+  document.getElementById('rv-carregando').style.display = '';
+  document.getElementById('rv-vazia').style.display = 'none';
+  document.getElementById('rv-conteudo').style.display = 'none';
+
+  if (!token) {
+    document.getElementById('rv-carregando').style.display = 'none';
+    document.getElementById('rv-vazia').style.display = 'block';
+    document.getElementById('rv-vazia').textContent = 'Link incompleto — peça pra admin te mandar o link de novo ✦';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${RIFA_API}?vendedorToken=${encodeURIComponent(token)}`);
+    rvDados = res.ok ? await res.json() : null;
+  } catch (e) { rvDados = null; }
+  document.getElementById('rv-carregando').style.display = 'none';
+
+  if (!rvDados) {
+    document.getElementById('rv-vazia').style.display = 'block';
+    document.getElementById('rv-vazia').textContent = 'Esse link não é mais válido — peça pra admin te mandar um novo ✦';
+    return;
+  }
+
+  document.getElementById('rv-saudacao').textContent = `Olá, ${rvDados.nomeVendedora}! Registre aqui quem comprou cada número ✦`;
+  document.getElementById('rv-conteudo').style.display = 'block';
+  rvRenderPagina();
+}
+
+function rvRenderPagina() {
+  const r = rvDados;
+  const imgWrap = document.getElementById('rv-premio-img');
+  if (r.imagemPremio) { imgWrap.style.display = ''; imgWrap.innerHTML = `<img src="${r.imagemPremio}" alt="${r.titulo}">`; }
+  else { imgWrap.style.display = 'none'; imgWrap.innerHTML = ''; }
+  document.getElementById('rv-premio-titulo').textContent = r.titulo || '';
+  document.getElementById('rv-premio-desc').textContent = r.premio || '';
+  const metaPartes = [`Número: ${rvFormatarPreco(r.precoPorNumero)}`];
+  if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  document.getElementById('rv-premio-meta').textContent = metaPartes.join('  ·  ');
+
+  const numeros = Object.keys(r.numeros).sort();
+  const vendidos = numeros.filter(n => r.numeros[n].status === 'pago');
+  const pendentes = numeros.filter(n => r.numeros[n].status === 'atribuido');
+  document.getElementById('rv-resumo-vendidos').textContent = vendidos.length;
+  document.getElementById('rv-resumo-pendentes').textContent = pendentes.length;
+  document.getElementById('rv-resumo-total').textContent = numeros.length;
+
+  const lista = document.getElementById('rv-lista');
+  lista.innerHTML = numeros.map(numero => {
+    const info = r.numeros[numero];
+    const vendido = info.status === 'pago';
+    return `<div class="rv-card">
+      <div class="rv-card-topo" onclick="rvToggleForm('${numero}')">
+        <div>
+          <span class="rv-card-numero">${numero}</span>
+          ${vendido ? `<div class="rv-card-comprador">${info.nome || 'Sem nome'}${info.telefone ? ' · ' + info.telefone : ''}</div>` : ''}
+        </div>
+        <span class="rv-card-status ${vendido ? 'vendido' : 'pendente'}">${vendido ? '✓ Vendido' : 'Pendente'}</span>
+      </div>
+      ${!vendido ? `
+      <div class="rv-card-form" id="rv-form-${numero}">
+        <p class="rv-erro" id="rv-erro-${numero}"></p>
+        <label class="form-label">Nome de quem comprou</label>
+        <input type="text" class="form-input" id="rv-nome-${numero}" placeholder="Nome completo">
+        <label class="form-label">Telefone (opcional)</label>
+        <input type="tel" class="form-input" id="rv-telefone-${numero}" placeholder="(51) 99999-9999">
+        <button class="btn-rosa" id="rv-btn-${numero}" onclick="rvRegistrarVenda('${numero}')">Registrar venda</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function rvToggleForm(numero) {
+  const form = document.getElementById(`rv-form-${numero}`);
+  if (!form) return;
+  form.classList.toggle('open');
+}
+
+async function rvRegistrarVenda(numero) {
+  const nome = document.getElementById(`rv-nome-${numero}`).value.trim();
+  const telefone = document.getElementById(`rv-telefone-${numero}`).value.trim();
+  const erroEl = document.getElementById(`rv-erro-${numero}`);
+  erroEl.style.display = 'none';
+  if (!nome) { erroEl.textContent = 'Digite o nome de quem comprou.'; erroEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById(`rv-btn-${numero}`);
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Registrando...'; btn.disabled = true;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'registrar-venda-atribuido', token, numero, nome, telefone }),
+    });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui registrar essa venda.'; erroEl.style.display = 'block'; btn.textContent = textoOriginal; btn.disabled = false; return; }
+    rvDados.numeros[numero] = { ...rvDados.numeros[numero], status: 'pago', nome, telefone };
+    rvRenderPagina();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui registrar essa venda — tenta de novo.'; erroEl.style.display = 'block';
+    btn.textContent = textoOriginal; btn.disabled = false;
+  }
+}
+
+rvCarregar();
+</script>
+
+</body>
+</html>

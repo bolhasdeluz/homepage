@@ -10,7 +10,9 @@
 // site. Reservar/cancelar um número é a única ação que uma pessoa comum
 // logada pode fazer — identificada pelo cabeçalho X-User-Email, no mesmo
 // molde do /api/perfil. "comprar-digital-lote" é pública também (vem do
-// link paralelo rifa-digital.html, sem login nenhum).
+// link paralelo rifa-digital.html, sem login nenhum), assim como
+// "registrar-venda-atribuido" (vem do link individual rifa-vendedor.html,
+// autenticado só pelo token da vendedora — ver "vendedores" abaixo).
 //
 // E-mails (Resend, precisa de env.RESEND_API_KEY — se não tiver configurado,
 // o envio é só pulado em silêncio): reservado (na hora da compra digital),
@@ -28,6 +30,16 @@ const CORS = {
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: CORS });
+}
+
+// pra reconhecer "a mesma pessoa" entre atribuições diferentes (ex: dar mais
+// números pra quem já tinha recebido antes) e reaproveitar o link dela
+function normalizarNome(nome) {
+  return String(nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function gerarToken() {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
 
 // "0001, 0002 e 0003" — lista amigável de números pro corpo dos e-mails
@@ -162,6 +174,9 @@ export async function onRequest(context) {
 
   try {
     // GET — pública: rifa ativa. Com ?historico=1 (só admin): todas as rifas.
+    // Com ?vendedorToken=...: visão restrita pro link individual da
+    // vendedora (rifa-vendedor.html) — só os números dela, sem o resto da
+    // galera (nome/telefone de quem comprou os outros números, etc.)
     if (method === 'GET') {
       if (url.searchParams.get('historico') === '1') {
         if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
@@ -169,6 +184,21 @@ export async function onRequest(context) {
         const itens = await Promise.all(list.keys.map(k => KV.get(k.name, { type: 'json' })));
         const rifas = itens.filter(Boolean).sort((a, b) => b.criadoEm - a.criadoEm);
         return json(rifas);
+      }
+      const vendedorToken = url.searchParams.get('vendedorToken');
+      if (vendedorToken) {
+        const ativa = await buscarAtiva(KV);
+        const vendedora = ativa && Object.values(ativa.vendedores || {}).find(v => v.token === vendedorToken);
+        if (!ativa || !vendedora) return json({ error: 'Link inválido ou expirado.' }, 404);
+        const numeros = {};
+        Object.entries(ativa.numeros).forEach(([numero, info]) => {
+          if (info.atribuicaoToken === vendedorToken) numeros[numero] = info;
+        });
+        return json({
+          titulo: ativa.titulo, premio: ativa.premio, imagemPremio: ativa.imagemPremio,
+          precoPorNumero: ativa.precoPorNumero, dataSorteio: ativa.dataSorteio,
+          nomeVendedora: vendedora.nome, numeros,
+        });
       }
       const ativa = await buscarAtiva(KV);
       return json(ativa);
@@ -207,6 +237,10 @@ export async function onRequest(context) {
         // continuam livres pra serem atribuídos a alguém vender por fora.
         // 0 = venda digital desativada (todo mundo só entra via atribuição)
         limiteDigital: Math.max(0, Math.min(totalNumeros, parseInt(body.limiteDigital, 10) || 0)),
+        // um token por vendedora (chaveado pelo nome normalizado) — dá o link
+        // individual dela (rifa-vendedor.html?token=...) pra registrar as
+        // próprias vendas sem precisar da senha de admin
+        vendedores: {},
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(rifa));
@@ -293,8 +327,42 @@ export async function onRequest(context) {
         return json({ ...rifa, _reservados: escolhidos });
       }
 
+      // REGISTRAR VENDA (vendedora) — pública, mas só funciona com o token
+      // individual dela (vem do link rifa-vendedor.html?token=...). Como ela
+      // já entregou o número físico e recebeu o dinheiro na hora, vai direto
+      // pra "pago" — não precisa do passo de conferência manual do digital
+      if (acao === 'registrar-venda-atribuido') {
+        const token = body.token || '';
+        const numero = String(body.numero || '');
+        const nome = (body.nome || '').trim();
+        const telefone = (body.telefone || '').trim();
+        if (!token) return json({ error: 'Link inválido.' }, 401);
+        if (!nome) return json({ error: 'Informe o nome de quem comprou.' }, 400);
+        const alvo = rifa.numeros[numero];
+        if (!alvo || alvo.atribuicaoToken !== token) return json({ error: 'Esse número não é seu.' }, 403);
+        if (alvo.status !== 'atribuido') return json({ error: 'Esse número já foi registrado.' }, 409);
+        rifa.numeros[numero] = { ...alvo, status: 'pago', nome, telefone, pagoEm: Date.now() };
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ok: true, numero });
+      }
+
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
+
+      // EDITAR RIFA — ajusta os dados da rifa ativa (título, prêmio, preço,
+      // data do sorteio) sem precisar encerrar e criar outra. A quantidade de
+      // números não muda por aqui — isso é só pelo "Aumentar números", pra
+      // nunca arriscar apagar um número que já foi vendido
+      if (acao === 'editar-rifa') {
+        if (!body.titulo) return json({ error: 'O título é obrigatório.' }, 400);
+        rifa.titulo = body.titulo;
+        rifa.premio = body.premio || '';
+        rifa.imagemPremio = body.imagemPremio || '';
+        rifa.precoPorNumero = Number(body.precoPorNumero) || 0;
+        rifa.dataSorteio = body.dataSorteio || '';
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
 
       // DEFINIR LIMITE DIGITAL — até qual número a venda digital (link
       // paralelo) vale; os números acima só entram por atribuição
@@ -308,25 +376,34 @@ export async function onRequest(context) {
       // ATRIBUIR — a admin entrega um lote de números livres pra uma pessoa
       // responsável vender por fora (não é a compradora final, só quem fica
       // com os números até prestar contas). Números dentro da faixa digital
-      // (até limiteDigital) ficam de fora — esses só saem pelo link público
+      // (até limiteDigital) ficam de fora — esses só saem pelo link público.
+      // Gera (ou reaproveita, se ela já tinha recebido números antes) um
+      // token individual — o link rifa-vendedor.html?token=... dá acesso só
+      // aos números dela, pra registrar as próprias vendas sem senha de admin
       if (acao === 'atribuir') {
         const nome = (body.nome || '').trim();
         const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
         if (!nome || !numeros.length) return json({ error: 'Informe a pessoa responsável e ao menos um número.' }, 400);
+
+        if (!rifa.vendedores) rifa.vendedores = {};
+        const chave = normalizarNome(nome);
+        if (!rifa.vendedores[chave]) rifa.vendedores[chave] = { nome, token: gerarToken() };
+        const token = rifa.vendedores[chave].token;
+
         const atribuidos = [];
         const ignorados = [];
         numeros.forEach(numero => {
           const alvo = rifa.numeros[numero];
           const ehDigital = parseInt(numero, 10) <= (rifa.limiteDigital || 0);
           if (alvo && alvo.status === 'livre' && !ehDigital) {
-            rifa.numeros[numero] = { status: 'atribuido', nome, atribuidoEm: Date.now() };
+            rifa.numeros[numero] = { status: 'atribuido', nome, atribuidoEm: Date.now(), atribuicaoToken: token };
             atribuidos.push(numero);
           } else {
             ignorados.push(numero);
           }
         });
         await KV.put(rifa.id, JSON.stringify(rifa));
-        return json({ ...rifa, _atribuidos: atribuidos, _ignorados: ignorados });
+        return json({ ...rifa, _atribuidos: atribuidos, _ignorados: ignorados, _tokenVendedora: token });
       }
 
       if (acao === 'confirmar-pagamento') {
