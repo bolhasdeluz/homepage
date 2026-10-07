@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Rifa — Venda Digital — Bolhas de Luz</title>
-<meta name="description" content="Escolha e reserve o seu número da rifa do Terreiro Bolhas de Luz, direto por aqui.">
+<meta name="description" content="Escolha quantos números quiser da rifa do Terreiro Bolhas de Luz, direto por aqui, e pague via Pix.">
 <link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -34,7 +34,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
     #fff5f7;}
 
-.section-wrap{max-width:640px;margin:0 auto;padding:40px 24px 100px}
+.section-wrap{max-width:560px;margin:0 auto;padding:40px 24px 100px}
 .back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
 .back-btn:hover{color:var(--rosa)}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
@@ -50,37 +50,39 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
 .rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
 
-.rf-legenda{display:flex;gap:16px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
-.rf-legenda-item{display:flex;align-items:center;gap:6px}
-.rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
-.rf-dot-livre{background:#fff;border:1px solid var(--border)}
-.rf-dot-reservado{background:var(--amber)}
-.rf-dot-pago{background:var(--green)}
+.rd-disponiveis{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px}
+.rd-disponiveis-topo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text-dim)}
+.rd-disponiveis-num{font-family:'Playfair Display',serif;color:var(--rosa);font-weight:600}
+.rd-barra{height:8px;border-radius:5px;background:rgba(196,57,107,.08);overflow:hidden}
+.rd-barra-preenchida{height:100%;background:linear-gradient(90deg,var(--rosa),var(--terra));border-radius:5px;transition:width .3s}
 
-.rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:8px}
-.rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
-.rf-numero:hover{transform:scale(1.06)}
-.rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber);cursor:default}
-.rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green);cursor:default}
-.rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
+.rd-form-box{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:24px 22px;margin-bottom:20px;box-shadow:0 8px 32px rgba(196,57,107,.1)}
+.rd-qtd-linha{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.rd-qtd-linha input{width:90px;text-align:center;font-size:20px;font-weight:700}
+.rd-qtd-total{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:16px}
 
 .form-label{display:block;font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin:0 0 6px}
 .form-input{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;width:100%;outline:none;margin-bottom:14px}
 .form-input:focus{border-color:var(--rosa)}
-.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block}
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
 .btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+.btn-voltar{background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.8rem;margin-top:12px;width:100%;text-align:center}
+.btn-voltar:hover{color:var(--rosa)}
 
-.rd-sucesso{display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:20px;text-align:center;margin-bottom:24px}
-.rd-sucesso-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--green);margin-bottom:6px}
-.rd-sucesso p{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic}
+.rd-pix-box{background:rgba(196,57,107,.06);border-radius:10px;padding:14px 16px;margin-bottom:18px}
+.rd-pix-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:4px}
+.rd-pix-linha{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rd-pix-chave{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;color:var(--text)}
+.rd-pix-copiar{background:var(--rosa);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;font-weight:700;padding:8px 14px;white-space:nowrap}
 
-.overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px}
-.overlay.open{display:flex}
-.modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:30px 26px;width:100%;max-width:380px;position:relative;max-height:88vh;overflow-y:auto}
-.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.3rem;color:var(--text-dim);line-height:1}
-.modal-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;margin-bottom:10px}
-.modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);margin-bottom:16px}
 .rd-erro{font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:10px;display:none}
+
+.rd-sucesso{display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:22px 20px;text-align:center;margin-bottom:24px}
+.rd-sucesso-titulo{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--green);margin-bottom:10px}
+.rd-sucesso-numeros{font-family:'DM Sans',sans-serif;font-weight:700;font-size:1.1rem;color:var(--text);background:#fff;border-radius:8px;padding:10px;margin-bottom:12px}
+.rd-sucesso p{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic}
+.btn-outra{background:none;border:1px solid var(--green-border);color:var(--green);border-radius:9px;padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:.82rem;margin-top:14px}
 
 .rd-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .rd-saiba-mais a{color:var(--rosa);text-decoration:underline}
@@ -92,7 +94,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <a class="back-btn" href="/">← Voltar pro site</a>
   <div class="eyebrow">Terreiro Bolhas de Luz</div>
   <div class="section-title">🎟️ Rifa — Venda Digital</div>
-  <p class="section-sub">Escolha seu número e garanta o seu já ✦</p>
+  <p class="section-sub">Escolha quantos números quiser e garanta já os seus ✦</p>
 
   <div id="rd-carregando" class="cp-carregando">Carregando rifa...</div>
 
@@ -107,41 +109,62 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     </div>
 
     <div class="rd-sucesso" id="rd-sucesso">
-      <div class="rd-sucesso-titulo">✦ Número reservado! ✦</div>
+      <div class="rd-sucesso-titulo">✦ Números reservados! ✦</div>
+      <div class="rd-sucesso-numeros" id="rd-sucesso-numeros"></div>
       <p id="rd-sucesso-texto"></p>
+      <button class="btn-outra" onclick="rdNovaCompra()">Comprar mais números</button>
     </div>
 
-    <div class="rf-legenda">
-      <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
-      <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
-      <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+    <div id="rd-passo-disponiveis" class="rd-disponiveis">
+      <div class="rd-disponiveis-topo">
+        <span>Números disponíveis</span>
+        <span><span class="rd-disponiveis-num" id="rd-qtd-disponivel"></span> de <span id="rd-qtd-total-faixa"></span></span>
+      </div>
+      <div class="rd-barra"><div class="rd-barra-preenchida" id="rd-barra"></div></div>
     </div>
 
-    <div class="rf-grid" id="rd-grid"></div>
+    <!-- PASSO 1: escolher quantidade -->
+    <div class="rd-form-box" id="rd-passo-1">
+      <label class="form-label">Quantos números você quer?</label>
+      <div class="rd-qtd-linha">
+        <input type="number" class="form-input" id="rd-quantidade" min="1" value="1" style="margin-bottom:0" oninput="rdAtualizarTotal()">
+        <span style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)">número(s)</span>
+      </div>
+      <p class="rd-qtd-total" id="rd-qtd-total-preco"></p>
+      <p class="rd-erro" id="rd-erro-1"></p>
+      <button class="btn-rosa" onclick="rdIrPraPagamento()">Comprar</button>
+    </div>
+
+    <!-- PASSO 2: pix + cadastro -->
+    <div class="rd-form-box" id="rd-passo-2" style="display:none">
+      <p class="modal-sub" id="rd-passo-2-resumo" style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:14px"></p>
+      <div class="rd-pix-box">
+        <div class="rd-pix-label">Chave Pix do terreiro (copia e cola)</div>
+        <div class="rd-pix-linha">
+          <span class="rd-pix-chave" id="rd-pix-chave"></span>
+          <button class="rd-pix-copiar" onclick="rdCopiarPix()">Copiar</button>
+        </div>
+      </div>
+      <label class="form-label">Seu nome</label>
+      <input type="text" class="form-input" id="rd-nome" placeholder="Nome completo">
+      <label class="form-label">Telefone</label>
+      <input type="tel" class="form-input" id="rd-telefone" placeholder="(51) 99999-9999">
+      <label class="form-label">E-mail (pra confirmação)</label>
+      <input type="email" class="form-input" id="rd-email" placeholder="seuemail@exemplo.com">
+      <p class="rd-erro" id="rd-erro-2"></p>
+      <button class="btn-rosa" id="rd-btn-confirmar" onclick="rdConfirmar()">Confirmar reserva</button>
+      <button class="btn-voltar" onclick="rdVoltarPasso1()">← Mudar a quantidade</button>
+    </div>
   </div>
 
   <p class="rd-saiba-mais">✦ Já comprou e quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
 </div>
 
-<div id="rd-overlay" class="overlay" onclick="if(event.target===this)rdFechar()">
-  <div class="modal">
-    <button class="modal-close" onclick="rdFechar()">×</button>
-    <div class="modal-title" id="rd-modal-titulo">Número</div>
-    <p class="modal-sub" id="rd-modal-sub"></p>
-    <p class="rd-erro" id="rd-erro"></p>
-    <label class="form-label">Seu nome</label>
-    <input type="text" class="form-input" id="rd-nome" placeholder="Nome completo">
-    <label class="form-label">Telefone</label>
-    <input type="tel" class="form-input" id="rd-telefone" placeholder="(51) 99999-9999">
-    <button class="btn-rosa" style="width:100%;text-align:center" id="rd-btn-confirmar" onclick="rdConfirmar()">Reservar este número</button>
-  </div>
-</div>
-
 <script>
 const RIFA_API = '/api/rifa';
+const PIX_CHAVE = 'bolhasdeluz@gmail.com';
 let rdRifa = null;
-let rdLargura = 2;
-let rdNumeroAtual = '';
+let rdDisponiveis = 0;
 
 function rdFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
@@ -166,8 +189,8 @@ async function rdCarregar() {
     return;
   }
 
-  rdLargura = Math.max(2, String(rdRifa.totalNumeros).length);
   document.getElementById('rd-conteudo').style.display = '';
+  document.getElementById('rd-pix-chave').textContent = PIX_CHAVE;
   rdRenderPagina();
 }
 
@@ -181,46 +204,61 @@ function rdRenderPagina() {
   const metaPartes = [`Número: ${rdFormatarPreco(r.precoPorNumero)}`];
   if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
   document.getElementById('rd-premio-meta').textContent = metaPartes.join('  ·  ');
-  rdRenderGrid();
+
+  rdDisponiveis = Object.keys(r.numeros).filter(n => parseInt(n, 10) <= r.limiteDigital && r.numeros[n].status === 'livre').length;
+  document.getElementById('rd-qtd-disponivel').textContent = rdDisponiveis;
+  document.getElementById('rd-qtd-total-faixa').textContent = r.limiteDigital;
+  const pct = r.limiteDigital ? Math.round((rdDisponiveis / r.limiteDigital) * 100) : 0;
+  document.getElementById('rd-barra').style.width = pct + '%';
+
+  document.getElementById('rd-quantidade').max = rdDisponiveis || 1;
+  rdAtualizarTotal();
 }
 
-function rdRenderGrid() {
-  const wrap = document.getElementById('rd-grid');
-  const r = rdRifa;
-  const html = [];
-  for (let i = 1; i <= r.limiteDigital; i++) {
-    const numero = String(i).padStart(rdLargura, '0');
-    const info = r.numeros[numero] || { status: 'livre' };
-    const ehVencedor = r.vencedor && r.vencedor.numero === numero;
-    let classe = ehVencedor ? 'rf-numero-pago' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'reservado' ? 'rf-numero-reservado' : ''));
-    const nomeCurto = info.status !== 'livre' && info.nome ? info.nome.split(' ')[0] : '';
-    html.push(`<div class="rf-numero ${classe}" onclick="rdClickNumero('${numero}')">
-        <span>${numero}</span>
-        ${nomeCurto ? `<span class="rf-numero-nome">${nomeCurto}</span>` : ''}
-      </div>`);
-  }
-  wrap.innerHTML = html.join('');
+function rdAtualizarTotal() {
+  const qtd = parseInt(document.getElementById('rd-quantidade').value, 10) || 0;
+  document.getElementById('rd-qtd-total-preco').textContent = qtd > 0
+    ? `Total: ${rdFormatarPreco(qtd * rdRifa.precoPorNumero)}`
+    : '';
 }
 
-function rdClickNumero(numero) {
-  const info = rdRifa.numeros[numero] || { status: 'livre' };
-  if (info.status !== 'livre') return;
-  rdNumeroAtual = numero;
-  document.getElementById('rd-modal-titulo').textContent = `Número ${numero}`;
-  document.getElementById('rd-modal-sub').textContent = `${rdFormatarPreco(rdRifa.precoPorNumero)} — a administração confirma o pagamento depois.`;
-  document.getElementById('rd-erro').style.display = 'none';
-  document.getElementById('rd-nome').value = '';
-  document.getElementById('rd-telefone').value = '';
-  document.getElementById('rd-overlay').classList.add('open');
+function rdIrPraPagamento() {
+  const qtd = parseInt(document.getElementById('rd-quantidade').value, 10) || 0;
+  const erroEl = document.getElementById('rd-erro-1');
+  erroEl.style.display = 'none';
+  if (qtd < 1) { erroEl.textContent = 'Escolha pelo menos 1 número.'; erroEl.style.display = 'block'; return; }
+  if (qtd > rdDisponiveis) { erroEl.textContent = `Só restam ${rdDisponiveis} número(s) disponível(is).`; erroEl.style.display = 'block'; return; }
+
+  document.getElementById('rd-passo-2-resumo').textContent = `${qtd} número(s) — ${rdFormatarPreco(qtd * rdRifa.precoPorNumero)}. A gente escolhe os números pra você.`;
+  document.getElementById('rd-erro-2').style.display = 'none';
+  document.getElementById('rd-passo-1').style.display = 'none';
+  document.getElementById('rd-passo-2').style.display = '';
 }
 
-function rdFechar() { document.getElementById('rd-overlay').classList.remove('open'); }
+function rdVoltarPasso1() {
+  document.getElementById('rd-passo-2').style.display = 'none';
+  document.getElementById('rd-passo-1').style.display = '';
+}
+
+function rdCopiarPix() {
+  navigator.clipboard?.writeText(PIX_CHAVE).catch(() => {});
+  const btn = document.querySelector('.rd-pix-copiar');
+  if (!btn) return;
+  const textoOriginal = btn.textContent;
+  btn.textContent = '✓ Copiado!';
+  setTimeout(() => { btn.textContent = textoOriginal; }, 2000);
+}
 
 async function rdConfirmar() {
+  const quantidade = parseInt(document.getElementById('rd-quantidade').value, 10) || 0;
   const nome = document.getElementById('rd-nome').value.trim();
   const telefone = document.getElementById('rd-telefone').value.trim();
-  const erroEl = document.getElementById('rd-erro');
-  if (!nome) { erroEl.textContent = 'Digite seu nome.'; erroEl.style.display = ''; return; }
+  const email = document.getElementById('rd-email').value.trim();
+  const erroEl = document.getElementById('rd-erro-2');
+  erroEl.style.display = 'none';
+  if (!nome) { erroEl.textContent = 'Digite seu nome.'; erroEl.style.display = 'block'; return; }
+  if (!email) { erroEl.textContent = 'Digite seu e-mail.'; erroEl.style.display = 'block'; return; }
+
   const btn = document.getElementById('rd-btn-confirmar');
   const textoOriginal = btn.textContent;
   btn.textContent = 'Reservando...'; btn.disabled = true;
@@ -228,20 +266,32 @@ async function rdConfirmar() {
     const res = await fetch(RIFA_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'comprar-digital', numero: rdNumeroAtual, nome, telefone }),
+      body: JSON.stringify({ acao: 'comprar-digital-lote', quantidade, nome, telefone, email }),
     });
     const data = await res.json();
-    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui reservar esse número.'; erroEl.style.display = ''; btn.textContent = textoOriginal; btn.disabled = false; return; }
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui reservar esses números.'; erroEl.style.display = 'block'; btn.textContent = textoOriginal; btn.disabled = false; return; }
     rdRifa = data;
-    rdFechar();
-    document.getElementById('rd-sucesso').style.display = '';
-    document.getElementById('rd-sucesso-texto').textContent = `Número ${rdNumeroAtual} reservado em nome de ${nome}. A administração confirma o pagamento em breve.`;
-    rdRenderGrid();
+    document.getElementById('rd-passo-2').style.display = 'none';
+    document.getElementById('rd-passo-disponiveis').style.display = 'none';
+    document.getElementById('rd-sucesso').style.display = 'block';
+    document.getElementById('rd-sucesso-numeros').textContent = (data._reservados || []).join(' · ');
+    document.getElementById('rd-sucesso-texto').textContent = `Reservados em nome de ${nome}. Mandamos um e-mail de confirmação pra ${email} — a administração confere o pagamento manualmente e avisa quando tudo estiver certo.`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {
-    erroEl.textContent = 'Não consegui reservar esse número — tenta de novo.'; erroEl.style.display = '';
+    erroEl.textContent = 'Não consegui reservar esses números — tenta de novo.'; erroEl.style.display = 'block';
   }
   btn.textContent = textoOriginal; btn.disabled = false;
+}
+
+function rdNovaCompra() {
+  document.getElementById('rd-sucesso').style.display = 'none';
+  document.getElementById('rd-passo-disponiveis').style.display = '';
+  document.getElementById('rd-passo-1').style.display = '';
+  document.getElementById('rd-quantidade').value = 1;
+  document.getElementById('rd-nome').value = '';
+  document.getElementById('rd-telefone').value = '';
+  document.getElementById('rd-email').value = '';
+  rdRenderPagina();
 }
 
 rdCarregar();

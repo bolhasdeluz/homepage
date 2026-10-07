@@ -6699,6 +6699,9 @@ function rifaClickNumero(numero) {
     if (admin && (info.status === 'reservado' || info.status === 'atribuido')) {
       botoes.innerHTML += `<button class="btn-rosa" onclick="rifaAbrirConfirmarPagamento('${numero}')">Confirmar pagamento</button>`;
     }
+    if (admin && info.status === 'reservado' && info.email) {
+      botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaLembrarPagamento('${numero}')">📧 Pagamento não localizado (enviar lembrete)</button>`;
+    }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
     }
@@ -6784,6 +6787,22 @@ async function rifaConfirmarPagamento(numero) {
   } catch (e) { alert('Não consegui confirmar o pagamento — tenta de novo.'); }
 }
 window.rifaConfirmarPagamento = rifaConfirmarPagamento;
+
+// manda um e-mail de lembrete pra quem reservou (origem digital, tem e-mail
+// cadastrado) sem mudar o status do número — usado quando a admin não achou
+// o pagamento ainda
+async function rifaLembrarPagamento(numero) {
+  if (!rifaEhAdmin()) return;
+  if (!confirm(`Mandar um lembrete de pagamento pro número ${numero}?`)) return;
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'lembrar-pagamento', numeros: [numero] }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui mandar o lembrete.'); return; }
+    alert('Lembrete enviado ✦');
+    rifaFecharDetalhe();
+  } catch (e) { alert('Não consegui mandar o lembrete — tenta de novo.'); }
+}
+window.rifaLembrarPagamento = rifaLembrarPagamento;
 
 async function rifaSortear() {
   if (!rifaEhAdmin()) return;
