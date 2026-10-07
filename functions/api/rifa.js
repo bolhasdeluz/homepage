@@ -94,6 +94,11 @@ export async function onRequest(context) {
         status: 'ativa',
         numeros: gerarNumeros(totalNumeros),
         vencedor: null,
+        // do 1 até esse número, a venda é "digital" — direto no link público
+        // (rifa-digital.html), sem passar pela admin. Os números depois dele
+        // continuam livres pra serem atribuídos a alguém vender por fora.
+        // 0 = venda digital desativada (todo mundo só entra via atribuição)
+        limiteDigital: Math.max(0, Math.min(totalNumeros, parseInt(body.limiteDigital, 10) || 0)),
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(rifa));
@@ -139,12 +144,46 @@ export async function onRequest(context) {
         return json(rifa);
       }
 
+      // COMPRAR DIGITAL — pública, sem precisar estar logada no site (vem do
+      // link paralelo rifa-digital.html). Só funciona dentro da faixa 1 até
+      // limiteDigital — os números além dele só entram por atribuição.
+      if (acao === 'comprar-digital') {
+        const numero = String(body.numero || '');
+        const nome = (body.nome || '').trim();
+        if (!nome) return json({ error: 'Informe seu nome.' }, 400);
+        const alvo = rifa.numeros[numero];
+        if (!alvo) return json({ error: 'Número inválido.' }, 400);
+        if (parseInt(numero, 10) > (rifa.limiteDigital || 0)) {
+          return json({ error: 'Esse número não faz parte da venda digital.' }, 400);
+        }
+        if (alvo.status !== 'livre') return json({ error: 'Esse número já não está mais livre.' }, 409);
+        rifa.numeros[numero] = {
+          status: 'reservado',
+          nome,
+          telefone: (body.telefone || '').trim(),
+          origem: 'digital',
+          reservadoEm: Date.now(),
+        };
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
 
+      // DEFINIR LIMITE DIGITAL — até qual número a venda digital (link
+      // paralelo) vale; os números acima só entram por atribuição
+      if (acao === 'definir-limite-digital') {
+        const limite = Math.max(0, Math.min(rifa.totalNumeros, parseInt(body.limiteDigital, 10) || 0));
+        rifa.limiteDigital = limite;
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
       // ATRIBUIR — a admin entrega um lote de números livres pra uma pessoa
       // responsável vender por fora (não é a compradora final, só quem fica
-      // com os números até prestar contas)
+      // com os números até prestar contas). Números dentro da faixa digital
+      // (até limiteDigital) ficam de fora — esses só saem pelo link público
       if (acao === 'atribuir') {
         const nome = (body.nome || '').trim();
         const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
@@ -153,7 +192,8 @@ export async function onRequest(context) {
         const ignorados = [];
         numeros.forEach(numero => {
           const alvo = rifa.numeros[numero];
-          if (alvo && alvo.status === 'livre') {
+          const ehDigital = parseInt(numero, 10) <= (rifa.limiteDigital || 0);
+          if (alvo && alvo.status === 'livre' && !ehDigital) {
             rifa.numeros[numero] = { status: 'atribuido', nome, atribuidoEm: Date.now() };
             atribuidos.push(numero);
           } else {
