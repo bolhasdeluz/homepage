@@ -2844,7 +2844,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div class="modal" style="max-width:480px">
     <button class="modal-close" onclick="rifaFecharRevisao()">×</button>
     <div class="modal-title" style="font-size:1.2rem">🔍 Revisar vínculos</div>
-    <p class="modal-sub">Números agrupados por pessoa (nome + e-mail/telefone) — confere se tudo bateu certinho, sem nomes duplicados por engano.</p>
+    <p class="modal-sub">Quem está com quais números atribuídos, e todo mundo agrupado por pessoa — confere se tudo bateu certinho, sem nomes duplicados por engano.</p>
     <div id="rf-revisao-corpo" style="max-height:60vh;overflow-y:auto"></div>
     <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharRevisao()">Fechar</button>
   </div>
@@ -7075,6 +7075,41 @@ window.rifaConfirmarAtribuicao = rifaConfirmarAtribuicao;
 // todos vinculados certinho (sem nome duplicado por erro de digitação, etc.)
 function rifaAbrirRevisao() {
   if (!rifaEhAdmin() || !rifaAtual) return;
+
+  // seção 1: vendedoras — todo número já atribuído a cada uma (atribuído
+  // ainda não vendido + já pago por ela), achado pelo token, que não muda
+  // quando o número vira "pago" (diferente do nome, que aí vira o do
+  // comprador final)
+  const porToken = {};
+  Object.entries(rifaAtual.numeros || {}).forEach(([numero, info]) => {
+    if (!info || !info.atribuicaoToken) return;
+    if (!porToken[info.atribuicaoToken]) porToken[info.atribuicaoToken] = [];
+    porToken[info.atribuicaoToken].push({ numero, status: info.status });
+  });
+  const vendedoras = Object.values(rifaAtual.vendedores || {})
+    .map(v => ({ ...v, numeros: (porToken[v.token] || []).sort((a, b) => a.numero.localeCompare(b.numero)) }))
+    .filter(v => v.numeros.length)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  let htmlVendedoras;
+  if (!vendedoras.length) {
+    htmlVendedoras = '<p class="cal-empty">Nenhum número atribuído a alguém ainda.</p>';
+  } else {
+    htmlVendedoras = vendedoras.map(v => {
+      const pagos = v.numeros.filter(n => n.status === 'pago').length;
+      const pendentes = v.numeros.length - pagos;
+      const link = new URL('rifa-vendedor.html?token=' + encodeURIComponent(v.token), window.location.href).href;
+      const numerosTexto = v.numeros.map(n => `${n.numero}${n.status === 'pago' ? ' ✓' : ''}`).join(', ');
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-weight:700">${calEsc(v.nome)}</div>
+          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${v.numeros.length} número(s) — ${pagos} vendido(s), ${pendentes} ainda não: ${calEsc(numerosTexto)}</div>
+          <div style="font-size:.78rem;margin-top:3px"><a href="${link}" target="_blank" style="color:var(--rosa)">Link individual dela →</a></div>
+        </div>`;
+    }).join('');
+  }
+
+  // seção 2: todo mundo (reservado/atribuído/pago), agrupado por quem está
+  // com o número NESTE MOMENTO (pra conferir vínculo de comprador final)
   const grupos = {};
   Object.entries(rifaAtual.numeros || {}).forEach(([numero, info]) => {
     if (!info || info.status === 'livre') return;
@@ -7089,11 +7124,11 @@ function rifaAbrirRevisao() {
     grupos[chave].numeros.push({ numero, status: info.status });
   });
   const lista = Object.values(grupos).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-  const corpo = document.getElementById('rf-revisao-corpo');
+  let htmlTodos;
   if (!lista.length) {
-    corpo.innerHTML = '<p class="cal-empty">Nenhum número reservado, atribuído ou pago ainda.</p>';
+    htmlTodos = '<p class="cal-empty">Nenhum número reservado, atribuído ou pago ainda.</p>';
   } else {
-    corpo.innerHTML = lista.map(g => {
+    htmlTodos = lista.map(g => {
       const numerosTexto = g.numeros.sort((a, b) => a.numero.localeCompare(b.numero)).map(n => `${n.numero} (${n.status})`).join(', ');
       return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="font-weight:700">${calEsc(g.nome)} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">— ${calEsc(g.contato)}</span></div>
@@ -7101,6 +7136,13 @@ function rifaAbrirRevisao() {
         </div>`;
     }).join('');
   }
+
+  document.getElementById('rf-revisao-corpo').innerHTML = `
+    <div style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin:12px 0 4px">👥 Vendedoras e seus números atribuídos</div>
+    ${htmlVendedoras}
+    <div style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin:18px 0 4px">Todos os números (agrupados por quem está com eles agora)</div>
+    ${htmlTodos}
+  `;
   document.getElementById('rf-revisao-overlay').classList.add('open');
 }
 window.rifaAbrirRevisao = rifaAbrirRevisao;
