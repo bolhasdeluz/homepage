@@ -15,12 +15,19 @@
 // autenticado só pelo token da vendedora — ver "vendedores" abaixo).
 //
 // E-mails (Resend, precisa de env.RESEND_API_KEY — se não tiver configurado,
-// o envio é só pulado em silêncio): reservado (na hora da compra digital),
-// confirmado (quando a admin confirma pagamento de um número com e-mail) e
-// lembrete (ação "lembrar-pagamento", quando o pagamento não foi localizado).
+// o envio é só pulado em silêncio): reservado (na hora da compra digital, pro
+// comprador), aviso-admin (na hora da compra digital, pra ADMIN_NOTIFY_EMAIL
+// — a confirmação de pagamento em si não é mais prometida por e-mail pro
+// comprador, a admin fala com a pessoa pelo WhatsApp), confirmado (quando a
+// admin confirma pagamento de um número com e-mail) e lembrete (ação
+// "lembrar-pagamento", quando o pagamento não foi localizado).
 
 const ADMIN_PASSWORD = 'admin';
 const PIX_CHAVE = 'bolhasdeluz@gmail.com';
+// pra onde vai o aviso de cada reserva feita no link digital — a confirmação
+// de pagamento em si não é mais prometida por e-mail pro comprador: a admin
+// é avisada aqui e fala com a pessoa diretamente pelo WhatsApp
+const ADMIN_NOTIFY_EMAIL = 'bolhasdeluz@gmail.com';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
@@ -89,8 +96,8 @@ async function enviarEmailRifa(env, { paraEmail, assunto, html }) {
 }
 
 // e-mail enviado assim que a pessoa reserva pelo link digital — avisa que o
-// pagamento é conferido manualmente e que ela vai ser avisada quando tudo
-// estiver certo
+// pagamento é conferido manualmente e que a equipe entra em contato pelo
+// WhatsApp (não promete mais um segundo e-mail automático de confirmação)
 async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorNumero }) {
   const total = numeros.length * Number(precoPorNumero || 0);
   const html = envelopeEmail({
@@ -104,9 +111,32 @@ async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorN
         <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Chave Pix (copia e cola)</p>
         <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
       </div>
-      <p style="color:#8a6070;font-size:13px;font-style:italic">O pagamento é conferido manualmente — assim que confirmarmos, você recebe um novo e-mail. Guarde esse número(s) com carinho ✦</p>`,
+      <p style="color:#8a6070;font-size:13px;font-style:italic">O pagamento é conferido manualmente — assim que confirmarmos, entramos em contato com você pelo WhatsApp. Guarde esse número(s) com carinho ✦</p>`,
   });
   await enviarEmailRifa(env, { paraEmail, assunto: `🎟️ Números reservados — ${titulo}`, html });
+}
+
+// e-mail enviado pra admin (ADMIN_NOTIFY_EMAIL) assim que alguém reserva pelo
+// link digital — como a confirmação de pagamento não é mais prometida por
+// e-mail pro comprador, é esse aviso que avisa a admin pra ela conferir o
+// Pix e falar com a pessoa pelo WhatsApp
+async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, email, precoPorNumero }) {
+  const total = numeros.length * Number(precoPorNumero || 0);
+  const html = envelopeEmail({
+    corTopo: '#c4396b',
+    titulo: '🔔 Nova reserva no link digital',
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Alguém reservou números da rifa <b>${titulo}</b> pelo link digital:</p>
+      <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15);color:#2a1a22;font-size:14px;margin-bottom:14px">
+        <p style="margin-bottom:4px"><b>Nome:</b> ${nome}</p>
+        <p style="margin-bottom:4px"><b>Telefone:</b> ${telefone || 'não informado'}</p>
+        <p style="margin-bottom:4px"><b>E-mail:</b> ${email}</p>
+        <p style="margin-bottom:4px"><b>Números:</b> ${listaNumeros(numeros)}</p>
+        <p><b>Total:</b> ${fmtPrecoEmail(total)}</p>
+      </div>
+      <p style="color:#8a6070;font-size:13px;font-style:italic">Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail: ADMIN_NOTIFY_EMAIL, assunto: `🔔 Nova reserva digital — ${titulo}`, html });
 }
 
 // e-mail enviado quando a admin confirma o pagamento de números com
@@ -340,6 +370,9 @@ export async function onRequest(context) {
 
         context.waitUntil(enviarEmailReservado(env, {
           paraEmail: email, titulo: rifa.titulo, numeros: escolhidos, precoPorNumero: rifa.precoPorNumero,
+        }));
+        context.waitUntil(enviarEmailAvisoAdmin(env, {
+          titulo: rifa.titulo, numeros: escolhidos, nome, telefone, email, precoPorNumero: rifa.precoPorNumero,
         }));
 
         return json({ ...rifa, _reservados: escolhidos });
