@@ -103,8 +103,8 @@ async function enviarEmailRifa(env, { paraEmail, assunto, html }) {
 }
 
 // e-mail enviado assim que a pessoa reserva pelo link digital — avisa que o
-// pagamento é conferido manualmente e que a equipe entra em contato pelo
-// WhatsApp (não promete mais um segundo e-mail automático de confirmação)
+// pagamento é conferido manualmente (não promete mais um segundo e-mail
+// automático de confirmação nem um canal específico de contato)
 async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorNumero }) {
   const total = numeros.length * Number(precoPorNumero || 0);
   const html = envelopeEmail({
@@ -118,7 +118,7 @@ async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorN
         <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Chave Pix (copia e cola)</p>
         <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
       </div>
-      <p style="color:#8a6070;font-size:13px;font-style:italic">O pagamento é conferido manualmente — assim que confirmarmos, entramos em contato com você pelo WhatsApp. Guarde esse número(s) com carinho ✦</p>`,
+      <p style="color:#8a6070;font-size:13px;font-style:italic">O pagamento é conferido manualmente. Guarde esse número(s) com carinho ✦</p>`,
   });
   await enviarEmailRifa(env, { paraEmail, assunto: `🎟️ Números reservados — ${titulo}`, html });
 }
