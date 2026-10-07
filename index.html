@@ -2851,10 +2851,18 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="rifaFecharLote100()">×</button>
     <div class="modal-title" style="font-size:1.2rem">📦 Atribuir em blocos de 100</div>
-    <p class="modal-sub">Escolhe quem fica com cada janela de números ainda livres — confirma uma vez e já atribui tudo.</p>
-    <div id="rf-lote100-corpo" style="max-height:55vh;overflow-y:auto"></div>
-    <button class="btn-rosa" style="width:100%;text-align:center;margin-top:12px" onclick="rifaConfirmarLote100()">Confirmar atribuições</button>
-    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:8px" onclick="rifaFecharLote100()">Fechar</button>
+    <div id="rf-lote100-form">
+      <p class="modal-sub">Escolhe quem fica com cada janela de números ainda livres — confirma uma vez e já atribui tudo.</p>
+      <div id="rf-lote100-corpo" style="max-height:55vh;overflow-y:auto"></div>
+      <button class="btn-rosa" style="width:100%;text-align:center;margin-top:12px" onclick="rifaConfirmarLote100()">Confirmar atribuições</button>
+      <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:8px" onclick="rifaFecharLote100()">Fechar</button>
+    </div>
+    <div id="rf-lote100-resultado" style="display:none">
+      <p class="modal-sub" id="rf-lote100-resultado-texto"></p>
+      <p class="modal-sub" style="font-size:.8rem">Link individual de cada uma (acessa só os números dela, sem senha) e o talão pra imprimir:</p>
+      <div id="rf-lote100-resultado-lista" style="max-height:50vh;overflow-y:auto"></div>
+      <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharLote100()">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -7063,8 +7071,12 @@ window.rifaFecharAtribuir = rifaFecharAtribuir;
 // ── ATRIBUIR EM BLOCOS DE 100 — pra atribuir a rifa inteira de uma vez só:
 // mostra uma janela de 100 números por vez (fora da faixa da venda
 // digital), cada uma com um seletor de pra quem vai; confirma tudo junto
+let rifaUltimoLote100Resultados = [];
+
 function rifaAbrirLote100() {
   if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-lote100-form').style.display = '';
+  document.getElementById('rf-lote100-resultado').style.display = 'none';
   carregarListaNomesCasa().then(rifaRenderLote100);
   rifaRenderLote100();
   document.getElementById('rf-lote100-overlay').classList.add('open');
@@ -7118,7 +7130,7 @@ async function rifaConfirmarLote100() {
   if (!selects.length) { alert('Escolhe pelo menos uma janela pra atribuir.'); return; }
 
   const largura = Math.max(2, String(rifaAtual.totalNumeros).length);
-  let totalAtribuidos = 0;
+  const resultados = [];
   const avisos = [];
 
   for (const sel of selects) {
@@ -7137,19 +7149,59 @@ async function rifaConfirmarLote100() {
       const data = await res.json();
       if (!res.ok) { avisos.push(`${de}–${ate}: ${data.error || 'erro'}`); continue; }
       rifaAtual = data;
-      totalAtribuidos += (data._atribuidos ? data._atribuidos.length : 0);
+      // agrupa por pessoa — ela pode ter sido escolhida em mais de uma janela
+      const existente = resultados.find(r => r.nome === nome);
+      if (existente) existente.numeros = existente.numeros.concat(data._atribuidos || []);
+      else resultados.push({ nome, token: data._tokenVendedora, numeros: data._atribuidos || [] });
     } catch (e) {
       avisos.push(`${de}–${ate}: falha de conexão`);
     }
   }
 
-  rifaFecharLote100();
   rifaRenderPagina();
-  let msg = `✓ ${totalAtribuidos} número(s) atribuído(s).`;
-  if (avisos.length) msg += '\n\nAlguns problemas:\n' + avisos.join('\n');
-  alert(msg);
+
+  if (!resultados.length) {
+    rifaFecharLote100();
+    alert(avisos.length ? 'Nada foi atribuído.\n\n' + avisos.join('\n') : 'Nada foi atribuído.');
+    return;
+  }
+
+  rifaUltimoLote100Resultados = resultados;
+  const totalAtribuidos = resultados.reduce((a, r) => a + r.numeros.length, 0);
+  document.getElementById('rf-lote100-form').style.display = 'none';
+  document.getElementById('rf-lote100-resultado').style.display = '';
+  let textoTopo = `✓ ${totalAtribuidos} número(s) atribuído(s) pra ${resultados.length} pessoa(s).`;
+  if (avisos.length) textoTopo += ' Alguns problemas: ' + avisos.join('; ');
+  document.getElementById('rf-lote100-resultado-texto').textContent = textoTopo;
+  document.getElementById('rf-lote100-resultado-lista').innerHTML = resultados.map((r, i) => {
+    const link = new URL('rifa-vendedor.html?token=' + encodeURIComponent(r.token), window.location.href).href;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:700;margin-bottom:6px">${calEsc(r.nome)} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">— ${r.numeros.length} número(s)</span></div>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <input type="text" class="form-input" readonly value="${calEsc(link)}" style="margin-bottom:0;font-size:.72rem" onclick="this.select()">
+          <button class="rm-btn-mes" style="flex:0 0 auto;padding:8px 10px" onclick="rifaCopiarLinkDoLote100(${i})">Copiar</button>
+        </div>
+        <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaImprimirTalaoDoLote100(${i})">🖨️ Imprimir talão dela</button>
+      </div>`;
+  }).join('');
 }
 window.rifaConfirmarLote100 = rifaConfirmarLote100;
+
+function rifaCopiarLinkDoLote100(idx) {
+  const r = rifaUltimoLote100Resultados[idx];
+  if (!r) return;
+  const link = new URL('rifa-vendedor.html?token=' + encodeURIComponent(r.token), window.location.href).href;
+  navigator.clipboard?.writeText(link).catch(() => {});
+  alert('Link copiado:\n\n' + link);
+}
+window.rifaCopiarLinkDoLote100 = rifaCopiarLinkDoLote100;
+
+function rifaImprimirTalaoDoLote100(idx) {
+  const r = rifaUltimoLote100Resultados[idx];
+  if (!r) return;
+  rifaImprimirTalao(r.numeros, r.nome);
+}
+window.rifaImprimirTalaoDoLote100 = rifaImprimirTalaoDoLote100;
 
 async function rifaConfirmarAtribuicao() {
   if (!rifaEhAdmin() || !rifaSelecionados.size) return;
