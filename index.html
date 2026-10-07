@@ -2751,6 +2751,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
       <button class="rm-btn-mes" id="rf-btn-nova" style="display:none" onclick="rifaAbrirNova()">✨ Criar nova rifa</button>
+      <button class="rm-btn-mes" id="rf-btn-editar" style="display:none" onclick="rifaAbrirEditar()">✎ Editar rifa</button>
       <button class="rm-btn-mes" id="rf-btn-atribuir" style="display:none" onclick="rifaToggleModoAtribuir()">🎫 Atribuir números</button>
       <button class="rm-btn-mes" id="rf-btn-lote" style="display:none" onclick="rifaToggleModoLote()">🧾 Lançar compra</button>
       <button class="rm-btn-mes" id="rf-btn-aumentar" style="display:none" onclick="rifaAbrirAumentar()">➕ Aumentar números</button>
@@ -2808,10 +2809,21 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div class="modal" style="max-width:360px">
     <button class="modal-close" onclick="rifaFecharAtribuir()">×</button>
     <div class="modal-title" style="font-size:1.2rem">🎫 Atribuir números</div>
-    <p class="modal-sub" id="rf-atribuir-resumo"></p>
-    <label class="form-label">Pessoa responsável</label>
-    <input type="text" class="form-input" id="rf-atribuir-nome" list="lista-nomes-casa" placeholder="Nome de quem vai vender">
-    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaConfirmarAtribuicao()">Confirmar atribuição</button>
+    <div id="rf-atribuir-form">
+      <p class="modal-sub" id="rf-atribuir-resumo"></p>
+      <label class="form-label">Pessoa responsável</label>
+      <input type="text" class="form-input" id="rf-atribuir-nome" list="lista-nomes-casa" placeholder="Nome de quem vai vender">
+      <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaConfirmarAtribuicao()">Confirmar atribuição</button>
+    </div>
+    <div id="rf-atribuir-resultado" style="display:none">
+      <p class="modal-sub" id="rf-atribuir-resultado-texto"></p>
+      <label class="form-label">Link individual dela (acessa só os números dela, sem senha)</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" class="form-input" id="rf-atribuir-link" readonly style="margin-bottom:0" onclick="this.select()">
+        <button class="rm-btn-mes" style="flex:0 0 auto" onclick="rifaCopiarLinkVendedora()">Copiar</button>
+      </div>
+      <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharAtribuir()">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -2859,7 +2871,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <div id="rf-nova-overlay" class="overlay" onclick="if(event.target===this)rifaFecharNova()">
   <div class="modal" style="max-width:420px">
     <button class="modal-close" onclick="rifaFecharNova()">×</button>
-    <div class="modal-title" style="font-size:1.2rem">✨ Nova rifa</div>
+    <div class="modal-title" style="font-size:1.2rem" id="rf-nova-titulo-modal">✨ Nova rifa</div>
     <p class="modal-sub" id="rf-nova-aviso" style="display:none;color:#b84040">Criar uma nova rifa vai encerrar a rifa ativa atual.</p>
     <label class="form-label">Título</label>
     <input type="text" class="form-input" id="rf-nova-titulo" placeholder="Ex: Rifa de Setembro">
@@ -2869,11 +2881,13 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <input type="text" class="form-input" id="rf-nova-imagem" placeholder="https://...">
     <label class="form-label">Preço por número (R$)</label>
     <input type="number" min="0" step="0.01" class="form-input" id="rf-nova-preco" placeholder="10">
-    <label class="form-label">Quantidade de números</label>
-    <input type="number" min="1" class="form-input" id="rf-nova-total" placeholder="100">
+    <div id="rf-nova-total-wrap">
+      <label class="form-label">Quantidade de números</label>
+      <input type="number" min="1" class="form-input" id="rf-nova-total" placeholder="100">
+    </div>
     <label class="form-label">Data do sorteio (opcional)</label>
     <input type="text" class="form-input" id="rf-nova-data" placeholder="Ex: 30/09, na sessão">
-    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaCriarNova()">Criar rifa</button>
+    <button class="btn-rosa" style="width:100%;text-align:center" id="rf-nova-btn-salvar" onclick="rifaSalvarNova()">Criar rifa</button>
   </div>
 </div>
 
@@ -6593,6 +6607,7 @@ async function rifaLoad() {
   document.getElementById('rf-btn-nova').style.display = rifaEhAdmin() ? '' : 'none';
   if (!rifaAtual) {
     document.getElementById('rf-vazia').style.display = '';
+    document.getElementById('rf-btn-editar').style.display = 'none';
     document.getElementById('rf-btn-atribuir').style.display = 'none';
     document.getElementById('rf-btn-lote').style.display = 'none';
     document.getElementById('rf-btn-aumentar').style.display = 'none';
@@ -6630,6 +6645,7 @@ function rifaRenderPagina() {
   const btnSortear = document.getElementById('rf-btn-sortear');
   btnSortear.style.display = (rifaEhAdmin() && !r.vencedor && pagos > 0) ? '' : 'none';
   const admin = rifaEhAdmin();
+  document.getElementById('rf-btn-editar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-atribuir').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-lote').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-aumentar').style.display = admin ? '' : 'none';
@@ -6701,6 +6717,9 @@ function rifaClickNumero(numero) {
     }
     if (admin && info.status === 'reservado' && info.email) {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaLembrarPagamento('${numero}')">📧 Pagamento não localizado (enviar lembrete)</button>`;
+    }
+    if (admin && info.status === 'atribuido' && info.atribuicaoToken) {
+      botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaVerLinkVendedora('${info.atribuicaoToken}')">🔗 Ver link da vendedora</button>`;
     }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
@@ -6872,6 +6891,8 @@ function rifaAbrirAtribuir() {
   const numeros = Array.from(rifaSelecionados).sort();
   document.getElementById('rf-atribuir-resumo').textContent = `Números: ${numeros.join(', ')}`;
   document.getElementById('rf-atribuir-nome').value = '';
+  document.getElementById('rf-atribuir-form').style.display = '';
+  document.getElementById('rf-atribuir-resultado').style.display = 'none';
   carregarListaNomesCasa();
   document.getElementById('rf-atribuir-overlay').classList.add('open');
 }
@@ -6890,15 +6911,37 @@ async function rifaConfirmarAtribuicao() {
     const data = await res.json();
     if (!res.ok) { alert(data.error || 'Não consegui atribuir os números.'); return; }
     rifaAtual = data;
-    rifaFecharAtribuir();
     rifaCancelarModo();
     rifaRenderPagina();
+
+    const qtd = data._atribuidos ? data._atribuidos.length : 0;
+    let aviso = `✓ ${qtd} número(s) atribuído(s) pra ${nome}.`;
     if (data._ignorados && data._ignorados.length) {
-      alert(`Alguns números já não estavam mais livres e não foram atribuídos: ${data._ignorados.join(', ')}`);
+      aviso += ` Alguns números já não estavam mais livres e não foram atribuídos: ${data._ignorados.join(', ')}`;
     }
+    document.getElementById('rf-atribuir-resultado-texto').textContent = aviso;
+    document.getElementById('rf-atribuir-link').value = new URL('rifa-vendedor.html?token=' + encodeURIComponent(data._tokenVendedora), window.location.href).href;
+    document.getElementById('rf-atribuir-form').style.display = 'none';
+    document.getElementById('rf-atribuir-resultado').style.display = '';
   } catch (e) { alert('Não consegui atribuir os números — tenta de novo.'); }
 }
 window.rifaConfirmarAtribuicao = rifaConfirmarAtribuicao;
+
+function rifaCopiarLinkVendedora() {
+  const inp = document.getElementById('rf-atribuir-link');
+  inp.select();
+  navigator.clipboard?.writeText(inp.value).then(() => alert('Link copiado!')).catch(() => {});
+}
+window.rifaCopiarLinkVendedora = rifaCopiarLinkVendedora;
+
+// recupera o link individual de uma vendedora a partir de um número já
+// atribuído a ela — útil quando ela perdeu o link de quando foi atribuído
+function rifaVerLinkVendedora(token) {
+  const link = new URL('rifa-vendedor.html?token=' + encodeURIComponent(token), window.location.href).href;
+  navigator.clipboard?.writeText(link).catch(() => {});
+  alert('Link copiado:\n\n' + link);
+}
+window.rifaVerLinkVendedora = rifaVerLinkVendedora;
 
 function rifaAbrirLote() {
   if (!rifaEhAdmin() || !rifaSelecionados.size) return;
@@ -7003,15 +7046,46 @@ function rifaCopiarLinkDigital() {
 }
 window.rifaCopiarLinkDigital = rifaCopiarLinkDigital;
 
+// o mesmo modal serve pra criar uma rifa nova e pra editar a ativa — só muda
+// o título, o botão, e se mostra o campo de quantidade (editar usa "Aumentar
+// números" à parte, porque diminuir aqui apagaria números já vendidos)
+let rifaNovaModo = 'criar';
+
 function rifaAbrirNova() {
   if (!rifaEhAdmin()) return;
+  rifaNovaModo = 'criar';
   ['titulo','premio','imagem','preco','total','data'].forEach(c => { const el = document.getElementById('rf-nova-' + c); if (el) el.value = ''; });
+  document.getElementById('rf-nova-titulo-modal').textContent = '✨ Nova rifa';
+  document.getElementById('rf-nova-btn-salvar').textContent = 'Criar rifa';
+  document.getElementById('rf-nova-total-wrap').style.display = '';
   document.getElementById('rf-nova-aviso').style.display = (rifaAtual && rifaAtual.status === 'ativa') ? '' : 'none';
   document.getElementById('rf-nova-overlay').classList.add('open');
 }
 window.rifaAbrirNova = rifaAbrirNova;
+
+function rifaAbrirEditar() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  rifaNovaModo = 'editar';
+  document.getElementById('rf-nova-titulo').value = rifaAtual.titulo || '';
+  document.getElementById('rf-nova-premio').value = rifaAtual.premio || '';
+  document.getElementById('rf-nova-imagem').value = rifaAtual.imagemPremio || '';
+  document.getElementById('rf-nova-preco').value = rifaAtual.precoPorNumero || '';
+  document.getElementById('rf-nova-data').value = rifaAtual.dataSorteio || '';
+  document.getElementById('rf-nova-titulo-modal').textContent = '✎ Editar rifa';
+  document.getElementById('rf-nova-btn-salvar').textContent = 'Salvar alterações';
+  document.getElementById('rf-nova-total-wrap').style.display = 'none';
+  document.getElementById('rf-nova-aviso').style.display = 'none';
+  document.getElementById('rf-nova-overlay').classList.add('open');
+}
+window.rifaAbrirEditar = rifaAbrirEditar;
+
 function rifaFecharNova() { document.getElementById('rf-nova-overlay').classList.remove('open'); }
 window.rifaFecharNova = rifaFecharNova;
+
+function rifaSalvarNova() {
+  if (rifaNovaModo === 'editar') rifaSalvarEdicao(); else rifaCriarNova();
+}
+window.rifaSalvarNova = rifaSalvarNova;
 
 async function rifaCriarNova() {
   if (!rifaEhAdmin()) return;
@@ -7038,6 +7112,29 @@ async function rifaCriarNova() {
   } catch (e) { alert('Não consegui criar a rifa — tenta de novo.'); }
 }
 window.rifaCriarNova = rifaCriarNova;
+
+async function rifaSalvarEdicao() {
+  if (!rifaEhAdmin()) return;
+  const titulo = document.getElementById('rf-nova-titulo').value.trim();
+  if (!titulo) { alert('Preencha ao menos o título.'); return; }
+  const payload = {
+    acao: 'editar-rifa',
+    titulo,
+    premio: document.getElementById('rf-nova-premio').value.trim(),
+    imagemPremio: document.getElementById('rf-nova-imagem').value.trim(),
+    precoPorNumero: parseFloat(document.getElementById('rf-nova-preco').value) || 0,
+    dataSorteio: document.getElementById('rf-nova-data').value.trim(),
+  };
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui salvar as alterações.'); return; }
+    rifaAtual = data;
+    rifaFecharNova();
+    rifaRenderPagina();
+  } catch (e) { alert('Não consegui salvar as alterações — tenta de novo.'); }
+}
+window.rifaSalvarEdicao = rifaSalvarEdicao;
 
 // ── MODAL "SAIBA MAIS" ────────────────────────────────────────────────────
 async function calAbrirInfo(id) {
