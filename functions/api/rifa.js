@@ -287,34 +287,52 @@ export async function onRequest(context) {
       }
 
       // COMPRAR DIGITAL — pública, sem precisar estar logada no site (vem do
-      // link paralelo rifa-digital.html). A pessoa escolhe só a QUANTIDADE —
-      // o sistema sorteia os números livres dentro da faixa digital (1 até
-      // limiteDigital) pra ela. Manda e-mail avisando que o pagamento vai
-      // ser conferido manualmente.
+      // link paralelo rifa-digital.html). A pessoa escolhe ela mesma quais
+      // números quer, dentro dos disponíveis na faixa digital (1 até
+      // limiteDigital) — manda "numeros" com a lista exata. Se preferir não
+      // escolher, "quantidade" sorteia números livres pra ela. Manda e-mail
+      // avisando que o pagamento vai ser conferido manualmente.
       if (acao === 'comprar-digital-lote') {
         const nome = (body.nome || '').trim();
         const email = (body.email || '').trim().toLowerCase();
         const telefone = (body.telefone || '').trim();
-        const quantidade = parseInt(body.quantidade, 10) || 0;
         if (!nome) return json({ error: 'Informe seu nome.' }, 400);
         if (!email) return json({ error: 'Informe seu e-mail.' }, 400);
-        if (!quantidade || quantidade < 1) return json({ error: 'Informe quantos números você quer.' }, 400);
         if (!rifa.limiteDigital) return json({ error: 'A venda digital não está disponível no momento.' }, 400);
 
-        const disponiveis = Object.keys(rifa.numeros).filter(numero =>
-          parseInt(numero, 10) <= rifa.limiteDigital && rifa.numeros[numero].status === 'livre'
-        );
-        if (disponiveis.length < quantidade) {
-          return json({ error: `Só restam ${disponiveis.length} número(s) disponível(is) na venda digital.` }, 409);
+        const numerosEscolhidos = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
+        let escolhidos;
+
+        if (numerosEscolhidos.length) {
+          // a pessoa escolheu os números dela — confere um por um antes de
+          // reservar qualquer um (tudo ou nada, pra não dar meia-reserva se
+          // alguém levou um deles entre a hora que ela escolheu e confirmou)
+          const indisponiveis = numerosEscolhidos.filter(numero => {
+            const alvo = rifa.numeros[numero];
+            return !alvo || alvo.status !== 'livre' || parseInt(numero, 10) > rifa.limiteDigital;
+          });
+          if (indisponiveis.length) {
+            return json({ error: `Esses números não estão mais disponíveis: ${indisponiveis.join(', ')}. Escolhe de novo.` }, 409);
+          }
+          escolhidos = numerosEscolhidos.sort();
+        } else {
+          const quantidade = parseInt(body.quantidade, 10) || 0;
+          if (!quantidade || quantidade < 1) return json({ error: 'Escolha os números ou informe quantos você quer.' }, 400);
+          const disponiveis = Object.keys(rifa.numeros).filter(numero =>
+            parseInt(numero, 10) <= rifa.limiteDigital && rifa.numeros[numero].status === 'livre'
+          );
+          if (disponiveis.length < quantidade) {
+            return json({ error: `Só restam ${disponiveis.length} número(s) disponível(is) na venda digital.` }, 409);
+          }
+          // embaralha (Fisher-Yates) e pega os primeiros "quantidade" — "quero
+          // N números, pode escolher pra mim"
+          for (let i = disponiveis.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [disponiveis[i], disponiveis[j]] = [disponiveis[j], disponiveis[i]];
+          }
+          escolhidos = disponiveis.slice(0, quantidade).sort();
         }
 
-        // embaralha (Fisher-Yates) e pega os primeiros "quantidade" — like um
-        // "quero N números, pode escolher pra mim"
-        for (let i = disponiveis.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [disponiveis[i], disponiveis[j]] = [disponiveis[j], disponiveis[i]];
-        }
-        const escolhidos = disponiveis.slice(0, quantidade).sort();
         escolhidos.forEach(numero => {
           rifa.numeros[numero] = { status: 'reservado', nome, telefone, email, origem: 'digital', reservadoEm: Date.now() };
         });
