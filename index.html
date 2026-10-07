@@ -2760,6 +2760,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rm-btn-mes" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
       <button class="rm-btn-mes" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
       <button class="rm-btn-mes" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
+      <button class="rm-btn-mes" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
       <button class="rm-btn-mes" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Selecionar próximos 100 livres</button>
     </div>
 
@@ -2923,6 +2924,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
     <label class="form-label">Data do sorteio (opcional)</label>
     <input type="text" class="form-input" id="rf-nova-data" placeholder="Ex: 30/09, na sessão">
+    <label class="form-label">Motivo da rifa (aparece no link digital e no talão)</label>
+    <textarea class="form-input" id="rf-nova-motivo" rows="3" placeholder="Ex: pra onde vai o dinheiro arrecadado"></textarea>
     <button class="btn-rosa" style="width:100%;text-align:center" id="rf-nova-btn-salvar" onclick="rifaSalvarNova()">Criar rifa</button>
   </div>
 </div>
@@ -6727,6 +6730,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -7104,6 +7108,42 @@ window.rifaAbrirRevisao = rifaAbrirRevisao;
 function rifaFecharRevisao() { document.getElementById('rf-revisao-overlay').classList.remove('open'); }
 window.rifaFecharRevisao = rifaFecharRevisao;
 
+// acha o nome da vendedora responsável por um número atribuído, a partir
+// do token guardado no próprio número
+function rifaNomeVendedoraPorToken(token) {
+  if (!token || !rifaAtual || !rifaAtual.vendedores) return '';
+  const entry = Object.values(rifaAtual.vendedores).find(v => v.token === token);
+  return entry ? entry.nome : '';
+}
+
+// exporta em CSV só os números já PAGOS (de fato vendidos), com de onde
+// vieram (digital ou atribuído/físico), quem vendeu (quando for o caso) e
+// quem comprou
+function rifaExportarVendidos() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const linhas = [['Número', 'Origem', 'Vendedora responsável', 'Comprador', 'E-mail', 'Telefone', 'Valor (R$)', 'Pago em']];
+  Object.keys(rifaAtual.numeros).sort().forEach(numero => {
+    const info = rifaAtual.numeros[numero];
+    if (!info || info.status !== 'pago') return;
+    const origem = info.origem === 'digital' ? 'Digital' : 'Atribuído (físico)';
+    const responsavel = info.origem === 'digital' ? '' : rifaNomeVendedoraPorToken(info.atribuicaoToken);
+    linhas.push([
+      numero, origem, responsavel, info.nome || '', info.email || '', info.telefone || '',
+      Number(rifaAtual.precoPorNumero || 0).toFixed(2),
+      info.pagoEm ? new Date(info.pagoEm).toLocaleString('pt-BR') : '',
+    ]);
+  });
+  if (linhas.length === 1) { alert('Ainda não há números vendidos (pagos) pra exportar.'); return; }
+  const csv = '﻿' + linhas.map(l => l.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const nomeBase = (rifaAtual.titulo || 'rifa').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const a = document.createElement('a');
+  a.href = url; a.download = `rifa-${nomeBase}-vendidos.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+window.rifaExportarVendidos = rifaExportarVendidos;
+
 function rifaCopiarLinkVendedora() {
   const inp = document.getElementById('rf-atribuir-link');
   inp.select();
@@ -7178,6 +7218,7 @@ function rifaImprimirTalao(numeros, nomeVendedora) {
         <div class="talao-premio">🎁 ${r.premio || ''}</div>
         <div class="talao-meta">${meta}</div>
         <div class="talao-numero">${numero}</div>
+        ${r.motivo ? `<div class="talao-motivo">${r.motivo}</div>` : ''}
       </div>
     </div>`).join('');
 
@@ -7200,6 +7241,7 @@ function rifaImprimirTalao(numeros, nomeVendedora) {
       .talao-numero{font-size:16px;font-weight:800;color:#c4396b;margin-top:2px}
       .talao-campo-label{margin-top:4px;color:#555}
       .talao-linha{border-bottom:1px solid #000;height:9px}
+      .talao-motivo{font-size:7.5px;font-style:italic;color:#666;margin-top:4px;line-height:1.3}
       @media print{ body{padding:0} .talao-grid{gap:0} .talao-ticket{width:50%} }
     </style></head>
     <body><div class="talao-grid">${ticketsHtml}</div></body></html>`;
@@ -7332,7 +7374,7 @@ let rifaNovaModo = 'criar';
 function rifaAbrirNova() {
   if (!rifaEhAdmin()) return;
   rifaNovaModo = 'criar';
-  ['titulo','premio','imagem','preco','total','data'].forEach(c => { const el = document.getElementById('rf-nova-' + c); if (el) el.value = ''; });
+  ['titulo','premio','imagem','preco','total','data','motivo'].forEach(c => { const el = document.getElementById('rf-nova-' + c); if (el) el.value = ''; });
   document.getElementById('rf-nova-titulo-modal').textContent = '✨ Nova rifa';
   document.getElementById('rf-nova-btn-salvar').textContent = 'Criar rifa';
   document.getElementById('rf-nova-total-wrap').style.display = '';
@@ -7349,6 +7391,7 @@ function rifaAbrirEditar() {
   document.getElementById('rf-nova-imagem').value = rifaAtual.imagemPremio || '';
   document.getElementById('rf-nova-preco').value = rifaAtual.precoPorNumero || '';
   document.getElementById('rf-nova-data').value = rifaAtual.dataSorteio || '';
+  document.getElementById('rf-nova-motivo').value = rifaAtual.motivo || '';
   document.getElementById('rf-nova-titulo-modal').textContent = '✎ Editar rifa';
   document.getElementById('rf-nova-btn-salvar').textContent = 'Salvar alterações';
   document.getElementById('rf-nova-total-wrap').style.display = 'none';
@@ -7377,6 +7420,7 @@ async function rifaCriarNova() {
     precoPorNumero: parseFloat(document.getElementById('rf-nova-preco').value) || 0,
     totalNumeros: total,
     dataSorteio: document.getElementById('rf-nova-data').value.trim(),
+    motivo: document.getElementById('rf-nova-motivo').value.trim(),
   };
   try {
     const res = await fetch(RIFA_API, { method: 'POST', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify(payload) });
@@ -7402,6 +7446,7 @@ async function rifaSalvarEdicao() {
     imagemPremio: document.getElementById('rf-nova-imagem').value.trim(),
     precoPorNumero: parseFloat(document.getElementById('rf-nova-preco').value) || 0,
     dataSorteio: document.getElementById('rf-nova-data').value.trim(),
+    motivo: document.getElementById('rf-nova-motivo').value.trim(),
   };
   try {
     const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify(payload) });

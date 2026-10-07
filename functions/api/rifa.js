@@ -266,6 +266,7 @@ export async function onRequest(context) {
         precoPorNumero: Number(body.precoPorNumero) || 0,
         totalNumeros,
         dataSorteio: body.dataSorteio || '',
+        motivo: body.motivo || '',
         status: 'ativa',
         numeros: gerarNumeros(totalNumeros),
         vencedores: [],
@@ -418,6 +419,7 @@ export async function onRequest(context) {
         rifa.imagemPremio = body.imagemPremio || '';
         rifa.precoPorNumero = Number(body.precoPorNumero) || 0;
         rifa.dataSorteio = body.dataSorteio || '';
+        rifa.motivo = body.motivo || '';
         await KV.put(rifa.id, JSON.stringify(rifa));
         return json(rifa);
       }
