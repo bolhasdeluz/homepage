@@ -54,8 +54,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rf-legenda-item{display:flex;align-items:center;gap:6px}
 .rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
 .rf-dot-livre{background:#fff;border:1px solid var(--border)}
-.rf-dot-reservado{background:var(--amber)}
-.rf-dot-pago{background:var(--green)}
+.rf-dot-indisponivel{background:var(--text-dim)}
 
 .rd-aleatorio{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:16px;flex-wrap:wrap}
 .rd-aleatorio input{width:70px;text-align:center;font-weight:700;margin-bottom:0}
@@ -65,8 +64,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:20px}
 .rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
 .rf-numero:hover{transform:scale(1.06)}
-.rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber);cursor:default}
-.rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green);cursor:default}
+.rf-numero-indisponivel{background:rgba(46,26,14,.06);border-color:rgba(46,26,14,.15);color:var(--text-dim);cursor:default}
 .rf-numero-selecionado{background:var(--rosa);border-color:var(--rosa);color:#fff;box-shadow:0 0 0 2px var(--rosa)}
 .rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
 
@@ -134,8 +132,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div id="rd-passo-escolha">
       <div class="rf-legenda">
         <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
-        <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
-        <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+        <span class="rf-legenda-item"><span class="rf-dot rf-dot-indisponivel"></span> Indisponível</span>
       </div>
 
       <div class="rd-aleatorio">
@@ -235,7 +232,7 @@ function rdRenderGrid() {
   for (let i = 1; i <= r.limiteDigital; i++) {
     const numero = String(i).padStart(rdLargura, '0');
     const info = r.numeros[numero] || { status: 'livre' };
-    let classe = info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'reservado' ? 'rf-numero-reservado' : '');
+    let classe = (info.status === 'pago' || info.status === 'reservado') ? 'rf-numero-indisponivel' : '';
     if (info.status === 'livre' && rdSelecionados.has(numero)) classe += ' rf-numero-selecionado';
     const nomeCurto = info.status !== 'livre' && info.nome ? info.nome.split(' ')[0] : '';
     html.push(`<div class="rf-numero ${classe}" onclick="rdClickNumero('${numero}')">
