@@ -49,6 +49,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
 .rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
 .rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+.rd-motivo{font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text-dim);margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
 
 .rf-legenda{display:flex;gap:16px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
 .rf-legenda-item{display:flex;align-items:center;gap:6px}
@@ -101,6 +102,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rd-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .rd-saiba-mais a{color:var(--rosa);text-decoration:underline}
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -120,12 +122,14 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <div class="rf-premio-titulo" id="rd-premio-titulo"></div>
       <div class="rf-premio-desc" id="rd-premio-desc"></div>
       <div class="rf-premio-meta" id="rd-premio-meta"></div>
+      <div class="rd-motivo" id="rd-motivo" style="display:none"></div>
     </div>
 
     <div class="rd-sucesso" id="rd-sucesso">
       <div class="rd-sucesso-titulo">✦ Números reservados! ✦</div>
       <div class="rd-sucesso-numeros" id="rd-sucesso-numeros"></div>
       <p id="rd-sucesso-texto"></p>
+      <button class="btn-rosa" id="rd-btn-talao-digital" style="width:100%;text-align:center;margin-top:10px" onclick="rdGerarTalaoDigital()">💾 Salvar meu talão digital</button>
       <button class="btn-outra" onclick="rdNovaCompra()">Comprar mais números</button>
     </div>
 
@@ -181,6 +185,8 @@ const PIX_CHAVE = 'bolhasdeluz@gmail.com';
 let rdRifa = null;
 let rdLargura = 2;
 let rdSelecionados = new Set();
+let rdUltimoNome = '';
+let rdUltimoNumeros = [];
 
 function rdFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
@@ -221,6 +227,9 @@ function rdRenderPagina() {
   const metaPartes = [`Número: ${rdFormatarPreco(r.precoPorNumero)}`];
   if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
   document.getElementById('rd-premio-meta').textContent = metaPartes.join('  ·  ');
+  const motivoEl = document.getElementById('rd-motivo');
+  if (r.motivo) { motivoEl.textContent = r.motivo; motivoEl.style.display = ''; }
+  else { motivoEl.style.display = 'none'; }
   rdRenderGrid();
   rdAtualizarBarraSelecao();
 }
@@ -340,6 +349,8 @@ async function rdConfirmar() {
     }
     rdRifa = data;
     rdSelecionados.clear();
+    rdUltimoNome = nome;
+    rdUltimoNumeros = data._reservados || [];
     document.getElementById('rd-passo-2').style.display = 'none';
     document.getElementById('rd-sucesso').style.display = 'block';
     document.getElementById('rd-sucesso-numeros').textContent = (data._reservados || []).join(' · ');
@@ -349,6 +360,66 @@ async function rdConfirmar() {
     erroEl.textContent = 'Não consegui reservar esses números — tenta de novo.'; erroEl.style.display = 'block';
   }
   btn.textContent = textoOriginal; btn.disabled = false;
+}
+
+// gera uma imagem (PNG) com os números comprados, pra pessoa guardar como
+// comprovante — mesma ideia do talão físico impresso, só que pra celular
+async function rdGerarTalaoDigital() {
+  const btn = document.getElementById('rd-btn-talao-digital');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Gerando...'; btn.disabled = true;
+  try {
+    const r = rdRifa;
+    const metaPartes = [rdFormatarPreco(r.precoPorNumero)];
+    if (r.dataSorteio) metaPartes.push(`Sorteio: ${r.dataSorteio}`);
+
+    const frame = document.createElement('div');
+    frame.style.cssText = 'width:480px;padding:28px 24px;background:#fff5f7;font-family:"DM Sans",sans-serif;color:#2e1a0e;border:2px solid #c4396b;border-radius:18px;';
+    frame.innerHTML = `
+      <div style="text-align:center;margin-bottom:16px">
+        <img src="assets/icon.png" style="width:48px;height:48px;object-fit:contain;margin-bottom:6px">
+        <div style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#c4396b;font-weight:700">✦ Terreiro Bolhas de Luz ✦</div>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;text-align:center;margin-bottom:4px">${r.titulo || ''}</div>
+      ${r.premio ? `<div style="text-align:center;color:#555;margin-bottom:4px">🎁 ${r.premio}</div>` : ''}
+      <div style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">${metaPartes.join(' · ')}</div>
+      <div style="background:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px">
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#8a6070;margin-bottom:6px">Seus números</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#c4396b">${rdUltimoNumeros.join(' · ')}</div>
+      </div>
+      <div style="font-size:.85rem;margin-bottom:4px"><b>Em nome de:</b> ${rdUltimoNome}</div>
+      ${r.motivo ? `<div style="font-size:.78rem;color:#8a6070;font-style:italic;margin-top:12px;border-top:1px dashed #c4396b;padding-top:10px">${r.motivo}</div>` : ''}
+      <div style="font-size:.7rem;color:#8a6070;text-align:center;margin-top:14px">Pagamento conferido manualmente — guarde este comprovante ✦</div>
+    `;
+    const palco = document.createElement('div');
+    palco.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    palco.appendChild(frame);
+    document.body.appendChild(palco);
+
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+
+    const canvas = await html2canvas(frame, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
+    document.body.removeChild(palco);
+
+    canvas.toBlob(async (blob) => {
+      btn.textContent = textoOriginal; btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar o talão digital. Tenta de novo.'); return; }
+      const nomeArquivo = `talao-digital-${rdUltimoNumeros.join('-')}.png`;
+      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try { await navigator.share({ files: [arquivo], title: 'Talão digital — Bolhas de Luz' }); return; }
+        catch (e) { /* cancelou o compartilhamento — cai no download abaixo */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    btn.textContent = textoOriginal; btn.disabled = false;
+    alert('Não deu pra gerar o talão digital. Tenta de novo.');
+  }
 }
 
 function rdNovaCompra() {
