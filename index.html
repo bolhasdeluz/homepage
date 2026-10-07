@@ -2767,6 +2767,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
       <button class="rf-admin-btn" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
+      <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
       <button class="rf-admin-btn" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Próximos 100 livres</button>
     </div>
@@ -2863,6 +2864,17 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div id="rf-lote100-resultado-lista" style="max-height:50vh;overflow-y:auto"></div>
       <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharLote100()">Fechar</button>
     </div>
+  </div>
+</div>
+
+<div id="rf-mensagem-overlay" class="overlay" onclick="if(event.target===this)rifaFecharMensagemLinks()">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="rifaFecharMensagemLinks()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📋 Mensagem com os links</div>
+    <p class="modal-sub">Revisa o texto e manda direto pro grupo das meninas.</p>
+    <textarea class="form-input" id="rf-mensagem-texto" style="min-height:260px;font-family:'DM Sans',sans-serif;font-size:.85rem"></textarea>
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaEnviarMensagemLinksWhats()">📱 Enviar no WhatsApp</button>
+    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:8px" onclick="rifaFecharMensagemLinks()">Fechar</button>
   </div>
 </div>
 
@@ -6758,6 +6770,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-mensagem-links').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -7311,6 +7324,49 @@ window.rifaAbrirRevisao = rifaAbrirRevisao;
 
 function rifaFecharRevisao() { document.getElementById('rf-revisao-overlay').classList.remove('open'); }
 window.rifaFecharRevisao = rifaFecharRevisao;
+
+// monta uma mensagem com o link individual de cada vendedora que ainda tem
+// número atribuído — pra mandar de uma vez só no grupo, em vez de ficar
+// copiando link por link
+function rifaGerarTextoMensagemLinks() {
+  const r = rifaAtual;
+  const porToken = {};
+  Object.values(r.numeros || {}).forEach(info => {
+    if (info && info.atribuicaoToken) porToken[info.atribuicaoToken] = (porToken[info.atribuicaoToken] || 0) + 1;
+  });
+  const vendedoras = Object.values(r.vendedores || {})
+    .filter(v => porToken[v.token])
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  let txt = `🎟️ *Rifa ${r.titulo}*\n\nMeninas, aqui está o link de cada uma pra registrar as vendas dos seus números e imprimir o talão:\n\n`;
+  if (vendedoras.length) {
+    vendedoras.forEach(v => {
+      const link = new URL('rifa-vendedor.html?token=' + encodeURIComponent(v.token), window.location.href).href;
+      txt += `• *${v.nome}*: ${link}\n`;
+    });
+  } else {
+    txt += `(ninguém com números atribuídos ainda)\n`;
+  }
+  txt += `\n✦ Terreiro Bolhas de Luz`;
+  return txt;
+}
+window.rifaGerarTextoMensagemLinks = rifaGerarTextoMensagemLinks;
+
+function rifaAbrirMensagemLinks() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-mensagem-texto').value = rifaGerarTextoMensagemLinks();
+  document.getElementById('rf-mensagem-overlay').classList.add('open');
+}
+window.rifaAbrirMensagemLinks = rifaAbrirMensagemLinks;
+
+function rifaFecharMensagemLinks() { document.getElementById('rf-mensagem-overlay').classList.remove('open'); }
+window.rifaFecharMensagemLinks = rifaFecharMensagemLinks;
+
+function rifaEnviarMensagemLinksWhats() {
+  const texto = document.getElementById('rf-mensagem-texto').value;
+  window.open('https://wa.me/?text=' + encodeURIComponent(texto), '_blank');
+}
+window.rifaEnviarMensagemLinksWhats = rifaEnviarMensagemLinksWhats;
 
 // acha o nome da vendedora responsável por um número atribuído, a partir
 // do token guardado no próprio número

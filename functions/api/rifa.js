@@ -233,7 +233,7 @@ export async function onRequest(context) {
         });
         return json({
           titulo: ativa.titulo, premio: ativa.premio, imagemPremio: ativa.imagemPremio,
-          precoPorNumero: ativa.precoPorNumero, dataSorteio: ativa.dataSorteio,
+          precoPorNumero: ativa.precoPorNumero, dataSorteio: ativa.dataSorteio, motivo: ativa.motivo || '',
           nomeVendedora: vendedora.nome, numeros,
         });
       }
