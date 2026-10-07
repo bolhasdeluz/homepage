@@ -219,15 +219,39 @@ async function rvRegistrarVenda(numero) {
   }
 }
 
-// gera o QR code (pro site do terreiro) uma única vez e guarda o data URI
-// em cache — assim não precisa gerar de novo a cada ticket do talão
+// monta o "Pix Copia e Cola" (padrão BR Code/EMV do Banco Central) a partir
+// da chave Pix do terreiro — sem valor fixo, pra poder pagar qualquer
+// quantidade de números com o mesmo QR
+const RIFA_PIX_CHAVE = 'bolhasdeluz@gmail.com';
+function rvCrc16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1);
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+function rvMontarPayloadPix() {
+  const tlv = (id, value) => `${id}${String(value.length).padStart(2, '0')}${value}`;
+  const contaMerchant = tlv('26', tlv('00', 'br.gov.bcb.pix') + tlv('01', RIFA_PIX_CHAVE));
+  const dadosAdicionais = tlv('62', tlv('05', '***'));
+  const semCrc = tlv('00', '01') + contaMerchant + tlv('52', '0000') + tlv('53', '986')
+    + tlv('58', 'BR') + tlv('59', 'BOLHAS DE LUZ') + tlv('60', 'PORTO ALEGRE') + dadosAdicionais + '6304';
+  return semCrc + rvCrc16(semCrc);
+}
+
+// gera o QR code do Pix uma única vez e guarda o data URI em cache — assim
+// não precisa gerar de novo a cada ticket do talão
 let rvQrDataURICache = null;
 function rvObterQrDataURI() {
   if (rvQrDataURICache) return rvQrDataURICache;
   const div = document.createElement('div');
   div.style.cssText = 'position:fixed;left:-9999px;top:0';
   document.body.appendChild(div);
-  new QRCode(div, { text: 'https://bolhasdeluz.ong.br', width: 120, height: 120, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+  new QRCode(div, { text: rvMontarPayloadPix(), width: 120, height: 120, colorDark: '#2e1a0e', colorLight: '#ffffff' });
   const img = div.querySelector('img');
   const canvas = div.querySelector('canvas');
   rvQrDataURICache = (img && img.src && img.src.startsWith('data:')) ? img.src : (canvas ? canvas.toDataURL('image/png') : '');
@@ -271,7 +295,7 @@ function rvImprimirTalao() {
         <div class="talao-numero">${numero}</div>
         ${r.motivo ? `<div class="talao-motivo">${r.motivo}</div>` : ''}
         <div class="talao-rodape">
-          <div class="talao-rodape-texto">📷 @bolhasdeluz<br>bolhasdeluz.ong.br</div>
+          <div class="talao-rodape-texto">💳 Pix: aponte a câmera no QR<br>📷 @bolhasdeluz · novos prêmios e resultado do sorteio no Instagram</div>
           ${qrDataURI ? `<img class="talao-qr" src="${qrDataURI}" alt="QR">` : ''}
         </div>
       </div>
