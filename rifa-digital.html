@@ -234,10 +234,9 @@ function rdRenderGrid() {
     const info = r.numeros[numero] || { status: 'livre' };
     let classe = (info.status === 'pago' || info.status === 'reservado') ? 'rf-numero-indisponivel' : '';
     if (info.status === 'livre' && rdSelecionados.has(numero)) classe += ' rf-numero-selecionado';
-    const nomeCurto = info.status !== 'livre' && info.nome ? info.nome.split(' ')[0] : '';
+    // nunca mostra o nome de quem comprou/reservou aqui — só o status
     html.push(`<div class="rf-numero ${classe}" onclick="rdClickNumero('${numero}')">
         <span>${numero}</span>
-        ${nomeCurto ? `<span class="rf-numero-nome">${nomeCurto}</span>` : ''}
       </div>`);
   }
   wrap.innerHTML = html.join('');
