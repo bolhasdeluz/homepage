@@ -9,9 +9,16 @@
 // o mesmo cabeçalho X-Admin-Password usado nos outros endpoints admin do
 // site. Reservar/cancelar um número é a única ação que uma pessoa comum
 // logada pode fazer — identificada pelo cabeçalho X-User-Email, no mesmo
-// molde do /api/perfil.
+// molde do /api/perfil. "comprar-digital-lote" é pública também (vem do
+// link paralelo rifa-digital.html, sem login nenhum).
+//
+// E-mails (Resend, precisa de env.RESEND_API_KEY — se não tiver configurado,
+// o envio é só pulado em silêncio): reservado (na hora da compra digital),
+// confirmado (quando a admin confirma pagamento de um número com e-mail) e
+// lembrete (ação "lembrar-pagamento", quando o pagamento não foi localizado).
 
 const ADMIN_PASSWORD = 'admin';
+const PIX_CHAVE = 'bolhasdeluz@gmail.com';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
@@ -21,6 +28,107 @@ const CORS = {
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: CORS });
+}
+
+// "0001, 0002 e 0003" — lista amigável de números pro corpo dos e-mails
+function listaNumeros(numeros) {
+  const lista = [...numeros];
+  if (lista.length <= 1) return lista.join('');
+  return lista.slice(0, -1).join(', ') + ' e ' + lista[lista.length - 1];
+}
+
+function fmtPrecoEmail(v) {
+  return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+}
+
+function envelopeEmail({ corTopo, titulo, corpoHtml }) {
+  return `
+    <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
+      <h2 style="font-family:Georgia,serif;color:${corTopo};margin-bottom:4px">${titulo}</h2>
+      <p style="color:#8a6070;font-size:14px;margin-bottom:20px">
+        ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+      </p>
+      ${corpoHtml}
+      <div style="margin-top:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
+        <a href="https://bolhasdeluz.ong.br" style="color:#c4396b;font-size:13px">Terreiro Bolhas de Luz →</a>
+      </div>
+    </div>`;
+}
+
+async function enviarEmailRifa(env, { paraEmail, assunto, html }) {
+  const RESEND_KEY = env.RESEND_API_KEY;
+  if (!RESEND_KEY || !paraEmail) return;
+  const resp = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
+      to: [paraEmail],
+      subject: assunto,
+      html,
+    }),
+  });
+  // roda dentro de waitUntil (não bloqueia a resposta pro cliente) — um erro
+  // aqui só aparece no log da função, nunca atrapalha quem está comprando
+  if (!resp.ok) {
+    const detalhe = await resp.text().catch(() => '');
+    console.error('rifa: Resend recusou o envio', resp.status, detalhe);
+  }
+}
+
+// e-mail enviado assim que a pessoa reserva pelo link digital — avisa que o
+// pagamento é conferido manualmente e que ela vai ser avisada quando tudo
+// estiver certo
+async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorNumero }) {
+  const total = numeros.length * Number(precoPorNumero || 0);
+  const html = envelopeEmail({
+    corTopo: '#c4396b',
+    titulo: '🎟️ Números reservados!',
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Você reservou os números da rifa <b>${titulo}</b>:</p>
+      <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15);color:#2a1a22;font-size:18px;font-weight:bold;text-align:center;margin-bottom:14px">${listaNumeros(numeros)}</div>
+      <p style="color:#2a1a22;font-size:14px;margin-bottom:14px">Total: <b>${fmtPrecoEmail(total)}</b></p>
+      <div style="padding:14px;background:rgba(196,57,107,.06);border-radius:8px;margin-bottom:14px">
+        <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Chave Pix (copia e cola)</p>
+        <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
+      </div>
+      <p style="color:#8a6070;font-size:13px;font-style:italic">O pagamento é conferido manualmente — assim que confirmarmos, você recebe um novo e-mail. Guarde esse número(s) com carinho ✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail, assunto: `🎟️ Números reservados — ${titulo}`, html });
+}
+
+// e-mail enviado quando a admin confirma o pagamento de números com
+// origem digital (tem e-mail cadastrado)
+async function enviarEmailConfirmado(env, { paraEmail, titulo, numeros }) {
+  const html = envelopeEmail({
+    corTopo: '#2a7a60',
+    titulo: '🎉 Pagamento confirmado!',
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Recebemos seu pagamento da rifa <b>${titulo}</b> — seus números já estão valendo:</p>
+      <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(42,122,96,.25);color:#2a1a22;font-size:18px;font-weight:bold;text-align:center;margin-bottom:14px">${listaNumeros(numeros)}</div>
+      <p style="color:#2a1a22;font-size:14px">Boa sorte no sorteio! ✦🍀✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail, assunto: `🎉 Pagamento confirmado — ${titulo}`, html });
+}
+
+// e-mail de lembrete — a admin não localizou o pagamento desses números
+// ainda e quer avisar quem reservou, sem mudar o status deles
+async function enviarEmailLembrete(env, { paraEmail, titulo, numeros, precoPorNumero }) {
+  const total = numeros.length * Number(precoPorNumero || 0);
+  const html = envelopeEmail({
+    corTopo: '#c88c00',
+    titulo: '⏰ Lembrete de pagamento',
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Ainda não localizamos o pagamento dos seus números reservados na rifa <b>${titulo}</b>:</p>
+      <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15);color:#2a1a22;font-size:18px;font-weight:bold;text-align:center;margin-bottom:14px">${listaNumeros(numeros)}</div>
+      <p style="color:#2a1a22;font-size:14px;margin-bottom:14px">Total: <b>${fmtPrecoEmail(total)}</b></p>
+      <div style="padding:14px;background:rgba(196,57,107,.06);border-radius:8px;margin-bottom:14px">
+        <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Chave Pix (copia e cola)</p>
+        <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
+      </div>
+      <p style="color:#8a6070;font-size:13px;font-style:italic">Se você já pagou, é só responder esse e-mail — pode ser só uma demora nossa pra conferir ✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail, assunto: `⏰ Lembrete de pagamento — ${titulo}`, html });
 }
 
 function gerarNumeros(total) {
@@ -145,27 +253,44 @@ export async function onRequest(context) {
       }
 
       // COMPRAR DIGITAL — pública, sem precisar estar logada no site (vem do
-      // link paralelo rifa-digital.html). Só funciona dentro da faixa 1 até
-      // limiteDigital — os números além dele só entram por atribuição.
-      if (acao === 'comprar-digital') {
-        const numero = String(body.numero || '');
+      // link paralelo rifa-digital.html). A pessoa escolhe só a QUANTIDADE —
+      // o sistema sorteia os números livres dentro da faixa digital (1 até
+      // limiteDigital) pra ela. Manda e-mail avisando que o pagamento vai
+      // ser conferido manualmente.
+      if (acao === 'comprar-digital-lote') {
         const nome = (body.nome || '').trim();
+        const email = (body.email || '').trim().toLowerCase();
+        const telefone = (body.telefone || '').trim();
+        const quantidade = parseInt(body.quantidade, 10) || 0;
         if (!nome) return json({ error: 'Informe seu nome.' }, 400);
-        const alvo = rifa.numeros[numero];
-        if (!alvo) return json({ error: 'Número inválido.' }, 400);
-        if (parseInt(numero, 10) > (rifa.limiteDigital || 0)) {
-          return json({ error: 'Esse número não faz parte da venda digital.' }, 400);
+        if (!email) return json({ error: 'Informe seu e-mail.' }, 400);
+        if (!quantidade || quantidade < 1) return json({ error: 'Informe quantos números você quer.' }, 400);
+        if (!rifa.limiteDigital) return json({ error: 'A venda digital não está disponível no momento.' }, 400);
+
+        const disponiveis = Object.keys(rifa.numeros).filter(numero =>
+          parseInt(numero, 10) <= rifa.limiteDigital && rifa.numeros[numero].status === 'livre'
+        );
+        if (disponiveis.length < quantidade) {
+          return json({ error: `Só restam ${disponiveis.length} número(s) disponível(is) na venda digital.` }, 409);
         }
-        if (alvo.status !== 'livre') return json({ error: 'Esse número já não está mais livre.' }, 409);
-        rifa.numeros[numero] = {
-          status: 'reservado',
-          nome,
-          telefone: (body.telefone || '').trim(),
-          origem: 'digital',
-          reservadoEm: Date.now(),
-        };
+
+        // embaralha (Fisher-Yates) e pega os primeiros "quantidade" — like um
+        // "quero N números, pode escolher pra mim"
+        for (let i = disponiveis.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [disponiveis[i], disponiveis[j]] = [disponiveis[j], disponiveis[i]];
+        }
+        const escolhidos = disponiveis.slice(0, quantidade).sort();
+        escolhidos.forEach(numero => {
+          rifa.numeros[numero] = { status: 'reservado', nome, telefone, email, origem: 'digital', reservadoEm: Date.now() };
+        });
         await KV.put(rifa.id, JSON.stringify(rifa));
-        return json(rifa);
+
+        context.waitUntil(enviarEmailReservado(env, {
+          paraEmail: email, titulo: rifa.titulo, numeros: escolhidos, precoPorNumero: rifa.precoPorNumero,
+        }));
+
+        return json({ ...rifa, _reservados: escolhidos });
       }
 
       // demais ações são só de admin
@@ -210,11 +335,15 @@ export async function onRequest(context) {
         if (!alvo || alvo.status === 'livre') return json({ error: 'Esse número não está reservado.' }, 400);
         const nome = (body.nome || '').trim();
         if (!nome) return json({ error: 'Informe o nome de quem comprou.' }, 400);
+        const emailParaAvisar = alvo.email;
         alvo.status = 'pago';
         alvo.pagoEm = Date.now();
         alvo.nome = nome;
         alvo.telefone = (body.telefone || '').trim();
         await KV.put(rifa.id, JSON.stringify(rifa));
+        if (emailParaAvisar) {
+          context.waitUntil(enviarEmailConfirmado(env, { paraEmail: emailParaAvisar, titulo: rifa.titulo, numeros: [numero] }));
+        }
         return json(rifa);
       }
 
@@ -228,9 +357,13 @@ export async function onRequest(context) {
         const telefone = (body.telefone || '').trim();
         const confirmados = [];
         const ignorados = [];
+        // agrupa por e-mail (quem reservou pelo link digital) pra mandar um
+        // e-mail só por pessoa, listando todos os números dela nesse lote
+        const porEmail = {};
         numeros.forEach(numero => {
           const alvo = rifa.numeros[numero];
           if (alvo && alvo.status !== 'pago') {
+            if (alvo.email) { (porEmail[alvo.email] ||= []).push(numero); }
             rifa.numeros[numero] = { status: 'pago', nome, telefone, pagoEm: Date.now() };
             confirmados.push(numero);
           } else {
@@ -238,7 +371,35 @@ export async function onRequest(context) {
           }
         });
         await KV.put(rifa.id, JSON.stringify(rifa));
+        Object.entries(porEmail).forEach(([emailDoComprador, numerosDoComprador]) => {
+          context.waitUntil(enviarEmailConfirmado(env, { paraEmail: emailDoComprador, titulo: rifa.titulo, numeros: numerosDoComprador }));
+        });
         return json({ ...rifa, _confirmados: confirmados, _ignorados: ignorados });
+      }
+
+      // LEMBRETE DE PAGAMENTO — a admin não localizou o pagamento desses
+      // números ainda; manda um e-mail de lembrete pra quem reservou, sem
+      // mudar o status deles (continuam "reservado")
+      if (acao === 'lembrar-pagamento') {
+        const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
+        if (!numeros.length) return json({ error: 'Informe ao menos um número.' }, 400);
+        const porEmail = {};
+        const semEmail = [];
+        numeros.forEach(numero => {
+          const alvo = rifa.numeros[numero];
+          if (!alvo || alvo.status !== 'reservado') return;
+          if (alvo.email) (porEmail[alvo.email] ||= []).push(numero);
+          else semEmail.push(numero);
+        });
+        Object.entries(porEmail).forEach(([emailDoComprador, numerosDoComprador]) => {
+          context.waitUntil(enviarEmailLembrete(env, {
+            paraEmail: emailDoComprador, titulo: rifa.titulo, numeros: numerosDoComprador, precoPorNumero: rifa.precoPorNumero,
+          }));
+        });
+        if (!Object.keys(porEmail).length) {
+          return json({ error: 'Nenhum dos números informados tem e-mail cadastrado pra avisar.' }, 400);
+        }
+        return json({ ok: true, _avisados: Object.values(porEmail).flat(), _semEmail: semEmail });
       }
 
       // AUMENTAR NÚMEROS — cresce a quantidade de números da rifa ativa sem
