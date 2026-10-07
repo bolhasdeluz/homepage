@@ -2758,6 +2758,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rm-btn-mes" id="rf-btn-lote" style="display:none" onclick="rifaToggleModoLote()">🧾 Lançar compra</button>
       <button class="rm-btn-mes" id="rf-btn-aumentar" style="display:none" onclick="rifaAbrirAumentar()">➕ Aumentar números</button>
       <button class="rm-btn-mes" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
+      <button class="rm-btn-mes" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
     </div>
 
     <div id="rf-carregando" class="cp-carregando">Carregando rifa...</div>
@@ -2825,6 +2826,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <input type="text" class="form-input" id="rf-atribuir-link" readonly style="margin-bottom:0" onclick="this.select()">
         <button class="rm-btn-mes" style="flex:0 0 auto" onclick="rifaCopiarLinkVendedora()">Copiar</button>
       </div>
+      <button class="btn-rosa" style="width:100%;text-align:center;margin-top:4px" onclick="rifaImprimirTalaoAtribuido()">🖨️ Imprimir talão desses números</button>
       <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharAtribuir()">Fechar</button>
     </div>
   </div>
@@ -2868,6 +2870,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <input type="text" class="form-input" id="rf-limite-link" readonly style="margin-bottom:0" onclick="this.select()">
       <button class="rm-btn-mes" style="flex:0 0 auto" onclick="rifaCopiarLinkDigital()">Copiar</button>
     </div>
+  </div>
+</div>
+
+<div id="rf-talao-overlay" class="overlay" onclick="if(event.target===this)rifaFecharTalao()">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="rifaFecharTalao()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🖨️ Gerar talão</div>
+    <p class="modal-sub">Imprime um talão (canhoto + ingresso) com os números da faixa escolhida — pra cortar e entregar na venda física.</p>
+    <div style="display:flex;gap:10px">
+      <div style="flex:1"><label class="form-label">De</label><input type="number" class="form-input" id="rf-talao-de" min="1"></div>
+      <div style="flex:1"><label class="form-label">Até</label><input type="number" class="form-input" id="rf-talao-ate" min="1"></div>
+    </div>
+    <p class="modal-sub" id="rf-talao-aviso" style="color:#b84040;display:none"></p>
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaGerarTalaoRange()">Gerar e imprimir</button>
   </div>
 </div>
 
@@ -6615,6 +6631,7 @@ async function rifaLoad() {
     document.getElementById('rf-btn-lote').style.display = 'none';
     document.getElementById('rf-btn-aumentar').style.display = 'none';
     document.getElementById('rf-btn-limite').style.display = 'none';
+    document.getElementById('rf-btn-talao').style.display = 'none';
     return;
   }
   document.getElementById('rf-conteudo').style.display = '';
@@ -6661,6 +6678,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-lote').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-aumentar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -6945,6 +6963,8 @@ async function rifaConfirmarAtribuicao() {
     document.getElementById('rf-atribuir-link').value = new URL('rifa-vendedor.html?token=' + encodeURIComponent(data._tokenVendedora), window.location.href).href;
     document.getElementById('rf-atribuir-form').style.display = 'none';
     document.getElementById('rf-atribuir-resultado').style.display = '';
+    rifaUltimoTalaoNumeros = data._atribuidos || [];
+    rifaUltimoTalaoNome = nome;
   } catch (e) { alert('Não consegui atribuir os números — tenta de novo.'); }
 }
 window.rifaConfirmarAtribuicao = rifaConfirmarAtribuicao;
@@ -6955,6 +6975,92 @@ function rifaCopiarLinkVendedora() {
   navigator.clipboard?.writeText(inp.value).then(() => alert('Link copiado!')).catch(() => {});
 }
 window.rifaCopiarLinkVendedora = rifaCopiarLinkVendedora;
+
+// ── TALÃO (venda física) — imprime canhoto + ingresso com os números, pra
+// cortar e entregar na hora da venda em papel ──────────────────────────
+let rifaUltimoTalaoNumeros = [];
+let rifaUltimoTalaoNome = '';
+
+function rifaAbrirTalao() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-talao-de').value = (rifaAtual.limiteDigital || 0) + 1;
+  document.getElementById('rf-talao-ate').value = rifaAtual.totalNumeros;
+  document.getElementById('rf-talao-aviso').style.display = 'none';
+  document.getElementById('rf-talao-overlay').classList.add('open');
+}
+window.rifaAbrirTalao = rifaAbrirTalao;
+
+function rifaFecharTalao() { document.getElementById('rf-talao-overlay').classList.remove('open'); }
+window.rifaFecharTalao = rifaFecharTalao;
+
+function rifaGerarTalaoRange() {
+  const de = parseInt(document.getElementById('rf-talao-de').value, 10);
+  const ate = parseInt(document.getElementById('rf-talao-ate').value, 10);
+  const avisoEl = document.getElementById('rf-talao-aviso');
+  if (!de || !ate || de > ate) { avisoEl.textContent = 'Informe um intervalo válido (De menor ou igual a Até).'; avisoEl.style.display = ''; return; }
+  if (ate - de > 500) { avisoEl.textContent = 'Intervalo grande demais pra imprimir de uma vez — tenta um intervalo menor (até 500 números).'; avisoEl.style.display = ''; return; }
+  const largura = Math.max(2, String(rifaAtual.totalNumeros).length);
+  const numeros = [];
+  for (let i = de; i <= ate; i++) numeros.push(String(i).padStart(largura, '0'));
+  rifaFecharTalao();
+  rifaImprimirTalao(numeros);
+}
+window.rifaGerarTalaoRange = rifaGerarTalaoRange;
+
+function rifaImprimirTalaoAtribuido() {
+  if (!rifaUltimoTalaoNumeros.length) return;
+  rifaImprimirTalao(rifaUltimoTalaoNumeros, rifaUltimoTalaoNome);
+}
+window.rifaImprimirTalaoAtribuido = rifaImprimirTalaoAtribuido;
+
+function rifaImprimirTalao(numeros, nomeVendedora) {
+  const r = rifaAtual;
+  const metaPartes = [rifaFormatarPreco(r.precoPorNumero)];
+  if (r.dataSorteio) metaPartes.push(`Sorteio: ${r.dataSorteio}`);
+  const meta = metaPartes.join(' · ');
+
+  const ticketsHtml = numeros.map(numero => `
+    <div class="talao-ticket">
+      <div class="talao-canhoto">
+        <div class="talao-eyebrow">Bolhas de Luz</div>
+        <div class="talao-premio">${r.premio || r.titulo}</div>
+        <div class="talao-meta">${meta}</div>
+        ${nomeVendedora ? `<div class="talao-meta">Vendedora: ${nomeVendedora}</div>` : ''}
+        <div class="talao-numero">${numero}</div>
+      </div>
+      <div class="talao-ingresso">
+        <div class="talao-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+        <div class="talao-titulo">${r.titulo}</div>
+        <div class="talao-premio">🎁 ${r.premio || ''}</div>
+        <div class="talao-meta">${meta}</div>
+        <div class="talao-numero">${numero}</div>
+      </div>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Talão — ${r.titulo}</title>
+    <style>
+      *{box-sizing:border-box}
+      body{font-family:'DM Sans',Arial,sans-serif;margin:0;padding:10px;color:#2e1a0e}
+      .talao-ticket{display:flex;border:1px solid #000;margin-bottom:5px;page-break-inside:avoid}
+      .talao-canhoto{flex:0 0 26%;padding:6px 8px;border-right:1px dashed #000;font-size:9px}
+      .talao-ingresso{flex:1;padding:8px 12px;font-size:11px}
+      .talao-eyebrow{font-size:8px;letter-spacing:.05em;text-transform:uppercase;color:#c4396b;font-weight:700;margin-bottom:2px}
+      .talao-titulo{font-size:13px;font-weight:700;margin-bottom:2px}
+      .talao-premio{font-weight:600;margin-bottom:2px}
+      .talao-meta{color:#555;margin-bottom:2px}
+      .talao-numero{font-size:20px;font-weight:800;color:#c4396b;margin-top:2px}
+      @media print{ body{padding:0} }
+    </style></head>
+    <body>${ticketsHtml}</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { alert('O navegador bloqueou a janela de impressão — permite pop-ups pra esse site.'); return; }
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
+}
+window.rifaImprimirTalao = rifaImprimirTalao;
 
 // recupera o link individual de uma vendedora a partir de um número já
 // atribuído a ela — útil quando ela perdeu o link de quando foi atribuído
