@@ -1235,12 +1235,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-dot-reservado{background:var(--amber)}
 .rf-dot-atribuido{background:#4a6fa5}
 .rf-dot-pago{background:var(--green)}
+.rf-dot-indisponivel{background:var(--text-dim)}
 .rf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:8px}
 .rf-numero{aspect-ratio:1;min-width:0;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:700;font-size:.85rem;border:1px solid var(--border);background:#fff;color:var(--text);transition:transform .15s;overflow:hidden}
 .rf-numero:hover{transform:scale(1.06)}
 .rf-numero-reservado{background:var(--amber-dim);border-color:var(--amber-border);color:var(--amber)}
 .rf-numero-atribuido{background:rgba(74,111,165,.08);border-color:rgba(74,111,165,.25);color:#4a6fa5}
 .rf-numero-pago{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
+.rf-numero-indisponivel{background:rgba(46,26,14,.06);border-color:rgba(46,26,14,.15);color:var(--text-dim)}
 .rf-numero-vencedor{background:linear-gradient(135deg,var(--rosa),var(--terra));border-color:var(--terra);color:#fff;animation:rfPulse 1.6s ease-in-out infinite}
 .rf-numero-nome{font-size:.48rem;font-weight:400;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 3px}
 @keyframes rfPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
@@ -2776,9 +2778,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
       <div class="rf-legenda">
         <span class="rf-legenda-item"><span class="rf-dot rf-dot-livre"></span> Livre</span>
-        <span class="rf-legenda-item"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
-        <span class="rf-legenda-item"><span class="rf-dot rf-dot-atribuido"></span> Atribuído</span>
-        <span class="rf-legenda-item"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+        <span class="rf-legenda-item" id="rf-legenda-reservado"><span class="rf-dot rf-dot-reservado"></span> Reservado</span>
+        <span class="rf-legenda-item" id="rf-legenda-atribuido"><span class="rf-dot rf-dot-atribuido"></span> Atribuído</span>
+        <span class="rf-legenda-item" id="rf-legenda-pago"><span class="rf-dot rf-dot-pago"></span> Pago</span>
+        <span class="rf-legenda-item" id="rf-legenda-indisponivel" style="display:none"><span class="rf-dot rf-dot-indisponivel"></span> Indisponível</span>
       </div>
 
       <div class="rf-barra-selecao" id="rf-barra-selecao">
@@ -6639,6 +6642,14 @@ function rifaRenderPagina() {
     vencedorEl.style.display = 'none';
   }
 
+  // pra quem não é admin, a legenda não distingue reservado/atribuído/pago —
+  // só mostra que esses números estão indisponíveis, sem dizer se já foi pago
+  const adminParaLegenda = rifaEhAdmin();
+  document.getElementById('rf-legenda-reservado').style.display = adminParaLegenda ? '' : 'none';
+  document.getElementById('rf-legenda-atribuido').style.display = adminParaLegenda ? '' : 'none';
+  document.getElementById('rf-legenda-pago').style.display = adminParaLegenda ? '' : 'none';
+  document.getElementById('rf-legenda-indisponivel').style.display = adminParaLegenda ? 'none' : '';
+
   rifaRenderGrid();
 
   const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago').length;
@@ -6655,11 +6666,16 @@ function rifaRenderPagina() {
 function rifaRenderGrid() {
   const wrap = document.getElementById('rf-grid');
   const r = rifaAtual;
+  const admin = rifaEhAdmin();
   const numerosOrdenados = Object.keys(r.numeros || {}).sort();
   wrap.innerHTML = numerosOrdenados.map(numero => {
     const info = r.numeros[numero];
     const ehVencedor = r.vencedor && r.vencedor.numero === numero;
-    let classe = ehVencedor ? 'rf-numero-vencedor' : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'atribuido' ? 'rf-numero-atribuido' : (info.status === 'reservado' ? 'rf-numero-reservado' : '')));
+    // pra quem não é admin, reservado/atribuído/pago aparecem todos iguais
+    // (só "indisponível") — ninguém de fora precisa saber se já foi pago
+    let classe = ehVencedor ? 'rf-numero-vencedor'
+      : (!admin && info.status !== 'livre') ? 'rf-numero-indisponivel'
+      : (info.status === 'pago' ? 'rf-numero-pago' : (info.status === 'atribuido' ? 'rf-numero-atribuido' : (info.status === 'reservado' ? 'rf-numero-reservado' : '')));
     if (rifaPodeSelecionar(info, numero)) classe += rifaSelecionados.has(numero) ? ' rf-numero-selecionado' : ' rf-numero-selecionavel';
     const nomeCurto = info.nome ? info.nome.split(' ')[0] : '';
     return `<div class="rf-numero ${classe}" onclick="rifaClickNumero('${numero}')">
@@ -6709,7 +6725,13 @@ function rifaClickNumero(numero) {
       botoes.innerHTML = `<button class="btn-rosa" onclick="rifaReservar('${numero}')">Reservar este número</button>`;
     }
   } else {
-    const statusLabel = info.status === 'pago' ? '✅ Pago' : (info.status === 'atribuido' ? '🎫 Atribuído pra vender' : '⏳ Reservado');
+    // pra quem não é admin nem a dona do número, reservado/atribuído/pago
+    // aparecem todos como "indisponível" — ninguém de fora precisa saber se
+    // já foi pago. A dona ainda vê o status da própria reserva
+    let statusLabel;
+    if (admin) statusLabel = info.status === 'pago' ? '✅ Pago' : (info.status === 'atribuido' ? '🎫 Atribuído pra vender' : '⏳ Reservado');
+    else if (dono) statusLabel = info.status === 'pago' ? '✅ Pago' : '⏳ Reservado';
+    else statusLabel = '🔒 Indisponível';
     const contato = admin ? [info.email, info.telefone].filter(Boolean).join(' · ') : '';
     sub.textContent = `${statusLabel} — ${info.nome || 'sem nome'}${contato ? ' · ' + contato : ''}`;
     if (admin && (info.status === 'reservado' || info.status === 'atribuido')) {
