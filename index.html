@@ -2759,6 +2759,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rm-btn-mes" id="rf-btn-aumentar" style="display:none" onclick="rifaAbrirAumentar()">➕ Aumentar números</button>
       <button class="rm-btn-mes" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
       <button class="rm-btn-mes" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
+      <button class="rm-btn-mes" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
+      <button class="rm-btn-mes" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Selecionar próximos 100 livres</button>
     </div>
 
     <div id="rf-carregando" class="cp-carregando">Carregando rifa...</div>
@@ -2795,7 +2797,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
       <div class="rf-grid" id="rf-grid"></div>
 
-      <button class="rm-btn-mes" id="rf-btn-sortear" style="display:none;margin-top:16px;width:100%;background:linear-gradient(135deg,#8c5a00,#c88c00)" onclick="rifaSortear()">🎲 Sortear entre os números pagos</button>
+      <div id="rf-sorteio-stats" style="display:none;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);text-align:center;margin-top:16px"></div>
+      <button class="rm-btn-mes" id="rf-btn-sortear" style="display:none;margin-top:8px;width:100%;background:linear-gradient(135deg,#8c5a00,#c88c00)" onclick="rifaSortear()">🎲 Sortear entre os números pagos</button>
     </div>
   </div>
 </div>
@@ -2815,6 +2818,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title" style="font-size:1.2rem">🎫 Atribuir números</div>
     <div id="rf-atribuir-form">
       <p class="modal-sub" id="rf-atribuir-resumo"></p>
+      <label class="form-label">Filha da casa (ativa)</label>
+      <select class="form-input" id="rf-atribuir-pessoa" onchange="rifaSelecionarPessoaAtribuir()">
+        <option value="">— Digitar nome livre (não é da casa) —</option>
+      </select>
       <label class="form-label">Pessoa responsável</label>
       <input type="text" class="form-input" id="rf-atribuir-nome" list="lista-nomes-casa" placeholder="Nome de quem vai vender">
       <button class="btn-rosa" style="width:100%;text-align:center" onclick="rifaConfirmarAtribuicao()">Confirmar atribuição</button>
@@ -2829,6 +2836,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="btn-rosa" style="width:100%;text-align:center;margin-top:4px" onclick="rifaImprimirTalaoAtribuido()">🖨️ Imprimir talão desses números</button>
       <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharAtribuir()">Fechar</button>
     </div>
+  </div>
+</div>
+
+<div id="rf-revisao-overlay" class="overlay" onclick="if(event.target===this)rifaFecharRevisao()">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="rifaFecharRevisao()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🔍 Revisar vínculos</div>
+    <p class="modal-sub">Números agrupados por pessoa (nome + e-mail/telefone) — confere se tudo bateu certinho, sem nomes duplicados por engano.</p>
+    <div id="rf-revisao-corpo" style="max-height:60vh;overflow-y:auto"></div>
+    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharRevisao()">Fechar</button>
   </div>
 </div>
 
@@ -6600,6 +6617,17 @@ const RIFA_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Passwo
 let rifaAtual = null;
 let rifaModo = null; // null | 'atribuir' | 'lote'
 let rifaSelecionados = new Set();
+let rifaAtribuirEmailSelecionado = '';
+
+// mesma lógica do backend — identifica "a mesma pessoa" entre números
+// diferentes (nome + e-mail/telefone) pro sorteio não repetir ganhador(a) e
+// pra tela de revisão agrupar os números de cada pessoa
+function rifaNormalizarNome(nome) {
+  return String(nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+function rifaChavePessoa(info) {
+  return rifaNormalizarNome(info.nome) + '|' + String(info.email || info.telefone || '').toLowerCase().trim();
+}
 
 function rifaEhAdmin() { return souAdminAtivo(window._getCurrentUser && window._getCurrentUser()); }
 function rifaUsuarioAtual() {
@@ -6651,10 +6679,13 @@ function rifaRenderPagina() {
   if (r.limiteDigital) metaPartes.push(`🔗 1–${r.limiteDigital} digital · ${r.limiteDigital+1}–${r.totalNumeros} atribuição`);
   document.getElementById('rf-premio-meta').textContent = metaPartes.join('  ·  ');
 
+  const vencedores = r.vencedores || [];
   const vencedorEl = document.getElementById('rf-vencedor');
-  if (r.vencedor) {
+  if (vencedores.length) {
     vencedorEl.style.display = '';
-    vencedorEl.innerHTML = `🎉 Número sorteado: ${r.vencedor.numero} <b>${r.vencedor.nome || r.vencedor.email || '—'}</b>`;
+    vencedorEl.innerHTML = vencedores.map((v, i) =>
+      `🎉 ${i + 1}º sorteado: número ${v.numero} <b>${v.nome || v.email || '—'}</b>`
+    ).join('<br>');
   } else {
     vencedorEl.style.display = 'none';
   }
@@ -6669,16 +6700,33 @@ function rifaRenderPagina() {
 
   rifaRenderGrid();
 
-  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago').length;
-  const btnSortear = document.getElementById('rf-btn-sortear');
-  btnSortear.style.display = (rifaEhAdmin() && !r.vencedor && pagos > 0) ? '' : 'none';
   const admin = rifaEhAdmin();
+  const todosPagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago');
+  const chavesGanhadoras = new Set(vencedores.map(rifaChavePessoa));
+  const elegiveis = todosPagos.filter(n => !chavesGanhadoras.has(rifaChavePessoa(n)));
+
+  const statsEl = document.getElementById('rf-sorteio-stats');
+  if (admin && todosPagos.length) {
+    const pessoasPagas = new Set(todosPagos.map(rifaChavePessoa)).size;
+    let texto = `${todosPagos.length} número(s) vendido(s) pra ${pessoasPagas} pessoa(s)`;
+    if (vencedores.length) texto += ` · ${vencedores.length} já sorteado(s)`;
+    statsEl.textContent = texto;
+    statsEl.style.display = '';
+  } else {
+    statsEl.style.display = 'none';
+  }
+
+  const btnSortear = document.getElementById('rf-btn-sortear');
+  btnSortear.style.display = (admin && elegiveis.length > 0) ? '' : 'none';
+  btnSortear.textContent = vencedores.length ? `🎲 Sortear o ${vencedores.length + 1}º prêmio` : '🎲 Sortear entre os números pagos';
+
   document.getElementById('rf-btn-editar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-atribuir').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-lote').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-aumentar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
 }
 
 function rifaRenderGrid() {
@@ -6688,7 +6736,7 @@ function rifaRenderGrid() {
   const numerosOrdenados = Object.keys(r.numeros || {}).sort();
   wrap.innerHTML = numerosOrdenados.map(numero => {
     const info = r.numeros[numero];
-    const ehVencedor = r.vencedor && r.vencedor.numero === numero;
+    const ehVencedor = (r.vencedores || []).some(v => v.numero === numero);
     // pra quem não é admin, reservado/atribuído/pago aparecem todos iguais
     // (só "indisponível") — ninguém de fora precisa saber se já foi pago
     let classe = ehVencedor ? 'rf-numero-vencedor'
@@ -6865,7 +6913,11 @@ window.rifaLembrarPagamento = rifaLembrarPagamento;
 
 async function rifaSortear() {
   if (!rifaEhAdmin()) return;
-  if (!confirm('Sortear um número entre os pagos? O resultado aparece na hora pra todo mundo.')) return;
+  const jaSorteados = (rifaAtual?.vencedores || []).length;
+  const msg = jaSorteados
+    ? `Sortear o ${jaSorteados + 1}º prêmio? Quem já ganhou antes fica de fora — o resultado aparece na hora pra todo mundo.`
+    : 'Sortear um número entre os pagos? O resultado aparece na hora pra todo mundo.';
+  if (!confirm(msg)) return;
   try {
     const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'sortear' }) });
     const data = await res.json();
@@ -6879,9 +6931,27 @@ window.rifaSortear = rifaSortear;
 function rifaAtualizarBotoesModo() {
   const btnAtribuir = document.getElementById('rf-btn-atribuir');
   const btnLote = document.getElementById('rf-btn-lote');
+  const btnProx100 = document.getElementById('rf-btn-proximos100');
   if (btnAtribuir) btnAtribuir.textContent = rifaModo === 'atribuir' ? '✕ Cancelar seleção' : '🎫 Atribuir números';
   if (btnLote) btnLote.textContent = rifaModo === 'lote' ? '✕ Cancelar seleção' : '🧾 Lançar compra';
+  if (btnProx100) btnProx100.style.display = (rifaEhAdmin() && rifaModo === 'atribuir') ? '' : 'none';
 }
+
+// seleciona, de uma vez, os próximos 100 números livres fora da faixa da
+// venda digital — evita ter que clicar número por número pra atribuir um
+// bloco grande a uma filha da casa
+function rifaSelecionarProximos100() {
+  if (!rifaEhAdmin() || rifaModo !== 'atribuir' || !rifaAtual) return;
+  const limite = rifaAtual.limiteDigital || 0;
+  const livres = Object.keys(rifaAtual.numeros)
+    .filter(n => rifaAtual.numeros[n].status === 'livre' && parseInt(n, 10) > limite && !rifaSelecionados.has(n))
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+  if (!livres.length) { alert('Não há mais números livres fora da venda digital pra selecionar.'); return; }
+  livres.slice(0, 100).forEach(n => rifaSelecionados.add(n));
+  rifaAtualizarBarraSelecao();
+  rifaRenderGrid();
+}
+window.rifaSelecionarProximos100 = rifaSelecionarProximos100;
 
 function rifaToggleModoAtribuir() {
   if (!rifaEhAdmin()) return;
@@ -6931,12 +7001,38 @@ function rifaAbrirAtribuir() {
   const numeros = Array.from(rifaSelecionados).sort();
   document.getElementById('rf-atribuir-resumo').textContent = `Números: ${numeros.join(', ')}`;
   document.getElementById('rf-atribuir-nome').value = '';
+  rifaAtribuirEmailSelecionado = '';
   document.getElementById('rf-atribuir-form').style.display = '';
   document.getElementById('rf-atribuir-resultado').style.display = 'none';
-  carregarListaNomesCasa();
+  carregarListaNomesCasa().then(rifaPopularSelectAtribuir);
+  rifaPopularSelectAtribuir();
   document.getElementById('rf-atribuir-overlay').classList.add('open');
 }
 window.rifaAbrirAtribuir = rifaAbrirAtribuir;
+
+// opções do seletor: só filhas da casa ativas, nos cargos já combinados com
+// a Mãe da Casa pro quadro das filhas (Curumim até Mãe da Casa, incluindo
+// Cambona e Naurú — Tamboreiro e quem não tem cargo ficam de fora)
+function rifaPopularSelectAtribuir() {
+  const sel = document.getElementById('rf-atribuir-pessoa');
+  if (!sel) return;
+  const elegiveis = (_perfisCasaCache || [])
+    .filter(p => p.nome && p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo))
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  sel.innerHTML = '<option value="">— Digitar nome livre (não é da casa) —</option>' +
+    elegiveis.map(p => `<option value="${calEsc(p.email)}">${calEsc(p.nome)}${p.cargo ? ' · ' + calEsc(p.cargo) : ''}</option>`).join('');
+  sel.value = '';
+}
+window.rifaPopularSelectAtribuir = rifaPopularSelectAtribuir;
+
+function rifaSelecionarPessoaAtribuir() {
+  const sel = document.getElementById('rf-atribuir-pessoa');
+  const email = sel.value;
+  rifaAtribuirEmailSelecionado = email;
+  const pessoa = (_perfisCasaCache || []).find(p => p.email === email);
+  document.getElementById('rf-atribuir-nome').value = pessoa ? pessoa.nome : '';
+}
+window.rifaSelecionarPessoaAtribuir = rifaSelecionarPessoaAtribuir;
 
 function rifaFecharAtribuir() { document.getElementById('rf-atribuir-overlay').classList.remove('open'); }
 window.rifaFecharAtribuir = rifaFecharAtribuir;
@@ -6945,9 +7041,10 @@ async function rifaConfirmarAtribuicao() {
   if (!rifaEhAdmin() || !rifaSelecionados.size) return;
   const nome = document.getElementById('rf-atribuir-nome').value.trim();
   if (!nome) { alert('Digite o nome da pessoa responsável.'); return; }
+  const email = rifaAtribuirEmailSelecionado || '';
   const numeros = Array.from(rifaSelecionados);
   try {
-    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'atribuir', numeros, nome }) });
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'atribuir', numeros, nome, email }) });
     const data = await res.json();
     if (!res.ok) { alert(data.error || 'Não consegui atribuir os números.'); return; }
     rifaAtual = data;
@@ -6968,6 +7065,44 @@ async function rifaConfirmarAtribuicao() {
   } catch (e) { alert('Não consegui atribuir os números — tenta de novo.'); }
 }
 window.rifaConfirmarAtribuicao = rifaConfirmarAtribuicao;
+
+// agrupa todos os números não-livres por pessoa (nome + e-mail/telefone) pra
+// admin conferir visualmente se os números de uma mesma pessoa ficaram
+// todos vinculados certinho (sem nome duplicado por erro de digitação, etc.)
+function rifaAbrirRevisao() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const grupos = {};
+  Object.entries(rifaAtual.numeros || {}).forEach(([numero, info]) => {
+    if (!info || info.status === 'livre') return;
+    const chave = rifaChavePessoa(info);
+    if (!grupos[chave]) {
+      grupos[chave] = {
+        nome: info.nome || '(sem nome)',
+        contato: [info.email, info.telefone].filter(Boolean).join(' · ') || '(sem contato)',
+        numeros: [],
+      };
+    }
+    grupos[chave].numeros.push({ numero, status: info.status });
+  });
+  const lista = Object.values(grupos).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const corpo = document.getElementById('rf-revisao-corpo');
+  if (!lista.length) {
+    corpo.innerHTML = '<p class="cal-empty">Nenhum número reservado, atribuído ou pago ainda.</p>';
+  } else {
+    corpo.innerHTML = lista.map(g => {
+      const numerosTexto = g.numeros.sort((a, b) => a.numero.localeCompare(b.numero)).map(n => `${n.numero} (${n.status})`).join(', ');
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-weight:700">${calEsc(g.nome)} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">— ${calEsc(g.contato)}</span></div>
+          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${calEsc(numerosTexto)}</div>
+        </div>`;
+    }).join('');
+  }
+  document.getElementById('rf-revisao-overlay').classList.add('open');
+}
+window.rifaAbrirRevisao = rifaAbrirRevisao;
+
+function rifaFecharRevisao() { document.getElementById('rf-revisao-overlay').classList.remove('open'); }
+window.rifaFecharRevisao = rifaFecharRevisao;
 
 function rifaCopiarLinkVendedora() {
   const inp = document.getElementById('rf-atribuir-link');

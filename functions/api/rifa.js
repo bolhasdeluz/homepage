@@ -49,6 +49,13 @@ function gerarToken() {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 }
 
+// identifica "a mesma pessoa" entre números diferentes (nome + e-mail ou
+// telefone, o que tiver) — usado pro sorteio não repetir ganhador(a) e pra
+// admin revisar se os números de uma mesma pessoa estão todos vinculados
+function chavePessoa(info) {
+  return normalizarNome(info.nome) + '|' + String(info.email || info.telefone || '').toLowerCase().trim();
+}
+
 // "0001, 0002 e 0003" — lista amigável de números pro corpo dos e-mails
 function listaNumeros(numeros) {
   const lista = [...numeros];
@@ -261,7 +268,7 @@ export async function onRequest(context) {
         dataSorteio: body.dataSorteio || '',
         status: 'ativa',
         numeros: gerarNumeros(totalNumeros),
-        vencedor: null,
+        vencedores: [],
         // do 1 até esse número, a venda é "digital" — direto no link público
         // (rifa-digital.html), sem passar pela admin. Os números depois dele
         // continuam livres pra serem atribuídos a alguém vender por fora.
@@ -433,12 +440,14 @@ export async function onRequest(context) {
       // aos números dela, pra registrar as próprias vendas sem senha de admin
       if (acao === 'atribuir') {
         const nome = (body.nome || '').trim();
+        const email = (body.email || '').trim().toLowerCase();
         const numeros = Array.isArray(body.numeros) ? body.numeros.map(String) : [];
         if (!nome || !numeros.length) return json({ error: 'Informe a pessoa responsável e ao menos um número.' }, 400);
 
         if (!rifa.vendedores) rifa.vendedores = {};
         const chave = normalizarNome(nome);
-        if (!rifa.vendedores[chave]) rifa.vendedores[chave] = { nome, token: gerarToken() };
+        if (!rifa.vendedores[chave]) rifa.vendedores[chave] = { nome, email, token: gerarToken() };
+        else if (email) rifa.vendedores[chave].email = email;
         const token = rifa.vendedores[chave].token;
 
         const atribuidos = [];
@@ -447,7 +456,7 @@ export async function onRequest(context) {
           const alvo = rifa.numeros[numero];
           const ehDigital = parseInt(numero, 10) <= (rifa.limiteDigital || 0);
           if (alvo && alvo.status === 'livre' && !ehDigital) {
-            rifa.numeros[numero] = { status: 'atribuido', nome, atribuidoEm: Date.now(), atribuicaoToken: token };
+            rifa.numeros[numero] = { status: 'atribuido', nome, email, atribuidoEm: Date.now(), atribuicaoToken: token };
             atribuidos.push(numero);
           } else {
             ignorados.push(numero);
@@ -548,8 +557,8 @@ export async function onRequest(context) {
             const novaChave = String(parseInt(k, 10)).padStart(novaLargura, '0');
             numerosAtualizados[novaChave] = rifa.numeros[k];
           });
-          if (rifa.vencedor) {
-            rifa.vencedor.numero = String(parseInt(rifa.vencedor.numero, 10)).padStart(novaLargura, '0');
+          if (Array.isArray(rifa.vencedores)) {
+            rifa.vencedores.forEach(v => { v.numero = String(parseInt(v.numero, 10)).padStart(novaLargura, '0'); });
           }
         }
         for (let i = rifa.totalNumeros + 1; i <= novoTotal; i++) {
@@ -561,11 +570,20 @@ export async function onRequest(context) {
         return json(rifa);
       }
 
+      // SORTEAR — pode ser clicado várias vezes na mesma rifa (1º prêmio, 2º
+      // prêmio...): cada sorteio novo exclui quem já ganhou antes (mesma
+      // pessoa identificada por nome + e-mail/telefone, pra não sortear duas
+      // vezes alguém que tem mais de um número pago)
       if (acao === 'sortear') {
-        const pagos = Object.entries(rifa.numeros).filter(([, v]) => v.status === 'pago');
-        if (!pagos.length) return json({ error: 'Ainda não há números pagos pra sortear.' }, 400);
-        const [numero, dados] = pagos[Math.floor(Math.random() * pagos.length)];
-        rifa.vencedor = { numero, nome: dados.nome || '', email: dados.email || '', sorteadoEm: Date.now() };
+        const vencedoresAtuais = Array.isArray(rifa.vencedores) ? rifa.vencedores : [];
+        const chavesGanhadoras = new Set(vencedoresAtuais.map(chavePessoa));
+        const todosPagos = Object.entries(rifa.numeros).filter(([, v]) => v.status === 'pago');
+        const elegiveis = todosPagos.filter(([, v]) => !chavesGanhadoras.has(chavePessoa(v)));
+        if (!todosPagos.length) return json({ error: 'Ainda não há números pagos pra sortear.' }, 400);
+        if (!elegiveis.length) return json({ error: 'Todo mundo que pagou já foi sorteado.' }, 400);
+        const [numero, dados] = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+        const vencedor = { numero, nome: dados.nome || '', email: dados.email || '', telefone: dados.telefone || '', sorteadoEm: Date.now() };
+        rifa.vencedores = [...vencedoresAtuais, vencedor];
         await KV.put(rifa.id, JSON.stringify(rifa));
         return json(rifa);
       }
