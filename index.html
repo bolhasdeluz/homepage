@@ -2773,6 +2773,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
+      <button class="rf-admin-btn" id="rf-btn-corrigir-origem" style="display:none" onclick="rifaCorrigirOrigemDigital()">🔧 Corrigir origem dos números digitais</button>
       <button class="rf-admin-btn" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Próximos 100 livres</button>
     </div>
 
@@ -6809,6 +6810,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
   document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-mensagem-links').style.display = admin ? '' : 'none';
 }
@@ -7436,6 +7438,31 @@ function rifaNomeVendedoraPorToken(token) {
   const entry = Object.values(rifaAtual.vendedores).find(v => v.token === token);
   return entry ? entry.nome : '';
 }
+
+// corrige de uma vez só a origem de todo mundo que já está pago dentro da
+// faixa digital (1 até o limite) — só esses números são alcançáveis pelo
+// link digital (atribuir bloqueia a faixa digital), então todo pago ali é
+// sempre venda digital. Serve pra consertar em lote números que ficaram
+// marcados como físico por engano (ex: confirmados antes da correção do
+// bug no "lançar compra em lote")
+async function rifaCorrigirOrigemDigital() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const limite = rifaAtual.limiteDigital || 0;
+  if (!limite) { alert('Essa rifa não tem venda digital ativa.'); return; }
+  const afetados = Object.entries(rifaAtual.numeros)
+    .filter(([numero, info]) => parseInt(numero, 10) <= limite && info.status === 'pago' && info.origem !== 'digital').length;
+  if (!afetados) { alert(`Já está tudo certo — nenhum número pago de 1 a ${limite} estava marcado como físico.`); return; }
+  if (!confirm(`${afetados} número(s) pago(s) de 1 a ${limite} vão ser marcados como venda digital. Confirma?`)) return;
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'corrigir-origem-faixa-digital' }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui corrigir.'); return; }
+    rifaAtual = data;
+    rifaRenderPagina();
+    alert(`${data._corrigidos.length} número(s) corrigido(s) pra venda digital ✦`);
+  } catch (e) { alert('Não consegui corrigir — tenta de novo.'); }
+}
+window.rifaCorrigirOrigemDigital = rifaCorrigirOrigemDigital;
 
 // exporta em CSV só os números já PAGOS (de fato vendidos), com de onde
 // vieram (digital ou atribuído/físico), quem vendeu (quando for o caso) e

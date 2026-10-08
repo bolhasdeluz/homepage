@@ -782,6 +782,25 @@ export async function onRequest(context) {
         return json(rifa);
       }
 
+      // CORRIGIR ORIGEM EM LOTE (faixa digital) — só números de 1 até o
+      // limite digital são alcançáveis pelo link público (atribuir bloqueia
+      // essa faixa, veja o "ehDigital" lá em cima), então todo número pago
+      // nessa faixa é sempre venda digital. Corrige numa tacada só quem
+      // ficou marcado como físico por engano
+      if (acao === 'corrigir-origem-faixa-digital') {
+        const limite = rifa.limiteDigital || 0;
+        if (!limite) return json({ error: 'Essa rifa não tem venda digital ativa.' }, 400);
+        const corrigidos = [];
+        Object.entries(rifa.numeros).forEach(([numero, info]) => {
+          if (parseInt(numero, 10) <= limite && info.status === 'pago' && info.origem !== 'digital') {
+            rifa.numeros[numero] = { ...info, origem: 'digital' };
+            corrigidos.push(numero);
+          }
+        });
+        if (corrigidos.length) await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ...rifa, _corrigidos: corrigidos });
+      }
+
       // LEMBRETE DE PAGAMENTO — a admin não localizou o pagamento desses
       // números ainda; manda um e-mail de lembrete pra quem reservou, sem
       // mudar o status deles (continuam "reservado")
