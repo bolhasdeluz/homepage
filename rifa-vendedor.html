@@ -69,10 +69,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rv-select-numeros{width:100%;border:1px solid var(--border);border-radius:8px;padding:6px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px}
 .rv-select-numeros option{padding:7px 6px}
 .rv-lote-campo{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px}
-.rv-lote-campo-numero{font-family:'Playfair Display',serif;font-weight:700;font-size:1.1rem;color:var(--rosa);margin-bottom:6px}
-.rv-lote-extra-tag{display:inline-block;background:var(--rosa-dim,#fdeef0);color:var(--rosa);border-radius:12px;padding:2px 8px;font-size:.75rem;font-family:'DM Sans',sans-serif;margin-left:4px}
-.rv-lote-extra-tag a{color:#b84040;text-decoration:none;margin-left:3px;font-weight:700}
-.rv-lote-extra-btn{background:none;border:none;color:var(--rosa);font-family:'DM Sans',sans-serif;font-size:.78rem;text-decoration:underline;padding:4px 0;margin-top:2px;cursor:pointer}
+.rv-lote-campo-remover{display:block;margin:8px 0 2px}
 .rv-modal-fechar{background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.8rem;width:100%;text-align:center;margin-top:10px}
 
 .rv-card-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
@@ -126,11 +123,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 <div class="rv-overlay" id="rv-lote-overlay" onclick="if(event.target===this)rvFecharLote()">
   <div class="rv-modal">
     <div class="rv-modal-titulo">📋 Lançar várias vendas</div>
-    <p class="rv-modal-sub">Role a lista e toque nos números que você já vendeu ✦</p>
-    <select multiple class="rv-select-numeros" id="rv-lote-select" size="8" onchange="rvAtualizarCamposLote()"></select>
-    <div id="rv-lote-campos"></div>
+    <p class="rv-modal-sub">Cadastre cada comprador e role a lista pra escolher os números dela(e) ✦</p>
+    <div id="rv-lote-compradores"></div>
+    <button type="button" class="btn-outra" onclick="rvAdicionarCompradorLote()">➕ Adicionar comprador</button>
     <p class="rv-erro" id="rv-lote-erro"></p>
-    <button class="btn-rosa" id="rv-lote-btn" onclick="rvRegistrarLote()">Registrar vendas selecionadas</button>
+    <button class="btn-rosa" id="rv-lote-btn" onclick="rvRegistrarLote()">Registrar vendas</button>
     <button class="rv-modal-fechar" onclick="rvFecharLote()">Cancelar</button>
   </div>
 </div>
@@ -245,18 +242,18 @@ function rvRenderPagina() {
 
 // abre o popup de lançamento em lote — lista os números pendentes num
 // select múltiplo (rola a lista e toca nos que já foram vendidos)
-// agrupa números extras sob o número "principal" de quem já está com o
-// campo de nome aberto — pra registrar vários números da mesma pessoa sem
-// digitar o nome de novo. Mapa: número principal -> array de números extras
-let rvGruposLote = {};
+// lançamento em lote: primeiro cadastra o(a) comprador(a) (nome/telefone),
+// só depois escolhe quais números são dela(e) — sem precisar pré-selecionar
+// números antes de saber quem comprou. Cada comprador é um bloco com id
+// próprio; um número escolhido por um comprador some da lista dos outros.
+let rvProximoIdComprador = 1;
+let rvCompradoresLote = [];
 
 function rvAbrirLote() {
-  const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
-  const select = document.getElementById('rv-lote-select');
-  select.innerHTML = pendentes.map(n => `<option value="${n}">${n}</option>`).join('');
-  rvGruposLote = {};
-  document.getElementById('rv-lote-campos').innerHTML = '';
+  rvProximoIdComprador = 1;
+  rvCompradoresLote = [{ id: 1 }];
   document.getElementById('rv-lote-erro').style.display = 'none';
+  rvRenderCompradoresLote();
   document.getElementById('rv-lote-overlay').classList.add('open');
 }
 
@@ -264,95 +261,70 @@ function rvFecharLote() {
   document.getElementById('rv-lote-overlay').classList.remove('open');
 }
 
-// toda vez que a seleção do select múltiplo muda, redesenha os campos de
-// nome/telefone só pros números marcados agora — preserva o que já tinha
-// sido digitado antes de redesenhar. Números que foram agrupados como
-// "extra" de outro comprador não ganham campo próprio.
-function rvAtualizarCamposLote() {
-  const select = document.getElementById('rv-lote-select');
-  const selecionados = Array.from(select.selectedOptions).map(o => o.value);
+function rvAdicionarCompradorLote() {
+  rvProximoIdComprador += 1;
+  rvCompradoresLote.push({ id: rvProximoIdComprador });
+  rvRenderCompradoresLote();
+}
+
+function rvRemoverCompradorLote(id) {
+  rvCompradoresLote = rvCompradoresLote.filter(c => c.id !== id);
+  if (!rvCompradoresLote.length) { rvAdicionarCompradorLote(); return; }
+  rvRenderCompradoresLote();
+}
+
+// redesenha todos os cartões de comprador preservando o que já foi
+// digitado/selecionado, e tira da lista de cada comprador os números que
+// outro comprador já escolheu (pra não vender o mesmo número duas vezes)
+function rvRenderCompradoresLote() {
   const valoresAtuais = {};
-  selecionados.forEach(n => {
-    valoresAtuais[n] = {
-      nome: document.getElementById(`rv-lote-nome-${n}`)?.value || '',
-      telefone: document.getElementById(`rv-lote-telefone-${n}`)?.value || '',
+  rvCompradoresLote.forEach(c => {
+    const selectEl = document.getElementById(`rv-lote-select-${c.id}`);
+    valoresAtuais[c.id] = {
+      nome: document.getElementById(`rv-lote-nome-${c.id}`)?.value || '',
+      telefone: document.getElementById(`rv-lote-telefone-${c.id}`)?.value || '',
+      numeros: selectEl ? Array.from(selectEl.selectedOptions).map(o => o.value) : [],
     };
   });
-  Object.keys(rvGruposLote).forEach(principal => {
-    if (!selecionados.includes(principal)) delete rvGruposLote[principal];
-  });
-  const todosExtras = new Set(Object.values(rvGruposLote).flat());
-  const principais = selecionados.filter(n => !todosExtras.has(n));
-  document.getElementById('rv-lote-campos').innerHTML = principais.map(numero => {
-    const extras = rvGruposLote[numero] || [];
-    const numeroLabel = numero + extras.map(e => `<span class="rv-lote-extra-tag">${e}<a href="javascript:void(0)" onclick="rvRemoverExtraLote('${numero}','${e}')">✕</a></span>`).join('');
+
+  const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
+
+  document.getElementById('rv-lote-compradores').innerHTML = rvCompradoresLote.map(c => {
+    const v = valoresAtuais[c.id] || { nome: '', telefone: '', numeros: [] };
+    const numerosDeOutros = new Set();
+    rvCompradoresLote.forEach(outro => {
+      if (outro.id !== c.id) (valoresAtuais[outro.id]?.numeros || []).forEach(n => numerosDeOutros.add(n));
+    });
+    const disponiveis = pendentes.filter(n => !numerosDeOutros.has(n));
     return `
     <div class="rv-lote-campo">
-      <div class="rv-lote-campo-numero">${numeroLabel}</div>
       <label class="form-label">Nome de quem comprou</label>
-      <input type="text" class="form-input" id="rv-lote-nome-${numero}" value="${valoresAtuais[numero]?.nome || ''}" placeholder="Nome completo">
+      <input type="text" class="form-input" id="rv-lote-nome-${c.id}" value="${v.nome}" placeholder="Nome completo">
       <label class="form-label">Telefone (opcional)</label>
-      <input type="tel" class="form-input" id="rv-lote-telefone-${numero}" value="${valoresAtuais[numero]?.telefone || ''}" placeholder="(51) 99999-9999">
-      <div id="rv-lote-extra-area-${numero}">
-        <button type="button" class="rv-lote-extra-btn" onclick="rvAbrirExtraLote('${numero}')">➕ Essa pessoa comprou outro número também</button>
-      </div>
+      <input type="tel" class="form-input" id="rv-lote-telefone-${c.id}" value="${v.telefone}" placeholder="(51) 99999-9999">
+      <label class="form-label">Quais números ela(e) comprou?</label>
+      <select multiple class="rv-select-numeros" id="rv-lote-select-${c.id}" size="6" onchange="rvRenderCompradoresLote()">
+        ${disponiveis.map(n => `<option value="${n}" ${v.numeros.includes(n) ? 'selected' : ''}>${n}</option>`).join('')}
+      </select>
+      ${rvCompradoresLote.length > 1 ? `<button type="button" class="rv-card-apagar rv-lote-campo-remover" onclick="rvRemoverCompradorLote(${c.id})">🗑️ Remover este comprador</button>` : ''}
     </div>`;
   }).join('');
 }
 
-// mostra um scroll-select pra escolher mais números da mesma pessoa, dentro
-// do próprio campo dela
-function rvAbrirExtraLote(numeroPrincipal) {
-  const todosExtras = new Set(Object.values(rvGruposLote).flat());
-  const jaNesseGrupo = new Set(rvGruposLote[numeroPrincipal] || []);
-  const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
-  const disponiveis = pendentes.filter(n => n !== numeroPrincipal && !todosExtras.has(n) && !jaNesseGrupo.has(n));
-  const area = document.getElementById(`rv-lote-extra-area-${numeroPrincipal}`);
-  if (!disponiveis.length) {
-    area.innerHTML = '<p class="rv-modal-sub" style="margin:4px 0 0">Não sobrou nenhum outro número pendente pra adicionar.</p>';
-    return;
-  }
-  area.innerHTML = `
-    <label class="form-label">Quais outros números ela(e) comprou?</label>
-    <select multiple class="rv-select-numeros" id="rv-lote-extra-select-${numeroPrincipal}" size="5">
-      ${disponiveis.map(n => `<option value="${n}">${n}</option>`).join('')}
-    </select>
-    <button type="button" class="btn-outra" onclick="rvConfirmarExtraLote('${numeroPrincipal}')">Adicionar a essa venda</button>`;
-}
-
-function rvConfirmarExtraLote(numeroPrincipal) {
-  const select = document.getElementById(`rv-lote-extra-select-${numeroPrincipal}`);
-  const escolhidos = Array.from(select.selectedOptions).map(o => o.value);
-  if (!escolhidos.length) return;
-  if (!rvGruposLote[numeroPrincipal]) rvGruposLote[numeroPrincipal] = [];
-  rvGruposLote[numeroPrincipal].push(...escolhidos);
-  rvAtualizarCamposLote();
-}
-
-function rvRemoverExtraLote(numeroPrincipal, numeroExtra) {
-  if (!rvGruposLote[numeroPrincipal]) return;
-  rvGruposLote[numeroPrincipal] = rvGruposLote[numeroPrincipal].filter(n => n !== numeroExtra);
-  rvAtualizarCamposLote();
-}
-
 async function rvRegistrarLote() {
-  const select = document.getElementById('rv-lote-select');
-  const selecionados = Array.from(select.selectedOptions).map(o => o.value);
-  const todosExtras = new Set(Object.values(rvGruposLote).flat());
-  const principais = selecionados.filter(n => !todosExtras.has(n));
   const erroEl = document.getElementById('rv-lote-erro');
   erroEl.style.display = 'none';
-  if (!principais.length) { erroEl.textContent = 'Selecione pelo menos um número.'; erroEl.style.display = 'block'; return; }
 
   const vendas = [];
-  principais.forEach(numero => {
-    const nome = (document.getElementById(`rv-lote-nome-${numero}`)?.value || '').trim();
-    const telefone = (document.getElementById(`rv-lote-telefone-${numero}`)?.value || '').trim();
-    if (!nome) return;
-    vendas.push({ numero, nome, telefone });
-    (rvGruposLote[numero] || []).forEach(extra => vendas.push({ numero: extra, nome, telefone }));
+  rvCompradoresLote.forEach(c => {
+    const nome = (document.getElementById(`rv-lote-nome-${c.id}`)?.value || '').trim();
+    const telefone = (document.getElementById(`rv-lote-telefone-${c.id}`)?.value || '').trim();
+    const selectEl = document.getElementById(`rv-lote-select-${c.id}`);
+    const numeros = selectEl ? Array.from(selectEl.selectedOptions).map(o => o.value) : [];
+    if (!nome || !numeros.length) return;
+    numeros.forEach(numero => vendas.push({ numero, nome, telefone }));
   });
-  if (!vendas.length) { erroEl.textContent = 'Preencha o nome de pelo menos um comprador.'; erroEl.style.display = 'block'; return; }
+  if (!vendas.length) { erroEl.textContent = 'Cadastre pelo menos um comprador com nome e número selecionado.'; erroEl.style.display = 'block'; return; }
 
   const btn = document.getElementById('rv-lote-btn');
   const textoOriginal = btn.textContent;
