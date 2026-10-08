@@ -574,6 +574,58 @@ export async function onRequest(context) {
         return json({ ok: true, numero });
       }
 
+      // REGISTRAR VENDAS EM LOTE (vendedora) — igual à de cima, só que pra
+      // vários números de uma vez (cada um com seu próprio nome/telefone,
+      // já que são compradores diferentes). Números sem nome preenchido são
+      // ignorados em silêncio — ela pode preencher só uma parte da lista.
+      if (acao === 'registrar-vendas-lote-atribuido') {
+        const token = body.token || '';
+        const vendas = Array.isArray(body.vendas) ? body.vendas : [];
+        if (!token) return json({ error: 'Link inválido.' }, 401);
+        if (!vendas.length) return json({ error: 'Preencha pelo menos um número.' }, 400);
+        const confirmados = [];
+        const ignorados = [];
+        vendas.forEach(({ numero, nome, telefone }) => {
+          const num = String(numero || '');
+          const nomeComprador = (nome || '').trim();
+          const alvo = rifa.numeros[num];
+          if (!nomeComprador || !alvo || alvo.atribuicaoToken !== token || alvo.status !== 'atribuido') {
+            ignorados.push(num);
+            return;
+          }
+          rifa.numeros[num] = { ...alvo, status: 'pago', nome: nomeComprador, telefone: (telefone || '').trim(), pagoEm: Date.now() };
+          confirmados.push(num);
+        });
+        if (confirmados.length) await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ok: true, confirmados, ignorados });
+      }
+
+      // DESFAZER VENDA (vendedora) — pra quando ela registrar no número
+      // errado por engano. Volta o número pra "atribuído" (do jeito que
+      // estava antes, com o nome/e-mail dela mesma, não do comprador) pra
+      // poder registrar de novo certo. Bloqueado se o número já foi
+      // sorteado, pra não bagunçar o histórico do sorteio.
+      if (acao === 'desfazer-venda-atribuido') {
+        const token = body.token || '';
+        const numero = String(body.numero || '');
+        if (!token) return json({ error: 'Link inválido.' }, 401);
+        const alvo = rifa.numeros[numero];
+        if (!alvo || alvo.atribuicaoToken !== token) return json({ error: 'Esse número não é seu.' }, 403);
+        if (alvo.status !== 'pago') return json({ error: 'Esse número ainda não foi registrado como vendido.' }, 409);
+        const jaSorteado = (rifa.vencedores || []).some(v => v.numero === numero);
+        if (jaSorteado) return json({ error: 'Esse número já foi sorteado — fale com a administração pra corrigir.' }, 409);
+        const vendedora = Object.values(rifa.vendedores || {}).find(v => v.token === token);
+        rifa.numeros[numero] = {
+          status: 'atribuido',
+          nome: vendedora ? vendedora.nome : alvo.nome,
+          email: vendedora ? vendedora.email : alvo.email,
+          atribuidoEm: alvo.atribuidoEm || Date.now(),
+          atribuicaoToken: token,
+        };
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ok: true, numero });
+      }
+
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
 
