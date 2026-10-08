@@ -70,6 +70,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rv-select-numeros option{padding:7px 6px}
 .rv-lote-campo{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px}
 .rv-lote-campo-numero{font-family:'Playfair Display',serif;font-weight:700;font-size:1.1rem;color:var(--rosa);margin-bottom:6px}
+.rv-lote-extra-tag{display:inline-block;background:var(--rosa-dim,#fdeef0);color:var(--rosa);border-radius:12px;padding:2px 8px;font-size:.75rem;font-family:'DM Sans',sans-serif;margin-left:4px}
+.rv-lote-extra-tag a{color:#b84040;text-decoration:none;margin-left:3px;font-weight:700}
+.rv-lote-extra-btn{background:none;border:none;color:var(--rosa);font-family:'DM Sans',sans-serif;font-size:.78rem;text-decoration:underline;padding:4px 0;margin-top:2px;cursor:pointer}
 .rv-modal-fechar{background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:.8rem;width:100%;text-align:center;margin-top:10px}
 
 .rv-card-form{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
@@ -242,10 +245,16 @@ function rvRenderPagina() {
 
 // abre o popup de lançamento em lote — lista os números pendentes num
 // select múltiplo (rola a lista e toca nos que já foram vendidos)
+// agrupa números extras sob o número "principal" de quem já está com o
+// campo de nome aberto — pra registrar vários números da mesma pessoa sem
+// digitar o nome de novo. Mapa: número principal -> array de números extras
+let rvGruposLote = {};
+
 function rvAbrirLote() {
   const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
   const select = document.getElementById('rv-lote-select');
   select.innerHTML = pendentes.map(n => `<option value="${n}">${n}</option>`).join('');
+  rvGruposLote = {};
   document.getElementById('rv-lote-campos').innerHTML = '';
   document.getElementById('rv-lote-erro').style.display = 'none';
   document.getElementById('rv-lote-overlay').classList.add('open');
@@ -257,7 +266,8 @@ function rvFecharLote() {
 
 // toda vez que a seleção do select múltiplo muda, redesenha os campos de
 // nome/telefone só pros números marcados agora — preserva o que já tinha
-// sido digitado antes de redesenhar
+// sido digitado antes de redesenhar. Números que foram agrupados como
+// "extra" de outro comprador não ganham campo próprio.
 function rvAtualizarCamposLote() {
   const select = document.getElementById('rv-lote-select');
   const selecionados = Array.from(select.selectedOptions).map(o => o.value);
@@ -268,28 +278,80 @@ function rvAtualizarCamposLote() {
       telefone: document.getElementById(`rv-lote-telefone-${n}`)?.value || '',
     };
   });
-  document.getElementById('rv-lote-campos').innerHTML = selecionados.map(numero => `
+  Object.keys(rvGruposLote).forEach(principal => {
+    if (!selecionados.includes(principal)) delete rvGruposLote[principal];
+  });
+  const todosExtras = new Set(Object.values(rvGruposLote).flat());
+  const principais = selecionados.filter(n => !todosExtras.has(n));
+  document.getElementById('rv-lote-campos').innerHTML = principais.map(numero => {
+    const extras = rvGruposLote[numero] || [];
+    const numeroLabel = numero + extras.map(e => `<span class="rv-lote-extra-tag">${e}<a href="javascript:void(0)" onclick="rvRemoverExtraLote('${numero}','${e}')">✕</a></span>`).join('');
+    return `
     <div class="rv-lote-campo">
-      <div class="rv-lote-campo-numero">${numero}</div>
+      <div class="rv-lote-campo-numero">${numeroLabel}</div>
       <label class="form-label">Nome de quem comprou</label>
-      <input type="text" class="form-input" id="rv-lote-nome-${numero}" value="${valoresAtuais[numero].nome}" placeholder="Nome completo">
+      <input type="text" class="form-input" id="rv-lote-nome-${numero}" value="${valoresAtuais[numero]?.nome || ''}" placeholder="Nome completo">
       <label class="form-label">Telefone (opcional)</label>
-      <input type="tel" class="form-input" id="rv-lote-telefone-${numero}" value="${valoresAtuais[numero].telefone}" placeholder="(51) 99999-9999">
-    </div>`).join('');
+      <input type="tel" class="form-input" id="rv-lote-telefone-${numero}" value="${valoresAtuais[numero]?.telefone || ''}" placeholder="(51) 99999-9999">
+      <div id="rv-lote-extra-area-${numero}">
+        <button type="button" class="rv-lote-extra-btn" onclick="rvAbrirExtraLote('${numero}')">➕ Essa pessoa comprou outro número também</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// mostra um scroll-select pra escolher mais números da mesma pessoa, dentro
+// do próprio campo dela
+function rvAbrirExtraLote(numeroPrincipal) {
+  const todosExtras = new Set(Object.values(rvGruposLote).flat());
+  const jaNesseGrupo = new Set(rvGruposLote[numeroPrincipal] || []);
+  const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
+  const disponiveis = pendentes.filter(n => n !== numeroPrincipal && !todosExtras.has(n) && !jaNesseGrupo.has(n));
+  const area = document.getElementById(`rv-lote-extra-area-${numeroPrincipal}`);
+  if (!disponiveis.length) {
+    area.innerHTML = '<p class="rv-modal-sub" style="margin:4px 0 0">Não sobrou nenhum outro número pendente pra adicionar.</p>';
+    return;
+  }
+  area.innerHTML = `
+    <label class="form-label">Quais outros números ela(e) comprou?</label>
+    <select multiple class="rv-select-numeros" id="rv-lote-extra-select-${numeroPrincipal}" size="5">
+      ${disponiveis.map(n => `<option value="${n}">${n}</option>`).join('')}
+    </select>
+    <button type="button" class="btn-outra" onclick="rvConfirmarExtraLote('${numeroPrincipal}')">Adicionar a essa venda</button>`;
+}
+
+function rvConfirmarExtraLote(numeroPrincipal) {
+  const select = document.getElementById(`rv-lote-extra-select-${numeroPrincipal}`);
+  const escolhidos = Array.from(select.selectedOptions).map(o => o.value);
+  if (!escolhidos.length) return;
+  if (!rvGruposLote[numeroPrincipal]) rvGruposLote[numeroPrincipal] = [];
+  rvGruposLote[numeroPrincipal].push(...escolhidos);
+  rvAtualizarCamposLote();
+}
+
+function rvRemoverExtraLote(numeroPrincipal, numeroExtra) {
+  if (!rvGruposLote[numeroPrincipal]) return;
+  rvGruposLote[numeroPrincipal] = rvGruposLote[numeroPrincipal].filter(n => n !== numeroExtra);
+  rvAtualizarCamposLote();
 }
 
 async function rvRegistrarLote() {
   const select = document.getElementById('rv-lote-select');
   const selecionados = Array.from(select.selectedOptions).map(o => o.value);
+  const todosExtras = new Set(Object.values(rvGruposLote).flat());
+  const principais = selecionados.filter(n => !todosExtras.has(n));
   const erroEl = document.getElementById('rv-lote-erro');
   erroEl.style.display = 'none';
-  if (!selecionados.length) { erroEl.textContent = 'Selecione pelo menos um número.'; erroEl.style.display = 'block'; return; }
+  if (!principais.length) { erroEl.textContent = 'Selecione pelo menos um número.'; erroEl.style.display = 'block'; return; }
 
-  const vendas = selecionados.map(numero => ({
-    numero,
-    nome: (document.getElementById(`rv-lote-nome-${numero}`)?.value || '').trim(),
-    telefone: (document.getElementById(`rv-lote-telefone-${numero}`)?.value || '').trim(),
-  })).filter(v => v.nome);
+  const vendas = [];
+  principais.forEach(numero => {
+    const nome = (document.getElementById(`rv-lote-nome-${numero}`)?.value || '').trim();
+    const telefone = (document.getElementById(`rv-lote-telefone-${numero}`)?.value || '').trim();
+    if (!nome) return;
+    vendas.push({ numero, nome, telefone });
+    (rvGruposLote[numero] || []).forEach(extra => vendas.push({ numero: extra, nome, telefone }));
+  });
   if (!vendas.length) { erroEl.textContent = 'Preencha o nome de pelo menos um comprador.'; erroEl.style.display = 'block'; return; }
 
   const btn = document.getElementById('rv-lote-btn');
