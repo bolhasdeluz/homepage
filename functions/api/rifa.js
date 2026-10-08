@@ -768,6 +768,20 @@ export async function onRequest(context) {
         return json({ ...rifa, _confirmados: confirmados, _ignorados: ignorados });
       }
 
+      // CORRIGIR ORIGEM — ajusta manualmente se um número pago conta como
+      // venda "digital" (link público) ou "física" (talão/atribuição) no
+      // resumo do topo. Serve pra corrigir números que ficaram com a origem
+      // errada (ex: reserva digital confirmada por engano pelo fluxo físico)
+      if (acao === 'marcar-origem') {
+        const numero = String(body.numero || '');
+        const alvo = rifa.numeros[numero];
+        if (!alvo) return json({ error: 'Número não encontrado.' }, 404);
+        if (body.origem === 'digital') alvo.origem = 'digital';
+        else delete alvo.origem;
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
       // LEMBRETE DE PAGAMENTO — a admin não localizou o pagamento desses
       // números ainda; manda um e-mail de lembrete pra quem reservou, sem
       // mudar o status deles (continuam "reservado")
