@@ -417,8 +417,14 @@ export async function onRequest(context) {
           return json({ ok: true, numeros: numerosDoPedido.map(([n]) => n), nome: infoPrimeiro.nome, ...respostaRifa });
         }
         const transactionNsu = String(body.transactionNsu || '');
-        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug, transactionNsu });
-        if (!aprovado) return json({ ok: false, debug, slug: infoPrimeiro.checkoutSlug || null, transactionNsu: transactionNsu || null });
+        // o slug que o InfinitePay manda de volta na URL (depois do
+        // pagamento) é o certo pro payment_check — diferente do token que
+        // veio na criação do link (esse é só pra abrir a página de
+        // pagamento). Usa o da volta quando disponível, com o salvo na
+        // reserva como alternativa
+        const slugDaVolta = String(body.slug || '') || infoPrimeiro.checkoutSlug;
+        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: slugDaVolta, transactionNsu });
+        if (!aprovado) return json({ ok: false, debug, slug: slugDaVolta || null, transactionNsu: transactionNsu || null });
         const numerosConfirmados = [];
         numerosDoPedido.forEach(([numero, info]) => {
           alvo.numeros[numero] = { ...info, status: 'pago', pagoEm: Date.now() };
