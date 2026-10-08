@@ -69,12 +69,12 @@ async function enviarEmailConfirmado(env, { paraEmail, titulo, numeros }) {
   await enviarEmailRifa(env, { paraEmail, assunto: `🎉 Pagamento confirmado — ${titulo}`, html });
 }
 
-async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
+async function conferirPagamentoInfinitePay({ orderNsu, slug, transactionNsu }) {
   try {
     const resp = await fetch('https://api.checkout.infinitepay.io/payment_check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined }),
+      body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined, transaction_nsu: transactionNsu || undefined }),
     });
     if (!resp.ok) {
       console.error('rifa-webhook-infinitepay: payment_check falhou', resp.status, await resp.text().catch(() => ''));
@@ -135,7 +135,7 @@ export async function onRequestPost(context) {
     }
 
     const slug = numerosDoPedido[0][1].checkoutSlug || slugWebhook;
-    const aprovado = await conferirPagamentoInfinitePay({ orderNsu, slug });
+    const aprovado = await conferirPagamentoInfinitePay({ orderNsu, slug, transactionNsu });
     if (!aprovado) return json({ ok: true }); // webhook pode chegar antes da confirmação valer no payment_check — não é erro
 
     const numerosConfirmados = [];

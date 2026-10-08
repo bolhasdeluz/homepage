@@ -218,12 +218,12 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
 // verificar-pagamento-infinitepay quando não aprova, só pra dar visibilidade
 // do que a API respondeu de verdade (esse ambiente não tem acesso aos logs
 // do Cloudflare Pages pra diagnosticar de outro jeito)
-async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
+async function conferirPagamentoInfinitePay({ orderNsu, slug, transactionNsu }) {
   try {
     const resp = await fetch('https://api.checkout.infinitepay.io/payment_check', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined }),
+      body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined, transaction_nsu: transactionNsu || undefined }),
     });
     const textoResp = await resp.text().catch(() => '');
     if (!resp.ok) {
@@ -416,8 +416,9 @@ export async function onRequest(context) {
         if (numerosDoPedido.every(([, v]) => v.status === 'pago')) {
           return json({ ok: true, numeros: numerosDoPedido.map(([n]) => n), nome: infoPrimeiro.nome, ...respostaRifa });
         }
-        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug });
-        if (!aprovado) return json({ ok: false, debug, slug: infoPrimeiro.checkoutSlug || null });
+        const transactionNsu = String(body.transactionNsu || '');
+        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug, transactionNsu });
+        if (!aprovado) return json({ ok: false, debug, slug: infoPrimeiro.checkoutSlug || null, transactionNsu: transactionNsu || null });
         const numerosConfirmados = [];
         numerosDoPedido.forEach(([numero, info]) => {
           alvo.numeros[numero] = { ...info, status: 'pago', pagoEm: Date.now() };
