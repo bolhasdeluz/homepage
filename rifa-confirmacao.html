@@ -90,6 +90,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <div class="rc-aviso-titulo">✦ Ainda conferindo ✦</div>
     <p>Se você já pagou, só um instante — às vezes a confirmação demora alguns segundos. Se preferir, tenta de novo, ou deixa que a administração confirma assim que vir o pagamento.</p>
     <button class="btn-rosa" onclick="rcVerificar(1)">Verificar de novo</button>
+    <p id="rc-pendente-debug" style="display:none;margin-top:12px;font-family:monospace;font-size:.68rem;color:var(--text-dim);word-break:break-all;text-align:left;background:rgba(0,0,0,.04);padding:8px;border-radius:6px"></p>
   </div>
 
   <div id="rc-erro" class="rc-erro" style="display:none">
@@ -128,6 +129,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 <script>
 const RIFA_API = '/api/rifa';
 let rcDados = null;
+let rcUltimoDebug = '';
 
 function rcFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
@@ -165,6 +167,10 @@ async function rcVerificar(tentativa) {
       document.getElementById('rc-erro').style.display = '';
       return;
     }
+    // guarda o motivo por trás do "ainda não aprovado" — mostrado na tela de
+    // pendente depois da última tentativa, só pra dar visibilidade (sem
+    // acesso a logs do Cloudflare Pages) do que a API do InfinitePay respondeu
+    if (data.debug) rcUltimoDebug = `slug: ${data.slug || '(nenhum)'} — ${data.debug}`;
   } catch (e) { /* tenta de novo abaixo, ou cai na tela de pendente */ }
 
   if (tentativa < 3) {
@@ -172,6 +178,9 @@ async function rcVerificar(tentativa) {
   } else {
     document.getElementById('rc-carregando').style.display = 'none';
     document.getElementById('rc-pendente').style.display = '';
+    const debugEl = document.getElementById('rc-pendente-debug');
+    if (rcUltimoDebug) { debugEl.textContent = rcUltimoDebug; debugEl.style.display = ''; }
+    else { debugEl.style.display = 'none'; }
   }
 }
 

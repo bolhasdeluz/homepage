@@ -194,7 +194,10 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
       console.error('infinitepay: resposta sem url de pagamento', textoResp);
       return { erro: `resposta sem url: ${textoResp.slice(0, 300)}` };
     }
-    return { url, slug: dados.slug || dados.id || null };
+    // se a resposta não trouxer o slug num campo separado, tira do fim da
+    // própria URL (.../bolhasdeluz/<slug>) — o payment_check depende dele
+    const slugDaUrl = url.split('/').filter(Boolean).pop();
+    return { url, slug: dados.slug || dados.id || slugDaUrl || null };
   } catch (e) {
     console.error('infinitepay: falha ao criar link', e.message);
     return { erro: e.message };
@@ -204,6 +207,10 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
 // confere no próprio InfinitePay se um pedido foi pago de verdade, antes de
 // marcar os números como pagos — nunca confia só na volta do navegador pro
 // redirect_url (dá pra forjar digitando a URL na mão)
+// devolve {aprovado, debug} — "debug" vai (truncado) pra resposta da ação
+// verificar-pagamento-infinitepay quando não aprova, só pra dar visibilidade
+// do que a API respondeu de verdade (esse ambiente não tem acesso aos logs
+// do Cloudflare Pages pra diagnosticar de outro jeito)
 async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
   try {
     const resp = await fetch('https://api.checkout.infinitepay.io/payment_check', {
@@ -211,16 +218,19 @@ async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined }),
     });
+    const textoResp = await resp.text().catch(() => '');
     if (!resp.ok) {
-      console.error('infinitepay: payment_check falhou', resp.status, await resp.text().catch(() => ''));
-      return false;
+      console.error('infinitepay: payment_check falhou', resp.status, textoResp);
+      return { aprovado: false, debug: `HTTP ${resp.status}: ${textoResp.slice(0, 300)}` };
     }
-    const dados = await resp.json();
+    let dados;
+    try { dados = JSON.parse(textoResp); } catch { dados = {}; }
     // nomes de campo defensivos — a documentação dessa API não é 100% oficial
-    return dados.paid === true || dados.is_paid === true || dados.status === 'paid' || dados.success === true;
+    const aprovado = dados.paid === true || dados.is_paid === true || dados.status === 'paid' || dados.success === true;
+    return { aprovado, debug: aprovado ? '' : textoResp.slice(0, 300) };
   } catch (e) {
     console.error('infinitepay: falha ao conferir pagamento', e.message);
-    return false;
+    return { aprovado: false, debug: e.message };
   }
 }
 
@@ -399,8 +409,8 @@ export async function onRequest(context) {
         if (numerosDoPedido.every(([, v]) => v.status === 'pago')) {
           return json({ ok: true, numeros: numerosDoPedido.map(([n]) => n), nome: infoPrimeiro.nome, ...respostaRifa });
         }
-        const aprovado = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug });
-        if (!aprovado) return json({ ok: false });
+        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug });
+        if (!aprovado) return json({ ok: false, debug, slug: infoPrimeiro.checkoutSlug || null });
         const numerosConfirmados = [];
         numerosDoPedido.forEach(([numero, info]) => {
           alvo.numeros[numero] = { ...info, status: 'pago', pagoEm: Date.now() };
