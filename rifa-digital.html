@@ -101,9 +101,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .rd-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .rd-saiba-mais a{color:var(--rosa);text-decoration:underline}
-
-.rd-pendente{background:var(--amber-dim);border-color:var(--amber-border)}
-.rd-pendente .rd-sucesso-titulo{color:var(--amber)}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -140,22 +137,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
         </div>
       </div>
       <button class="btn-rosa" id="rd-btn-talao-digital" style="width:100%;text-align:center;margin-top:10px" onclick="rdGerarTalaoDigital()">💾 Salvar meu talão digital</button>
-      <button class="btn-outra" onclick="rdNovaCompra()">Comprar mais números</button>
-    </div>
-
-    <div class="cp-carregando" id="rd-verificando" style="display:none">Confirmando seu pagamento...</div>
-
-    <div class="rd-sucesso rd-pendente" id="rd-verificando-pendente" style="display:none">
-      <div class="rd-sucesso-titulo">✦ Ainda conferindo ✦</div>
-      <p>Se você já pagou, só um instante — às vezes a confirmação demora alguns segundos. Se preferir, tenta de novo, ou deixa que a administração confirma assim que vir o Pix.</p>
-      <button class="btn-rosa" style="margin-top:14px" onclick="rdVerificarPagamentoRetorno(rdPedidoRetorno, rdRifaIdRetorno, 1)">Verificar de novo</button>
-    </div>
-
-    <div class="rd-sucesso" id="rd-confirmado" style="display:none">
-      <div class="rd-sucesso-titulo">✦ Pagamento confirmado! ✦</div>
-      <div class="rd-sucesso-numeros" id="rd-confirmado-numeros"></div>
-      <p>Seus números já estão valendo. Boa sorte no sorteio! 🍀</p>
-      <button class="btn-rosa" style="width:100%;text-align:center;margin-top:10px" onclick="rdGerarTalaoDigital()">💾 Salvar meu talão digital</button>
       <button class="btn-outra" onclick="rdNovaCompra()">Comprar mais números</button>
     </div>
 
@@ -207,8 +188,6 @@ let rdLargura = 2;
 let rdSelecionados = new Set();
 let rdUltimoNome = '';
 let rdUltimoNumeros = [];
-let rdPedidoRetorno = null;
-let rdRifaIdRetorno = null;
 
 function rdFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
@@ -376,8 +355,8 @@ async function rdConfirmar() {
 
     if (data._checkoutUrl) {
       // leva a pessoa pro checkout hospedado do InfinitePay — ela paga lá
-      // (Pix ou cartão) e volta sozinha pro rifa-digital.html, que confirma
-      // o pagamento automaticamente (ver rdVerificarPagamentoRetorno)
+      // (Pix ou cartão) e volta pra rifa-confirmacao.html, que confirma o
+      // pagamento automaticamente e mostra o talão digital dela
       btn.textContent = 'Te levando pro pagamento...';
       window.location.href = data._checkoutUrl;
       return;
@@ -460,67 +439,14 @@ async function rdGerarTalaoDigital() {
 
 function rdNovaCompra() {
   document.getElementById('rd-sucesso').style.display = 'none';
-  document.getElementById('rd-confirmado').style.display = 'none';
-  document.getElementById('rd-verificando-pendente').style.display = 'none';
   document.getElementById('rd-passo-escolha').style.display = '';
   document.getElementById('rd-nome').value = '';
   document.getElementById('rd-telefone').value = '';
   document.getElementById('rd-email').value = '';
-  // tira o ?pedido=...&rifa=... da URL — senão um F5 nessa página tentaria
-  // conferir o mesmo pedido de novo em vez de abrir a tela de escolha
-  history.replaceState(null, '', window.location.pathname);
   rdCarregar();
 }
 
-// chamada quando a pessoa volta do checkout do InfinitePay (?pedido=X&rifa=Y
-// na URL) — confere no backend (que confere no próprio InfinitePay) se o
-// pagamento foi aprovado antes de considerar os números pagos. Tenta de novo
-// algumas vezes (a confirmação pode demorar alguns segundos) antes de cair
-// numa tela de "ainda conferindo" com botão pra tentar de novo na mão
-async function rdVerificarPagamentoRetorno(pedido, rifaId, tentativa) {
-  tentativa = tentativa || 1;
-  document.getElementById('rd-carregando').style.display = 'none';
-  document.getElementById('rd-conteudo').style.display = '';
-  document.getElementById('rd-passo-escolha').style.display = 'none';
-  document.getElementById('rd-sucesso').style.display = 'none';
-  document.getElementById('rd-confirmado').style.display = 'none';
-  document.getElementById('rd-verificando-pendente').style.display = 'none';
-  document.getElementById('rd-verificando').style.display = '';
-  try {
-    const res = await fetch(RIFA_API, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId }),
-    });
-    const data = await res.json();
-    if (res.ok && data.ok) {
-      rdRifa = { titulo: data.titulo, premio: data.premio, precoPorNumero: data.precoPorNumero, dataSorteio: data.dataSorteio, motivo: data.motivo };
-      rdUltimoNome = data.nome || '';
-      rdUltimoNumeros = data.numeros || [];
-      document.getElementById('rd-verificando').style.display = 'none';
-      document.getElementById('rd-confirmado').style.display = 'block';
-      document.getElementById('rd-confirmado-numeros').textContent = rdUltimoNumeros.join(' · ');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-  } catch (e) { /* tenta de novo abaixo, ou cai na tela de pendente */ }
-
-  if (tentativa < 3) {
-    setTimeout(() => rdVerificarPagamentoRetorno(pedido, rifaId, tentativa + 1), 2500);
-  } else {
-    document.getElementById('rd-verificando').style.display = 'none';
-    document.getElementById('rd-verificando-pendente').style.display = 'block';
-  }
-}
-
-const rdUrlParams = new URLSearchParams(window.location.search);
-rdPedidoRetorno = rdUrlParams.get('pedido');
-rdRifaIdRetorno = rdUrlParams.get('rifa');
-if (rdPedidoRetorno && rdRifaIdRetorno) {
-  rdVerificarPagamentoRetorno(rdPedidoRetorno, rdRifaIdRetorno, 1);
-} else {
-  rdCarregar();
-}
+rdCarregar();
 </script>
 
 </body>
