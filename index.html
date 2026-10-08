@@ -1221,6 +1221,9 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
 /* ═══ PÁGINA RIFA ═══ */
+.rf-resumo-vendas{background:linear-gradient(135deg,rgba(196,57,107,.08),rgba(196,57,107,.03));border:1px solid rgba(196,57,107,.25);border-radius:14px;padding:14px 18px;margin-bottom:16px;text-align:center}
+.rf-resumo-principal{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--rosa)}
+.rf-resumo-detalhe{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
 .rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
 .rf-premio-img img{width:100%;display:block}
@@ -2780,6 +2783,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
 
     <div id="rf-conteudo" style="display:none">
+      <div class="rf-resumo-vendas" id="rf-resumo-vendas" style="display:none">
+        <div class="rf-resumo-principal" id="rf-resumo-principal"></div>
+        <div class="rf-resumo-detalhe" id="rf-resumo-detalhe"></div>
+      </div>
       <div class="rf-premio-frame">
         <div class="rf-premio-img" id="rf-premio-img" style="display:none"></div>
         <div class="rf-premio-titulo" id="rf-premio-titulo"></div>
@@ -6724,8 +6731,25 @@ async function rifaLoad() {
 }
 window.rifaLoad = rifaLoad;
 
+// resumo no topo da rifa: quantos números já foram vendidos, quanto já foi
+// arrecadado, e a quebra entre venda física (atribuída/talão) e digital
+// (link público) — só pra admin, mesmo critério do rf-sorteio-stats
+function rifaAtualizarResumoVendas(r) {
+  const resumoEl = document.getElementById('rf-resumo-vendas');
+  if (!rifaEhAdmin()) { resumoEl.style.display = 'none'; return; }
+  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago');
+  if (!pagos.length) { resumoEl.style.display = 'none'; return; }
+  const arrecadado = pagos.length * Number(r.precoPorNumero || 0);
+  const digital = pagos.filter(n => n.origem === 'digital').length;
+  const fisico = pagos.length - digital;
+  document.getElementById('rf-resumo-principal').textContent = `🎟️ ${pagos.length} número(s) vendido(s) · ${rifaFormatarPreco(arrecadado)} arrecadado(s)`;
+  document.getElementById('rf-resumo-detalhe').textContent = `${fisico} físico · ${digital} digital`;
+  resumoEl.style.display = '';
+}
+
 function rifaRenderPagina() {
   const r = rifaAtual;
+  rifaAtualizarResumoVendas(r);
   const imgWrap = document.getElementById('rf-premio-img');
   if (r.imagemPremio) { imgWrap.style.display = ''; imgWrap.innerHTML = `<img src="${r.imagemPremio}" alt="${r.titulo}">`; }
   else { imgWrap.style.display = 'none'; imgWrap.innerHTML = ''; }
