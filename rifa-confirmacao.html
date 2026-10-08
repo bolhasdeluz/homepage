@@ -138,6 +138,11 @@ async function rcVerificar(tentativa) {
   const params = new URLSearchParams(window.location.search);
   const pedido = params.get('pedido');
   const rifaId = params.get('rifa');
+  // o InfinitePay pode acrescentar parâmetros próprios na volta (além do
+  // ?pedido=&rifa= que a gente já manda) — tenta achar um id de transação
+  // em qualquer nome de campo plausível, e manda pro backend usar no
+  // payment_check (pode ser obrigatório lá, não só o slug)
+  const transactionNsu = params.get('transaction_nsu') || params.get('transactionNsu') || params.get('nsu') || params.get('transaction_id') || '';
 
   document.getElementById('rc-pendente').style.display = 'none';
   document.getElementById('rc-erro').style.display = 'none';
@@ -154,7 +159,7 @@ async function rcVerificar(tentativa) {
     const res = await fetch(RIFA_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId }),
+      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId, transactionNsu }),
     });
     const data = await res.json();
     if (res.ok && data.ok) {
@@ -170,7 +175,11 @@ async function rcVerificar(tentativa) {
     // guarda o motivo por trás do "ainda não aprovado" — mostrado na tela de
     // pendente depois da última tentativa, só pra dar visibilidade (sem
     // acesso a logs do Cloudflare Pages) do que a API do InfinitePay respondeu
-    if (data.debug) rcUltimoDebug = `slug: ${data.slug || '(nenhum)'} — ${data.debug}`;
+    // — inclui a query string inteira da URL, pra ver se o InfinitePay
+    // mandou algum parâmetro extra que a gente ainda não está usando
+    if (data.debug) {
+      rcUltimoDebug = `URL: ${window.location.search || '(sem parâmetros)'}\nslug: ${data.slug || '(nenhum)'}\ntransactionNsu: ${data.transactionNsu || '(nenhum)'}\nresposta: ${data.debug}`;
+    }
   } catch (e) { /* tenta de novo abaixo, ou cai na tela de pendente */ }
 
   if (tentativa < 3) {
