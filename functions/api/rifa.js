@@ -169,7 +169,7 @@ async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, ema
 // esse ambiente de desenvolvimento não consegue chamar a API de verdade pra
 // diagnosticar — é o jeito de descobrir o que aconteceu sem acesso aos logs
 // do Cloudflare Pages
-async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCentavosUnitario, redirectUrl }) {
+async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCentavosUnitario, redirectUrl, customer }) {
   try {
     const resp = await fetch('https://api.checkout.infinitepay.io/links', {
       method: 'POST',
@@ -179,6 +179,7 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
         order_nsu: orderNsu,
         redirect_url: redirectUrl,
         items: [{ quantity: quantidade, price: precoCentavosUnitario, description: descricao.slice(0, 250) }],
+        ...(customer ? { customer } : {}),
       }),
     });
     const textoResp = await resp.text().catch(() => '');
@@ -225,6 +226,14 @@ async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
 
 function gerarOrderNsu() {
   return `rifa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+// telefone em formato internacional (+55...) pro campo "customer.phone_number"
+// do InfinitePay — assume sempre número brasileiro, como o resto do site
+function formatarTelefoneE164(telefone) {
+  const digitos = String(telefone || '').replace(/\D/g, '');
+  if (!digitos) return undefined;
+  return digitos.startsWith('55') && digitos.length >= 12 ? `+${digitos}` : `+55${digitos}`;
 }
 
 // e-mail enviado quando a admin confirma o pagamento de números com
@@ -497,6 +506,9 @@ export async function onRequest(context) {
           quantidade: escolhidos.length,
           precoCentavosUnitario: Math.round(Number(rifa.precoPorNumero || 0) * 100),
           redirectUrl,
+          // pré-preenche o checkout do InfinitePay com os dados que a pessoa
+          // já digitou aqui, pra ela não precisar digitar tudo de novo lá
+          customer: { name: nome, email, phone_number: formatarTelefoneE164(telefone) },
         });
 
         escolhidos.forEach(numero => {
