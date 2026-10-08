@@ -626,6 +626,37 @@ export async function onRequest(context) {
         return json({ ok: true, numero });
       }
 
+      // MUDAR NÚMERO (vendedora) — variante do desfazer: em vez de só
+      // apagar, já move o registro (nome/telefone do comprador) pra outro
+      // número que ainda esteja livre com ela. O número errado volta pra
+      // "atribuído" (igual o desfazer), e o número certo recebe os dados
+      // de quem comprou. Mesma trava de número já sorteado.
+      if (acao === 'mudar-numero-venda-atribuido') {
+        const token = body.token || '';
+        const numeroOrigem = String(body.numeroOrigem || '');
+        const numeroDestino = String(body.numeroDestino || '');
+        if (!token) return json({ error: 'Link inválido.' }, 401);
+        const origem = rifa.numeros[numeroOrigem];
+        if (!origem || origem.atribuicaoToken !== token) return json({ error: 'Esse número não é seu.' }, 403);
+        if (origem.status !== 'pago') return json({ error: 'Esse número ainda não foi registrado como vendido.' }, 409);
+        const jaSorteado = (rifa.vencedores || []).some(v => v.numero === numeroOrigem);
+        if (jaSorteado) return json({ error: 'Esse número já foi sorteado — fale com a administração pra corrigir.' }, 409);
+        const destino = rifa.numeros[numeroDestino];
+        if (!destino || destino.atribuicaoToken !== token) return json({ error: 'O número de destino não é seu.' }, 403);
+        if (destino.status !== 'atribuido') return json({ error: 'Esse número de destino não está mais livre.' }, 409);
+        const vendedora = Object.values(rifa.vendedores || {}).find(v => v.token === token);
+        rifa.numeros[numeroDestino] = { ...destino, status: 'pago', nome: origem.nome, telefone: origem.telefone, pagoEm: Date.now() };
+        rifa.numeros[numeroOrigem] = {
+          status: 'atribuido',
+          nome: vendedora ? vendedora.nome : origem.nome,
+          email: vendedora ? vendedora.email : origem.email,
+          atribuidoEm: origem.atribuidoEm || Date.now(),
+          atribuicaoToken: token,
+        };
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json({ ok: true, numeroOrigem, numeroDestino });
+      }
+
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
 
