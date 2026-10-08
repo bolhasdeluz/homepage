@@ -24,6 +24,12 @@
 
 const ADMIN_PASSWORD = 'admin';
 const PIX_CHAVE = 'bolhasdeluz@gmail.com';
+// "InfiniteTag" da conta do terreiro no InfinitePay (sem o "$") — usado pra
+// criar o link de pagamento automático na compra digital. Diferente do
+// Mercado Pago (usado na loja Flora), o checkout do InfinitePay não pede
+// Access Token — só o handle público da conta — então não precisa de
+// nenhuma env var/secret nova no Cloudflare Pages pra isso funcionar.
+const INFINITEPAY_HANDLE = 'bolhasdeluz';
 // pra onde vai o aviso de cada reserva feita no link digital — a confirmação
 // de pagamento em si não é mais prometida por e-mail pro comprador: a admin
 // é avisada aqui e fala com a pessoa diretamente pelo WhatsApp
@@ -126,9 +132,13 @@ async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorN
 // e-mail enviado pra admin (ADMIN_NOTIFY_EMAIL) assim que alguém reserva pelo
 // link digital — como a confirmação de pagamento não é mais prometida por
 // e-mail pro comprador, é esse aviso que avisa a admin pra ela conferir o
-// Pix e falar com a pessoa pelo WhatsApp
-async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, email, precoPorNumero }) {
+// Pix e falar com a pessoa pelo WhatsApp (ou, se o link automático do
+// InfinitePay foi criado, só avisa que a confirmação deve rolar sozinha)
+async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, email, precoPorNumero, comLinkAutomatico }) {
   const total = numeros.length * Number(precoPorNumero || 0);
+  const notaRodape = comLinkAutomatico
+    ? 'Essa reserva tem link de pagamento automático (InfinitePay) — se a pessoa pagar por ele, o número confirma sozinho. Se não confirmar, confira o Pix e fala com a pessoa pelo WhatsApp ✦'
+    : 'Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦';
   const html = envelopeEmail({
     corTopo: '#c4396b',
     titulo: '🔔 Nova reserva no link digital',
@@ -141,9 +151,70 @@ async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, ema
         <p style="margin-bottom:4px"><b>Números:</b> ${listaNumeros(numeros)}</p>
         <p><b>Total:</b> ${fmtPrecoEmail(total)}</p>
       </div>
-      <p style="color:#8a6070;font-size:13px;font-style:italic">Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦</p>`,
+      <p style="color:#8a6070;font-size:13px;font-style:italic">${notaRodape}</p>`,
   });
   await enviarEmailRifa(env, { paraEmail: ADMIN_NOTIFY_EMAIL, assunto: `🔔 Nova reserva digital — ${titulo}`, html });
+}
+
+// cria um link de pagamento hospedado no InfinitePay (Pix e cartão) pro
+// total do pedido — devolve {url, slug} ou null se não der certo (a compra
+// não é bloqueada por isso: só cai no fluxo manual de sempre, mostrando a
+// chave Pix pra copiar). Não exige autenticação, só o handle público da
+// conta — ver nota em INFINITEPAY_HANDLE.
+async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCentavosUnitario, redirectUrl }) {
+  try {
+    const resp = await fetch('https://api.checkout.infinitepay.io/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        handle: INFINITEPAY_HANDLE,
+        order_nsu: orderNsu,
+        redirect_url: redirectUrl,
+        items: [{ quantity: quantidade, price: precoCentavosUnitario, description: descricao.slice(0, 250) }],
+      }),
+    });
+    if (!resp.ok) {
+      console.error('infinitepay: erro ao criar link', resp.status, await resp.text().catch(() => ''));
+      return null;
+    }
+    const dados = await resp.json();
+    const url = dados.url || dados.checkout_url || dados.payment_url || dados.link || null;
+    if (!url) {
+      console.error('infinitepay: resposta sem url de pagamento', JSON.stringify(dados));
+      return null;
+    }
+    return { url, slug: dados.slug || dados.id || null };
+  } catch (e) {
+    console.error('infinitepay: falha ao criar link', e.message);
+    return null;
+  }
+}
+
+// confere no próprio InfinitePay se um pedido foi pago de verdade, antes de
+// marcar os números como pagos — nunca confia só na volta do navegador pro
+// redirect_url (dá pra forjar digitando a URL na mão)
+async function conferirPagamentoInfinitePay({ orderNsu, slug }) {
+  try {
+    const resp = await fetch('https://api.checkout.infinitepay.io/payment_check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ handle: INFINITEPAY_HANDLE, order_nsu: orderNsu, slug: slug || undefined }),
+    });
+    if (!resp.ok) {
+      console.error('infinitepay: payment_check falhou', resp.status, await resp.text().catch(() => ''));
+      return false;
+    }
+    const dados = await resp.json();
+    // nomes de campo defensivos — a documentação dessa API não é 100% oficial
+    return dados.paid === true || dados.is_paid === true || dados.status === 'paid' || dados.success === true;
+  } catch (e) {
+    console.error('infinitepay: falha ao conferir pagamento', e.message);
+    return false;
+  }
+}
+
+function gerarOrderNsu() {
+  return `rifa-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // e-mail enviado quando a admin confirma o pagamento de números com
@@ -291,6 +362,38 @@ export async function onRequest(context) {
       const acao = body.acao;
       const userEmail = (request.headers.get('X-User-Email') || '').toLowerCase();
 
+      // VERIFICAR PAGAMENTO (InfinitePay) — pública, chamada pelo
+      // rifa-digital.html quando a pessoa volta do checkout hospedado do
+      // InfinitePay. Busca a rifa pelo id exato (não necessariamente a
+      // "ativa" — pode ter mudado entre a compra e a volta) e confere no
+      // próprio InfinitePay se o pedido foi pago antes de marcar os números
+      if (acao === 'verificar-pagamento-infinitepay') {
+        const rifaId = String(body.rifaId || '');
+        const pedidoNsu = String(body.pedido || '');
+        if (!rifaId || !pedidoNsu) return json({ error: 'Pedido inválido.' }, 400);
+        const alvo = await KV.get(rifaId, { type: 'json' });
+        if (!alvo) return json({ error: 'Rifa não encontrada.' }, 404);
+        const numerosDoPedido = Object.entries(alvo.numeros).filter(([, v]) => v.pedidoNsu === pedidoNsu);
+        if (!numerosDoPedido.length) return json({ error: 'Pedido não encontrado.' }, 404);
+        const infoPrimeiro = numerosDoPedido[0][1];
+        const respostaRifa = { titulo: alvo.titulo, premio: alvo.premio, precoPorNumero: alvo.precoPorNumero, dataSorteio: alvo.dataSorteio, motivo: alvo.motivo || '' };
+        if (numerosDoPedido.every(([, v]) => v.status === 'pago')) {
+          return json({ ok: true, numeros: numerosDoPedido.map(([n]) => n), nome: infoPrimeiro.nome, ...respostaRifa });
+        }
+        const aprovado = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: infoPrimeiro.checkoutSlug });
+        if (!aprovado) return json({ ok: false });
+        const numerosConfirmados = [];
+        numerosDoPedido.forEach(([numero, info]) => {
+          alvo.numeros[numero] = { ...info, status: 'pago', pagoEm: Date.now() };
+          numerosConfirmados.push(numero);
+        });
+        await KV.put(rifaId, JSON.stringify(alvo));
+        if (infoPrimeiro.email) {
+          context.waitUntil(enviarEmailConfirmado(env, { paraEmail: infoPrimeiro.email, titulo: alvo.titulo, numeros: numerosConfirmados }));
+        }
+        return json({ ok: true, numeros: numerosConfirmados, nome: infoPrimeiro.nome, ...respostaRifa });
+      }
+
       const rifa = await buscarAtiva(KV);
       if (!rifa) return json({ error: 'Não há rifa ativa no momento.' }, 404);
 
@@ -371,8 +474,27 @@ export async function onRequest(context) {
           escolhidos = disponiveis.slice(0, quantidade).sort();
         }
 
+        // tenta criar um link de pagamento automático (Pix/cartão) no
+        // InfinitePay pro total do pedido — se não der certo (API fora do ar,
+        // handle errado etc.), a reserva segue normalmente e cai no fluxo
+        // manual de sempre (chave Pix pra copiar, admin confere na mão)
+        const orderNsu = gerarOrderNsu();
+        const origin = new URL(request.url).origin;
+        const redirectUrl = `${origin}/rifa-digital.html?pedido=${encodeURIComponent(orderNsu)}&rifa=${encodeURIComponent(rifa.id)}`;
+        const linkPagamento = await criarLinkInfinitePay({
+          orderNsu,
+          descricao: `${rifa.titulo} — ${escolhidos.length} número(s)`,
+          quantidade: escolhidos.length,
+          precoCentavosUnitario: Math.round(Number(rifa.precoPorNumero || 0) * 100),
+          redirectUrl,
+        });
+
         escolhidos.forEach(numero => {
-          rifa.numeros[numero] = { status: 'reservado', nome, telefone, email, origem: 'digital', reservadoEm: Date.now() };
+          rifa.numeros[numero] = {
+            status: 'reservado', nome, telefone, email, origem: 'digital', reservadoEm: Date.now(),
+            pedidoNsu: orderNsu,
+            ...(linkPagamento && linkPagamento.slug ? { checkoutSlug: linkPagamento.slug } : {}),
+          };
         });
         await KV.put(rifa.id, JSON.stringify(rifa));
 
@@ -381,9 +503,10 @@ export async function onRequest(context) {
         }));
         context.waitUntil(enviarEmailAvisoAdmin(env, {
           titulo: rifa.titulo, numeros: escolhidos, nome, telefone, email, precoPorNumero: rifa.precoPorNumero,
+          comLinkAutomatico: !!linkPagamento,
         }));
 
-        return json({ ...rifa, _reservados: escolhidos });
+        return json({ ...rifa, _reservados: escolhidos, _checkoutUrl: linkPagamento ? linkPagamento.url : null });
       }
 
       // REGISTRAR VENDA (vendedora) — pública, mas só funciona com o token
