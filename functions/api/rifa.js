@@ -134,11 +134,14 @@ async function enviarEmailReservado(env, { paraEmail, titulo, numeros, precoPorN
 // e-mail pro comprador, é esse aviso que avisa a admin pra ela conferir o
 // Pix e falar com a pessoa pelo WhatsApp (ou, se o link automático do
 // InfinitePay foi criado, só avisa que a confirmação deve rolar sozinha)
-async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, email, precoPorNumero, comLinkAutomatico }) {
+async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, email, precoPorNumero, comLinkAutomatico, erroLinkAutomatico }) {
   const total = numeros.length * Number(precoPorNumero || 0);
-  const notaRodape = comLinkAutomatico
-    ? 'Essa reserva tem link de pagamento automático (InfinitePay) — se a pessoa pagar por ele, o número confirma sozinho. Se não confirmar, confira o Pix e fala com a pessoa pelo WhatsApp ✦'
-    : 'Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦';
+  let notaRodape = 'Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦';
+  if (comLinkAutomatico) {
+    notaRodape = 'Essa reserva tem link de pagamento automático (InfinitePay) — se a pessoa pagar por ele, o número confirma sozinho. Se não confirmar, confira o Pix e fala com a pessoa pelo WhatsApp ✦';
+  } else if (erroLinkAutomatico) {
+    notaRodape = `Não deu pra criar o link automático do InfinitePay dessa vez (${erroLinkAutomatico}) — confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦`;
+  }
   const html = envelopeEmail({
     corTopo: '#c4396b',
     titulo: '🔔 Nova reserva no link digital',
@@ -161,6 +164,11 @@ async function enviarEmailAvisoAdmin(env, { titulo, numeros, nome, telefone, ema
 // não é bloqueada por isso: só cai no fluxo manual de sempre, mostrando a
 // chave Pix pra copiar). Não exige autenticação, só o handle público da
 // conta — ver nota em INFINITEPAY_HANDLE.
+// devolve {url, slug} se der certo, ou {erro: '...'} se não — o "erro" vai
+// pro e-mail de aviso da admin (não aparece pra quem está comprando), já que
+// esse ambiente de desenvolvimento não consegue chamar a API de verdade pra
+// diagnosticar — é o jeito de descobrir o que aconteceu sem acesso aos logs
+// do Cloudflare Pages
 async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCentavosUnitario, redirectUrl }) {
   try {
     const resp = await fetch('https://api.checkout.infinitepay.io/links', {
@@ -173,20 +181,22 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
         items: [{ quantity: quantidade, price: precoCentavosUnitario, description: descricao.slice(0, 250) }],
       }),
     });
+    const textoResp = await resp.text().catch(() => '');
     if (!resp.ok) {
-      console.error('infinitepay: erro ao criar link', resp.status, await resp.text().catch(() => ''));
-      return null;
+      console.error('infinitepay: erro ao criar link', resp.status, textoResp);
+      return { erro: `HTTP ${resp.status}: ${textoResp.slice(0, 300)}` };
     }
-    const dados = await resp.json();
+    let dados;
+    try { dados = JSON.parse(textoResp); } catch { dados = {}; }
     const url = dados.url || dados.checkout_url || dados.payment_url || dados.link || null;
     if (!url) {
-      console.error('infinitepay: resposta sem url de pagamento', JSON.stringify(dados));
-      return null;
+      console.error('infinitepay: resposta sem url de pagamento', textoResp);
+      return { erro: `resposta sem url: ${textoResp.slice(0, 300)}` };
     }
     return { url, slug: dados.slug || dados.id || null };
   } catch (e) {
     console.error('infinitepay: falha ao criar link', e.message);
-    return null;
+    return { erro: e.message };
   }
 }
 
@@ -503,10 +513,10 @@ export async function onRequest(context) {
         }));
         context.waitUntil(enviarEmailAvisoAdmin(env, {
           titulo: rifa.titulo, numeros: escolhidos, nome, telefone, email, precoPorNumero: rifa.precoPorNumero,
-          comLinkAutomatico: !!linkPagamento,
+          comLinkAutomatico: !!linkPagamento.url, erroLinkAutomatico: linkPagamento.erro,
         }));
 
-        return json({ ...rifa, _reservados: escolhidos, _checkoutUrl: linkPagamento ? linkPagamento.url : null });
+        return json({ ...rifa, _reservados: escolhidos, _checkoutUrl: linkPagamento.url || null });
       }
 
       // REGISTRAR VENDA (vendedora) — pública, mas só funciona com o token
