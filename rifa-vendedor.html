@@ -132,6 +132,21 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 </div>
 
+<div class="rv-overlay" id="rv-corrigir-overlay" onclick="if(event.target===this)rvFecharCorrigir()">
+  <div class="rv-modal">
+    <div class="rv-modal-titulo">Número <span id="rv-corrigir-numero"></span></div>
+    <p class="rv-modal-sub">O que você quer fazer com esse registro?</p>
+    <button class="btn-outra" style="color:#b84040;border-color:rgba(184,64,64,.3)" onclick="rvConfirmarApagar()">🗑️ Apagar (volta pra pendente)</button>
+    <div class="rv-lote-campo">
+      <label class="form-label">Ou mude pra outro número que ainda está com você</label>
+      <select class="rv-select-numeros" id="rv-corrigir-select" size="6"></select>
+      <button class="btn-rosa" onclick="rvMudarNumero()">Confirmar troca pra esse número</button>
+    </div>
+    <p class="rv-erro" id="rv-corrigir-erro"></p>
+    <button class="rv-modal-fechar" onclick="rvFecharCorrigir()">Cancelar</button>
+  </div>
+</div>
+
 <script>
 const RIFA_API = '/api/rifa';
 const token = new URLSearchParams(window.location.search).get('token') || '';
@@ -204,7 +219,7 @@ function rvRenderPagina() {
           </div>
           <span class="rv-card-status vendido">✓ Vendido</span>
         </div>
-        <button class="rv-card-apagar" onclick="rvDesfazerVenda('${numero}')">🗑️ Registrei no número errado — apagar</button>
+        <button class="rv-card-apagar" onclick="rvAbrirCorrigir('${numero}')">🗑️ Registrei no número errado — apagar ou mudar</button>
       </div>`;
     }
 
@@ -297,10 +312,28 @@ async function rvRegistrarLote() {
   }
 }
 
-// desfaz um registro de venda feito no número errado — volta o número pra
-// "pendente" (com o nome da própria vendedora, igual tava antes) pra ela
-// poder registrar de novo no número certo
-async function rvDesfazerVenda(numero) {
+// abre o popup de corrigir um registro feito no número errado — dá pra
+// apagar (volta pra pendente) ou já mudar direto pra outro número livre
+// dela, sem precisar apagar e registrar nos dois
+let rvNumeroCorrigindo = null;
+
+function rvAbrirCorrigir(numero) {
+  rvNumeroCorrigindo = numero;
+  document.getElementById('rv-corrigir-numero').textContent = numero;
+  document.getElementById('rv-corrigir-erro').style.display = 'none';
+  const pendentes = Object.keys(rvDados.numeros).filter(n => rvDados.numeros[n].status === 'atribuido').sort();
+  document.getElementById('rv-corrigir-select').innerHTML = pendentes.map(n => `<option value="${n}">${n}</option>`).join('');
+  document.getElementById('rv-corrigir-overlay').classList.add('open');
+}
+
+function rvFecharCorrigir() {
+  document.getElementById('rv-corrigir-overlay').classList.remove('open');
+  rvNumeroCorrigindo = null;
+}
+
+async function rvConfirmarApagar() {
+  const numero = rvNumeroCorrigindo;
+  if (!numero) return;
   if (!confirm(`Apagar o registro do número ${numero}? Ele volta pra "pendente" e você pode registrar de novo certinho.`)) return;
   try {
     const res = await fetch(RIFA_API, {
@@ -310,9 +343,32 @@ async function rvDesfazerVenda(numero) {
     });
     const data = await res.json();
     if (!res.ok) { alert(data.error || 'Não consegui apagar esse registro.'); return; }
+    rvFecharCorrigir();
     await rvCarregar();
   } catch (e) {
     alert('Não consegui apagar esse registro — tenta de novo.');
+  }
+}
+
+async function rvMudarNumero() {
+  const numeroOrigem = rvNumeroCorrigindo;
+  const numeroDestino = document.getElementById('rv-corrigir-select').value;
+  const erroEl = document.getElementById('rv-corrigir-erro');
+  erroEl.style.display = 'none';
+  if (!numeroOrigem) return;
+  if (!numeroDestino) { erroEl.textContent = 'Selecione o número de destino.'; erroEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'mudar-numero-venda-atribuido', token, numeroOrigem, numeroDestino }),
+    });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui mudar esse registro de número.'; erroEl.style.display = 'block'; return; }
+    rvFecharCorrigir();
+    await rvCarregar();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui mudar esse registro de número — tenta de novo.'; erroEl.style.display = 'block';
   }
 }
 
