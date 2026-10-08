@@ -258,6 +258,7 @@ footer{
 }
 .footer-logo{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.1em;margin-bottom:2px}
 .footer-sub{font-family:'Crimson Pro',serif;font-size:.72rem;color:rgba(255,255,255,.3);font-style:italic}
+.footer-versao{font-family:'DM Sans',sans-serif;font-size:.55rem;color:rgba(255,255,255,.18);margin-top:2px}
 
 @media(max-width:500px){
   .widgets-grid{grid-template-columns:1fr 1fr}
@@ -4783,11 +4784,21 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <footer>
   <div class="footer-logo">Terreiro Bolhas de Luz</div>
   <div class="footer-sub">Porto Alegre, RS · Umbanda & Quimbanda</div>
+  <div class="footer-versao" id="footer-versao"></div>
 </footer>
 
 <script>
 // ── CONFIG ──
 const API = '/api/menu';
+
+// mostra o hash do commit rodando de verdade nessa Function, bem discreto no
+// rodapé — serve só pra conferir se um deploy já propagou (compara com o
+// hash do commit mais recente no GitHub), sem precisar abrir o painel do
+// Cloudflare. Se não vier (versao.js ainda não foi deployado, por exemplo),
+// o rodapé continua igual, sem o texto
+fetch('/api/versao').then(r => r.ok ? r.json() : null).then(dados => {
+  if (dados && dados.sha) document.getElementById('footer-versao').textContent = `v. ${dados.sha.slice(0, 7)}`;
+}).catch(() => {});
 // login de admin por senha, sem precisar do Google — a senha em si só existe
 // no servidor (variável de ambiente), o cliente só guarda "entrou ou não"
 let adminSenhaAtiva = localStorage.getItem('adminSenhaAtiva') === '1';
