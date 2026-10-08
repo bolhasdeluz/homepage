@@ -194,9 +194,16 @@ async function criarLinkInfinitePay({ orderNsu, descricao, quantidade, precoCent
       console.error('infinitepay: resposta sem url de pagamento', textoResp);
       return { erro: `resposta sem url: ${textoResp.slice(0, 300)}` };
     }
-    // se a resposta não trouxer o slug num campo separado, tira do fim da
-    // própria URL (.../bolhasdeluz/<slug>) — o payment_check depende dele
-    const slugDaUrl = url.split('/').filter(Boolean).pop();
+    // se a resposta não trouxer o slug num campo separado, tira da própria
+    // URL — o link criado pela API vem como .../bolhasdeluz?lenc=<token>
+    // (token vai no parâmetro "lenc", não no caminho), mas um link criado
+    // manualmente pelo app vem como .../bolhasdeluz/<slug> (no caminho) —
+    // tenta os dois formatos. O payment_check depende desse valor.
+    let slugDaUrl = null;
+    try {
+      const urlObj = new URL(url);
+      slugDaUrl = urlObj.searchParams.get('lenc') || urlObj.pathname.split('/').filter(Boolean).pop() || null;
+    } catch { /* url inválida — slugDaUrl continua null */ }
     return { url, slug: dados.slug || dados.id || slugDaUrl || null };
   } catch (e) {
     console.error('infinitepay: falha ao criar link', e.message);
