@@ -17,5 +17,9 @@ export async function onRequestGet(context) {
   return new Response(JSON.stringify({
     sha: env.CF_PAGES_COMMIT_SHA || null,
     branch: env.CF_PAGES_BRANCH || null,
+    // horário do servidor na hora dessa chamada (não é o horário do deploy
+    // em si, o Cloudflare não expõe isso) — serve pra confirmar que a
+    // resposta é "ao vivo" e não veio de algum cache
+    horario: Date.now(),
   }), { headers: CORS });
 }
