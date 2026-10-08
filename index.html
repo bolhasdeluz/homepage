@@ -7023,9 +7023,23 @@ async function rifaSortear() {
   if (!rifaEhAdmin()) return;
   const jaSorteados = (rifaAtual?.vencedores || []).length;
   const msg = jaSorteados
-    ? `Sortear o ${jaSorteados + 1}º prêmio? Quem já ganhou antes fica de fora — o resultado aparece na hora pra todo mundo.`
-    : 'Sortear um número entre os pagos? O resultado aparece na hora pra todo mundo.';
+    ? `Sortear o ${jaSorteados + 1}º prêmio? Essa ação é definitiva e o resultado aparece na hora pra todo mundo. Confirma?`
+    : 'Sortear um número entre os pagos? Essa ação é definitiva e o resultado aparece na hora pra todo mundo. Confirma?';
   if (!confirm(msg)) return;
+
+  // trava extra pra não disparar um sorteio sem querer (ex: alguém mais
+  // mexendo no celular já logado) — exige confirmar de novo com o Google de
+  // admin bem na hora, mesmo que já exista uma sessão ativa
+  if (!window.loginGoogle) { alert('A página ainda está carregando — espera um instante e tenta de novo.'); return; }
+  await window.loginGoogle();
+  let usuarioConfirmado = null;
+  for (let i = 0; i < 10 && !usuarioConfirmado; i++) {
+    const u = window._getCurrentUser && window._getCurrentUser();
+    if (u && isEmailAdmin(u.email)) usuarioConfirmado = u;
+    else await new Promise(r => setTimeout(r, 300));
+  }
+  if (!usuarioConfirmado) { alert('Não consegui confirmar o login do Google de admin — o sorteio não foi feito.'); return; }
+
   try {
     const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'sortear' }) });
     const data = await res.json();
