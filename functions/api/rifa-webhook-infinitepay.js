@@ -134,7 +134,10 @@ export async function onRequestPost(context) {
       return json({ ok: true }); // idempotente — já tinha sido confirmado antes (pelo retorno do navegador, por exemplo)
     }
 
-    const slug = numerosDoPedido[0][1].checkoutSlug || slugWebhook;
+    // o slug que o próprio webhook manda é o "certo" pro payment_check —
+    // diferente do token comprido guardado na criação do link, que serve só
+    // pra abrir a página de pagamento (ver mesmo ajuste em rifa.js)
+    const slug = slugWebhook || numerosDoPedido[0][1].checkoutSlug;
     const aprovado = await conferirPagamentoInfinitePay({ orderNsu, slug, transactionNsu });
     if (!aprovado) return json({ ok: true }); // webhook pode chegar antes da confirmação valer no payment_check — não é erro
 

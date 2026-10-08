@@ -138,11 +138,12 @@ async function rcVerificar(tentativa) {
   const params = new URLSearchParams(window.location.search);
   const pedido = params.get('pedido');
   const rifaId = params.get('rifa');
-  // o InfinitePay pode acrescentar parâmetros próprios na volta (além do
-  // ?pedido=&rifa= que a gente já manda) — tenta achar um id de transação
-  // em qualquer nome de campo plausível, e manda pro backend usar no
-  // payment_check (pode ser obrigatório lá, não só o slug)
+  // o InfinitePay acrescenta parâmetros próprios na volta (além do
+  // ?pedido=&rifa= que a gente já manda) — entre eles, um "slug" curto que
+  // é o valor certo pro payment_check (diferente do token comprido que
+  // volta na criação do link, que serve só pra abrir a página de pagamento)
   const transactionNsu = params.get('transaction_nsu') || params.get('transactionNsu') || params.get('nsu') || params.get('transaction_id') || '';
+  const slugDaVolta = params.get('slug') || '';
 
   document.getElementById('rc-pendente').style.display = 'none';
   document.getElementById('rc-erro').style.display = 'none';
@@ -159,7 +160,7 @@ async function rcVerificar(tentativa) {
     const res = await fetch(RIFA_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId, transactionNsu }),
+      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId, transactionNsu, slug: slugDaVolta }),
     });
     const data = await res.json();
     if (res.ok && data.ok) {
