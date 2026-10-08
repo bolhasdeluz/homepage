@@ -6893,6 +6893,10 @@ function rifaClickNumero(numero) {
     if (admin && info.status === 'atribuido' && info.atribuicaoToken) {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaVerLinkVendedora('${info.atribuicaoToken}')">🔗 Ver link da vendedora</button>`;
     }
+    if (admin && info.status === 'pago') {
+      const ehDigital = info.origem === 'digital';
+      botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaAlternarOrigem('${numero}')">${ehDigital ? '🏠 Marcar como venda física' : '🔗 Marcar como venda digital'}</button>`;
+    }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
     }
@@ -6994,6 +6998,23 @@ async function rifaLembrarPagamento(numero) {
   } catch (e) { alert('Não consegui mandar o lembrete — tenta de novo.'); }
 }
 window.rifaLembrarPagamento = rifaLembrarPagamento;
+
+// corrige manualmente se um número pago conta como venda digital ou física
+// no resumo do topo — pra consertar números que ficaram com a origem errada
+async function rifaAlternarOrigem(numero) {
+  if (!rifaEhAdmin()) return;
+  const info = rifaAtual.numeros[numero];
+  const novaOrigem = info.origem === 'digital' ? '' : 'digital';
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'marcar-origem', numero, origem: novaOrigem }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui atualizar a origem.'); return; }
+    rifaAtual = data;
+    rifaRenderPagina();
+    rifaClickNumero(numero);
+  } catch (e) { alert('Não consegui atualizar a origem — tenta de novo.'); }
+}
+window.rifaAlternarOrigem = rifaAlternarOrigem;
 
 async function rifaSortear() {
   if (!rifaEhAdmin()) return;
