@@ -1221,9 +1221,15 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rm-vazio-secao{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;text-align:center;padding:6px 0;grid-column:1/-1}
 
 /* ═══ PÁGINA RIFA ═══ */
-.rf-resumo-vendas{background:linear-gradient(135deg,rgba(196,57,107,.08),rgba(196,57,107,.03));border:1px solid rgba(196,57,107,.25);border-radius:14px;padding:14px 18px;margin-bottom:16px;text-align:center}
+.rf-resumo-vendas{background:linear-gradient(135deg,rgba(196,57,107,.08),rgba(196,57,107,.03));border:1px solid rgba(196,57,107,.25);border-radius:14px;padding:14px 18px;margin-bottom:16px;text-align:center;cursor:pointer}
 .rf-resumo-principal{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--rosa)}
 .rf-resumo-detalhe{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.rf-resumo-dica{font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim);font-style:italic;margin-top:6px;opacity:.75}
+.rf-ranking-linha{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.rf-ranking-linha:last-child{border-bottom:none}
+.rf-ranking-pos{font-family:'Cinzel',serif;font-size:.75rem;font-weight:700;color:var(--rosa);min-width:24px}
+.rf-ranking-nome{flex:1;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
+.rf-ranking-qtd{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);white-space:nowrap}
 .rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
 .rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
 .rf-premio-img img{width:100%;display:block}
@@ -2784,9 +2790,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
 
     <div id="rf-conteudo" style="display:none">
-      <div class="rf-resumo-vendas" id="rf-resumo-vendas" style="display:none">
+      <div class="rf-resumo-vendas" id="rf-resumo-vendas" style="display:none" onclick="rifaAbrirRankingVendedoras()">
         <div class="rf-resumo-principal" id="rf-resumo-principal"></div>
         <div class="rf-resumo-detalhe" id="rf-resumo-detalhe"></div>
+        <div class="rf-resumo-dica">toque pra ver o ranking de quem mais vendeu ✦</div>
       </div>
       <div id="rf-sorteio-stats" style="display:none;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);text-align:center;margin-top:8px"></div>
       <button class="rm-btn-mes" id="rf-btn-sortear" style="display:none;margin-top:8px;margin-bottom:16px;width:100%;background:linear-gradient(135deg,#8c5a00,#c88c00)" onclick="rifaSortear()">🎲 Sortear entre os números pagos</button>
@@ -2826,6 +2833,15 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title" id="rf-detalhe-titulo" style="font-size:1.3rem">Número</div>
     <div class="modal-sub rf-detalhe-linha" id="rf-detalhe-sub"></div>
     <div class="rf-detalhe-botoes" id="rf-detalhe-botoes"></div>
+  </div>
+</div>
+
+<div id="rf-ranking-overlay" class="overlay" onclick="if(event.target===this)rifaFecharRanking()">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="rifaFecharRanking()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🏆 Ranking de vendas</div>
+    <p class="modal-sub">Quantos números cada um já vendeu ✦</p>
+    <div id="rf-ranking-lista"></div>
   </div>
 </div>
 
@@ -6746,6 +6762,53 @@ function rifaAtualizarResumoVendas(r) {
   document.getElementById('rf-resumo-detalhe').textContent = `${fisico} físico · ${digital} digital`;
   resumoEl.style.display = '';
 }
+
+// agrupa os números pagos por quem vendeu: cada vendedora atribuída (pelo
+// atribuicaoToken do número), a venda digital direta (sem vendedora) e, se
+// sobrar algum pago sem nenhum dos dois (venda antiga lançada direto pela
+// admin), um balde à parte — pra montar o ranking de quem mais vendeu
+function rifaCalcularRankingVendedoras(r) {
+  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago');
+  const preco = Number(r.precoPorNumero || 0);
+  const porChave = {};
+  pagos.forEach(info => {
+    let chave, nome;
+    if (info.origem === 'digital') {
+      chave = '__digital__';
+      nome = '🔗 Venda digital (direto pelo site)';
+    } else {
+      const vendedora = info.atribuicaoToken
+        ? Object.values(r.vendedores || {}).find(v => v.token === info.atribuicaoToken)
+        : null;
+      chave = vendedora ? vendedora.token : '__sem_vendedora__';
+      nome = vendedora ? vendedora.nome : '🧾 Sem vendedora identificada';
+    }
+    if (!porChave[chave]) porChave[chave] = { nome, quantidade: 0 };
+    porChave[chave].quantidade += 1;
+  });
+  return Object.values(porChave)
+    .map(item => ({ ...item, arrecadado: item.quantidade * preco }))
+    .sort((a, b) => b.quantidade - a.quantidade);
+}
+
+function rifaAbrirRankingVendedoras() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const ranking = rifaCalcularRankingVendedoras(rifaAtual);
+  const lista = document.getElementById('rf-ranking-lista');
+  lista.innerHTML = ranking.length
+    ? ranking.map((item, i) => `
+      <div class="rf-ranking-linha">
+        <span class="rf-ranking-pos">${i + 1}º</span>
+        <span class="rf-ranking-nome">${item.nome}</span>
+        <span class="rf-ranking-qtd">${item.quantidade} · ${rifaFormatarPreco(item.arrecadado)}</span>
+      </div>`).join('')
+    : '<p class="modal-sub" style="margin:0">Ainda não há nenhuma venda registrada.</p>';
+  document.getElementById('rf-ranking-overlay').classList.add('open');
+}
+window.rifaAbrirRankingVendedoras = rifaAbrirRankingVendedoras;
+
+function rifaFecharRanking() { document.getElementById('rf-ranking-overlay').classList.remove('open'); }
+window.rifaFecharRanking = rifaFecharRanking;
 
 function rifaRenderPagina() {
   const r = rifaAtual;
