@@ -755,7 +755,7 @@ export async function onRequest(context) {
           const alvo = rifa.numeros[numero];
           if (alvo && alvo.status !== 'pago') {
             if (alvo.email) { (porEmail[alvo.email] ||= []).push(numero); }
-            rifa.numeros[numero] = { status: 'pago', nome, telefone, pagoEm: Date.now() };
+            rifa.numeros[numero] = { ...alvo, status: 'pago', nome, telefone, pagoEm: Date.now() };
             confirmados.push(numero);
           } else {
             ignorados.push(numero);
