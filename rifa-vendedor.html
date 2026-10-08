@@ -38,6 +38,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
 .section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+.rv-nome-vendedora{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--rosa);text-align:center;margin-bottom:4px;line-height:1.2}
 
 .cp-carregando, .rv-vazia{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
 
@@ -82,7 +83,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 <div class="section-wrap">
   <div class="eyebrow">Terreiro Bolhas de Luz</div>
   <div class="section-title">🎟️ Meus Números</div>
-  <p class="section-sub" id="rv-saudacao">Registre aqui quem comprou cada número ✦</p>
+  <div class="rv-nome-vendedora" id="rv-nome-vendedora" style="display:none"></div>
+  <p class="section-sub">Registre aqui quem comprou cada número ✦</p>
 
   <div id="rv-carregando" class="cp-carregando">Carregando...</div>
 
@@ -149,7 +151,9 @@ async function rvCarregar() {
     return;
   }
 
-  document.getElementById('rv-saudacao').textContent = `Olá, ${rvDados.nomeVendedora}! Registre aqui quem comprou cada número ✦`;
+  const nomeEl = document.getElementById('rv-nome-vendedora');
+  nomeEl.textContent = rvDados.nomeVendedora || '';
+  nomeEl.style.display = rvDados.nomeVendedora ? '' : 'none';
   document.getElementById('rv-conteudo').style.display = 'block';
   rvRenderPagina();
 }
