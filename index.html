@@ -6955,13 +6955,15 @@ function rifaAbrirConfirmarPagamento(numero) {
   const info = rifaAtual.numeros[numero];
   if (!info) return;
   document.getElementById('rf-detalhe-sub').textContent = `Confirmando o pagamento do número ${numero}:`;
-  // sempre em branco — quem reservou/ficou responsável pelo número não é
-  // necessariamente quem de fato comprou, então não faz sentido pré-preencher
+  // pré-preenche com quem já está registrado nesse número (ex: quem
+  // reservou pelo link digital já é a própria compradora) — mas deixa
+  // editável, porque em números atribuídos o nome ali é só da vendedora
+  // responsável, não necessariamente de quem de fato comprou
   document.getElementById('rf-detalhe-botoes').innerHTML = `
     <label class="form-label">Nome de quem comprou</label>
-    <input type="text" class="form-input" id="rf-pagamento-nome" placeholder="Nome completo">
+    <input type="text" class="form-input" id="rf-pagamento-nome" placeholder="Nome completo" value="${info.nome || ''}">
     <label class="form-label">Telefone</label>
-    <input type="tel" class="form-input" id="rf-pagamento-telefone" placeholder="(51) 99999-9999">
+    <input type="tel" class="form-input" id="rf-pagamento-telefone" placeholder="(51) 99999-9999" value="${info.telefone || ''}">
     <button class="btn-rosa" onclick="rifaConfirmarPagamento('${numero}')">Confirmar pagamento</button>
     <button class="rm-btn-mes" onclick="rifaClickNumero('${numero}')">Voltar</button>
   `;
