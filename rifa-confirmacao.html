@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pagamento confirmado — Rifa — Bolhas de Luz</title>
+<meta name="description" content="Confirmação do pagamento da rifa do Terreiro Bolhas de Luz.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rifa confirmada — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:560px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--text);margin-bottom:28px;text-align:center}
+
+.cp-carregando{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rc-aviso{background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:18px 20px;text-align:center;margin-bottom:22px}
+.rc-aviso-titulo{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--green);margin-bottom:6px}
+.rc-aviso p{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);font-style:italic}
+
+.rc-pendente{background:var(--amber-dim);border-color:var(--amber-border)}
+.rc-pendente .rc-aviso-titulo{color:var(--amber)}
+.rc-pendente button{margin-top:12px}
+
+.rc-erro{background:rgba(184,64,64,.06);border:1px solid rgba(184,64,64,.2);border-radius:14px;padding:18px 20px;text-align:center;margin-bottom:22px}
+.rc-erro p{font-family:'Crimson Pro',serif;font-size:.92rem;color:#8a4040}
+
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+
+/* talão digital — cartão visível na página, igual ao que vira a imagem salva */
+.rc-talao{background:#fff;border:2px solid var(--rosa);border-radius:18px;padding:28px 24px;margin-bottom:20px}
+.rc-talao-cabecalho{text-align:center;margin-bottom:16px}
+.rc-talao-logo{width:48px;height:48px;object-fit:contain;margin:0 auto 6px}
+.rc-talao-eyebrow{font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700}
+.rc-talao-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;text-align:center;margin-bottom:4px}
+.rc-talao-premio{text-align:center;color:#555;margin-bottom:4px}
+.rc-talao-meta{text-align:center;color:#555;font-size:.85rem;margin-bottom:16px}
+.rc-talao-numeros-box{background:var(--creme);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px}
+.rc-talao-numeros-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#8a6070;margin-bottom:6px}
+.rc-talao-numeros{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--rosa)}
+.rc-talao-nome{font-size:.85rem;margin-bottom:4px}
+.rc-talao-motivo{font-size:.78rem;color:#8a6070;font-style:italic;margin-top:12px;border-top:1px dashed var(--rosa);padding-top:10px}
+.rc-talao-rodape{font-size:.7rem;color:#8a6070;text-align:center;margin-top:14px}
+
+.rc-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
+.rc-saiba-mais a{color:var(--rosa);text-decoration:underline}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎟️ Confirmação da Rifa</div>
+
+  <div id="rc-carregando" class="cp-carregando">Confirmando seu pagamento...</div>
+
+  <div id="rc-pendente" class="rc-aviso rc-pendente" style="display:none">
+    <div class="rc-aviso-titulo">✦ Ainda conferindo ✦</div>
+    <p>Se você já pagou, só um instante — às vezes a confirmação demora alguns segundos. Se preferir, tenta de novo, ou deixa que a administração confirma assim que vir o pagamento.</p>
+    <button class="btn-rosa" onclick="rcVerificar(1)">Verificar de novo</button>
+  </div>
+
+  <div id="rc-erro" class="rc-erro" style="display:none">
+    <p>Não encontrei esse pedido. Se você acabou de pagar, fala com a administração pelo WhatsApp que ela confirma pra você.</p>
+  </div>
+
+  <div id="rc-conteudo" style="display:none">
+    <div class="rc-aviso">
+      <div class="rc-aviso-titulo">✦ Pagamento confirmado! ✦</div>
+      <p>Seus números já estão valendo. Boa sorte no sorteio! 🍀</p>
+    </div>
+
+    <div class="rc-talao" id="rc-talao">
+      <div class="rc-talao-cabecalho">
+        <img class="rc-talao-logo" src="assets/icon.png" alt="">
+        <div class="rc-talao-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+      </div>
+      <div class="rc-talao-titulo" id="rc-talao-titulo"></div>
+      <div class="rc-talao-premio" id="rc-talao-premio" style="display:none"></div>
+      <div class="rc-talao-meta" id="rc-talao-meta"></div>
+      <div class="rc-talao-numeros-box">
+        <div class="rc-talao-numeros-label">Seus números</div>
+        <div class="rc-talao-numeros" id="rc-talao-numeros"></div>
+      </div>
+      <div class="rc-talao-nome" id="rc-talao-nome"></div>
+      <div class="rc-talao-motivo" id="rc-talao-motivo" style="display:none"></div>
+      <div class="rc-talao-rodape">Pagamento confirmado — guarde este comprovante ✦</div>
+    </div>
+
+    <button class="btn-rosa" id="rc-btn-salvar" onclick="rcSalvarTalao()">💾 Salvar meu talão digital</button>
+  </div>
+
+  <p class="rc-saiba-mais">✦ Quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
+</div>
+
+<script>
+const RIFA_API = '/api/rifa';
+let rcDados = null;
+
+function rcFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rcVerificar(tentativa) {
+  tentativa = tentativa || 1;
+  const params = new URLSearchParams(window.location.search);
+  const pedido = params.get('pedido');
+  const rifaId = params.get('rifa');
+
+  document.getElementById('rc-pendente').style.display = 'none';
+  document.getElementById('rc-erro').style.display = 'none';
+  document.getElementById('rc-conteudo').style.display = 'none';
+  document.getElementById('rc-carregando').style.display = '';
+
+  if (!pedido || !rifaId) {
+    document.getElementById('rc-carregando').style.display = 'none';
+    document.getElementById('rc-erro').style.display = '';
+    return;
+  }
+
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'verificar-pagamento-infinitepay', pedido, rifaId }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      rcDados = data;
+      rcRenderConfirmado();
+      return;
+    }
+    if (!res.ok) {
+      document.getElementById('rc-carregando').style.display = 'none';
+      document.getElementById('rc-erro').style.display = '';
+      return;
+    }
+  } catch (e) { /* tenta de novo abaixo, ou cai na tela de pendente */ }
+
+  if (tentativa < 3) {
+    setTimeout(() => rcVerificar(tentativa + 1), 2500);
+  } else {
+    document.getElementById('rc-carregando').style.display = 'none';
+    document.getElementById('rc-pendente').style.display = '';
+  }
+}
+
+function rcRenderConfirmado() {
+  const r = rcDados;
+  document.getElementById('rc-carregando').style.display = 'none';
+  document.getElementById('rc-conteudo').style.display = '';
+
+  const metaPartes = [rcFormatarPreco(r.precoPorNumero)];
+  if (r.dataSorteio) metaPartes.push(`Sorteio: ${r.dataSorteio}`);
+
+  document.getElementById('rc-talao-titulo').textContent = r.titulo || '';
+  const premioEl = document.getElementById('rc-talao-premio');
+  if (r.premio) { premioEl.textContent = `🎁 ${r.premio}`; premioEl.style.display = ''; }
+  else { premioEl.style.display = 'none'; }
+  document.getElementById('rc-talao-meta').textContent = metaPartes.join(' · ');
+  document.getElementById('rc-talao-numeros').textContent = (r.numeros || []).join(' · ');
+  document.getElementById('rc-talao-nome').innerHTML = `<b>Em nome de:</b> ${r.nome || ''}`;
+  const motivoEl = document.getElementById('rc-talao-motivo');
+  if (r.motivo) { motivoEl.textContent = r.motivo; motivoEl.style.display = ''; }
+  else { motivoEl.style.display = 'none'; }
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// gera uma imagem (PNG) do talão já visível na página, pra pessoa guardar
+// como comprovante
+async function rcSalvarTalao() {
+  const btn = document.getElementById('rc-btn-salvar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Gerando...'; btn.disabled = true;
+  try {
+    const talao = document.getElementById('rc-talao');
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+
+    const canvas = await html2canvas(talao, { scale: 2, backgroundColor: '#fff', useCORS: true });
+
+    canvas.toBlob(async (blob) => {
+      btn.textContent = textoOriginal; btn.disabled = false;
+      if (!blob) { alert('Não deu pra gerar o talão digital. Tenta de novo.'); return; }
+      const numeros = (rcDados.numeros || []).join('-');
+      const nomeArquivo = `talao-digital-${numeros}.png`;
+      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try { await navigator.share({ files: [arquivo], title: 'Talão digital — Bolhas de Luz' }); return; }
+        catch (e) { /* cancelou o compartilhamento — cai no download abaixo */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    btn.textContent = textoOriginal; btn.disabled = false;
+    alert('Não deu pra gerar o talão digital. Tenta de novo.');
+  }
+}
+
+rcVerificar(1);
+</script>
+
+</body>
+</html>

@@ -499,7 +499,7 @@ export async function onRequest(context) {
         // manual de sempre (chave Pix pra copiar, admin confere na mão)
         const orderNsu = gerarOrderNsu();
         const origin = new URL(request.url).origin;
-        const redirectUrl = `${origin}/rifa-digital.html?pedido=${encodeURIComponent(orderNsu)}&rifa=${encodeURIComponent(rifa.id)}`;
+        const redirectUrl = `${origin}/rifa-confirmacao.html?pedido=${encodeURIComponent(orderNsu)}&rifa=${encodeURIComponent(rifa.id)}`;
         const linkPagamento = await criarLinkInfinitePay({
           orderNsu,
           descricao: `${rifa.titulo} — ${escolhidos.length} número(s)`,
