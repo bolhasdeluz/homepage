@@ -4593,6 +4593,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       🔑 Sair do modo admin (senha)
     </button>
 
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">📊 Acessos ao site</div>
+      <div id="admin-acessos-corpo" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Carregando...</div>
+    </div>
+
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
     <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
       <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
@@ -5216,6 +5221,31 @@ function adminVoltarMenu() {
 }
 
 // ── PAINEL ADMIN ──
+// contador de acessos diários — carrega os últimos 7 dias (hoje primeiro)
+// e mostra no topo do painel de admin
+async function adminCarregarAcessos() {
+  const corpo = document.getElementById('admin-acessos-corpo');
+  if (!corpo) return;
+  corpo.textContent = 'Carregando...';
+  try {
+    const res = await fetch('/api/visita?dias=7', { headers: { 'X-Admin-Password': 'admin' } });
+    const data = await res.json();
+    if (!res.ok) { corpo.textContent = 'Não consegui carregar os acessos.'; return; }
+    const [hoje, ...resto] = data.dias;
+    const totalSemana = data.dias.reduce((soma, d) => soma + d.contagem, 0);
+    const linhasResto = resto.map(d => {
+      const [, mes, dia] = d.dia.split('-');
+      return `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${dia}/${mes}</span><span>${d.contagem}</span></div>`;
+    }).join('');
+    corpo.innerHTML = `
+      <div style="font-family:'Playfair Display',serif;font-style:normal;font-size:1.3rem;font-weight:700;color:var(--text)">${hoje.contagem} acesso(s) hoje</div>
+      <div style="font-size:.78rem;margin-bottom:8px">${totalSemana} nos últimos 7 dias</div>
+      <div style="font-size:.78rem">${linhasResto}</div>
+    `;
+  } catch (e) { corpo.textContent = 'Não consegui carregar os acessos.'; }
+}
+window.adminCarregarAcessos = adminCarregarAcessos;
+
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
   if (!container || !menuData) return;
@@ -6102,7 +6132,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
-  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); }
+  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
@@ -10373,6 +10403,9 @@ function drawerCancelSecName(si) {
 
 // inicializar
 loadMenu();
+
+// contador de acessos diários — só registra, sem bloquear nada se falhar
+fetch('/api/visita', { method: 'POST' }).catch(() => {});
 
 // ── PRÓXIMA SESSÃO NO HEADER ──
 function sincronizarMiniCardsPerfil() {
