@@ -52,6 +52,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
 .rd-motivo{font-family:'Crimson Pro',serif;font-size:.92rem;font-style:italic;color:var(--text-dim);margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
 
+.rd-resumo-vendas{background:linear-gradient(135deg,rgba(196,57,107,.08),rgba(196,57,107,.03));border:1px solid var(--rosa-border);border-radius:14px;padding:12px 18px;margin-bottom:20px;text-align:center;font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa);letter-spacing:.02em}
+
 .rf-legenda{display:flex;gap:16px;justify-content:center;margin-bottom:14px;flex-wrap:wrap;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
 .rf-legenda-item{display:flex;align-items:center;gap:6px}
 .rf-dot{width:12px;height:12px;border-radius:50%;display:inline-block}
@@ -127,6 +129,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <div class="rf-premio-meta" id="rd-premio-meta"></div>
       <div class="rd-motivo" id="rd-motivo" style="display:none"></div>
     </div>
+
+    <div class="rd-resumo-vendas" id="rd-resumo-vendas" style="display:none"></div>
 
     <div class="rd-sucesso" id="rd-sucesso">
       <div class="rd-sucesso-titulo">✦ Números reservados! ✦</div>
@@ -234,8 +238,25 @@ function rdRenderPagina() {
   const motivoEl = document.getElementById('rd-motivo');
   if (r.motivo) { motivoEl.textContent = r.motivo; motivoEl.style.display = ''; }
   else { motivoEl.style.display = 'none'; }
+  rdAtualizarResumoVendas();
   rdRenderGrid();
   rdAtualizarBarraSelecao();
+}
+
+// quantos dos números digitais já foram vendidos, pra dar uma ideia de como
+// a rifa está andando — conta só dentro da faixa digital (1 até o limite)
+function rdAtualizarResumoVendas() {
+  const el = document.getElementById('rd-resumo-vendas');
+  const r = rdRifa;
+  const total = r.limiteDigital || 0;
+  if (!total) { el.style.display = 'none'; return; }
+  let vendidos = 0;
+  for (let i = 1; i <= total; i++) {
+    const numero = String(i).padStart(rdLargura, '0');
+    if ((r.numeros[numero] || {}).status === 'pago') vendidos++;
+  }
+  el.textContent = `🎟️ ${vendidos} de ${total} números já vendidos`;
+  el.style.display = '';
 }
 
 function rdRenderGrid() {
@@ -245,7 +266,8 @@ function rdRenderGrid() {
   for (let i = 1; i <= r.limiteDigital; i++) {
     const numero = String(i).padStart(rdLargura, '0');
     const info = r.numeros[numero] || { status: 'livre' };
-    let classe = (info.status === 'pago' || info.status === 'reservado') ? 'rf-numero-indisponivel' : '';
+    if (info.status === 'pago') continue; // já vendido — some da lista
+    let classe = (info.status === 'reservado') ? 'rf-numero-indisponivel' : '';
     if (info.status === 'livre' && rdSelecionados.has(numero)) classe += ' rf-numero-selecionado';
     // nunca mostra o nome de quem comprou/reservou aqui — só o status
     html.push(`<div class="rf-numero ${classe}" onclick="rdClickNumero('${numero}')">
