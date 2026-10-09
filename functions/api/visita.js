@@ -50,6 +50,10 @@ export async function onRequest(context) {
     let body = {};
     try { body = await request.json(); } catch (e) {}
 
+    // guarda a partir de quando o contador passou a existir — dias antes
+    // disso não têm 0 acessos de verdade, simplesmente ninguém contou ainda
+    if (!(await KV.get('visita:inicio'))) await KV.put('visita:inicio', dia);
+
     if (body && body.email) {
       // segundo POST, só pra identificar quem já logou — não conta de
       // novo no total nem no IP, isso já rolou no POST anônimo
@@ -85,7 +89,13 @@ export async function onRequest(context) {
     for (let i = 0; i < dias; i++) {
       datas.push(diaUTC(new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() - i))));
     }
+    const inicio = await KV.get('visita:inicio');
     const resultado = await Promise.all(datas.map(async dia => {
+      // dia anterior ao contador existir — não é "0 acessos", é "não tinha
+      // contador ainda"; deixa isso claro em vez de mostrar zero
+      if (inicio && dia < inicio) {
+        return { dia, contagem: null, unicos: null, logados: [], semDados: true };
+      }
       const [totalRaw, listaIps, listaUsers] = await Promise.all([
         KV.get(`visita:${dia}`),
         KV.list({ prefix: `visita:${dia}:ip:` }),
@@ -94,7 +104,7 @@ export async function onRequest(context) {
       const logados = (await Promise.all(listaUsers.keys.map(k => KV.get(k.name, { type: 'json' }))))
         .filter(Boolean)
         .sort((a, b) => b.acessos - a.acessos);
-      return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: listaIps.keys.length, logados };
+      return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: listaIps.keys.length, logados, semDados: false };
     }));
     return json({ dias: resultado });
   }
