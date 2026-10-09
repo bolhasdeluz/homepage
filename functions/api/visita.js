@@ -1,8 +1,15 @@
 // Cloudflare Pages Function: /api/visita
-// Contador simples de acessos diários ao site — toda vez que o index.html
-// carrega, ele chama POST aqui, que soma 1 no contador do dia (UTC) no KV
-// MENU_DATA (chave "visita:YYYY-MM-DD"). GET (só admin) devolve a contagem
-// dos últimos dias, mais recente primeiro, pro painel de administração.
+// Contador de acessos diários ao site — toda vez que o index.html carrega,
+// ele chama POST aqui (sem corpo), que soma 1 no contador do dia (UTC) no KV
+// MENU_DATA (chave "visita:YYYY-MM-DD") e marca o IP de quem acessou como
+// visto hoje (chave "visita:<dia>:ip:<hash>"), pra dar pra contar quantas
+// pessoas diferentes (por IP) passaram no dia, sem guardar o IP de verdade.
+// Quando a pessoa está logada, o site manda um segundo POST com
+// {email, nome} — esse só identifica quem acessou (guardado em
+// "visita:<dia>:user:<email>"), sem contar de novo no total nem no IP (isso
+// já foi feito no primeiro POST anônimo).
+// GET (só admin) devolve, pros últimos dias, o total de acessos, quantos
+// IPs diferentes e quem estava logada — pro painel de administração.
 
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
@@ -20,6 +27,14 @@ function diaUTC(data) {
   return data.toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
+// hash curto e não-reversível do IP — dá pra contar quantos diferentes sem
+// guardar o endereço de verdade
+async function hashTexto(texto) {
+  const dados = new TextEncoder().encode(texto);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', dados);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16);
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -31,9 +46,31 @@ export async function onRequest(context) {
   if (!KV) return json({ error: 'KV não configurado.' }, 500);
 
   if (request.method === 'POST') {
-    const chave = `visita:${diaUTC(new Date())}`;
-    const atual = parseInt(await KV.get(chave), 10) || 0;
-    await KV.put(chave, String(atual + 1));
+    const dia = diaUTC(new Date());
+    let body = {};
+    try { body = await request.json(); } catch (e) {}
+
+    if (body && body.email) {
+      // segundo POST, só pra identificar quem já logou — não conta de
+      // novo no total nem no IP, isso já rolou no POST anônimo
+      const email = String(body.email).toLowerCase().trim();
+      if (!email) return json({ error: 'E-mail inválido.' }, 400);
+      const chaveUser = `visita:${dia}:user:${email}`;
+      const existente = await KV.get(chaveUser, { type: 'json' });
+      const nome = (body.nome || '').trim() || existente?.nome || email;
+      await KV.put(chaveUser, JSON.stringify({ nome, email, acessos: (existente?.acessos || 0) + 1 }));
+      return json({ ok: true });
+    }
+
+    // ping anônimo: soma no total do dia + marca o IP como visto hoje
+    const chaveTotal = `visita:${dia}`;
+    const atual = parseInt(await KV.get(chaveTotal), 10) || 0;
+    await KV.put(chaveTotal, String(atual + 1));
+
+    const ip = request.headers.get('CF-Connecting-IP') || 'desconhecido';
+    const ipHash = await hashTexto(ip);
+    await KV.put(`visita:${dia}:ip:${ipHash}`, '1');
+
     return json({ ok: true });
   }
 
@@ -48,8 +85,17 @@ export async function onRequest(context) {
     for (let i = 0; i < dias; i++) {
       datas.push(diaUTC(new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth(), agora.getUTCDate() - i))));
     }
-    const contagens = await Promise.all(datas.map(d => KV.get(`visita:${d}`)));
-    const resultado = datas.map((dia, i) => ({ dia, contagem: parseInt(contagens[i], 10) || 0 }));
+    const resultado = await Promise.all(datas.map(async dia => {
+      const [totalRaw, listaIps, listaUsers] = await Promise.all([
+        KV.get(`visita:${dia}`),
+        KV.list({ prefix: `visita:${dia}:ip:` }),
+        KV.list({ prefix: `visita:${dia}:user:` }),
+      ]);
+      const logados = (await Promise.all(listaUsers.keys.map(k => KV.get(k.name, { type: 'json' }))))
+        .filter(Boolean)
+        .sort((a, b) => b.acessos - a.acessos);
+      return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: listaIps.keys.length, logados };
+    }));
     return json({ dias: resultado });
   }
 
