@@ -354,6 +354,9 @@ window.cmNovaInscricao = cmNovaInscricao;
 
 cmRenderCriancasLista();
 
+// contador de acessos diários — só registra, sem bloquear nada se falhar
+fetch('/api/visita?pagina=cosmes', { method: 'POST' }).catch(() => {});
+
 function cmAbrirAdmin() {
   if (cmSenhaAtiva) { cmAbrirPainelAdmin(); return; }
   document.getElementById('cm-senha-input').value = '';
