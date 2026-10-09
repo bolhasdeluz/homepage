@@ -5223,6 +5223,11 @@ function adminVoltarMenu() {
 // ── PAINEL ADMIN ──
 // contador de acessos diários — carrega os últimos 7 dias (hoje primeiro)
 // e mostra no topo do painel de admin
+// nomes amigáveis pras páginas já conhecidas que mandam ping — qualquer
+// outra página nova aparece com o próprio identificador, sem precisar
+// mexer aqui
+const ADMIN_NOMES_PAGINAS_ACESSO = { site: '🏠 Site principal', 'rifa-digital': '🎟️ Rifa — venda digital', cosmes: '🎈 Cosme e Damião' };
+
 async function adminCarregarAcessos() {
   const corpo = document.getElementById('admin-acessos-corpo');
   if (!corpo) return;
@@ -5231,23 +5236,33 @@ async function adminCarregarAcessos() {
     const res = await fetch('/api/visita?dias=7', { headers: { 'X-Admin-Password': 'admin' } });
     const data = await res.json();
     if (!res.ok) { corpo.textContent = 'Não consegui carregar os acessos.'; return; }
-    const [hoje, ...resto] = data.dias;
-    const totalSemana = data.dias.reduce((soma, d) => soma + (d.contagem || 0), 0);
-    const nomesHoje = (hoje.logados || []).map(l => calEsc(l.nome)).join(', ');
-    const temDiaSemDados = resto.some(d => d.semDados);
-    const linhasResto = resto.map(d => {
-      const [, mes, dia] = d.dia.split('-');
-      const valor = d.semDados ? 'sem dados*' : `${d.contagem} (${d.unicos} únicos)`;
-      return `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${dia}/${mes}</span><span>${valor}</span></div>`;
+    const ordemPaginas = Object.keys(data.paginas).sort((a, b) => {
+      const prioridade = p => (p === 'site' ? 0 : 1);
+      return prioridade(a) - prioridade(b) || a.localeCompare(b);
+    });
+    corpo.innerHTML = ordemPaginas.map((pagina, i) => {
+      const dias = data.paginas[pagina];
+      const [hoje, ...resto] = dias;
+      const totalSemana = dias.reduce((soma, d) => soma + (d.contagem || 0), 0);
+      const nomesHoje = (hoje.logados || []).map(l => calEsc(l.nome)).join(', ');
+      const temDiaSemDados = resto.some(d => d.semDados);
+      const linhasResto = resto.map(d => {
+        const [, mes, dia] = d.dia.split('-');
+        const valor = d.semDados ? 'sem dados*' : `${d.contagem} (${d.unicos} únicos)`;
+        return `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${dia}/${mes}</span><span>${valor}</span></div>`;
+      }).join('');
+      const titulo = ADMIN_NOMES_PAGINAS_ACESSO[pagina] || calEsc(pagina);
+      return `
+        <div style="${i > 0 ? 'margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)' : ''}">
+          <div style="font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px">${titulo}</div>
+          <div style="font-family:'Playfair Display',serif;font-style:normal;font-size:1.2rem;font-weight:700;color:var(--text)">${hoje.contagem} acesso(s) hoje</div>
+          <div style="font-size:.78rem">${hoje.unicos} pessoa(s) diferente(s) hoje (por IP)</div>
+          ${nomesHoje ? `<div style="font-size:.78rem;margin-top:4px">👤 Logaram hoje: ${nomesHoje}</div>` : ''}
+          <div style="font-size:.78rem;margin:8px 0 4px">${totalSemana} acessos nos últimos 7 dias</div>
+          <div style="font-size:.78rem">${linhasResto}</div>
+          ${temDiaSemDados ? `<div style="font-size:.7rem;font-style:italic;margin-top:6px">*antes do contador dessa página existir — não quer dizer que ninguém acessou, só que ainda não contava</div>` : ''}
+        </div>`;
     }).join('');
-    corpo.innerHTML = `
-      <div style="font-family:'Playfair Display',serif;font-style:normal;font-size:1.3rem;font-weight:700;color:var(--text)">${hoje.contagem} acesso(s) hoje</div>
-      <div style="font-size:.78rem">${hoje.unicos} pessoa(s) diferente(s) hoje (por IP)</div>
-      ${nomesHoje ? `<div style="font-size:.78rem;margin-top:4px">👤 Logaram hoje: ${nomesHoje}</div>` : ''}
-      <div style="font-size:.78rem;margin:8px 0 4px">${totalSemana} acessos nos últimos 7 dias</div>
-      <div style="font-size:.78rem">${linhasResto}</div>
-      ${temDiaSemDados ? `<div style="font-size:.7rem;font-style:italic;margin-top:6px">*antes do contador existir — não quer dizer que ninguém acessou, só que ainda não contava</div>` : ''}
-    `;
   } catch (e) { corpo.textContent = 'Não consegui carregar os acessos.'; }
 }
 window.adminCarregarAcessos = adminCarregarAcessos;
@@ -10411,7 +10426,7 @@ function drawerCancelSecName(si) {
 loadMenu();
 
 // contador de acessos diários — só registra, sem bloquear nada se falhar
-fetch('/api/visita', { method: 'POST' }).catch(() => {});
+fetch('/api/visita?pagina=site', { method: 'POST' }).catch(() => {});
 
 // ── PRÓXIMA SESSÃO NO HEADER ──
 function sincronizarMiniCardsPerfil() {
@@ -17579,7 +17594,7 @@ onAuthStateChanged(auth, async (user) => {
   // ping anônimo que já roda ao carregar a página (soma no total e no IP),
   // esse aqui só marca o nome/e-mail de quem acessou logada hoje
   if (user && user.email) {
-    fetch('/api/visita', {
+    fetch('/api/visita?pagina=site', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: user.email, nome: user.displayName || user.email }),
