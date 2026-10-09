@@ -5232,11 +5232,13 @@ async function adminCarregarAcessos() {
     const data = await res.json();
     if (!res.ok) { corpo.textContent = 'Não consegui carregar os acessos.'; return; }
     const [hoje, ...resto] = data.dias;
-    const totalSemana = data.dias.reduce((soma, d) => soma + d.contagem, 0);
+    const totalSemana = data.dias.reduce((soma, d) => soma + (d.contagem || 0), 0);
     const nomesHoje = (hoje.logados || []).map(l => calEsc(l.nome)).join(', ');
+    const temDiaSemDados = resto.some(d => d.semDados);
     const linhasResto = resto.map(d => {
       const [, mes, dia] = d.dia.split('-');
-      return `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${dia}/${mes}</span><span>${d.contagem} (${d.unicos} únicos)</span></div>`;
+      const valor = d.semDados ? 'sem dados*' : `${d.contagem} (${d.unicos} únicos)`;
+      return `<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${dia}/${mes}</span><span>${valor}</span></div>`;
     }).join('');
     corpo.innerHTML = `
       <div style="font-family:'Playfair Display',serif;font-style:normal;font-size:1.3rem;font-weight:700;color:var(--text)">${hoje.contagem} acesso(s) hoje</div>
@@ -5244,6 +5246,7 @@ async function adminCarregarAcessos() {
       ${nomesHoje ? `<div style="font-size:.78rem;margin-top:4px">👤 Logaram hoje: ${nomesHoje}</div>` : ''}
       <div style="font-size:.78rem;margin:8px 0 4px">${totalSemana} acessos nos últimos 7 dias</div>
       <div style="font-size:.78rem">${linhasResto}</div>
+      ${temDiaSemDados ? `<div style="font-size:.7rem;font-style:italic;margin-top:6px">*antes do contador existir — não quer dizer que ninguém acessou, só que ainda não contava</div>` : ''}
     `;
   } catch (e) { corpo.textContent = 'Não consegui carregar os acessos.'; }
 }
