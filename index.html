@@ -2777,6 +2777,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
       <button class="rf-admin-btn" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
+      <button class="rf-admin-btn" id="rf-btn-vendas" style="display:none" onclick="rifaAbrirRevisarVendas()">📇 Revisar vendas</button>
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
       <button class="rf-admin-btn" id="rf-btn-corrigir-origem" style="display:none" onclick="rifaCorrigirOrigemDigital()">🔧 Corrigir origem dos números digitais</button>
@@ -2909,6 +2910,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <p class="modal-sub">Quem está com quais números atribuídos, e todo mundo agrupado por pessoa — confere se tudo bateu certinho, sem nomes duplicados por engano.</p>
     <div id="rf-revisao-corpo" style="max-height:60vh;overflow-y:auto"></div>
     <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharRevisao()">Fechar</button>
+  </div>
+</div>
+
+<div id="rf-vendas-overlay" class="overlay" onclick="if(event.target===this)rifaFecharRevisarVendas()">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="rifaFecharRevisarVendas()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📇 Revisar vendas</div>
+    <p class="modal-sub">Quem comprou quais números — pagamentos pendentes aparecem primeiro ✦</p>
+    <div id="rf-vendas-corpo" style="max-height:60vh;overflow-y:auto"></div>
+    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharRevisarVendas()">Fechar</button>
   </div>
 </div>
 
@@ -6871,6 +6882,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-vendas').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
   document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
@@ -7465,6 +7477,70 @@ window.rifaAbrirRevisao = rifaAbrirRevisao;
 
 function rifaFecharRevisao() { document.getElementById('rf-revisao-overlay').classList.remove('open'); }
 window.rifaFecharRevisao = rifaFecharRevisao;
+
+// agrupa por pessoa (reservado ou pago — atribuído ainda não tem comprador
+// de verdade, só a vendedora responsável) pra conferir quem comprou o quê;
+// quem tem pelo menos um número ainda reservado (pagamento pendente) vem
+// primeiro na lista, pra facilitar cobrar
+function rifaCalcularGruposVendas(r) {
+  const grupos = {};
+  Object.entries(r.numeros || {}).forEach(([numero, info]) => {
+    if (!info || (info.status !== 'reservado' && info.status !== 'pago')) return;
+    const chave = rifaChavePessoa(info);
+    if (!grupos[chave]) {
+      grupos[chave] = { nome: info.nome || '(sem nome)', telefone: info.telefone || '', email: info.email || '', numeros: [], pendente: false };
+    }
+    grupos[chave].numeros.push({ numero, status: info.status });
+    if (info.status === 'reservado') grupos[chave].pendente = true;
+  });
+  const lista = Object.values(grupos).map(g => ({ ...g, numeros: g.numeros.sort((a, b) => a.numero.localeCompare(b.numero)) }));
+  lista.sort((a, b) => {
+    if (a.pendente !== b.pendente) return a.pendente ? -1 : 1;
+    return a.nome.localeCompare(b.nome, 'pt-BR');
+  });
+  return lista;
+}
+
+function rifaAbrirRevisarVendas() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  const grupos = rifaCalcularGruposVendas(rifaAtual);
+  window._rifaGruposVendasAtual = grupos;
+  const corpo = document.getElementById('rf-vendas-corpo');
+  corpo.innerHTML = grupos.length
+    ? grupos.map((g, i) => {
+        const numerosTexto = g.numeros.map(n => `${n.numero}${n.status === 'pago' ? ' ✓' : ' ⏳'}`).join(', ');
+        const contato = [g.telefone, g.email].filter(Boolean).join(' · ') || '(sem contato)';
+        return `<div style="padding:10px 0;border-bottom:1px solid var(--border)${g.pendente ? ';background:rgba(139,90,0,.06)' : ''}">
+          <div style="font-weight:700">${g.pendente ? '⏳ ' : ''}${calEsc(g.nome)}</div>
+          <div style="font-size:.8rem;color:var(--text-dim);margin-top:2px">${calEsc(contato)}</div>
+          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${calEsc(numerosTexto)}</div>
+          ${g.pendente ? `<button class="rm-btn-mes" id="rf-vendas-msg-${i}" style="margin-top:6px;padding:6px 10px;font-size:.72rem" onclick="rifaCopiarMensagemPendente(${i})">📋 Copiar mensagem pro WhatsApp</button>` : ''}
+        </div>`;
+      }).join('')
+    : '<p class="cal-empty">Nenhuma venda ou reserva ainda.</p>';
+  document.getElementById('rf-vendas-overlay').classList.add('open');
+}
+window.rifaAbrirRevisarVendas = rifaAbrirRevisarVendas;
+
+function rifaFecharRevisarVendas() { document.getElementById('rf-vendas-overlay').classList.remove('open'); }
+window.rifaFecharRevisarVendas = rifaFecharRevisarVendas;
+
+function rifaCopiarMensagemPendente(idx) {
+  const g = (window._rifaGruposVendasAtual || [])[idx];
+  if (!g) return;
+  const primeiroNome = (g.nome || '').trim().split(' ')[0] || '';
+  const numerosTexto = g.numeros.map(n => n.numero).join(', ');
+  const texto = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Aqui é a Anna do Bolhas de Luz ✦ Não conseguimos identificar o pagamento do(s) número(s) ${numerosTexto} da nossa rifa — teve algum problema na finalização no site? Caso tenha dado tudo certo, por favor nos envie o comprovante pra validarmos o seu número da sorte 🍀`;
+  navigator.clipboard?.writeText(texto).then(() => {
+    const btn = document.getElementById(`rf-vendas-msg-${idx}`);
+    if (!btn) return;
+    const original = btn.dataset.textoOriginal || btn.textContent;
+    btn.dataset.textoOriginal = original;
+    btn.textContent = '✓ Copiado!';
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  }).catch(() => alert('Não consegui copiar — tenta de novo.'));
+}
+window.rifaCopiarMensagemPendente = rifaCopiarMensagemPendente;
 
 // monta uma mensagem com o link individual de cada vendedora que ainda tem
 // número atribuído — pra mandar de uma vez só no grupo, em vez de ficar
