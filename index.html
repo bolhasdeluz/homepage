@@ -1981,6 +1981,7 @@ input.pg-cel-input[type=number]{min-width:60px}
 
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -2781,6 +2782,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
       <button class="rf-admin-btn" id="rf-btn-corrigir-origem" style="display:none" onclick="rifaCorrigirOrigemDigital()">🔧 Corrigir origem dos números digitais</button>
+      <button class="rf-admin-btn" id="rf-btn-qr" style="display:none" onclick="rifaAbrirQr()">📷 QR code da venda digital</button>
       <button class="rf-admin-btn" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Próximos 100 livres</button>
     </div>
 
@@ -2843,6 +2845,18 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title" style="font-size:1.2rem">🏆 Ranking de vendas</div>
     <p class="modal-sub">Quantos números cada um já vendeu ✦</p>
     <div id="rf-ranking-lista"></div>
+  </div>
+</div>
+
+<div id="rf-qr-overlay" class="overlay" onclick="if(event.target===this)rifaFecharQr()">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <button class="modal-close" onclick="rifaFecharQr()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📷 QR code da venda digital</div>
+    <p class="modal-sub">Aponta pro link público de compra — pode imprimir e colar onde quiser ✦</p>
+    <button class="rm-btn-mes" id="rf-qr-contagem" onclick="rifaToggleLeiturasQr()" style="display:none;width:100%;margin-bottom:10px"></button>
+    <div id="rf-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
+    <div id="rf-qr-canvas" style="margin:0 auto"></div>
+    <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/rifa</span>
   </div>
 </div>
 
@@ -6872,6 +6886,49 @@ window.rifaAbrirRankingVendedoras = rifaAbrirRankingVendedoras;
 function rifaFecharRanking() { document.getElementById('rf-ranking-overlay').classList.remove('open'); }
 window.rifaFecharRanking = rifaFecharRanking;
 
+// QR code pro link público de venda digital — aponta pro link curto
+// /ir/rifa (não direto pra página) pra cada leitura passar por um
+// contador, igual já é feito pra cosmes.html
+let rifaLeiturasQr = [];
+
+async function rifaAbrirQr() {
+  if (!rifaEhAdmin()) return;
+  document.getElementById('rf-qr-overlay').classList.add('open');
+  const canvasWrap = document.getElementById('rf-qr-canvas');
+  if (!canvasWrap.hasChildNodes()) {
+    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/rifa', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+  }
+  const btn = document.getElementById('rf-qr-contagem');
+  btn.style.display = 'none';
+  document.getElementById('rf-qr-leituras').style.display = 'none';
+  try {
+    const res = await fetch('/api/qr-contagem', { headers: RIFA_ADMIN_HEADERS });
+    if (res.ok) {
+      const porSlug = await res.json();
+      rifaLeiturasQr = porSlug.rifa || [];
+      const n = rifaLeiturasQr.length;
+      btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
+      btn.style.display = n ? 'block' : 'none';
+    }
+  } catch (e) { /* não trava o popup se essa parte falhar */ }
+}
+window.rifaAbrirQr = rifaAbrirQr;
+
+function rifaFecharQr() { document.getElementById('rf-qr-overlay').classList.remove('open'); }
+window.rifaFecharQr = rifaFecharQr;
+
+function rifaFormatarDataHoraQr(ts) {
+  return new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function rifaToggleLeiturasQr() {
+  const wrap = document.getElementById('rf-qr-leituras');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = rifaLeiturasQr.map(ts => `<div>${rifaFormatarDataHoraQr(ts)}</div>`).join('') || '<div>Nenhuma leitura ainda ✦</div>';
+  wrap.style.display = 'block';
+}
+window.rifaToggleLeiturasQr = rifaToggleLeiturasQr;
+
 function rifaRenderPagina() {
   const r = rifaAtual;
   rifaAtualizarResumoVendas(r);
@@ -6936,6 +6993,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-vendas').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
+  document.getElementById('rf-btn-qr').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
   document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-mensagem-links').style.display = admin ? '' : 'none';
 }
