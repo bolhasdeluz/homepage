@@ -2778,6 +2778,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-limite" style="display:none" onclick="rifaAbrirLimite()">🔗 Venda digital</button>
       <button class="rf-admin-btn" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
+      <button class="rf-admin-btn" id="rf-btn-gastos" style="display:none" onclick="rifaAbrirGastos()">📒 Relatório de gastos</button>
       <button class="rf-admin-btn" id="rf-btn-vendas" style="display:none" onclick="rifaAbrirRevisarVendas()">📇 Revisar vendas</button>
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
@@ -2924,6 +2925,22 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <p class="modal-sub">Quem está com quais números atribuídos, e todo mundo agrupado por pessoa — confere se tudo bateu certinho, sem nomes duplicados por engano.</p>
     <div id="rf-revisao-corpo" style="max-height:60vh;overflow-y:auto"></div>
     <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharRevisao()">Fechar</button>
+  </div>
+</div>
+
+<div id="rf-gastos-overlay" class="overlay" onclick="if(event.target===this)rifaFecharGastos()">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="rifaFecharGastos()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📒 Relatório de gastos</div>
+    <p class="modal-sub">Quanto foi arrecadado e em que foi gasto ✦</p>
+    <div id="rf-gastos-resumo" style="background:var(--rosa-dim);border:1px solid var(--rosa-border);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-family:'DM Sans',sans-serif;font-size:.85rem"></div>
+    <label class="form-label">Descrição do gasto</label>
+    <input type="text" class="form-input" id="rf-gasto-descricao" placeholder="Ex: Air Fryer, taxa do InfinitePay...">
+    <label class="form-label">Valor (R$)</label>
+    <input type="number" class="form-input" id="rf-gasto-valor" placeholder="0,00" step="0.01" min="0">
+    <button class="btn-rosa" style="width:100%;margin-bottom:16px" onclick="rifaAdicionarGasto()">+ Lançar gasto</button>
+    <div id="rf-gastos-lista" style="max-height:38vh;overflow-y:auto"></div>
+    <button class="rm-btn-mes" style="width:100%;text-align:center;margin-top:12px" onclick="rifaFecharGastos()">Fechar</button>
   </div>
 </div>
 
@@ -6990,6 +7007,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-limite').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-gastos').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-vendas').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
@@ -7586,6 +7604,80 @@ window.rifaAbrirRevisao = rifaAbrirRevisao;
 
 function rifaFecharRevisao() { document.getElementById('rf-revisao-overlay').classList.remove('open'); }
 window.rifaFecharRevisao = rifaFecharRevisao;
+
+// relatório de gastos — quanto foi arrecadado (números pagos × preço) menos
+// quanto já foi lançado como gasto, pra acompanhar o saldo da rifa
+function rifaCalcularFinancasGastos(r) {
+  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago');
+  const arrecadado = pagos.length * Number(r.precoPorNumero || 0);
+  const gastos = Array.isArray(r.gastos) ? r.gastos.slice().sort((a, b) => b.criadoEm - a.criadoEm) : [];
+  const totalGastos = gastos.reduce((soma, g) => soma + Number(g.valor || 0), 0);
+  return { arrecadado, totalGastos, saldo: arrecadado - totalGastos, gastos };
+}
+
+function rifaAbrirGastos() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-gasto-descricao').value = '';
+  document.getElementById('rf-gasto-valor').value = '';
+  rifaRenderGastos();
+  document.getElementById('rf-gastos-overlay').classList.add('open');
+}
+window.rifaAbrirGastos = rifaAbrirGastos;
+
+function rifaFecharGastos() { document.getElementById('rf-gastos-overlay').classList.remove('open'); }
+window.rifaFecharGastos = rifaFecharGastos;
+
+function rifaRenderGastos() {
+  const { arrecadado, totalGastos, saldo, gastos } = rifaCalcularFinancasGastos(rifaAtual);
+  document.getElementById('rf-gastos-resumo').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Arrecadado</span><strong>${rifaFormatarPreco(arrecadado)}</strong></div>
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>Gastos</span><strong>${rifaFormatarPreco(totalGastos)}</strong></div>
+    <div style="display:flex;justify-content:space-between;padding-top:6px;border-top:1px dashed var(--rosa-border);font-weight:700;color:${saldo < 0 ? '#b84040' : 'var(--green)'}"><span>Saldo</span><span>${rifaFormatarPreco(saldo)}</span></div>
+  `;
+  const lista = document.getElementById('rf-gastos-lista');
+  lista.innerHTML = gastos.length
+    ? gastos.map(g => `
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600;font-size:.88rem">${calEsc(g.descricao)}</div>
+          <div style="font-size:.72rem;color:var(--text-dim)">${rifaFormatarDataHoraQr(g.criadoEm)}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <strong style="white-space:nowrap">${rifaFormatarPreco(g.valor)}</strong>
+          <button onclick="rifaRemoverGasto('${g.id}')" title="Remover" style="background:none;border:none;color:#b84040;cursor:pointer;font-size:.9rem">🗑️</button>
+        </div>
+      </div>`).join('')
+    : '<p class="cal-empty">Nenhum gasto lançado ainda.</p>';
+}
+
+async function rifaAdicionarGasto() {
+  const descricao = document.getElementById('rf-gasto-descricao').value.trim();
+  const valor = parseFloat(document.getElementById('rf-gasto-valor').value);
+  if (!descricao) { alert('Digite a descrição do gasto.'); return; }
+  if (!valor || valor <= 0) { alert('Digite um valor válido.'); return; }
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'adicionar-gasto', descricao, valor }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui lançar o gasto.'); return; }
+    rifaAtual = data;
+    document.getElementById('rf-gasto-descricao').value = '';
+    document.getElementById('rf-gasto-valor').value = '';
+    rifaRenderGastos();
+  } catch (e) { alert('Não consegui lançar o gasto — tenta de novo.'); }
+}
+window.rifaAdicionarGasto = rifaAdicionarGasto;
+
+async function rifaRemoverGasto(id) {
+  if (!confirm('Remover esse gasto?')) return;
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'remover-gasto', id }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui remover.'); return; }
+    rifaAtual = data;
+    rifaRenderGastos();
+  } catch (e) { alert('Não consegui remover — tenta de novo.'); }
+}
+window.rifaRemoverGasto = rifaRemoverGasto;
 
 // agrupa por pessoa (reservado ou pago — atribuído ainda não tem comprador
 // de verdade, só a vendedora responsável) pra conferir quem comprou o quê;

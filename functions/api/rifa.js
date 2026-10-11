@@ -676,6 +676,26 @@ export async function onRequest(context) {
         return json(rifa);
       }
 
+      // RELATÓRIO DE GASTOS — registra em que o dinheiro arrecadado com a
+      // rifa foi gasto, pra acompanhar o saldo (arrecadado - gastos)
+      if (acao === 'adicionar-gasto') {
+        const descricao = (body.descricao || '').trim();
+        const valor = Number(body.valor);
+        if (!descricao) return json({ error: 'Informe a descrição do gasto.' }, 400);
+        if (!valor || valor <= 0) return json({ error: 'Informe um valor válido.' }, 400);
+        if (!Array.isArray(rifa.gastos)) rifa.gastos = [];
+        rifa.gastos.push({ id: gerarToken(), descricao, valor, criadoEm: Date.now() });
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
+      if (acao === 'remover-gasto') {
+        const id = String(body.id || '');
+        rifa.gastos = (rifa.gastos || []).filter(g => g.id !== id);
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
+
       // DEFINIR LIMITE DIGITAL — até qual número a venda digital (link
       // paralelo) vale; os números acima só entram por atribuição
       if (acao === 'definir-limite-digital') {
