@@ -4640,6 +4640,21 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/banner</span>
     </div>
 
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">✨ Criar novo QR code</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-bottom:14px">Cada QR novo tem seu próprio link, então dá pra saber de onde veio cada leitura — mesmo levando todos pro mesmo lugar.</div>
+      <label class="form-label">Nome do QR (ex: flyer2026, evento-tal)</label>
+      <input type="text" id="qr-criar-nome" class="form-input" placeholder="nome-do-qr">
+      <label class="form-label">Pra onde ele leva</label>
+      <select id="qr-criar-destino" class="form-input">
+        <option value="site">🏠 Site principal</option>
+        <option value="rifa-digital">🎟️ Rifa — venda digital</option>
+        <option value="cosmes">🎈 Cosme e Damião</option>
+      </select>
+      <button class="rm-btn-mes" onclick="qrCriarNovo()" style="width:100%">Criar QR code</button>
+      <div id="qr-criar-lista" style="margin-top:6px"></div>
+    </div>
+
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
     <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
       <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
@@ -5343,6 +5358,82 @@ function adminToggleLeiturasQr() {
   wrap.style.display = 'block';
 }
 window.adminToggleLeiturasQr = adminToggleLeiturasQr;
+
+// Criação de QR codes personalizados pelo próprio painel admin — ver
+// functions/api/qr-slugs.js. Cada um vira um /ir/<slug> próprio, então
+// dá pra identificar de onde veio cada leitura mesmo levando todos pro
+// mesmo destino (site, rifa digital ou Cosme e Damião).
+const QR_DESTINO_LABEL = {
+  site: '🏠 Site principal',
+  'rifa-digital': '🎟️ Rifa — venda digital',
+  cosmes: '🎈 Cosme e Damião',
+};
+
+async function qrCriarNovo() {
+  const nomeInput = document.getElementById('qr-criar-nome');
+  const destino = document.getElementById('qr-criar-destino').value;
+  const nome = nomeInput.value.trim();
+  if (!nome) { alert('Dê um nome pro QR code.'); return; }
+  try {
+    const res = await fetch('/api/qr-slugs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ acao: 'criar', slug: nome, destino, label: nome }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui criar o QR code.'); return; }
+    nomeInput.value = '';
+    await qrCarregarCriados();
+  } catch (e) { alert('Não consegui criar o QR code.'); }
+}
+window.qrCriarNovo = qrCriarNovo;
+
+async function qrCarregarCriados() {
+  const wrap = document.getElementById('qr-criar-lista');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin-top:10px">Carregando...</div>';
+  try {
+    const [resSlugs, resContagem] = await Promise.all([
+      fetch('/api/qr-slugs', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/qr-contagem', { headers: { 'X-Admin-Password': 'admin' } }),
+    ]);
+    const { itens } = await resSlugs.json();
+    const porSlug = resContagem.ok ? await resContagem.json() : {};
+    if (!itens || !itens.length) {
+      wrap.innerHTML = '<div class="cal-empty">Nenhum QR criado por aqui ainda ✦</div>';
+      return;
+    }
+    wrap.innerHTML = itens.map((item, i) => {
+      const n = (porSlug[item.slug] || []).length;
+      return `
+        <div style="border-top:1px solid var(--border);padding:14px 0;text-align:center">
+          <div style="font-family:'DM Sans',sans-serif;font-weight:600;font-size:.85rem;margin-bottom:2px">${calEsc(item.label)}</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);margin-bottom:8px">${QR_DESTINO_LABEL[item.destinoTipo] || item.destinoTipo} · lido ${n} vez${n === 1 ? '' : 'es'}</div>
+          <div id="qr-criado-canvas-${i}" style="margin:0 auto;width:fit-content"></div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:6px">https://bolhasdeluz.ong.br/ir/${calEsc(item.slug)}</span>
+          <button onclick="qrRemoverCriado('${item.slug}')" style="margin-top:8px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.05em;padding:6px 14px;cursor:pointer">🗑️ Remover</button>
+        </div>`;
+    }).join('');
+    itens.forEach((item, i) => {
+      const el = document.getElementById(`qr-criado-canvas-${i}`);
+      if (el) new QRCode(el, { text: `https://bolhasdeluz.ong.br/ir/${item.slug}`, width: 120, height: 120, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+    });
+  } catch (e) { wrap.innerHTML = 'Não consegui carregar os QR codes criados.'; }
+}
+window.qrCarregarCriados = qrCarregarCriados;
+
+async function qrRemoverCriado(slug) {
+  if (!confirm('Remover esse QR code? Ele para de funcionar (redirecionar) depois disso.')) return;
+  try {
+    await fetch('/api/qr-slugs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ acao: 'remover', slug }),
+    });
+    await qrCarregarCriados();
+  } catch (e) { alert('Não consegui remover o QR code.'); }
+}
+window.qrRemoverCriado = qrRemoverCriado;
 
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
@@ -6230,7 +6321,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
-  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); }
+  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); qrCarregarCriados(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
