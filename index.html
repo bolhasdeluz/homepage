@@ -7599,7 +7599,8 @@ function rifaCalcularGruposVendas(r) {
     if (!grupos[chave]) {
       grupos[chave] = { nome: info.nome || '(sem nome)', telefone: info.telefone || '', email: info.email || '', numeros: [], pendente: false };
     }
-    grupos[chave].numeros.push({ numero, status: info.status });
+    // data/hora do pedido — ajuda a localizar no extrato do banco
+    grupos[chave].numeros.push({ numero, status: info.status, quando: info.reservadoEm || info.pagoEm || null });
     if (info.status === 'reservado') grupos[chave].pendente = true;
   });
   const lista = Object.values(grupos).map(g => ({ ...g, numeros: g.numeros.sort((a, b) => a.numero.localeCompare(b.numero)) }));
@@ -7617,13 +7618,20 @@ function rifaAbrirRevisarVendas() {
   const corpo = document.getElementById('rf-vendas-corpo');
   corpo.innerHTML = grupos.length
     ? grupos.map((g, i) => {
-        const numerosTexto = g.numeros.map(n => `${n.numero}${n.status === 'pago' ? ' ✓' : ' ⏳'}`).join(', ');
+        const numerosTexto = g.numeros.map(n => {
+          const quando = n.quando ? ` <span style="opacity:.75">(${rifaFormatarDataHoraQr(n.quando)})</span>` : '';
+          return `${n.numero}${n.status === 'pago' ? ' ✓' : ' ⏳'}${quando}`;
+        }).join(', ');
         const contato = [g.telefone, g.email].filter(Boolean).join(' · ') || '(sem contato)';
         return `<div style="padding:10px 0;border-bottom:1px solid var(--border)${g.pendente ? ';background:rgba(139,90,0,.06)' : ''}">
           <div style="font-weight:700">${g.pendente ? '⏳ ' : ''}${calEsc(g.nome)}</div>
           <div style="font-size:.8rem;color:var(--text-dim);margin-top:2px">${calEsc(contato)}</div>
-          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${calEsc(numerosTexto)}</div>
-          ${g.pendente ? `<button class="rm-btn-mes" style="margin-top:6px;padding:6px 10px;font-size:.72rem" onclick="rifaAbrirWhatsappPendente(${i})">📱 Abrir WhatsApp com a mensagem</button>` : ''}
+          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${numerosTexto}</div>
+          ${g.pendente ? `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+            <button class="rm-btn-mes" style="padding:6px 10px;font-size:.72rem;background:linear-gradient(135deg,var(--green),#1f5c48)" onclick="rifaConfirmarPagamentoGrupo(${i})">✅ Confirmar pagamento</button>
+            <button class="rm-btn-mes" style="padding:6px 10px;font-size:.72rem" onclick="rifaAbrirWhatsappPendente(${i})">📱 Abrir WhatsApp com a mensagem</button>
+          </div>` : ''}
         </div>`;
       }).join('')
     : '<p class="cal-empty">Nenhuma venda ou reserva ainda.</p>';
@@ -7653,6 +7661,26 @@ function rifaAbrirWhatsappPendente(idx) {
   window.open(url, '_blank');
 }
 window.rifaAbrirWhatsappPendente = rifaAbrirWhatsappPendente;
+
+// confirma de uma vez só todos os números pendentes dessa pessoa — pra
+// quando a admin já conferiu o valor no extrato do banco e não precisa
+// mais fechar o popup, achar o número na grade e confirmar um por um
+async function rifaConfirmarPagamentoGrupo(idx) {
+  const g = (window._rifaGruposVendasAtual || [])[idx];
+  if (!g) return;
+  const numeros = g.numeros.filter(n => n.status !== 'pago').map(n => n.numero);
+  if (!numeros.length) return;
+  if (!confirm(`Confirmar pagamento ${numeros.length > 1 ? `dos números ${numeros.join(', ')}` : `do número ${numeros[0]}`} pra ${g.nome}?`)) return;
+  try {
+    const res = await fetch(RIFA_API, { method: 'PUT', headers: RIFA_ADMIN_HEADERS, body: JSON.stringify({ acao: 'confirmar-pagamento-lote', numeros, nome: g.nome, telefone: g.telefone }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Não consegui confirmar o pagamento.'); return; }
+    rifaAtual = data;
+    rifaRenderPagina();
+    rifaAbrirRevisarVendas();
+  } catch (e) { alert('Não consegui confirmar o pagamento — tenta de novo.'); }
+}
+window.rifaConfirmarPagamentoGrupo = rifaConfirmarPagamentoGrupo;
 
 // monta uma mensagem com o link individual de cada vendedora que ainda tem
 // número atribuído — pra mandar de uma vez só no grupo, em vez de ficar
