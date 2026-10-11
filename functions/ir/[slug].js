@@ -13,6 +13,7 @@ const DESTINOS = {
   cosmes: '/cosmes',
   rifa: '/rifa-digital',
   site: '/',
+  banner: '/',
 };
 
 export async function onRequestGet(context) {
