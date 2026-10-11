@@ -4632,12 +4632,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
 
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;text-align:center">
-      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px;text-align:left">📷 QR code do site</div>
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px;text-align:left">📷 QR code do banner</div>
       <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;text-align:left">É esse que está no banner novo ✦</div>
       <button class="rm-btn-mes" id="admin-qr-contagem" onclick="adminToggleLeiturasQr()" style="display:none;width:100%;margin-bottom:10px"></button>
       <div id="admin-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
       <div id="admin-qr-canvas" style="margin:0 auto"></div>
-      <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/site</span>
+      <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/banner</span>
     </div>
 
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
@@ -5309,7 +5309,7 @@ async function adminCarregarAcessos() {
 }
 window.adminCarregarAcessos = adminCarregarAcessos;
 
-// QR code pro link curto do site principal — aponta pro /ir/site (não
+// QR code pro banner novo do site principal — aponta pro /ir/banner (não
 // direto pra "/") pra cada leitura ficar registrada, igual já acontece
 // com o QR da rifa e do Cosme e Damião
 let adminLeiturasQr = [];
@@ -5318,7 +5318,7 @@ async function adminCarregarQr() {
   const canvasWrap = document.getElementById('admin-qr-canvas');
   if (!canvasWrap) return;
   if (!canvasWrap.hasChildNodes()) {
-    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/site', width: 160, height: 160, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/banner', width: 160, height: 160, colorDark: '#2e1a0e', colorLight: '#ffffff' });
   }
   const btn = document.getElementById('admin-qr-contagem');
   btn.style.display = 'none';
@@ -5327,7 +5327,7 @@ async function adminCarregarQr() {
     const res = await fetch('/api/qr-contagem', { headers: { 'X-Admin-Password': 'admin' } });
     if (res.ok) {
       const porSlug = await res.json();
-      adminLeiturasQr = porSlug.site || [];
+      adminLeiturasQr = porSlug.banner || [];
       const n = adminLeiturasQr.length;
       btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
       btn.style.display = n ? 'block' : 'none';
