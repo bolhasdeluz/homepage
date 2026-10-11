@@ -19,10 +19,16 @@ const DESTINOS = {
 export async function onRequestGet(context) {
   const { params, env, request } = context;
   const slug = params.slug;
-  const destino = DESTINOS[slug];
+  const KV = env.MENU_DATA;
+
+  let destino = DESTINOS[slug];
+  if (!destino && KV) {
+    // slugs criados pela própria Anna no painel admin (ver /api/qr-slugs)
+    const customizado = await KV.get(`qr:slug:${slug}`, { type: 'json' });
+    if (customizado) destino = customizado.destino;
+  }
   if (!destino) return new Response('Link não encontrado.', { status: 404 });
 
-  const KV = env.MENU_DATA;
   if (KV) {
     const agora = Date.now();
     const chave = `qr:leitura:${slug}:${agora}-${Math.random().toString(36).slice(2, 7)}`;
