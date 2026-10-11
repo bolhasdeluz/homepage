@@ -1225,11 +1225,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-resumo-principal{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--rosa)}
 .rf-resumo-detalhe{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .rf-resumo-dica{font-family:'Crimson Pro',serif;font-size:.7rem;color:var(--text-dim);font-style:italic;margin-top:6px;opacity:.75}
-.rf-ranking-linha{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.rf-ranking-linha{padding:9px 0;border-bottom:1px solid var(--border)}
 .rf-ranking-linha:last-child{border-bottom:none}
+.rf-ranking-linha-topo{display:flex;align-items:center;gap:10px}
 .rf-ranking-pos{font-family:'Cinzel',serif;font-size:.75rem;font-weight:700;color:var(--rosa);min-width:24px}
 .rf-ranking-nome{flex:1;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)}
-.rf-ranking-qtd{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);white-space:nowrap}
+.rf-ranking-qtd{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:3px;margin-left:34px}
 .rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
 .rf-premio-img{width:100%;max-width:280px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
 .rf-premio-img img{width:100%;display:block}
@@ -2779,6 +2780,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-talao" style="display:none" onclick="rifaAbrirTalao()">🖨️ Gerar talão</button>
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
       <button class="rf-admin-btn" id="rf-btn-gastos" style="display:none" onclick="rifaAbrirGastos()">📒 Relatório de gastos</button>
+      <button class="rf-admin-btn" id="rf-btn-ranking" style="display:none" onclick="rifaAbrirRankingVendedoras()">🏆 Quanto cada um vendeu</button>
       <button class="rf-admin-btn" id="rf-btn-vendas" style="display:none" onclick="rifaAbrirRevisarVendas()">📇 Revisar vendas</button>
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
@@ -6860,6 +6862,9 @@ function rifaAtualizarResumoVendas(r) {
 // atribuicaoToken do número), a venda digital direta (sem vendedora) e, se
 // sobrar algum pago sem nenhum dos dois (venda antiga lançada direto pela
 // admin), um balde à parte — pra montar o ranking de quem mais vendeu
+// pra cada vendedora, conta tanto o número de números vendidos quanto o
+// número de vendas (compradores diferentes) — uma vendedora pode vender
+// vários números pra mesma pessoa numa venda só
 function rifaCalcularRankingVendedoras(r) {
   const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago');
   const preco = Number(r.precoPorNumero || 0);
@@ -6876,12 +6881,13 @@ function rifaCalcularRankingVendedoras(r) {
       chave = vendedora ? vendedora.token : '__sem_vendedora__';
       nome = vendedora ? vendedora.nome : '🧾 Sem vendedora identificada';
     }
-    if (!porChave[chave]) porChave[chave] = { nome, quantidade: 0 };
-    porChave[chave].quantidade += 1;
+    if (!porChave[chave]) porChave[chave] = { nome, numeros: 0, compradores: new Set() };
+    porChave[chave].numeros += 1;
+    porChave[chave].compradores.add(rifaChavePessoa(info));
   });
   return Object.values(porChave)
-    .map(item => ({ ...item, arrecadado: item.quantidade * preco }))
-    .sort((a, b) => b.quantidade - a.quantidade);
+    .map(item => ({ nome: item.nome, numeros: item.numeros, vendas: item.compradores.size, arrecadado: item.numeros * preco }))
+    .sort((a, b) => b.numeros - a.numeros);
 }
 
 function rifaAbrirRankingVendedoras() {
@@ -6891,9 +6897,11 @@ function rifaAbrirRankingVendedoras() {
   lista.innerHTML = ranking.length
     ? ranking.map((item, i) => `
       <div class="rf-ranking-linha">
-        <span class="rf-ranking-pos">${i + 1}º</span>
-        <span class="rf-ranking-nome">${item.nome}</span>
-        <span class="rf-ranking-qtd">${item.quantidade} · ${rifaFormatarPreco(item.arrecadado)}</span>
+        <div class="rf-ranking-linha-topo">
+          <span class="rf-ranking-pos">${i + 1}º</span>
+          <span class="rf-ranking-nome">${item.nome}</span>
+        </div>
+        <div class="rf-ranking-qtd">${item.vendas} venda${item.vendas === 1 ? '' : 's'} de ${item.numeros} número${item.numeros === 1 ? '' : 's'} · ${rifaFormatarPreco(item.arrecadado)}</div>
       </div>`).join('')
     : '<p class="modal-sub" style="margin:0">Ainda não há nenhuma venda registrada.</p>';
   document.getElementById('rf-ranking-overlay').classList.add('open');
@@ -7008,6 +7016,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-talao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-gastos').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-ranking').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-vendas').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
