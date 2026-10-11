@@ -7623,7 +7623,7 @@ function rifaAbrirRevisarVendas() {
           <div style="font-weight:700">${g.pendente ? '⏳ ' : ''}${calEsc(g.nome)}</div>
           <div style="font-size:.8rem;color:var(--text-dim);margin-top:2px">${calEsc(contato)}</div>
           <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${calEsc(numerosTexto)}</div>
-          ${g.pendente ? `<button class="rm-btn-mes" id="rf-vendas-msg-${i}" style="margin-top:6px;padding:6px 10px;font-size:.72rem" onclick="rifaCopiarMensagemPendente(${i})">📋 Copiar mensagem pro WhatsApp</button>` : ''}
+          ${g.pendente ? `<button class="rm-btn-mes" style="margin-top:6px;padding:6px 10px;font-size:.72rem" onclick="rifaAbrirWhatsappPendente(${i})">📱 Abrir WhatsApp com a mensagem</button>` : ''}
         </div>`;
       }).join('')
     : '<p class="cal-empty">Nenhuma venda ou reserva ainda.</p>';
@@ -7634,22 +7634,25 @@ window.rifaAbrirRevisarVendas = rifaAbrirRevisarVendas;
 function rifaFecharRevisarVendas() { document.getElementById('rf-vendas-overlay').classList.remove('open'); }
 window.rifaFecharRevisarVendas = rifaFecharRevisarVendas;
 
-function rifaCopiarMensagemPendente(idx) {
+// limpa o telefone e garante o código do país (55) pro link do wa.me —
+// sem isso o WhatsApp Web não sabe pra quem abrir a conversa
+function rifaTelefoneWhatsapp(telefone) {
+  const digitos = String(telefone || '').replace(/\D/g, '');
+  if (!digitos) return '';
+  return digitos.startsWith('55') && digitos.length >= 12 ? digitos : '55' + digitos;
+}
+
+function rifaAbrirWhatsappPendente(idx) {
   const g = (window._rifaGruposVendasAtual || [])[idx];
   if (!g) return;
   const primeiroNome = (g.nome || '').trim().split(' ')[0] || '';
   const numerosTexto = g.numeros.map(n => n.numero).join(', ');
   const texto = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Aqui é a Anna do Bolhas de Luz ✦ Não conseguimos identificar o pagamento do(s) número(s) ${numerosTexto} da nossa rifa — teve algum problema na finalização no site? Caso tenha dado tudo certo, por favor nos envie o comprovante pra validarmos o seu número da sorte 🍀`;
-  navigator.clipboard?.writeText(texto).then(() => {
-    const btn = document.getElementById(`rf-vendas-msg-${idx}`);
-    if (!btn) return;
-    const original = btn.dataset.textoOriginal || btn.textContent;
-    btn.dataset.textoOriginal = original;
-    btn.textContent = '✓ Copiado!';
-    setTimeout(() => { btn.textContent = original; }, 2000);
-  }).catch(() => alert('Não consegui copiar — tenta de novo.'));
+  const numero = rifaTelefoneWhatsapp(g.telefone);
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
 }
-window.rifaCopiarMensagemPendente = rifaCopiarMensagemPendente;
+window.rifaAbrirWhatsappPendente = rifaAbrirWhatsappPendente;
 
 // monta uma mensagem com o link individual de cada vendedora que ainda tem
 // número atribuído — pra mandar de uma vez só no grupo, em vez de ficar
