@@ -4631,6 +4631,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div id="admin-acessos-corpo" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Carregando...</div>
     </div>
 
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:20px;text-align:center">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px;text-align:left">📷 QR code do site</div>
+      <button class="rm-btn-mes" id="admin-qr-contagem" onclick="adminToggleLeiturasQr()" style="display:none;width:100%;margin-bottom:10px"></button>
+      <div id="admin-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
+      <div id="admin-qr-canvas" style="margin:0 auto"></div>
+      <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/site</span>
+    </div>
+
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
     <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
       <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
@@ -5299,6 +5307,41 @@ async function adminCarregarAcessos() {
   } catch (e) { corpo.textContent = 'Não consegui carregar os acessos.'; }
 }
 window.adminCarregarAcessos = adminCarregarAcessos;
+
+// QR code pro link curto do site principal — aponta pro /ir/site (não
+// direto pra "/") pra cada leitura ficar registrada, igual já acontece
+// com o QR da rifa e do Cosme e Damião
+let adminLeiturasQr = [];
+
+async function adminCarregarQr() {
+  const canvasWrap = document.getElementById('admin-qr-canvas');
+  if (!canvasWrap) return;
+  if (!canvasWrap.hasChildNodes()) {
+    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/site', width: 160, height: 160, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+  }
+  const btn = document.getElementById('admin-qr-contagem');
+  btn.style.display = 'none';
+  document.getElementById('admin-qr-leituras').style.display = 'none';
+  try {
+    const res = await fetch('/api/qr-contagem', { headers: { 'X-Admin-Password': 'admin' } });
+    if (res.ok) {
+      const porSlug = await res.json();
+      adminLeiturasQr = porSlug.site || [];
+      const n = adminLeiturasQr.length;
+      btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
+      btn.style.display = n ? 'block' : 'none';
+    }
+  } catch (e) { /* não trava o painel se essa parte falhar */ }
+}
+window.adminCarregarQr = adminCarregarQr;
+
+function adminToggleLeiturasQr() {
+  const wrap = document.getElementById('admin-qr-leituras');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = adminLeiturasQr.map(ts => `<div>${rifaFormatarDataHoraQr(ts)}</div>`).join('') || '<div>Nenhuma leitura ainda ✦</div>';
+  wrap.style.display = 'block';
+}
+window.adminToggleLeiturasQr = adminToggleLeiturasQr;
 
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
@@ -6186,7 +6229,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
-  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); }
+  if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
     calAtualizarControlesAdmin();
