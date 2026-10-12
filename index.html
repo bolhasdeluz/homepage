@@ -7244,6 +7244,9 @@ function rifaClickNumero(numero) {
       const ehDigital = info.origem === 'digital';
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaAlternarOrigem('${numero}')">${ehDigital ? '🏠 Marcar como venda física' : '🔗 Marcar como venda digital'}</button>`;
     }
+    if (admin) {
+      botoes.innerHTML += `<button class="rm-btn-mes" id="rf-btn-talao-digital-numero" onclick="rifaGerarTalaoDigitalNumero('${numero}')">💾 Pegar talão digital desse número</button>`;
+    }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
     }
@@ -7364,6 +7367,71 @@ async function rifaAlternarOrigem(numero) {
   } catch (e) { alert('Não consegui atualizar a origem — tenta de novo.'); }
 }
 window.rifaAlternarOrigem = rifaAlternarOrigem;
+
+// mesma imagem (PNG) que a pessoa recebe na compra digital, mas gerada
+// aqui do painel admin pra um número específico — útil quando ela não
+// salvou (ou perdeu) o comprovante na hora e pede de novo
+async function rifaGerarTalaoDigitalNumero(numero) {
+  if (!rifaEhAdmin()) return;
+  const r = rifaAtual;
+  const info = r.numeros[numero];
+  if (!info) return;
+  const btn = document.getElementById('rf-btn-talao-digital-numero');
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Gerando...'; btn.disabled = true; }
+  try {
+    const metaPartes = [rifaFormatarPreco(r.precoPorNumero)];
+    if (r.dataSorteio) metaPartes.push(`Sorteio: ${r.dataSorteio}`);
+
+    const frame = document.createElement('div');
+    frame.style.cssText = 'width:480px;padding:28px 24px;background:#fff5f7;font-family:"DM Sans",sans-serif;color:#2e1a0e;border:2px solid #c4396b;border-radius:18px;';
+    frame.innerHTML = `
+      <div style="text-align:center;margin-bottom:16px">
+        <img src="${RIFA_LOGO_DATA_URI}" style="width:48px;height:48px;object-fit:contain;margin-bottom:6px">
+        <div style="font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#c4396b;font-weight:700">✦ Terreiro Bolhas de Luz ✦</div>
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;text-align:center;margin-bottom:4px">${calEsc(r.titulo || '')}</div>
+      ${r.premio ? `<div style="text-align:center;color:#555;margin-bottom:4px">🎁 ${calEsc(r.premio)}</div>` : ''}
+      <div style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">${metaPartes.join(' · ')}</div>
+      <div style="background:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px">
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#8a6070;margin-bottom:6px">Seu número</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#c4396b">${numero}</div>
+      </div>
+      <div style="font-size:.85rem;margin-bottom:4px"><b>Em nome de:</b> ${calEsc(info.nome || '')}</div>
+      ${r.motivo ? `<div style="font-size:.78rem;color:#8a6070;font-style:italic;margin-top:12px;border-top:1px dashed #c4396b;padding-top:10px">${calEsc(r.motivo)}</div>` : ''}
+      <div style="font-size:.7rem;color:#8a6070;text-align:center;margin-top:14px">Pagamento conferido manualmente — guarde este comprovante ✦</div>
+    `;
+    const palco = document.createElement('div');
+    palco.style.cssText = 'position:fixed;left:-9999px;top:0;';
+    palco.appendChild(frame);
+    document.body.appendChild(palco);
+
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+
+    const canvas = await html2canvas(frame, { scale: 2, backgroundColor: '#fff5f7', useCORS: true });
+    document.body.removeChild(palco);
+
+    canvas.toBlob(async (blob) => {
+      if (btn) { btn.textContent = textoOriginal; btn.disabled = false; }
+      if (!blob) { alert('Não deu pra gerar o talão digital. Tenta de novo.'); return; }
+      const nomeArquivo = `talao-digital-${numero}.png`;
+      const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+        try { await navigator.share({ files: [arquivo], title: 'Talão digital — Bolhas de Luz' }); return; }
+        catch (e) { /* cancelou o compartilhamento — cai no download abaixo */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = nomeArquivo; a.click();
+      URL.revokeObjectURL(url);
+    }, 'image/png');
+  } catch (e) {
+    if (btn) { btn.textContent = textoOriginal; btn.disabled = false; }
+    alert('Não deu pra gerar o talão digital. Tenta de novo.');
+  }
+}
+window.rifaGerarTalaoDigitalNumero = rifaGerarTalaoDigitalNumero;
 
 async function rifaSortear() {
   if (!rifaEhAdmin()) return;
