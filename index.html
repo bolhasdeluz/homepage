@@ -7244,8 +7244,8 @@ function rifaClickNumero(numero) {
       const ehDigital = info.origem === 'digital';
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaAlternarOrigem('${numero}')">${ehDigital ? '🏠 Marcar como venda física' : '🔗 Marcar como venda digital'}</button>`;
     }
-    if (admin) {
-      botoes.innerHTML += `<button class="rm-btn-mes" id="rf-btn-talao-digital-numero" onclick="rifaGerarTalaoDigitalNumero('${numero}')">💾 Pegar talão digital desse número</button>`;
+    if (admin && (info.status === 'reservado' || info.status === 'pago')) {
+      botoes.innerHTML += `<button class="rm-btn-mes" id="rf-btn-talao-digital-numero" onclick="rifaGerarTalaoDigitalNumero('${numero}')">💾 Pegar talão digital (com todos os números dela)</button>`;
     }
     if (dono && info.status === 'reservado') {
       botoes.innerHTML += `<button class="rm-btn-mes" onclick="rifaCancelar('${numero}')">Cancelar minha reserva</button>`;
@@ -7369,13 +7369,17 @@ async function rifaAlternarOrigem(numero) {
 window.rifaAlternarOrigem = rifaAlternarOrigem;
 
 // mesma imagem (PNG) que a pessoa recebe na compra digital, mas gerada
-// aqui do painel admin pra um número específico — útil quando ela não
-// salvou (ou perdeu) o comprovante na hora e pede de novo
+// aqui do painel admin com TODOS os números daquela pessoa (não só o que
+// foi clicado) — útil quando ela não salvou ou perdeu o comprovante e
+// pede de novo
 async function rifaGerarTalaoDigitalNumero(numero) {
   if (!rifaEhAdmin()) return;
   const r = rifaAtual;
   const info = r.numeros[numero];
   if (!info) return;
+  const grupo = rifaCalcularGruposVendas(r).find(g => g.numeros.some(n => n.numero === numero));
+  const numerosPessoa = grupo ? grupo.numeros.map(n => n.numero) : [numero];
+  const nomeComprador = grupo ? grupo.nome : (info.nome || '');
   const btn = document.getElementById('rf-btn-talao-digital-numero');
   const textoOriginal = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'Gerando...'; btn.disabled = true; }
@@ -7394,10 +7398,10 @@ async function rifaGerarTalaoDigitalNumero(numero) {
       ${r.premio ? `<div style="text-align:center;color:#555;margin-bottom:4px">🎁 ${calEsc(r.premio)}</div>` : ''}
       <div style="text-align:center;color:#555;font-size:.85rem;margin-bottom:16px">${metaPartes.join(' · ')}</div>
       <div style="background:#fff;border-radius:12px;padding:16px;text-align:center;margin-bottom:16px">
-        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#8a6070;margin-bottom:6px">Seu número</div>
-        <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#c4396b">${numero}</div>
+        <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:#8a6070;margin-bottom:6px">${numerosPessoa.length > 1 ? 'Seus números' : 'Seu número'}</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#c4396b">${numerosPessoa.join(' · ')}</div>
       </div>
-      <div style="font-size:.85rem;margin-bottom:4px"><b>Em nome de:</b> ${calEsc(info.nome || '')}</div>
+      <div style="font-size:.85rem;margin-bottom:4px"><b>Em nome de:</b> ${calEsc(nomeComprador)}</div>
       ${r.motivo ? `<div style="font-size:.78rem;color:#8a6070;font-style:italic;margin-top:12px;border-top:1px dashed #c4396b;padding-top:10px">${calEsc(r.motivo)}</div>` : ''}
       <div style="font-size:.7rem;color:#8a6070;text-align:center;margin-top:14px">Pagamento conferido manualmente — guarde este comprovante ✦</div>
     `;
@@ -7415,7 +7419,7 @@ async function rifaGerarTalaoDigitalNumero(numero) {
     canvas.toBlob(async (blob) => {
       if (btn) { btn.textContent = textoOriginal; btn.disabled = false; }
       if (!blob) { alert('Não deu pra gerar o talão digital. Tenta de novo.'); return; }
-      const nomeArquivo = `talao-digital-${numero}.png`;
+      const nomeArquivo = `talao-digital-${numerosPessoa.join('-')}.png`;
       const arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
         try { await navigator.share({ files: [arquivo], title: 'Talão digital — Bolhas de Luz' }); return; }
