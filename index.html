@@ -737,6 +737,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   92%{opacity:1}
   100%{transform:translateY(-115vh) translateX(var(--balao-sway,30px)) rotate(var(--balao-rot,12deg));opacity:0}
 }
+.bolha-flutuante{
+  position:absolute;bottom:-40px;border-radius:50%;
+  background:radial-gradient(circle at 30% 28%, rgba(255,255,255,.95), rgba(196,57,107,.12) 55%, rgba(196,57,107,.04) 100%);
+  border:1px solid rgba(255,255,255,.65);
+  box-shadow:inset 0 0 6px rgba(255,255,255,.5), 0 0 4px rgba(196,57,107,.12);
+  animation:bolhaSubir linear forwards;will-change:transform,opacity;
+}
+@keyframes bolhaSubir{
+  0%{transform:translateY(0) translateX(0);opacity:0}
+  10%{opacity:.85}
+  88%{opacity:.85}
+  100%{transform:translateY(-112vh) translateX(var(--bolha-sway,20px));opacity:0}
+}
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -18115,8 +18128,8 @@ window.verificarAniversarioCasaELancarBaloes = verificarAniversarioCasaELancarBa
 function lancarBaloesAniversarioCasa() {
   const wrap = document.createElement('div');
   wrap.className = 'baloes-aniversario-casa';
-  const total = 16;
-  for (let i = 0; i < total; i++) {
+  const totalBaloes = 16;
+  for (let i = 0; i < totalBaloes; i++) {
     const balao = document.createElement('span');
     balao.className = 'balao-flutuante';
     balao.textContent = '🎈';
@@ -18127,6 +18140,20 @@ function lancarBaloesAniversarioCasa() {
     balao.style.setProperty('--balao-sway', (Math.random() * 80 - 40) + 'px');
     balao.style.setProperty('--balao-rot', (Math.random() * 40 - 20) + 'deg');
     wrap.appendChild(balao);
+  }
+  // bolhas de sabão junto — a casa se chama Bolhas de Luz, então combina ✦
+  const totalBolhas = 22;
+  for (let i = 0; i < totalBolhas; i++) {
+    const bolha = document.createElement('span');
+    bolha.className = 'bolha-flutuante';
+    const tamanho = 10 + Math.random() * 26;
+    bolha.style.left = (Math.random() * 97) + '%';
+    bolha.style.width = tamanho + 'px';
+    bolha.style.height = tamanho + 'px';
+    bolha.style.animationDelay = (Math.random() * 3) + 's';
+    bolha.style.animationDuration = (4 + Math.random() * 3.5) + 's';
+    bolha.style.setProperty('--bolha-sway', (Math.random() * 60 - 30) + 'px');
+    wrap.appendChild(bolha);
   }
   document.body.appendChild(wrap);
   setTimeout(() => wrap.remove(), 9000);
