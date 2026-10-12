@@ -750,6 +750,19 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
   88%{opacity:.85}
   100%{transform:translateY(-112vh) translateX(var(--bolha-sway,20px));opacity:0}
 }
+.numero-aniversario-casa{
+  position:absolute;left:50%;bottom:32%;transform:translateX(-50%);
+  text-align:center;color:var(--rosa);text-shadow:0 2px 16px rgba(196,57,107,.35),0 0 3px #fff;
+  animation:numeroAniversarioSubir 6s ease-out forwards;
+}
+.numero-aniversario-casa .num{font-family:'Playfair Display',serif;font-size:4.4rem;font-weight:700;line-height:1}
+.numero-aniversario-casa .label{font-family:'Cinzel',serif;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;margin-top:4px}
+@keyframes numeroAniversarioSubir{
+  0%{transform:translate(-50%,50px) scale(.7);opacity:0}
+  18%{transform:translate(-50%,0) scale(1);opacity:1}
+  75%{transform:translate(-50%,0) scale(1);opacity:1}
+  100%{transform:translate(-50%,-240px) scale(1.08);opacity:0}
+}
 
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
@@ -18121,13 +18134,21 @@ function verificarAniversarioCasaELancarBaloes(dataEntrada) {
   const ehMesDeAniversario = inicio.getMonth() === hoje.getMonth() && hoje.getFullYear() > inicio.getFullYear();
   if (!ehMesDeAniversario) return;
   anivCasaBaloesDisparado = true;
-  lancarBaloesAniversarioCasa();
+  let anos = hoje.getFullYear() - inicio.getFullYear();
+  if (hoje.getDate() < inicio.getDate()) anos--; // ainda não chegou o dia exato este mês
+  lancarBaloesAniversarioCasa(anos);
 }
 window.verificarAniversarioCasaELancarBaloes = verificarAniversarioCasaELancarBaloes;
 
-function lancarBaloesAniversarioCasa() {
+function lancarBaloesAniversarioCasa(anos) {
   const wrap = document.createElement('div');
   wrap.className = 'baloes-aniversario-casa';
+  if (anos > 0) {
+    const numero = document.createElement('div');
+    numero.className = 'numero-aniversario-casa';
+    numero.innerHTML = `<div class="num">${anos}</div><div class="label">${anos === 1 ? 'ano de casa' : 'anos de casa'}</div>`;
+    wrap.appendChild(numero);
+  }
   const totalBaloes = 16;
   for (let i = 0; i < totalBaloes; i++) {
     const balao = document.createElement('span');
