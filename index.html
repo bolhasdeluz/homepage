@@ -727,6 +727,17 @@ footer{
 body.logada{padding-top:62px} /* sobrescreve a regra acima quando logada */
 body{padding-bottom:62px} /* espaço para o footer fixo na base */
 
+/* balõezinhos no mês de aniversário de entrada na casa — ver
+   lancarBaloesAniversarioCasa() */
+.baloes-aniversario-casa{position:fixed;inset:0;pointer-events:none;z-index:9999;overflow:hidden}
+.balao-flutuante{position:absolute;bottom:-80px;line-height:1;animation:balaoSubir linear forwards;will-change:transform,opacity}
+@keyframes balaoSubir{
+  0%{transform:translateY(0) translateX(0) rotate(0deg);opacity:0}
+  8%{opacity:1}
+  92%{opacity:1}
+  100%{transform:translateY(-115vh) translateX(var(--balao-sway,30px)) rotate(var(--balao-rot,12deg));opacity:0}
+}
+
 /* ── MODAL PÁGINAS ── */
 .page-modal-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:400;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
 .page-modal-overlay.open{display:flex}
@@ -18070,6 +18081,7 @@ function atualizarBoasVindas() {
   const cargo = perfil.cargo || '';
   const emoji = perfil.emoji || '✦';
   const tempo = calcTempo(perfil.historia?.data_entrada);
+  verificarAniversarioCasaELancarBaloes(perfil.historia?.data_entrada);
 
   document.getElementById('bv-emoji').textContent = emoji;
   document.getElementById('bv-nome').textContent  = primeiroNome;
@@ -18083,6 +18095,43 @@ function atualizarBoasVindas() {
   ajustarTopoFixo();
 }
 window.atualizarBoasVindas = atualizarBoasVindas;
+
+// balõezinhos voando quando a pessoa loga no mês do aniversário de entrada
+// na casa (já com pelo menos 1 ano completo — não dispara no mesmo mês em
+// que ela entrou) — só uma vez por sessão, pra não repetir a cada clique
+let anivCasaBaloesDisparado = false;
+function verificarAniversarioCasaELancarBaloes(dataEntrada) {
+  if (!dataEntrada || anivCasaBaloesDisparado) return;
+  const inicio = new Date(dataEntrada + 'T12:00:00');
+  if (isNaN(inicio.getTime())) return;
+  const hoje = new Date();
+  const ehMesDeAniversario = inicio.getMonth() === hoje.getMonth() && hoje.getFullYear() > inicio.getFullYear();
+  if (!ehMesDeAniversario) return;
+  anivCasaBaloesDisparado = true;
+  lancarBaloesAniversarioCasa();
+}
+window.verificarAniversarioCasaELancarBaloes = verificarAniversarioCasaELancarBaloes;
+
+function lancarBaloesAniversarioCasa() {
+  const wrap = document.createElement('div');
+  wrap.className = 'baloes-aniversario-casa';
+  const total = 16;
+  for (let i = 0; i < total; i++) {
+    const balao = document.createElement('span');
+    balao.className = 'balao-flutuante';
+    balao.textContent = '🎈';
+    balao.style.left = (Math.random() * 94) + '%';
+    balao.style.fontSize = (1.6 + Math.random() * 1.4) + 'rem';
+    balao.style.animationDelay = (Math.random() * 2.5) + 's';
+    balao.style.animationDuration = (5 + Math.random() * 3) + 's';
+    balao.style.setProperty('--balao-sway', (Math.random() * 80 - 40) + 'px');
+    balao.style.setProperty('--balao-rot', (Math.random() * 40 - 20) + 'deg');
+    wrap.appendChild(balao);
+  }
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 9000);
+}
+window.lancarBaloesAniversarioCasa = lancarBaloesAniversarioCasa;
 
 // só quem está logada (Google, admin por senha, ou "padrão" por senha) vê o
 // gavetão de ferramentas — quem abre o site sem logar não vê nem o botão dele
