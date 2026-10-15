@@ -4291,6 +4291,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="text-align:center;margin-bottom:14px">
       <button onclick="calAbrirEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
       <button onclick="calImportarCalendario2027()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">📥 Importar calendário 2027 (apaga e recria)</button>
+      <button onclick="calAdicionarExu2027()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">➕ Adicionar sessões de Exu 2027</button>
     </div>
 
     <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
@@ -9418,6 +9419,37 @@ async function calImportarCalendario2027() {
   alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : ''));
 }
 window.calImportarCalendario2027 = calImportarCalendario2027;
+
+// adição única das sessões de Exu que faltavam em 2027 — só cria, não mexe
+// em nada que já estava cadastrado (sem assistência não foi mencionada
+// pra essas datas, então segue o padrão combinado: aberta à assistência)
+const CAL_ADICAO_EXU_2027 = [
+  { data: '2027-03-09', nome: 'Exu' },
+  { data: '2027-04-06', nome: 'Exu' },
+  { data: '2027-05-11', nome: 'Exu' },
+  { data: '2027-06-08', nome: 'Exu' },
+  { data: '2027-09-07', nome: 'Exu' },
+  { data: '2027-10-05', nome: 'Exu' },
+  { data: '2027-11-09', nome: 'Exu' },
+  { data: '2027-12-07', nome: 'Exu' },
+];
+
+async function calAdicionarExu2027() {
+  if (!confirm(`Isso vai criar ${CAL_ADICAO_EXU_2027.length} sessões de Exu em 2027, sem apagar nada que já existe. Continuar?`)) return;
+
+  let criadas = 0, erros = 0;
+  for (const s of CAL_ADICAO_EXU_2027) {
+    try {
+      const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(s) });
+      if (res.ok) criadas++; else erros++;
+    } catch (e) { erros++; }
+  }
+
+  await calLoad();
+  if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  alert(`Pronto! ${criadas} sessão(ões) de Exu criada(s).` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
+}
+window.calAdicionarExu2027 = calAdicionarExu2027;
 
 function calAnualRender() {
   const grade = document.getElementById('cal-anual-grade');
