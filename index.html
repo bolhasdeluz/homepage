@@ -9452,15 +9452,40 @@ async function calAdicionarExu2027() {
 }
 window.calAdicionarExu2027 = calAdicionarExu2027;
 
-// exporta um PDF "de parede" do ano inteiro (12 meses, 3 por linha) com as
-// datas que já têm sessão marcadas — abre numa aba nova e chama print(), a
-// pessoa escolhe "Salvar como PDF" no diálogo de impressão do navegador,
-// igual já acontece com o talão da rifa (rifaImprimirTalao)
+// cor por entidade no calendário impresso — a primeira que bater com o
+// nome da sessão vence; o que não casa com nenhuma usa a cor padrão (rosa)
+const PCAL_CORES_ENTIDADE = [
+  { re: /caboclo/i, cor: '#2f6fb3', nome: 'Caboclo' },
+  { re: /preto\s*velho/i, cor: '#3f8f4f', nome: 'Preto Velho' },
+  { re: /cigano/i, cor: '#d98a1f', nome: 'Cigano' },
+  { re: /exu/i, cor: '#c0392b', nome: 'Exu' },
+];
+const PCAL_COR_PADRAO = '#c4396b';
+function pcalCorDaSessao(nome) {
+  const achado = PCAL_CORES_ENTIDADE.find(c => c.re.test(nome || ''));
+  return achado ? achado.cor : PCAL_COR_PADRAO;
+}
+// sessões fechadas (sem assistência) ganham uma estrelinha — a marca fica
+// guardada no próprio nome (ex: "Corte dos Exus (sem assistência)"), então
+// aqui só detecta e limpa o texto pra exibir bonito na legenda
+function pcalEhFechada(nome) { return /sem\s*assist[êe]ncia/i.test(nome || ''); }
+function pcalNomeLimpo(nome) { return String(nome || '').replace(/\s*\(sem\s*assist[êe]ncia\)/i, '').trim(); }
+
+// exporta um PDF "de parede" do ano inteiro (12 meses, 3 por linha,
+// empilhados numa folha vertical) com as datas que já têm sessão marcadas,
+// coloridas por entidade, e uma legenda com o nome de cada dia marcado
+// embaixo de cada mês — abre numa aba nova e chama print(), a pessoa
+// escolhe "Salvar como PDF" no diálogo de impressão do navegador, igual já
+// acontece com o talão da rifa (rifaImprimirTalao)
 function calImprimirCalendarioAnual() {
   const ano = calAnualAno;
   const feriados = calFeriadosDoAno(ano);
-  const temSessaoNoDia = {};
-  calSessoes.forEach(s => { if (s.data && s.data.startsWith(ano + '-')) temSessaoNoDia[s.data] = true; });
+  const sessoesPorDia = {};
+  calSessoes.forEach(s => {
+    if (!s.data || !s.data.startsWith(ano + '-')) return;
+    if (!sessoesPorDia[s.data]) sessoesPorDia[s.data] = [];
+    sessoesPorDia[s.data].push(s);
+  });
 
   const semanaHtml = CAL_DIAS.map(d => `<div class="pcal-dow">${d[0]}</div>`).join('');
 
@@ -9469,47 +9494,72 @@ function calImprimirCalendarioAnual() {
     const primeiroDia = new Date(ano, mes, 1).getDay();
     const ultimoDia = new Date(ano, mes + 1, 0).getDate();
     let diasHtml = '';
+    const diasDoMes = [];
     for (let i = 0; i < primeiroDia; i++) diasHtml += `<div class="pcal-dia vazio"></div>`;
     for (let d = 1; d <= ultimoDia; d++) {
       const dataStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      let classe = 'pcal-dia';
-      if (temSessaoNoDia[dataStr]) classe += ' tem-sessao';
-      else if (feriados[dataStr]) classe += ' feriado';
-      diasHtml += `<div class="${classe}"><span class="pcal-dia-num">${d}</span></div>`;
+      const doDia = sessoesPorDia[dataStr] || [];
+      if (doDia.length) {
+        const cor = pcalCorDaSessao(doDia[0].nome);
+        const fechada = doDia.some(s => pcalEhFechada(s.nome));
+        diasHtml += `<div class="pcal-dia tem-sessao">
+          <span class="pcal-dia-num" style="background:${cor}">${d}</span>
+          ${fechada ? '<span class="pcal-estrela">★</span>' : ''}
+        </div>`;
+        diasDoMes.push({ dia: d, cor, fechada, textos: doDia.map(s => pcalNomeLimpo(s.nome)) });
+      } else {
+        const classe = feriados[dataStr] ? 'pcal-dia feriado' : 'pcal-dia';
+        diasHtml += `<div class="${classe}"><span class="pcal-dia-num">${d}</span></div>`;
+      }
     }
+    const legendaMesHtml = diasDoMes.map(item => `
+      <div class="pcal-legenda-dia">
+        <span class="pcal-legenda-dia-num" style="background:${item.cor}">${item.dia}</span>
+        <span>${calEsc(item.textos.join(', '))}${item.fechada ? ' ★' : ''}</span>
+      </div>`).join('');
     mesesHtml += `<div class="pcal-mes">
       <div class="pcal-mes-nome">${CAL_MESES[mes]}</div>
       <div class="pcal-grade-semana">${semanaHtml}</div>
       <div class="pcal-grade-dias">${diasHtml}</div>
+      ${legendaMesHtml ? `<div class="pcal-legenda-mes">${legendaMesHtml}</div>` : ''}
     </div>`;
   }
+
+  const legendaCoresHtml = PCAL_CORES_ENTIDADE.map(c =>
+    `<span class="pcal-legenda-item"><span class="pcal-legenda-bola" style="background:${c.cor}"></span>${c.nome}</span>`
+  ).join('') + `
+    <span class="pcal-legenda-item"><span class="pcal-legenda-bola" style="background:${PCAL_COR_PADRAO}"></span>Outras sessões</span>
+    <span class="pcal-legenda-item"><span class="pcal-legenda-bola" style="background:#c9963c"></span>Feriado</span>
+    <span class="pcal-legenda-item">★ Sessão fechada (sem assistência)</span>`;
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
     <title>Calendário ${ano} — Terreiro Bolhas de Luz</title>
     <style>
       *{box-sizing:border-box}
-      body{font-family:Georgia,'Times New Roman',serif;margin:0;padding:18px;color:#2e1a0e;background:#fff}
-      .pcal-pagina{max-width:1100px;margin:0 auto}
-      .pcal-cabecalho{text-align:center;margin-bottom:18px}
-      .pcal-logo{width:52px;height:52px;object-fit:contain;margin-bottom:4px}
-      .pcal-titulo{font-size:1.5rem;font-weight:700;letter-spacing:.03em}
-      .pcal-subtitulo{font-size:.8rem;color:#8a6070;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
-      .pcal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-      .pcal-mes{border:1px solid #e3b8a0;border-radius:10px;padding:8px 10px 10px;break-inside:avoid;page-break-inside:avoid}
-      .pcal-mes-nome{text-align:center;font-weight:700;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:#c4396b;margin-bottom:6px}
-      .pcal-grade-semana,.pcal-grade-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-      .pcal-dow{text-align:center;font-size:.55rem;font-weight:700;color:#8a6070;padding-bottom:2px}
-      .pcal-dia{display:flex;align-items:center;justify-content:center;padding:1px 0}
-      .pcal-dia-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;font-size:.63rem}
-      .pcal-dia.tem-sessao .pcal-dia-num{background:#c4396b;color:#fff;font-weight:700}
+      body{font-family:Georgia,'Times New Roman',serif;margin:0;padding:14px;color:#2e1a0e;background:#fff}
+      .pcal-pagina{max-width:760px;margin:0 auto}
+      .pcal-cabecalho{text-align:center;margin-bottom:14px}
+      .pcal-logo{width:46px;height:46px;object-fit:contain;margin-bottom:4px}
+      .pcal-titulo{font-size:1.3rem;font-weight:700;letter-spacing:.03em}
+      .pcal-subtitulo{font-size:.72rem;color:#8a6070;letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+      .pcal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+      .pcal-mes{border:1px solid #e3b8a0;border-radius:10px;padding:6px 7px 8px;break-inside:avoid;page-break-inside:avoid}
+      .pcal-mes-nome{text-align:center;font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:#c4396b;margin-bottom:4px}
+      .pcal-grade-semana,.pcal-grade-dias{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+      .pcal-dow{text-align:center;font-size:.46rem;font-weight:700;color:#8a6070;padding-bottom:2px}
+      .pcal-dia{display:flex;align-items:center;justify-content:center;padding:1px 0;position:relative}
+      .pcal-dia-num{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;font-size:.5rem;color:#2e1a0e}
+      .pcal-dia.tem-sessao .pcal-dia-num{color:#fff;font-weight:700}
       .pcal-dia.feriado .pcal-dia-num{color:#c9963c;font-weight:700}
-      .pcal-legenda{display:flex;justify-content:center;gap:20px;margin-top:16px;font-size:.7rem;color:#555}
+      .pcal-estrela{position:absolute;top:-3px;right:1px;font-size:6px;color:#c9963c;line-height:1}
+      .pcal-legenda-mes{margin-top:5px;padding-top:4px;border-top:1px dashed #e3b8a0;font-size:.52rem;color:#555;line-height:1.5}
+      .pcal-legenda-dia{display:flex;align-items:center;gap:4px}
+      .pcal-legenda-dia-num{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;color:#fff;font-weight:700;font-size:.48rem;flex-shrink:0}
+      .pcal-legenda{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 16px;margin-top:14px;font-size:.62rem;color:#555}
       .pcal-legenda-item{display:flex;align-items:center;gap:5px}
-      .pcal-legenda-bola{display:inline-block;width:10px;height:10px;border-radius:50%}
-      .pcal-legenda-bola.tem-sessao{background:#c4396b}
-      .pcal-legenda-bola.feriado{background:#c9963c}
-      .pcal-rodape{text-align:center;margin-top:14px;font-size:.65rem;color:#8a6070;font-style:italic}
-      @page{size:A4 landscape;margin:12mm}
+      .pcal-legenda-bola{display:inline-block;width:9px;height:9px;border-radius:50%}
+      .pcal-rodape{text-align:center;margin-top:12px;font-size:.6rem;color:#8a6070;font-style:italic}
+      @page{size:A4 portrait;margin:10mm}
       @media print{ body{padding:0} }
     </style></head>
     <body>
@@ -9520,10 +9570,7 @@ function calImprimirCalendarioAnual() {
           <div class="pcal-subtitulo">Calendário de Sessões — ${ano}</div>
         </div>
         <div class="pcal-grid">${mesesHtml}</div>
-        <div class="pcal-legenda">
-          <span class="pcal-legenda-item"><span class="pcal-legenda-bola tem-sessao"></span> Sessão marcada</span>
-          <span class="pcal-legenda-item"><span class="pcal-legenda-bola feriado"></span> Feriado</span>
-        </div>
+        <div class="pcal-legenda">${legendaCoresHtml}</div>
         <div class="pcal-rodape">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
       </div>
     </body></html>`;
