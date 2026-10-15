@@ -4290,6 +4290,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Arraste um modelo pra um dia pra criar a sessão, ou clique num dia pra criar/editar na mão.</p>
     <div style="text-align:center;margin-bottom:14px">
       <button onclick="calAbrirEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
+      <button onclick="calImportarCalendario2027()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">📥 Importar calendário 2027 (apaga e recria)</button>
     </div>
 
     <div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
@@ -9353,6 +9354,70 @@ async function calConfirmarEspelharAno() {
   calFecharEspelharAno();
   alert(`Pronto! ${criadas} sessão(ões) criada(s).` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
 }
+
+// importação única do calendário 2027 combinado com a Anna (apaga tudo que
+// já estava cadastrado pra 2027 e recria do zero com essa lista fechada) —
+// as sessões sem marca de "(sem assistência)" no nome são abertas à
+// assistência por padrão, só as 5 marcadas são fechadas
+const CAL_IMPORTACAO_2027 = [
+  { data: '2027-01-16', nome: 'Confraternização' },
+  { data: '2027-01-30', nome: 'Cruzamento de Congá (sem assistência)' },
+  { data: '2027-02-13', nome: 'Caboclo e Exus — na praia' },
+  { data: '2027-02-26', nome: 'Preto Velho e Cosme' },
+  { data: '2027-03-12', nome: 'Cigano' },
+  { data: '2027-03-20', nome: 'Caboclo — Aborôs (homenagem aos pais)' },
+  { data: '2027-04-02', nome: 'Preto Velho e Cosme' },
+  { data: '2027-04-16', nome: 'Ciganos — Festa' },
+  { data: '2027-05-01', nome: 'Caboclo — Cruzamento de mata (sem assistência)' },
+  { data: '2027-05-15', nome: 'Pretos Velhos — Festa de Pretos Velhos (sem Cosme)' },
+  { data: '2027-05-28', nome: 'Ciganos' },
+  { data: '2027-06-11', nome: 'Caboclo' },
+  { data: '2027-06-25', nome: 'Cosme' },
+  { data: '2027-07-09', nome: 'Ciganos' },
+  { data: '2027-07-23', nome: 'Exu — confirmação da obrigação' },
+  { data: '2027-08-06', nome: 'Preto Velho — Almas' },
+  { data: '2027-08-09', nome: 'Firmeza dos Reinos' },
+  { data: '2027-08-14', nome: 'Corte dos Exus (sem assistência)' },
+  { data: '2027-08-21', nome: 'Ebó e Levantação' },
+  { data: '2027-08-22', nome: 'Marmitas' },
+  { data: '2027-09-10', nome: 'Ciganos' },
+  { data: '2027-09-24', nome: 'Festa dos Cosmes' },
+  { data: '2027-10-08', nome: 'Caboclos' },
+  { data: '2027-10-22', nome: 'Ciganos' },
+  { data: '2027-11-01', nome: 'Almas (sem assistência)' },
+  { data: '2027-11-15', nome: 'Xangô — homenagem às mães' },
+  { data: '2027-11-27', nome: 'Cruzamento de Cachoeira (sem assistência)' },
+  { data: '2027-12-10', nome: 'Limpeza de final de ano' },
+];
+
+async function calImportarCalendario2027() {
+  const existentes = calSessoes.filter(s => s.data && s.data.startsWith('2027-'));
+  const aviso = existentes.length
+    ? `Isso vai APAGAR as ${existentes.length} sessão(ões) já cadastradas em 2027 e criar as ${CAL_IMPORTACAO_2027.length} combinadas com a Anna no lugar. Essa ação não pode ser desfeita. Continuar?`
+    : `Isso vai criar as ${CAL_IMPORTACAO_2027.length} sessões de 2027 combinadas com a Anna. Continuar?`;
+  if (!confirm(aviso)) return;
+
+  let apagadas = 0, erroApagar = 0;
+  for (const s of existentes) {
+    try {
+      const res = await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id: s.id }) });
+      if (res.ok) apagadas++; else erroApagar++;
+    } catch (e) { erroApagar++; }
+  }
+
+  let criadas = 0, erroCriar = 0;
+  for (const s of CAL_IMPORTACAO_2027) {
+    try {
+      const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(s) });
+      if (res.ok) criadas++; else erroCriar++;
+    } catch (e) { erroCriar++; }
+  }
+
+  await calLoad();
+  if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : ''));
+}
+window.calImportarCalendario2027 = calImportarCalendario2027;
 
 function calAnualRender() {
   const grade = document.getElementById('cal-anual-grade');
