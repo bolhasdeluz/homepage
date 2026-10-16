@@ -100,7 +100,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .cm-lista-info{font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);line-height:1.5}
 .cm-lista-data{font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-top:2px}
 .cm-lista-info b{font-family:'Playfair Display',serif;font-weight:600}
+.cm-lista-acoes{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0}
 .cm-lista-del{background:none;border:none;color:#b84040;font-size:1rem;flex-shrink:0}
+.cm-lista-whats{background:none;border:none;color:var(--green);font-size:1.05rem;flex-shrink:0}
 .cm-lista-vazia{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);text-align:center;padding:16px 0}
 .cm-qr-wrap{text-align:center;margin:14px 0}
 .cm-qr-wrap canvas,.cm-qr-wrap img{margin:0 auto}
@@ -472,7 +474,10 @@ function cmRenderLista() {
           : `🧒 <b>${cmEsc(i.nome)}</b> — ${cmEsc(i.idade)} anos<br>Responsável: ${cmEsc(i.responsavel)}${cmAdultosCrianca(i) > 1 ? ` (+${cmAdultosCrianca(i) - 1} adulto${cmAdultosCrianca(i) - 1 === 1 ? '' : 's'})` : ''}${i.telefone ? ' · 📞 ' + cmEsc(i.telefone) : ''}`}
         ${i.criadoEm ? `<div class="cm-lista-data">Inscrito(a) em ${cmFormatarDataHora(i.criadoEm)}</div>` : ''}
       </div>
-      <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
+      <div class="cm-lista-acoes">
+        <button class="cm-lista-whats" onclick="cmAbrirWhatsapp('${i.id}')" title="Mensagem pro WhatsApp">📱</button>
+        <button class="cm-lista-del" onclick="cmExcluir('${i.id}')" title="Excluir">🗑️</button>
+      </div>
     </div>`).join('');
 }
 
@@ -486,6 +491,36 @@ async function cmExcluir(id) {
   } catch (e) { alert('Não consegui remover — tenta de novo.'); }
 }
 window.cmExcluir = cmExcluir;
+
+function cmTelefoneWhatsapp(telefone) {
+  const digitos = String(telefone || '').replace(/\D/g, '');
+  if (!digitos) return '';
+  return digitos.startsWith('55') && digitos.length >= 12 ? digitos : '55' + digitos;
+}
+
+// mensagem de confirmação de presença, já personalizada com o nome da
+// criança e de quem é responsável — pra mandar um dia antes da festa
+function cmMensagemConfirmacao(i) {
+  let quem;
+  if (i.tipo === 'adulto') {
+    const extra = cmQtd(i) > 1 ? ` e mais ${cmQtd(i) - 1} pessoa${cmQtd(i) - 1 === 1 ? '' : 's'}` : '';
+    quem = `${i.nome}${extra}`;
+  } else {
+    const extraAdultos = cmAdultosCrianca(i) > 1 ? ` e mais ${cmAdultosCrianca(i) - 1} acompanhante${cmAdultosCrianca(i) - 1 === 1 ? '' : 's'}` : '';
+    quem = `${i.nome} e ${i.responsavel}${extraAdultos}`;
+  }
+  return `Olá! Aqui é a Anna do Terreiro Bolhas de Luz 🍬 Aguardamos ${quem} amanhã para comer cachorrinho e tomar guaraná! 🌭🥤 Teremos um teatro de fantoche contando a história do Boi Tatá e também brincadeiras com brindes! 🎎🎁 E claro, muito axé com nossas crianças da Umbanda! ✦\n\n🍬🍭🧁🍡`;
+}
+
+function cmAbrirWhatsapp(id) {
+  const i = cmInscricoes.find(x => x.id === id);
+  if (!i) return;
+  const texto = cmMensagemConfirmacao(i);
+  const numero = cmTelefoneWhatsapp(i.telefone);
+  const url = numero ? `https://wa.me/${numero}?text=${encodeURIComponent(texto)}` : `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  window.open(url, '_blank');
+}
+window.cmAbrirWhatsapp = cmAbrirWhatsapp;
 
 function cmEnviarWhatsapp() {
   let texto = `🍬 *Inscritos — Festa de Cosme e Damião* 🍬\n\n`;
