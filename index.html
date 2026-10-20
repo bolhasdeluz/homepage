@@ -6981,8 +6981,14 @@ let rifaAtribuirEmailSelecionado = '';
 function rifaNormalizarNome(nome) {
   return String(nome || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
+// o telefone precisa virar só dígitos antes de entrar na chave — senão
+// "(51) 99906-1531" e "51999061531" da mesma pessoa viram duas chaves
+// diferentes, e ela aparece duas vezes (uma com os números pagos, outra
+// com os pendentes) em vez de uma pessoa só com os dois juntos
 function rifaChavePessoa(info) {
-  return rifaNormalizarNome(info.nome) + '|' + String(info.email || info.telefone || '').toLowerCase().trim();
+  const email = String(info.email || '').toLowerCase().trim();
+  const telefoneDigitos = String(info.telefone || '').replace(/\D/g, '');
+  return rifaNormalizarNome(info.nome) + '|' + (email || telefoneDigitos);
 }
 
 function rifaEhAdmin() { return souAdminAtivo(window._getCurrentUser && window._getCurrentUser()); }
