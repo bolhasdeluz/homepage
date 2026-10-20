@@ -7978,15 +7978,20 @@ function rifaAbrirRevisarVendas() {
   const corpo = document.getElementById('rf-vendas-corpo');
   corpo.innerHTML = grupos.length
     ? grupos.map((g, i) => {
-        const numerosTexto = g.numeros.map(n => {
+        const fmtNum = n => {
           const quando = n.quando ? ` <span style="opacity:.75">(${rifaFormatarDataHoraQr(n.quando)})</span>` : '';
-          return `${n.numero}${n.status === 'pago' ? ' ✓' : ' ⏳'}${quando}`;
-        }).join(', ');
+          return `${n.numero}${quando}`;
+        };
+        const pagos = g.numeros.filter(n => n.status === 'pago');
+        const pendentes = g.numeros.filter(n => n.status !== 'pago');
+        const linhaPendentes = pendentes.length ? `<div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">⏳ ${pendentes.length} pendente(s): ${pendentes.map(fmtNum).join(', ')}</div>` : '';
+        const linhaPagos = pagos.length ? `<div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">✓ ${pagos.length} pago(s): ${pagos.map(fmtNum).join(', ')}</div>` : '';
         const contato = [g.telefone, g.email].filter(Boolean).join(' · ') || '(sem contato)';
         return `<div style="padding:10px 0;border-bottom:1px solid var(--border)${g.pendente ? ';background:rgba(139,90,0,.06)' : ''}">
           <div style="font-weight:700">${g.pendente ? '⏳ ' : ''}${calEsc(g.nome)}</div>
           <div style="font-size:.8rem;color:var(--text-dim);margin-top:2px">${calEsc(contato)}</div>
-          <div style="font-size:.85rem;color:var(--text-dim);margin-top:2px">${g.numeros.length} número(s): ${numerosTexto}</div>
+          ${linhaPendentes}
+          ${linhaPagos}
           ${g.pendente ? `
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
             <button class="rm-btn-mes" style="padding:6px 10px;font-size:.72rem;background:linear-gradient(135deg,var(--green),#1f5c48)" onclick="rifaConfirmarPagamentoGrupo(${i})">✅ Confirmar pagamento</button>
