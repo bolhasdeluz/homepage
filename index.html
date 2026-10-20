@@ -7430,7 +7430,8 @@ async function rifaGerarTalaoDigitalNumero(numero) {
   const info = r.numeros[numero];
   if (!info) return;
   const grupo = rifaCalcularGruposVendas(r).find(g => g.numeros.some(n => n.numero === numero));
-  const numerosPessoa = grupo ? grupo.numeros.map(n => n.numero) : [numero];
+  const numerosPessoa = grupo ? grupo.numeros.filter(n => n.status === 'pago').map(n => n.numero) : (info.status === 'pago' ? [numero] : []);
+  if (!numerosPessoa.length) { alert('Essa pessoa ainda não tem número pago — o talão digital é só pros números já confirmados.'); return; }
   const nomeComprador = grupo ? grupo.nome : (info.nome || '');
   const btn = document.getElementById('rf-btn-talao-digital-numero');
   const textoOriginal = btn ? btn.textContent : '';
