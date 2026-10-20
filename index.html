@@ -8019,7 +8019,7 @@ function rifaAbrirWhatsappPendente(idx) {
   const g = (window._rifaGruposVendasAtual || [])[idx];
   if (!g) return;
   const primeiroNome = (g.nome || '').trim().split(' ')[0] || '';
-  const numerosTexto = g.numeros.map(n => n.numero).join(', ');
+  const numerosTexto = g.numeros.filter(n => n.status !== 'pago').map(n => n.numero).join(', ');
   const texto = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Aqui é a Anna do Bolhas de Luz ✦ Não conseguimos identificar o pagamento do(s) número(s) ${numerosTexto} da nossa rifa — teve algum problema na finalização no site? Caso tenha dado tudo certo, por favor nos envie o comprovante pra validarmos o seu número da sorte 🍀\n\nCaso não tenha conseguido concluir o pagamento, pode enviar no Pix a seguir que validaremos: bolhasdeluz@gmail.com`;
   const numero = rifaTelefoneWhatsapp(g.telefone);
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
