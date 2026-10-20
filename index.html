@@ -8020,8 +8020,16 @@ function rifaAbrirWhatsappPendente(idx) {
   const g = (window._rifaGruposVendasAtual || [])[idx];
   if (!g) return;
   const primeiroNome = (g.nome || '').trim().split(' ')[0] || '';
-  const numerosTexto = g.numeros.filter(n => n.status !== 'pago').map(n => n.numero).join(', ');
-  const texto = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Aqui é a Anna do Bolhas de Luz ✦ Não conseguimos identificar o pagamento do(s) número(s) ${numerosTexto} da nossa rifa — teve algum problema na finalização no site? Caso tenha dado tudo certo, por favor nos envie o comprovante pra validarmos o seu número da sorte 🍀\n\nCaso não tenha conseguido concluir o pagamento, pode enviar no Pix a seguir que validaremos: bolhasdeluz@gmail.com`;
+  const pagos = g.numeros.filter(n => n.status === 'pago').map(n => n.numero);
+  const pendentes = g.numeros.filter(n => n.status !== 'pago').map(n => n.numero);
+  const pendentesPlural = pendentes.length > 1;
+  let texto = `Oi${primeiroNome ? ' ' + primeiroNome : ''}! Aqui é a Anna do Bolhas de Luz ✦`;
+  if (pagos.length) {
+    texto += ` O(s) número(s) ${pagos.join(', ')} da nossa rifa já ${pagos.length > 1 ? 'foram confirmados' : 'foi confirmado'} ✅\n\nJá o(s) número(s) ${pendentes.join(', ')} ainda ${pendentesPlural ? 'estão pendentes' : 'está pendente'} de pagamento ⏳ Você vai querer garantir ${pendentesPlural ? 'esses também' : 'esse também'}, ou prefere que a gente libere pra outra pessoa?`;
+  } else {
+    texto += ` Não conseguimos identificar o pagamento do(s) número(s) ${pendentes.join(', ')} da nossa rifa — teve algum problema na finalização no site?`;
+  }
+  texto += `\n\nCaso tenha pago e só não tenha enviado o comprovante, pode nos mandar que validamos certinho 🍀\n\nCaso ainda não tenha pago, pode enviar no Pix a seguir que confirmamos: bolhasdeluz@gmail.com`;
   const numero = rifaTelefoneWhatsapp(g.telefone);
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`;
   window.open(url, '_blank');
