@@ -43,6 +43,37 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
   });
 }
 
+// e-mail de boas-vindas pra pessoa recém-cadastrada pelo admin — avisa que o
+// acesso já está liberado e explica como entrar (login com Google, mesmo e-mail)
+async function enviarEmailBoasVindas(env, { email, nome }) {
+  const RESEND_KEY = env.RESEND_API_KEY;
+  if (!RESEND_KEY || !email) return;
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
+      <h2 style="font-family:Georgia,serif;color:#c4396b;margin-bottom:16px">✦ Seu acesso foi liberado!</h2>
+      <p style="color:#2a1a22;font-size:15px;line-height:1.5">
+        Olá${nome ? ', ' + nome : ''}!<br><br>
+        Seu acesso ao site do Terreiro Bolhas de Luz foi liberado ✦<br><br>
+        Para entrar, é só acessar <b>bolhasdeluz.ong.br</b> e fazer login com a conta Google desse mesmo e-mail (${email}).
+      </p>
+      <div style="margin-top:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
+        <a href="https://bolhasdeluz.ong.br" style="color:#c4396b;font-size:13px">Acessar o site →</a>
+      </div>
+    </div>`;
+
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
+      to: [email],
+      subject: '✦ Seu acesso ao Bolhas de Luz foi liberado!',
+      html
+    })
+  });
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -138,8 +169,16 @@ export async function onRequest(context) {
     if (hist.length > 20) hist.splice(20);
     await env.MENU_DATA.put(histKey, JSON.stringify(hist));
 
+    // flag de controle, não faz parte do perfil salvo
+    const enviarBoasVindas = isAdmin && !!body.enviarBoasVindas;
+    delete body.enviarBoasVindas;
+
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
+
+    if (enviarBoasVindas) {
+      context.waitUntil(enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '' }));
+    }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
   }
