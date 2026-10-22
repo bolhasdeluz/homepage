@@ -4534,6 +4534,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <option value="tamboreiro">Tamboreiro</option>
           <option value="amigos">Amigos</option>
           <option value="assistencia">Assistência</option>
+          <option value="familia">Família</option>
         </select>
       </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
@@ -4635,6 +4636,51 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- ADICIONAR PESSOA — cadastro rápido, só e-mail + grupo de acesso -->
+<div id="modal-adicionar-pessoa-overlay" onclick="if(event.target===this)fecharAdicionarPessoa()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:440px;margin:40px auto;padding:28px 24px;position:relative">
+    <button onclick="fecharAdicionarPessoa()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:4px">➕ Adicionar Pessoa</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:20px">Cadastro rápido — só o e-mail e o grupo de acesso. O resto (nome, foto) ela mesma preenche quando logar.</div>
+
+    <div style="margin-bottom:12px">
+      <label class="form-label">E-mail (obrigatório)</label>
+      <input type="email" class="form-input" id="ap-email" placeholder="pessoa@gmail.com">
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">Nome (opcional)</label>
+      <input type="text" class="form-input" id="ap-nome" placeholder="Puxa do Google no 1º login se deixar em branco">
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="form-label">Grupo de acesso</label>
+      <select class="form-input" id="ap-grupo" style="font-family:'Crimson Pro',serif;font-size:15px">
+        <option value="visitante">Visitante (padrão)</option>
+        <option value="filhas">Filhas da Casa</option>
+        <option value="tamboreiro">Tamboreiro</option>
+        <option value="amigos">Amigos</option>
+        <option value="assistencia">Assistência</option>
+        <option value="familia">Família</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-boasvindas" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        📧 Enviar e-mail avisando que o acesso foi liberado
+      </label>
+    </div>
+    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-calendario" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        📅 Dar acesso à agenda do Google (aparece no celular dela)
+      </label>
+    </div>
+
+    <div id="ap-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
+    <button class="btn-rosa" style="width:100%;padding:13px;font-size:11px;letter-spacing:.1em" onclick="salvarAdicionarPessoa()">✦ Cadastrar</button>
+  </div>
+</div>
+
 <!-- MODAL ANIVERSÁRIOS -->
 <div id="modal-aniversarios-overlay" onclick="if(event.target===this)fecharModalAniversarios()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:550;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:480px;margin:40px auto;padding:26px 22px;position:relative">
@@ -4720,6 +4766,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
     <div id="admin-menu-principal" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+      <button class="admin-menu-item" onclick="abrirAdicionarPessoa()">
+        <span class="admin-menu-item-icon">➕</span>
+        <span class="admin-menu-item-label">Adicionar Pessoa</span>
+        <span class="admin-menu-item-desc">Cadastro rápido — só e-mail e grupo</span>
+      </button>
       <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
         <span class="admin-menu-item-icon">📋</span>
         <span class="admin-menu-item-label">Menu do Site</span>
@@ -5542,11 +5593,11 @@ function renderAdminPanel() {
           <!-- visibilidade por grupo -->
           <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
             <span style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;color:var(--text-dim);white-space:nowrap">Visível para:</span>
-            ${['publico','visitante','filhas','tamboreiro','amigos','assistencia'].map(g => {
+            ${['publico','visitante','filhas','tamboreiro','amigos','assistencia','familia'].map(g => {
               const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
               const ativo = grupos.includes(g);
-              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲'}[g];
-              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência'}[g];
+              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲',familia:'👪'}[g];
+              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência',familia:'Família'}[g];
               return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
             }).join('')}
             <span style="width:1px;height:14px;background:rgba(196,90,30,.15);margin:0 2px"></span>
@@ -5713,10 +5764,10 @@ function avRenderLista() {
         <button class="admin-del" onclick="avExcluir(${i})">✕</button>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
-        ${['publico','visitante','filhas','tamboreiro','amigos','assistencia'].map(g => {
+        ${['publico','visitante','filhas','tamboreiro','amigos','assistencia','familia'].map(g => {
           const ativo = (a.grupos || []).includes(g);
-          const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲'}[g];
-          const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência'}[g];
+          const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲',familia:'👪'}[g];
+          const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência',familia:'Família'}[g];
           return `<button class="toggle-pill ${ativo ? 'on' : ''}" style="font-size:.54rem;padding:3px 8px" onclick="avToggleGrupo(${i},'${g}')">${emoji} ${label}</button>`;
         }).join('')}
       </div>
@@ -5802,15 +5853,15 @@ function mudarSimulacao(valor) {
       const primeiroNome = (simPerfil.nome || '').split(' ')[0];
       const cargo = simPerfil.cargo || '';
       const emoji = simPerfil.emoji || '✦';
-      const tempo = window.calcTempo?.(simPerfil.historia?.data_entrada);
+      const tempoTexto = window.textoTempoCasa(simPerfil);
       const avatar = document.getElementById('user-avatar');
       if (avatar) { avatar.src = simPerfil.foto || ''; avatar.style.display = simPerfil.foto ? 'block' : 'none'; }
       document.getElementById('bv-emoji').textContent = emoji;
       document.getElementById('bv-nome').textContent  = primeiroNome;
       document.getElementById('bv-cargo').textContent = cargo;
-      document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+      document.getElementById('bv-tempo').textContent = tempoTexto;
       document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
-      document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+      document.getElementById('bv-sep2').style.display = tempoTexto ? '' : 'none';
       document.getElementById('bv-guest').style.display = 'none';
       document.getElementById('bv-logged').style.display = 'flex';
       document.getElementById('boas-vindas').style.display = 'block';
@@ -5872,13 +5923,13 @@ function sairSimulacao() {
   // volta barra de boas-vindas para admin (usa os getters globais, já que perfilData/currentUser vivem no módulo Firebase)
   const realUser = window._getCurrentUser ? window._getCurrentUser() : null;
   const realPerfil = window._getPerfilDataReal ? window._getPerfilDataReal() : {};
-  const tempo = window.calcTempo?.(realPerfil?.historia?.data_entrada);
+  const tempoTexto = window.textoTempoCasa(realPerfil);
   document.getElementById('bv-emoji').textContent = realPerfil?.emoji || '✦';
   document.getElementById('bv-nome').textContent  = (realPerfil?.nome || realUser?.displayName || '').split(' ')[0];
   document.getElementById('bv-cargo').textContent = realPerfil?.cargo || '';
-  document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+  document.getElementById('bv-tempo').textContent = tempoTexto;
   document.getElementById('bv-sep').style.display  = realPerfil?.cargo ? '' : 'none';
-  document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempoTexto ? '' : 'none';
   document.getElementById('bv-guest').style.display = 'none';
   document.getElementById('bv-logged').style.display = 'flex';
   document.getElementById('boas-vindas').style.display = 'block';
@@ -6272,6 +6323,60 @@ async function salvarPerfilAdmin() {
   } catch(e) { status.textContent = 'Erro de conexão.'; }
 }
 
+// ── ADICIONAR PESSOA — cadastro rápido (só e-mail + grupo), sem o
+// formulário gigante do "Criar Perfil" ──
+function abrirAdicionarPessoa() {
+  document.getElementById('ap-email').value = '';
+  document.getElementById('ap-nome').value = '';
+  document.getElementById('ap-grupo').value = 'visitante';
+  document.getElementById('ap-boasvindas').checked = true;
+  document.getElementById('ap-calendario').checked = true;
+  document.getElementById('ap-status').textContent = '';
+  document.getElementById('modal-adicionar-pessoa-overlay').style.display = 'flex';
+}
+window.abrirAdicionarPessoa = abrirAdicionarPessoa;
+
+function fecharAdicionarPessoa() {
+  document.getElementById('modal-adicionar-pessoa-overlay').style.display = 'none';
+}
+window.fecharAdicionarPessoa = fecharAdicionarPessoa;
+
+async function salvarAdicionarPessoa() {
+  const email = document.getElementById('ap-email').value.trim();
+  const status = document.getElementById('ap-status');
+  if (!email) { status.textContent = 'E-mail é obrigatório.'; return; }
+
+  const payload = {
+    email: email.toLowerCase(),
+    nome: document.getElementById('ap-nome').value.trim(),
+    grupo: document.getElementById('ap-grupo').value || 'visitante',
+    ativo: true,
+    historia: {}, guias: {}, cruzamentos: {},
+    criadoEm: Date.now(),
+    solicitacao: 'Cadastro rápido pelo admin',
+    enviarBoasVindas: document.getElementById('ap-boasvindas')?.checked || false,
+    darAcessoCalendario: document.getElementById('ap-calendario')?.checked || false,
+  };
+
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin', 'X-User-Email': email },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      const extras = [];
+      if (payload.enviarBoasVindas) extras.push('e-mail de boas-vindas enviado');
+      if (payload.darAcessoCalendario) extras.push('acesso à agenda liberado');
+      status.textContent = extras.length ? `✦ Cadastrado — ${extras.join(' e ')}!` : '✦ Cadastrado com sucesso!';
+      carregarFilhasAdmin();
+      setTimeout(fecharAdicionarPessoa, 1200);
+    } else { status.textContent = 'Erro ao salvar.'; }
+  } catch (e) { status.textContent = 'Erro de conexão.'; }
+}
+window.salvarAdicionarPessoa = salvarAdicionarPessoa;
 
 function adminSaveSecLabel(si, newLabel) {
   const v = (newLabel||'').trim();
@@ -6623,8 +6728,8 @@ const CAL_DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const CAL_TIPO_LABEL = {Interna:'Interna',Atendimento:'Atendimento',Visita:'Visita',Familia:'Família',Reuniao:'Reunião'};
 const CAL_TAMBOR = {confirmado:'✅ Tambor',arrecadacao:'🪘 Arrecadação',nao:'❌ Sem tambor'};
 const CAL_TIPOS = ['Interna','Atendimento','Visita','Familia','Reuniao'];
-const CAL_GRUPOS = ['publico','visitante','filhas','tamboreiro','amigos','assistencia'];
-const CAL_GRUPO_LABEL = {publico:'🌍 Público',visitante:'👤 Visitante',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',amigos:'🤝 Amigos',assistencia:'🤲 Assistência'};
+const CAL_GRUPOS = ['publico','visitante','filhas','tamboreiro','amigos','assistencia','familia'];
+const CAL_GRUPO_LABEL = {publico:'🌍 Público',visitante:'👤 Visitante',filhas:'🌸 Filhas',tamboreiro:'🥁 Tamboreiro',amigos:'🤝 Amigos',assistencia:'🤲 Assistência',familia:'👪 Família'};
 
 // visibilidade por TIPO de sessão (não mais por evento individual) — carregada
 // uma vez do KV e reaproveitada por calSessaoVisivel() pra decidir quem vê o quê
@@ -9860,6 +9965,7 @@ const PG_CARGO_OPCOES = ['', 'Mãe da Casa', 'Cacique', 'Tamoio', 'Naurú', 'Cam
 const PG_GRUPO_ACESSO_OPCOES = [
   ['visitante', 'Visitante (padrão)'], ['filhas', 'Filhas da Casa'],
   ['tamboreiro', 'Tamboreiro'], ['amigos', 'Amigos'], ['assistencia', 'Assistência'],
+  ['familia', 'Família'],
 ];
 
 const PG_COLUNAS = [
@@ -9871,7 +9977,7 @@ const PG_COLUNAS = [
   { grupo:'basico', key:'ativo', label:'Ativo', campo:'ativo', tipo:'checkbox', ler:p => p.ativo !== false },
   { grupo:'basico', key:'isento', label:'Isento de Mensalidade', campo:'isento', tipo:'checkbox', ler:p => !!p.isento },
   { grupo:'basico', key:'data_entrada', label:'Data de Entrada', secao:'historia', campo:'data_entrada', tipo:'date' },
-  { grupo:'basico', key:'tempo_casa', label:'Tempo de Casa', tipo:'readonly', valor:p => window.calcTempo?.(p.historia?.data_entrada) },
+  { grupo:'basico', key:'tempo_casa', label:'Tempo de Casa', tipo:'readonly', valor:p => window.textoTempoCasa(p) },
 
   { grupo:'familia', key:'guia_chefe', label:'Guia Chefe', secao:'historia', campo:'guia_chefe', tipo:'text' },
   { grupo:'familia', key:'madrinha', label:'Madrinha', secao:'historia', campo:'madrinha', tipo:'text' },
@@ -10315,8 +10421,7 @@ function guiasAbrirPainel(email) {
 
   document.getElementById('gp-nome').textContent  = p.nome || '';
   document.getElementById('gp-cargo').textContent = p.cargo || '';
-  const tempo = window.calcTempo?.(p.historia?.data_entrada);
-  document.getElementById('gp-tempo').textContent = tempo ? tempo + ' de casa' : '';
+  document.getElementById('gp-tempo').textContent = window.textoTempoCasa(p);
 
   // mostra botão editar só para a própria pessoa logada
   const user = window._getCurrentUser?.();
@@ -17649,6 +17754,8 @@ function renderDashPessoal(p, user) {
     fraseEl.textContent = p.fraseDestaque;
   } else if (tempo) {
     fraseEl.innerHTML = `<strong>${tempo}</strong> de caminhada na casa. ${DASH_FRASES_CARGO[cargo] || 'Cada passo guiado pela espiritualidade.'}`;
+  } else if (p.grupo === 'familia') {
+    fraseEl.textContent = window.MENSAGEM_TEMPO_FAMILIA + '.';
   } else {
     fraseEl.innerHTML = `Bem-vinda à sua jornada no <strong>Bolhas de Luz</strong>. ✨`;
   }
@@ -17789,7 +17896,7 @@ function terreiroRenderSessoes(sessoesTodas) {
 
 // assistência e visitantes não são "filhas da casa" — não entram na
 // Hierarquia nem na Árvore Genealógica, só quem é filha da casa de fato
-const GRUPOS_FORA_DA_ARVORE = ['assistencia', 'visitante'];
+const GRUPOS_FORA_DA_ARVORE = ['assistencia', 'visitante', 'familia'];
 
 // ── HIERARQUIA DA CASA — pirâmide por cargo ──
 // escada hierárquica (desenvolvimento espiritual), do mais alto pro mais
@@ -18389,15 +18496,15 @@ function atualizarBoasVindas() {
   const primeiroNome = nomeCompleto.split(' ')[0];
   const cargo = perfil.cargo || '';
   const emoji = perfil.emoji || '✦';
-  const tempo = calcTempo(perfil.historia?.data_entrada);
+  const tempoTexto = textoTempoCasa(perfil);
   verificarAniversarioCasaELancarBaloes(perfil.historia?.data_entrada);
 
   document.getElementById('bv-emoji').textContent = emoji;
   document.getElementById('bv-nome').textContent  = primeiroNome;
   document.getElementById('bv-cargo').textContent = cargo;
-  document.getElementById('bv-tempo').textContent = tempo ? tempo + ' de casa' : '';
+  document.getElementById('bv-tempo').textContent = tempoTexto;
   document.getElementById('bv-sep').style.display  = cargo ? '' : 'none';
-  document.getElementById('bv-sep2').style.display = tempo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempoTexto ? '' : 'none';
 
   banner.style.display = 'block';
   document.body.classList.add('logada');
@@ -18741,6 +18848,17 @@ window.calcTempo = function calcTempo(dataStr) {
   if (dias > 0)  p.push(dias  + (dias  === 1 ? ' dia'  : ' dias'));
   if (!p.length) return 'Recém chegada';
   return p.length === 1 ? p[0] : p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1];
+}
+
+// texto de "tempo de casa" pronto pra exibir — pessoas do grupo "família"
+// normalmente não têm data de entrada na corrente ainda, então em vez de
+// sumir em branco mostra uma frase explicando o motivo
+window.MENSAGEM_TEMPO_FAMILIA = 'Seu tempo de casa começará a contar a partir da sua entrada na corrente';
+window.textoTempoCasa = function textoTempoCasa(perfil) {
+  const tempo = window.calcTempo(perfil?.historia?.data_entrada);
+  if (tempo) return tempo + ' de casa';
+  if (perfil?.grupo === 'familia') return window.MENSAGEM_TEMPO_FAMILIA;
+  return '';
 }
 
 // calcula o ciclo de caminhada atual: 7 anos até completar o primeiro ciclo,
