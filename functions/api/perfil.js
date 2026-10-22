@@ -206,6 +206,16 @@ export async function onRequest(context) {
 
     // perfil existente — notifica login
     const perfil = JSON.parse(data);
+
+    // perfil pré-cadastrado pelo admin só com e-mail (sem nome) — puxa do
+    // Google no primeiro login dela, em vez de depender de alguém digitar
+    const nomeGoogle = url.searchParams.get('nome') || '';
+    const fotoGoogle = url.searchParams.get('foto') || '';
+    let precisaSalvar = false;
+    if (!perfil.nome && nomeGoogle) { perfil.nome = nomeGoogle; precisaSalvar = true; }
+    if (!perfil.foto && fotoGoogle) { perfil.foto = fotoGoogle; precisaSalvar = true; }
+    if (precisaSalvar) await env.MENU_DATA.put(key, JSON.stringify(perfil));
+
     context.waitUntil(enviarEmail(env, {
       email,
       nome: perfil.nome || '',
@@ -213,7 +223,7 @@ export async function onRequest(context) {
       novoPerfil: false
     }));
 
-    return new Response(data, { status: 200, headers: CORS });
+    return new Response(JSON.stringify(perfil), { status: 200, headers: CORS });
   }
 
   // POST — salvar perfil + histórico
