@@ -58,6 +58,16 @@ async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
         Para entrar, é só acessar <b>bolhasdeluz.ong.br</b> e fazer login com a conta Google desse mesmo e-mail (${email}).
         ${comAgenda ? `<br><br>Também liberamos pra você a nossa agenda de sessões — ela já deve aparecer sozinha no seu Google Agenda (no celular ou no computador), em "Outras agendas".` : ''}
       </p>
+      ${comAgenda ? `
+      <div style="margin-top:16px;padding:14px 16px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
+        <p style="color:#c4396b;font-size:13px;font-weight:bold;margin:0 0 8px">📅 Como ativar ou desativar a agenda no app</p>
+        <p style="color:#2a1a22;font-size:13px;line-height:1.6;margin:0">
+          1. Abra o app Google Agenda no celular<br>
+          2. Toque no menu ☰ no canto superior esquerdo<br>
+          3. Procure "Terreiro Bolhas de Luz" em "Outras agendas"<br>
+          4. Toque na caixinha ao lado do nome pra mostrar (marcada) ou esconder (desmarcada) os eventos dela
+        </p>
+      </div>` : ''}
       <div style="margin-top:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
         <a href="https://bolhasdeluz.ong.br" style="color:#c4396b;font-size:13px">Acessar o site →</a>
       </div>
