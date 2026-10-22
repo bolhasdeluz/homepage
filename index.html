@@ -4592,6 +4592,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         📧 Enviar e-mail avisando que o acesso foi liberado
       </label>
     </div>
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-calendario" style="accent-color:var(--rosa);width:16px;height:16px">
+        📅 Dar acesso à agenda do Google (aparece no celular dela)
+      </label>
+    </div>
     <!-- CAMPOS CACIQUE -->
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
       ✦ Cacique — campos especiais
@@ -6143,6 +6149,7 @@ function abrirCriarPerfil(emailParaEditar) {
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
   if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = false;
   if (document.getElementById('cp-boasvindas')) document.getElementById('cp-boasvindas').checked = !emailParaEditar;
+  if (document.getElementById('cp-calendario')) document.getElementById('cp-calendario').checked = !emailParaEditar;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -6216,6 +6223,7 @@ async function salvarPerfilAdmin() {
     isento: document.getElementById('cp-isento')?.checked || false,
     visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     enviarBoasVindas: document.getElementById('cp-boasvindas')?.checked || false,
+    darAcessoCalendario: document.getElementById('cp-calendario')?.checked || false,
     cacique: {
       ...(base.cacique || {}),
       terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
@@ -6244,7 +6252,10 @@ async function salvarPerfilAdmin() {
     });
     const data = await res.json();
     if (data.ok) {
-      status.textContent = payload.enviarBoasVindas ? '✦ Salvo e e-mail de boas-vindas enviado!' : '✦ Salvo com sucesso!';
+      const extras = [];
+      if (payload.enviarBoasVindas) extras.push('e-mail de boas-vindas enviado');
+      if (payload.darAcessoCalendario) extras.push('acesso à agenda liberado');
+      status.textContent = extras.length ? `✦ Salvo — ${extras.join(' e ')}!` : '✦ Salvo com sucesso!';
       carregarFilhasAdmin();
       setTimeout(fecharCriarPerfil, 1200);
     } else { status.textContent = 'Erro ao salvar.'; }

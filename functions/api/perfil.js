@@ -45,7 +45,7 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
 
 // e-mail de boas-vindas pra pessoa recém-cadastrada pelo admin — avisa que o
 // acesso já está liberado e explica como entrar (login com Google, mesmo e-mail)
-async function enviarEmailBoasVindas(env, { email, nome }) {
+async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
   const RESEND_KEY = env.RESEND_API_KEY;
   if (!RESEND_KEY || !email) return;
 
@@ -56,6 +56,7 @@ async function enviarEmailBoasVindas(env, { email, nome }) {
         Olá${nome ? ', ' + nome : ''}!<br><br>
         Seu acesso ao site do Terreiro Bolhas de Luz foi liberado ✦<br><br>
         Para entrar, é só acessar <b>bolhasdeluz.ong.br</b> e fazer login com a conta Google desse mesmo e-mail (${email}).
+        ${comAgenda ? `<br><br>Também liberamos pra você a nossa agenda de sessões — ela já deve aparecer sozinha no seu Google Agenda (no celular ou no computador), em "Outras agendas".` : ''}
       </p>
       <div style="margin-top:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
         <a href="https://bolhasdeluz.ong.br" style="color:#c4396b;font-size:13px">Acessar o site →</a>
@@ -72,6 +73,69 @@ async function enviarEmailBoasVindas(env, { email, nome }) {
       html
     })
   });
+}
+
+// --- Compartilhamento da Agenda do Google (mesma conta de serviço usada em
+// sessoes.js pra sincronizar as sessões) -------------------------------
+
+function gcalB64Url(str) {
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function gcalLimparChavePem(chavePem) {
+  const comQuebras = String(chavePem || '').replace(/\\n/g, '\n');
+  const linhas = comQuebras.split('\n').filter(l => !l.toUpperCase().includes('PRIVATE KEY'));
+  return linhas.join('').replace(/[^A-Za-z0-9+/=]/g, '');
+}
+
+async function gcalToken(env) {
+  const email = env.GOOGLE_SA_EMAIL;
+  const chavePem = env.GOOGLE_SA_PRIVATE_KEY;
+  if (!email || !chavePem) return null;
+
+  const agora = Math.floor(Date.now() / 1000);
+  const cabecalho = gcalB64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
+  const claims = gcalB64Url(JSON.stringify({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/calendar',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: agora,
+    exp: agora + 3600,
+  }));
+  const entrada = `${cabecalho}.${claims}`;
+
+  const pemLimpo = gcalLimparChavePem(chavePem);
+  if (pemLimpo.length < 500) return null;
+  const der = Uint8Array.from(atob(pemLimpo), c => c.charCodeAt(0));
+  const chave = await crypto.subtle.importKey('pkcs8', der.buffer, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['sign']);
+  const assinatura = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', chave, new TextEncoder().encode(entrada));
+  const assinaturaB64 = btoa(String.fromCharCode(...new Uint8Array(assinatura))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  const jwt = `${entrada}.${assinaturaB64}`;
+
+  const resp = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `grant_type=${encodeURIComponent('urn:ietf:params:oauth:grant-type:jwt-bearer')}&assertion=${encodeURIComponent(jwt)}`,
+  });
+  if (!resp.ok) return null;
+  const dados = await resp.json();
+  return dados.access_token || null;
+}
+
+// dá acesso de leitura à agenda inteira do terreiro pro e-mail da pessoa —
+// a agenda aparece sozinha no Google Agenda/celular dela, sem precisar
+// aceitar convite. sendNotifications=false porque já mandamos nosso próprio
+// e-mail de boas-vindas avisando disso.
+async function gcalDarAcessoAgenda(env, email) {
+  const token = await gcalToken(env);
+  const calendarId = env.GOOGLE_CALENDAR_ID;
+  if (!token || !calendarId || !email) return false;
+  const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl?sendNotifications=false`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role: 'reader', scope: { type: 'user', value: email } }),
+  });
+  return resp.ok;
 }
 
 export async function onRequest(context) {
@@ -169,15 +233,18 @@ export async function onRequest(context) {
     if (hist.length > 20) hist.splice(20);
     await env.MENU_DATA.put(histKey, JSON.stringify(hist));
 
-    // flag de controle, não faz parte do perfil salvo
+    // flags de controle, não fazem parte do perfil salvo
     const enviarBoasVindas = isAdmin && !!body.enviarBoasVindas;
+    const darAcessoCalendario = isAdmin && !!body.darAcessoCalendario;
     delete body.enviarBoasVindas;
+    delete body.darAcessoCalendario;
 
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
 
+    if (darAcessoCalendario) context.waitUntil(gcalDarAcessoAgenda(env, targetEmail));
     if (enviarBoasVindas) {
-      context.waitUntil(enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '' }));
+      context.waitUntil(enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda: darAcessoCalendario }));
     }
 
     return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
