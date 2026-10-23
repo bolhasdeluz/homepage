@@ -10650,7 +10650,9 @@ async function textosVerificarDuplicatas() {
   if (!duplicados.length) {
     corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim)">Nenhuma duplicata encontrada — ${itens.length} textos no total, todos com título e data únicos. ✦</p>`;
   } else {
-    corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);margin-bottom:14px">${duplicados.length} título(s) duplicado(s), de ${itens.length} textos no total. Mantenha uma cópia de cada e exclua as demais:</p>` +
+    corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);margin-bottom:10px">${duplicados.length} título(s) duplicado(s), de ${itens.length} textos no total.</p>
+      <button onclick="textosLimparTodasDuplicatas()" style="background:#b33;border:none;color:#fff;padding:9px 16px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;margin-bottom:14px">🧹 Excluir todas as cópias extras de uma vez (mantém 1 de cada)</button>
+      <p style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);margin-bottom:14px">Ou revise e exclua uma por uma abaixo:</p>` +
       duplicados.map(grupo => `
         <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">
           <div style="font-family:'Playfair Display',serif;font-weight:600;margin-bottom:6px">${calEsc(grupo[0].titulo)} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">(${(grupo[0].data || '').split('-').reverse().join('/')})</span></div>
@@ -10681,12 +10683,59 @@ async function textosExcluirDuplicata(id) {
 }
 window.textosExcluirDuplicata = textosExcluirDuplicata;
 
+// exclui todas as cópias extras de cada título+data duplicado de uma vez só
+// — mantém a cópia mais antiga (criadoEm menor) de cada grupo e apaga o
+// resto, pra não precisar clicar uma por uma quando tem muita duplicata
+async function textosLimparTodasDuplicatas() {
+  const grupos = {};
+  textosTodos.forEach(t => {
+    const chave = `${t.titulo}|${t.data}`;
+    (grupos[chave] = grupos[chave] || []).push(t);
+  });
+  const paraExcluir = [];
+  Object.values(grupos).filter(g => g.length > 1).forEach(g => {
+    const ordenado = [...g].sort((a, b) => (a.criadoEm || 0) - (b.criadoEm || 0));
+    paraExcluir.push(...ordenado.slice(1));
+  });
+  if (!paraExcluir.length) return;
+  if (!confirm(`Isso vai excluir ${paraExcluir.length} cópia(s) extra(s), mantendo a mais antiga de cada título. Confirma?`)) return;
+
+  let excluidos = 0, falhas = 0;
+  for (const t of paraExcluir) {
+    try {
+      const res = await fetch(TEXTOS_API, { method: 'DELETE', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify({ id: t.id }) });
+      if (res.ok) { excluidos++; textosTodos = textosTodos.filter(x => x.id !== t.id); } else falhas++;
+    } catch (e) { falhas++; }
+  }
+  textosPopularFiltroAno();
+  textosRenderCategoriasChips();
+  textosRenderKeywordsChips();
+  textosRenderTimeline();
+  alert(`Limpeza concluída!\n\n🗑️ ${excluidos} cópia(s) excluída(s)\n${falhas ? `⚠️ ${falhas} falharam` : ''}`);
+  textosVerificarDuplicatas();
+}
+window.textosLimparTodasDuplicatas = textosLimparTodasDuplicatas;
+
+// vira um id estável a partir do título+data (minúsculo, sem acento, só
+// letras/números/hífen) — usado só pra importação em massa, pra o próprio
+// servidor conseguir reconhecer "esse texto já existe" por leitura direta da
+// chave (muito mais confiável que listar todas as chaves logo depois de uma
+// leva grande de escritas, que no KV do Cloudflare pode demorar a atualizar)
+function textosSlugImportacao(titulo, data) {
+  const slug = String(titulo || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  return `texto:import-${data}-${slug}`;
+}
+
 // importação única do acervo de textos (textos-import.json, gerado a partir
 // do histórico de avisos da Anna) — roda do navegador da admin, que tem
-// acesso normal ao site, em vez de depender de rede externa; compara por
-// título+data pra nunca duplicar se for clicado mais de uma vez
+// acesso normal ao site, em vez de depender de rede externa. Cada item usa
+// um id determinístico (título+data), então clicar de novo nunca duplica —
+// o servidor reconhece a chave já existente e devolve ela sem recriar,
+// mesmo que a lista local esteja desatualizada ou vazia
 async function textosImportarArquivo() {
-  if (!confirm('Importar o acervo de textos do arquivo? Isso cria vários textos novos de uma vez (não duplica os que já existirem).')) return;
+  if (!confirm('Importar o acervo de textos do arquivo? Isso cria vários textos novos de uma vez (não duplica os que já existirem, mesmo clicando mais de uma vez).')) return;
   let itens;
   try {
     const res = await fetch('/textos-import.json');
@@ -10695,22 +10744,40 @@ async function textosImportarArquivo() {
   } catch (e) { alert('Não consegui carregar o arquivo de importação.'); return; }
   if (!Array.isArray(itens) || !itens.length) { alert('Arquivo de importação vazio ou inválido.'); return; }
 
-  const existentesChave = new Set(textosTodos.map(t => `${t.titulo}|${t.data}`));
+  // busca fresca (não usa o que já estava em memória) — pega qualquer texto
+  // que já exista com o mesmo título+data, mesmo que tenha um id antigo
+  // (de antes desse esquema de id determinístico), pra não criar uma cópia
+  // nova ao lado de uma que já tem conteúdo igual
+  let existentesPorChave = {};
+  try {
+    const res = await fetch(TEXTOS_API);
+    const atuais = await res.json();
+    if (Array.isArray(atuais)) {
+      textosTodos = atuais;
+      atuais.forEach(t => { existentesPorChave[`${t.titulo}|${t.data}`] = t; });
+    }
+  } catch (e) {}
+
   let criados = 0, pulados = 0, falhas = 0;
 
   for (let i = 0; i < itens.length; i++) {
     const item = itens[i];
     const chave = `${item.titulo}|${item.data}`;
-    if (existentesChave.has(chave)) { pulados++; continue; }
+    if (existentesPorChave[chave]) { pulados++; continue; }
+    const id = textosSlugImportacao(item.titulo, item.data);
     const status = document.getElementById('textos-import-status');
     if (status) status.textContent = `Importando ${i + 1}/${itens.length}…`;
     try {
-      const res = await fetch(TEXTOS_API, { method: 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify(item) });
+      const res = await fetch(TEXTOS_API, { method: 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify({ ...item, id }) });
       if (!res.ok) { falhas++; continue; }
-      const criado = await res.json();
-      textosTodos.push(criado);
-      existentesChave.add(chave);
-      criados++;
+      const resultado = await res.json();
+      // se o servidor devolveu algo criado há mais de 10s, é porque esse id
+      // já existia de antes (não foi criado agora) — serve só pra mostrar o
+      // resumo certo pra admin, não muda o comportamento
+      const jaExistia = resultado.criadoEm && (Date.now() - resultado.criadoEm > 10000);
+      if (jaExistia) pulados++; else criados++;
+      const idx = textosTodos.findIndex(t => t.id === id);
+      if (idx >= 0) textosTodos[idx] = resultado; else textosTodos.push(resultado);
     } catch (e) { falhas++; }
   }
 
