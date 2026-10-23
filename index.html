@@ -4613,6 +4613,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         📅 Dar acesso à agenda do Google (aparece no celular dela)
       </label>
     </div>
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-drive" style="accent-color:var(--rosa);width:16px;height:16px">
+        📁 Dar acesso à pasta do Drive (fotos e registros das sessões)
+      </label>
+    </div>
     <!-- CAMPOS CACIQUE -->
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:#4a6fa5;margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid rgba(74,111,165,.2)">
       ✦ Cacique — campos especiais
@@ -4683,10 +4689,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         📧 Enviar e-mail avisando que o acesso foi liberado
       </label>
     </div>
-    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
         <input type="checkbox" id="ap-calendario" checked style="accent-color:var(--rosa);width:16px;height:16px">
         📅 Dar acesso à agenda do Google (aparece no celular dela)
+      </label>
+    </div>
+    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-drive" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        📁 Dar acesso à pasta do Drive (fotos e registros das sessões)
       </label>
     </div>
 
@@ -4696,7 +4708,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="margin:24px 0 16px;border-top:1px dashed var(--border)"></div>
 
     <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:4px">🔁 Reenviar pra quem já tem perfil</div>
-    <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Pra quando o e-mail ou o acesso à agenda falhou e precisa tentar de novo.</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Pra quando o e-mail, a agenda ou o Drive falhou e precisa tentar de novo.</div>
 
     <div style="margin-bottom:12px">
       <label class="form-label">Perfil</label>
@@ -4711,10 +4723,16 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         📧 Reenviar e-mail de boas-vindas
       </label>
     </div>
-    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
         <input type="checkbox" id="ap-reenviar-calendario" style="accent-color:var(--rosa);width:16px;height:16px">
         📅 Tentar dar acesso à agenda do Google de novo
+      </label>
+    </div>
+    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-reenviar-drive" style="accent-color:var(--rosa);width:16px;height:16px">
+        📁 Tentar dar acesso à pasta do Drive de novo
       </label>
     </div>
 
@@ -6253,6 +6271,7 @@ function abrirCriarPerfil(emailParaEditar) {
   if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = false;
   if (document.getElementById('cp-boasvindas')) document.getElementById('cp-boasvindas').checked = !emailParaEditar;
   if (document.getElementById('cp-calendario')) document.getElementById('cp-calendario').checked = !emailParaEditar;
+  if (document.getElementById('cp-drive')) document.getElementById('cp-drive').checked = !emailParaEditar;
   cpPerfilOriginal = null;
 
   // se editar, preencher
@@ -6327,6 +6346,7 @@ async function salvarPerfilAdmin() {
     visivelGuias: document.getElementById('cp-visivelGuias')?.checked || false,
     enviarBoasVindas: document.getElementById('cp-boasvindas')?.checked || false,
     darAcessoCalendario: document.getElementById('cp-calendario')?.checked || false,
+    darAcessoDrive: document.getElementById('cp-drive')?.checked || false,
     cacique: {
       ...(base.cacique || {}),
       terreiro_titulo: document.getElementById('cp-terreiro_titulo')?.value.trim() || '',
@@ -6372,11 +6392,12 @@ function montarStatusCadastro(data, prefixo) {
   const partes = [];
   if (data.email) partes.push(data.email.ok ? 'e-mail de boas-vindas enviado' : `⚠️ e-mail NÃO enviado (${data.email.erro || 'motivo desconhecido'})`);
   if (data.agenda) partes.push(data.agenda.ok ? 'acesso à agenda liberado' : `⚠️ agenda NÃO liberada (${data.agenda.erro || 'motivo desconhecido'})`);
+  if (data.drive) partes.push(data.drive.ok ? 'acesso ao Drive liberado' : `⚠️ Drive NÃO liberado (${data.drive.erro || 'motivo desconhecido'})`);
   if (!partes.length) return `✦ ${prefixo} com sucesso!`;
   return `✦ ${prefixo} — ${partes.join(' · ')}`;
 }
 function houveFalhaCadastro(data) {
-  return (data.email && !data.email.ok) || (data.agenda && !data.agenda.ok);
+  return (data.email && !data.email.ok) || (data.agenda && !data.agenda.ok) || (data.drive && !data.drive.ok);
 }
 
 // ── ADICIONAR PESSOA — cadastro rápido (só e-mail + grupo), sem o
@@ -6387,9 +6408,11 @@ function abrirAdicionarPessoa() {
   document.getElementById('ap-grupo').value = 'visitante';
   document.getElementById('ap-boasvindas').checked = true;
   document.getElementById('ap-calendario').checked = true;
+  document.getElementById('ap-drive').checked = true;
   document.getElementById('ap-status').textContent = '';
   document.getElementById('ap-reenviar-boasvindas').checked = true;
   document.getElementById('ap-reenviar-calendario').checked = false;
+  document.getElementById('ap-reenviar-drive').checked = false;
   document.getElementById('ap-reenviar-status').textContent = '';
   carregarListaReenvio();
   document.getElementById('modal-adicionar-pessoa-overlay').style.display = 'flex';
@@ -6419,14 +6442,15 @@ async function reenviarParaPerfilSelecionado() {
   if (!email) { status.textContent = 'Escolha um perfil.'; return; }
   const enviarBoasVindas = document.getElementById('ap-reenviar-boasvindas')?.checked || false;
   const darAcessoCalendario = document.getElementById('ap-reenviar-calendario')?.checked || false;
-  if (!enviarBoasVindas && !darAcessoCalendario) { status.textContent = 'Marque pelo menos uma opção.'; return; }
+  const darAcessoDrive = document.getElementById('ap-reenviar-drive')?.checked || false;
+  if (!enviarBoasVindas && !darAcessoCalendario && !darAcessoDrive) { status.textContent = 'Marque pelo menos uma opção.'; return; }
 
   status.textContent = 'Reenviando...';
   try {
     const res = await fetch('/api/perfil', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify({ email, enviarBoasVindas, darAcessoCalendario })
+      body: JSON.stringify({ email, enviarBoasVindas, darAcessoCalendario, darAcessoDrive })
     });
     const data = await res.json();
     status.textContent = data.ok ? montarStatusCadastro(data, 'Reenviado') : (data.error || 'Erro ao reenviar.');
@@ -6454,6 +6478,7 @@ async function salvarAdicionarPessoa() {
     solicitacao: 'Cadastro rápido pelo admin',
     enviarBoasVindas: document.getElementById('ap-boasvindas')?.checked || false,
     darAcessoCalendario: document.getElementById('ap-calendario')?.checked || false,
+    darAcessoDrive: document.getElementById('ap-drive')?.checked || false,
   };
 
   status.textContent = 'Salvando...';

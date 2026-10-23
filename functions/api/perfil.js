@@ -48,7 +48,7 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
 // Devolve {ok, erro} em vez de só disparar e esquecer — senão uma falha (chave
 // não configurada, Resend recusando, domínio não verificado etc.) nunca
 // aparece pra admin, e ela só descobre quando a pessoa reclama que não recebeu.
-async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
+async function enviarEmailBoasVindas(env, { email, nome, comAgenda, comDrive }) {
   const RESEND_KEY = env.RESEND_API_KEY;
   if (!RESEND_KEY) return { ok: false, erro: 'RESEND_API_KEY não configurada no Cloudflare.' };
   if (!email) return { ok: false, erro: 'E-mail vazio.' };
@@ -61,6 +61,7 @@ async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
         Seu acesso ao site do Terreiro Bolhas de Luz foi liberado ✦<br><br>
         Para entrar, é só acessar <b>bolhasdeluz.ong.br</b> e fazer login com a conta Google desse mesmo e-mail (${email}).
         ${comAgenda ? `<br><br>Também liberamos pra você a nossa agenda de sessões — ela já deve aparecer sozinha no seu Google Agenda (no celular ou no computador), em "Outras agendas".` : ''}
+        ${comDrive ? `<br><br>E liberamos também o acesso à pasta do Drive com as fotos e registros das sessões — você já consegue abrir ela direto com essa conta Google.` : ''}
       </p>
       ${comAgenda ? `
       <div style="margin-top:16px;padding:14px 16px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
@@ -98,8 +99,8 @@ async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
   }
 }
 
-// --- Compartilhamento da Agenda do Google (mesma conta de serviço usada em
-// sessoes.js pra sincronizar as sessões) -------------------------------
+// --- Compartilhamento da Agenda e do Drive do Google (mesma conta de
+// serviço usada em sessoes.js pra sincronizar as sessões) --------------
 
 function gcalB64Url(str) {
   return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -111,7 +112,9 @@ function gcalLimparChavePem(chavePem) {
   return linhas.join('').replace(/[^A-Za-z0-9+/=]/g, '');
 }
 
-async function gcalToken(env) {
+// autentica como a conta de serviço pedindo o escopo passado — reaproveitado
+// tanto pra Agenda (auth/calendar) quanto pro Drive (auth/drive)
+async function googleToken(env, scope) {
   const email = env.GOOGLE_SA_EMAIL;
   const chavePem = env.GOOGLE_SA_PRIVATE_KEY;
   if (!email || !chavePem) return null;
@@ -120,7 +123,7 @@ async function gcalToken(env) {
   const cabecalho = gcalB64Url(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
   const claims = gcalB64Url(JSON.stringify({
     iss: email,
-    scope: 'https://www.googleapis.com/auth/calendar',
+    scope,
     aud: 'https://oauth2.googleapis.com/token',
     iat: agora,
     exp: agora + 3600,
@@ -155,13 +158,45 @@ async function gcalDarAcessoAgenda(env, email) {
   if (!email) return { ok: false, erro: 'E-mail vazio.' };
   if (!env.GOOGLE_SA_EMAIL || !env.GOOGLE_SA_PRIVATE_KEY) return { ok: false, erro: 'GOOGLE_SA_EMAIL / GOOGLE_SA_PRIVATE_KEY não configurados no Cloudflare.' };
   if (!env.GOOGLE_CALENDAR_ID) return { ok: false, erro: 'GOOGLE_CALENDAR_ID não configurado no Cloudflare.' };
-  const token = await gcalToken(env);
+  const token = await googleToken(env, 'https://www.googleapis.com/auth/calendar');
   if (!token) return { ok: false, erro: 'Não consegui autenticar com a conta de serviço do Google — confere a chave privada.' };
   try {
     const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.GOOGLE_CALENDAR_ID)}/acl?sendNotifications=false`, {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ role: 'reader', scope: { type: 'user', value: email } }),
+    });
+    if (!resp.ok) {
+      const corpo = await resp.text().catch(() => '');
+      return { ok: false, erro: `Google recusou (status ${resp.status}): ${corpo.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, erro: e.message };
+  }
+}
+
+// pasta padrão de fotos/registros das sessões, já usada em sessoes.js/
+// index.html (CAL_DRIVE_LINK_PADRAO) — pode ser trocada por outra pasta via
+// GOOGLE_DRIVE_FOLDER_ID no Cloudflare, sem precisar mexer no código
+const DRIVE_FOLDER_ID_PADRAO = '1T-tJ9bSfcZT8udd9nMulZZFWLy4N8OQT';
+
+// dá acesso de leitura a uma pasta do Drive pro e-mail da pessoa — mesma
+// lógica do acesso à agenda: exige que a pasta já tenha sido compartilhada
+// com a conta de serviço como Editora (só assim ela pode gerenciar quem mais
+// tem acesso), e sendNotificationEmail=false porque o aviso vai no nosso
+// próprio e-mail de boas-vindas.
+async function gdriveDarAcessoPasta(env, email) {
+  if (!email) return { ok: false, erro: 'E-mail vazio.' };
+  if (!env.GOOGLE_SA_EMAIL || !env.GOOGLE_SA_PRIVATE_KEY) return { ok: false, erro: 'GOOGLE_SA_EMAIL / GOOGLE_SA_PRIVATE_KEY não configurados no Cloudflare.' };
+  const folderId = env.GOOGLE_DRIVE_FOLDER_ID || DRIVE_FOLDER_ID_PADRAO;
+  const token = await googleToken(env, 'https://www.googleapis.com/auth/drive');
+  if (!token) return { ok: false, erro: 'Não consegui autenticar com a conta de serviço do Google — confere a chave privada.' };
+  try {
+    const resp = await fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(folderId)}/permissions?sendNotificationEmail=false`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'reader', type: 'user', emailAddress: email }),
     });
     if (!resp.ok) {
       const corpo = await resp.text().catch(() => '');
@@ -281,28 +316,37 @@ export async function onRequest(context) {
     // flags de controle, não fazem parte do perfil salvo
     const enviarBoasVindas = isAdmin && !!body.enviarBoasVindas;
     const darAcessoCalendario = isAdmin && !!body.darAcessoCalendario;
+    const darAcessoDrive = isAdmin && !!body.darAcessoDrive;
     delete body.enviarBoasVindas;
     delete body.darAcessoCalendario;
+    delete body.darAcessoDrive;
 
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
 
-    // espera os dois terminarem (em vez de só disparar e esquecer) pra poder
+    // espera todos terminarem (em vez de só disparar e esquecer) pra poder
     // contar pra admin se realmente deu certo, com o motivo quando não deu
     const resultado = { ok: true };
     if (darAcessoCalendario) {
       resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
     }
+    if (darAcessoDrive) {
+      resultado.drive = await gdriveDarAcessoPasta(env, targetEmail);
+    }
     if (enviarBoasVindas) {
-      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda: darAcessoCalendario && resultado.agenda?.ok });
+      resultado.email = await enviarEmailBoasVindas(env, {
+        email: targetEmail, nome: body.nome || '',
+        comAgenda: darAcessoCalendario && resultado.agenda?.ok,
+        comDrive: darAcessoDrive && resultado.drive?.ok,
+      });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
   }
 
   // PUT — ações rápidas que NÃO reescrevem o perfil (hoje só reenviar e-mail
-  // de boas-vindas / dar acesso à agenda de novo) — ao contrário do POST, não
-  // mexe em nenhum outro campo do perfil já salvo
+  // de boas-vindas / dar acesso à agenda ou ao Drive de novo) — ao contrário
+  // do POST, não mexe em nenhum outro campo do perfil já salvo
   if (request.method === 'PUT') {
     if (!isAdmin) return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: CORS });
 
@@ -319,11 +363,17 @@ export async function onRequest(context) {
 
     const enviarBoasVindas = !!body.enviarBoasVindas;
     const darAcessoCalendario = !!body.darAcessoCalendario;
+    const darAcessoDrive = !!body.darAcessoDrive;
 
     const resultado = { ok: true };
     if (darAcessoCalendario) resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
+    if (darAcessoDrive) resultado.drive = await gdriveDarAcessoPasta(env, targetEmail);
     if (enviarBoasVindas) {
-      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: perfil.nome || '', comAgenda: darAcessoCalendario && resultado.agenda?.ok });
+      resultado.email = await enviarEmailBoasVindas(env, {
+        email: targetEmail, nome: perfil.nome || '',
+        comAgenda: darAcessoCalendario && resultado.agenda?.ok,
+        comDrive: darAcessoDrive && resultado.drive?.ok,
+      });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
