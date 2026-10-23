@@ -4099,6 +4099,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="textos-controles-admin"></div>
       </div>
 
+      <button onclick="textosAbrirMapa()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,var(--rosa),#8a4fa0);border:none;color:#fff;padding:14px 18px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(196,57,107,.3);margin-bottom:16px">
+        🕸️ Explorar Mapa de Ideias
+      </button>
+
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;position:relative;z-index:10">
         <input id="textos-busca" type="text" placeholder="Buscar por título, palavra ou conteúdo…" oninput="textosOnSearch(this.value)"
           style="flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;backdrop-filter:blur(4px)">
@@ -4528,6 +4532,19 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <button onclick="textosSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- MODAL MAPA DE IDEIAS — teia de palavras-chave dos Textos: cada palavra é
+     um nó (tamanho = quantas vezes aparece), ligada às palavras com que
+     divide texto (linha = co-ocorrência). Clicar num nó filtra a linha do
+     tempo por aquela palavra. -->
+<div id="textos-mapa-overlay" onclick="if(event.target===this)textosFecharMapa()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:20px;position:relative">
+    <button onclick="textosFecharMapa()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🕸️ Mapa de Ideias</div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Toca numa palavra pra ver os textos ligados a ela. Palavras maiores aparecem mais vezes; linhas mais grossas indicam temas que sempre andam juntos.</p>
+    <div id="textos-mapa-svg-wrap" style="width:100%"></div>
   </div>
 </div>
 
@@ -10195,6 +10212,134 @@ function textosToggleKeyword(k) {
   textosRenderTimeline();
 }
 window.textosToggleKeyword = textosToggleKeyword;
+
+// ── MAPA DE IDEIAS ── monta uma teia das palavras-chave: nó = palavra
+// (tamanho = frequência), aresta = duas palavras aparecerem no mesmo texto
+// (espessura = quantas vezes isso aconteceu). Layout por simulação de forças
+// (repulsão entre todos os nós + atração nas arestas), rodada já na hora de
+// abrir — leve o bastante (até ~60 nós) pra não travar o celular.
+function textosConstruirGrafoIdeias() {
+  const visiveis = textosTodos.filter(textosVisivel);
+  const freq = {};
+  const coOcorrencia = {};
+  const catPorPalavra = {};
+  visiveis.forEach(t => {
+    const palavras = [...new Set(t.palavrasChave || [])];
+    palavras.forEach(p => {
+      freq[p] = (freq[p] || 0) + 1;
+      catPorPalavra[p] = catPorPalavra[p] || {};
+      catPorPalavra[p][t.categoria] = (catPorPalavra[p][t.categoria] || 0) + 1;
+    });
+    for (let i = 0; i < palavras.length; i++) {
+      for (let j = i + 1; j < palavras.length; j++) {
+        const chave = [palavras[i], palavras[j]].sort().join('|');
+        coOcorrencia[chave] = (coOcorrencia[chave] || 0) + 1;
+      }
+    }
+  });
+  let palavras = Object.keys(freq).filter(p => freq[p] >= 2);
+  if (palavras.length < 10) palavras = Object.keys(freq);
+  palavras = palavras.sort((a, b) => freq[b] - freq[a]).slice(0, 60);
+  const indice = {};
+  const nodes = palavras.map((p, i) => {
+    indice[p] = i;
+    const cats = catPorPalavra[p] || {};
+    const catDominante = Object.keys(cats).sort((a, b) => cats[b] - cats[a])[0];
+    return { id: p, freq: freq[p], cor: TEXTOS_CATEGORIA_COR[catDominante] || 'var(--rosa)' };
+  });
+  const edges = [];
+  Object.keys(coOcorrencia).forEach(chave => {
+    const [a, b] = chave.split('|');
+    if (indice[a] === undefined || indice[b] === undefined) return;
+    edges.push({ si: indice[a], ti: indice[b], weight: coOcorrencia[chave] });
+  });
+  return { nodes, edges };
+}
+
+function textosCalcularLayoutTeia(nodes, edges, largura, altura) {
+  const n = nodes.length;
+  nodes.forEach((no, i) => {
+    const ang = (i / n) * Math.PI * 2;
+    no.x = largura / 2 + Math.cos(ang) * Math.min(largura, altura) * 0.35;
+    no.y = altura / 2 + Math.sin(ang) * Math.min(largura, altura) * 0.35;
+  });
+  const k = Math.sqrt((largura * altura) / Math.max(n, 1));
+  const iteracoes = 250;
+  for (let it = 0; it < iteracoes; it++) {
+    const temperatura = Math.max(largura, altura) * (1 - it / iteracoes) * 0.05;
+    nodes.forEach(a => { a.dx = 0; a.dy = 0; });
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        const a = nodes[i], b = nodes[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+        const forca = (k * k) / dist;
+        const fx = (dx / dist) * forca, fy = (dy / dist) * forca;
+        a.dx += fx; a.dy += fy;
+        b.dx -= fx; b.dy -= fy;
+      }
+    }
+    edges.forEach(e => {
+      const a = nodes[e.si], b = nodes[e.ti];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const forca = (dist * dist) / k * (0.3 + e.weight * 0.15);
+      const fx = (dx / dist) * forca, fy = (dy / dist) * forca;
+      a.dx -= fx; a.dy -= fy;
+      b.dx += fx; b.dy += fy;
+    });
+    nodes.forEach(a => {
+      const dist = Math.sqrt(a.dx * a.dx + a.dy * a.dy) || 0.01;
+      const lim = Math.min(dist, temperatura);
+      a.x += (a.dx / dist) * lim;
+      a.y += (a.dy / dist) * lim;
+      a.x += (largura / 2 - a.x) * 0.002;
+      a.y += (altura / 2 - a.y) * 0.002;
+      a.x = Math.max(34, Math.min(largura - 34, a.x));
+      a.y = Math.max(34, Math.min(altura - 34, a.y));
+    });
+  }
+}
+
+function textosAbrirMapa() {
+  const { nodes, edges } = textosConstruirGrafoIdeias();
+  if (!nodes.length) { alert('Ainda não tem palavras-chave suficientes pra montar o mapa.'); return; }
+  const W = 680, H = 680;
+  textosCalcularLayoutTeia(nodes, edges, W, H);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:70vh">`;
+  edges.forEach(e => {
+    const a = nodes[e.si], b = nodes[e.ti];
+    const opacidade = Math.min(0.12 + e.weight * 0.12, 0.6);
+    svg += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rosa)" stroke-opacity="${opacidade}" stroke-width="${Math.min(1 + e.weight * 0.6, 4).toFixed(1)}" />`;
+  });
+  nodes.forEach(no => {
+    const r = Math.min(7 + no.freq * 2.2, 28);
+    const fonte = Math.min(9 + no.freq * 0.6, 14);
+    svg += `<g style="cursor:pointer" onclick="textosMapaClicarNode('${calEsc(no.id)}')">
+      <circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${no.cor}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" />
+      <text x="${no.x.toFixed(1)}" y="${(no.y + r + 11).toFixed(1)}" text-anchor="middle" font-family="'Crimson Pro',serif" font-size="${fonte.toFixed(1)}" fill="var(--text)">${calEsc(no.id)}</text>
+    </g>`;
+  });
+  svg += `</svg>`;
+  document.getElementById('textos-mapa-svg-wrap').innerHTML = svg;
+  document.getElementById('textos-mapa-overlay').style.display = 'flex';
+}
+window.textosAbrirMapa = textosAbrirMapa;
+
+function textosFecharMapa() { document.getElementById('textos-mapa-overlay').style.display = 'none'; }
+window.textosFecharMapa = textosFecharMapa;
+
+function textosMapaClicarNode(palavra) {
+  textosFecharMapa();
+  textosCategoriaFiltro = null;
+  textosKeywordFiltro = palavra;
+  textosRenderCategoriasChips();
+  textosRenderKeywordsChips();
+  textosRenderTimeline();
+  const el = document.getElementById('textos-timeline');
+  if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+}
+window.textosMapaClicarNode = textosMapaClicarNode;
 
 function textosSetAno(v) { textosAnoFiltro = v; textosRenderTimeline(); }
 window.textosSetAno = textosSetAno;
