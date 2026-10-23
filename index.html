@@ -4124,6 +4124,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </div>
     </div>
 
+    <div id="textos-fallback-aviso" style="display:none;max-width:720px;margin:0 auto 14px;padding:10px 14px;border-radius:8px;background:#fff6e0;border:1px solid #e0c080;font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text)">📦 Mostrando uma cópia salva dos textos (a busca ao vivo falhou agora) — leitura liberada normalmente, só a edição fica indisponível até normalizar.</div>
     <div id="textos-empty" class="cal-empty" style="display:none">Nenhum texto encontrado.</div>
     <div id="textos-timeline" style="max-width:720px;margin:0 auto"></div>
   </div>
@@ -10175,6 +10176,7 @@ function textosVisivel(t) {
 
 async function textosLoad() {
   textosErroCarregar = null;
+  textosModoFallback = false;
   try {
     const res = await fetch(TEXTOS_API);
     const corpo = await res.json();
@@ -10184,10 +10186,30 @@ async function textosLoad() {
       // resposta não é uma lista — provavelmente um erro do servidor
       // (ex: {error:"..."}); nunca trata isso como "lista vazia", senão a
       // admin vê "nenhum texto encontrado" quando na verdade é uma falha
-      textosTodos = [];
       textosErroCarregar = (corpo && corpo.error) ? corpo.error : `resposta inesperada (HTTP ${res.status})`;
     }
-  } catch (e) { textosTodos = []; textosErroCarregar = e.message || 'falha de conexão'; }
+  } catch (e) { textosErroCarregar = e.message || 'falha de conexão'; }
+
+  // a API ao vivo falhou (ex: limite diário do KV do Cloudflare estourado) —
+  // os textos nunca podem simplesmente sumir pra quem está lendo, então cai
+  // pro arquivo estático (textos-import.json) publicado junto com o site,
+  // que não depende do KV pra nada. Fica em modo só-leitura (sem editar nem
+  // excluir), mas a família de santo continua conseguindo ler tudo.
+  if (textosErroCarregar) {
+    try {
+      const resFallback = await fetch('/textos-import.json');
+      const itensFallback = await resFallback.json();
+      if (Array.isArray(itensFallback) && itensFallback.length) {
+        textosTodos = itensFallback.map(t => ({ ...t, id: textosSlugImportacao(t.titulo, t.data) }));
+        textosModoFallback = true;
+      } else {
+        textosTodos = [];
+      }
+    } catch (e) { textosTodos = []; }
+  } else {
+    textosModoFallback = false;
+  }
+
   textosPopularFiltroAno();
   textosRenderCategoriasChips();
   textosRenderKeywordsChips();
@@ -10197,6 +10219,7 @@ async function textosLoad() {
 }
 window.textosLoad = textosLoad;
 let textosErroCarregar = null;
+let textosModoFallback = false;
 
 // se chegou um link de compartilhamento de um texto específico (via
 // /texto/<id>, que redireciona pra cá com #pagina=textos&texto=<id>), o id
@@ -10417,7 +10440,9 @@ function textosRenderTimeline() {
   const lista = textosItensFiltrados();
   const el = document.getElementById('textos-timeline');
   const vazio = document.getElementById('textos-empty');
+  const avisoFallback = document.getElementById('textos-fallback-aviso');
   if (!el || !vazio) return;
+  if (avisoFallback) avisoFallback.style.display = textosModoFallback ? 'block' : 'none';
   if (!lista.length) {
     el.innerHTML = '';
     vazio.textContent = textosErroCarregar ? `⚠️ Não consegui carregar os textos (${textosErroCarregar}). Recarrega a página e tenta de novo.` : 'Nenhum texto encontrado.';
@@ -10434,7 +10459,7 @@ function textosRenderTimeline() {
     g.itens.push(t);
   });
 
-  const isAdmin = textosGetGrupo() === 'admin';
+  const isAdmin = textosGetGrupo() === 'admin' && !textosModoFallback;
   let html = '';
   grupos.forEach(({ key, itens }) => {
     const [y, m] = key.split('-');
@@ -10485,7 +10510,7 @@ function textosAbrirInfo(id) {
   }
   document.getElementById('textos-info-corpo').textContent = t.corpo || '';
   const acoes = document.getElementById('textos-info-admin-acoes');
-  if (textosGetGrupo() === 'admin') {
+  if (textosGetGrupo() === 'admin' && !textosModoFallback) {
     acoes.style.display = 'flex';
     acoes.innerHTML = `<button class="rm-btn-mes" onclick="textosFecharInfo();textosAbrirEditar('${t.id}')">✎ Editar</button>`;
   } else acoes.style.display = 'none';
@@ -10649,6 +10674,10 @@ function textosAtualizarControlesAdmin() {
   const el = document.getElementById('textos-controles-admin');
   if (!el) return;
   if (textosGetGrupo() !== 'admin') { el.innerHTML = ''; return; }
+  if (textosModoFallback) {
+    el.innerHTML = `<span style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)">Edição indisponível enquanto a busca ao vivo não normaliza.</span>`;
+    return;
+  }
   el.innerHTML = `
     <button onclick="textosAbrirCriar()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Novo Texto</button>
     <button onclick="textosImportarArquivo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">📥 Importar textos do arquivo</button>
