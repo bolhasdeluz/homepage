@@ -10375,7 +10375,6 @@ function textosAtualizarControlesAdmin() {
   if (textosGetGrupo() !== 'admin') { el.innerHTML = ''; return; }
   el.innerHTML = `
     <button class="admin-btn" onclick="textosAbrirCriar()">+ Novo Texto</button>
-    <button class="admin-btn" onclick="textosGarantirMenu()">✨ Criar item de menu</button>
     <button class="admin-btn" onclick="textosImportarArquivo()">📥 Importar textos do arquivo</button>
     <span id="textos-import-status" style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)"></span>
   `;
@@ -10421,30 +10420,6 @@ async function textosImportarArquivo() {
   alert(`Importação concluída!\n\n✦ ${criados} textos criados\n↩️ ${pulados} já existiam (pulados)\n${falhas ? `⚠️ ${falhas} falharam` : ''}`);
 }
 window.textosImportarArquivo = textosImportarArquivo;
-
-// cria o item "📝 Textos" no Menu do Site (seção Corrente, só filhas+tamboreiro
-// veem) — lê o menu atual, confere se já existe, e só então adiciona, pra
-// nunca sobrescrever o que a admin já configurou
-async function textosGarantirMenu() {
-  try {
-    const res = await fetch('/api/menu');
-    const menuData = await res.json();
-    const jaExiste = (menuData.sections || []).some(s => (s.items || []).some(i => i.page === 'textos'));
-    if (jaExiste) { alert('Já existe um item de menu apontando pra "Textos".'); return; }
-    if (!menuData.sections || !menuData.sections.length) { alert('Não encontrei nenhuma seção de menu pra adicionar.'); return; }
-    let secao = menuData.sections.find(s => s.id === 'corrente' || /corrente/i.test(s.label || ''));
-    if (!secao) secao = menuData.sections[menuData.sections.length - 1];
-    secao.items.push({
-      id: 'textos', label: '📝 Textos', type: 'internal', page: 'textos',
-      desc: 'Doutrina, instruções e avisos organizados', showCard: true, showMenu: true,
-      grupos: ['filhas', 'tamboreiro'],
-    });
-    const salvar = await fetch('/api/menu', { method: 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify(menuData) });
-    if (!salvar.ok) { alert('Não consegui salvar o menu — tenta de novo.'); return; }
-    alert('Item de menu "Textos" criado! Recarregue a página pra ver no menu.');
-  } catch (e) { alert('Não consegui criar o item de menu — tenta de novo.'); }
-}
-window.textosGarantirMenu = textosGarantirMenu;
 
 // ── GUIAS ──────────────────────────────────────────────────────
 let guiasData = [];
