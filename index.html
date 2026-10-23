@@ -4099,8 +4099,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="textos-controles-admin"></div>
       </div>
 
-      <button onclick="textosAbrirMapa()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,var(--rosa),#8a4fa0);border:none;color:#fff;padding:14px 18px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(196,57,107,.3);margin-bottom:16px">
-        🕸️ Explorar Mapa de Ideias
+      <div style="margin-bottom:16px">
+        <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:2px">🕸️ Mapa de Ideias</div>
+        <p id="textos-mapa-dica" style="font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-bottom:10px">Toca numa palavra pra destacar as conexões dela.</p>
+        <div id="textos-mapa-svg-wrap" style="width:100%"></div>
+      </div>
+
+      <button onclick="textosAbrirLinhaDoTempo()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,var(--rosa),#8a4fa0);border:none;color:#fff;padding:14px 18px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(196,57,107,.3);margin-bottom:16px">
+        📅 Linha do Tempo
       </button>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;position:relative;z-index:10">
@@ -4553,16 +4559,15 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
-<!-- MODAL MAPA DE IDEIAS — teia de palavras-chave dos Textos: cada palavra é
-     um nó (tamanho = quantas vezes aparece), ligada às palavras com que
-     divide texto (linha = co-ocorrência). Clicar num nó filtra a linha do
-     tempo por aquela palavra. -->
-<div id="textos-mapa-overlay" onclick="if(event.target===this)textosFecharMapa()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
+<!-- MODAL LINHA DO TEMPO — uma bolinha por texto, posicionada pelo dia do ano
+     dentro da linha do ano correspondente, colorida pela categoria. Toca na
+     bolinha pra abrir o texto direto. -->
+<div id="textos-linha-overlay" onclick="if(event.target===this)textosFecharLinhaDoTempo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:20px;position:relative">
-    <button onclick="textosFecharMapa()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
-    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🕸️ Mapa de Ideias</div>
-    <p id="textos-mapa-dica" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Toca numa palavra pra destacar as conexões dela.</p>
-    <div id="textos-mapa-svg-wrap" style="width:100%"></div>
+    <button onclick="textosFecharLinhaDoTempo()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">📅 Linha do Tempo</div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Cada bolinha é um texto, posicionado pela época do ano. Toca pra abrir.</p>
+    <div id="textos-linha-svg-wrap" style="width:100%"></div>
   </div>
 </div>
 
@@ -6801,7 +6806,7 @@ function showPage(name) {
   }
   if (name === 'textos') {
     if (!textosTodos.length) textosLoad();
-    else { textosAtualizarControlesAdmin(); textosRenderTimeline(); textosAbrirPendente(); }
+    else { textosAtualizarControlesAdmin(); textosRenderTimeline(); textosMontarMapa(); textosAbrirPendente(); }
   }
   if (name === 'linha-geral') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -10231,6 +10236,7 @@ async function textosLoad() {
   textosRenderKeywordsChips();
   textosAtualizarControlesAdmin();
   textosRenderTimeline();
+  textosMontarMapa();
   textosAbrirPendente();
 }
 window.textosLoad = textosLoad;
@@ -10415,23 +10421,24 @@ let textosMapaNodes = [];
 let textosMapaEdges = [];
 let textosMapaSelecionado = null; // palavra em destaque no momento, ou null
 
-function textosAbrirMapa() {
+// o mapa agora fica embutido direto na página (sempre visível, no topo),
+// não é mais um modal — essa função só (re)monta os dados e desenha; chamada
+// sempre que a lista de textos é (re)carregada
+function textosMontarMapa() {
+  const wrap = document.getElementById('textos-mapa-svg-wrap');
+  if (!wrap) return;
   const { nodes, edges } = textosConstruirGrafoIdeias();
-  if (!nodes.length) { alert('Ainda não tem palavras-chave suficientes pra montar o mapa.'); return; }
+  if (!nodes.length) {
+    wrap.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Ainda não tem palavras-chave suficientes pra montar o mapa.</p>`;
+    return;
+  }
   textosCalcularLayoutTeia(nodes, edges, TEXTOS_MAPA_W, TEXTOS_MAPA_H);
   textosMapaNodes = nodes;
   textosMapaEdges = edges;
   textosMapaSelecionado = null;
   textosMapaRenderizar();
-  document.getElementById('textos-mapa-overlay').style.display = 'flex';
 }
-window.textosAbrirMapa = textosAbrirMapa;
-
-function textosFecharMapa() {
-  document.getElementById('textos-mapa-overlay').style.display = 'none';
-  textosMapaSelecionado = null;
-}
-window.textosFecharMapa = textosFecharMapa;
+window.textosMontarMapa = textosMontarMapa;
 
 // redesenha a teia toda vez que a seleção muda — sem seleção, mostra tudo
 // no tom normal; com uma palavra selecionada, aproxima (viewBox menor) e dá
@@ -10534,7 +10541,7 @@ function textosMapaAbrirResultado(palavra) {
   } else {
     corpo.innerHTML = relacionados.map(t => {
       const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
-      return `<div class="cal-sessao-card" style="margin-bottom:8px;border-left:3px solid ${cor};cursor:pointer" onclick="textosMapaFecharResultado();textosFecharMapa();textosAbrirInfo('${t.id}')">
+      return `<div class="cal-sessao-card" style="margin-bottom:8px;border-left:3px solid ${cor};cursor:pointer" onclick="textosMapaFecharResultado();textosAbrirInfo('${t.id}')">
         <div class="cal-card-nome">${calEsc(t.titulo)}</div>
         <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-top:4px">${(t.data || '').split('-').reverse().join('/')}</div>
       </div>`;
@@ -10546,6 +10553,44 @@ window.textosMapaAbrirResultado = textosMapaAbrirResultado;
 
 function textosMapaFecharResultado() { document.getElementById('textos-mapa-resultado-overlay').style.display = 'none'; }
 window.textosMapaFecharResultado = textosMapaFecharResultado;
+
+// ── LINHA DO TEMPO — uma bolinha por texto, uma linha (trilha) por ano,
+// posição horizontal pelo dia do ano (não é lista, é visão geral de quando
+// as coisas aconteceram) ──
+function textosDiaDoAno(dataStr) {
+  const d = new Date(dataStr + 'T12:00:00');
+  const inicioDoAno = new Date(d.getFullYear(), 0, 1);
+  return Math.floor((d - inicioDoAno) / 86400000);
+}
+
+function textosAbrirLinhaDoTempo() {
+  const visiveis = textosTodos.filter(textosVisivel).filter(t => /^\d{4}-\d{2}-\d{2}$/.test(t.data || ''));
+  if (!visiveis.length) { alert('Ainda não tem textos com data suficientes.'); return; }
+  const porAno = {};
+  visiveis.forEach(t => { (porAno[t.data.slice(0, 4)] = porAno[t.data.slice(0, 4)] || []).push(t); });
+  const anos = Object.keys(porAno).sort((a, b) => a - b);
+
+  const W = 680, padEsq = 46, padDir = 16, alturaLinha = 60, topo = 26;
+  const H = topo + anos.length * alturaLinha + 10;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:70vh">`;
+  anos.forEach((ano, i) => {
+    const y = topo + i * alturaLinha;
+    svg += `<text x="4" y="${y + 4}" font-family="'Cinzel',serif" font-size="13" font-weight="700" fill="var(--text-dim)">${ano}</text>`;
+    svg += `<line x1="${padEsq}" y1="${y}" x2="${W - padDir}" y2="${y}" stroke="var(--border)" stroke-width="1.5" />`;
+    porAno[ano].sort((a, b) => a.data.localeCompare(b.data)).forEach(t => {
+      const x = padEsq + (textosDiaDoAno(t.data) / 365) * (W - padDir - padEsq);
+      const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+      svg += `<circle cx="${x.toFixed(1)}" cy="${y}" r="6.5" fill="${cor}" fill-opacity="0.85" stroke="#fff" stroke-width="1.3" style="cursor:pointer" onclick="textosFecharLinhaDoTempo();textosAbrirInfo('${t.id}')"><title>${calEsc(t.titulo)}</title></circle>`;
+    });
+  });
+  svg += `</svg>`;
+  document.getElementById('textos-linha-svg-wrap').innerHTML = svg;
+  document.getElementById('textos-linha-overlay').style.display = 'flex';
+}
+window.textosAbrirLinhaDoTempo = textosAbrirLinhaDoTempo;
+
+function textosFecharLinhaDoTempo() { document.getElementById('textos-linha-overlay').style.display = 'none'; }
+window.textosFecharLinhaDoTempo = textosFecharLinhaDoTempo;
 
 function textosSetAno(v) { textosAnoFiltro = v; textosRenderTimeline(); }
 window.textosSetAno = textosSetAno;
