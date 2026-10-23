@@ -6706,6 +6706,11 @@ function showPage(name) {
   // lista de necessidades da casa é só pra quem está logada — pede login em
   // vez de abrir a página, não importa por onde a pessoa tentou chegar nela
   if (name === 'compras' && !(window._getCurrentUser && window._getCurrentUser())) { openLogin(); return; }
+  // textos também é só pra quem está logada (filhas/tamboreiro) — sem isso,
+  // quem chega por um link direto (#pagina=textos) via a página vazia e sem
+  // cabeçalho, sem nenhum jeito de entrar (o botão "Ferramentas" só aparece
+  // pra quem já está logada)
+  if (name === 'textos' && !(window._getCurrentUser && window._getCurrentUser()) && !adminSenhaAtiva && !padraoSenhaAtiva) { openLogin(); return; }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
   if (p) {
