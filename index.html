@@ -6327,14 +6327,27 @@ async function salvarPerfilAdmin() {
     });
     const data = await res.json();
     if (data.ok) {
-      const extras = [];
-      if (payload.enviarBoasVindas) extras.push('e-mail de boas-vindas enviado');
-      if (payload.darAcessoCalendario) extras.push('acesso à agenda liberado');
-      status.textContent = extras.length ? `✦ Salvo — ${extras.join(' e ')}!` : '✦ Salvo com sucesso!';
+      status.textContent = montarStatusCadastro(data);
       carregarFilhasAdmin();
-      setTimeout(fecharCriarPerfil, 1200);
+      if (!houveFalhaCadastro(data)) setTimeout(fecharCriarPerfil, 1200);
     } else { status.textContent = 'Erro ao salvar.'; }
   } catch(e) { status.textContent = 'Erro de conexão.'; }
+}
+
+// monta a mensagem de status a partir do que o backend realmente conseguiu
+// fazer (não só do que foi pedido) — antes a tela dizia "e-mail enviado"
+// mesmo quando o envio falhava silenciosamente (chave não configurada,
+// Resend recusando etc.), e isso só aparecia quando a pessoa reclamava que
+// não recebeu nada
+function montarStatusCadastro(data) {
+  const partes = [];
+  if (data.email) partes.push(data.email.ok ? 'e-mail de boas-vindas enviado' : `⚠️ e-mail NÃO enviado (${data.email.erro || 'motivo desconhecido'})`);
+  if (data.agenda) partes.push(data.agenda.ok ? 'acesso à agenda liberado' : `⚠️ agenda NÃO liberada (${data.agenda.erro || 'motivo desconhecido'})`);
+  if (!partes.length) return '✦ Salvo com sucesso!';
+  return `✦ Salvo — ${partes.join(' · ')}`;
+}
+function houveFalhaCadastro(data) {
+  return (data.email && !data.email.ok) || (data.agenda && !data.agenda.ok);
 }
 
 // ── ADICIONAR PESSOA — cadastro rápido (só e-mail + grupo), sem o
@@ -6381,12 +6394,9 @@ async function salvarAdicionarPessoa() {
     });
     const data = await res.json();
     if (data.ok) {
-      const extras = [];
-      if (payload.enviarBoasVindas) extras.push('e-mail de boas-vindas enviado');
-      if (payload.darAcessoCalendario) extras.push('acesso à agenda liberado');
-      status.textContent = extras.length ? `✦ Cadastrado — ${extras.join(' e ')}!` : '✦ Cadastrado com sucesso!';
+      status.textContent = montarStatusCadastro(data).replace('Salvo', 'Cadastrado');
       carregarFilhasAdmin();
-      setTimeout(fecharAdicionarPessoa, 1200);
+      if (!houveFalhaCadastro(data)) setTimeout(fecharAdicionarPessoa, 1200);
     } else { status.textContent = 'Erro ao salvar.'; }
   } catch (e) { status.textContent = 'Erro de conexão.'; }
 }
