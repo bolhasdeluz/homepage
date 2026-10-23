@@ -4493,7 +4493,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="textos-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
     <div id="textos-info-aviso" style="display:none;margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff6e0;border:1px solid #e0c080;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)"></div>
     <div id="textos-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.65;white-space:pre-wrap"></div>
-    <div id="textos-info-admin-acoes" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);gap:8px"></div>
+    <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <button id="textos-info-btn-compartilhar" onclick="textosCompartilhar()" style="background:none;border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em">🔗 Compartilhar</button>
+    </div>
+    <div id="textos-info-admin-acoes" style="display:none;margin-top:14px;gap:8px"></div>
   </div>
 </div>
 
@@ -6781,7 +6784,7 @@ function showPage(name) {
   }
   if (name === 'textos') {
     if (!textosTodos.length) textosLoad();
-    else { textosAtualizarControlesAdmin(); textosRenderTimeline(); }
+    else { textosAtualizarControlesAdmin(); textosRenderTimeline(); textosAbrirPendente(); }
   }
   if (name === 'linha-geral') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -10181,8 +10184,23 @@ async function textosLoad() {
   textosRenderKeywordsChips();
   textosAtualizarControlesAdmin();
   textosRenderTimeline();
+  textosAbrirPendente();
 }
 window.textosLoad = textosLoad;
+
+// se chegou um link de compartilhamento de um texto específico (via
+// /texto/<id>, que redireciona pra cá com #pagina=textos&texto=<id>), o id
+// fica guardado no sessionStorage até a lista estar carregada — sobrevive
+// até a um redirect de login, se a pessoa não estava logada ainda
+function textosAbrirPendente() {
+  try {
+    const idAlvo = sessionStorage.getItem('textosAbrirId');
+    if (!idAlvo) return;
+    if (!textosTodos.some(t => t.id === idAlvo)) return;
+    sessionStorage.removeItem('textosAbrirId');
+    textosAbrirInfo(idAlvo);
+  } catch (e) {}
+}
 
 function textosPopularFiltroAno() {
   const sel = document.getElementById('textos-filtro-ano');
@@ -10430,9 +10448,11 @@ function textosRenderTimeline() {
   el.innerHTML = html;
 }
 
+let textosInfoAtual = null;
 function textosAbrirInfo(id) {
   const t = textosTodos.find(x => x.id === id);
   if (!t) return;
+  textosInfoAtual = t;
   document.getElementById('textos-info-titulo').textContent = t.titulo || '';
   document.getElementById('textos-info-sub').textContent = textosFmtDiaSemana(t.data) ? `${textosFmtDiaSemana(t.data)}, ${(t.data || '').split('-').reverse().join('/')}` : '';
   const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
@@ -10459,6 +10479,38 @@ function textosAbrirInfo(id) {
 window.textosAbrirInfo = textosAbrirInfo;
 function textosFecharInfo() { document.getElementById('textos-info-overlay').style.display = 'none'; }
 window.textosFecharInfo = textosFecharInfo;
+
+// gera um link direto pra esse texto (/texto/<id>, que serve uma prévia com
+// título/miniatura pro WhatsApp e redireciona quem clica de volta pro site)
+// e compartilha — no celular tenta abrir o menu de compartilhar nativo
+// (WhatsApp já aparece como opção); se cancelar ou não tiver suporte, cai
+// pra copiar o link direto na área de transferência
+async function textosCompartilhar() {
+  const t = textosInfoAtual;
+  if (!t) return;
+  const idSemPrefixo = t.id.startsWith('texto:') ? t.id.slice(6) : t.id;
+  const url = `${window.location.origin}/texto/${encodeURIComponent(idSemPrefixo)}`;
+  const corpoPlano = (t.corpo || '').replace(/\s+/g, ' ').trim();
+  const resumo = corpoPlano.slice(0, 140) + (corpoPlano.length > 140 ? '…' : '');
+  const btn = document.getElementById('textos-info-btn-compartilhar');
+
+  if (navigator.share) {
+    try { await navigator.share({ title: t.titulo, text: resumo, url }); return; }
+    catch (e) { /* cancelou o compartilhar — cai pro copiar abaixo */ }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    if (btn) {
+      const original = btn.textContent;
+      btn.textContent = '✓ Link copiado';
+      setTimeout(() => { btn.textContent = original; }, 2000);
+    }
+  } catch (e) {
+    prompt('Copia o link deste texto:', url);
+  }
+}
+window.textosCompartilhar = textosCompartilhar;
 
 function textosRenderGruposChips() {
   const el = document.getElementById('tx-grupos-chips');
@@ -16322,10 +16374,17 @@ const auth = getAuth(app);
       const params = new URLSearchParams(hash.replace(/^#/, ''));
       const token = params.get('ct');
       const pagina = params.get('pagina');
+      const texto = params.get('texto');
       if (pagina) handoffPaginaAlvo = pagina;
-      if (token || pagina) {
+      // guarda no sessionStorage (não numa variável comum) o texto específico
+      // a abrir, porque sobrevive até a um redirect de login — textosLoad()
+      // confere isso assim que a lista carrega, não importa se foi preciso
+      // logar antes (ver textosAbrirPendente no <script> comum)
+      if (texto) { try { sessionStorage.setItem('textosAbrirId', 'texto:' + texto); } catch (e) {} }
+      if (token || pagina || texto) {
         params.delete('ct');
         params.delete('pagina');
+        params.delete('texto');
         const resto = params.toString();
         history.replaceState(null, '', window.location.pathname + window.location.search + (resto ? '#' + resto : ''));
       }
