@@ -4084,6 +4084,47 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
+     organizados por categoria/palavra-chave/data, com linha do tempo como
+     visualização principal. Visibilidade por grupo igual sessões/menu. -->
+<div id="page-textos" class="page">
+  <div class="cal-wrap">
+    <div class="cal-topo">
+      <button class="back-btn" onclick="showPage('inicio')" style="position:relative;z-index:10">← Voltar</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:16px;position:relative;z-index:10">
+        <div>
+          <div class="eyebrow">Terreiro Bolhas de Luz</div>
+          <div class="section-title" style="margin-bottom:0">📝 Textos</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap" id="textos-controles-admin"></div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;position:relative;z-index:10">
+        <input id="textos-busca" type="text" placeholder="Buscar por título, palavra ou conteúdo…" oninput="textosOnSearch(this.value)"
+          style="flex:1;min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);outline:none;backdrop-filter:blur(4px)">
+        <div style="position:relative;min-width:110px">
+          <select id="textos-filtro-ano" onchange="textosSetAno(this.value)" style="width:100%;appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 28px 8px 12px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;color:var(--text);outline:none;backdrop-filter:blur(4px)">
+            <option value="">Todos os anos</option>
+          </select>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--rosa);pointer-events:none;font-size:.8rem">›</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom:6px">
+        <div style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categorias</div>
+        <div id="textos-categorias-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div id="textos-keywords-titulo" style="display:none;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Palavras-chave</div>
+        <div id="textos-keywords-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      </div>
+    </div>
+
+    <div id="textos-empty" class="cal-empty" style="display:none">Nenhum texto encontrado.</div>
+    <div id="textos-timeline" style="max-width:720px;margin:0 auto"></div>
+  </div>
+</div>
+
 <!-- PÁGINA LINHA DO TEMPO GERAL — admin, junta a história de todas as
      filhas da casa com as sessões passadas do calendário, tudo numa volta
      no passado só -->
@@ -4435,6 +4476,57 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
     <div id="cal-info-ir-calendario" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);text-align:center">
       <a href="#" onclick="calVerProximasSessoes();return false" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);text-decoration:none">Clique para ver as próximas sessões →</a>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER TEXTO — visualização completa de um texto da linha do tempo -->
+<div id="textos-info-overlay" onclick="if(event.target===this)textosFecharInfo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
+    <button onclick="textosFecharInfo()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <h2 id="textos-info-titulo" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:6px;padding-right:24px"></h2>
+    <div id="textos-info-sub" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:10px"></div>
+    <div id="textos-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+    <div id="textos-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.65;white-space:pre-wrap"></div>
+    <div id="textos-info-admin-acoes" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);gap:8px"></div>
+  </div>
+</div>
+
+<!-- MODAL CRIAR/EDITAR TEXTO (admin) -->
+<div id="textos-editar-overlay" onclick="if(event.target===this)textosFecharEditar()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;margin:40px auto;padding:28px 24px;position:relative">
+    <button onclick="textosFecharEditar()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.4rem;color:var(--text-dim);cursor:pointer">×</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:600;color:var(--text);margin-bottom:16px" id="textos-editar-titulo-modal">Novo Texto</div>
+
+    <input type="hidden" id="tx-id">
+    <div style="margin-bottom:12px"><label class="form-label">Título *</label><input type="text" class="form-input" id="tx-titulo"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="form-label">Data *</label><input type="date" class="form-input" id="tx-data"></div>
+      <div><label class="form-label">Categoria</label>
+        <select class="form-input" id="tx-categoria" style="font-family:'Crimson Pro',serif;font-size:15px"></select>
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">Palavras-chave (separadas por vírgula)</label>
+      <input type="text" class="form-input" id="tx-palavras-chave" placeholder="ex: cruzamento, exu, vestimenta">
+    </div>
+    <div style="margin-bottom:16px">
+      <label class="form-label">Texto *</label>
+      <textarea class="form-input" id="tx-corpo" style="min-height:220px;resize:vertical;font-family:'Crimson Pro',serif;font-size:15px"></textarea>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div class="form-label" style="margin-bottom:6px">Visível para</div>
+      <div id="tx-grupos-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <div id="tx-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <button id="tx-btn-excluir" onclick="textosExcluir(document.getElementById('tx-id').value)" style="display:none;background:none;border:1px dashed #b33;color:#b33;padding:9px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase">🗑️ Excluir</button>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button onclick="textosFecharEditar()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Cancelar</button>
+        <button onclick="textosSalvar()" style="background:var(--rosa);border:none;color:#fff;padding:9px 22px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700">Salvar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -6633,6 +6725,10 @@ function showPage(name) {
   if (name === 'guias') {
     if (!guiasData.length) guiasLoad();
     else guiasRenderGrid(guiasData);
+  }
+  if (name === 'textos') {
+    if (!textosTodos.length) textosLoad();
+    else { textosAtualizarControlesAdmin(); textosRenderTimeline(); }
   }
   if (name === 'linha-geral') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -9982,6 +10078,325 @@ function calAnualClicarDia(dataStr) {
 const _origShowPage = window.showPage;
 // inicializar na primeira abertura
 document.addEventListener('DOMContentLoaded', () => {});
+
+// ── TEXTOS — doutrina, instruções, lembretes e normas da casa, organizados
+// por categoria/palavra-chave/data, com linha do tempo como visualização
+// principal. Mesmo padrão de visibilidade por grupo das sessões (calGetGrupo),
+// guardado via /api/textos (KV, prefixo "texto:") ──────────────────────
+const TEXTOS_API = '/api/textos';
+const TEXTOS_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+const TEXTOS_CATEGORIAS = [
+  { id: 'doutrina',   label: '📜 Doutrina',                          cor: '#6a4fa0' },
+  { id: 'instrucao',  label: '🕯️ Instrução Ritualística / Preceito', cor: '#2f6fb3' },
+  { id: 'lembrete',   label: '🔔 Lembrete / Aviso',                   cor: '#3f8f4f' },
+  { id: 'financeiro', label: '💰 Planejamento Financeiro',            cor: '#c9963c' },
+  { id: 'reflexao',   label: '💭 Reflexão',                           cor: '#9e6a9e' },
+  { id: 'materiais',  label: '🧺 Materiais e Listas',                 cor: '#6a8fa5' },
+  { id: 'normas',     label: '📋 Normas da Casa',                     cor: '#c0392b' },
+  { id: 'vestimenta', label: '👗 Vestimenta',                         cor: '#d98a1f' },
+  { id: 'recursos',   label: '🔗 Recursos',                           cor: '#4a6fa5' },
+];
+const TEXTOS_CATEGORIA_LABEL = Object.fromEntries(TEXTOS_CATEGORIAS.map(c => [c.id, c.label]));
+const TEXTOS_CATEGORIA_COR = Object.fromEntries(TEXTOS_CATEGORIAS.map(c => [c.id, c.cor]));
+
+let textosTodos = [];
+let textosCategoriaFiltro = null;
+let textosKeywordFiltro = null;
+let textosAnoFiltro = '';
+let textosBusca = '';
+let txGruposSelecionados = new Set();
+
+function textosGetGrupo() { return calGetGrupo(); }
+function textosVisivel(t) {
+  const g = textosGetGrupo();
+  if (g === 'admin') return true;
+  return (t.grupos || []).includes(g);
+}
+
+async function textosLoad() {
+  try {
+    const res = await fetch(TEXTOS_API);
+    textosTodos = await res.json();
+    if (!Array.isArray(textosTodos)) textosTodos = [];
+  } catch (e) { textosTodos = []; }
+  textosPopularFiltroAno();
+  textosRenderCategoriasChips();
+  textosRenderKeywordsChips();
+  textosAtualizarControlesAdmin();
+  textosRenderTimeline();
+}
+window.textosLoad = textosLoad;
+
+function textosPopularFiltroAno() {
+  const sel = document.getElementById('textos-filtro-ano');
+  if (!sel) return;
+  const anos = [...new Set(textosTodos.filter(textosVisivel).map(t => (t.data || '').slice(0, 4)).filter(Boolean))].sort((a, b) => b.localeCompare(a));
+  const atual = sel.value;
+  sel.innerHTML = '<option value="">Todos os anos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = anos.includes(atual) ? atual : '';
+}
+
+function textosRenderCategoriasChips() {
+  const el = document.getElementById('textos-categorias-chips');
+  if (!el) return;
+  const visiveis = textosTodos.filter(textosVisivel);
+  const contagem = {};
+  visiveis.forEach(t => { contagem[t.categoria] = (contagem[t.categoria] || 0) + 1; });
+  el.innerHTML = TEXTOS_CATEGORIAS.filter(c => contagem[c.id]).map(c => `
+    <button class="toggle-pill ${textosCategoriaFiltro === c.id ? 'on' : ''}" style="font-size:.64rem;padding:6px 12px" onclick="textosToggleCategoria('${c.id}')">${c.label} <span style="opacity:.6">${contagem[c.id]}</span></button>
+  `).join('');
+}
+function textosToggleCategoria(id) {
+  textosCategoriaFiltro = textosCategoriaFiltro === id ? null : id;
+  textosRenderCategoriasChips();
+  textosRenderKeywordsChips();
+  textosRenderTimeline();
+}
+window.textosToggleCategoria = textosToggleCategoria;
+
+function textosRenderKeywordsChips() {
+  const el = document.getElementById('textos-keywords-chips');
+  const titulo = document.getElementById('textos-keywords-titulo');
+  if (!el || !titulo) return;
+  const base = textosTodos.filter(textosVisivel).filter(t => !textosCategoriaFiltro || t.categoria === textosCategoriaFiltro);
+  const contagem = {};
+  base.forEach(t => (t.palavrasChave || []).forEach(k => { contagem[k] = (contagem[k] || 0) + 1; }));
+  const chaves = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]).slice(0, 24);
+  if (!chaves.length) { el.innerHTML = ''; titulo.style.display = 'none'; return; }
+  titulo.style.display = '';
+  el.innerHTML = chaves.map(k => `
+    <button class="toggle-pill ${textosKeywordFiltro === k ? 'on' : ''}" style="font-size:.6rem;padding:5px 10px" onclick="textosToggleKeyword('${calEsc(k)}')">#${calEsc(k)}</button>
+  `).join('');
+}
+function textosToggleKeyword(k) {
+  textosKeywordFiltro = textosKeywordFiltro === k ? null : k;
+  textosRenderKeywordsChips();
+  textosRenderTimeline();
+}
+window.textosToggleKeyword = textosToggleKeyword;
+
+function textosSetAno(v) { textosAnoFiltro = v; textosRenderTimeline(); }
+window.textosSetAno = textosSetAno;
+function textosOnSearch(v) { textosBusca = blogNormBusca(v); textosRenderTimeline(); }
+window.textosOnSearch = textosOnSearch;
+
+function textosItensFiltrados() {
+  return textosTodos
+    .filter(textosVisivel)
+    .filter(t => !textosCategoriaFiltro || t.categoria === textosCategoriaFiltro)
+    .filter(t => !textosKeywordFiltro || (t.palavrasChave || []).includes(textosKeywordFiltro))
+    .filter(t => !textosAnoFiltro || (t.data || '').startsWith(textosAnoFiltro))
+    .filter(t => {
+      if (!textosBusca) return true;
+      const h = blogNormBusca([t.titulo, t.corpo, (t.palavrasChave || []).join(' ')].join(' '));
+      return h.includes(textosBusca);
+    })
+    .sort((a, b) => (b.data || '').localeCompare(a.data || '') || (b.criadoEm || 0) - (a.criadoEm || 0));
+}
+
+function textosFmtDiaSemana(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T12:00:00');
+  return CAL_DIAS[dt.getDay()];
+}
+
+function textosRenderTimeline() {
+  const lista = textosItensFiltrados();
+  const el = document.getElementById('textos-timeline');
+  const vazio = document.getElementById('textos-empty');
+  if (!el || !vazio) return;
+  if (!lista.length) { el.innerHTML = ''; vazio.style.display = 'block'; return; }
+  vazio.style.display = 'none';
+
+  const grupos = [];
+  lista.forEach(t => {
+    const key = (t.data || '').slice(0, 7);
+    let g = grupos[grupos.length - 1];
+    if (!g || g.key !== key) { g = { key, itens: [] }; grupos.push(g); }
+    g.itens.push(t);
+  });
+
+  const isAdmin = textosGetGrupo() === 'admin';
+  let html = '';
+  grupos.forEach(({ key, itens }) => {
+    const [y, m] = key.split('-');
+    const rotuloMes = (y && m) ? `${CAL_MESES[parseInt(m) - 1]} ${y}` : 'Sem data';
+    html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">${rotuloMes}</div>`;
+    itens.forEach(t => {
+      const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+      const corpoPlano = (t.corpo || '').replace(/\s+/g, ' ').trim();
+      const snippet = calEsc(corpoPlano.slice(0, 140)) + (corpoPlano.length > 140 ? '…' : '');
+      html += `<div class="cal-sessao-card" style="margin-bottom:8px;border-left:3px solid ${cor};cursor:pointer" onclick="textosAbrirInfo('${t.id}')">
+        <div class="cal-card-top">
+          <div class="cal-card-data"><div class="cal-card-dia">${(t.data || '').slice(8, 10) || '·'}</div><div class="cal-card-info"><div class="cal-card-dow">${textosFmtDiaSemana(t.data)}</div></div></div>
+          <div class="cal-card-nome">${calEsc(t.titulo)}</div>
+          ${isAdmin ? `<div class="cal-admin-acoes">
+            <button class="cal-icon-btn" onclick="textosAbrirEditar('${t.id}');event.stopPropagation()">✎</button>
+          </div>` : ''}
+        </div>
+        <div class="cal-card-meta">
+          <span class="cal-tipo-badge" style="background:${cor}22;color:${cor};border-color:${cor}55">${TEXTOS_CATEGORIA_LABEL[t.categoria] || ''}</span>
+        </div>
+        ${snippet ? `<div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${snippet}</div>` : ''}
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+function textosAbrirInfo(id) {
+  const t = textosTodos.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('textos-info-titulo').textContent = t.titulo || '';
+  document.getElementById('textos-info-sub').textContent = textosFmtDiaSemana(t.data) ? `${textosFmtDiaSemana(t.data)}, ${(t.data || '').split('-').reverse().join('/')}` : '';
+  const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+  let meta = `<span class="cal-tipo-badge" style="background:${cor}22;color:${cor};border-color:${cor}55">${TEXTOS_CATEGORIA_LABEL[t.categoria] || ''}</span>`;
+  (t.palavrasChave || []).forEach(k => { meta += `<span style="font-size:.7rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim)">#${calEsc(k)}</span>`; });
+  document.getElementById('textos-info-meta').innerHTML = meta;
+  document.getElementById('textos-info-corpo').textContent = t.corpo || '';
+  const acoes = document.getElementById('textos-info-admin-acoes');
+  if (textosGetGrupo() === 'admin') {
+    acoes.style.display = 'flex';
+    acoes.innerHTML = `<button class="rm-btn-mes" onclick="textosFecharInfo();textosAbrirEditar('${t.id}')">✎ Editar</button>`;
+  } else acoes.style.display = 'none';
+  document.getElementById('textos-info-overlay').style.display = 'flex';
+}
+window.textosAbrirInfo = textosAbrirInfo;
+function textosFecharInfo() { document.getElementById('textos-info-overlay').style.display = 'none'; }
+window.textosFecharInfo = textosFecharInfo;
+
+function textosRenderGruposChips() {
+  const el = document.getElementById('tx-grupos-chips');
+  if (!el) return;
+  el.innerHTML = CAL_GRUPOS.map(g => `
+    <button type="button" class="toggle-pill ${txGruposSelecionados.has(g) ? 'on' : ''}" style="font-size:.6rem;padding:5px 10px" onclick="textosToggleGrupoEdit('${g}')">${CAL_GRUPO_LABEL[g]}</button>
+  `).join('');
+}
+function textosToggleGrupoEdit(g) {
+  if (txGruposSelecionados.has(g)) txGruposSelecionados.delete(g); else txGruposSelecionados.add(g);
+  textosRenderGruposChips();
+}
+window.textosToggleGrupoEdit = textosToggleGrupoEdit;
+
+function textosAbrirCriar() {
+  document.getElementById('textos-editar-titulo-modal').textContent = 'Novo Texto';
+  document.getElementById('tx-id').value = '';
+  document.getElementById('tx-titulo').value = '';
+  document.getElementById('tx-data').value = calFmtDate(new Date());
+  document.getElementById('tx-categoria').innerHTML = TEXTOS_CATEGORIAS.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+  document.getElementById('tx-categoria').value = 'lembrete';
+  document.getElementById('tx-palavras-chave').value = '';
+  document.getElementById('tx-corpo').value = '';
+  document.getElementById('tx-status').textContent = '';
+  document.getElementById('tx-btn-excluir').style.display = 'none';
+  txGruposSelecionados = new Set(['filhas', 'tamboreiro']);
+  textosRenderGruposChips();
+  document.getElementById('textos-editar-overlay').style.display = 'flex';
+}
+window.textosAbrirCriar = textosAbrirCriar;
+
+function textosAbrirEditar(id) {
+  const t = textosTodos.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('textos-editar-titulo-modal').textContent = 'Editar Texto';
+  document.getElementById('tx-id').value = id;
+  document.getElementById('tx-titulo').value = t.titulo || '';
+  document.getElementById('tx-data').value = t.data || '';
+  document.getElementById('tx-categoria').innerHTML = TEXTOS_CATEGORIAS.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+  document.getElementById('tx-categoria').value = t.categoria || 'lembrete';
+  document.getElementById('tx-palavras-chave').value = (t.palavrasChave || []).join(', ');
+  document.getElementById('tx-corpo').value = t.corpo || '';
+  document.getElementById('tx-status').textContent = '';
+  document.getElementById('tx-btn-excluir').style.display = '';
+  txGruposSelecionados = new Set(t.grupos || []);
+  textosRenderGruposChips();
+  document.getElementById('textos-editar-overlay').style.display = 'flex';
+}
+window.textosAbrirEditar = textosAbrirEditar;
+
+function textosFecharEditar() { document.getElementById('textos-editar-overlay').style.display = 'none'; }
+window.textosFecharEditar = textosFecharEditar;
+
+async function textosSalvar() {
+  const titulo = document.getElementById('tx-titulo').value.trim();
+  const data = document.getElementById('tx-data').value;
+  const status = document.getElementById('tx-status');
+  if (!titulo || !data) { status.textContent = 'Preencha título e data.'; return; }
+  const payload = {
+    titulo, data,
+    categoria: document.getElementById('tx-categoria').value,
+    palavrasChave: document.getElementById('tx-palavras-chave').value.split(',').map(s => s.trim()).filter(Boolean),
+    corpo: document.getElementById('tx-corpo').value.trim(),
+    grupos: [...txGruposSelecionados],
+  };
+  const editId = document.getElementById('tx-id').value;
+  if (editId) payload.id = editId;
+
+  status.textContent = 'Salvando...';
+  try {
+    const res = await fetch(TEXTOS_API, { method: editId ? 'PUT' : 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify(payload) });
+    if (!res.ok) { status.textContent = 'Erro ao salvar.'; return; }
+    const json = await res.json();
+    if (editId) { const idx = textosTodos.findIndex(x => x.id === editId); if (idx >= 0) textosTodos[idx] = json; }
+    else textosTodos.push(json);
+    textosFecharEditar();
+    textosPopularFiltroAno();
+    textosRenderCategoriasChips();
+    textosRenderKeywordsChips();
+    textosRenderTimeline();
+  } catch (e) { status.textContent = 'Erro de conexão.'; }
+}
+window.textosSalvar = textosSalvar;
+
+async function textosExcluir(id) {
+  if (!id) return;
+  if (!confirm('Excluir esse texto?')) return;
+  try {
+    await fetch(TEXTOS_API, { method: 'DELETE', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+    textosTodos = textosTodos.filter(x => x.id !== id);
+    textosFecharEditar();
+    textosFecharInfo();
+    textosPopularFiltroAno();
+    textosRenderCategoriasChips();
+    textosRenderKeywordsChips();
+    textosRenderTimeline();
+  } catch (e) { alert('Não consegui excluir — tenta de novo.'); }
+}
+window.textosExcluir = textosExcluir;
+
+function textosAtualizarControlesAdmin() {
+  const el = document.getElementById('textos-controles-admin');
+  if (!el) return;
+  if (textosGetGrupo() !== 'admin') { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button class="admin-btn" onclick="textosAbrirCriar()">+ Novo Texto</button>
+    <button class="admin-btn" onclick="textosGarantirMenu()">✨ Criar item de menu</button>
+  `;
+}
+
+// cria o item "📝 Textos" no Menu do Site (seção Corrente, só filhas+tamboreiro
+// veem) — lê o menu atual, confere se já existe, e só então adiciona, pra
+// nunca sobrescrever o que a admin já configurou
+async function textosGarantirMenu() {
+  try {
+    const res = await fetch('/api/menu');
+    const menuData = await res.json();
+    const jaExiste = (menuData.sections || []).some(s => (s.items || []).some(i => i.page === 'textos'));
+    if (jaExiste) { alert('Já existe um item de menu apontando pra "Textos".'); return; }
+    if (!menuData.sections || !menuData.sections.length) { alert('Não encontrei nenhuma seção de menu pra adicionar.'); return; }
+    let secao = menuData.sections.find(s => s.id === 'corrente' || /corrente/i.test(s.label || ''));
+    if (!secao) secao = menuData.sections[menuData.sections.length - 1];
+    secao.items.push({
+      id: 'textos', label: '📝 Textos', type: 'internal', page: 'textos',
+      desc: 'Doutrina, instruções e avisos organizados', showCard: true, showMenu: true,
+      grupos: ['filhas', 'tamboreiro'],
+    });
+    const salvar = await fetch('/api/menu', { method: 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify(menuData) });
+    if (!salvar.ok) { alert('Não consegui salvar o menu — tenta de novo.'); return; }
+    alert('Item de menu "Textos" criado! Recarregue a página pra ver no menu.');
+  } catch (e) { alert('Não consegui criar o item de menu — tenta de novo.'); }
+}
+window.textosGarantirMenu = textosGarantirMenu;
 
 // ── GUIAS ──────────────────────────────────────────────────────
 let guiasData = [];
