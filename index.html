@@ -4556,6 +4556,17 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- MODAL VERIFICAR DUPLICATAS — confere se há textos com o mesmo
+     título+data (pode acontecer se a importação for clicada com a lista
+     local desatualizada), deixando excluir as cópias extras na hora -->
+<div id="textos-duplicatas-overlay" onclick="if(event.target===this)textosFecharDuplicatas()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;padding:20px;position:relative">
+    <button onclick="textosFecharDuplicatas()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">🔍 Verificação de Duplicatas</div>
+    <div id="textos-duplicatas-corpo"></div>
+  </div>
+</div>
+
 <!-- MODAL VISIBILIDADE POR TIPO DE SESSÃO — define quem vê cada tipo de sessão
      de uma vez só, em vez de marcar grupo por grupo em cada evento -->
 <div id="cal-vistipo-overlay" onclick="if(event.target===this)calFecharVisibilidadeTipo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
@@ -10575,6 +10586,7 @@ function textosAtualizarControlesAdmin() {
     <button onclick="textosAbrirCriar()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Novo Texto</button>
     <button onclick="textosImportarArquivo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">📥 Importar textos do arquivo</button>
     <button onclick="textosRevisarAtualizacoes(true)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔗 Revisar atualizações entre textos</button>
+    <button onclick="textosVerificarDuplicatas()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔍 Verificar duplicatas</button>
     <span id="textos-import-status" style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)"></span>
   `;
 }
@@ -10613,6 +10625,61 @@ async function textosRevisarAtualizacoes(avisar) {
   return marcados;
 }
 window.textosRevisarAtualizacoes = textosRevisarAtualizacoes;
+
+// confere se há textos com o mesmo título+data (pode acontecer se a
+// importação for clicada com a lista local desatualizada/vazia) — busca
+// direto do servidor pra não confiar no que já está em memória, agrupa por
+// título+data e deixa excluir as cópias extras ali mesmo
+async function textosVerificarDuplicatas() {
+  let itens;
+  try {
+    const res = await fetch(TEXTOS_API);
+    itens = await res.json();
+    if (!Array.isArray(itens)) throw new Error('resposta inesperada');
+  } catch (e) { alert('Não consegui verificar — tenta de novo.'); return; }
+  textosTodos = itens;
+
+  const grupos = {};
+  itens.forEach(t => {
+    const chave = `${t.titulo}|${t.data}`;
+    (grupos[chave] = grupos[chave] || []).push(t);
+  });
+  const duplicados = Object.values(grupos).filter(g => g.length > 1);
+
+  const corpo = document.getElementById('textos-duplicatas-corpo');
+  if (!duplicados.length) {
+    corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim)">Nenhuma duplicata encontrada — ${itens.length} textos no total, todos com título e data únicos. ✦</p>`;
+  } else {
+    corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);margin-bottom:14px">${duplicados.length} título(s) duplicado(s), de ${itens.length} textos no total. Mantenha uma cópia de cada e exclua as demais:</p>` +
+      duplicados.map(grupo => `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">
+          <div style="font-family:'Playfair Display',serif;font-weight:600;margin-bottom:6px">${calEsc(grupo[0].titulo)} <span style="font-weight:400;color:var(--text-dim);font-size:.8rem">(${(grupo[0].data || '').split('-').reverse().join('/')})</span></div>
+          ${grupo.map(t => `
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--border)">
+              <span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim)">criado em ${t.criadoEm ? new Date(t.criadoEm).toLocaleString('pt-BR') : '—'}</span>
+              <button onclick="textosExcluirDuplicata('${t.id}')" style="background:none;border:1px dashed #b33;color:#b33;padding:5px 10px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.56rem;white-space:nowrap">🗑️ Excluir esta cópia</button>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+  }
+  document.getElementById('textos-duplicatas-overlay').style.display = 'flex';
+}
+window.textosVerificarDuplicatas = textosVerificarDuplicatas;
+
+function textosFecharDuplicatas() { document.getElementById('textos-duplicatas-overlay').style.display = 'none'; }
+window.textosFecharDuplicatas = textosFecharDuplicatas;
+
+async function textosExcluirDuplicata(id) {
+  if (!confirm('Excluir esta cópia duplicada?')) return;
+  try {
+    await fetch(TEXTOS_API, { method: 'DELETE', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+    textosTodos = textosTodos.filter(x => x.id !== id);
+    textosRenderTimeline();
+    textosVerificarDuplicatas();
+  } catch (e) { alert('Não consegui excluir — tenta de novo.'); }
+}
+window.textosExcluirDuplicata = textosExcluirDuplicata;
 
 // importação única do acervo de textos (textos-import.json, gerado a partir
 // do histórico de avisos da Anna) — roda do navegador da admin, que tem
