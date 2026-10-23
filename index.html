@@ -567,6 +567,7 @@ footer{
 .cal-dia-evento.tipo-familia{background:#c9963c}
 .cal-dia-evento.tipo-reuniao{background:#6a8fa5}
 .cal-dia-evento.tipo-default{background:var(--rosa)}
+.cal-dia-evento.tentativa{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.14),rgba(0,0,0,.14) 4px,transparent 4px,transparent 8px);opacity:.85}
 .cal-dia-mais{font-family:'Cinzel',serif;font-size:.48rem;color:var(--text-dim);padding:0 2px}
 
 /* PLANEJAMENTO ANUAL — visão ampla dos 12 meses de uma vez, com feriados */
@@ -585,6 +586,7 @@ footer{
 .cal-anual-evento{font-family:'DM Sans',sans-serif;font-size:.42rem;line-height:1.2;color:#fff;border-radius:2px;padding:1px 2px;white-space:normal;word-break:break-word;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cal-anual-evento[draggable=true]{cursor:grab}
 .cal-anual-evento[draggable=true]:active{cursor:grabbing}
+.cal-anual-evento.tentativa{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.16),rgba(0,0,0,.16) 3px,transparent 3px,transparent 6px)!important}
 .cal-anual-mais{font-family:'Cinzel',serif;font-size:.4rem;color:var(--text-dim);text-align:center}
 .cal-anual-feriado-nome{font-family:'DM Sans',sans-serif;font-size:.32rem;font-weight:600;color:#8a6a1c;line-height:1.15;text-align:center;white-space:normal;word-break:break-word;width:100%;max-width:100%;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cal-anual-legenda{display:flex;gap:14px;flex-wrap:wrap;align-items:center;font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-bottom:16px}
@@ -4191,6 +4193,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Data *</label><input type="date" class="form-input" id="cal-fData"></div>
       <div><label class="form-label">Hora</label><input type="time" class="form-input" id="cal-fHora"></div>
     </div>
+    <div style="margin-bottom:12px">
+      <label class="form-label">📅 Data alternativa (opcional — se ainda não tá certo o dia)</label>
+      <input type="date" class="form-input" id="cal-fDataAlt">
+      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-top:4px">Preenchendo aqui, a sessão fica "a confirmar" entre as duas datas — nos dois lugares (calendário, agenda do Google, impressão) — até você escolher uma.</div>
+    </div>
     <div style="margin-bottom:12px"><label class="form-label">Tipo *</label>
       <select class="form-input" id="cal-fTipo">
         <option value="">— Selecionar —</option>
@@ -4260,6 +4267,13 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
          de "+ Nova Sessão"), e valem pra toda sessão desse tipo automaticamente -->
     <div style="margin-bottom:12px;font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">
       ✦ A visibilidade e as informações para visitantes dessa sessão são definidas pelo <strong>tipo</strong> escolhido acima — ajuste em "⚙️ Visibilidade por tipo" e "📋 Informações por tipo".
+    </div>
+    <div id="cal-confirmar-dia-wrap" style="display:none;margin-bottom:14px;background:rgba(196,57,107,.05);border:1px dashed var(--rosa);border-radius:8px;padding:12px 14px">
+      <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:8px">❓ Ainda a confirmar — qual dia vai ser?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button id="cal-btn-confirmar-principal" onclick="calConfirmarDia(true)" style="background:var(--rosa);border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase"></button>
+        <button id="cal-btn-confirmar-alternativa" onclick="calConfirmarDia(false)" style="background:var(--rosa);border:none;color:#fff;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase"></button>
+      </div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:16px">
       <div style="display:flex;gap:8px">
@@ -6829,15 +6843,16 @@ function calRenderGrade() {
     const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ehHoje = dataStr === todayStr;
     const selecionado = dataStr === calDiaSelecionado;
-    const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
+    const eventos = calSessoes.filter(s => (s.data === dataStr || s.dataAlternativa === dataStr) && calSessaoVisivel(s));
 
     let eventosHtml = '';
     const visiveis = eventos.slice(0, 3);
     visiveis.forEach(s => {
       const vis = calSessaoVisivel(s);
       const tc = 'tipo-' + (s.tipo||'default').toLowerCase();
+      const ehTentativa = !!s.dataAlternativa;
       const nome = vis === 'parcial' ? '🔒 Sessão fechada' : (s.nome || '');
-      eventosHtml += `<div class="cal-dia-evento ${tc}">${calEsc(nome)}</div>`;
+      eventosHtml += `<div class="cal-dia-evento ${tc}${ehTentativa ? ' tentativa' : ''}" title="${ehTentativa ? 'Ainda a confirmar entre dois dias possíveis' : ''}">${ehTentativa ? '❓ ' : ''}${calEsc(nome)}</div>`;
     });
     if (eventos.length > 3) {
       eventosHtml += `<div class="cal-dia-mais">+${eventos.length - 3} mais</div>`;
@@ -6968,6 +6983,7 @@ function calRenderLista() {
         </div>
         <div class="cal-card-meta">
           <span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>
+          ${s.dataAlternativa ? `<span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:#fff3d6;color:#8a6020;border:1px dashed #c89a3f">❓ a confirmar: ${calFmtDiaSemana(s.data)} ou ${calFmtDiaSemana(s.dataAlternativa)}</span>` : ''}
           ${isLogada && s.tambor ? `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>` : ''}
           ${isLogada && s.responsavel ? `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>` : ''}
         </div>
@@ -7008,6 +7024,7 @@ async function calOpenModal() {
   document.getElementById('cal-edit-id').value = '';
   document.getElementById('cal-fNome').value = '';
   document.getElementById('cal-fData').value = calDiaSelecionado || calFmtDate(new Date());
+  document.getElementById('cal-fDataAlt').value = '';
   document.getElementById('cal-fHora').value = '20:30';
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
@@ -7026,6 +7043,7 @@ async function calOpenModal() {
   document.getElementById('cal-fDriveLink').value = CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-btn-excluir').style.display = 'none';
+  document.getElementById('cal-confirmar-dia-wrap').style.display = 'none';
 
   document.getElementById('cal-fModelo-wrap').style.display = '';
   if (!calModelos.length) await calCarregarModelos();
@@ -7064,6 +7082,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-edit-id').value = id;
   document.getElementById('cal-fNome').value = s.nome || '';
   document.getElementById('cal-fData').value = s.data || '';
+  document.getElementById('cal-fDataAlt').value = s.dataAlternativa || '';
   document.getElementById('cal-fHora').value = s.hora || '';
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
@@ -7085,7 +7104,43 @@ function calOpenEdit(id) {
   document.getElementById('cal-fDriveLink').value = s.driveLink || CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = '';
   document.getElementById('cal-btn-excluir').style.display = '';
+
+  const confirmarWrap = document.getElementById('cal-confirmar-dia-wrap');
+  if (s.dataAlternativa) {
+    confirmarWrap.style.display = 'block';
+    document.getElementById('cal-btn-confirmar-principal').textContent = `✓ Confirmar ${calFmtDiaSemana(s.data)}`;
+    document.getElementById('cal-btn-confirmar-alternativa').textContent = `✓ Confirmar ${calFmtDiaSemana(s.dataAlternativa)}`;
+  } else {
+    confirmarWrap.style.display = 'none';
+  }
+
   document.getElementById('cal-modal-overlay').style.display = 'flex';
+}
+
+// "sex 13/03" — usado nos botões de confirmar qual dos dois dias possíveis vingou
+function calFmtDiaSemana(dataStr) {
+  if (!dataStr) return '';
+  const d = new Date(dataStr + 'T12:00:00');
+  const dias = ['dom','seg','ter','qua','qui','sex','sáb'];
+  return `${dias[d.getDay()]} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// confirma qual dos dois dias possíveis vai ser o definitivo — ehPrincipal
+// escolhe a data original (cal-fData), senão escolhe a alternativa
+async function calConfirmarDia(ehPrincipal) {
+  const id = document.getElementById('cal-edit-id').value;
+  const s = calSessoes.find(x => x.id === id);
+  if (!s || !s.dataAlternativa) return;
+  const diaEscolhido = ehPrincipal ? s.data : s.dataAlternativa;
+  const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, data: diaEscolhido, dataAlternativa: '' }) });
+  if (!res.ok) { alert('Não consegui confirmar o dia — tenta de novo.'); return; }
+  const json = await res.json();
+  const idx = calSessoes.findIndex(x => x.id === id);
+  if (idx >= 0) calSessoes[idx] = json;
+  calPopularFiltroAno();
+  calCloseModal(); calRenderGrade(); calRenderLista();
+  if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  if (calVisaoAnual) calRenderVisaoAnualInline();
 }
 
 // mantém todos os campos já preenchidos, mas vira uma criação (sem
@@ -7096,6 +7151,8 @@ function calClonarSessao() {
   document.getElementById('cal-modal-titulo').textContent = 'Clonar Sessão — escolha a nova data';
   document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-btn-excluir').style.display = 'none';
+  document.getElementById('cal-confirmar-dia-wrap').style.display = 'none';
+  document.getElementById('cal-fDataAlt').value = '';
   document.getElementById('cal-fData').focus();
 }
 
@@ -8643,7 +8700,10 @@ async function calPreencherInfoModal(s, mostrarLinkCalendario) {
   const dow = CAL_DIAS[dataObj.getDay()];
 
   document.getElementById('cal-info-titulo').textContent = s.nome || '';
-  document.getElementById('cal-info-sub').textContent = `${dow}, ${sd}/${sm}` + (s.hora ? ` às ${s.hora}` : '');
+  const subBase = `${dow}, ${sd}/${sm}` + (s.hora ? ` às ${s.hora}` : '');
+  document.getElementById('cal-info-sub').textContent = s.dataAlternativa
+    ? `❓ Ainda a confirmar: ${calFmtDiaSemana(s.data)} ou ${calFmtDiaSemana(s.dataAlternativa)}`
+    : subBase;
 
   let meta = `<span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>`;
   if (isLogada && s.tambor) meta += `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>`;
@@ -8696,6 +8756,7 @@ async function calSalvar() {
   const marco = document.getElementById('cal-fMarco').value;
 
   const payload = { nome, data,
+    dataAlternativa: document.getElementById('cal-fDataAlt').value || '',
     hora: document.getElementById('cal-fHora').value,
     tipo, lado: document.getElementById('cal-fLado').value, onde,
     endereco: document.getElementById('cal-fEndereco').value.trim(),
@@ -9193,18 +9254,19 @@ function calAnualGradeHtml(ano, interativo) {
     for (let d = 1; d <= ultimoDia; d++) {
       const dataStr = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
       const feriado = feriados[dataStr];
-      const eventos = calSessoes.filter(s => s.data === dataStr && calSessaoVisivel(s));
+      const eventos = calSessoes.filter(s => (s.data === dataStr || s.dataAlternativa === dataStr) && calSessaoVisivel(s));
       // mostra o nome de cada sessão (cor do chip ainda indica o Lado) — pra
       // quem não pode ver o nome (visibilidade parcial), mostra só que existe
       const visiveis = eventos.slice(0, 2);
       let eventosHtml = visiveis.map(s => {
         const vis = calSessaoVisivel(s);
-        const rotulo = vis === 'parcial' ? '🔒 Fechada' : (s.nome || CAL_LADO_LABEL[s.lado] || s.lado || '—');
+        const ehTentativa = !!s.dataAlternativa;
+        const rotulo = vis === 'parcial' ? '🔒 Fechada' : ((ehTentativa ? '❓ ' : '') + (s.nome || CAL_LADO_LABEL[s.lado] || s.lado || '—'));
         const cor = CAL_LADO_COR[s.lado] || 'var(--rosa)';
         const podeEditar = interativo && vis === 'total';
         const arrastar = podeEditar ? ` draggable="true" ondragstart="calAnualDragStart(event,'${s.id}')"` : '';
         const clique = podeEditar ? ` onclick="event.stopPropagation();calOpenEdit('${s.id}')"` : '';
-        return `<div class="cal-anual-evento" style="background:${cor}"${arrastar}${clique}>${calEsc(rotulo)}</div>`;
+        return `<div class="cal-anual-evento${ehTentativa ? ' tentativa' : ''}" style="background:${cor}"${arrastar}${clique}>${calEsc(rotulo)}</div>`;
       }).join('');
       if (eventos.length > 2) eventosHtml += `<div class="cal-anual-mais">+${eventos.length - 2} mais</div>`;
       const nomesEventos = eventos.map(s => calSessaoVisivel(s) === 'parcial' ? 'Sessão fechada' : s.nome);
@@ -9634,10 +9696,20 @@ function calImprimirCalendarioAnual() {
   const ano = calAnualAno;
   const feriados = calFeriadosDoAno(ano);
   const sessoesPorDia = {};
+  // sessão com data alternativa (ainda "a confirmar" entre dois dias) entra
+  // nos dois dias do calendário impresso, marcada com contorno tracejado
   calSessoes.forEach(s => {
-    if (!s.data || !s.data.startsWith(ano + '-')) return;
-    if (!sessoesPorDia[s.data]) sessoesPorDia[s.data] = [];
-    sessoesPorDia[s.data].push(s);
+    if (s.dataAlternativa) {
+      [s.data, s.dataAlternativa].forEach(d => {
+        if (!d || !d.startsWith(ano + '-')) return;
+        if (!sessoesPorDia[d]) sessoesPorDia[d] = [];
+        sessoesPorDia[d].push({ ...s, _tentativa: true });
+      });
+    } else {
+      if (!s.data || !s.data.startsWith(ano + '-')) return;
+      if (!sessoesPorDia[s.data]) sessoesPorDia[s.data] = [];
+      sessoesPorDia[s.data].push({ ...s, _tentativa: false });
+    }
   });
 
   const semanaHtml = CAL_DIAS.map(d => `<div class="pcal-dow">${d[0]}</div>`).join('');
@@ -9655,21 +9727,27 @@ function calImprimirCalendarioAnual() {
       if (doDia.length) {
         const cor = pcalCorDaSessao(doDia[0].nome);
         const fechada = doDia.some(s => pcalEhFechada(s.nome));
+        const tentativa = doDia.some(s => s._tentativa);
+        const estiloNum = tentativa ? `border:1.5px dashed ${cor};color:${cor}` : `background:${cor}`;
         diasHtml += `<div class="pcal-dia tem-sessao">
-          <span class="pcal-dia-num" style="background:${cor}">${d}</span>
+          <span class="pcal-dia-num${tentativa ? ' tentativa' : ''}" style="${estiloNum}">${d}</span>
           ${fechada ? '<span class="pcal-estrela">★</span>' : ''}
+          ${tentativa ? '<span class="pcal-interrogacao">？</span>' : ''}
         </div>`;
-        diasDoMes.push({ dia: d, cor, fechada, textos: doDia.map(s => pcalNomeLimpo(s.nome)) });
+        diasDoMes.push({ dia: d, cor, fechada, tentativa, textos: doDia.map(s => pcalNomeLimpo(s.nome)) });
       } else {
         const classe = feriados[dataStr] ? 'pcal-dia feriado' : 'pcal-dia';
         diasHtml += `<div class="${classe}"><span class="pcal-dia-num">${d}</span></div>`;
       }
     }
-    const legendaMesHtml = diasDoMes.map(item => `
+    const legendaMesHtml = diasDoMes.map(item => {
+      const estiloNum = item.tentativa ? `border-color:${item.cor};color:${item.cor}` : `background:${item.cor}`;
+      return `
       <div class="pcal-legenda-dia">
-        <span class="pcal-legenda-dia-num" style="background:${item.cor}">${item.dia}</span>
-        <span>${calEsc(item.textos.join(', '))}${item.fechada ? ' ★' : ''}</span>
-      </div>`).join('');
+        <span class="pcal-legenda-dia-num${item.tentativa ? ' tentativa' : ''}" style="${estiloNum}">${item.dia}</span>
+        <span>${calEsc(item.textos.join(', '))}${item.fechada ? ' ★' : ''}${item.tentativa ? ' ？ a confirmar' : ''}</span>
+      </div>`;
+    }).join('');
     mesesHtml += `<div class="pcal-mes">
       <div class="pcal-mes-nome">${CAL_MESES[mes]}</div>
       <div class="pcal-grade-semana">${semanaHtml}</div>
@@ -9683,7 +9761,8 @@ function calImprimirCalendarioAnual() {
   ).join('') + `
     <span class="pcal-legenda-item"><span class="pcal-legenda-bola" style="background:${PCAL_COR_PADRAO}"></span>Outras sessões</span>
     <span class="pcal-legenda-item"><span class="pcal-legenda-bola" style="background:#c9963c"></span>Feriado</span>
-    <span class="pcal-legenda-item">★ Sessão fechada (sem assistência)</span>`;
+    <span class="pcal-legenda-item">★ Sessão fechada (sem assistência)</span>
+    <span class="pcal-legenda-item">？ Dia possível — ainda a confirmar</span>`;
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
     <title>Calendário ${ano} — Terreiro Bolhas de Luz</title>
@@ -9704,7 +9783,10 @@ function calImprimirCalendarioAnual() {
       .pcal-dia-num{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;font-size:.5rem;color:#2e1a0e}
       .pcal-dia.tem-sessao .pcal-dia-num{color:#fff;font-weight:700}
       .pcal-dia.feriado .pcal-dia-num{color:#c9963c;font-weight:700}
+      .pcal-dia-num.tentativa{background:#fff!important;font-weight:700}
       .pcal-estrela{position:absolute;top:-3px;right:1px;font-size:6px;color:#c9963c;line-height:1}
+      .pcal-interrogacao{position:absolute;top:-3px;right:1px;font-size:6px;color:#8a6070;line-height:1}
+      .pcal-legenda-dia-num.tentativa{background:#fff!important;border:1.5px dashed;font-weight:700}
       .pcal-legenda-mes{margin-top:5px;padding-top:4px;border-top:1px dashed #e3b8a0;font-size:.52rem;color:#555;line-height:1.5}
       .pcal-legenda-dia{display:flex;align-items:center;gap:4px}
       .pcal-legenda-dia-num{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;color:#fff;font-weight:700;font-size:.48rem;flex-shrink:0}
