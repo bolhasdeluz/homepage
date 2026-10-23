@@ -59,6 +59,10 @@ export async function onRequest(context) {
         id,
         nome: body.nome || '',
         data: body.data || '',
+        // data concorrente, pra quando o dia ainda não tá certo (ex: "sexta ou
+        // sábado") — enquanto preenchida, a sessão aparece nos dois dias,
+        // marcada como "a confirmar", até alguém escolher uma (ver calConfirmarDia)
+        dataAlternativa: body.dataAlternativa || '',
         hora: body.hora || '',
         tipo: body.tipo || '',
         lado: body.lado || '',
@@ -74,9 +78,14 @@ export async function onRequest(context) {
         marco: body.marco || '',
         marcoOutroNome: body.marcoOutroNome || '',
         googleEventId: '',
+        googleEventIdAlt: '',
         criadoEm: Date.now(),
       };
-      try { sessao.googleEventId = await gcalCriarEvento(env, sessao); } catch (e) {}
+      const temAlt = !!sessao.dataAlternativa;
+      try { sessao.googleEventId = await gcalCriarEvento(env, sessao, sessao.data, temAlt, false); } catch (e) {}
+      if (temAlt && sessao.googleEventId) {
+        try { sessao.googleEventIdAlt = await gcalCriarEvento(env, sessao, sessao.dataAlternativa, temAlt, true); } catch (e) {}
+      }
       await KV.put(id, JSON.stringify(sessao));
       return json(sessao);
     }
@@ -88,11 +97,41 @@ export async function onRequest(context) {
       const existing = await KV.get(id, { type: 'json' });
       if (!existing) return json({ error: 'Sessão não encontrada' }, 404);
       const updated = { ...existing, ...fields, id };
-      if (criarNoGoogle && !updated.googleEventId) {
-        try { updated.googleEventId = await gcalCriarEvento(env, updated); } catch (e) {}
-      } else if (updated.googleEventId) {
-        try { await gcalAtualizarEvento(env, updated); } catch (e) {}
+
+      const alvoPrincipal = updated.data;
+      const alvoAlternativa = updated.dataAlternativa || '';
+      const temAlternativaAgora = !!alvoAlternativa;
+
+      // a pessoa confirmou a data alternativa como a definitiva (dataAlternativa
+      // some e "data" vira o que antes era a alternativa) — o evento que já
+      // existia pra aquele dia (googleEventIdAlt) vira o principal; o evento
+      // da data que não vingou (o antigo googleEventId) é descartado
+      const confirmouAlternativa = !temAlternativaAgora && existing.dataAlternativa && alvoPrincipal === existing.dataAlternativa;
+      if (confirmouAlternativa) {
+        if (existing.googleEventId) { try { await gcalExcluirEvento(env, existing.googleEventId); } catch (e) {} }
+        updated.googleEventId = existing.googleEventIdAlt || '';
+        updated.googleEventIdAlt = '';
       }
+
+      // evento da data principal
+      if (updated.googleEventId) {
+        try { await gcalAtualizarEvento(env, updated, alvoPrincipal, temAlternativaAgora, false, updated.googleEventId); } catch (e) {}
+      } else if (criarNoGoogle) {
+        try { updated.googleEventId = await gcalCriarEvento(env, updated, alvoPrincipal, temAlternativaAgora, false); } catch (e) {}
+      }
+
+      // evento da data alternativa
+      if (temAlternativaAgora) {
+        if (updated.googleEventIdAlt) {
+          try { await gcalAtualizarEvento(env, updated, alvoAlternativa, temAlternativaAgora, true, updated.googleEventIdAlt); } catch (e) {}
+        } else if (updated.googleEventId) {
+          try { updated.googleEventIdAlt = await gcalCriarEvento(env, updated, alvoAlternativa, temAlternativaAgora, true); } catch (e) {}
+        }
+      } else if (updated.googleEventIdAlt) {
+        try { await gcalExcluirEvento(env, updated.googleEventIdAlt); } catch (e) {}
+        updated.googleEventIdAlt = '';
+      }
+
       await KV.put(id, JSON.stringify(updated));
       return json(updated);
     }
@@ -102,8 +141,9 @@ export async function onRequest(context) {
       const { id } = body;
       if (!id) return json({ error: 'id obrigatório' }, 400);
       const existing = await KV.get(id, { type: 'json' });
-      if (existing && existing.googleEventId) {
-        try { await gcalExcluirEvento(env, existing.googleEventId); } catch (e) {}
+      if (existing) {
+        if (existing.googleEventId) { try { await gcalExcluirEvento(env, existing.googleEventId); } catch (e) {} }
+        if (existing.googleEventIdAlt) { try { await gcalExcluirEvento(env, existing.googleEventIdAlt); } catch (e) {} }
       }
       await KV.delete(id);
       return json({ ok: true });
@@ -174,50 +214,67 @@ async function gcalToken(env) {
   return dados.access_token || null;
 }
 
-// Monta o corpo do evento no formato da API do Google Agenda a partir de
-// uma sessão do site. Sessão sem hora vira evento de dia inteiro; com hora,
-// dura 3h por padrão (duração típica de uma gira/sessão).
-function gcalEventoDe(sessao) {
+// "sexta-feira, 13/03" — usado na descrição do evento tentativo, pra quem
+// olha a Agenda do Google saber qual é a outra data concorrente
+function gcalFormatarDataNota(dataStr) {
+  if (!dataStr) return '';
+  const d = new Date(dataStr + 'T12:00:00');
+  const dias = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+  return `${dias[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+// Monta o corpo do evento no formato da API do Google Agenda a partir de uma
+// sessão do site, pra uma data específica (a sessão pode ter até duas datas
+// concorrentes enquanto o dia não tá confirmado — ver dataAlternativa).
+// Sessão sem hora vira evento de dia inteiro; com hora, dura 3h por padrão.
+// Quando tentativa=true, o evento nasce como "tentative" no Google (aparece
+// com estilo tracejado lá) e ganha uma nota avisando a outra data candidata.
+function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
+  const outraData = ehAlternativa ? sessao.data : sessao.dataAlternativa;
+  const nota = tentativa
+    ? `⚠️ Data ainda não confirmada — pode ser ${gcalFormatarDataNota(dataAlvo)} ou ${gcalFormatarDataNota(outraData)}.\n\n`
+    : '';
   const evento = {
-    summary: sessao.nome || 'Sessão',
+    summary: (tentativa ? '❓ ' : '') + (sessao.nome || 'Sessão'),
     location: sessao.endereco || sessao.onde || undefined,
-    description: [sessao.descricao, sessao.responsavel ? `Responsável: ${sessao.responsavel}` : ''].filter(Boolean).join('\n\n') || undefined,
+    description: (nota + [sessao.descricao, sessao.responsavel ? `Responsável: ${sessao.responsavel}` : ''].filter(Boolean).join('\n\n')) || undefined,
+    status: tentativa ? 'tentative' : 'confirmed',
   };
   if (sessao.hora) {
-    const inicio = new Date(`${sessao.data}T${sessao.hora}:00`);
+    const inicio = new Date(`${dataAlvo}T${sessao.hora}:00`);
     const fim = new Date(inicio.getTime() + 3 * 60 * 60 * 1000);
     const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
     evento.start = { dateTime: fmt(inicio), timeZone: 'America/Sao_Paulo' };
     evento.end = { dateTime: fmt(fim), timeZone: 'America/Sao_Paulo' };
   } else {
-    evento.start = { date: sessao.data };
-    evento.end = { date: sessao.data };
+    evento.start = { date: dataAlvo };
+    evento.end = { date: dataAlvo };
   }
   return evento;
 }
 
-async function gcalCriarEvento(env, sessao) {
+async function gcalCriarEvento(env, sessao, dataAlvo, tentativa, ehAlternativa) {
   const token = await gcalToken(env);
   const calendarId = env.GOOGLE_CALENDAR_ID;
   if (!token || !calendarId) return '';
   const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(gcalEventoDe(sessao)),
+    body: JSON.stringify(gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa)),
   });
   if (!resp.ok) return '';
   const dados = await resp.json();
   return dados.id || '';
 }
 
-async function gcalAtualizarEvento(env, sessao) {
+async function gcalAtualizarEvento(env, sessao, dataAlvo, tentativa, ehAlternativa, eventId) {
   const token = await gcalToken(env);
   const calendarId = env.GOOGLE_CALENDAR_ID;
   if (!token || !calendarId) return;
-  await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(sessao.googleEventId)}`, {
+  await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`, {
     method: 'PATCH',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(gcalEventoDe(sessao)),
+    body: JSON.stringify(gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa)),
   });
 }
 
