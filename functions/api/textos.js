@@ -30,6 +30,14 @@ function sanitizarGrupos(v) {
   return v.filter(g => GRUPOS_VALIDOS.includes(g));
 }
 
+// referência opcional pro texto que atualiza este (observação "orientação
+// atualizada em..." mostrada no texto antigo) — só guarda o essencial pra
+// montar o link, não o texto inteiro
+function sanitizarAtualizadoPor(v) {
+  if (!v || !v.id || !v.titulo || !v.data) return null;
+  return { id: String(v.id), titulo: String(v.titulo).slice(0, 300), data: String(v.data) };
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -67,6 +75,7 @@ export async function onRequest(context) {
         categoria: CATEGORIAS_VALIDAS.includes(body.categoria) ? body.categoria : 'lembrete',
         palavrasChave: sanitizarPalavrasChave(body.palavrasChave),
         grupos: sanitizarGrupos(body.grupos),
+        atualizadoPor: sanitizarAtualizadoPor(body.atualizadoPor),
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(texto));
@@ -83,6 +92,7 @@ export async function onRequest(context) {
       if (fields.palavrasChave !== undefined) updated.palavrasChave = sanitizarPalavrasChave(fields.palavrasChave);
       if (fields.grupos !== undefined) updated.grupos = sanitizarGrupos(fields.grupos);
       if (fields.categoria !== undefined) updated.categoria = CATEGORIAS_VALIDAS.includes(fields.categoria) ? fields.categoria : existing.categoria;
+      if (fields.atualizadoPor !== undefined) updated.atualizadoPor = sanitizarAtualizadoPor(fields.atualizadoPor);
       await KV.put(id, JSON.stringify(updated));
       return json(updated);
     }
