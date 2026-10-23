@@ -10639,9 +10639,56 @@ function textosAtualizarControlesAdmin() {
     <button onclick="textosImportarArquivo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">📥 Importar textos do arquivo</button>
     <button onclick="textosRevisarAtualizacoes(true)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔗 Revisar atualizações entre textos</button>
     <button onclick="textosVerificarDuplicatas()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔍 Verificar duplicatas</button>
+    <button onclick="textosCorrigirCorpoPeloArquivo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🩹 Corrigir texto pelo arquivo</button>
     <span id="textos-import-status" style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)"></span>
   `;
 }
+
+// corrige o "corpo" de textos já importados comparando com o arquivo
+// (textos-import.json) — útil quando o arquivo é corrigido DEPOIS de já ter
+// sido importado (o botão de importar só cria o que falta, nunca atualiza o
+// que já existe). Casa por título+data e só atualiza o que realmente mudou.
+async function textosCorrigirCorpoPeloArquivo() {
+  if (!confirm('Isso compara o arquivo de importação com os textos já publicados e corrige o conteúdo dos que estiverem diferentes. Confirma?')) return;
+  let itens;
+  try {
+    const res = await fetch('/textos-import.json');
+    if (!res.ok) throw new Error('arquivo não encontrado');
+    itens = await res.json();
+  } catch (e) { alert('Não consegui carregar o arquivo de importação.'); return; }
+  if (!Array.isArray(itens) || !itens.length) { alert('Arquivo de importação vazio ou inválido.'); return; }
+
+  let atuais;
+  try {
+    const res = await fetch(TEXTOS_API);
+    atuais = await res.json();
+    if (!Array.isArray(atuais)) throw new Error();
+  } catch (e) { alert('Não consegui buscar os textos publicados.'); return; }
+  textosTodos = atuais;
+  const porChave = {};
+  atuais.forEach(t => { porChave[`${t.titulo}|${t.data}`] = t; });
+
+  let corrigidos = 0, iguais = 0, naoEncontrados = 0, falhas = 0;
+  for (let i = 0; i < itens.length; i++) {
+    const item = itens[i];
+    const existente = porChave[`${item.titulo}|${item.data}`];
+    if (!existente) { naoEncontrados++; continue; }
+    if ((existente.corpo || '') === (item.corpo || '')) { iguais++; continue; }
+    const status = document.getElementById('textos-import-status');
+    if (status) status.textContent = `Corrigindo ${i + 1}/${itens.length}…`;
+    try {
+      const res = await fetch(TEXTOS_API, { method: 'PUT', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify({ id: existente.id, corpo: item.corpo }) });
+      if (!res.ok) { falhas++; continue; }
+      const atualizado = await res.json();
+      Object.assign(existente, atualizado);
+      corrigidos++;
+    } catch (e) { falhas++; }
+  }
+
+  textosRenderTimeline();
+  alert(`Correção concluída!\n\n🩹 ${corrigidos} texto(s) corrigido(s)\n✓ ${iguais} já estavam iguais\n${naoEncontrados ? `↩️ ${naoEncontrados} não encontrado(s) entre os publicados\n` : ''}${falhas ? `⚠️ ${falhas} falharam` : ''}`);
+}
+window.textosCorrigirCorpoPeloArquivo = textosCorrigirCorpoPeloArquivo;
 
 // pares conhecidos de "texto antigo" → "texto que atualiza ele", encontrados
 // na revisão de contradições do acervo — resolve por título+data (não por
