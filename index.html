@@ -4692,6 +4692,34 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <div id="ap-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
     <button class="btn-rosa" style="width:100%;padding:13px;font-size:11px;letter-spacing:.1em" onclick="salvarAdicionarPessoa()">✦ Cadastrar</button>
+
+    <div style="margin:24px 0 16px;border-top:1px dashed var(--border)"></div>
+
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:4px">🔁 Reenviar pra quem já tem perfil</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Pra quando o e-mail ou o acesso à agenda falhou e precisa tentar de novo.</div>
+
+    <div style="margin-bottom:12px">
+      <label class="form-label">Perfil</label>
+      <select class="form-input" id="ap-reenviar-select" style="font-family:'Crimson Pro',serif;font-size:15px">
+        <option value="">Carregando...</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-reenviar-boasvindas" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        📧 Reenviar e-mail de boas-vindas
+      </label>
+    </div>
+    <div style="margin-bottom:16px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="ap-reenviar-calendario" style="accent-color:var(--rosa);width:16px;height:16px">
+        📅 Tentar dar acesso à agenda do Google de novo
+      </label>
+    </div>
+
+    <div id="ap-reenviar-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
+    <button class="btn-rosa" style="width:100%;padding:13px;font-size:11px;letter-spacing:.1em" onclick="reenviarParaPerfilSelecionado()">🔁 Reenviar</button>
   </div>
 </div>
 
@@ -6339,12 +6367,13 @@ async function salvarPerfilAdmin() {
 // mesmo quando o envio falhava silenciosamente (chave não configurada,
 // Resend recusando etc.), e isso só aparecia quando a pessoa reclamava que
 // não recebeu nada
-function montarStatusCadastro(data) {
+function montarStatusCadastro(data, prefixo) {
+  prefixo = prefixo || 'Salvo';
   const partes = [];
   if (data.email) partes.push(data.email.ok ? 'e-mail de boas-vindas enviado' : `⚠️ e-mail NÃO enviado (${data.email.erro || 'motivo desconhecido'})`);
   if (data.agenda) partes.push(data.agenda.ok ? 'acesso à agenda liberado' : `⚠️ agenda NÃO liberada (${data.agenda.erro || 'motivo desconhecido'})`);
-  if (!partes.length) return '✦ Salvo com sucesso!';
-  return `✦ Salvo — ${partes.join(' · ')}`;
+  if (!partes.length) return `✦ ${prefixo} com sucesso!`;
+  return `✦ ${prefixo} — ${partes.join(' · ')}`;
 }
 function houveFalhaCadastro(data) {
   return (data.email && !data.email.ok) || (data.agenda && !data.agenda.ok);
@@ -6359,9 +6388,51 @@ function abrirAdicionarPessoa() {
   document.getElementById('ap-boasvindas').checked = true;
   document.getElementById('ap-calendario').checked = true;
   document.getElementById('ap-status').textContent = '';
+  document.getElementById('ap-reenviar-boasvindas').checked = true;
+  document.getElementById('ap-reenviar-calendario').checked = false;
+  document.getElementById('ap-reenviar-status').textContent = '';
+  carregarListaReenvio();
   document.getElementById('modal-adicionar-pessoa-overlay').style.display = 'flex';
 }
 window.abrirAdicionarPessoa = abrirAdicionarPessoa;
+
+// lista de perfis já cadastrados, pro dropdown de reenvio
+async function carregarListaReenvio() {
+  const sel = document.getElementById('ap-reenviar-select');
+  sel.innerHTML = '<option value="">Carregando...</option>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const perfis = await res.json();
+    if (!Array.isArray(perfis) || !perfis.length) { sel.innerHTML = '<option value="">Nenhum perfil cadastrado ainda</option>'; return; }
+    const ordenados = perfis.filter(p => p.email).sort((a, b) => (a.nome || a.email).localeCompare(b.nome || b.email, 'pt-BR'));
+    sel.innerHTML = ordenados.map(p => `<option value="${calEsc(p.email)}">${calEsc(p.nome || '(sem nome)')} — ${calEsc(p.email)}</option>`).join('');
+  } catch (e) {
+    sel.innerHTML = '<option value="">Erro ao carregar os perfis</option>';
+  }
+}
+
+// reenvia e-mail de boas-vindas e/ou dá acesso à agenda de novo pra um
+// perfil que já existe — sem reescrever nada do perfil dela
+async function reenviarParaPerfilSelecionado() {
+  const email = document.getElementById('ap-reenviar-select').value;
+  const status = document.getElementById('ap-reenviar-status');
+  if (!email) { status.textContent = 'Escolha um perfil.'; return; }
+  const enviarBoasVindas = document.getElementById('ap-reenviar-boasvindas')?.checked || false;
+  const darAcessoCalendario = document.getElementById('ap-reenviar-calendario')?.checked || false;
+  if (!enviarBoasVindas && !darAcessoCalendario) { status.textContent = 'Marque pelo menos uma opção.'; return; }
+
+  status.textContent = 'Reenviando...';
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ email, enviarBoasVindas, darAcessoCalendario })
+    });
+    const data = await res.json();
+    status.textContent = data.ok ? montarStatusCadastro(data, 'Reenviado') : (data.error || 'Erro ao reenviar.');
+  } catch (e) { status.textContent = 'Erro de conexão.'; }
+}
+window.reenviarParaPerfilSelecionado = reenviarParaPerfilSelecionado;
 
 function fecharAdicionarPessoa() {
   document.getElementById('modal-adicionar-pessoa-overlay').style.display = 'none';
@@ -6394,7 +6465,7 @@ async function salvarAdicionarPessoa() {
     });
     const data = await res.json();
     if (data.ok) {
-      status.textContent = montarStatusCadastro(data).replace('Salvo', 'Cadastrado');
+      status.textContent = montarStatusCadastro(data, 'Cadastrado');
       carregarFilhasAdmin();
       if (!houveFalhaCadastro(data)) setTimeout(fecharAdicionarPessoa, 1200);
     } else { status.textContent = 'Erro ao salvar.'; }
