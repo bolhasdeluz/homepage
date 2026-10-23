@@ -4114,13 +4114,19 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         </div>
       </div>
 
-      <div style="margin-bottom:6px">
-        <div style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categorias</div>
-        <div id="textos-categorias-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
-      </div>
-      <div style="margin-bottom:16px">
-        <div id="textos-keywords-titulo" style="display:none;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Palavras-chave</div>
-        <div id="textos-keywords-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+      <button onclick="textosToggleFiltros()" id="textos-btn-filtros" style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim)">
+        <span id="textos-filtros-label">🔍 Filtros por categoria e palavra-chave</span>
+        <span id="textos-filtros-seta">▾</span>
+      </button>
+      <div id="textos-filtros-wrap" style="display:none">
+        <div style="margin-bottom:6px">
+          <div style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Categorias</div>
+          <div id="textos-categorias-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div id="textos-keywords-titulo" style="display:none;font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">Palavras-chave</div>
+          <div id="textos-keywords-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+        </div>
       </div>
     </div>
 
@@ -10269,6 +10275,7 @@ function textosToggleCategoria(id) {
   textosRenderCategoriasChips();
   textosRenderKeywordsChips();
   textosRenderTimeline();
+  textosAtualizarIndicadorFiltros();
 }
 window.textosToggleCategoria = textosToggleCategoria;
 
@@ -10290,8 +10297,30 @@ function textosToggleKeyword(k) {
   textosKeywordFiltro = textosKeywordFiltro === k ? null : k;
   textosRenderKeywordsChips();
   textosRenderTimeline();
+  textosAtualizarIndicadorFiltros();
 }
 window.textosToggleKeyword = textosToggleKeyword;
+
+// painel de categorias/palavras-chave fica recolhido por padrão (a lista
+// tinha ficado poluída com 9 categorias + 24 palavras-chave sempre visíveis
+// antes mesmo do conteúdo) — só abre quando a pessoa pede, e o botão mostra
+// um resumo de qual filtro já está ativo mesmo fechado
+let textosFiltrosAbertos = false;
+function textosToggleFiltros() {
+  textosFiltrosAbertos = !textosFiltrosAbertos;
+  document.getElementById('textos-filtros-wrap').style.display = textosFiltrosAbertos ? 'block' : 'none';
+  document.getElementById('textos-filtros-seta').textContent = textosFiltrosAbertos ? '▴' : '▾';
+}
+window.textosToggleFiltros = textosToggleFiltros;
+
+function textosAtualizarIndicadorFiltros() {
+  const label = document.getElementById('textos-filtros-label');
+  if (!label) return;
+  const partes = [];
+  if (textosCategoriaFiltro) partes.push(TEXTOS_CATEGORIA_LABEL[textosCategoriaFiltro] || textosCategoriaFiltro);
+  if (textosKeywordFiltro) partes.push(`#${textosKeywordFiltro}`);
+  label.textContent = partes.length ? `🔍 Filtrando por: ${partes.join(' + ')}` : '🔍 Filtros por categoria e palavra-chave';
+}
 
 // ── MAPA DE IDEIAS ── monta uma teia das palavras-chave: nó = palavra
 // (tamanho = frequência), aresta = duas palavras aparecerem no mesmo texto
