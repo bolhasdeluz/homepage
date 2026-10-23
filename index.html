@@ -4555,8 +4555,18 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:760px;max-height:92vh;overflow-y:auto;padding:20px;position:relative">
     <button onclick="textosFecharMapa()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
     <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🕸️ Mapa de Ideias</div>
-    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Toca numa palavra pra ver os textos ligados a ela. Palavras maiores aparecem mais vezes; linhas mais grossas indicam temas que sempre andam juntos.</p>
+    <p id="textos-mapa-dica" style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Toca numa palavra pra destacar as conexões dela.</p>
     <div id="textos-mapa-svg-wrap" style="width:100%"></div>
+  </div>
+</div>
+
+<!-- MODAL RESULTADO DO MAPA DE IDEIAS — textos ligados à palavra selecionada
+     (abre ao tocar de novo na palavra já em destaque no mapa) -->
+<div id="textos-mapa-resultado-overlay" onclick="if(event.target===this)textosMapaFecharResultado()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.7);backdrop-filter:blur(4px);z-index:600;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:20px;position:relative">
+    <button onclick="textosMapaFecharResultado()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div id="textos-mapa-resultado-titulo" style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px;padding-right:24px"></div>
+    <div id="textos-mapa-resultado-corpo"></div>
   </div>
 </div>
 
@@ -10371,45 +10381,142 @@ function textosCalcularLayoutTeia(nodes, edges, largura, altura) {
   }
 }
 
+const TEXTOS_MAPA_W = 680, TEXTOS_MAPA_H = 680;
+let textosMapaNodes = [];
+let textosMapaEdges = [];
+let textosMapaSelecionado = null; // palavra em destaque no momento, ou null
+
 function textosAbrirMapa() {
   const { nodes, edges } = textosConstruirGrafoIdeias();
   if (!nodes.length) { alert('Ainda não tem palavras-chave suficientes pra montar o mapa.'); return; }
-  const W = 680, H = 680;
-  textosCalcularLayoutTeia(nodes, edges, W, H);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;max-height:70vh">`;
-  edges.forEach(e => {
-    const a = nodes[e.si], b = nodes[e.ti];
-    const opacidade = Math.min(0.12 + e.weight * 0.12, 0.6);
-    svg += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rosa)" stroke-opacity="${opacidade}" stroke-width="${Math.min(1 + e.weight * 0.6, 4).toFixed(1)}" />`;
-  });
-  nodes.forEach(no => {
-    const r = Math.min(7 + no.freq * 2.2, 28);
-    const fonte = Math.min(9 + no.freq * 0.6, 14);
-    svg += `<g style="cursor:pointer" onclick="textosMapaClicarNode('${calEsc(no.id)}')">
-      <circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${no.cor}" fill-opacity="0.85" stroke="#fff" stroke-width="1.5" />
-      <text x="${no.x.toFixed(1)}" y="${(no.y + r + 11).toFixed(1)}" text-anchor="middle" font-family="'Crimson Pro',serif" font-size="${fonte.toFixed(1)}" fill="var(--text)">${calEsc(no.id)}</text>
-    </g>`;
-  });
-  svg += `</svg>`;
-  document.getElementById('textos-mapa-svg-wrap').innerHTML = svg;
+  textosCalcularLayoutTeia(nodes, edges, TEXTOS_MAPA_W, TEXTOS_MAPA_H);
+  textosMapaNodes = nodes;
+  textosMapaEdges = edges;
+  textosMapaSelecionado = null;
+  textosMapaRenderizar();
   document.getElementById('textos-mapa-overlay').style.display = 'flex';
 }
 window.textosAbrirMapa = textosAbrirMapa;
 
-function textosFecharMapa() { document.getElementById('textos-mapa-overlay').style.display = 'none'; }
+function textosFecharMapa() {
+  document.getElementById('textos-mapa-overlay').style.display = 'none';
+  textosMapaSelecionado = null;
+}
 window.textosFecharMapa = textosFecharMapa;
 
+// redesenha a teia toda vez que a seleção muda — sem seleção, mostra tudo
+// no tom normal; com uma palavra selecionada, aproxima (viewBox menor) e dá
+// destaque só a ela e às palavras diretamente ligadas, apagando o resto
+function textosMapaRenderizar() {
+  const nodes = textosMapaNodes, edges = textosMapaEdges;
+  const indice = {};
+  nodes.forEach((n, i) => { indice[n.id] = i; });
+  const selIdx = textosMapaSelecionado !== null ? indice[textosMapaSelecionado] : undefined;
+  const temSelecao = selIdx !== undefined;
+
+  const vizinhos = new Set();
+  if (temSelecao) {
+    edges.forEach(e => {
+      if (e.si === selIdx) vizinhos.add(e.ti);
+      if (e.ti === selIdx) vizinhos.add(e.si);
+    });
+  }
+
+  let vb = { x: 0, y: 0, w: TEXTOS_MAPA_W, h: TEXTOS_MAPA_H };
+  if (temSelecao) {
+    const foco = [selIdx, ...vizinhos].map(i => nodes[i]);
+    const pad = 75;
+    const minX = Math.min(...foco.map(n => n.x)) - pad, maxX = Math.max(...foco.map(n => n.x)) + pad;
+    const minY = Math.min(...foco.map(n => n.y)) - pad, maxY = Math.max(...foco.map(n => n.y)) + pad;
+    const w = Math.max(maxX - minX, 170), h = Math.max(maxY - minY, 170);
+    vb = { x: (minX + maxX) / 2 - w / 2, y: (minY + maxY) / 2 - h / 2, w, h };
+  }
+
+  let svg = `<svg viewBox="${vb.x.toFixed(1)} ${vb.y.toFixed(1)} ${vb.w.toFixed(1)} ${vb.h.toFixed(1)}" style="width:100%;height:auto;max-height:70vh;transition:all .35s ease" onclick="textosMapaLimparSelecao()">`;
+
+  edges.forEach(e => {
+    const a = nodes[e.si], b = nodes[e.ti];
+    const destacada = temSelecao && (e.si === selIdx || e.ti === selIdx);
+    const opacidade = !temSelecao ? Math.min(0.12 + e.weight * 0.12, 0.6) : (destacada ? Math.min(0.35 + e.weight * 0.15, 0.9) : 0.03);
+    const largura = destacada ? Math.min(1.8 + e.weight * 0.7, 5) : Math.min(1 + e.weight * 0.6, 4);
+    svg += `<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="var(--rosa)" stroke-opacity="${opacidade.toFixed(2)}" stroke-width="${largura.toFixed(1)}" />`;
+  });
+
+  nodes.forEach((no, i) => {
+    const ehSelecionado = temSelecao && i === selIdx;
+    const ehVizinho = temSelecao && vizinhos.has(i);
+    let r = Math.min(7 + no.freq * 2.2, 28);
+    let opCirculo = 0.85, opTexto = 1;
+    if (temSelecao) {
+      if (ehSelecionado) { r *= 1.4; opCirculo = 1; }
+      else if (ehVizinho) { opCirculo = 0.9; opTexto = 0.95; }
+      else { opCirculo = 0.12; opTexto = 0.25; }
+    }
+    const fonte = (ehSelecionado ? 1.3 : 1) * Math.min(9 + no.freq * 0.6, 14);
+    const glow = ehSelecionado ? `<circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${(r + 7).toFixed(1)}" fill="${no.cor}" fill-opacity="0.3" />` : '';
+    svg += `<g style="cursor:pointer" onclick="textosMapaClicarNode('${calEsc(no.id)}');event.stopPropagation()">
+      ${glow}
+      <circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${no.cor}" fill-opacity="${opCirculo.toFixed(2)}" stroke="#fff" stroke-width="${ehSelecionado ? 2.5 : 1.5}" />
+      <text x="${no.x.toFixed(1)}" y="${(no.y + r + 11).toFixed(1)}" text-anchor="middle" font-family="'Crimson Pro',serif" font-size="${fonte.toFixed(1)}" fill="var(--text)" fill-opacity="${opTexto.toFixed(2)}">${calEsc(no.id)}</text>
+    </g>`;
+  });
+  svg += `</svg>`;
+  document.getElementById('textos-mapa-svg-wrap').innerHTML = svg;
+
+  const dica = document.getElementById('textos-mapa-dica');
+  if (dica) {
+    dica.innerHTML = temSelecao
+      ? `Toca em <b>#${calEsc(textosMapaSelecionado)}</b> de novo pra ver os textos ligados a ela — ou toca fora pra limpar a seleção.`
+      : `Toca numa palavra pra destacar as conexões dela.`;
+  }
+}
+
+// primeiro toque numa palavra: seleciona ela (dá zoom + destaque, apaga o
+// resto). Tocar de nova na MESMA palavra já selecionada: abre os textos
+// ligados a ela. Tocar numa palavra DIFERENTE: troca a seleção pra ela.
 function textosMapaClicarNode(palavra) {
-  textosFecharMapa();
-  textosCategoriaFiltro = null;
-  textosKeywordFiltro = palavra;
-  textosRenderCategoriasChips();
-  textosRenderKeywordsChips();
-  textosRenderTimeline();
-  const el = document.getElementById('textos-timeline');
-  if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  if (textosMapaSelecionado === palavra) {
+    textosMapaAbrirResultado(palavra);
+    return;
+  }
+  textosMapaSelecionado = palavra;
+  textosMapaRenderizar();
 }
 window.textosMapaClicarNode = textosMapaClicarNode;
+
+function textosMapaLimparSelecao() {
+  if (!textosMapaSelecionado) return;
+  textosMapaSelecionado = null;
+  textosMapaRenderizar();
+}
+window.textosMapaLimparSelecao = textosMapaLimparSelecao;
+
+// popup com os textos ligados à palavra — abre por cima do mapa, que
+// continua com a seleção em destaque por trás
+function textosMapaAbrirResultado(palavra) {
+  const relacionados = textosTodos
+    .filter(textosVisivel)
+    .filter(t => (t.palavrasChave || []).includes(palavra))
+    .sort((a, b) => (b.data || '').localeCompare(a.data || ''));
+  document.getElementById('textos-mapa-resultado-titulo').textContent = `#${palavra} — ${relacionados.length} texto(s)`;
+  const corpo = document.getElementById('textos-mapa-resultado-corpo');
+  if (!relacionados.length) {
+    corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim)">Nenhum texto encontrado com essa palavra.</p>`;
+  } else {
+    corpo.innerHTML = relacionados.map(t => {
+      const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+      return `<div class="cal-sessao-card" style="margin-bottom:8px;border-left:3px solid ${cor};cursor:pointer" onclick="textosMapaFecharResultado();textosFecharMapa();textosAbrirInfo('${t.id}')">
+        <div class="cal-card-nome">${calEsc(t.titulo)}</div>
+        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-top:4px">${(t.data || '').split('-').reverse().join('/')}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('textos-mapa-resultado-overlay').style.display = 'flex';
+}
+window.textosMapaAbrirResultado = textosMapaAbrirResultado;
+
+function textosMapaFecharResultado() { document.getElementById('textos-mapa-resultado-overlay').style.display = 'none'; }
+window.textosMapaFecharResultado = textosMapaFecharResultado;
 
 function textosSetAno(v) { textosAnoFiltro = v; textosRenderTimeline(); }
 window.textosSetAno = textosSetAno;
