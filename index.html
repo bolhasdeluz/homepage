@@ -6693,6 +6693,9 @@ document.addEventListener('keydown', e => {
     document.getElementById('admin-senha-overlay')?.classList.remove('open');
     document.getElementById('modal-ficha-overlay')?.classList.remove('open');
     document.getElementById('modal-criar-overlay')?.style && (document.getElementById('modal-criar-overlay').style.display = 'none');
+    // cancelou o login de vez — não deixa um redirecionamento pendente preso
+    // pra atrapalhar um login futuro sem relação com essa tentativa
+    sessionStorage.removeItem('paginaAposLogin');
   }
 });
 function showPage(name) {
@@ -6704,13 +6707,22 @@ function showPage(name) {
   // sessoes → calendário interno
   if (name === 'sessoes') { showPage('calendario'); return; }
   // lista de necessidades da casa é só pra quem está logada — pede login em
-  // vez de abrir a página, não importa por onde a pessoa tentou chegar nela
-  if (name === 'compras' && !(window._getCurrentUser && window._getCurrentUser())) { openLogin(); return; }
+  // vez de abrir a página, não importa por onde a pessoa tentou chegar nela.
+  // Guarda o destino no sessionStorage (não só numa variável) porque no
+  // celular o login do Google sai da página (redirect) e volta depois —
+  // sem isso, a pessoa loga e some o lugar aonde ela queria ir.
+  if (name === 'compras' && !(window._getCurrentUser && window._getCurrentUser())) {
+    try { sessionStorage.setItem('paginaAposLogin', name); } catch (e) {}
+    openLogin(); return;
+  }
   // textos também é só pra quem está logada (filhas/tamboreiro) — sem isso,
   // quem chega por um link direto (#pagina=textos) via a página vazia e sem
   // cabeçalho, sem nenhum jeito de entrar (o botão "Ferramentas" só aparece
   // pra quem já está logada)
-  if (name === 'textos' && !(window._getCurrentUser && window._getCurrentUser()) && !adminSenhaAtiva && !padraoSenhaAtiva) { openLogin(); return; }
+  if (name === 'textos' && !(window._getCurrentUser && window._getCurrentUser()) && !adminSenhaAtiva && !padraoSenhaAtiva) {
+    try { sessionStorage.setItem('paginaAposLogin', name); } catch (e) {}
+    openLogin(); return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const p = document.getElementById('page-' + name);
   if (p) {
@@ -6864,6 +6876,8 @@ async function checkAdminSenha(){
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
       window.ajustarTopoFixo?.();
+      const paginaPendenteAdmin = sessionStorage.getItem('paginaAposLogin');
+      if (paginaPendenteAdmin) { sessionStorage.removeItem('paginaAposLogin'); showPage(paginaPendenteAdmin); return; }
       abrirDrawer();
       return;
     }
@@ -6882,6 +6896,8 @@ async function checkAdminSenha(){
       document.getElementById('admin-senha-overlay').classList.remove('open');
       input.value='';
       window.ajustarTopoFixo?.();
+      const paginaPendentePadrao = sessionStorage.getItem('paginaAposLogin');
+      if (paginaPendentePadrao) { sessionStorage.removeItem('paginaAposLogin'); showPage(paginaPendentePadrao); return; }
       showPage('jogos');
       return;
     }
@@ -19074,6 +19090,15 @@ onAuthStateChanged(auth, async (user) => {
     atualizarWidgetHistoria(true);
     window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
+    // se tinha uma página esperando o login (ex: abriu Textos ou Necessidades
+    // da Casa sem estar logada), volta pra ela em vez de ficar na Início
+    const paginaPendente = sessionStorage.getItem('paginaAposLogin');
+    if (paginaPendente) {
+      sessionStorage.removeItem('paginaAposLogin');
+      ajustarTopoFixo();
+      showPage(paginaPendente);
+      return;
+    }
     // admin já abre com a barra de ferramentas à mão — garante que está no index primeiro
     if (isEmailAdmin(user.email)) {
       // se não estiver no index, redireciona
