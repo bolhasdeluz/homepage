@@ -1,7 +1,7 @@
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password, X-User-Email',
   'Content-Type': 'application/json',
 };
@@ -295,6 +295,35 @@ export async function onRequest(context) {
     }
     if (enviarBoasVindas) {
       resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda: darAcessoCalendario && resultado.agenda?.ok });
+    }
+
+    return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
+  }
+
+  // PUT — ações rápidas que NÃO reescrevem o perfil (hoje só reenviar e-mail
+  // de boas-vindas / dar acesso à agenda de novo) — ao contrário do POST, não
+  // mexe em nenhum outro campo do perfil já salvo
+  if (request.method === 'PUT') {
+    if (!isAdmin) return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: CORS });
+
+    let body;
+    try { body = await request.json(); }
+    catch (e) { return new Response(JSON.stringify({ error: 'JSON inválido' }), { status: 400, headers: CORS }); }
+
+    const targetEmail = (body.email || '').toLowerCase();
+    if (!targetEmail) return new Response(JSON.stringify({ error: 'E-mail obrigatório' }), { status: 400, headers: CORS });
+
+    const data = await env.MENU_DATA.get('perfil:' + targetEmail);
+    if (!data) return new Response(JSON.stringify({ error: 'Perfil não encontrado' }), { status: 404, headers: CORS });
+    const perfil = JSON.parse(data);
+
+    const enviarBoasVindas = !!body.enviarBoasVindas;
+    const darAcessoCalendario = !!body.darAcessoCalendario;
+
+    const resultado = { ok: true };
+    if (darAcessoCalendario) resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
+    if (enviarBoasVindas) {
+      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: perfil.nome || '', comAgenda: darAcessoCalendario && resultado.agenda?.ok });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
