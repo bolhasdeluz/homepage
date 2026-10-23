@@ -44,10 +44,14 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
 }
 
 // e-mail de boas-vindas pra pessoa recém-cadastrada pelo admin — avisa que o
-// acesso já está liberado e explica como entrar (login com Google, mesmo e-mail)
+// acesso já está liberado e explica como entrar (login com Google, mesmo e-mail).
+// Devolve {ok, erro} em vez de só disparar e esquecer — senão uma falha (chave
+// não configurada, Resend recusando, domínio não verificado etc.) nunca
+// aparece pra admin, e ela só descobre quando a pessoa reclama que não recebeu.
 async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
   const RESEND_KEY = env.RESEND_API_KEY;
-  if (!RESEND_KEY || !email) return;
+  if (!RESEND_KEY) return { ok: false, erro: 'RESEND_API_KEY não configurada no Cloudflare.' };
+  if (!email) return { ok: false, erro: 'E-mail vazio.' };
 
   const html = `
     <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
@@ -73,16 +77,25 @@ async function enviarEmailBoasVindas(env, { email, nome, comAgenda }) {
       </div>
     </div>`;
 
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
-      to: [email],
-      subject: '✦ Seu acesso ao Bolhas de Luz foi liberado!',
-      html
-    })
-  });
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
+        to: [email],
+        subject: '✦ Seu acesso ao Bolhas de Luz foi liberado!',
+        html
+      })
+    });
+    if (!resp.ok) {
+      const corpo = await resp.text().catch(() => '');
+      return { ok: false, erro: `Resend recusou (status ${resp.status}): ${corpo.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, erro: e.message };
+  }
 }
 
 // --- Compartilhamento da Agenda do Google (mesma conta de serviço usada em
@@ -135,17 +148,29 @@ async function gcalToken(env) {
 // dá acesso de leitura à agenda inteira do terreiro pro e-mail da pessoa —
 // a agenda aparece sozinha no Google Agenda/celular dela, sem precisar
 // aceitar convite. sendNotifications=false porque já mandamos nosso próprio
-// e-mail de boas-vindas avisando disso.
+// e-mail de boas-vindas avisando disso. Devolve {ok, erro} pelo mesmo motivo
+// do e-mail: uma falha silenciosa aqui só aparece quando alguém reclama que
+// a agenda nunca chegou.
 async function gcalDarAcessoAgenda(env, email) {
+  if (!email) return { ok: false, erro: 'E-mail vazio.' };
+  if (!env.GOOGLE_SA_EMAIL || !env.GOOGLE_SA_PRIVATE_KEY) return { ok: false, erro: 'GOOGLE_SA_EMAIL / GOOGLE_SA_PRIVATE_KEY não configurados no Cloudflare.' };
+  if (!env.GOOGLE_CALENDAR_ID) return { ok: false, erro: 'GOOGLE_CALENDAR_ID não configurado no Cloudflare.' };
   const token = await gcalToken(env);
-  const calendarId = env.GOOGLE_CALENDAR_ID;
-  if (!token || !calendarId || !email) return false;
-  const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/acl?sendNotifications=false`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role: 'reader', scope: { type: 'user', value: email } }),
-  });
-  return resp.ok;
+  if (!token) return { ok: false, erro: 'Não consegui autenticar com a conta de serviço do Google — confere a chave privada.' };
+  try {
+    const resp = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.GOOGLE_CALENDAR_ID)}/acl?sendNotifications=false`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: 'reader', scope: { type: 'user', value: email } }),
+    });
+    if (!resp.ok) {
+      const corpo = await resp.text().catch(() => '');
+      return { ok: false, erro: `Google recusou (status ${resp.status}): ${corpo.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, erro: e.message };
+  }
 }
 
 export async function onRequest(context) {
@@ -262,12 +287,17 @@ export async function onRequest(context) {
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
 
-    if (darAcessoCalendario) context.waitUntil(gcalDarAcessoAgenda(env, targetEmail));
+    // espera os dois terminarem (em vez de só disparar e esquecer) pra poder
+    // contar pra admin se realmente deu certo, com o motivo quando não deu
+    const resultado = { ok: true };
+    if (darAcessoCalendario) {
+      resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
+    }
     if (enviarBoasVindas) {
-      context.waitUntil(enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda: darAcessoCalendario }));
+      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda: darAcessoCalendario && resultado.agenda?.ok });
     }
 
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
+    return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
   }
 
   return new Response('Method not allowed', { status: 405, headers: CORS });
