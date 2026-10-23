@@ -10371,8 +10371,51 @@ function textosAtualizarControlesAdmin() {
   el.innerHTML = `
     <button class="admin-btn" onclick="textosAbrirCriar()">+ Novo Texto</button>
     <button class="admin-btn" onclick="textosGarantirMenu()">✨ Criar item de menu</button>
+    <button class="admin-btn" onclick="textosImportarArquivo()">📥 Importar textos do arquivo</button>
+    <span id="textos-import-status" style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)"></span>
   `;
 }
+
+// importação única do acervo de textos (textos-import.json, gerado a partir
+// do histórico de avisos da Anna) — roda do navegador da admin, que tem
+// acesso normal ao site, em vez de depender de rede externa; compara por
+// título+data pra nunca duplicar se for clicado mais de uma vez
+async function textosImportarArquivo() {
+  if (!confirm('Importar o acervo de textos do arquivo? Isso cria vários textos novos de uma vez (não duplica os que já existirem).')) return;
+  let itens;
+  try {
+    const res = await fetch('/textos-import.json');
+    if (!res.ok) throw new Error('arquivo não encontrado');
+    itens = await res.json();
+  } catch (e) { alert('Não consegui carregar o arquivo de importação.'); return; }
+  if (!Array.isArray(itens) || !itens.length) { alert('Arquivo de importação vazio ou inválido.'); return; }
+
+  const existentesChave = new Set(textosTodos.map(t => `${t.titulo}|${t.data}`));
+  let criados = 0, pulados = 0, falhas = 0;
+
+  for (let i = 0; i < itens.length; i++) {
+    const item = itens[i];
+    const chave = `${item.titulo}|${item.data}`;
+    if (existentesChave.has(chave)) { pulados++; continue; }
+    const status = document.getElementById('textos-import-status');
+    if (status) status.textContent = `Importando ${i + 1}/${itens.length}…`;
+    try {
+      const res = await fetch(TEXTOS_API, { method: 'POST', headers: TEXTOS_ADMIN_HEADERS, body: JSON.stringify(item) });
+      if (!res.ok) { falhas++; continue; }
+      const criado = await res.json();
+      textosTodos.push(criado);
+      existentesChave.add(chave);
+      criados++;
+    } catch (e) { falhas++; }
+  }
+
+  textosPopularFiltroAno();
+  textosRenderCategoriasChips();
+  textosRenderKeywordsChips();
+  textosRenderTimeline();
+  alert(`Importação concluída!\n\n✦ ${criados} textos criados\n↩️ ${pulados} já existiam (pulados)\n${falhas ? `⚠️ ${falhas} falharam` : ''}`);
+}
+window.textosImportarArquivo = textosImportarArquivo;
 
 // cria o item "📝 Textos" no Menu do Site (seção Corrente, só filhas+tamboreiro
 // veem) — lê o menu atual, confere se já existe, e só então adiciona, pra
