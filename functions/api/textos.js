@@ -11,6 +11,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password',
   'Content-Type': 'application/json',
+  'Cache-Control': 'no-store',
 };
 
 const GRUPOS_VALIDOS = ['publico', 'visitante', 'filhas', 'tamboreiro', 'amigos', 'assistencia', 'familia'];
@@ -65,7 +66,19 @@ export async function onRequest(context) {
     // CREATE — POST
     if (method === 'POST') {
       if (!body.titulo || !body.data) return json({ error: 'Título e data são obrigatórios.' }, 400);
-      const id = `texto:${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      // se vier um id pronto (importação em massa, pra ser idempotente — ver
+      // textosImportarArquivo no index.html), confere se já existe por
+      // leitura direta da chave (get é muito mais consistente que list logo
+      // após uma leva grande de escritas) e devolve o que já existe em vez
+      // de sobrescrever, pra não apagar edições feitas depois da criação nem
+      // criar duplicata se a importação for clicada de novo
+      let id = typeof body.id === 'string' && body.id.startsWith('texto:') ? body.id : null;
+      if (id) {
+        const existente = await KV.get(id, { type: 'json' });
+        if (existente) return json(existente);
+      } else {
+        id = `texto:${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      }
       const texto = {
         id,
         titulo: String(body.titulo).slice(0, 300),
