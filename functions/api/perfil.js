@@ -333,12 +333,13 @@ export async function onRequest(context) {
     if (darAcessoDrive) {
       resultado.drive = await gdriveDarAcessoPasta(env, targetEmail);
     }
-    if (enviarBoasVindas) {
-      resultado.email = await enviarEmailBoasVindas(env, {
-        email: targetEmail, nome: body.nome || '',
-        comAgenda: darAcessoCalendario && resultado.agenda?.ok,
-        comDrive: darAcessoDrive && resultado.drive?.ok,
-      });
+    // manda o e-mail sempre que algum acesso foi de fato concedido (agenda
+    // ou Drive), mesmo que o checkbox geral de boas-vindas não esteja
+    // marcado — conceder acesso e avisar sobre ele andam juntos
+    const comAgenda = darAcessoCalendario && resultado.agenda?.ok;
+    const comDrive = darAcessoDrive && resultado.drive?.ok;
+    if (enviarBoasVindas || comAgenda || comDrive) {
+      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda, comDrive });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
@@ -368,12 +369,12 @@ export async function onRequest(context) {
     const resultado = { ok: true };
     if (darAcessoCalendario) resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
     if (darAcessoDrive) resultado.drive = await gdriveDarAcessoPasta(env, targetEmail);
-    if (enviarBoasVindas) {
-      resultado.email = await enviarEmailBoasVindas(env, {
-        email: targetEmail, nome: perfil.nome || '',
-        comAgenda: darAcessoCalendario && resultado.agenda?.ok,
-        comDrive: darAcessoDrive && resultado.drive?.ok,
-      });
+    // mesma regra do POST: acesso concedido (agenda ou Drive) já basta pra
+    // mandar o e-mail, independente do checkbox geral de boas-vindas
+    const comAgenda = darAcessoCalendario && resultado.agenda?.ok;
+    const comDrive = darAcessoDrive && resultado.drive?.ok;
+    if (enviarBoasVindas || comAgenda || comDrive) {
+      resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: perfil.nome || '', comAgenda, comDrive });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
