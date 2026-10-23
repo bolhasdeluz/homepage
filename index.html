@@ -4491,6 +4491,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <h2 id="textos-info-titulo" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:6px;padding-right:24px"></h2>
     <div id="textos-info-sub" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:10px"></div>
     <div id="textos-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
+    <div id="textos-info-aviso" style="display:none;margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff6e0;border:1px solid #e0c080;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)"></div>
     <div id="textos-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.65;white-space:pre-wrap"></div>
     <div id="textos-info-admin-acoes" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);gap:8px"></div>
   </div>
@@ -4522,6 +4523,13 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="margin-bottom:16px">
       <div class="form-label" style="margin-bottom:6px">Visível para</div>
       <div id="tx-grupos-chips" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <label class="form-label">Essa orientação foi atualizada por outro texto?</label>
+      <select class="form-input" id="tx-atualizado-por" style="font-family:'Crimson Pro',serif;font-size:15px">
+        <option value="">— Não, continua valendo —</option>
+      </select>
     </div>
 
     <div id="tx-status" style="font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);margin-bottom:10px;min-height:18px"></div>
@@ -10402,6 +10410,7 @@ function textosRenderTimeline() {
         </div>
         <div class="cal-card-meta">
           <span class="cal-tipo-badge" style="background:${cor}22;color:${cor};border-color:${cor}55">${TEXTOS_CATEGORIA_LABEL[t.categoria] || ''}</span>
+          ${t.atualizadoPor?.id ? `<span class="cal-tipo-badge" style="background:#fff6e0;color:#8a6a1a;border-color:#e0c080">📌 Atualizado</span>` : ''}
         </div>
         ${snippet ? `<div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${snippet}</div>` : ''}
       </div>`;
@@ -10419,6 +10428,15 @@ function textosAbrirInfo(id) {
   let meta = `<span class="cal-tipo-badge" style="background:${cor}22;color:${cor};border-color:${cor}55">${TEXTOS_CATEGORIA_LABEL[t.categoria] || ''}</span>`;
   (t.palavrasChave || []).forEach(k => { meta += `<span style="font-size:.7rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim)">#${calEsc(k)}</span>`; });
   document.getElementById('textos-info-meta').innerHTML = meta;
+  const avisoEl = document.getElementById('textos-info-aviso');
+  if (t.atualizadoPor?.id) {
+    const dataFmt = (t.atualizadoPor.data || '').split('-').reverse().join('/');
+    avisoEl.style.display = 'block';
+    avisoEl.innerHTML = `📌 Orientação atualizada em ${dataFmt} — <a href="#" onclick="textosAbrirInfo('${t.atualizadoPor.id}');return false" style="color:var(--rosa);text-decoration:underline;cursor:pointer">ver: ${calEsc(t.atualizadoPor.titulo)}</a>`;
+  } else {
+    avisoEl.style.display = 'none';
+    avisoEl.innerHTML = '';
+  }
   document.getElementById('textos-info-corpo').textContent = t.corpo || '';
   const acoes = document.getElementById('textos-info-admin-acoes');
   if (textosGetGrupo() === 'admin') {
@@ -10444,6 +10462,20 @@ function textosToggleGrupoEdit(g) {
 }
 window.textosToggleGrupoEdit = textosToggleGrupoEdit;
 
+// popula o seletor "atualizado por" com todos os outros textos (ordenados
+// por data, mais recentes primeiro) — exclui o próprio texto em edição pra
+// não deixar ele apontar pra si mesmo
+function textosPopularSelectAtualizadoPor(idAtual, idSelecionado) {
+  const sel = document.getElementById('tx-atualizado-por');
+  if (!sel) return;
+  const opcoes = textosTodos
+    .filter(t => t.id !== idAtual)
+    .sort((a, b) => (b.data || '').localeCompare(a.data || ''))
+    .map(t => `<option value="${t.id}" ${t.id === idSelecionado ? 'selected' : ''}>${(t.data || '').split('-').reverse().join('/')} — ${calEsc(t.titulo)}</option>`)
+    .join('');
+  sel.innerHTML = '<option value="">— Não, continua valendo —</option>' + opcoes;
+}
+
 function textosAbrirCriar() {
   document.getElementById('textos-editar-titulo-modal').textContent = 'Novo Texto';
   document.getElementById('tx-id').value = '';
@@ -10457,6 +10489,7 @@ function textosAbrirCriar() {
   document.getElementById('tx-btn-excluir').style.display = 'none';
   txGruposSelecionados = new Set(['filhas', 'tamboreiro']);
   textosRenderGruposChips();
+  textosPopularSelectAtualizadoPor(null, null);
   document.getElementById('textos-editar-overlay').style.display = 'flex';
 }
 window.textosAbrirCriar = textosAbrirCriar;
@@ -10476,6 +10509,7 @@ function textosAbrirEditar(id) {
   document.getElementById('tx-btn-excluir').style.display = '';
   txGruposSelecionados = new Set(t.grupos || []);
   textosRenderGruposChips();
+  textosPopularSelectAtualizadoPor(id, t.atualizadoPor?.id || null);
   document.getElementById('textos-editar-overlay').style.display = 'flex';
 }
 window.textosAbrirEditar = textosAbrirEditar;
@@ -10488,12 +10522,15 @@ async function textosSalvar() {
   const data = document.getElementById('tx-data').value;
   const status = document.getElementById('tx-status');
   if (!titulo || !data) { status.textContent = 'Preencha título e data.'; return; }
+  const idAtualizadoPor = document.getElementById('tx-atualizado-por').value;
+  const destinoAtualizacao = idAtualizadoPor ? textosTodos.find(t => t.id === idAtualizadoPor) : null;
   const payload = {
     titulo, data,
     categoria: document.getElementById('tx-categoria').value,
     palavrasChave: document.getElementById('tx-palavras-chave').value.split(',').map(s => s.trim()).filter(Boolean),
     corpo: document.getElementById('tx-corpo').value.trim(),
     grupos: [...txGruposSelecionados],
+    atualizadoPor: destinoAtualizacao ? { id: destinoAtualizacao.id, titulo: destinoAtualizacao.titulo, data: destinoAtualizacao.data } : null,
   };
   const editId = document.getElementById('tx-id').value;
   if (editId) payload.id = editId;
@@ -10537,9 +10574,45 @@ function textosAtualizarControlesAdmin() {
   el.innerHTML = `
     <button class="admin-btn" onclick="textosAbrirCriar()">+ Novo Texto</button>
     <button class="admin-btn" onclick="textosImportarArquivo()">📥 Importar textos do arquivo</button>
+    <button class="admin-btn" onclick="textosRevisarAtualizacoes(true)">🔗 Revisar atualizações entre textos</button>
     <span id="textos-import-status" style="font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim)"></span>
   `;
 }
+
+// pares conhecidos de "texto antigo" → "texto que atualiza ele", encontrados
+// na revisão de contradições do acervo — resolve por título+data (não por
+// id, que só existe depois do texto já ter sido criado) e marca a observação
+// "orientação atualizada em..." no texto antigo automaticamente
+const TEXTOS_ATUALIZACOES_CONHECIDAS = [
+  {
+    de: ['Adaptação de Vestimenta (Calor Extremo)', '2025-02-10'],
+    para: ['Vestimenta: Progressão de Roupas e Regras de Uso (Jaleco, Calça, Saia)', '2026-01-06'],
+  },
+];
+
+async function textosRevisarAtualizacoes(avisar) {
+  let marcados = 0, jaCertos = 0, naoEncontrados = 0;
+  for (const { de, para } of TEXTOS_ATUALIZACOES_CONHECIDAS) {
+    const origem = textosTodos.find(t => t.titulo === de[0] && t.data === de[1]);
+    const destino = textosTodos.find(t => t.titulo === para[0] && t.data === para[1]);
+    if (!origem || !destino) { naoEncontrados++; continue; }
+    if (origem.atualizadoPor?.id === destino.id) { jaCertos++; continue; }
+    try {
+      const res = await fetch(TEXTOS_API, {
+        method: 'PUT', headers: TEXTOS_ADMIN_HEADERS,
+        body: JSON.stringify({ id: origem.id, atualizadoPor: { id: destino.id, titulo: destino.titulo, data: destino.data } }),
+      });
+      if (!res.ok) continue;
+      const atualizado = await res.json();
+      Object.assign(origem, atualizado);
+      marcados++;
+    } catch (e) {}
+  }
+  textosRenderTimeline();
+  if (avisar) alert(`Revisão concluída.\n\n📌 ${marcados} observação(ões) marcada(s)\n✓ ${jaCertos} já estavam certas\n${naoEncontrados ? `↩️ ${naoEncontrados} par(es) ainda sem os dois textos criados` : ''}`);
+  return marcados;
+}
+window.textosRevisarAtualizacoes = textosRevisarAtualizacoes;
 
 // importação única do acervo de textos (textos-import.json, gerado a partir
 // do histórico de avisos da Anna) — roda do navegador da admin, que tem
@@ -10574,11 +10647,13 @@ async function textosImportarArquivo() {
     } catch (e) { falhas++; }
   }
 
+  const atualizacoesMarcadas = await textosRevisarAtualizacoes(false);
+
   textosPopularFiltroAno();
   textosRenderCategoriasChips();
   textosRenderKeywordsChips();
   textosRenderTimeline();
-  alert(`Importação concluída!\n\n✦ ${criados} textos criados\n↩️ ${pulados} já existiam (pulados)\n${falhas ? `⚠️ ${falhas} falharam` : ''}`);
+  alert(`Importação concluída!\n\n✦ ${criados} textos criados\n↩️ ${pulados} já existiam (pulados)\n${falhas ? `⚠️ ${falhas} falharam\n` : ''}${atualizacoesMarcadas ? `📌 ${atualizacoesMarcadas} observação(ões) de atualização marcada(s)` : ''}`);
 }
 window.textosImportarArquivo = textosImportarArquivo;
 
