@@ -10488,12 +10488,12 @@ function textosMapaRenderizar() {
       else if (ehVizinho) { opCirculo = 0.9; opTexto = 0.95; }
       else { opCirculo = 0.12; opTexto = 0.25; }
     }
-    const fonte = (ehSelecionado ? 1.3 : 1) * Math.min(9 + no.freq * 0.6, 14);
+    const fonte = (ehSelecionado ? 1.3 : 1) * Math.min(10 + no.freq * 0.65, 15);
     const glow = ehSelecionado ? `<circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${(r + 7).toFixed(1)}" fill="${no.cor}" fill-opacity="0.3" />` : '';
     svg += `<g style="cursor:pointer" onclick="textosMapaClicarNode('${calEsc(no.id)}');event.stopPropagation()">
       ${glow}
       <circle cx="${no.x.toFixed(1)}" cy="${no.y.toFixed(1)}" r="${r.toFixed(1)}" fill="${no.cor}" fill-opacity="${opCirculo.toFixed(2)}" stroke="#fff" stroke-width="${ehSelecionado ? 2.5 : 1.5}" />
-      <text x="${no.x.toFixed(1)}" y="${(no.y + r + 11).toFixed(1)}" text-anchor="middle" font-family="'Crimson Pro',serif" font-size="${fonte.toFixed(1)}" fill="var(--text)" fill-opacity="${opTexto.toFixed(2)}">${calEsc(no.id)}</text>
+      <text x="${no.x.toFixed(1)}" y="${(no.y + r + 12).toFixed(1)}" text-anchor="middle" font-family="'Crimson Pro',serif" font-size="${fonte.toFixed(1)}" font-weight="700" fill="var(--text)" fill-opacity="${opTexto.toFixed(2)}" stroke="#fff" stroke-width="3" stroke-opacity="${(opTexto * 0.9).toFixed(2)}" stroke-linejoin="round" paint-order="stroke fill">${calEsc(no.id)}</text>
     </g>`;
   });
   svg += `</svg>`;
