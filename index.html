@@ -10174,11 +10174,20 @@ function textosVisivel(t) {
 }
 
 async function textosLoad() {
+  textosErroCarregar = null;
   try {
     const res = await fetch(TEXTOS_API);
-    textosTodos = await res.json();
-    if (!Array.isArray(textosTodos)) textosTodos = [];
-  } catch (e) { textosTodos = []; }
+    const corpo = await res.json();
+    if (Array.isArray(corpo)) {
+      textosTodos = corpo;
+    } else {
+      // resposta não é uma lista — provavelmente um erro do servidor
+      // (ex: {error:"..."}); nunca trata isso como "lista vazia", senão a
+      // admin vê "nenhum texto encontrado" quando na verdade é uma falha
+      textosTodos = [];
+      textosErroCarregar = (corpo && corpo.error) ? corpo.error : `resposta inesperada (HTTP ${res.status})`;
+    }
+  } catch (e) { textosTodos = []; textosErroCarregar = e.message || 'falha de conexão'; }
   textosPopularFiltroAno();
   textosRenderCategoriasChips();
   textosRenderKeywordsChips();
@@ -10187,6 +10196,7 @@ async function textosLoad() {
   textosAbrirPendente();
 }
 window.textosLoad = textosLoad;
+let textosErroCarregar = null;
 
 // se chegou um link de compartilhamento de um texto específico (via
 // /texto/<id>, que redireciona pra cá com #pagina=textos&texto=<id>), o id
@@ -10408,7 +10418,12 @@ function textosRenderTimeline() {
   const el = document.getElementById('textos-timeline');
   const vazio = document.getElementById('textos-empty');
   if (!el || !vazio) return;
-  if (!lista.length) { el.innerHTML = ''; vazio.style.display = 'block'; return; }
+  if (!lista.length) {
+    el.innerHTML = '';
+    vazio.textContent = textosErroCarregar ? `⚠️ Não consegui carregar os textos (${textosErroCarregar}). Recarrega a página e tenta de novo.` : 'Nenhum texto encontrado.';
+    vazio.style.display = 'block';
+    return;
+  }
   vazio.style.display = 'none';
 
   const grupos = [];
@@ -10733,9 +10748,10 @@ async function textosVerificarDuplicatas() {
   let itens;
   try {
     const res = await fetch(TEXTOS_API);
-    itens = await res.json();
-    if (!Array.isArray(itens)) throw new Error('resposta inesperada');
-  } catch (e) { alert('Não consegui verificar — tenta de novo.'); return; }
+    const corpo = await res.json();
+    if (!Array.isArray(corpo)) throw new Error((corpo && corpo.error) ? corpo.error : `resposta inesperada (HTTP ${res.status})`);
+    itens = corpo;
+  } catch (e) { alert(`Não consegui verificar.\n\nMotivo: ${e.message || 'falha de conexão'}`); return; }
   textosTodos = itens;
 
   const grupos = {};
