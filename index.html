@@ -4105,9 +4105,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div id="textos-mapa-svg-wrap" style="width:100%"></div>
       </div>
 
-      <button onclick="textosAbrirLinhaDoTempo()" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:linear-gradient(135deg,var(--rosa),#8a4fa0);border:none;color:#fff;padding:14px 18px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(196,57,107,.3);margin-bottom:16px">
-        📅 Linha do Tempo
-      </button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <button onclick="textosAbrirLinhaDoTempo()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,var(--rosa),#8a4fa0);border:none;color:#fff;padding:14px 10px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(196,57,107,.25);text-align:center;line-height:1.3">
+          <span style="font-size:1.3rem">📅</span> Linha do Tempo
+        </button>
+        <button onclick="textosAbrirNesseDia()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,#8a4fa0,#4a6fa5);border:none;color:#fff;padding:14px 10px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(138,79,160,.25);text-align:center;line-height:1.3">
+          <span style="font-size:1.3rem">📆</span> Nesse Dia
+        </button>
+        <button onclick="textosAbrirTrilhas()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,#4a6fa5,#3f8f4f);border:none;color:#fff;padding:14px 10px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(74,111,165,.25);text-align:center;line-height:1.3">
+          <span style="font-size:1.3rem">🧭</span> Trilhas
+        </button>
+        <button onclick="textosAbrirBuscaAvancada()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,#c9963c,var(--rosa));border:none;color:#fff;padding:14px 10px;border-radius:12px;cursor:pointer;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;box-shadow:0 4px 18px rgba(201,150,60,.25);text-align:center;line-height:1.3">
+          <span style="font-size:1.3rem">🔎</span> Busca Avançada
+        </button>
+      </div>
 
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;position:relative;z-index:10">
         <input id="textos-busca" type="text" placeholder="Buscar por título, palavra ou conteúdo…" oninput="textosOnSearch(this.value)"
@@ -4501,11 +4512,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <div id="textos-info-overlay" onclick="if(event.target===this)textosFecharInfo()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.55);z-index:500;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)">
   <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:24px 20px;position:relative">
     <button onclick="textosFecharInfo()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="textos-info-trilha-nav" style="display:none;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;padding:8px 10px;background:var(--rosa-dim);border-radius:8px;padding-right:40px">
+      <button onclick="textosTrilhaAnterior()" style="background:none;border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:5px;cursor:pointer">←</button>
+      <span id="textos-info-trilha-label" style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;color:var(--text-dim);text-align:center;flex:1"></span>
+      <button onclick="textosTrilhaProximo()" style="background:none;border:1px solid var(--border);color:var(--text);width:26px;height:26px;border-radius:5px;cursor:pointer">→</button>
+    </div>
     <h2 id="textos-info-titulo" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--text);margin-bottom:6px;padding-right:24px"></h2>
     <div id="textos-info-sub" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:10px"></div>
     <div id="textos-info-meta" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:16px"></div>
     <div id="textos-info-aviso" style="display:none;margin-bottom:16px;padding:10px 12px;border-radius:8px;background:#fff6e0;border:1px solid #e0c080;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text)"></div>
     <div id="textos-info-corpo" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.65;white-space:pre-wrap"></div>
+    <div id="textos-info-relacionados" style="display:none;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">Você também pode gostar</div>
+      <div id="textos-info-relacionados-lista" style="display:flex;flex-direction:column;gap:6px"></div>
+    </div>
     <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border)">
       <button id="textos-info-btn-compartilhar" onclick="textosCompartilhar()" style="background:none;border:1px solid var(--border);color:var(--text);padding:8px 16px;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em">🔗 Compartilhar</button>
     </div>
@@ -4568,6 +4588,38 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">📅 Linha do Tempo</div>
     <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Cada bolinha é um texto, posicionado pela época do ano. Toca pra abrir.</p>
     <div id="textos-linha-svg-wrap" style="width:100%"></div>
+  </div>
+</div>
+
+<!-- MODAL NESSE DIA — textos de anos anteriores na mesma data de hoje, e
+     textos relacionados a sessões do Calendário chegando nos próximos dias -->
+<div id="textos-nessedia-overlay" onclick="if(event.target===this)textosFecharNesseDia()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;padding:20px;position:relative">
+    <button onclick="textosFecharNesseDia()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">📆 Nesse Dia</div>
+    <div id="textos-nessedia-corpo"></div>
+  </div>
+</div>
+
+<!-- MODAL TRILHAS — lista de trilhas (por enquanto, uma por categoria) —
+     escolher uma abre o primeiro texto dela com navegação ← → -->
+<div id="textos-trilhas-overlay" onclick="if(event.target===this)textosFecharTrilhas()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:560px;max-height:85vh;overflow-y:auto;padding:20px;position:relative">
+    <button onclick="textosFecharTrilhas()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:4px">🧭 Trilhas</div>
+    <p style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic;margin-bottom:14px">Uma sequência de leitura por tema — escolhe uma trilha pra começar.</p>
+    <div id="textos-trilhas-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+</div>
+
+<!-- MODAL BUSCA AVANÇADA — busca com o trecho encontrado destacado -->
+<div id="textos-busca-avancada-overlay" onclick="if(event.target===this)textosFecharBuscaAvancada()" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);z-index:500;align-items:flex-start;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;padding:20px;position:relative;margin-top:20px">
+    <button onclick="textosFecharBuscaAvancada()" style="position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:2">✕</button>
+    <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--text);margin-bottom:14px">🔎 Busca Avançada</div>
+    <input id="textos-busca-avancada-input" type="text" placeholder="Digite pra buscar…" oninput="textosBuscaAvancadaInput(this.value)" autofocus
+      style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'Crimson Pro',serif;font-size:16px;color:var(--text);outline:none;margin-bottom:16px">
+    <div id="textos-busca-avancada-corpo"><p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Digite acima pra buscar por título, palavra-chave ou conteúdo.</p></div>
   </div>
 </div>
 
@@ -10599,6 +10651,190 @@ window.textosAbrirLinhaDoTempo = textosAbrirLinhaDoTempo;
 function textosFecharLinhaDoTempo() { document.getElementById('textos-linha-overlay').style.display = 'none'; }
 window.textosFecharLinhaDoTempo = textosFecharLinhaDoTempo;
 
+// ── TRILHAS — sequências de leitura por tema. Por enquanto, uma trilha por
+// categoria (ordem cronológica); reaproveita o modal de "ver texto" normal,
+// só acrescentando uma barra de navegação ← → no topo dele ──
+let textosTrilhaAtual = null; // { categoriaId, itens: [...] } ou null
+let textosTrilhaIndice = 0;
+
+function textosAbrirTrilhas() {
+  const porCategoria = {};
+  textosTodos.filter(textosVisivel).forEach(t => { (porCategoria[t.categoria] = porCategoria[t.categoria] || []).push(t); });
+  const lista = document.getElementById('textos-trilhas-lista');
+  const categoriasComTexto = TEXTOS_CATEGORIAS.filter(c => porCategoria[c.id]?.length);
+  if (!categoriasComTexto.length) {
+    lista.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim)">Ainda não tem textos suficientes pra montar trilhas.</p>`;
+  } else {
+    lista.innerHTML = categoriasComTexto.map(c => `
+      <button onclick="textosAbrirTrilha('${c.id}')" style="display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-left:4px solid ${c.cor};border-radius:8px;padding:12px 14px;cursor:pointer;text-align:left">
+        <span style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text)">${c.label}</span>
+        <span style="font-family:'Cinzel',serif;font-size:.6rem;color:var(--text-dim)">${porCategoria[c.id].length} textos →</span>
+      </button>
+    `).join('');
+  }
+  document.getElementById('textos-trilhas-overlay').style.display = 'flex';
+}
+window.textosAbrirTrilhas = textosAbrirTrilhas;
+
+function textosFecharTrilhas() { document.getElementById('textos-trilhas-overlay').style.display = 'none'; }
+window.textosFecharTrilhas = textosFecharTrilhas;
+
+function textosAbrirTrilha(categoriaId) {
+  const itens = textosTodos.filter(textosVisivel).filter(t => t.categoria === categoriaId).sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+  if (!itens.length) return;
+  textosTrilhaAtual = { categoriaId, itens };
+  textosTrilhaIndice = 0;
+  textosFecharTrilhas();
+  textosAbrirInfo(itens[0].id);
+}
+window.textosAbrirTrilha = textosAbrirTrilha;
+
+function textosTrilhaAnterior() {
+  if (!textosTrilhaAtual || textosTrilhaIndice <= 0) return;
+  textosTrilhaIndice--;
+  textosAbrirInfo(textosTrilhaAtual.itens[textosTrilhaIndice].id);
+}
+window.textosTrilhaAnterior = textosTrilhaAnterior;
+
+function textosTrilhaProximo() {
+  if (!textosTrilhaAtual || textosTrilhaIndice >= textosTrilhaAtual.itens.length - 1) return;
+  textosTrilhaIndice++;
+  textosAbrirInfo(textosTrilhaAtual.itens[textosTrilhaIndice].id);
+}
+window.textosTrilhaProximo = textosTrilhaProximo;
+
+// ── NESSE DIA — textos de anos anteriores na mesma data, cruzado com
+// sessões do Calendário chegando nos próximos 30 dias (por palavras em
+// comum entre o nome da sessão e o título/palavras-chave dos textos) ──
+function textosNormalizarTermos(s) {
+  return blogNormBusca(s).split(/[^a-z0-9]+/).filter(w => w.length >= 4);
+}
+
+function textosEncontrarRelacionadosParaSessao(nomeSessao, textos) {
+  const termosSessao = new Set(textosNormalizarTermos(nomeSessao));
+  if (!termosSessao.size) return [];
+  const pontuados = textos.map(t => {
+    const termosTexto = new Set([...textosNormalizarTermos(t.titulo), ...(t.palavrasChave || []).map(k => blogNormBusca(k))]);
+    let pontos = 0;
+    termosSessao.forEach(termo => { if (termosTexto.has(termo)) pontos++; });
+    return { t, pontos };
+  }).filter(r => r.pontos > 0).sort((a, b) => b.pontos - a.pontos);
+  return pontuados.slice(0, 3).map(r => r.t);
+}
+
+async function textosAbrirNesseDia() {
+  const corpo = document.getElementById('textos-nessedia-corpo');
+  corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Carregando…</p>`;
+  document.getElementById('textos-nessedia-overlay').style.display = 'flex';
+
+  const hoje = new Date();
+  const mesDia = String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+  const anoAtual = hoje.getFullYear();
+  const visiveis = textosTodos.filter(textosVisivel);
+
+  const historicos = visiveis
+    .filter(t => t.data && t.data.slice(5) === mesDia && t.data.slice(0, 4) != anoAtual)
+    .sort((a, b) => b.data.localeCompare(a.data));
+
+  let sessoesComTextos = [];
+  try {
+    const res = await fetch(CAL_API);
+    const todasSessoes = await res.json();
+    const hojeStr = calFmtDate(hoje);
+    const limite = new Date(hoje); limite.setDate(limite.getDate() + 30);
+    const limiteStr = calFmtDate(limite);
+    const futuras = (Array.isArray(todasSessoes) ? todasSessoes : [])
+      .filter(s => s.data >= hojeStr && s.data <= limiteStr && calSessaoVisivel(s))
+      .sort((a, b) => a.data.localeCompare(b.data));
+    sessoesComTextos = futuras
+      .map(s => ({ sessao: s, textos: textosEncontrarRelacionadosParaSessao(s.nome, visiveis) }))
+      .filter(r => r.textos.length);
+  } catch (e) {}
+
+  let html = '';
+  if (sessoesComTextos.length) {
+    html += `<div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">🗓️ Pra sessões chegando</div>`;
+    sessoesComTextos.forEach(({ sessao, textos }) => {
+      const dataFmt = (sessao.data || '').split('-').reverse().join('/');
+      html += `<div style="margin-bottom:14px">
+        <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:6px">${calEsc(sessao.nome || '')} · ${dataFmt}</div>
+        ${textos.map(t => textosCardSimples(t)).join('')}
+      </div>`;
+    });
+  }
+  if (historicos.length) {
+    html += `<div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);margin:${sessoesComTextos.length ? '18px' : '0'} 0 10px">📆 Nesse dia, em anos anteriores</div>`;
+    historicos.forEach(t => {
+      const anosAtras = anoAtual - parseInt(t.data.slice(0, 4), 10);
+      html += textosCardSimples(t, `Há ${anosAtras} ano${anosAtras > 1 ? 's' : ''}`);
+    });
+  }
+  if (!html) html = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Nada marcante por aqui hoje — volta outro dia. 🌙</p>`;
+  corpo.innerHTML = html;
+}
+window.textosAbrirNesseDia = textosAbrirNesseDia;
+
+function textosFecharNesseDia() { document.getElementById('textos-nessedia-overlay').style.display = 'none'; }
+window.textosFecharNesseDia = textosFecharNesseDia;
+
+// card compacto reaproveitado pelo "Nesse Dia" — opcionalmente com uma
+// etiqueta extra (ex: "Há 2 anos") acima do título
+function textosCardSimples(t, etiqueta) {
+  const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+  return `<div style="display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--border);border-left:3px solid ${cor};border-radius:6px;cursor:pointer;margin-bottom:6px" onclick="textosFecharNesseDia();textosAbrirInfo('${t.id}')">
+    ${etiqueta ? `<span style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;color:${cor}">${calEsc(etiqueta)}</span>` : ''}
+    <span style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(t.titulo)}</span>
+  </div>`;
+}
+
+// ── BUSCA AVANÇADA — busca ao vivo com o trecho encontrado destacado ──
+function textosBuscaDestacar(texto, termo) {
+  const escapado = calEsc(texto);
+  if (!termo) return escapado;
+  const termoRegex = termo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return escapado.replace(new RegExp(`(${termoRegex})`, 'ig'), '<mark style="background:var(--rosa-dim);color:var(--rosa);padding:0 2px;border-radius:3px">$1</mark>');
+}
+
+function textosAbrirBuscaAvancada() {
+  document.getElementById('textos-busca-avancada-input').value = '';
+  document.getElementById('textos-busca-avancada-corpo').innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Digite acima pra buscar por título, palavra-chave ou conteúdo.</p>`;
+  document.getElementById('textos-busca-avancada-overlay').style.display = 'flex';
+  setTimeout(() => document.getElementById('textos-busca-avancada-input')?.focus(), 100);
+}
+window.textosAbrirBuscaAvancada = textosAbrirBuscaAvancada;
+
+function textosFecharBuscaAvancada() { document.getElementById('textos-busca-avancada-overlay').style.display = 'none'; }
+window.textosFecharBuscaAvancada = textosFecharBuscaAvancada;
+
+function textosBuscaAvancadaInput(valor) {
+  const termo = valor.trim();
+  const corpo = document.getElementById('textos-busca-avancada-corpo');
+  if (!termo) { corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Digite acima pra buscar por título, palavra-chave ou conteúdo.</p>`; return; }
+  const termoNorm = blogNormBusca(termo);
+  const resultados = textosTodos.filter(textosVisivel).filter(t => {
+    const alvo = blogNormBusca([t.titulo, t.corpo, (t.palavrasChave || []).join(' ')].join(' '));
+    return alvo.includes(termoNorm);
+  }).slice(0, 30);
+  if (!resultados.length) { corpo.innerHTML = `<p style="font-family:'Crimson Pro',serif;color:var(--text-dim);font-style:italic">Nenhum resultado pra "${calEsc(termo)}".</p>`; return; }
+  corpo.innerHTML = resultados.map(t => {
+    const cor = TEXTOS_CATEGORIA_COR[t.categoria] || 'var(--rosa)';
+    const corpoPlano = (t.corpo || '').replace(/\s+/g, ' ').trim();
+    const idx = blogNormBusca(corpoPlano).indexOf(termoNorm);
+    let trecho;
+    if (idx >= 0) {
+      const ini = Math.max(0, idx - 50);
+      trecho = (ini > 0 ? '…' : '') + corpoPlano.slice(ini, idx + termo.length + 90) + (ini + 140 < corpoPlano.length ? '…' : '');
+    } else {
+      trecho = corpoPlano.slice(0, 140) + (corpoPlano.length > 140 ? '…' : '');
+    }
+    return `<div class="cal-sessao-card" style="margin-bottom:8px;border-left:3px solid ${cor};cursor:pointer" onclick="textosFecharBuscaAvancada();textosAbrirInfo('${t.id}')">
+      <div class="cal-card-nome">${textosBuscaDestacar(t.titulo, termo)}</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:6px;line-height:1.5">${textosBuscaDestacar(trecho, termo)}</div>
+    </div>`;
+  }).join('');
+}
+window.textosBuscaAvancadaInput = textosBuscaAvancadaInput;
+
 function textosSetAno(v) { textosAnoFiltro = v; textosRenderTimeline(); }
 window.textosSetAno = textosSetAno;
 function textosOnSearch(v) { textosBusca = blogNormBusca(v); textosRenderTimeline(); }
@@ -10697,6 +10933,35 @@ function textosAbrirInfo(id) {
     avisoEl.innerHTML = '';
   }
   document.getElementById('textos-info-corpo').textContent = t.corpo || '';
+
+  // "Você também pode gostar" — outros textos que dividem palavra-chave ou
+  // categoria com esse, do mais parecido pro menos parecido
+  const relEl = document.getElementById('textos-info-relacionados');
+  const relLista = document.getElementById('textos-info-relacionados-lista');
+  const relacionados = textosEncontrarRelacionados(t);
+  if (relacionados.length) {
+    relEl.style.display = 'block';
+    relLista.innerHTML = relacionados.map(r => {
+      const corR = TEXTOS_CATEGORIA_COR[r.categoria] || 'var(--rosa)';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);border-left:3px solid ${corR};border-radius:6px;cursor:pointer" onclick="textosAbrirInfo('${r.id}')">
+        <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);flex:1">${calEsc(r.titulo)}</span>
+        <span style="font-family:'Crimson Pro',serif;font-size:.74rem;color:var(--text-dim);white-space:nowrap">${(r.data || '').split('-').reverse().join('/')}</span>
+      </div>`;
+    }).join('');
+  } else {
+    relEl.style.display = 'none';
+    relLista.innerHTML = '';
+  }
+
+  // barra de navegação de trilha — só aparece se estiver no meio de uma
+  const trilhaNav = document.getElementById('textos-info-trilha-nav');
+  if (textosTrilhaAtual) {
+    trilhaNav.style.display = 'flex';
+    document.getElementById('textos-info-trilha-label').textContent = `Trilha: ${TEXTOS_CATEGORIA_LABEL[textosTrilhaAtual.categoriaId] || ''} — ${textosTrilhaIndice + 1} de ${textosTrilhaAtual.itens.length}`;
+  } else {
+    trilhaNav.style.display = 'none';
+  }
+
   const acoes = document.getElementById('textos-info-admin-acoes');
   if (textosGetGrupo() === 'admin' && !textosModoFallback) {
     acoes.style.display = 'flex';
@@ -10705,8 +10970,26 @@ function textosAbrirInfo(id) {
   document.getElementById('textos-info-overlay').style.display = 'flex';
 }
 window.textosAbrirInfo = textosAbrirInfo;
-function textosFecharInfo() { document.getElementById('textos-info-overlay').style.display = 'none'; }
+function textosFecharInfo() {
+  document.getElementById('textos-info-overlay').style.display = 'none';
+  textosTrilhaAtual = null; // sair do modal normalmente também sai da trilha
+}
 window.textosFecharInfo = textosFecharInfo;
+
+function textosEncontrarRelacionados(t) {
+  const palavras = new Set(t.palavrasChave || []);
+  const pontuados = textosTodos
+    .filter(textosVisivel)
+    .filter(x => x.id !== t.id)
+    .map(x => {
+      let pontos = (x.palavrasChave || []).filter(k => palavras.has(k)).length * 2;
+      if (x.categoria === t.categoria) pontos += 1;
+      return { x, pontos };
+    })
+    .filter(r => r.pontos > 0)
+    .sort((a, b) => b.pontos - a.pontos || (b.x.data || '').localeCompare(a.x.data || ''));
+  return pontuados.slice(0, 4).map(r => r.x);
+}
 
 // gera um link direto pra esse texto (/texto/<id>, que serve uma prévia com
 // título/miniatura pro WhatsApp e redireciona quem clica de volta pro site)
