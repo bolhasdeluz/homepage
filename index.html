@@ -5235,7 +5235,14 @@ fetch('/api/versao').then(r => r.ok ? r.json() : null).then(dados => {
 // login de admin por senha, sem precisar do Google — a senha em si só existe
 // no servidor (variável de ambiente), o cliente só guarda "entrou ou não"
 let adminSenhaAtiva = localStorage.getItem('adminSenhaAtiva') === '1';
-function souAdminAtivo(user) { return (!!user && isEmailAdmin(user.email)) || adminSenhaAtiva; }
+// enquanto estiver simulando outro perfil (menu "Simular como"), nunca conta
+// como admin — mesmo a admin de verdade estando logada por trás, a visão
+// simulada tem que mostrar exatamente o que aquele tipo de perfil veria,
+// sem nenhum botão/ferramenta de administração escapando
+function souAdminAtivo(user) {
+  if (typeof _modoSimulacao !== 'undefined' && _modoSimulacao !== null) return false;
+  return (!!user && isEmailAdmin(user.email)) || adminSenhaAtiva;
+}
 function logoutSenhaAdmin() {
   adminSenhaAtiva = false;
   localStorage.removeItem('adminSenhaAtiva');
