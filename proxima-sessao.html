@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Próxima Sessão — Bolhas de Luz</title>
+<meta name="description" content="Terreiro Bolhas de Luz — próxima sessão e link para o site completo.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;--surface:#ffffff;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.55);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Crimson Pro',serif;background:var(--creme);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%);
+  display:flex;flex-direction:column;align-items:center;padding:28px 16px 40px;}
+.topo{text-align:center;margin-bottom:22px}
+.topo h1{font-family:'Cinzel',serif;font-size:1.15rem;letter-spacing:.06em;color:var(--terra);font-weight:700}
+.topo p{font-size:.85rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+
+.aviso{width:100%;max-width:420px;background:var(--rosa-dim);border:1px solid rgba(196,57,107,.22);
+  border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start;
+  font-size:.85rem;line-height:1.45;color:var(--text);animation:fadeIn .4s ease both}
+.aviso button{background:none;border:none;font-size:1rem;color:var(--text-dim);cursor:pointer;line-height:1;padding:0 2px}
+
+.card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:16px;
+  box-shadow:0 8px 32px rgba(140,58,26,.1);padding:24px 22px;text-align:center;animation:fadeIn .4s ease .05s both}
+.card-eyebrow{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--rosa)}
+.card-data{font-family:'Cinzel',serif;font-size:1.5rem;font-weight:700;margin:10px 0 2px;color:var(--terra)}
+.card-dataextra{font-size:.9rem;color:var(--text-dim);margin-bottom:12px;text-transform:capitalize}
+.card-badge{display:inline-block;background:var(--rosa);color:#fff;font-family:'Cinzel',serif;font-size:.68rem;
+  letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.card-nome{font-size:1.05rem;line-height:1.4}
+.card-vazio{font-size:.95rem;color:var(--text-dim);font-style:italic;padding:10px 0}
+
+.btn{display:inline-block;margin-top:20px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));
+  color:#fff;text-decoration:none;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.07em;text-transform:uppercase;
+  font-weight:700;padding:13px 26px;border-radius:30px;box-shadow:0 4px 16px rgba(196,57,107,.3)}
+.rodape{margin-top:26px;font-size:.78rem;color:var(--text-dim);text-align:center}
+.rodape a{color:var(--rosa);text-decoration:underline}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="topo">
+  <h1>Terreiro Bolhas de Luz</h1>
+  <p>Umbanda &amp; Quimbanda · Porto Alegre, RS</p>
+</div>
+
+<div class="aviso" id="aviso-passou">
+  <span>📅</span>
+  <span>A sessão deste banner já aconteceu — mas toda vez que você escanear este QR code, vai ver a próxima data marcada aqui.</span>
+  <button onclick="document.getElementById('aviso-passou').style.display='none'" aria-label="Fechar">✕</button>
+</div>
+
+<div class="card" id="card-sessao">
+  <div class="card-eyebrow">Próxima sessão</div>
+  <div class="card-vazio">Carregando...</div>
+</div>
+
+<a class="btn" href="/#pagina=calendario">Ver calendário completo</a>
+
+<div class="rodape">
+  Mais informações em <a href="/">bolhasdeluz.ong.br</a>
+</div>
+
+<script>
+const DIAS_SEMANA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+function parseDataLocal(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatarData(str) {
+  const dt = parseDataLocal(str);
+  return { diaSemana: DIAS_SEMANA[dt.getDay()], dia: dt.getDate(), mes: MESES[dt.getMonth()] };
+}
+
+function visibilidadeTipoPadrao() {
+  const tipos = ['Interna','Atendimento','Visita','Familia','Reuniao'];
+  const cfg = {};
+  tipos.forEach(t => { cfg[t] = { grupos: ['publico','visitante','filhas','tamboreiro'], parcial: [] }; });
+  return cfg;
+}
+
+async function carregarProximaSessao() {
+  const card = document.getElementById('card-sessao');
+  try {
+    const [resSessoes, resVis] = await Promise.all([
+      fetch('/api/sessoes'),
+      fetch('/api/sessoes-visibilidade-tipo').catch(() => null),
+    ]);
+    const sessoes = await resSessoes.json();
+    let vis = visibilidadeTipoPadrao();
+    try { if (resVis) vis = { ...vis, ...(await resVis.json()) }; } catch (e) {}
+
+    const hoje = new Date();
+    const hojeStr = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0') + '-' + String(hoje.getDate()).padStart(2,'0');
+
+    const futuras = (Array.isArray(sessoes) ? sessoes : [])
+      .filter(s => s && s.data)
+      .map(s => ({ ...s, dataEfetiva: (s.data >= hojeStr ? s.data : (s.dataAlternativa && s.dataAlternativa >= hojeStr ? s.dataAlternativa : null)) }))
+      .filter(s => s.dataEfetiva)
+      .filter(s => {
+        const cfg = vis[s.tipo] || { grupos: ['publico','visitante','filhas','tamboreiro'], parcial: [] };
+        return cfg.grupos.includes('publico') || cfg.parcial.includes('publico');
+      })
+      .sort((a, b) => a.dataEfetiva.localeCompare(b.dataEfetiva));
+
+    if (!futuras.length) {
+      card.innerHTML = '<div class="card-eyebrow">Próxima sessão</div><div class="card-vazio">Ainda não temos uma data marcada — fique de olho no site!</div>';
+      return;
+    }
+
+    const proxima = futuras[0];
+    const cfg = vis[proxima.tipo] || { grupos: ['publico','visitante','filhas','tamboreiro'], parcial: [] };
+    const fechada = !cfg.grupos.includes('publico') && cfg.parcial.includes('publico');
+    const { diaSemana, dia, mes } = formatarData(proxima.dataEfetiva);
+    const ehTentativa = proxima.dataAlternativa && proxima.data !== proxima.dataEfetiva ? false : !!proxima.dataAlternativa;
+
+    card.innerHTML = `
+      <div class="card-eyebrow">Próxima sessão</div>
+      <div class="card-data">${dia} de ${mes}</div>
+      <div class="card-dataextra">${diaSemana}${ehTentativa ? ' · data a confirmar' : ''}</div>
+      ${proxima.tipo ? `<div class="card-badge">${proxima.tipo}</div><br>` : ''}
+      <div class="card-nome">${fechada ? '🔒 Sessão fechada' : escapeHtml(proxima.nome || '')}</div>
+    `;
+  } catch (e) {
+    card.innerHTML = '<div class="card-eyebrow">Próxima sessão</div><div class="card-vazio">Não consegui carregar agora — tente abrir o site completo.</div>';
+  }
+}
+
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+carregarProximaSessao();
+</script>
+
+</body>
+</html>
