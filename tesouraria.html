@@ -522,6 +522,7 @@ body{padding-bottom:64px}
           <button onclick="mudarQtdTambor('quimbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
         </div>
       </div>
+      <button onclick="abrirExportTamborConfig()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px;cursor:pointer;">🖨️ Extrato do Tambor</button>
     </div>
 
     <!-- Filtros de tipo -->
@@ -808,6 +809,30 @@ body{padding-bottom:64px}
         <button onclick="exportarPrestacao('pdf')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;">🖨️ PDF / Imprimir</button>
         <button onclick="exportarPrestacao('csv')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);">📊 Excel / CSV</button>
         <button onclick="exportarPrestacao('wpp')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;">💬 WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT TAMBOR MODAL -->
+<div class="modal-overlay" id="export-tambor-overlay" onclick="fecharModal('export-tambor-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">🪘 Extrato do Tambor</div>
+      <button class="modal-close" onclick="document.getElementById('export-tambor-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label class="field-label">De</label><input type="month" id="export-tambor-de" onchange="atualizarPreviewExportTambor()"></div>
+        <div class="field"><label class="field-label">Até</label><input type="month" id="export-tambor-ate" onchange="atualizarPreviewExportTambor()"></div>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;padding:10px 13px;">
+        <div id="export-tambor-preview-count" style="font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="exportarExtratoTambor('pdf')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;">🖨️ PDF / Imprimir</button>
+        <button onclick="exportarExtratoTambor('csv')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);">📊 Excel / CSV</button>
+        <button onclick="exportarExtratoTambor('wpp')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;">💬 WhatsApp</button>
       </div>
     </div>
   </div>
@@ -2674,6 +2699,170 @@ body{padding-bottom:64px}
       var ta = document.createElement('textarea'); ta.value = texto;
       document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
       btn.textContent='✓ Copiado!'; setTimeout(function(){ btn.textContent='Copiar Mensagem'; }, 2000);
+    }
+  }
+
+  // ── EXTRATO EXCLUSIVO DO TAMBOR — só os gastos da conta "Tambor", pra
+  // emitir separado da prestação de contas geral (ex: pra mostrar só o
+  // custo dos tambores do período, sem misturar com o resto da casa) ──
+  function abrirExportTamborConfig() {
+    var datasTambor = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.conta === 'Tambor'; })
+      .map(function(l){ return l.data || ''; }).filter(Boolean).sort();
+    var agora = new Date();
+    var mesAtual = agora.getFullYear() + '-' + String(agora.getMonth()+1).padStart(2,'0');
+    document.getElementById('export-tambor-de').value = datasTambor.length ? datasTambor[0].slice(0,7) : mesAtual;
+    document.getElementById('export-tambor-ate').value = mesAtual;
+    atualizarPreviewExportTambor();
+    document.getElementById('export-tambor-overlay').classList.add('open');
+  }
+
+  function lancamentosTamborDoPeriodo(de, ate) {
+    return lancamentos.filter(function(l) {
+      if (l.tipo !== 'gasto' || l.conta !== 'Tambor') return false;
+      var ref = l.data ? l.data.slice(0,7) : '';
+      if (!ref) return true;
+      return ref >= de && ref <= ate;
+    }).sort(function(a,b){ return new Date(a.data) - new Date(b.data); });
+  }
+
+  function atualizarPreviewExportTambor() {
+    var de = document.getElementById('export-tambor-de').value;
+    var ate = document.getElementById('export-tambor-ate').value;
+    if (!de || !ate) return;
+    var lista = lancamentosTamborDoPeriodo(de, ate);
+    var total = lista.reduce(function(a,l){ return a+l.valor; },0);
+    var qtdTotal = lista.reduce(function(a,l){ return a+(l.quantidade||1); },0);
+    document.getElementById('export-tambor-preview-count').innerHTML =
+      '<strong>' + qtdTotal + '</strong> tambor(es) · Total: <strong>' + fmt(total) + '</strong>';
+  }
+
+  setTimeout(function(){
+    var de = document.getElementById('export-tambor-de');
+    var ate = document.getElementById('export-tambor-ate');
+    if (de) de.addEventListener('change', atualizarPreviewExportTambor);
+    if (ate) ate.addEventListener('change', atualizarPreviewExportTambor);
+  }, 500);
+
+  function exportarExtratoTambor(formato) {
+    var de = document.getElementById('export-tambor-de').value;
+    var ate = document.getElementById('export-tambor-ate').value;
+    if (!de || !ate) { showToast('Informe o período'); return; }
+
+    var lista = lancamentosTamborDoPeriodo(de, ate);
+    var periodo = de===ate ? fmtMesAno(de) : fmtMesAno(de) + ' a ' + fmtMesAno(ate);
+    var totalUmbanda = lista.filter(function(l){ return l.tipoTambor==='umbanda'; }).reduce(function(a,l){ return a+l.valor; },0);
+    var totalQuimbanda = lista.filter(function(l){ return l.tipoTambor==='quimbanda'; }).reduce(function(a,l){ return a+l.valor; },0);
+    var qtdUmbanda = lista.filter(function(l){ return l.tipoTambor==='umbanda'; }).reduce(function(a,l){ return a+(l.quantidade||1); },0);
+    var qtdQuimbanda = lista.filter(function(l){ return l.tipoTambor==='quimbanda'; }).reduce(function(a,l){ return a+(l.quantidade||1); },0);
+    var outros = lista.filter(function(l){ return l.tipoTambor!=='umbanda' && l.tipoTambor!=='quimbanda'; });
+    var totalOutros = outros.reduce(function(a,l){ return a+l.valor; },0);
+    var total = totalUmbanda + totalQuimbanda + totalOutros;
+
+    document.getElementById('export-tambor-overlay').classList.remove('open');
+
+    if (formato === 'pdf') {
+      var html = '<html><head><meta charset="UTF-8">';
+      html += '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">';
+      html += '<style>';
+      html += 'body{font-family:"DM Sans",sans-serif;color:#2a1a22;max-width:700px;margin:0 auto;padding:24px 20px;font-size:13px;}';
+      html += 'h1{font-family:"Cinzel",serif;font-size:1.1rem;font-weight:700;color:#7a3a1a;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}';
+      html += 'h2{font-family:"Cinzel",serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7a3a1a;border-bottom:1px solid rgba(122,58,26,.2);padding-bottom:5px;margin:20px 0 8px;}';
+      html += '.sub{font-family:"DM Sans",sans-serif;font-size:.78rem;color:rgba(80,30,50,.5);margin-bottom:16px;}';
+      html += 'table{width:100%;border-collapse:collapse;margin-bottom:8px;}';
+      html += 'th{font-family:"Cinzel",serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(80,30,50,.5);text-align:left;padding:5px 8px;border-bottom:1.5px solid rgba(122,58,26,.15);}';
+      html += 'td{font-family:"Crimson Pro",serif;font-size:.88rem;padding:5px 8px;border-bottom:1px solid rgba(122,58,26,.07);}';
+      html += 'td.val{text-align:right;font-weight:600;}';
+      html += 'td.dim{color:rgba(80,30,50,.5);font-style:italic;}';
+      html += '.total-row td{font-weight:700;border-top:1.5px solid rgba(122,58,26,.2);border-bottom:none;font-family:"Cinzel",serif;font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;}';
+      html += '.saldo-box{background:rgba(122,58,26,.05);border:1px solid rgba(122,58,26,.2);border-radius:8px;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;}';
+      html += '.saldo-box .label{font-family:"Cinzel",serif;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:rgba(80,30,50,.5);}';
+      html += '.saldo-box .valor{font-family:"Crimson Pro",serif;font-size:1.3rem;font-weight:600;}';
+      html += '@media print{body{padding:8px;}button{display:none!important;}}';
+      html += '</style></head><body>';
+
+      html += '<h1>🪘 Bolhas de Luz — Extrato do Tambor</h1>';
+      html += '<div class="sub">Período: <strong>' + periodo + '</strong> · Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div>';
+
+      html += '<div class="saldo-box"><div><div class="label">Tambor de Umbanda</div><div class="valor" style="color:#7a3a1a">' + fmt(totalUmbanda) + '</div></div>';
+      html += '<div><div class="label">Tambor de Quimbanda</div><div class="valor" style="color:#7a3a1a">' + fmt(totalQuimbanda) + '</div></div>';
+      html += '<div><div class="label">Total</div><div class="valor" style="color:#7a3a1a">' + fmt(total) + '</div></div></div>';
+
+      html += '<h2>Lançamentos</h2>';
+      if (lista.length) {
+        html += '<table><tr><th>Mês</th><th>Tipo</th><th>Quantidade</th><th>Observação</th><th style="text-align:right">Valor</th></tr>';
+        lista.forEach(function(l){
+          var tipoLabel = l.tipoTambor ? TAMBOR_LABELS[l.tipoTambor] : (l.conta || 'Tambor');
+          html += '<tr><td>'+fmtMesAno(l.data ? l.data.slice(0,7) : '')+'</td><td>'+tipoLabel+'</td><td class="dim">'+(l.quantidade||1)+'x</td><td class="dim">'+(l.obs||'—')+'</td><td class="val">'+fmt(l.valor)+'</td></tr>';
+        });
+        html += '<tr class="total-row"><td colspan="4">TOTAL</td><td style="text-align:right">'+fmt(total)+'</td></tr>';
+        html += '</table>';
+      } else {
+        html += '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:rgba(80,30,50,.5)">Nenhum tambor registrado nesse período.</p>';
+      }
+
+      html += '<h2>Resumo</h2>';
+      html += '<table><tr><th>Item</th><th style="text-align:right">Valor</th></tr>';
+      html += '<tr><td>Tambor de Umbanda ('+qtdUmbanda+'x)</td><td class="val">'+fmt(totalUmbanda)+'</td></tr>';
+      html += '<tr><td>Tambor de Quimbanda ('+qtdQuimbanda+'x)</td><td class="val">'+fmt(totalQuimbanda)+'</td></tr>';
+      if (outros.length) html += '<tr><td>Outros lançamentos de Tambor</td><td class="val">'+fmt(totalOutros)+'</td></tr>';
+      html += '<tr class="total-row"><td>TOTAL DO PERÍODO</td><td style="text-align:right">'+fmt(total)+'</td></tr>';
+      html += '</table></body></html>';
+
+      var win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(function(){ win.print(); }, 600);
+
+    } else if (formato === 'csv') {
+      var rows = [];
+      rows.push(['BOLHAS DE LUZ — EXTRATO DO TAMBOR']);
+      rows.push(['Período: ' + periodo]);
+      rows.push([]);
+      rows.push(['Mês','Tipo','Quantidade','Observação','Valor']);
+      lista.forEach(function(l){
+        var tipoLabel = l.tipoTambor ? TAMBOR_LABELS[l.tipoTambor] : (l.conta || 'Tambor');
+        rows.push([fmtMesAno(l.data ? l.data.slice(0,7) : ''), tipoLabel, (l.quantidade||1), l.obs||'', l.valor.toFixed(2)]);
+      });
+      rows.push(['','','','TOTAL', total.toFixed(2)]);
+      rows.push([]);
+      rows.push(['RESUMO']);
+      rows.push(['Tambor de Umbanda ('+qtdUmbanda+'x)', totalUmbanda.toFixed(2)]);
+      rows.push(['Tambor de Quimbanda ('+qtdQuimbanda+'x)', totalQuimbanda.toFixed(2)]);
+      if (outros.length) rows.push(['Outros lançamentos de Tambor', totalOutros.toFixed(2)]);
+      rows.push(['TOTAL', total.toFixed(2)]);
+      var csv = '﻿' + rows.map(function(r){
+        return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'extrato-tambor-bolhasdeluz-' + de + '-a-' + ate + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV baixado ✓');
+
+    } else if (formato === 'wpp') {
+      var msg = '🪘 *BOLHAS DE LUZ — EXTRATO DO TAMBOR*\n';
+      msg += '📅 Período: ' + periodo + '\n';
+      msg += '─'.repeat(28) + '\n\n';
+      if (lista.length) {
+        lista.forEach(function(l){
+          var tipoLabel = l.tipoTambor ? TAMBOR_LABELS[l.tipoTambor] : (l.conta || 'Tambor');
+          msg += '• ' + fmtMesAno(l.data ? l.data.slice(0,7) : '') + ' — ' + tipoLabel + ' (' + (l.quantidade||1) + 'x): *' + fmt(l.valor) + '*\n';
+        });
+      } else {
+        msg += '_Nenhum tambor registrado nesse período._\n';
+      }
+      msg += '\n💰 *RESUMO*\n';
+      msg += '🥁 Umbanda ('+qtdUmbanda+'x): *'+fmt(totalUmbanda)+'*\n';
+      msg += '🔥 Quimbanda ('+qtdQuimbanda+'x): *'+fmt(totalQuimbanda)+'*\n';
+      if (outros.length) msg += '✨ Outros: *'+fmt(totalOutros)+'*\n';
+      msg += '▸ *Total: ' + fmt(total) + '*\n';
+
+      document.getElementById('wpp-preview').textContent = msg;
+      document.getElementById('wpp-copy-btn').textContent = 'Copiar Mensagem';
+      document.getElementById('wpp-overlay').classList.add('open');
     }
   }
 
