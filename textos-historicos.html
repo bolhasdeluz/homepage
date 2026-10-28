@@ -6,7 +6,7 @@
 <title>Textos Históricos — Bolhas de Luz</title>
 <meta name="description" content="Estudos acadêmicos com embasamento histórico sobre a Umbanda e a Quimbanda.">
 <link rel="icon" type="image/png" href="assets/icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -46,11 +46,27 @@ body{font-family:'Crimson Pro',serif;background:var(--creme);color:var(--text);m
 .relacionados{margin-bottom:14px}
 .relacionados .label{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
 .relacionados .chip{display:inline-block;font-size:.78rem;color:var(--terra);background:var(--rosa-dim);
-  text-decoration:none;padding:4px 11px;border-radius:14px;margin:0 6px 6px 0}
+  border:none;text-decoration:none;padding:4px 11px;border-radius:14px;margin:0 6px 6px 0;cursor:pointer;font-family:'Crimson Pro',serif}
 .card.contraponto .relacionados .chip{background:rgba(140,58,26,.08)}
 .relacionados .chip:hover{opacity:.75}
 
 .rodape{margin-top:30px;text-align:center;font-size:.8rem;color:var(--text-dim)}
+
+/* MODAL — texto interno relacionado, aberto direto nesta página */
+#texto-overlay{display:none;position:fixed;inset:0;background:rgba(40,10,20,.65);backdrop-filter:blur(4px);
+  z-index:500;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto}
+#texto-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;
+  box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:640px;margin:20px auto;padding:22px 20px;position:relative}
+#texto-modal .fechar{position:absolute;top:12px;right:14px;background:none;border:1px solid var(--border);color:var(--text-dim);
+  width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+#texto-modal .nota{background:var(--rosa-dim);border:1px solid rgba(196,57,107,.2);border-radius:10px;padding:12px 14px;
+  font-size:.85rem;line-height:1.55;color:var(--terra);margin:8px 0 18px}
+#texto-modal .nota b{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:4px}
+#texto-modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--text);line-height:1.35;margin-bottom:4px;padding-right:26px}
+#texto-modal .data{font-size:.8rem;color:var(--text-dim);font-style:italic;margin-bottom:14px}
+#texto-modal .corpo{font-size:.95rem;line-height:1.7}
+#texto-modal .corpo p{margin-bottom:12px}
+#texto-modal .carregando{font-style:italic;color:var(--text-dim)}
 </style>
 </head>
 <body>
@@ -73,6 +89,13 @@ body{font-family:'Crimson Pro',serif;background:var(--creme);color:var(--text);m
 
 </div>
 
+<div id="texto-overlay" onclick="if(event.target===this)fecharTextoRelacionado()">
+  <div id="texto-modal">
+    <button class="fechar" onclick="fecharTextoRelacionado()">✕</button>
+    <div id="texto-modal-conteudo"><p class="carregando">Carregando…</p></div>
+  </div>
+</div>
+
 <script>
 const TEXTOS = [
   {
@@ -82,8 +105,8 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1lmktmybxrkp3jkb1cVnDDhVBTk4bQlU6/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'A Umbanda é uma religião de tradição oral', id: 'import-2021-10-13-a-umbanda-e-uma-religiao-de-tradicao-oral' },
-      { titulo: 'Desmistificando Zélio de Moraes e a Natureza da Umbanda', id: 'import-2025-07-26-desmistificando-zelio-de-moraes-e-a-natureza-da-umbanda' },
+      { titulo: 'A Umbanda é uma religião de tradição oral', nota: 'Este texto já dizia, em 2021: "a história de Zélio é apenas a raíz branca, e uma das mais recentes" — a mesma tese central deste TCC.' },
+      { titulo: 'Desmistificando Zélio de Moraes e a Natureza da Umbanda', nota: 'Aqui a casa já indicava o Povo Bantu como a influência mais forte da Umbanda — o mesmo ponto que este TCC desenvolve com nomes e datas (Juca Rosa, João de Camargo).' },
     ],
   },
   {
@@ -93,7 +116,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1wr3ZiGvQY9IkEPdgJtK9I6XfnL2-5JNS/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina: O Significado do Elebó — Axé em Movimento', id: 'import-2026-08-26-doutrina-o-significado-do-elebo-axe-em-movimento' },
+      { titulo: 'Doutrina: O Significado do Elebó — Axé em Movimento', nota: '"O axé... é circular... não existe axé sem partilha" é a versão vivida da força vital banto que este artigo descreve academicamente.' },
     ],
   },
   {
@@ -103,8 +126,8 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1z_ftX-k6ECAKoCgH6YG6P1OZ-9lfYEJw/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Umbanda Cruzada com Quimbanda', id: 'import-2021-11-06-umbanda-cruzada-com-quimbanda' },
-      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', id: 'import-2024-02-11-doutrina-fundamental-exu-de-quimbanda-vs-exu-de-orixa-umband' },
+      { titulo: 'Umbanda Cruzada com Quimbanda', nota: 'A casa já se definia assim antes mesmo deste artigo — "Umbanda Cruzada" é o nome técnico da mesma Linha Cruzada que o artigo descreve como a vertente que mais cresce no RS.' },
+      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', nota: 'Mostra na prática como Umbanda e Quimbanda convivem lado a lado na casa, sem hierarquia entre elas — o mesmo fenômeno regional que o artigo mapeia.' },
     ],
   },
   {
@@ -114,8 +137,8 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1fb9Mox8hA6aX2vLeyFxAX6r5ryAKM968/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina: Pares de Guias, Linhas de Umbanda e os Limites da Umbandomblé', id: 'import-2025-11-28-doutrina-pares-de-guias-linhas-de-umbanda-e-os-limites-da-um' },
-      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', id: 'import-2024-02-11-doutrina-fundamental-exu-de-quimbanda-vs-exu-de-orixa-umband' },
+      { titulo: 'Doutrina: Pares de Guias, Linhas de Umbanda e os Limites da Umbandomblé', nota: 'Cita os mesmos Sete Reinos da Quimbanda gaúcha que o artigo detalha: Calunga, Cruzeiro, Sete Encruzilhada, Almas, Calunga Maior, Lira e Matas.' },
+      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', nota: 'Defende um Exu autônomo, não subordinado ao caboclo — a mesma posição que o artigo atribui à forma mais fiel à raiz banto da Quimbanda.' },
     ],
   },
   {
@@ -125,7 +148,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/170tnnACy_OfjNl1Wlc7zeI-CR6dMHctk/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', id: 'import-2022-08-24-doutrina-exu-nao-pode-ser-o-diabo' },
+      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', nota: 'Argumenta que a moral cristã não se aplica à cosmologia de Exu — o artigo chega à mesma conclusão por outro caminho, mostrando que Quimbanda e Umbanda têm éticas próprias, não subordinadas a uma moral única.' },
     ],
   },
   {
@@ -135,7 +158,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1Yp8PQpe-lwB8ifY6lHkqNUl0BsZGY3c4/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', id: 'import-2022-08-24-doutrina-exu-nao-pode-ser-o-diabo' },
+      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', nota: 'Ambos chegam à mesma conclusão — aqui pela psicologia junguiana ("nem bom nem mau"), lá pela cosmologia ancestral de Exu que não cabe na lógica cristã de pecado.' },
     ],
   },
   {
@@ -145,7 +168,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1QDRRM2h_XKZzAfkR_MPfU4eohY01i7zH/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina Ritualística: Separação dos Trabalhos de Cruzeiro e Calunga (Cemitério)', id: 'import-2024-08-15-doutrina-ritualistica-separacao-dos-trabalhos-de-cruzeiro-e-' },
+      { titulo: 'Doutrina Ritualística: Separação dos Trabalhos de Cruzeiro e Calunga (Cemitério)', nota: 'Mostra na prática a diferença entre o trabalho de Cruzeiro e o de Calunga/Cemitério — a mesma distinção de espaços sagrados que o artigo descreve academicamente.' },
     ],
   },
   {
@@ -155,7 +178,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1FoalUt2Zsx_MsSRgVnxl1DIj-zwjNpUR/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Ritual: Axé de Pomba Gira para a Casa (Brilho, Caminhos e Liberdade)', id: 'import-2024-07-19-ritual-axe-de-pomba-gira-para-a-casa-brilho-caminhos-e-liber' },
+      { titulo: 'Ritual: Axé de Pomba Gira para a Casa (Brilho, Caminhos e Liberdade)', nota: '"Pomba Gira é a mulher livre em essência, sem as amarras da carne, da sociedade" — a mesma leitura de Pombagira como símbolo de liberdade de gênero que o artigo estuda nos pontos cantados.' },
     ],
   },
   {
@@ -165,7 +188,7 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1BRx_if-M8ko73H2PNBCu8UetTbKOTNty/view?usp=drivesdk',
     contraponto: false,
     relacionados: [
-      { titulo: 'Doutrina: A Linha das Crianças (Erês/Ibejada) e o Respeito no Trabalho', id: 'import-2024-09-19-doutrina-a-linha-das-criancas-eres-ibejada-e-o-respeito-no-t' },
+      { titulo: 'Doutrina: A Linha das Crianças (Erês/Ibejada) e o Respeito no Trabalho', nota: '"Elas não têm como ser a nossa criança interior... mas elas brincam com nossa criança" — a mesma distinção entre criança-entidade e arquétipo infantil que o artigo explora pela psicologia analítica.' },
     ],
   },
   {
@@ -175,9 +198,9 @@ const TEXTOS = [
     link: 'https://drive.google.com/file/d/1fUvyLcvhsugivzYGfwLs0WzDFaq1lfqM/view?usp=drivesdk',
     contraponto: true,
     relacionados: [
-      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', id: 'import-2024-02-11-doutrina-fundamental-exu-de-quimbanda-vs-exu-de-orixa-umband' },
-      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', id: 'import-2022-08-24-doutrina-exu-nao-pode-ser-o-diabo' },
-      { titulo: 'Reflexão: Sincretismo, Embranquecimento e Respeito à Ancestralidade Recente', id: 'import-2026-01-23-reflexao-sincretismo-embranquecimento-e-respeito-a-ancestral' },
+      { titulo: 'Doutrina Fundamental: Exu de Quimbanda vs. Exu de Orixá', nota: 'Aqui a casa descreve um Exu autônomo e igual à Umbanda — o oposto do Exu "intermediário subordinado aos orixás" das Mirongas.' },
+      { titulo: 'Doutrina: Exu Não Pode Ser o Diabo', nota: 'Rejeita a lógica de pecado-e-punição que sustenta o "choque de retorno" moral das Mirongas.' },
+      { titulo: 'Reflexão: Sincretismo, Embranquecimento e Respeito à Ancestralidade Recente', nota: 'Trata o sincretismo como uma cicatriz histórica a ser curada aos poucos — não como doutrina central, como nas Mirongas.' },
     ],
   },
 ];
@@ -190,7 +213,7 @@ function escapeHtml(s) {
 
 function render() {
   const lista = document.getElementById('lista');
-  lista.innerHTML = TEXTOS.map(t => `
+  lista.innerHTML = TEXTOS.map((t, ti) => `
     <div class="card${t.contraponto ? ' contraponto' : ''}">
       <h2>${escapeHtml(t.titulo)}</h2>
       <div class="autor">${escapeHtml(t.autor)}</div>
@@ -198,12 +221,64 @@ function render() {
       ${t.relacionados && t.relacionados.length ? `
       <div class="relacionados">
         <div class="label">Textos internos que falam sobre isso</div>
-        ${t.relacionados.map(r => `<a class="chip" href="/#pagina=textos&texto=${encodeURIComponent(r.id)}">${escapeHtml(r.titulo)}</a>`).join('')}
+        ${t.relacionados.map((r, ri) => `<button class="chip" onclick="abrirTextoRelacionado(${ti},${ri})">${escapeHtml(r.titulo)}</button>`).join('')}
       </div>` : ''}
       <a class="abrir" href="${t.link}" target="_blank" rel="noopener">Abrir no Drive →</a>
     </div>
   `).join('');
 }
+
+// os corpos completos dos Textos internos vêm do mesmo arquivo estático que
+// serve de reserva pra página de Textos do site (/textos-import.json) — não
+// depende do KV ao vivo, então abre sempre, mesmo se a cota do KV estourar
+let _textosInternosCache = null;
+async function carregarTextosInternos() {
+  if (_textosInternosCache) return _textosInternosCache;
+  const res = await fetch('/textos-import.json');
+  _textosInternosCache = await res.json();
+  return _textosInternosCache;
+}
+
+function formatarCorpo(corpo) {
+  return String(corpo || '').split(/\n\s*\n/).map(p => `<p>${escapeHtml(p.trim())}</p>`).join('');
+}
+
+async function abrirTextoRelacionado(ti, ri) {
+  const rel = TEXTOS[ti].relacionados[ri];
+  const overlay = document.getElementById('texto-overlay');
+  const conteudo = document.getElementById('texto-modal-conteudo');
+  conteudo.innerHTML = `
+    <div class="nota"><b>Como se conecta com "${escapeHtml(TEXTOS[ti].titulo)}"</b>${escapeHtml(rel.nota)}</div>
+    <p class="carregando">Carregando o texto…</p>`;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const textos = await carregarTextosInternos();
+    const encontrado = textos.find(x => x.titulo === rel.titulo);
+    const notaHtml = `<div class="nota"><b>Como se conecta com "${escapeHtml(TEXTOS[ti].titulo)}"</b>${escapeHtml(rel.nota)}</div>`;
+    if (!encontrado) {
+      conteudo.innerHTML = notaHtml + `<p class="carregando">Não consegui encontrar esse texto agora — tenta de novo mais tarde.</p>`;
+      return;
+    }
+    const dataFmt = encontrado.data ? new Date(encontrado.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
+    conteudo.innerHTML = `
+      ${notaHtml}
+      <h3>${escapeHtml(encontrado.titulo)}</h3>
+      ${dataFmt ? `<div class="data">${dataFmt}</div>` : ''}
+      <div class="corpo">${formatarCorpo(encontrado.corpo)}</div>
+    `;
+  } catch (e) {
+    conteudo.innerHTML = `<p class="carregando">Não consegui carregar o texto agora — tenta de novo mais tarde.</p>`;
+  }
+}
+window.abrirTextoRelacionado = abrirTextoRelacionado;
+
+function fecharTextoRelacionado() {
+  document.getElementById('texto-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+window.fecharTextoRelacionado = fecharTextoRelacionado;
 
 render();
 </script>
