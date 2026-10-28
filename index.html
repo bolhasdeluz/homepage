@@ -5681,7 +5681,32 @@ function adminVoltarMenu() {
 // nomes amigáveis pras páginas já conhecidas que mandam ping — qualquer
 // outra página nova aparece com o próprio identificador, sem precisar
 // mexer aqui
-const ADMIN_NOMES_PAGINAS_ACESSO = { site: '🏠 Site principal', 'rifa-digital': '🎟️ Rifa — venda digital', cosmes: '🎈 Cosme e Damião' };
+const ADMIN_NOMES_PAGINAS_ACESSO = {
+  site: '🏠 Site principal (geral)',
+  'rifa-digital': '🎟️ Rifa — venda digital',
+  cosmes: '🎈 Cosme e Damião',
+  quiz: '🔮 Quiz de Fundamentos',
+  manutencao: '🔧 Manutenção',
+  'textos-historicos': '📚 Textos Históricos',
+  tesouraria: '💰 Tesouraria',
+  'item-inicio': '· Início',
+  'item-historia': '· Nossa História',
+  'item-apoie': '· Apoie o Terreiro',
+  'item-pix': '· Pix para Doações',
+  'item-guias': '· Filhas da Casa (perfis)',
+  'item-compras': '· Necessidades da Casa',
+  'item-rifa': '· Rifa (dentro do site)',
+  'item-resumo': '· Resumo Mensal',
+  'item-eventos': '· Próximas Sessões',
+  'item-orientacoes': '· Orientações da Sessão',
+  'item-jogos': '· Sua Terreirinha',
+  'item-calendario': '· Calendário / Sessões',
+  'item-textos': '· Textos (área de filhas)',
+  'item-blog': '· Blog do Terreiro',
+  'item-quadro-filhas': '· Quadro das Filhas',
+  'item-planilha-geral': '· Planilha Geral',
+  'item-linha-geral': '· Linha Geral',
+};
 
 async function adminCarregarAcessos() {
   const corpo = document.getElementById('admin-acessos-corpo');
@@ -6855,6 +6880,9 @@ function showPage(name) {
   if (p) {
     p.classList.add('active');
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    // conta acesso por item de menu, separado do contador geral do site — não
+    // conta o próprio painel admin, que é só a Anna usando
+    if (name !== 'admin') fetch('/api/visita?pagina=item-' + name, { method: 'POST' }).catch(() => {});
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
   if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); qrCarregarCriados(); }
