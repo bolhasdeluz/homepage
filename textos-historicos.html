@@ -68,6 +68,9 @@ body{font-family:'Crimson Pro',serif;background:var(--creme);color:var(--text);m
 #texto-modal .corpo{font-size:.95rem;line-height:1.7}
 #texto-modal .corpo p{margin-bottom:12px}
 #texto-modal .carregando{font-style:italic;color:var(--text-dim)}
+#texto-modal .retry{display:inline-block;font-size:.8rem;color:var(--terra);background:var(--rosa-dim);
+  border:none;text-decoration:none;padding:7px 14px;border-radius:14px;cursor:pointer;font-family:'Crimson Pro',serif;margin-top:4px}
+#texto-modal .retry:hover{opacity:.75}
 </style>
 </head>
 <body>
@@ -361,11 +364,20 @@ function render() {
 // serve de reserva pra página de Textos do site (/textos-import.json) — não
 // depende do KV ao vivo, então abre sempre, mesmo se a cota do KV estourar
 let _textosInternosCache = null;
-async function carregarTextosInternos() {
-  if (_textosInternosCache) return _textosInternosCache;
-  const res = await fetch('/textos-import.json');
+async function carregarTextosInternos(forcarRecarregar) {
+  if (_textosInternosCache && !forcarRecarregar) return _textosInternosCache;
+  const res = await fetch('/textos-import.json', forcarRecarregar ? { cache: 'reload' } : undefined);
   _textosInternosCache = await res.json();
   return _textosInternosCache;
+}
+
+function normalizarTitulo(s) {
+  return String(s || '').normalize('NFC').replace(/\s+/g, ' ').trim();
+}
+
+function encontrarTextoInterno(textos, titulo) {
+  const alvo = normalizarTitulo(titulo);
+  return textos.find(x => normalizarTitulo(x.titulo) === alvo);
 }
 
 function formatarCorpo(corpo) {
@@ -376,18 +388,23 @@ async function abrirTextoRelacionado(ti, ri) {
   const rel = TEXTOS[ti].relacionados[ri];
   const overlay = document.getElementById('texto-overlay');
   const conteudo = document.getElementById('texto-modal-conteudo');
-  conteudo.innerHTML = `
-    <div class="nota"><b>Como se conecta com "${escapeHtml(TEXTOS[ti].titulo)}"</b>${escapeHtml(rel.nota)}</div>
-    <p class="carregando">Carregando o texto…</p>`;
+  const notaHtml = `<div class="nota"><b>Como se conecta com "${escapeHtml(TEXTOS[ti].titulo)}"</b>${escapeHtml(rel.nota)}</div>`;
+  conteudo.innerHTML = `${notaHtml}<p class="carregando">Carregando o texto…</p>`;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
 
   try {
-    const textos = await carregarTextosInternos();
-    const encontrado = textos.find(x => x.titulo === rel.titulo);
-    const notaHtml = `<div class="nota"><b>Como se conecta com "${escapeHtml(TEXTOS[ti].titulo)}"</b>${escapeHtml(rel.nota)}</div>`;
+    let textos = await carregarTextosInternos();
+    let encontrado = encontrarTextoInterno(textos, rel.titulo);
     if (!encontrado) {
-      conteudo.innerHTML = notaHtml + `<p class="carregando">Não consegui encontrar esse texto agora — tenta de novo mais tarde.</p>`;
+      // pode ser cache desatualizado (CDN ou do próprio aparelho) — força uma recarga antes de desistir
+      textos = await carregarTextosInternos(true);
+      encontrado = encontrarTextoInterno(textos, rel.titulo);
+    }
+    if (!encontrado) {
+      conteudo.innerHTML = notaHtml + `
+        <p class="carregando">Não consegui encontrar esse texto agora.</p>
+        <button class="retry" onclick="abrirTextoRelacionado(${ti},${ri})">Tentar de novo</button>`;
       return;
     }
     const dataFmt = encontrado.data ? new Date(encontrado.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : '';
@@ -398,7 +415,10 @@ async function abrirTextoRelacionado(ti, ri) {
       <div class="corpo">${formatarCorpo(encontrado.corpo)}</div>
     `;
   } catch (e) {
-    conteudo.innerHTML = `<p class="carregando">Não consegui carregar o texto agora — tenta de novo mais tarde.</p>`;
+    conteudo.innerHTML = `
+      ${notaHtml}
+      <p class="carregando">Não consegui carregar o texto agora.</p>
+      <button class="retry" onclick="abrirTextoRelacionado(${ti},${ri})">Tentar de novo</button>`;
   }
 }
 window.abrirTextoRelacionado = abrirTextoRelacionado;
