@@ -1718,10 +1718,13 @@ body{padding-bottom:64px}
     lancamentos.forEach(function(l) {
       var ref = (l.tipo==='entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : null);
       if (!ref) return;
-      if (!meses[ref]) meses[ref] = { e:0, g:0, pagantes:{} };
+      if (!meses[ref]) meses[ref] = { e:0, eMensalidade:0, g:0, pagantes:{} };
       if (l.tipo==='entrada') {
         meses[ref].e += l.valor;
-        if (l.membro && l.subTipo !== 'extra') meses[ref].pagantes[l.membro] = true;
+        if (l.membro && l.subTipo !== 'extra') {
+          meses[ref].pagantes[l.membro] = true;
+          meses[ref].eMensalidade += l.valor;
+        }
       }
       if (l.tipo==='gasto' && l.status !== 'pendente') meses[ref].g += l.valor;
     });
@@ -1741,6 +1744,7 @@ body{padding-bottom:64px}
             var nPag = Object.keys(d.pagantes).length;
             var pctPag = Math.round(nPag / MEMBROS_FIXOS.length * 100);
             var naoPag = MEMBROS_FIXOS.filter(function(m){ return !d.pagantes[m]; });
+            var mediaMensalidade = nPag > 0 ? d.eMensalidade / nPag : 0;
             var p = mes.split('-');
             var label = MESES_NOMES_FULL[parseInt(p[1])-1] + '/' + p[0].slice(2);
             return '<div style="background:var(--surface);border-radius:10px;padding:11px 14px;margin-bottom:7px;box-shadow:0 2px 10px rgba(180,60,90,.06);">'
@@ -1767,6 +1771,7 @@ body{padding-bottom:64px}
               +   '<div style="font-family:\'Crimson Pro\',serif;font-size:.88rem;font-weight:600;color:'+(pctValor>=100?'var(--green)':'var(--gold)')+'">'+pctValor+'%</div>'
               + '</div>'
               + '</div>'
+              + (nPag > 0 ? '<div style="font-family:\'DM Sans\',sans-serif;font-size:.68rem;color:var(--text-dim);margin-bottom:7px;">Média por mensalidade: <strong style="color:var(--text);">'+fmt(mediaMensalidade)+'</strong></div>' : '')
               + '<div style="background:rgba(196,57,107,.06);border-radius:4px;height:3px;overflow:hidden;margin-bottom:'+(naoPag.length?'5px':'0')+';">'
               +   '<div style="height:100%;border-radius:4px;width:'+Math.min(pctValor,100)+'%;background:'+(pctValor>=100?'var(--green)':'var(--gold)')+'"></div>'
               + '</div>'
