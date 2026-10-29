@@ -495,10 +495,12 @@ function salvarPremissasPrevisao() {
   var aluguel = document.getElementById('prev-aluguel').value;
   var alarme = document.getElementById('prev-alarme').value;
   var membros = document.getElementById('prev-membros').value;
+  var mensalidade = document.getElementById('prev-mensalidade').value;
   var nova = {
     aluguelMes: aluguel !== '' ? Number(aluguel) : null,
     alarmeMes: alarme !== '' ? Number(alarme) : null,
-    variacaoMembros: membros !== '' ? Number(membros) : null
+    variacaoMembros: membros !== '' ? Number(membros) : null,
+    mediaMensalidadeMes: mensalidade !== '' ? Number(mensalidade) : null
   };
   var status = document.getElementById('prev-premissas-status');
   if (status) status.textContent = 'Salvando…';
@@ -602,12 +604,38 @@ function calcularPrevisao2027() {
     }
   });
 
-  var entradasPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('entradas', m); }));
+  // valor médio pago por mensalidade: parte do valor real do ano mais
+  // recente (não de uma média de anos — o valor de hoje já é o número
+  // certo) e aplica de novo o mesmo aumento que já aconteceu de um ano pro
+  // outro (ex: subiu R$10 de 2025 pra 2026 → prevê mais R$10 de aumento em
+  // 2027). As entradas de mensalidade do mês viram esse valor médio vezes
+  // quantas pagantes são esperadas naquele mês — o resto da entrada (doação,
+  // avulso) continua pela média mês a mês entre os anos, como antes
+  var anoRecente = anosComDados[anosComDados.length - 1];
+  var anoBaseTendencia = anosComDados.length >= 2 ? anosComDados[anosComDados.length - 2] : null;
+  var mediaAnualRecente = dadosPorAno[anoRecente].mediaAnual;
+  var mediaAnualBase = anoBaseTendencia ? dadosPorAno[anoBaseTendencia].mediaAnual : null;
+  var aumentoMediaMensalidade = mediaAnualBase != null ? (mediaAnualRecente - mediaAnualBase) : 0;
+  var autoMediaMensalidadeMes = Math.round((mediaAnualRecente + aumentoMediaMensalidade) * 100) / 100;
+  var overrideMediaMensalidade = premissas.mediaMensalidadeMes;
+  var mediaMensalidadeMes = (overrideMediaMensalidade != null && !isNaN(overrideMediaMensalidade))
+    ? Number(overrideMediaMensalidade) : autoMediaMensalidadeMes;
+
+  var extraPorMes = comFallback(MESES_1A12.map(function(m){
+    var valores = [];
+    anosComDados.forEach(function(a){
+      var ent = valorAnoMes(dadosPorAno[a], m, 'entradas');
+      var mens = valorAnoMes(dadosPorAno[a], m, 'eMensalidade');
+      if (ent != null) valores.push(ent - (mens || 0));
+    });
+    return valores.length ? valores.reduce(function(s,v){ return s+v; }, 0) / valores.length : null;
+  }));
   var nTotPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nTot', m); }));
   var nPagPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nPag', m); }));
 
   var linhas = MESES_1A12.map(function(mes, idx){
-    var entradas = Math.round(entradasPorMes[idx] * 100) / 100;
+    var mensalidadeMes = Math.round(mediaMensalidadeMes * nPagPorMes[idx] * 100) / 100;
+    var entradas = Math.round((mensalidadeMes + extraPorMes[idx]) * 100) / 100;
     var gastos = Math.round(nomesCategorias.reduce(function(s, conta){ return s + categoriasMensais[conta][idx]; }, 0) * 100) / 100;
     var nTot = Math.max(0, Math.round(nTotPorMes[idx] + variacaoMembros));
     var nPag = Math.min(Math.round(nPagPorMes[idx]), nTot);
@@ -638,8 +666,14 @@ function calcularPrevisao2027() {
     categorias: nomesCategorias.map(function(conta){
       return { conta: conta, total: Math.round(categoriasMensais[conta].reduce(function(s,v){ return s+v; }, 0) * 100) / 100 };
     }),
-    autoValores: { aluguelMes: autoAluguelMes, alarmeMes: autoAlarmeMes, membrosBase: autoMembrosBase },
-    premissasAtuais: { aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], variacaoMembros: variacaoMembros }
+    autoValores: {
+      aluguelMes: autoAluguelMes, alarmeMes: autoAlarmeMes, membrosBase: autoMembrosBase,
+      mediaMensalidadeMes: autoMediaMensalidadeMes, mediaMensalidadeRecente: mediaAnualRecente, mediaMensalidadeAumento: aumentoMediaMensalidade
+    },
+    premissasAtuais: {
+      aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], variacaoMembros: variacaoMembros,
+      mediaMensalidadeMes: overrideMediaMensalidade
+    }
   };
 }
 
@@ -847,6 +881,9 @@ function renderComparativo(comPrevisao) {
       + '</label>';
     html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Variação de membros ativos (número, pode ser negativo)'
       + '<input type="number" step="1" id="prev-membros" value="' + (atuais.variacaoMembros || '') + '" placeholder="0 — hoje a média é ' + auto.membrosBase + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+      + '</label>';
+    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Valor médio por mensalidade em 2027 (R$)'
+      + '<input type="number" step="0.01" id="prev-mensalidade" value="' + (atuais.mediaMensalidadeMes != null ? atuais.mediaMensalidadeMes : '') + '" placeholder="automático: ' + fmt(auto.mediaMensalidadeMes) + ' (' + fmt(auto.mediaMensalidadeRecente) + ' do último ano ' + (auto.mediaMensalidadeAumento >= 0 ? '+ ' + fmt(auto.mediaMensalidadeAumento) + ' de aumento' : '- ' + fmt(Math.abs(auto.mediaMensalidadeAumento)) + ' de redução') + ', igual ao que já aconteceu de um ano pro outro)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
       + '</label>';
     html += '<button class="bl-btn-rosa" onclick="salvarPremissasPrevisao()">Salvar premissas</button>';
     html += '<div id="prev-premissas-status" style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:center"></div>';
