@@ -237,6 +237,35 @@ function gcalFormatarDataNota(dataStr) {
 // aparecem com o próprio nome do tipo, sem forçar essa tradução
 const GCAL_TIPO_ASSISTENCIA = { Interna: 'Fechada', Atendimento: 'Aberta' };
 
+// rótulo de cada valor de Marco, igual ao texto das opções do dropdown
+// (ver cal-fMarco no index.html) — usado só pra montar o título do evento
+const GCAL_MARCO_LABEL = {
+  'Corte': 'Corte',
+  'Obrigacao': 'Obrigação',
+  'Elebo': 'Elebó',
+  'Cruz:Conga': 'Cruzamento — Conga',
+  'Cruz:Mata': 'Cruzamento — Mata',
+  'Cruz:Praia': 'Cruzamento — Praia',
+  'Cruz:Rio': 'Cruzamento — Rio',
+  'Cruz:Cachoeira': 'Cruzamento — Cachoeira',
+  'Cruz:Pedreira': 'Cruzamento — Pedreira',
+  'Firmeza:Cruzeiro': 'Firmeza de Reinos — Cruzeiro',
+  'Firmeza:CalungaPequena': 'Firmeza de Reinos — Calunga Pequena',
+  'Firmeza:CalungaMaior': 'Firmeza de Reinos — Calunga Maior',
+  'Firmeza:Mato': 'Firmeza de Reinos — Mato',
+};
+
+// prefixo do título do evento — Marco (Cruzamento/Corte/Elebó/Obrigação/
+// Firmeza de Reinos) tem prioridade por marcar uma data significativa pra
+// casa; sem Marco, usa a Linha de trabalho (Caboclo, Exu...); sem nenhum
+// dos dois, o evento fica só com o Nome, como sempre foi
+function gcalTituloPrefixo(sessao) {
+  if (sessao.marco === 'Cruz:Outro' && sessao.marcoOutroNome) return `Cruzamento — ${sessao.marcoOutroNome}`;
+  if (sessao.marco && GCAL_MARCO_LABEL[sessao.marco]) return GCAL_MARCO_LABEL[sessao.marco];
+  if (sessao.linha) return sessao.linha;
+  return '';
+}
+
 function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
   const outraData = ehAlternativa ? sessao.data : sessao.dataAlternativa;
   const nota = tentativa
@@ -251,8 +280,10 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
     sessao.descricao,
     sessao.responsavel ? `Responsável: ${sessao.responsavel}` : '',
   ].filter(Boolean).join('\n\n');
+  const prefixo = gcalTituloPrefixo(sessao);
+  const nomeBase = prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}` : (sessao.nome || 'Sessão');
   const evento = {
-    summary: (tentativa ? '❓ ' : '') + (sessao.nome || 'Sessão'),
+    summary: (tentativa ? '❓ ' : '') + nomeBase,
     location: sessao.endereco || sessao.onde || undefined,
     description: (nota + corpo) || undefined,
     status: tentativa ? 'tentative' : 'confirmed',
