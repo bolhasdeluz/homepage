@@ -255,6 +255,20 @@ const GCAL_MARCO_LABEL = {
   'Firmeza:Mato': 'Firmeza de Reinos — Mato',
 };
 
+// cor do evento no Google Agenda, por Linha de trabalho — mesma lógica de
+// cor por entidade usada no PDF do calendário anual (ver PCAL_CORES_ENTIDADE
+// no index.html), só que mapeada pros ids fixos de cor que a API do Google
+// aceita (1 a 11, cada um um nome de cor própria do Google). Linha sem
+// mapa aqui (Cosme, Desenvolvimento, uma linha nova que a Anna cadastrar...)
+// cai no "Flamingo", o mesmo rosa usado de "outras sessões" no PDF
+const GCAL_LINHA_COR = {
+  'Caboclo': '7',      // Peacock (azul)
+  'Preto Velho': '10', // Basil (verde)
+  'Cigano': '6',        // Tangerine (laranja)
+  'Exu': '11',          // Tomato (vermelho)
+};
+const GCAL_COR_PADRAO = '4'; // Flamingo (rosa) — "outras sessões"
+
 // prefixo do título do evento — Marco (Cruzamento/Corte/Elebó/Obrigação/
 // Firmeza de Reinos) tem prioridade por marcar uma data significativa pra
 // casa; sem Marco, usa a Linha de trabalho (Caboclo, Exu...); sem nenhum
@@ -284,6 +298,7 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
   const nomeBase = prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}` : (sessao.nome || 'Sessão');
   const evento = {
     summary: (tentativa ? '❓ ' : '') + nomeBase,
+    colorId: GCAL_LINHA_COR[sessao.linha] || GCAL_COR_PADRAO,
     location: sessao.endereco || sessao.onde || undefined,
     description: (nota + corpo) || undefined,
     status: tentativa ? 'tentative' : 'confirmed',
