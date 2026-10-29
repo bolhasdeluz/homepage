@@ -295,7 +295,14 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
     sessao.responsavel ? `Responsável: ${sessao.responsavel}` : '',
   ].filter(Boolean).join('\n\n');
   const prefixo = gcalTituloPrefixo(sessao);
-  const nomeBase = prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}` : (sessao.nome || 'Sessão');
+  // quando o Nome já é (a menos de maiúscula/plural) a própria palavra do
+  // prefixo — ex: Nome="Desenvolvimento" com Linha="Desenvolvimento" — não
+  // repete ("Desenvolvimento — Desenvolvimento"), fica só o prefixo
+  const normaliza = (s) => String(s || '').trim().toLowerCase().replace(/s$/, '');
+  const repetido = prefixo && normaliza(prefixo) === normaliza(sessao.nome);
+  const nomeBase = repetido ? prefixo
+    : prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}`
+    : (sessao.nome || 'Sessão');
   const evento = {
     summary: (tentativa ? '❓ ' : '') + nomeBase,
     colorId: GCAL_LINHA_COR[sessao.linha] || GCAL_COR_PADRAO,
