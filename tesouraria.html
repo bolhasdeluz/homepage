@@ -1156,6 +1156,20 @@ body{padding-bottom:64px}
           });
         MEMBROS_ISENTOS = isentos;
 
+        // data de entrada de cada uma, puxada do próprio perfil (campo "Data
+        // de Entrada" no cadastro) — assim quem for cadastrada daqui pra
+        // frente já entra com a data certa nos relatórios de anos passados,
+        // sem precisar mexer no código. Só sobrescreve quem tem perfil; quem
+        // não tem (ex: alguém que já saiu antes do site existir) mantém a
+        // data fixada no MEMBROS_ENTRADA acima
+        perfis
+          .filter(function(p){ return p && p.nome && p.historia && p.historia.data_entrada; })
+          .forEach(function(p){
+            var normalizado = vinculoNormalizar(p.nome);
+            var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
+            if (membro) MEMBROS_ENTRADA[membro] = p.historia.data_entrada.slice(0,7);
+          });
+
         if (adicionados.length) {
           try { renderInicio(); } catch(e){}
           try { renderVinculos(); } catch(e){}
