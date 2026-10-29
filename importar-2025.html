@@ -228,12 +228,20 @@ function montarRegistros() {
 
 var lancamentosAtuais = null;
 var registrosParaAdicionar = [];
+var registrosObsoletos = [];
+
+// a primeira versão desta ferramenta lançava a mensalidade como um valor
+// agregado por mês ("Corrente"/"Anna"); se isso já foi importado antes,
+// precisa sair de cena pra não dobrar com as mensalidades individuais de
+// agora — senão as duas versões ficam somadas no sistema
+var ID_AGREGADO_ANTIGO = /^imp25-e-(corrente|anna)-\d{2}$/;
 
 function carregarPreview() {
   fetch('/api/dados?chave=lancamentos')
     .then(function(r){ return r.json(); })
     .then(function(dados){
       lancamentosAtuais = Array.isArray(dados) ? dados : [];
+      registrosObsoletos = lancamentosAtuais.filter(function(l){ return l && ID_AGREGADO_ANTIGO.test(l.id); });
       var idsExistentes = {};
       lancamentosAtuais.forEach(function(l){ if (l && l.id) idsExistentes[l.id] = true; });
       var todos = montarRegistros();
@@ -244,18 +252,24 @@ function carregarPreview() {
       var totalEntradas = registrosParaAdicionar.filter(function(r){ return r.tipo==='entrada'; }).reduce(function(s,r){ return s+r.valor; }, 0);
       var nGastos = registrosParaAdicionar.filter(function(r){ return r.tipo==='gasto'; }).length;
       var nEntradas = registrosParaAdicionar.filter(function(r){ return r.tipo==='entrada'; }).length;
+      var totalObsoleto = registrosObsoletos.reduce(function(s,r){ return s+r.valor; }, 0);
 
       var html = '';
-      if (!registrosParaAdicionar.length) {
+      if (!registrosParaAdicionar.length && !registrosObsoletos.length) {
         html = '<p>✅ Esses lançamentos de 2025 já estão todos no sistema — nada pra importar.</p>';
       } else {
+        if (registrosObsoletos.length) {
+          html += '<p style="margin-bottom:10px">⚠️ Achei ' + registrosObsoletos.length + ' lançamento(s) de uma importação anterior (mensalidade em valor agregado, ' + fmt(totalObsoleto) + ' no total). Eles vão ser <strong>substituídos</strong> pelas mensalidades individuais de agora — não vão ficar duplicados.</p>';
+        }
         html += '<table><tr><th>Tipo</th><th>Qtde.</th><th>Total</th></tr>';
         html += '<tr><td>Gastos</td><td>' + nGastos + '</td><td>' + fmt(totalGastos) + '</td></tr>';
         html += '<tr><td>Entradas</td><td>' + nEntradas + '</td><td>' + fmt(totalEntradas) + '</td></tr>';
         html += '</table>';
-        if (jaExistem) html += '<p style="margin-top:8px">(' + jaExistem + ' já estavam no sistema e não serão duplicados.)</p>';
+        if (jaExistem) html += '<p style="margin-top:8px">(' + jaExistem + ' já estavam no sistema, no formato atual, e não serão duplicados.)</p>';
         document.getElementById('acao-card').style.display = 'block';
-        document.getElementById('btn-importar').textContent = 'Importar ' + registrosParaAdicionar.length + ' lançamento(s) pro sistema';
+        var label = 'Importar ' + registrosParaAdicionar.length + ' lançamento(s) pro sistema';
+        if (registrosObsoletos.length) label += ' (substituindo ' + registrosObsoletos.length + ' antigo(s))';
+        document.getElementById('btn-importar').textContent = label;
       }
       document.getElementById('preview-conteudo').innerHTML = html;
     })
@@ -268,7 +282,8 @@ function importar() {
   var btn = document.getElementById('btn-importar');
   btn.disabled = true;
   btn.textContent = 'Importando…';
-  var novaLista = lancamentosAtuais.concat(registrosParaAdicionar);
+  var semObsoletos = lancamentosAtuais.filter(function(l){ return !(l && ID_AGREGADO_ANTIGO.test(l.id)); });
+  var novaLista = semObsoletos.concat(registrosParaAdicionar);
   fetch('/api/dados?chave=lancamentos', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
@@ -276,7 +291,10 @@ function importar() {
   })
     .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
     .then(function(){
-      document.getElementById('resultado').innerHTML = '<div class="msg-ok">✅ Importado! ' + registrosParaAdicionar.length + ' lançamento(s) de 2025 adicionados. <a href="/relatorio-anual.html?ano=2025">Ver o relatório anual de 2025</a></div>';
+      var msg = '✅ Importado! ' + registrosParaAdicionar.length + ' lançamento(s) de 2025 adicionados';
+      if (registrosObsoletos.length) msg += ', substituindo ' + registrosObsoletos.length + ' lançamento(s) agregado(s) de uma importação anterior';
+      msg += '. <a href="/relatorio-anual.html?ano=2025">Ver o relatório anual de 2025</a>';
+      document.getElementById('resultado').innerHTML = '<div class="msg-ok">' + msg + '</div>';
       btn.style.display = 'none';
     })
     .catch(function(){
