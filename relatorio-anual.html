@@ -1217,6 +1217,12 @@ function blDrawerIconeLabel(item) {
 }
 
 function blDrawerOnclick(item) {
+  // Sessões & Eventos / Calendário — manda pro calendário interno do site
+  // principal (com Planejamento Anual e Visão Anual), não pro calendário
+  // externo mais simples configurado como link desse item
+  if (item.id === 'sessoes' || item.id === 'calendario') {
+    return `onclick="location.href='index.html#pagina=calendario'"`;
+  }
   if (item.type === 'internal') return `onclick="location.href='index.html'"`;
   if (item.type === 'members') {
     return window._blCurrentUser
