@@ -435,6 +435,25 @@ function montarDadosExtratoAnual(ano) {
   };
 }
 
+// quebra os gastos de cada mês em 3 pedaços pro gráfico "Entradas x Gastos":
+// Tambor, Segurança (gastos de Alarme Serviço que não são a mensalidade fixa
+// de R$200) e o resto (inclui os R$200 fixos do alarme, por ser conta fixa)
+function gastosPorMesCategoriaEspecial(ano) {
+  var porMes = {};
+  for (var m = 1; m <= 12; m++) porMes[m] = { tambor: 0, seguranca: 0, outras: 0 };
+  lancamentos.forEach(function(l){
+    if (l.tipo !== 'gasto' || l.status === 'pendente') return;
+    var ref = l.data ? l.data.slice(0,7) : '';
+    if (ref.slice(0,4) !== String(ano)) return;
+    var mes = parseInt(ref.slice(5,7), 10);
+    if (!porMes[mes]) return;
+    if (l.conta === 'Tambor') porMes[mes].tambor += l.valor;
+    else if (l.conta === 'Alarme Serviço' && Math.abs(l.valor - 200) > 0.001) porMes[mes].seguranca += l.valor;
+    else porMes[mes].outras += l.valor;
+  });
+  return porMes;
+}
+
 function calcularGastosPorCategoriaAno(ano) {
   var porConta = {};
   var total = 0;
@@ -816,13 +835,16 @@ function montarGraficos(dados, cat) {
     // normal (ou os dois)
     var mediaEntradasMes = linhasOrdem.reduce(function(s,l){ return s+l.entradas; }, 0) / linhasOrdem.length;
     var mediaGastosMes = linhasOrdem.reduce(function(s,l){ return s+l.gastos; }, 0) / linhasOrdem.length;
+    var gastosEspeciais = gastosPorMesCategoriaEspecial(anoAtivo);
     charts.barras = new Chart(ctxBarras, {
       type: 'bar',
       data: {
         labels: labelsCurtos,
         datasets: [
-          { label: 'Entradas', data: linhasOrdem.map(function(l){ return l.entradas; }), backgroundColor: '#2a7a60', borderRadius: 4 },
-          { label: 'Gastos', data: linhasOrdem.map(function(l){ return l.gastos; }), backgroundColor: '#b84040', borderRadius: 4 },
+          { label: 'Entradas', data: linhasOrdem.map(function(l){ return l.entradas; }), backgroundColor: '#2a7a60', borderRadius: 4, stack: 'entradas' },
+          { label: 'Outras contas', data: linhasOrdem.map(function(l){ return gastosEspeciais[l.mes].outras; }), backgroundColor: '#b84040', stack: 'gastos' },
+          { label: 'Tambor', data: linhasOrdem.map(function(l){ return gastosEspeciais[l.mes].tambor; }), backgroundColor: '#c9a227', stack: 'gastos' },
+          { label: 'Segurança', data: linhasOrdem.map(function(l){ return gastosEspeciais[l.mes].seguranca; }), backgroundColor: '#8a8a8a', borderRadius: 4, stack: 'gastos' },
           { label: 'Média de entradas', type: 'line', data: linhasOrdem.map(function(){ return mediaEntradasMes; }),
             borderColor: '#1f5c47', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false },
           { label: 'Média de gastos', type: 'line', data: linhasOrdem.map(function(){ return mediaGastosMes; }),
@@ -835,14 +857,18 @@ function montarGraficos(dados, cat) {
         onClick: function(evt, elems) {
           if (!elems.length) return;
           var el = elems[0];
-          if (el.datasetIndex > 1) return; // linha de média não é clicável
           var l = linhasOrdem[el.index];
           if (!l) return;
-          if (el.datasetIndex === 0) detalheEntradasMes(l.mes); else detalheGastosMes(l.mes);
+          if (el.datasetIndex === 0) detalheEntradasMes(l.mes);
+          else if (el.datasetIndex >= 1 && el.datasetIndex <= 3) detalheGastosMes(l.mes);
+          // linhas de média (índice 4 e 5) não são clicáveis
         },
         plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
           tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
-        scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+        scales: {
+          y: { stacked: true, ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } },
+          x: { stacked: true, ticks: { font: { size: 10 } } }
+        }
       }
     });
   }
