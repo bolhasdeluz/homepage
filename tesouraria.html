@@ -1034,6 +1034,29 @@ body{padding-bottom:64px}
   <button onclick="excluirSelecionados()" style="background:var(--red);color:#fff;">🗑 Excluir</button>
 </div>
 
+<!-- EXPORT EXTRATO ANUAL MODAL -->
+<div class="modal-overlay" id="export-anual-overlay" onclick="fecharModal('export-anual-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">📅 Exportar Extrato Anual</div>
+      <button class="modal-close" onclick="document.getElementById('export-anual-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label class="field-label">Ano</label>
+        <select id="export-anual-ano" onchange="atualizarPreviewExportAnual()"></select>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;padding:10px 13px;">
+        <div id="export-anual-preview-count" style="font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="exportarExtratoAnual('pdf')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;">🖨️ PDF / Imprimir</button>
+        <button onclick="exportarExtratoAnual('csv')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);">📊 Excel / CSV</button>
+        <button onclick="exportarExtratoAnual('wpp')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;">💬 WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CLONAR (uma ou mais datas, um ou mais lançamentos) -->
 <div class="modal-overlay" id="clonar-overlay" onclick="fecharModal('clonar-overlay',event)">
   <div class="modal-sheet">
@@ -1710,10 +1733,10 @@ body{padding-bottom:64px}
     el.innerHTML = recentes.map(itemHTML).join('');
   }
 
-  function renderHistorico() {
-    var el = document.getElementById('lista-historico');
-
-    // ── Visão panorâmica de meses ────────────────────────────
+  // Agrupa os lançamentos por mês de competência (igual o painel "Extrato
+  // Mensal" do Histórico) — usado ali e também na exportação do extrato
+  // anual, pra não duplicar essa conta em dois lugares
+  function calcularMesesPanorama() {
     var meses = {};
     lancamentos.forEach(function(l) {
       var ref = (l.tipo==='entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : null);
@@ -1728,6 +1751,14 @@ body{padding-bottom:64px}
       }
       if (l.tipo==='gasto' && l.status !== 'pendente') meses[ref].g += l.valor;
     });
+    return meses;
+  }
+
+  function renderHistorico() {
+    var el = document.getElementById('lista-historico');
+
+    // ── Visão panorâmica de meses ────────────────────────────
+    var meses = calcularMesesPanorama();
 
     var agora = new Date();
     var mesAtualStr = agora.getFullYear() + '-' + String(agora.getMonth()+1).padStart(2,'0');
@@ -1735,7 +1766,10 @@ body{padding-bottom:64px}
     var panoramaHTML = '';
     if (mesesOrdenados.length) {
       panoramaHTML = '<div style="margin-bottom:14px;">'
-        + '<div style="font-family:\'Cinzel\',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Extrato Mensal</div>'
+        + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+        +   '<div style="font-family:\'Cinzel\',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);">Extrato Mensal</div>'
+        +   '<button onclick="abrirExportAnualConfig()" style="background:none;border:1px solid var(--border);border-radius:16px;color:var(--gold);font-family:\'DM Sans\',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;">🖨️ Exportar ano</button>'
+        + '</div>'
         + mesesOrdenados.map(function(mes) {
             var d = meses[mes];
             var MEMBROS_FIXOS = getMembrosAtivos(mes);
@@ -3126,6 +3160,167 @@ body{padding-bottom:64px}
       msg += '🔥 Quimbanda ('+qtdQuimbanda+'x): *'+fmt(totalQuimbanda)+'*\n';
       if (outros.length) msg += '✨ Outros: *'+fmt(totalOutros)+'*\n';
       msg += '▸ *Total: ' + fmt(total) + '*\n';
+
+      document.getElementById('wpp-preview').textContent = msg;
+      document.getElementById('wpp-copy-btn').textContent = 'Copiar Mensagem';
+      document.getElementById('wpp-overlay').classList.add('open');
+    }
+  }
+
+  // ── EXTRATO ANUAL — mesmo formato do painel "Extrato Mensal" do
+  // Histórico (mês a mês: entradas, gastos, saldo, % pagantes, % cobertura,
+  // média por mensalidade, quem faltou), só que pra emitir, com uma média
+  // da mensalidade do ano inteiro no final ──────────────────────────
+  function abrirExportAnualConfig() {
+    var meses = calcularMesesPanorama();
+    var anos = {};
+    Object.keys(meses).forEach(function(m){ anos[m.slice(0,4)] = true; });
+    var anoAtual = new Date().getFullYear();
+    anos[anoAtual] = true;
+    var listaAnos = Object.keys(anos).sort().reverse();
+    var select = document.getElementById('export-anual-ano');
+    select.innerHTML = listaAnos.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('');
+    select.value = anoAtual;
+    atualizarPreviewExportAnual();
+    document.getElementById('export-anual-overlay').classList.add('open');
+  }
+
+  // Monta as linhas do ano escolhido (Jan→Dez, só os meses com algum
+  // lançamento) e a média/totais do ano inteiro, pra reusar nos 3 formatos
+  function montarDadosExtratoAnual(ano) {
+    var meses = calcularMesesPanorama();
+    var linhas = [];
+    for (var m = 1; m <= 12; m++) {
+      var ref = ano + '-' + String(m).padStart(2,'0');
+      var d = meses[ref];
+      if (!d) continue;
+      var MEMBROS_FIXOS = getMembrosAtivos(ref);
+      var nPag = Object.keys(d.pagantes).length;
+      var naoPag = MEMBROS_FIXOS.filter(function(mb){ return !d.pagantes[mb]; });
+      linhas.push({
+        mes: m, label: MESES_NOMES_FULL[m-1] + '/' + ano,
+        entradas: d.e, gastos: d.g, saldo: d.e - d.g,
+        nPag: nPag, nTot: MEMBROS_FIXOS.length,
+        pctPag: MEMBROS_FIXOS.length ? Math.round(nPag / MEMBROS_FIXOS.length * 100) : 0,
+        pctCob: d.g > 0 ? Math.round(d.e / d.g * 100) : (d.e > 0 ? 100 : 0),
+        mediaMensalidade: nPag > 0 ? d.eMensalidade / nPag : 0,
+        eMensalidade: d.eMensalidade, naoPag: naoPag
+      });
+    }
+    var totalEntradas = linhas.reduce(function(a,l){ return a+l.entradas; }, 0);
+    var totalGastos = linhas.reduce(function(a,l){ return a+l.gastos; }, 0);
+    var totalMensalidade = linhas.reduce(function(a,l){ return a+l.eMensalidade; }, 0);
+    var totalPagamentos = linhas.reduce(function(a,l){ return a+l.nPag; }, 0);
+    return {
+      linhas: linhas,
+      totalEntradas: totalEntradas, totalGastos: totalGastos, saldoAno: totalEntradas - totalGastos,
+      mediaAnual: totalPagamentos > 0 ? totalMensalidade / totalPagamentos : 0
+    };
+  }
+
+  function atualizarPreviewExportAnual() {
+    var ano = document.getElementById('export-anual-ano').value;
+    if (!ano) return;
+    var dados = montarDadosExtratoAnual(ano);
+    document.getElementById('export-anual-preview-count').innerHTML =
+      '<strong>' + dados.linhas.length + '</strong> mês(es) com movimento · Média da mensalidade no ano: <strong>' + fmt(dados.mediaAnual) + '</strong>';
+  }
+
+  function exportarExtratoAnual(formato) {
+    var ano = document.getElementById('export-anual-ano').value;
+    if (!ano) { showToast('Escolha um ano'); return; }
+    var dados = montarDadosExtratoAnual(ano);
+    if (!dados.linhas.length) { showToast('Nenhum lançamento nesse ano'); return; }
+
+    document.getElementById('export-anual-overlay').classList.remove('open');
+
+    if (formato === 'pdf') {
+      var html = '<html><head><meta charset="UTF-8">';
+      html += '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">';
+      html += '<style>';
+      html += 'body{font-family:"DM Sans",sans-serif;color:#2a1a22;max-width:760px;margin:0 auto;padding:24px 20px;font-size:13px;}';
+      html += 'h1{font-family:"Cinzel",serif;font-size:1.1rem;font-weight:700;color:#c4396b;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}';
+      html += '.sub{font-family:"DM Sans",sans-serif;font-size:.78rem;color:rgba(80,30,50,.5);margin-bottom:16px;}';
+      html += 'table{width:100%;border-collapse:collapse;margin-bottom:8px;}';
+      html += 'th{font-family:"Cinzel",serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(80,30,50,.5);text-align:left;padding:5px 7px;border-bottom:1.5px solid rgba(196,57,107,.15);}';
+      html += 'td{font-family:"Crimson Pro",serif;font-size:.84rem;padding:5px 7px;border-bottom:1px solid rgba(196,57,107,.07);}';
+      html += 'td.val{text-align:right;font-weight:600;}';
+      html += 'td.verde{color:#2a7a60;text-align:right;font-weight:600;}';
+      html += 'td.vermelho{color:#b84040;text-align:right;font-weight:600;}';
+      html += 'td.dim{color:rgba(80,30,50,.5);font-style:italic;font-size:.75rem;}';
+      html += '.total-row td{font-weight:700;border-top:1.5px solid rgba(196,57,107,.2);border-bottom:none;font-family:"Cinzel",serif;font-size:.65rem;letter-spacing:.04em;text-transform:uppercase;}';
+      html += '.saldo-box{background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}';
+      html += '.saldo-box .label{font-family:"Cinzel",serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,30,50,.5);}';
+      html += '.saldo-box .valor{font-family:"Crimson Pro",serif;font-size:1.2rem;font-weight:600;}';
+      html += '@media print{body{padding:8px;}button{display:none!important;}}';
+      html += '</style></head><body>';
+
+      html += '<h1>Bolhas de Luz — Extrato Anual ' + ano + '</h1>';
+      html += '<div class="sub">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div>';
+
+      html += '<div class="saldo-box">';
+      html += '<div><div class="label">Entradas no ano</div><div class="valor" style="color:#2a7a60">' + fmt(dados.totalEntradas) + '</div></div>';
+      html += '<div><div class="label">Gastos no ano</div><div class="valor" style="color:#b84040">' + fmt(dados.totalGastos) + '</div></div>';
+      html += '<div><div class="label">Saldo do ano</div><div class="valor" style="color:' + (dados.saldoAno>=0?'#2a7a60':'#b84040') + '">' + fmt(dados.saldoAno) + '</div></div>';
+      html += '<div><div class="label">Média mensalidade no ano</div><div class="valor" style="color:#c4396b">' + fmt(dados.mediaAnual) + '</div></div>';
+      html += '</div>';
+
+      html += '<table><tr><th>Mês</th><th style="text-align:right">Entradas</th><th style="text-align:right">Gastos</th><th style="text-align:right">Saldo</th><th style="text-align:center">Pagantes</th><th style="text-align:center">Cobertura</th><th style="text-align:right">Média mens.</th><th>Faltaram</th></tr>';
+      dados.linhas.forEach(function(l){
+        html += '<tr><td>'+l.label+'</td><td class="verde">'+fmt(l.entradas)+'</td><td class="vermelho">'+fmt(l.gastos)+'</td>'
+          + '<td class="val" style="color:'+(l.saldo>=0?'#2a7a60':'#b84040')+'">'+fmt(l.saldo)+'</td>'
+          + '<td style="text-align:center">'+l.pctPag+'% ('+l.nPag+'/'+l.nTot+')</td>'
+          + '<td style="text-align:center">'+l.pctCob+'%</td>'
+          + '<td class="val">'+(l.nPag>0?fmt(l.mediaMensalidade):'—')+'</td>'
+          + '<td class="dim">'+(l.naoPag.length?l.naoPag.join(', '):'✓ todas pagaram')+'</td></tr>';
+      });
+      html += '<tr class="total-row"><td>TOTAL '+ano+'</td><td class="verde" style="text-align:right">'+fmt(dados.totalEntradas)+'</td><td class="vermelho" style="text-align:right">'+fmt(dados.totalGastos)+'</td>'
+        + '<td style="text-align:right;color:'+(dados.saldoAno>=0?'#2a7a60':'#b84040')+'">'+fmt(dados.saldoAno)+'</td><td></td><td></td>'
+        + '<td style="text-align:right">'+fmt(dados.mediaAnual)+'</td><td></td></tr>';
+      html += '</table></body></html>';
+
+      var win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(function(){ win.print(); }, 600);
+
+    } else if (formato === 'csv') {
+      var rows = [];
+      rows.push(['BOLHAS DE LUZ — EXTRATO ANUAL ' + ano]);
+      rows.push([]);
+      rows.push(['Mês','Entradas','Gastos','Saldo','% Pagantes','Pagantes','% Cobertura','Média mensalidade','Faltaram']);
+      dados.linhas.forEach(function(l){
+        rows.push([l.label, l.entradas.toFixed(2), l.gastos.toFixed(2), l.saldo.toFixed(2), l.pctPag+'%', l.nPag+'/'+l.nTot, l.pctCob+'%', l.nPag>0?l.mediaMensalidade.toFixed(2):'', l.naoPag.join(', ')]);
+      });
+      rows.push(['TOTAL '+ano, dados.totalEntradas.toFixed(2), dados.totalGastos.toFixed(2), dados.saldoAno.toFixed(2), '', '', '', dados.mediaAnual.toFixed(2), '']);
+      var csv = '﻿' + rows.map(function(r){
+        return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'extrato-anual-bolhasdeluz-' + ano + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV baixado ✓');
+
+    } else if (formato === 'wpp') {
+      var msg = '🕯️ *BOLHAS DE LUZ — EXTRATO ANUAL ' + ano + '*\n';
+      msg += '─'.repeat(28) + '\n\n';
+      dados.linhas.forEach(function(l){
+        msg += '📅 *' + l.label + '*\n';
+        msg += '↑ ' + fmt(l.entradas) + ' · ↓ ' + fmt(l.gastos) + ' · Saldo ' + fmt(l.saldo) + (l.saldo<0?' 🕯️':'') + '\n';
+        msg += '👥 ' + l.pctPag + '% (' + l.nPag + '/' + l.nTot + ') · 💰 Cob. ' + l.pctCob + '%\n';
+        if (l.nPag > 0) msg += '💵 Média mensalidade: ' + fmt(l.mediaMensalidade) + '\n';
+        if (l.naoPag.length) msg += 'Faltaram: ' + l.naoPag.join(', ') + '\n';
+        msg += '\n';
+      });
+      msg += '📊 *RESUMO DO ANO*\n';
+      msg += '↑ Entradas: *' + fmt(dados.totalEntradas) + '*\n';
+      msg += '↓ Gastos: *' + fmt(dados.totalGastos) + '*\n';
+      msg += '💼 Saldo: *' + fmt(dados.saldoAno) + '*' + (dados.saldoAno<0?' 🕯️':'') + '\n';
+      msg += '💵 Média da mensalidade no ano: *' + fmt(dados.mediaAnual) + '*\n';
 
       document.getElementById('wpp-preview').textContent = msg;
       document.getElementById('wpp-copy-btn').textContent = 'Copiar Mensagem';
