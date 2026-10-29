@@ -1791,9 +1791,13 @@ body{padding-bottom:64px}
   // anual, pra não duplicar essa conta em dois lugares
   function calcularMesesPanorama() {
     var meses = {};
+    var mesAtual = today().slice(0,7);
     lancamentos.forEach(function(l) {
       var ref = (l.tipo==='entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : null);
-      if (!ref) return;
+      // só considera meses já passados ou o mês em vigência — um lançamento
+      // lançado adiantado pra um mês futuro (ex: conta fixa já registrada)
+      // não deve aparecer no relatório antes desse mês realmente começar
+      if (!ref || ref > mesAtual) return;
       if (!meses[ref]) meses[ref] = { e:0, eMensalidade:0, g:0, pagantes:{} };
       if (l.tipo==='entrada') {
         meses[ref].e += l.valor;
