@@ -108,7 +108,8 @@ body.logada .header-cta{display:none}
   position:fixed;
   top:0;left:0;right:0;
   z-index:195; /* abaixo do #boas-vindas (z-index:200) */
-  display:flex;align-items:center;justify-content:center;
+  display:none; /* só aparece quando atualizarVisibilidadeMenuHint() confirmar login — ver comentário dela */
+  align-items:center;justify-content:center;
   padding:10px 20px 11px;
   background:rgba(253,246,238,.96);
   border-bottom:1px solid rgba(196,90,30,.14);
@@ -2713,7 +2714,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <!-- BOAS-VINDAS -->
 <div id="boas-vindas">
   <div id="boas-vindas-inner">
-    <div id="bv-logged" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+    <div id="bv-logged" style="display:none;align-items:center;gap:7px;flex-wrap:wrap">
       <img id="user-avatar" src="" alt="" onclick="showSuaHistoria()" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);cursor:pointer;flex-shrink:0">
       <span id="bv-emoji"></span>
       <span id="bv-nome"></span>
@@ -2729,6 +2730,22 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
   </div>
 </div>
+<script>
+// Mostra a barra "✦ Área das Filhas · Entrar" assim que a página carrega,
+// sem esperar o Firebase responder — numa rede ruim/lenta, o carregamento
+// do Firebase pode demorar ou falhar, e sem isso a barra inteira ficava
+// escondida pra sempre (nem "Entrar" nem o nome de quem já tá logada
+// aparecia). Roda logo aqui, fora do <script type="module">, porque esse
+// módulo às vezes nem chega a carregar. Quando o Firebase confirmar o
+// login (ou confirmar que não tem ninguém logada), atualizarBoasVindas()
+// troca pra versão certa — isso aqui é só o estado inicial, otimista.
+(function() {
+  try {
+    document.getElementById('bv-guest').style.display = 'flex';
+    document.getElementById('boas-vindas').style.display = 'block';
+  } catch (e) {}
+})();
+</script>
 
 <!-- PÁGINA PERFIL -->
 <!-- PÁGINA GUIAS -->
