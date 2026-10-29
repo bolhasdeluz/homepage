@@ -89,6 +89,7 @@ a { color: inherit; }
 .ano-btn { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); border-radius: 20px; color: #fff;
   font-family: 'Cinzel', serif; font-size: .68rem; letter-spacing: .05em; font-weight: 700; padding: 6px 14px; cursor: pointer; }
 .ano-btn.active { background: #fff; color: var(--gold); }
+.comparar-btn { margin-left: 4px; border-style: dashed; }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: 18px 14px 0; }
 
@@ -299,6 +300,7 @@ var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Camb
 var MEMBROS_ISENTOS = {};
 var lancamentos = [];
 var anoAtivo = null;
+var modoComparativo = false;
 var charts = {};
 
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -475,20 +477,36 @@ function escolherAnoInicial() {
 
 function irParaAno(ano) {
   anoAtivo = ano;
+  modoComparativo = false;
   var params = new URLSearchParams(window.location.search);
   params.set('ano', ano);
+  params.delete('comparar');
   history.replaceState(null, '', window.location.pathname + '?' + params.toString());
   renderRelatorio();
 }
 window.irParaAno = irParaAno;
+
+function toggleComparativo() {
+  modoComparativo = !modoComparativo;
+  var params = new URLSearchParams(window.location.search);
+  if (modoComparativo) params.set('comparar', '1'); else params.delete('comparar');
+  history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+  renderRelatorio();
+}
+window.toggleComparativo = toggleComparativo;
 
 // ── RENDER ─────────────────────────────────────────────────────────
 function renderRelatorio() {
   atualizarBotaoNomesRA();
   var anos = anosDisponiveis();
   document.getElementById('ano-bar').innerHTML = anos.map(function(a){
-    return '<button class="ano-btn' + (a===anoAtivo?' active':'') + '" onclick="irParaAno(\'' + a + '\')">' + a + '</button>';
-  }).join('');
+    return '<button class="ano-btn' + (!modoComparativo && a===anoAtivo?' active':'') + '" onclick="irParaAno(\'' + a + '\')">' + a + '</button>';
+  }).join('') + '<button class="ano-btn comparar-btn' + (modoComparativo?' active':'') + '" onclick="toggleComparativo()">📊 Comparar anos</button>';
+
+  if (modoComparativo) {
+    renderComparativo();
+    return;
+  }
 
   var dados = montarDadosExtratoAnual(anoAtivo);
   var cat = calcularGastosPorCategoriaAno(anoAtivo);
@@ -561,6 +579,165 @@ function renderRelatorio() {
 
   conteudo.innerHTML = html;
   montarGraficos(dados, cat);
+}
+
+var MESES_LABEL_CURTO = MESES_NOMES_FULL.map(function(m){ return m.slice(0,3); });
+
+// valor de um mês (1-12) pra um dado campo das linhas de montarDadosExtratoAnual
+// — null quando o mês não teve nenhum lançamento naquele ano, pra o gráfico
+// deixar um buraco em vez de mostrar zero (que seria enganoso)
+function valorAnoMes(dados, mes, campo) {
+  var l = dados.linhas.find(function(x){ return x.mes === mes; });
+  return l ? l[campo] : null;
+}
+
+function renderComparativo() {
+  var anos = anosDisponiveis().slice().reverse(); // ordem crescente, do mais antigo pro mais novo
+  var conteudo = document.getElementById('conteudo');
+  var porAno = anos.map(function(ano){ return { ano: ano, dados: montarDadosExtratoAnual(ano) }; })
+    .filter(function(x){ return x.dados.linhas.length > 0; });
+
+  if (porAno.length < 2) {
+    conteudo.innerHTML = '<div class="empty-ano">Precisa de pelo menos 2 anos com lançamento pra comparar.</div>';
+    destruirGraficos();
+    return;
+  }
+
+  var html = '';
+  html += '<div class="sec-title">Totais do ano — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-totais"></canvas></div></div>';
+
+  html += '<div class="sec-title">Entradas por mês — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-entradas"></canvas></div></div>';
+
+  html += '<div class="sec-title">Gastos por mês — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-gastos"></canvas></div></div>';
+
+  html += '<div class="sec-title">Membros ativos por mês — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-membros"></canvas></div></div>';
+
+  html += '<div class="sec-title">% de pagantes por mês — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-pagantes"></canvas></div></div>';
+
+  html += '<div class="sec-title">% de cobertura por mês — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-cobertura"></canvas></div></div>';
+
+  conteudo.innerHTML = html;
+  montarGraficosComparativo(porAno);
+}
+
+function montarGraficosComparativo(porAno) {
+  destruirGraficos();
+  var IDS_CMP = ['chart-cmp-totais', 'chart-cmp-entradas', 'chart-cmp-gastos', 'chart-cmp-membros', 'chart-cmp-pagantes', 'chart-cmp-cobertura'];
+  if (typeof Chart === 'undefined') {
+    IDS_CMP.forEach(function(id){
+      var cv = document.getElementById(id);
+      if (cv && cv.parentElement) cv.parentElement.innerHTML = '<div class="chart-erro">Não consegui carregar os gráficos agora. Atualize a página pra tentar de novo.</div>';
+    });
+    return;
+  }
+
+  function linhaPorAno(campo) {
+    return porAno.map(function(x, i){
+      return {
+        label: String(x.ano),
+        data: MESES_LABEL_CURTO.map(function(_, idx){ return valorAnoMes(x.dados, idx + 1, campo); }),
+        borderColor: corGrafico(i), backgroundColor: corGrafico(i), fill: false, tension: .3,
+        spanGaps: true, pointRadius: 3
+      };
+    });
+  }
+
+  var ctxTotais = document.getElementById('chart-cmp-totais');
+  if (ctxTotais) {
+    charts.cmpTotais = new Chart(ctxTotais, {
+      type: 'bar',
+      data: {
+        labels: porAno.map(function(x){ return String(x.ano); }),
+        datasets: [
+          { label: 'Entradas', data: porAno.map(function(x){ return x.dados.totalEntradas; }), backgroundColor: '#2a7a60', borderRadius: 4 },
+          { label: 'Gastos', data: porAno.map(function(x){ return x.dados.totalGastos; }), backgroundColor: '#b84040', borderRadius: 4 },
+          { label: 'Saldo', data: porAno.map(function(x){ return x.dados.saldoAno; }), backgroundColor: porAno.map(function(x){ return x.dados.saldoAno>=0?'#2a7a60':'#8c5a00'; }), borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
+        scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxEntradas = document.getElementById('chart-cmp-entradas');
+  if (ctxEntradas) {
+    charts.cmpEntradas = new Chart(ctxEntradas, {
+      type: 'line',
+      data: { labels: MESES_LABEL_CURTO, datasets: linhaPorAno('entradas') },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
+        scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxGastos = document.getElementById('chart-cmp-gastos');
+  if (ctxGastos) {
+    charts.cmpGastos = new Chart(ctxGastos, {
+      type: 'line',
+      data: { labels: MESES_LABEL_CURTO, datasets: linhaPorAno('gastos') },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
+        scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxMembros = document.getElementById('chart-cmp-membros');
+  if (ctxMembros) {
+    charts.cmpMembros = new Chart(ctxMembros, {
+      type: 'line',
+      data: { labels: MESES_LABEL_CURTO, datasets: linhaPorAno('nTot') },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + c.parsed.y + ' membro(s)'; } } } },
+        scales: { y: { min: 0, ticks: { stepSize: 1, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxPagantes = document.getElementById('chart-cmp-pagantes');
+  if (ctxPagantes) {
+    charts.cmpPagantes = new Chart(ctxPagantes, {
+      type: 'line',
+      data: { labels: MESES_LABEL_CURTO, datasets: linhaPorAno('pctPag') },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + c.parsed.y + '%'; } } } },
+        scales: { y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxCobertura = document.getElementById('chart-cmp-cobertura');
+  if (ctxCobertura) {
+    charts.cmpCobertura = new Chart(ctxCobertura, {
+      type: 'line',
+      data: { labels: MESES_LABEL_CURTO, datasets: linhaPorAno('pctCob') },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + c.parsed.y + '%'; } } } },
+        scales: { y: { min: 0, ticks: { callback: function(v){ return v + '%'; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
 }
 
 var PALETA_GRAFICO = ['#c4396b','#e8688a','#8c5a00','#2a7a60','#3a9a78','#b84040','#6a4c93','#1f7a8c','#f2a541','#9d6b53'];
@@ -904,6 +1081,7 @@ function carregarDados() {
     .then(function(dados){
       lancamentos = Array.isArray(dados) ? dados : [];
       anoAtivo = escolherAnoInicial();
+      modoComparativo = new URLSearchParams(window.location.search).get('comparar') === '1';
       document.getElementById('tela-carregando').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       renderRelatorio();
