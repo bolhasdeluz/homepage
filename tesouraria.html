@@ -1101,11 +1101,15 @@ body{padding-bottom:64px}
 <script>
   // ── HELPERS ───────────────────────────────────────────────
   // Membros que saíram da casa, com o mês (YYYY-MM) a partir do qual não contam mais
-  var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07' };
+  var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07', 'Mikael': '2026-04', 'Miguel': '2026-02' };
+  // mês (YYYY-MM) a partir do qual cada uma passou a contar — só precisa
+  // entrada pra quem entrou depois do começo do histórico (ex-membros
+  // cadastrados aqui só pra contar certinho em anos passados)
+  var MEMBROS_ENTRADA = { 'Miguel': '2025-07' };
   // Lista completa histórica (usada para não quebrar cálculos de meses antigos) —
   // serve de base e é completada automaticamente por sincronizarMembrosDosCargos(),
   // que busca no cadastro do site quem tem um cargo de casa e ainda não está aqui
-  var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana'];
+  var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana','Mikael','Miguel'];
 
   // cargos "de casa" que contam como membro pagante da Tesouraria — mesma
   // escada usada no Quadro das Filhas, menos Mãe da Casa (ela não paga
@@ -1170,6 +1174,8 @@ body{padding-bottom:64px}
     var ref = mesRef || today().slice(0,7);
     return MEMBROS_TODOS.filter(function(m){
       if (MEMBROS_ISENTOS[m]) return false;
+      var entrada = MEMBROS_ENTRADA[m];
+      if (entrada && ref < entrada) return false;
       var saida = MEMBROS_SAIDA[m];
       return !saida || ref < saida;
     });
