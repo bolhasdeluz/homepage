@@ -505,23 +505,49 @@ body{padding-bottom:64px}
     <div id="saldo-nota-mae" style="display:none;text-align:right;margin-top:-8px;margin-bottom:6px;padding-right:4px;font-family:'Crimson Pro',serif;font-style:italic;font-size:.78rem;color:var(--text-dim);">coberto pela mãe de santo 🕯️</div>
 
     <div id="tambor-mes-box" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-      <div style="font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">🪘 Tambor do mês</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-        <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Umbanda (R$ 190,00 cada)</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button onclick="mudarQtdTambor('umbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
-          <input type="number" min="0" id="tambor-umbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-          <button onclick="mudarQtdTambor('umbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🪘 Tambor do mês</div>
+        <button onclick="toggleEditarPrecosTambor()" id="tambor-editar-btn" title="Editar valores" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:.85rem;padding:2px 4px;">✏️</button>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Quimbanda (R$ 290,00 cada)</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <button onclick="mudarQtdTambor('quimbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
-          <input type="number" min="0" id="tambor-quimbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-          <button onclick="mudarQtdTambor('quimbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
+
+      <div id="tambor-precos-display">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Umbanda (<span id="tambor-preco-umbanda-label">R$ 130,00</span> cada)</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="mudarQtdTambor('umbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
+            <input type="number" min="0" id="tambor-umbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
+            <button onclick="mudarQtdTambor('umbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
+          </div>
         </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Quimbanda (<span id="tambor-preco-quimbanda-label">R$ 230,00</span> cada)</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button onclick="mudarQtdTambor('quimbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
+            <input type="number" min="0" id="tambor-quimbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
+            <button onclick="mudarQtdTambor('quimbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
+          </div>
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:6px;">+ deslocamento de <span id="tambor-preco-deslocamento-label">R$ 60,00</span> por sessão, lançado separado em "Deslocamento"</div>
       </div>
+
+      <div id="tambor-precos-editar" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Umbanda (R$)</label>
+            <input type="number" id="tambor-edit-umbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+          </div>
+          <div style="flex:1;">
+            <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Quimbanda (R$)</label>
+            <input type="number" id="tambor-edit-quimbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Deslocamento por sessão (R$)</label>
+          <input type="number" id="tambor-edit-deslocamento" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+        </div>
+        <button onclick="salvarPrecosTambor()" class="btn-primary" style="width:100%;">Salvar valores</button>
+      </div>
+
       <button onclick="abrirExportTamborConfig()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px;cursor:pointer;">🖨️ Extrato do Tambor</button>
     </div>
 
@@ -659,7 +685,7 @@ body{padding-bottom:64px}
         <select id="batch-conta" onchange="renderTabelaLote()">
           <option value="">Selecionar conta…</option>
           <option>Luz</option><option>Água</option><option>Alarme Serviço</option><option>Internet</option>
-          <option>Aluguel</option><option>Tambor</option><option>Agosto</option><option>Extras</option>
+          <option>Aluguel</option><option>Tambor</option><option>Deslocamento</option><option>Agosto</option><option>Extras</option>
         </select>
       </div>
       <div>
@@ -727,7 +753,7 @@ body{padding-bottom:64px}
           <select id="edit-conta">
             <option value="">Selecionar conta…</option>
             <option>Luz</option><option>Água</option><option>Alarme Serviço</option><option>Internet</option>
-            <option>Aluguel</option><option>Tambor</option><option>Agosto</option><option>Extras</option>
+            <option>Aluguel</option><option>Tambor</option><option>Deslocamento</option><option>Agosto</option><option>Extras</option>
           </select>
         </div>
       </div>
@@ -892,7 +918,7 @@ body{padding-bottom:64px}
           <select id="gasto-conta">
             <option value="">Selecionar conta…</option>
             <option>Luz</option><option>Água</option><option>Alarme Serviço</option><option>Internet</option>
-            <option>Aluguel</option><option>Tambor</option><option>Agosto</option><option>Extras</option>
+            <option>Aluguel</option><option>Tambor</option><option>Deslocamento</option><option>Agosto</option><option>Extras</option>
           </select>
         </div>
         <div class="field-row">
@@ -921,7 +947,7 @@ body{padding-bottom:64px}
           <select id="pend-conta">
             <option value="">Selecionar conta…</option>
             <option>Luz</option><option>Água</option><option>Alarme Serviço</option><option>Internet</option>
-            <option>Aluguel</option><option>Tambor</option><option>Agosto</option><option>Extras</option>
+            <option>Aluguel</option><option>Tambor</option><option>Deslocamento</option><option>Agosto</option><option>Extras</option>
           </select>
         </div>
         <div class="field-row">
@@ -2059,13 +2085,57 @@ body{padding-bottom:64px}
   // mês (pode ter mais de um de cada); cada tipo vira um único gasto
   // confirmado (não pendente) com o valor já multiplicado pela quantidade,
   // que entra direto no total de Gastos do mês (igual qualquer outro gasto,
-  // sem cobrar nada a mais de ninguém — é despesa da casa)
-  var TAMBOR_PRECOS = { umbanda: 190, quimbanda: 290 };
+  // sem cobrar nada a mais de ninguém — é despesa da casa). O deslocamento
+  // de cada sessão é lançado à parte, na conta "Deslocamento" — não entra
+  // no extrato exclusivo do Tambor, que é só o custo do tambor em si.
+  // Os valores (tamborConfig) são editáveis pela Anna — não fixos no código.
+  var tamborConfig = { umbanda: 130, quimbanda: 230, deslocamento: 60 };
   var TAMBOR_LABELS = { umbanda: 'Tambor de Umbanda', quimbanda: 'Tambor de Quimbanda' };
+
+  function salvarTamborConfig() {
+    try { localStorage.setItem('bdl-tambor-config', JSON.stringify(tamborConfig)); } catch(e){}
+    kvSet('tambor_config', tamborConfig);
+  }
+
+  function renderPrecosTamborLabels() {
+    var lblU = document.getElementById('tambor-preco-umbanda-label');
+    var lblQ = document.getElementById('tambor-preco-quimbanda-label');
+    var lblD = document.getElementById('tambor-preco-deslocamento-label');
+    if (lblU) lblU.textContent = fmt(tamborConfig.umbanda);
+    if (lblQ) lblQ.textContent = fmt(tamborConfig.quimbanda);
+    if (lblD) lblD.textContent = fmt(tamborConfig.deslocamento);
+  }
+
+  function toggleEditarPrecosTambor() {
+    var display = document.getElementById('tambor-precos-display');
+    var editar = document.getElementById('tambor-precos-editar');
+    var abrindo = editar.style.display === 'none';
+    display.style.display = abrindo ? 'none' : 'block';
+    editar.style.display = abrindo ? 'block' : 'none';
+    if (abrindo) {
+      document.getElementById('tambor-edit-umbanda').value = tamborConfig.umbanda;
+      document.getElementById('tambor-edit-quimbanda').value = tamborConfig.quimbanda;
+      document.getElementById('tambor-edit-deslocamento').value = tamborConfig.deslocamento;
+    }
+  }
+
+  function salvarPrecosTambor() {
+    var u = parseFloat(document.getElementById('tambor-edit-umbanda').value);
+    var q = parseFloat(document.getElementById('tambor-edit-quimbanda').value);
+    var d = parseFloat(document.getElementById('tambor-edit-deslocamento').value);
+    if (isNaN(u) || u < 0 || isNaN(q) || q < 0 || isNaN(d) || d < 0) { showToast('Valores inválidos'); return; }
+    tamborConfig = { umbanda: u, quimbanda: q, deslocamento: d };
+    salvarTamborConfig();
+    renderPrecosTamborLabels();
+    toggleEditarPrecosTambor();
+    showToast('Valores do Tambor atualizados ✓');
+    // os lançamentos já feitos no mês não mudam retroativamente — só os
+    // próximos ajustes de quantidade passam a usar os novos valores
+  }
 
   function qtdTamborDoMes(tipo, mes) {
     var l = lancamentos.find(function(l) {
-      return l.tipo === 'gasto' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+      return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
     });
     return l ? (l.quantidade || 1) : 0;
   }
@@ -2075,19 +2145,30 @@ body{padding-bottom:64px}
       var input = document.getElementById('tambor-' + tipo + '-qtd');
       if (input) input.value = qtdTamborDoMes(tipo, mes);
     });
+    renderPrecosTamborLabels();
   }
 
   function mudarQtdTambor(tipo, delta) {
     var mes = filtroMesAtivo || today().slice(0, 7);
     var qtd = Math.max(0, qtdTamborDoMes(tipo, mes) + delta);
+
     var idx = lancamentos.findIndex(function(l) {
-      return l.tipo === 'gasto' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+      return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
     });
+    var idxDesloc = lancamentos.findIndex(function(l) {
+      return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+    });
+
     if (qtd === 0) {
       if (idx !== -1) lancamentos.splice(idx, 1);
+      // reacha o índice do deslocamento (pode ter mudado depois do splice acima)
+      idxDesloc = lancamentos.findIndex(function(l) {
+        return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+      });
+      if (idxDesloc !== -1) lancamentos.splice(idxDesloc, 1);
     } else {
       var obs = TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '');
-      var valor = TAMBOR_PRECOS[tipo] * qtd;
+      var valor = tamborConfig[tipo] * qtd;
       if (idx !== -1) {
         lancamentos[idx].quantidade = qtd;
         lancamentos[idx].valor = valor;
@@ -2096,6 +2177,19 @@ body{padding-bottom:64px}
         lancamentos.push({
           id: Date.now() + Math.random(), tipo: 'gasto', conta: 'Tambor', tipoTambor: tipo,
           quantidade: qtd, valor: valor, data: mes + '-01', obs: obs, comprovante: null
+        });
+      }
+
+      var obsDesloc = 'Deslocamento — ' + TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '');
+      var valorDesloc = tamborConfig.deslocamento * qtd;
+      if (idxDesloc !== -1) {
+        lancamentos[idxDesloc].quantidade = qtd;
+        lancamentos[idxDesloc].valor = valorDesloc;
+        lancamentos[idxDesloc].obs = obsDesloc;
+      } else {
+        lancamentos.push({
+          id: Date.now() + Math.random() + 1, tipo: 'gasto', conta: 'Deslocamento', tipoTambor: tipo,
+          quantidade: qtd, valor: valorDesloc, data: mes + '-01', obs: obsDesloc, comprovante: null
         });
       }
     }
@@ -3037,7 +3131,7 @@ body{padding-bottom:64px}
   var caixaTipo = 'entrada';
   var direcionandoId = null;
 
-  var CONTAS_GASTO = ['Luz','Água','Alarme Serviço','Internet','Aluguel','Tambor','Agosto','Extras'];
+  var CONTAS_GASTO = ['Luz','Água','Alarme Serviço','Internet','Aluguel','Tambor','Deslocamento','Agosto','Extras'];
   var MEMBROS_CAIXA = getMembrosAtivos();
 
   function saveCaixa() {
@@ -3304,7 +3398,15 @@ body{padding-bottom:64px}
       if (Array.isArray(parsedContasFixas)) contasFixas = parsedContasFixas;
     }
   } catch(e){}
+  try {
+    var localTamborConfig = localStorage.getItem('bdl-tambor-config');
+    if (localTamborConfig) {
+      var parsedTamborConfig = JSON.parse(localTamborConfig);
+      if (parsedTamborConfig && typeof parsedTamborConfig === 'object') tamborConfig = parsedTamborConfig;
+    }
+  } catch(e){}
   try { renderInicio(); } catch(e){ console.error('renderInicio:', e); }
+  try { renderPrecosTamborLabels(); } catch(e){}
   try { renderHistorico(); } catch(e){ console.error('renderHistorico:', e); }
   try { renderResumo(); } catch(e){ console.error('renderResumo:', e); }
   try { renderCaixa(); } catch(e){ console.error('renderCaixa:', e); }
@@ -3350,6 +3452,21 @@ body{padding-bottom:64px}
       } else if (contasFixas.length > 0) {
         // KV vazio mas temos os padrões locais — envia pro KV
         kvSet('contas_fixas', contasFixas);
+      }
+    })
+    .catch(function(){});
+
+  // Busca os valores do Tambor (editáveis) do KV em segundo plano
+  fetchComTimeout('/api/dados?chave=tambor_config', 8000)
+    .then(function(r){ if(!r.ok) throw new Error('sem KV'); return r.json(); })
+    .then(function(dadosKV){
+      if (dadosKV && typeof dadosKV === 'object' && dadosKV.umbanda !== undefined) {
+        tamborConfig = dadosKV;
+        try { localStorage.setItem('bdl-tambor-config', JSON.stringify(dadosKV)); } catch(e){}
+        try { renderPrecosTamborLabels(); } catch(e){}
+      } else {
+        // KV vazio — envia os padrões (ou o que já tinha local) pro KV
+        kvSet('tambor_config', tamborConfig);
       }
     })
     .catch(function(){});
