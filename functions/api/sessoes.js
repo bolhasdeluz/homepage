@@ -232,15 +232,29 @@ function gcalFormatarDataNota(dataStr) {
 // Sessão sem hora vira evento de dia inteiro; com hora, dura 3h por padrão.
 // Quando tentativa=true, o evento nasce como "tentative" no Google (aparece
 // com estilo tracejado lá) e ganha uma nota avisando a outra data candidata.
+// só os dois tipos que têm um equivalente direto de "aberta/fechada pra
+// assistência" (ver regra combinada com a Anna); Visita/Família/Reunião
+// aparecem com o próprio nome do tipo, sem forçar essa tradução
+const GCAL_TIPO_ASSISTENCIA = { Interna: 'Fechada', Atendimento: 'Aberta' };
+
 function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
   const outraData = ehAlternativa ? sessao.data : sessao.dataAlternativa;
   const nota = tentativa
     ? `⚠️ Data ainda não confirmada — pode ser ${gcalFormatarDataNota(dataAlvo)} ou ${gcalFormatarDataNota(outraData)}.\n\n`
     : '';
+  const tipoEhAssistencia = !!GCAL_TIPO_ASSISTENCIA[sessao.tipo];
+  const linhaAssistencia = tipoEhAssistencia ? `Assistência: ${GCAL_TIPO_ASSISTENCIA[sessao.tipo]}`
+    : sessao.tipo ? `Tipo: ${sessao.tipo}` : '';
+  const corpo = [
+    sessao.linha ? `Linha de trabalho: ${sessao.linha}` : '',
+    linhaAssistencia,
+    sessao.descricao,
+    sessao.responsavel ? `Responsável: ${sessao.responsavel}` : '',
+  ].filter(Boolean).join('\n\n');
   const evento = {
     summary: (tentativa ? '❓ ' : '') + (sessao.nome || 'Sessão'),
     location: sessao.endereco || sessao.onde || undefined,
-    description: (nota + [sessao.descricao, sessao.responsavel ? `Responsável: ${sessao.responsavel}` : ''].filter(Boolean).join('\n\n')) || undefined,
+    description: (nota + corpo) || undefined,
     status: tentativa ? 'tentative' : 'confirmed',
   };
   if (sessao.hora) {
