@@ -4273,6 +4273,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </select>
     </div>
     <div style="margin-bottom:12px"><label class="form-label">Nome *</label><input type="text" class="form-input" id="cal-fNome"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Linha de trabalho</label>
+      <select class="form-input" id="cal-fLinha" style="margin-bottom:0" onchange="calLinhaOnChange(this.value)">
+        <option value="">— Nenhuma —</option>
+        <option value="__nova__">+ Nova linha de trabalho…</option>
+      </select>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Data *</label><input type="date" class="form-input" id="cal-fData"></div>
       <div><label class="form-label">Hora</label><input type="time" class="form-input" id="cal-fHora"></div>
@@ -4395,7 +4401,6 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div style="text-align:center;margin-bottom:14px">
       <button onclick="calAbrirEspelharAno(2026,2027)" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer">🪞 Espelhar 2026 → 2027</button>
       <button onclick="calImportarCalendario2027()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">📥 Importar calendário 2027 (apaga e recria)</button>
-      <button onclick="calAdicionarExu2027()" style="background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">➕ Adicionar sessões de Exu 2027</button>
       <button onclick="calImprimirCalendarioAnual()" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer;margin-left:8px">🖨️ Exportar PDF do calendário</button>
     </div>
 
@@ -6915,6 +6920,7 @@ function showPage(name) {
     calAtualizarControlesAdmin();
     if (calVisibilidadeTipo === null) calCarregarVisibilidadeTipo();
     if (calInfoTipo === null) calCarregarInfoTipo();
+    if (!calLinhas.length) calCarregarLinhas();
     if (!calSessoes.length) calLoad();
     else calRenderLista();
   }
@@ -7129,6 +7135,40 @@ const CAL_INFOTIPO_API = '/api/sessoes-info-tipo';
 const CAL_GOOGLE_EVENTOS_API = '/api/google-eventos';
 const CAL_MODELOS_API = '/api/sessoes-modelos';
 let calModelos = [];
+const CAL_LINHAS_API = '/api/sessoes-linhas';
+let calLinhas = [];
+async function calCarregarLinhas() {
+  try {
+    const res = await fetch(CAL_LINHAS_API);
+    calLinhas = res.ok ? await res.json() : [];
+  } catch (e) { calLinhas = []; }
+}
+function calRenderOpcoesLinha(valorAtual) {
+  const sel = document.getElementById('cal-fLinha');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Nenhuma —</option>' +
+    calLinhas.map(l => `<option value="${calEsc(l)}">${calEsc(l)}</option>`).join('') +
+    '<option value="__nova__">+ Nova linha de trabalho…</option>';
+  sel.value = (valorAtual && calLinhas.includes(valorAtual)) ? valorAtual : '';
+}
+// quando a admin escolhe "+ Nova linha de trabalho…" no seletor, pede o nome
+// e salva pra já ficar disponível nas próximas sessões (sem precisar abrir
+// outro painel só pra isso)
+async function calLinhaOnChange(valor) {
+  const sel = document.getElementById('cal-fLinha');
+  if (valor !== '__nova__') return;
+  const nome = prompt('Nome da nova linha de trabalho (ex: Caboclo, Cigano...):');
+  if (!nome || !nome.trim()) { sel.value = ''; return; }
+  try {
+    const res = await fetch(CAL_LINHAS_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ nome: nome.trim() }) });
+    if (!res.ok) throw new Error('falhou');
+    calLinhas = await res.json();
+    calRenderOpcoesLinha(nome.trim());
+  } catch (e) {
+    alert('Não consegui salvar a linha nova — tenta de novo.');
+    sel.value = '';
+  }
+}
 let calInfoTipo = null;
 let calProximaSessaoObj = null;
 let calSessoes = [], calFiltro = '', calBusca = '', calPassadas = false;
@@ -7423,6 +7463,8 @@ async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
   document.getElementById('cal-fNome').value = '';
+  if (!calLinhas.length) await calCarregarLinhas();
+  calRenderOpcoesLinha('');
   document.getElementById('cal-fData').value = calDiaSelecionado || calFmtDate(new Date());
   document.getElementById('cal-fDataAlt').value = '';
   document.getElementById('cal-fHora').value = '20:30';
@@ -7468,6 +7510,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fModelo-wrap').style.display = 'none';
   document.getElementById('cal-edit-id').value = id;
   document.getElementById('cal-fNome').value = s.nome || '';
+  calRenderOpcoesLinha(s.linha || '');
   document.getElementById('cal-fData').value = s.data || '';
   document.getElementById('cal-fDataAlt').value = s.dataAlternativa || '';
   document.getElementById('cal-fHora').value = s.hora || '';
@@ -9137,6 +9180,7 @@ async function calSalvar() {
     dataAlternativa: document.getElementById('cal-fDataAlt').value || '',
     hora: document.getElementById('cal-fHora').value,
     tipo, lado: document.getElementById('cal-fLado').value,
+    linha: document.getElementById('cal-fLinha').value === '__nova__' ? '' : document.getElementById('cal-fLinha').value,
     endereco: document.getElementById('cal-fEndereco').value.trim(),
     descricao: document.getElementById('cal-fDesc').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
@@ -9941,39 +9985,44 @@ async function calConfirmarEspelharAno() {
   alert(`Pronto! ${criadas} sessão(ões) criada(s).` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
 }
 
-// importação única do calendário 2027 combinado com a Anna (apaga tudo que
-// já estava cadastrado pra 2027 e recria do zero com essa lista fechada) —
-// as sessões sem marca de "(sem assistência)" no nome são abertas à
-// assistência por padrão, só as 5 marcadas são fechadas
+// importação única do calendário 2027 combinado com a Anna, a partir da
+// planilha sessoes-2027.xlsx (apaga tudo que já estava cadastrado pra 2027 e
+// recria do zero com essa lista fechada). Mapeamentos da planilha pro
+// formato do site: Assistência=Aberta→Tipo=Atendimento, Fechada→Tipo=Interna
+// (a visibilidade por tipo já configurada no site cuida do resto); coluna
+// "Tipo" da planilha (a entidade: Caboclo, Exu...) virou o campo Linha;
+// Tambor=Orçado à parte (só agosto, tem verba separada) virou Confirmado;
+// Onde=Praia/Mata (os únicos diferentes de Salão) foram pro Endereço, já
+// que o campo Onde não existe mais no formulário. Confraternização e
+// Marmitas entram no calendário mas não são sessão (sem os campos extras)
 const CAL_IMPORTACAO_2027 = [
-  { data: '2027-01-16', nome: 'Confraternização' },
-  { data: '2027-01-30', nome: 'Cruzamento de Congá (sem assistência)' },
-  { data: '2027-02-13', nome: 'Caboclo e Exus — na praia' },
-  { data: '2027-02-26', nome: 'Preto Velho e Cosme' },
-  { data: '2027-03-12', nome: 'Cigano' },
-  { data: '2027-03-20', nome: 'Caboclo — Aborôs (homenagem aos pais)' },
-  { data: '2027-04-02', nome: 'Preto Velho e Cosme' },
-  { data: '2027-04-16', nome: 'Ciganos — Festa' },
-  { data: '2027-05-01', nome: 'Caboclo — Cruzamento de mata (sem assistência)' },
-  { data: '2027-05-15', nome: 'Pretos Velhos — Festa de Pretos Velhos (sem Cosme)' },
-  { data: '2027-05-28', nome: 'Ciganos' },
-  { data: '2027-06-11', nome: 'Caboclo' },
-  { data: '2027-06-25', nome: 'Cosme' },
-  { data: '2027-07-09', nome: 'Ciganos' },
-  { data: '2027-07-23', nome: 'Exu — confirmação da obrigação' },
-  { data: '2027-08-06', nome: 'Preto Velho — Almas' },
-  { data: '2027-08-09', nome: 'Firmeza dos Reinos' },
-  { data: '2027-08-14', nome: 'Corte dos Exus (sem assistência)' },
-  { data: '2027-08-21', nome: 'Ebó e Levantação' },
-  { data: '2027-08-22', nome: 'Marmitas' },
-  { data: '2027-09-10', nome: 'Ciganos' },
-  { data: '2027-09-24', nome: 'Festa dos Cosmes' },
-  { data: '2027-10-08', nome: 'Caboclos' },
-  { data: '2027-10-22', nome: 'Ciganos' },
-  { data: '2027-11-01', nome: 'Almas (sem assistência)' },
-  { data: '2027-11-15', nome: 'Xangô — homenagem às mães' },
-  { data: '2027-11-27', nome: 'Cruzamento de Cachoeira (sem assistência)' },
-  { data: '2027-12-10', nome: 'Limpeza de final de ano' },
+  { nome: 'Caboclo e Exus, na praia', data: '2027-02-19', dataAlternativa: '2027-02-20', hora: '20:30', tipo: 'Interna', lado: 'Desenvolvimento', linha: 'Desenvolvimento', endereco: 'Praia', tambor: 'confirmado' },
+  { nome: 'Cruzamento de Congá', data: '2027-02-26', dataAlternativa: '2027-02-27', hora: '08:00', tipo: 'Interna', lado: 'Umbanda', linha: 'Caboclo', marco: 'Cruz:Conga', tambor: 'nao' },
+  { nome: 'Preto Velho e Cosme', data: '2027-03-12', dataAlternativa: '2027-03-13', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Preto Velho', tambor: 'confirmado' },
+  { nome: 'Cigano', data: '2027-03-26', dataAlternativa: '2027-03-27', hora: '20:30', tipo: 'Atendimento', lado: 'Oriente', linha: 'Cigano', descricao: 'Feriadão de Páscoa (mantido)', tambor: 'confirmado' },
+  { nome: 'Desenvolvimento', data: '2027-04-09', dataAlternativa: '2027-04-10', hora: '20:30', tipo: 'Interna', lado: 'Desenvolvimento', linha: 'Desenvolvimento', tambor: 'nao' },
+  { nome: 'Exu', data: '2027-04-13', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', tambor: 'nao' },
+  { nome: 'Caboclo, Cruzamento de mata', data: '2027-04-23', dataAlternativa: '2027-04-24', hora: '08:00', tipo: 'Interna', lado: 'Umbanda', linha: 'Caboclo', marco: 'Cruz:Mata', endereco: 'Mata', tambor: 'confirmado' },
+  { nome: 'Exu', data: '2027-05-07', dataAlternativa: '2027-05-08', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', tambor: 'confirmado' },
+  { nome: 'Pretos Velhos, Festa de Pretos Velhos', data: '2027-05-21', dataAlternativa: '2027-05-22', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Preto Velho', tambor: 'confirmado' },
+  { nome: 'Caboclo, Aborôs (homenagem aos pais)', data: '2027-06-11', dataAlternativa: '2027-06-12', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Caboclo', tambor: 'confirmado' },
+  { nome: 'Exu', data: '2027-06-15', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', tambor: 'nao' },
+  { nome: 'Ciganos', data: '2027-06-25', dataAlternativa: '2027-06-26', hora: '20:30', tipo: 'Atendimento', lado: 'Oriente', linha: 'Cigano', tambor: 'confirmado' },
+  { nome: 'Exu', data: '2027-07-09', dataAlternativa: '2027-07-10', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', tambor: 'confirmado' },
+  { nome: 'Preto Velho, Almas', data: '2027-08-06', dataAlternativa: '2027-08-07', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Preto Velho', descricao: 'Tambor de agosto tem orçamento separado', tambor: 'confirmado' },
+  { nome: 'Firmeza dos Reinos', data: '2027-08-09', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', descricao: 'Tambor de agosto tem orçamento separado', tambor: 'confirmado' },
+  { nome: 'Corte dos Exus', data: '2027-08-13', dataAlternativa: '2027-08-14', hora: '20:30', tipo: 'Interna', lado: 'Quimbanda', linha: 'Exu', marco: 'Corte', descricao: 'Tambor de agosto tem orçamento separado', tambor: 'confirmado' },
+  { nome: 'Elebó e Levantação', data: '2027-08-20', dataAlternativa: '2027-08-21', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', descricao: 'Tambor de agosto tem orçamento separado', tambor: 'confirmado' },
+  { nome: 'Ciganos', data: '2027-09-10', dataAlternativa: '2027-09-11', hora: '20:30', tipo: 'Atendimento', lado: 'Oriente', linha: 'Cigano', tambor: 'confirmado' },
+  { nome: 'Festa dos Cosmes', data: '2027-09-24', dataAlternativa: '2027-09-25', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Cosme', tambor: 'confirmado' },
+  { nome: 'Caboclos (possível cruzamento)', data: '2027-10-08', dataAlternativa: '2027-10-09', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Caboclo', descricao: 'Se virar cruzamento: 08:00, fechada, com Marco', tambor: 'confirmado' },
+  { nome: 'Exu', data: '2027-10-19', hora: '20:30', tipo: 'Atendimento', lado: 'Quimbanda', linha: 'Exu', tambor: 'nao' },
+  { nome: 'Desenvolvimento', data: '2027-10-22', dataAlternativa: '2027-10-23', hora: '20:30', tipo: 'Interna', lado: 'Desenvolvimento', linha: 'Desenvolvimento', tambor: 'nao' },
+  { nome: 'Almas', data: '2027-11-01', hora: '20:30', tipo: 'Interna', lado: 'Quimbanda', linha: 'Exu', tambor: 'nao' },
+  { nome: 'Xangô, homenagem às mães', data: '2027-11-15', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Caboclo', descricao: 'Feriado (de propósito)', tambor: 'confirmado' },
+  { nome: 'Preto Velho, Limpeza de final de ano', data: '2027-11-26', dataAlternativa: '2027-11-27', hora: '20:30', tipo: 'Atendimento', lado: 'Umbanda', linha: 'Preto Velho', tambor: 'confirmado' },
+  { nome: 'Confraternização', data: '2027-01-16' },
+  { nome: 'Marmitas', data: '2027-08-22' },
 ];
 
 async function calImportarCalendario2027() {
@@ -10004,36 +10053,6 @@ async function calImportarCalendario2027() {
   alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : ''));
 }
 window.calImportarCalendario2027 = calImportarCalendario2027;
-
-// adição única das sessões de Exu que faltavam em 2027 — só cria, não mexe
-// em nada que já estava cadastrado (sem assistência não foi mencionada
-// pra essas datas, então segue o padrão combinado: aberta à assistência)
-const CAL_ADICAO_EXU_2027 = [
-  { data: '2027-03-09', nome: 'Exu' },
-  { data: '2027-04-06', nome: 'Exu' },
-  { data: '2027-05-11', nome: 'Exu' },
-  { data: '2027-06-08', nome: 'Exu' },
-  { data: '2027-09-07', nome: 'Exu' },
-  { data: '2027-10-05', nome: 'Exu' },
-  { data: '2027-12-07', nome: 'Exu' },
-];
-
-async function calAdicionarExu2027() {
-  if (!confirm(`Isso vai criar ${CAL_ADICAO_EXU_2027.length} sessões de Exu em 2027, sem apagar nada que já existe. Continuar?`)) return;
-
-  let criadas = 0, erros = 0;
-  for (const s of CAL_ADICAO_EXU_2027) {
-    try {
-      const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(s) });
-      if (res.ok) criadas++; else erros++;
-    } catch (e) { erros++; }
-  }
-
-  await calLoad();
-  if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
-  alert(`Pronto! ${criadas} sessão(ões) de Exu criada(s).` + (erros ? ` ${erros} falharam — tenta de novo.` : ''));
-}
-window.calAdicionarExu2027 = calAdicionarExu2027;
 
 // cor por entidade no calendário impresso — a primeira que bater com o
 // nome da sessão vence; o que não casa com nenhuma usa a cor padrão (rosa)

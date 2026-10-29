@@ -66,6 +66,9 @@ export async function onRequest(context) {
         hora: body.hora || '',
         tipo: body.tipo || '',
         lado: body.lado || '',
+        // linha de trabalho (Caboclo, Preto Velho, Exu, Cigano...) —
+        // selecionável no formulário, lista gerenciada em /api/sessoes-linhas
+        linha: body.linha || '',
         onde: body.onde || '',
         endereco: body.endereco || '',
         descricao: body.descricao || '',
