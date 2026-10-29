@@ -4292,21 +4292,25 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <option value="Reuniao">Reunião</option>
       </select>
     </div>
-    <div style="margin-bottom:12px"><label class="form-label">Marco de Corte/Cruzamento (opcional)</label>
-      <select class="form-input" id="cal-fMarco" onchange="calToggleMarcoOutro(this.value)" style="margin-bottom:0">
+    <div style="margin-bottom:12px"><label class="form-label">Marco de Obrigações/Cruzamento (opcional)</label>
+      <select class="form-input" id="cal-fMarco" style="margin-bottom:0">
         <option value="">— Nenhum —</option>
         <option value="Corte">Corte</option>
+        <option value="Obrigacao">Obrigação</option>
+        <option value="Elebo">Elebó</option>
         <option value="Cruz:Conga">Cruzamento — Conga</option>
         <option value="Cruz:Mata">Cruzamento — Mata</option>
         <option value="Cruz:Praia">Cruzamento — Praia</option>
-        <option value="Cruz:Rio/Cachoeira">Cruzamento — Rio/Cachoeira</option>
+        <option value="Cruz:Rio">Cruzamento — Rio</option>
+        <option value="Cruz:Cachoeira">Cruzamento — Cachoeira</option>
         <option value="Cruz:Pedreira">Cruzamento — Pedreira</option>
-        <option value="Cruz:Encruzilhada">Cruzamento — Encruzilhada</option>
-        <option value="Cruz:Outro">Cruzamento — Outro</option>
+        <option value="Firmeza:Cruzeiro">Firmeza de Reinos — Cruzeiro</option>
+        <option value="Firmeza:CalungaPequena">Firmeza de Reinos — Calunga Pequena</option>
+        <option value="Firmeza:CalungaMaior">Firmeza de Reinos — Calunga Maior</option>
+        <option value="Firmeza:Mato">Firmeza de Reinos — Mato</option>
       </select>
-      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Marca essa data pra entrar na lista de Pendências de Corte/Cruzamento</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Corte e Cruzamento entram no catálogo de datas da Minha História; Obrigação, Elebó e Firmeza de Reinos por enquanto só organizam o calendário da casa (a integração deles com a Minha História vem numa etapa seguinte)</div>
     </div>
-    <div id="cal-fMarcoOutro-wrap" style="display:none;margin-bottom:12px"><label class="form-label">Qual cruzamento?</label><input type="text" class="form-input" id="cal-fMarcoOutro" placeholder="ex: Mikael"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
       <div><label class="form-label">Lado</label>
         <select class="form-input" id="cal-fLado" style="margin-bottom:0">
@@ -7425,11 +7429,6 @@ function calToggleOndeOutro(valor) {
   if (wrap) wrap.style.display = valor === 'Outro' ? '' : 'none';
 }
 
-function calToggleMarcoOutro(valor) {
-  const wrap = document.getElementById('cal-fMarcoOutro-wrap');
-  if (wrap) wrap.style.display = valor === 'Cruz:Outro' ? '' : 'none';
-}
-
 async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
@@ -7440,8 +7439,6 @@ async function calOpenModal() {
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
   document.getElementById('cal-fMarco').value = '';
-  document.getElementById('cal-fMarcoOutro').value = '';
-  calToggleMarcoOutro('');
   // "Salão" é onde a imensa maioria das sessões acontece — deixa pré-marcado
   // pra só precisar trocar quando for diferente
   document.getElementById('cal-fOnde').value = 'Salão';
@@ -7498,8 +7495,6 @@ function calOpenEdit(id) {
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
   document.getElementById('cal-fMarco').value = s.marco || '';
-  document.getElementById('cal-fMarcoOutro').value = s.marcoOutroNome || '';
-  calToggleMarcoOutro(s.marco || '');
   // sessões antigas (de antes desse campo existir) não tem "onde" salvo —
   // trata como "Salão" também, já que é onde a maioria acontece. Se o valor
   // salvo não bate com nenhuma opção fixa, trata como "Outro" com o texto customizado
@@ -9176,7 +9171,7 @@ async function calSalvar() {
     tambor: document.getElementById('cal-fTambor').value,
     driveLink: document.getElementById('cal-fDriveLink').value.trim(),
     marco,
-    marcoOutroNome: marco === 'Cruz:Outro' ? document.getElementById('cal-fMarcoOutro').value.trim() : '',
+    marcoOutroNome: '',
   };
   const editId = document.getElementById('cal-edit-id').value;
   if (editId) payload.id = editId;
