@@ -3437,7 +3437,20 @@ body{padding-bottom:64px}
       html += '.saldo-box .label{font-family:"Cinzel",serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,30,50,.5);}';
       html += '.saldo-box .valor{font-family:"Crimson Pro",serif;font-size:1.2rem;font-weight:600;}';
       html += '.barra-cat{background:rgba(196,57,107,.08);border-radius:3px;height:6px;overflow:hidden;margin-top:3px;}';
-      html += '.barra-cat-fill{height:100%;background:var(--gold,#8c6000);background:#c4396b;}';
+      html += '.barra-cat-fill{height:100%;background:#c4396b;}';
+      html += '.mes-card{background:#fff;border:1px solid rgba(196,57,107,.12);border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 10px rgba(180,60,90,.06);page-break-inside:avoid;}';
+      html += '.mes-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px;}';
+      html += '.mes-label{font-family:"Cinzel",serif;font-size:11px;font-weight:700;letter-spacing:.06em;color:#2a1a22;}';
+      html += '.mes-saldo{font-family:"Crimson Pro",serif;font-size:1.05rem;font-weight:600;}';
+      html += '.mes-stats{display:flex;gap:8px;margin-bottom:9px;}';
+      html += '.mes-stat{flex:1;border-radius:6px;padding:7px 9px;}';
+      html += '.mes-stat-label{font-family:"DM Sans",sans-serif;font-size:.62rem;}';
+      html += '.mes-stat-valor{font-family:"Crimson Pro",serif;font-size:.92rem;font-weight:600;}';
+      html += '.mes-stat-sub{font-family:"DM Sans",sans-serif;font-size:.6rem;color:rgba(80,30,50,.5);}';
+      html += '.mes-media{font-family:"DM Sans",sans-serif;font-size:.72rem;color:rgba(80,30,50,.5);margin-bottom:6px;}';
+      html += '.mes-barra{background:rgba(196,57,107,.06);border-radius:4px;height:4px;overflow:hidden;margin-bottom:6px;}';
+      html += '.mes-barra-fill{height:100%;border-radius:4px;}';
+      html += '.mes-faltam{font-family:"DM Sans",sans-serif;font-size:.68rem;color:rgba(80,30,50,.5);}';
       html += '@media print{body{padding:8px;}button{display:none!important;}}';
       html += '</style></head><body>';
 
@@ -3452,19 +3465,24 @@ body{padding-bottom:64px}
       html += '</div>';
 
       html += '<h2>Mês a mês</h2>';
-      html += '<table><tr><th>Mês</th><th style="text-align:right">Entradas</th><th style="text-align:right">Gastos</th><th style="text-align:right">Saldo</th><th style="text-align:center">Pagantes</th><th style="text-align:center">Cobertura</th><th style="text-align:right">Média mens.</th><th>Faltaram</th></tr>';
-      dados.linhas.forEach(function(l){
-        html += '<tr><td>'+l.label+'</td><td class="verde">'+fmt(l.entradas)+'</td><td class="vermelho">'+fmt(l.gastos)+'</td>'
-          + '<td class="val" style="color:'+(l.saldo>=0?'#2a7a60':'#b84040')+'">'+fmt(l.saldo)+'</td>'
-          + '<td style="text-align:center">'+l.pctPag+'% ('+l.nPag+'/'+l.nTot+')</td>'
-          + '<td style="text-align:center">'+l.pctCob+'%</td>'
-          + '<td class="val">'+(l.nPag>0?fmt(l.mediaMensalidade):'—')+'</td>'
-          + '<td class="dim">'+(l.naoPag.length?blNomesLista(l.naoPag):'✓ todas pagaram')+'</td></tr>';
+      dados.linhas.slice().reverse().forEach(function(l){
+        var corSaldo = l.saldo>=0?'#2a7a60':'#b84040';
+        html += '<div class="mes-card">';
+        html += '<div class="mes-top"><span class="mes-label">'+l.label+'</span><span class="mes-saldo" style="color:'+corSaldo+'">'+fmt(l.saldo)+(l.saldo<0?' 🕯️':'')+'</span></div>';
+        html += '<div class="mes-stats">';
+        html += '<div class="mes-stat" style="background:#e8f4f0;"><div class="mes-stat-label" style="color:#2a7a60;">↑ Entradas</div><div class="mes-stat-valor" style="color:#2a7a60;">'+fmt(l.entradas)+'</div></div>';
+        html += '<div class="mes-stat" style="background:rgba(184,64,64,.08);"><div class="mes-stat-label" style="color:#b84040;">↓ Gastos</div><div class="mes-stat-valor" style="color:#b84040;">'+fmt(l.gastos)+'</div></div>';
+        html += '<div class="mes-stat" style="background:rgba(196,57,107,.05);text-align:center;"><div class="mes-stat-label" style="color:rgba(80,30,50,.5);">👥 Pag.</div><div class="mes-stat-valor" style="color:'+(l.nPag===l.nTot?'#2a7a60':'#c4396b')+';">'+l.pctPag+'%</div><div class="mes-stat-sub">'+l.nPag+'/'+l.nTot+'</div></div>';
+        html += '<div class="mes-stat" style="background:rgba(196,57,107,.05);text-align:center;"><div class="mes-stat-label" style="color:rgba(80,30,50,.5);">💰 Cob.</div><div class="mes-stat-valor" style="color:'+(l.pctCob>=100?'#2a7a60':'#c4396b')+';">'+l.pctCob+'%</div></div>';
+        html += '</div>';
+        if (l.nPag > 0) html += '<div class="mes-media">Média por mensalidade: <strong style="color:#2a1a22;">'+fmt(l.mediaMensalidade)+'</strong></div>';
+        html += '<div class="mes-barra"><div class="mes-barra-fill" style="width:'+Math.min(l.pctCob,100)+'%;background:'+(l.pctCob>=100?'#2a7a60':'#c4396b')+';"></div></div>';
+        html += '<div class="mes-faltam" style="'+(l.naoPag.length?'':'color:#2a7a60;')+'">'+(l.naoPag.length?'Faltam: '+blNomesLista(l.naoPag):'✓ Todas pagaram')+'</div>';
+        html += '</div>';
       });
-      html += '<tr class="total-row"><td>TOTAL '+ano+'</td><td class="verde" style="text-align:right">'+fmt(dados.totalEntradas)+'</td><td class="vermelho" style="text-align:right">'+fmt(dados.totalGastos)+'</td>'
-        + '<td style="text-align:right;color:'+(dados.saldoAno>=0?'#2a7a60':'#b84040')+'">'+fmt(dados.saldoAno)+'</td><td></td><td></td>'
-        + '<td style="text-align:right">'+fmt(dados.mediaAnual)+'</td><td></td></tr>';
-      html += '</table>';
+      html += '<table style="margin-top:4px;"><tr class="total-row"><td>TOTAL '+ano+'</td><td class="verde" style="text-align:right">'+fmt(dados.totalEntradas)+'</td><td class="vermelho" style="text-align:right">'+fmt(dados.totalGastos)+'</td>'
+        + '<td style="text-align:right;color:'+(dados.saldoAno>=0?'#2a7a60':'#b84040')+'">'+fmt(dados.saldoAno)+'</td>'
+        + '<td style="text-align:right">Média: '+fmt(dados.mediaAnual)+'</td></tr></table>';
 
       html += '<h2>Gastos por categoria no ano</h2>';
       html += '<table><tr><th>Categoria</th><th style="text-align:right">Total</th><th style="text-align:right">% do ano</th><th></th></tr>';
