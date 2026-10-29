@@ -90,6 +90,8 @@ a { color: inherit; }
   font-family: 'Cinzel', serif; font-size: .68rem; letter-spacing: .05em; font-weight: 700; padding: 6px 14px; cursor: pointer; }
 .ano-btn.active { background: #fff; color: var(--gold); }
 .comparar-btn { margin-left: 4px; border-style: dashed; }
+.previsao-btn { margin-left: 0; }
+.previsao-btn.active { background: #c9a227; color: #fff; }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: 18px 14px 0; }
 
@@ -302,6 +304,7 @@ var MEMBROS_ISENTOS = {};
 var lancamentos = [];
 var anoAtivo = null;
 var modoComparativo = false;
+var modoPrevisao = false;
 var charts = {};
 
 function today() { return new Date().toISOString().split('T')[0]; }
@@ -476,6 +479,55 @@ function calcularGastosPorCategoriaAno(ano) {
   return { categorias: categorias, total: total };
 }
 
+// ── PREVISÃO 2027 ────────────────────────────────────────────────
+// pega o ano mais recente com lançamento e usa o padrão mensal dele como
+// base; se tiver um ano anterior pra comparar, aplica a variação entre os
+// dois (ano mais recente ÷ ano anterior) sobre essa base — assim a previsão
+// carrega a sazonalidade do ano mais recente e a tendência de crescimento
+// (ou queda) entre os dois últimos anos. Sem ano anterior pra comparar,
+// repete o padrão do ano mais recente sem nenhum ajuste de tendência.
+function calcularPrevisao2027() {
+  var anosComDados = anosDisponiveis().slice().reverse()
+    .filter(function(a){ return montarDadosExtratoAnual(a).linhas.length > 0; });
+  if (!anosComDados.length) return null;
+
+  var anoRecente = anosComDados[anosComDados.length - 1];
+  var anoBase = anosComDados.length >= 2 ? anosComDados[anosComDados.length - 2] : null;
+  var dadosRecente = montarDadosExtratoAnual(anoRecente);
+  var dadosBase = anoBase ? montarDadosExtratoAnual(anoBase) : null;
+
+  var fatorEntradas = (dadosBase && dadosBase.totalEntradas > 0) ? dadosRecente.totalEntradas / dadosBase.totalEntradas : 1;
+  var fatorGastos = (dadosBase && dadosBase.totalGastos > 0) ? dadosRecente.totalGastos / dadosBase.totalGastos : 1;
+
+  var linhas = dadosRecente.linhas.map(function(l){
+    var entradas = Math.round(l.entradas * fatorEntradas * 100) / 100;
+    var gastos = Math.round(l.gastos * fatorGastos * 100) / 100;
+    return {
+      mes: l.mes, label: MESES_NOMES_FULL[l.mes-1] + '/2027 (previsão)',
+      entradas: entradas, gastos: gastos, saldo: Math.round((entradas - gastos) * 100) / 100,
+      nTot: l.nTot, nPag: l.nPag,
+      pctPag: l.pctPag,
+      pctCob: gastos > 0 ? Math.round(entradas / gastos * 100) : (entradas > 0 ? 100 : 0)
+    };
+  });
+  var totalEntradas = linhas.reduce(function(s,l){ return s + l.entradas; }, 0);
+  var totalGastos = linhas.reduce(function(s,l){ return s + l.gastos; }, 0);
+
+  var catRecente = calcularGastosPorCategoriaAno(anoRecente);
+  var catBase = anoBase ? calcularGastosPorCategoriaAno(anoBase) : null;
+  var categorias = catRecente.categorias.map(function(c){
+    var base = catBase ? catBase.categorias.find(function(x){ return x.conta === c.conta; }) : null;
+    var fator = (base && base.total > 0) ? c.total / base.total : 1;
+    return { conta: c.conta, total: Math.round(c.total * fator * 100) / 100 };
+  });
+
+  return {
+    ano: '2027', previsto: true, anoRecenteUsado: anoRecente, anoBaseUsado: anoBase,
+    dados: { linhas: linhas, totalEntradas: totalEntradas, totalGastos: totalGastos, saldoAno: totalEntradas - totalGastos },
+    categorias: categorias
+  };
+}
+
 // ── ANOS DISPONÍVEIS / LINK DINÂMICO (?ano=2026) ──────────────────
 function anosDisponiveis() {
   var meses = calcularMesesPanorama();
@@ -503,9 +555,11 @@ function escolherAnoInicial() {
 function irParaAno(ano) {
   anoAtivo = ano;
   modoComparativo = false;
+  modoPrevisao = false;
   var params = new URLSearchParams(window.location.search);
   params.set('ano', ano);
   params.delete('comparar');
+  params.delete('previsao');
   history.replaceState(null, '', window.location.pathname + '?' + params.toString());
   renderRelatorio();
 }
@@ -513,23 +567,42 @@ window.irParaAno = irParaAno;
 
 function toggleComparativo() {
   modoComparativo = !modoComparativo;
+  if (modoComparativo) modoPrevisao = false;
   var params = new URLSearchParams(window.location.search);
   if (modoComparativo) params.set('comparar', '1'); else params.delete('comparar');
+  params.delete('previsao');
   history.replaceState(null, '', window.location.pathname + '?' + params.toString());
   renderRelatorio();
 }
 window.toggleComparativo = toggleComparativo;
+
+function togglePrevisao() {
+  modoPrevisao = !modoPrevisao;
+  if (modoPrevisao) modoComparativo = false;
+  var params = new URLSearchParams(window.location.search);
+  if (modoPrevisao) params.set('previsao', '1'); else params.delete('previsao');
+  params.delete('comparar');
+  history.replaceState(null, '', window.location.pathname + '?' + params.toString());
+  renderRelatorio();
+}
+window.togglePrevisao = togglePrevisao;
 
 // ── RENDER ─────────────────────────────────────────────────────────
 function renderRelatorio() {
   atualizarBotaoNomesRA();
   var anos = anosDisponiveis();
   document.getElementById('ano-bar').innerHTML = anos.map(function(a){
-    return '<button class="ano-btn' + (!modoComparativo && a===anoAtivo?' active':'') + '" onclick="irParaAno(\'' + a + '\')">' + a + '</button>';
-  }).join('') + '<button class="ano-btn comparar-btn' + (modoComparativo?' active':'') + '" onclick="toggleComparativo()">📊 Comparar anos</button>';
+    return '<button class="ano-btn' + (!modoComparativo && !modoPrevisao && a===anoAtivo?' active':'') + '" onclick="irParaAno(\'' + a + '\')">' + a + '</button>';
+  }).join('')
+    + '<button class="ano-btn comparar-btn' + (modoComparativo?' active':'') + '" onclick="toggleComparativo()">📊 Comparar anos</button>'
+    + '<button class="ano-btn comparar-btn previsao-btn' + (modoPrevisao?' active':'') + '" onclick="togglePrevisao()">🔮 Previsão 2027</button>';
 
   if (modoComparativo) {
-    renderComparativo();
+    renderComparativo(false);
+    return;
+  }
+  if (modoPrevisao) {
+    renderComparativo(true);
     return;
   }
 
@@ -616,19 +689,37 @@ function valorAnoMes(dados, mes, campo) {
   return l ? l[campo] : null;
 }
 
-function renderComparativo() {
+function renderComparativo(comPrevisao) {
   var anos = anosDisponiveis().slice().reverse(); // ordem crescente, do mais antigo pro mais novo
   var conteudo = document.getElementById('conteudo');
   var porAno = anos.map(function(ano){ return { ano: ano, dados: montarDadosExtratoAnual(ano) }; })
     .filter(function(x){ return x.dados.linhas.length > 0; });
 
-  if (porAno.length < 2) {
+  if (!comPrevisao && porAno.length < 2) {
     conteudo.innerHTML = '<div class="empty-ano">Precisa de pelo menos 2 anos com lançamento pra comparar.</div>';
     destruirGraficos();
     return;
   }
+  if (comPrevisao && !porAno.length) {
+    conteudo.innerHTML = '<div class="empty-ano">Precisa de pelo menos 1 ano com lançamento pra prever 2027.</div>';
+    destruirGraficos();
+    return;
+  }
+
+  var previsao = null;
+  if (comPrevisao) {
+    previsao = calcularPrevisao2027();
+    if (previsao) porAno.push(previsao);
+  }
 
   var html = '';
+  if (previsao) {
+    html += '<div class="chart-hint" style="margin-bottom:14px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
+      + (previsao.anoBaseUsado
+          ? 'aplica a variação entre ' + previsao.anoBaseUsado + ' e ' + previsao.anoRecenteUsado + ' sobre o padrão mensal de ' + previsao.anoRecenteUsado
+          : 'repete o padrão de ' + previsao.anoRecenteUsado + ', sem nenhum outro ano pra comparar a tendência')
+      + '. Trate como estimativa.</div>';
+  }
   html += '<div class="sec-title">Totais do ano — comparativo</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-totais"></canvas></div></div>';
 
@@ -668,10 +759,11 @@ function montarGraficosComparativo(porAno) {
 
   function linhaPorAno(campo) {
     return porAno.map(function(x, i){
+      var cor = x.previsto ? COR_PREVISAO : corComparativo(i);
       return {
-        label: String(x.ano),
+        label: String(x.ano) + (x.previsto ? ' (previsão)' : ''),
         data: MESES_LABEL_CURTO.map(function(_, idx){ return valorAnoMes(x.dados, idx + 1, campo); }),
-        borderColor: corComparativo(i), backgroundColor: corComparativo(i), fill: false, tension: .3,
+        borderColor: cor, backgroundColor: cor, fill: false, tension: .3,
         spanGaps: true, pointRadius: 3
       };
     });
@@ -682,7 +774,7 @@ function montarGraficosComparativo(porAno) {
     charts.cmpTotais = new Chart(ctxTotais, {
       type: 'bar',
       data: {
-        labels: porAno.map(function(x){ return String(x.ano); }),
+        labels: porAno.map(function(x){ return String(x.ano) + (x.previsto ? ' (previsão)' : ''); }),
         datasets: [
           { label: 'Entradas', data: porAno.map(function(x){ return x.dados.totalEntradas; }), backgroundColor: '#2a7a60', borderRadius: 4 },
           { label: 'Gastos', data: porAno.map(function(x){ return x.dados.totalGastos; }), backgroundColor: '#b84040', borderRadius: 4 },
@@ -771,8 +863,10 @@ function montarGraficosComparativo(porAno) {
   var ctxCategorias = document.getElementById('chart-cmp-categorias');
   if (ctxCategorias) {
     // gasto médio por mês, por categoria — pra cada ano, divide o total da
-    // categoria pelos meses em que teve movimento naquele ano
-    var catsPorAno = porAno.map(function(x){ return calcularGastosPorCategoriaAno(x.ano); });
+    // categoria pelos meses em que teve movimento naquele ano. A entrada de
+    // previsão já vem com as categorias calculadas (não dá pra buscar nos
+    // lançamentos reais, que não existem pra 2027)
+    var catsPorAno = porAno.map(function(x){ return x.categorias ? { categorias: x.categorias } : calcularGastosPorCategoriaAno(x.ano); });
     var todasCategorias = {};
     catsPorAno.forEach(function(c){ c.categorias.forEach(function(cat){ todasCategorias[cat.conta] = true; }); });
     var totalPorCategoria = {};
@@ -788,12 +882,12 @@ function montarGraficosComparativo(porAno) {
       var catData = catsPorAno[i];
       var nMeses = x.dados.linhas.length || 1;
       return {
-        label: String(x.ano),
+        label: String(x.ano) + (x.previsto ? ' (previsão)' : ''),
         data: categorias.map(function(cat){
           var f = catData.categorias.find(function(c){ return c.conta === cat; });
           return f ? Math.round((f.total / nMeses) * 100) / 100 : 0;
         }),
-        backgroundColor: corComparativo(i), borderRadius: 4
+        backgroundColor: x.previsto ? COR_PREVISAO : corComparativo(i), borderRadius: 4
       };
     });
 
@@ -819,6 +913,10 @@ function corGrafico(i) { return PALETA_GRAFICO[i % PALETA_GRAFICO.length]; }
 // mais comum), então aqui a ordem prioriza o contraste entre as primeiras cores
 var PALETA_COMPARATIVO = ['#c4396b','#2a7a60','#f2a541','#1f7a8c','#6a4c93','#8c5a00','#b84040','#3a9a78'];
 function corComparativo(i) { return PALETA_COMPARATIVO[i % PALETA_COMPARATIVO.length]; }
+
+// cor fixa da previsão 2027, sempre dourada — não entra no ciclo da paleta
+// dos anos reais, pra ficar claro que é uma estimativa, não dado real
+var COR_PREVISAO = '#c9a227';
 
 function destruirGraficos() {
   Object.keys(charts).forEach(function(k){ try { charts[k].destroy(); } catch(e){} });
@@ -1172,6 +1270,7 @@ function carregarDados() {
       lancamentos = Array.isArray(dados) ? dados : [];
       anoAtivo = escolherAnoInicial();
       modoComparativo = new URLSearchParams(window.location.search).get('comparar') === '1';
+      modoPrevisao = new URLSearchParams(window.location.search).get('previsao') === '1';
       document.getElementById('tela-carregando').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       renderRelatorio();
