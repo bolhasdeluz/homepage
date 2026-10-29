@@ -515,6 +515,9 @@ function renderRelatorio() {
   html += '<div class="sec-title">Saldo ao longo do ano</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-saldo"></canvas></div></div>';
 
+  html += '<div class="sec-title">Membros ativos ao longo do ano — clique num ponto pra ver quem entrou/saiu</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-membros"></canvas></div></div>';
+
   html += '<div class="sec-title">% de pagantes por mês — clique numa barra pra ver quem faltou</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-pagantes"></canvas></div></div>';
 
@@ -572,7 +575,7 @@ function montarGraficos(dados, cat) {
   destruirGraficos();
   if (typeof Chart === 'undefined') {
     // CDN do Chart.js não carregou (ex: sem internet) — avisa em vez de deixar a caixa em branco
-    ['chart-barras', 'chart-saldo', 'chart-pagantes', 'chart-cobertura', 'chart-categoria'].forEach(function(id){
+    ['chart-barras', 'chart-saldo', 'chart-membros', 'chart-pagantes', 'chart-cobertura', 'chart-categoria'].forEach(function(id){
       var cv = document.getElementById(id);
       if (cv && cv.parentElement) cv.parentElement.innerHTML = '<div class="chart-erro">Não consegui carregar os gráficos agora. Atualize a página pra tentar de novo.</div>';
     });
@@ -642,6 +645,58 @@ function montarGraficos(dados, cat) {
         },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return 'Saldo: ' + fmt(c.parsed.y); } } } },
         scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxMembros = document.getElementById('chart-membros');
+  if (ctxMembros) {
+    // quem entrou/saiu em cada mês, pra marcar o ponto e dar pra clicar e ver
+    var movimentoPorMes = linhasOrdem.map(function(l){
+      var ref = anoAtivo + '-' + String(l.mes).padStart(2,'0');
+      var entraram = MEMBROS_TODOS.filter(function(m){ return MEMBROS_ENTRADA[m] === ref; });
+      var sairam = MEMBROS_TODOS.filter(function(m){ return MEMBROS_SAIDA[m] === ref; });
+      return { entraram: entraram, sairam: sairam };
+    });
+    charts.membros = new Chart(ctxMembros, {
+      type: 'line',
+      data: {
+        labels: labelsCurtos,
+        datasets: [{
+          label: 'Membros ativos',
+          data: linhasOrdem.map(function(l){ return l.nTot; }),
+          borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)', fill: true, tension: .3,
+          pointRadius: movimentoPorMes.map(function(m){ return (m.entraram.length || m.sairam.length) ? 6 : 3; }),
+          pointBackgroundColor: movimentoPorMes.map(function(m){
+            if (m.entraram.length && m.sairam.length) return '#8c5a00';
+            if (m.entraram.length) return '#2a7a60';
+            if (m.sairam.length) return '#b84040';
+            return '#c4396b';
+          })
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onClick: function(evt, elems) {
+          if (!elems.length) return;
+          var l = linhasOrdem[elems[0].index];
+          if (l) detalheMembrosMes(l.mes);
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){
+            var m = movimentoPorMes[c.dataIndex];
+            var txt = c.parsed.y + ' membro(s) ativo(s)';
+            if (m.entraram.length) txt += ' · entrou: ' + m.entraram.join(', ');
+            if (m.sairam.length) txt += ' · saiu: ' + m.sairam.join(', ');
+            return txt;
+          } } }
+        },
+        scales: {
+          y: { min: 0, ticks: { stepSize: 1, font: { size: 10 } } },
+          x: { ticks: { font: { size: 10 } } }
+        }
       }
     });
   }
@@ -808,6 +863,27 @@ function detalheFaltamMes(mes) {
   abrirDetalhe('Faltam pagar — ' + label, linha.naoPag.length ? (linha.naoPag.length + ' pessoa(s) ainda não pagaram esse mês') : 'Todas pagaram esse mês ✓', itens);
 }
 window.detalheFaltamMes = detalheFaltamMes;
+
+function detalheMembrosMes(mes) {
+  var label = MESES_NOMES_FULL[mes-1] + '/' + anoAtivo;
+  var ref = anoAtivo + '-' + String(mes).padStart(2,'0');
+  var dados = montarDadosExtratoAnual(anoAtivo);
+  var linha = dados.linhas.find(function(l){ return l.mes === mes; });
+  if (!linha) return;
+  if (blNomesOcultos()) {
+    abrirDetalhe('Membros ativos — ' + label, linha.nTot + ' membro(s) ativo(s) esse mês. Nomes ocultos no momento — clique em "👁 Mostrar nomes" no topo pra ver quem entrou/saiu.', []);
+    return;
+  }
+  var entraram = MEMBROS_TODOS.filter(function(m){ return MEMBROS_ENTRADA[m] === ref; });
+  var sairam = MEMBROS_TODOS.filter(function(m){ return MEMBROS_SAIDA[m] === ref; });
+  var itens = [];
+  entraram.forEach(function(nome){ itens.push({ label: nome, valor: '🟢 entrou', cor: 'var(--green)' }); });
+  sairam.forEach(function(nome){ itens.push({ label: nome, valor: '🔴 saiu', cor: 'var(--red)' }); });
+  var nota = linha.nTot + ' membro(s) ativo(s) esse mês';
+  if (!itens.length) nota += ' · nenhuma entrada ou saída';
+  abrirDetalhe('Membros ativos — ' + label, nota, itens);
+}
+window.detalheMembrosMes = detalheMembrosMes;
 
 function detalheCategoria(conta) {
   var itens = lancamentos.filter(function(l) {
