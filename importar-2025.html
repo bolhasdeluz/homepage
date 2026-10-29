@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar histórico 2025 — Bolhas de Luz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c4396b; --gold-light: #e8688a; --gold-dim: rgba(196,57,107,.08);
+  --bg: #fff5f7; --surface: #ffffff; --border: rgba(196,57,107,.15);
+  --text: #2a1a22; --text-dim: rgba(80,30,50,.5);
+  --red: #b84040; --red-dim: rgba(184,64,64,.08);
+  --green: #2a7a60; --green-light: #3a9a78; --green-dim: #e8f4f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; padding-bottom: 40px; }
+a { color: var(--gold); }
+.header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); padding: 18px 20px 16px; }
+.header-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: #fff; }
+.header-sub { font-family: 'DM Sans', sans-serif; font-size: .72rem; color: rgba(255,255,255,.78); }
+.wrap { max-width: 640px; margin: 0 auto; padding: 18px 14px 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(180,60,90,.06); }
+.sec-title { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px; }
+.aviso { font-family: 'Crimson Pro', serif; font-style: italic; color: var(--text-dim); font-size: .88rem; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid rgba(196,57,107,.08); font-size: .82rem; }
+th { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); }
+.btn { background: var(--gold); border: none; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: .08em; font-weight: 700; padding: 11px 22px; cursor: pointer; }
+.btn:hover { background: var(--gold-light); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.msg-ok { background: var(--green-dim); color: var(--green); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.msg-erro { background: var(--red-dim); color: var(--red); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.bl-overlay{display:flex;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.bl-overlay.off{display:none}
+.bl-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:36px 32px;width:100%;max-width:360px;text-align:center}
+.bl-modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.bl-modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.bl-btn-rosa{background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;font-weight:700;padding:11px 24px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+</style>
+</head>
+<body>
+
+<div id="login-overlay" class="bl-overlay">
+  <div class="bl-modal">
+    <div class="bl-modal-title">Área da Mãe da Casa</div>
+    <div class="bl-modal-sub">Essa ferramenta é só pra importar o histórico 2025 na Tesouraria</div>
+    <button class="bl-btn-rosa" onclick="window.loginGoogle && window.loginGoogle()">Entrar com Google</button>
+    <p id="login-msg" style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:14px"></p>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <div class="header">
+    <div class="header-title">🗂️ Importar histórico 2025</div>
+    <div class="header-sub">Terreiro Bolhas de Luz · Tesouraria</div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <div class="sec-title">O que isso faz</div>
+      <div class="aviso">
+        Lança no sistema, como gastos e entradas de verdade do ano de 2025, os valores da sua planilha
+        (Luz, Água, Alarme Serviço, Internet, Aluguel e Tambor mês a mês, mais as entradas "Corrente"
+        — mensalidades recebidas — e "Anna" — o que você cobriu do próprio bolso). Agosto ficou de fora
+        porque não tinha valor na planilha. Depois de importar, esses meses aparecem normalmente na
+        Tesouraria e no Relatório Anual, ano 2025.
+      </div>
+    </div>
+    <div class="card" id="preview-card">
+      <div class="sec-title">Prévia</div>
+      <div id="preview-conteudo" class="aviso">Carregando o que já existe no sistema…</div>
+    </div>
+    <div class="card" id="acao-card" style="display:none;">
+      <button class="btn" id="btn-importar" onclick="importar()">Importar pro sistema</button>
+      <div id="resultado"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var GASTOS_2025 = [
+  { conta: 'Luz', mes: '05', valor: 35.00 }, { conta: 'Luz', mes: '06', valor: 35.00 }, { conta: 'Luz', mes: '07', valor: 35.00 },
+  { conta: 'Luz', mes: '09', valor: 42.10 }, { conta: 'Luz', mes: '10', valor: 60.81 }, { conta: 'Luz', mes: '11', valor: 36.50 }, { conta: 'Luz', mes: '12', valor: 35.79 },
+
+  { conta: 'Água', mes: '03', valor: 52.00 }, { conta: 'Água', mes: '04', valor: 65.00 }, { conta: 'Água', mes: '05', valor: 40.00 },
+  { conta: 'Água', mes: '06', valor: 88.00 }, { conta: 'Água', mes: '07', valor: 44.00 }, { conta: 'Água', mes: '09', valor: 55.94 },
+  { conta: 'Água', mes: '10', valor: 37.31 }, { conta: 'Água', mes: '11', valor: 39.36 }, { conta: 'Água', mes: '12', valor: 37.31 },
+
+  { conta: 'Alarme Serviço', mes: '01', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '02', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '03', valor: 200.00 },
+  { conta: 'Alarme Serviço', mes: '04', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '05', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '06', valor: 200.00 },
+  { conta: 'Alarme Serviço', mes: '07', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '09', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '10', valor: 200.00 },
+  { conta: 'Alarme Serviço', mes: '11', valor: 200.00 }, { conta: 'Alarme Serviço', mes: '12', valor: 200.00 },
+
+  { conta: 'Internet', mes: '01', valor: 124.00 }, { conta: 'Internet', mes: '02', valor: 89.00 }, { conta: 'Internet', mes: '04', valor: 64.00 },
+  { conta: 'Internet', mes: '05', valor: 95.00 }, { conta: 'Internet', mes: '06', valor: 95.00 }, { conta: 'Internet', mes: '07', valor: 105.00 },
+  { conta: 'Internet', mes: '09', valor: 106.42 }, { conta: 'Internet', mes: '10', valor: 106.42 }, { conta: 'Internet', mes: '11', valor: 106.42 }, { conta: 'Internet', mes: '12', valor: 103.20 },
+
+  { conta: 'Aluguel', mes: '01', valor: 270.00 }, { conta: 'Aluguel', mes: '02', valor: 270.00 }, { conta: 'Aluguel', mes: '03', valor: 270.00 },
+  { conta: 'Aluguel', mes: '04', valor: 270.00 }, { conta: 'Aluguel', mes: '05', valor: 270.00 }, { conta: 'Aluguel', mes: '06', valor: 270.00 },
+  { conta: 'Aluguel', mes: '07', valor: 270.00 }, { conta: 'Aluguel', mes: '09', valor: 270.00 }, { conta: 'Aluguel', mes: '10', valor: 270.00 },
+  { conta: 'Aluguel', mes: '11', valor: 270.00 }, { conta: 'Aluguel', mes: '12', valor: 270.00 },
+
+  { conta: 'Tambor', mes: '03', valor: 250.00 }, { conta: 'Tambor', mes: '04', valor: 230.00 }, { conta: 'Tambor', mes: '05', valor: 255.00 },
+  { conta: 'Tambor', mes: '06', valor: 574.00 }, { conta: 'Tambor', mes: '07', valor: 300.00 }, { conta: 'Tambor', mes: '09', valor: 320.00 },
+  { conta: 'Tambor', mes: '10', valor: 190.00 }, { conta: 'Tambor', mes: '11', valor: 297.61 }, { conta: 'Tambor', mes: '12', valor: 201.58 }
+];
+
+var ENTRADAS_2025 = [
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '01', valor: 320.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '02', valor: 150.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '03', valor: 427.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '04', valor: 144.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '05', valor: 435.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '06', valor: 460.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '07', valor: 375.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '09', valor: 330.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '10', valor: 480.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '11', valor: 635.00 },
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '12', valor: 615.00 },
+
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '01', valor: 274.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '02', valor: 409.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '03', valor: 345.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '04', valor: 685.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '05', valor: 460.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '06', valor: 802.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '07', valor: 579.00 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '09', valor: 664.46 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '10', valor: 384.54 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '11', valor: 314.89 },
+  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '12', valor: 232.88 }
+];
+
+function slug(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
+function fmt(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+function montarRegistros() {
+  var registros = [];
+  GASTOS_2025.forEach(function(g){
+    registros.push({
+      id: 'imp25-g-' + slug(g.conta) + '-' + g.mes,
+      tipo: 'gasto', valor: g.valor, data: '2025-' + g.mes + '-05',
+      conta: g.conta, obs: 'Importado do histórico 2025', status: 'pago'
+    });
+  });
+  ENTRADAS_2025.forEach(function(e){
+    registros.push({
+      id: 'imp25-e-' + slug(e.membro) + '-' + e.mes,
+      tipo: 'entrada', valor: e.valor, data: '2025-' + e.mes + '-05',
+      competencia: '2025-' + e.mes, membro: e.membro, subTipo: 'extra', obs: e.obs
+    });
+  });
+  return registros;
+}
+
+var lancamentosAtuais = null;
+var registrosParaAdicionar = [];
+
+function carregarPreview() {
+  fetch('/api/dados?chave=lancamentos')
+    .then(function(r){ return r.json(); })
+    .then(function(dados){
+      lancamentosAtuais = Array.isArray(dados) ? dados : [];
+      var idsExistentes = {};
+      lancamentosAtuais.forEach(function(l){ if (l && l.id) idsExistentes[l.id] = true; });
+      var todos = montarRegistros();
+      registrosParaAdicionar = todos.filter(function(r){ return !idsExistentes[r.id]; });
+      var jaExistem = todos.length - registrosParaAdicionar.length;
+
+      var totalGastos = registrosParaAdicionar.filter(function(r){ return r.tipo==='gasto'; }).reduce(function(s,r){ return s+r.valor; }, 0);
+      var totalEntradas = registrosParaAdicionar.filter(function(r){ return r.tipo==='entrada'; }).reduce(function(s,r){ return s+r.valor; }, 0);
+      var nGastos = registrosParaAdicionar.filter(function(r){ return r.tipo==='gasto'; }).length;
+      var nEntradas = registrosParaAdicionar.filter(function(r){ return r.tipo==='entrada'; }).length;
+
+      var html = '';
+      if (!registrosParaAdicionar.length) {
+        html = '<p>✅ Esses lançamentos de 2025 já estão todos no sistema — nada pra importar.</p>';
+      } else {
+        html += '<table><tr><th>Tipo</th><th>Qtde.</th><th>Total</th></tr>';
+        html += '<tr><td>Gastos</td><td>' + nGastos + '</td><td>' + fmt(totalGastos) + '</td></tr>';
+        html += '<tr><td>Entradas</td><td>' + nEntradas + '</td><td>' + fmt(totalEntradas) + '</td></tr>';
+        html += '</table>';
+        if (jaExistem) html += '<p style="margin-top:8px">(' + jaExistem + ' já estavam no sistema e não serão duplicados.)</p>';
+        document.getElementById('acao-card').style.display = 'block';
+        document.getElementById('btn-importar').textContent = 'Importar ' + registrosParaAdicionar.length + ' lançamento(s) pro sistema';
+      }
+      document.getElementById('preview-conteudo').innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('preview-conteudo').textContent = 'Não consegui carregar os dados atuais agora — tenta de novo mais tarde.';
+    });
+}
+
+function importar() {
+  var btn = document.getElementById('btn-importar');
+  btn.disabled = true;
+  btn.textContent = 'Importando…';
+  var novaLista = lancamentosAtuais.concat(registrosParaAdicionar);
+  fetch('/api/dados?chave=lancamentos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+    body: JSON.stringify(novaLista)
+  })
+    .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
+    .then(function(){
+      document.getElementById('resultado').innerHTML = '<div class="msg-ok">✅ Importado! ' + registrosParaAdicionar.length + ' lançamento(s) de 2025 adicionados. <a href="/relatorio-anual.html?ano=2025">Ver o relatório anual de 2025</a></div>';
+      btn.style.display = 'none';
+    })
+    .catch(function(){
+      document.getElementById('resultado').innerHTML = '<div class="msg-erro">Não consegui salvar agora — tenta de novo em alguns minutos.</div>';
+      btn.disabled = false;
+      btn.textContent = 'Importar ' + registrosParaAdicionar.length + ' lançamento(s) pro sistema';
+    });
+}
+
+window._raAoConfirmarLogin = function(logado, user) {
+  var overlay = document.getElementById('login-overlay');
+  var app = document.getElementById('app');
+  var msg = document.getElementById('login-msg');
+  var ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+  if (logado && user && ADMIN_EMAILS.indexOf(user.email) !== -1) {
+    overlay.classList.add('off');
+    app.style.display = 'block';
+    carregarPreview();
+  } else if (logado) {
+    msg.textContent = 'Essa conta não tem acesso de administradora.';
+  } else {
+    msg.textContent = '';
+  }
+};
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.loginGoogle = async function () {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { console.warn('login google:', e); }
+};
+
+onAuthStateChanged(auth, (user) => {
+  window._raAoConfirmarLogin(!!user, user);
+});
+</script>
+
+</body>
+</html>
