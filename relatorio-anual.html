@@ -23,10 +23,56 @@ body {
   background: radial-gradient(ellipse at 50% 100%, rgba(196,57,107,.1) 0%, rgba(196,57,107,.04) 35%, transparent 65%),
     radial-gradient(ellipse at 15% 90%, rgba(196,57,107,.07) 0%, transparent 50%), var(--bg);
   background-attachment: fixed; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px;
-  min-height: 100vh; overflow-x: hidden; padding-bottom: 40px;
+  min-height: 100vh; overflow-x: hidden; padding-bottom: 40px; padding-top: 34px;
 }
 html { overflow-x: hidden; }
 a { color: inherit; }
+
+/* ── MENU PADRÃO DO SITE — igual ao da Tesouraria/index ── */
+#menu-hint{position:fixed;top:0;left:0;right:0;z-index:550;display:flex;align-items:center;justify-content:center;
+  padding:10px 20px 11px;background:rgba(253,246,238,.96);border-bottom:1px solid var(--border);box-shadow:0 1px 8px rgba(196,90,30,.06);
+  backdrop-filter:blur(8px);transition:top .25s ease;display:none;}
+#menu-hint-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;opacity:.85;transition:opacity .2s;padding:3px 4px;}
+#menu-hint-btn:hover,#menu-hint-btn:active{opacity:1}
+#menu-hint-label{font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);}
+#hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
+
+#boas-vindas{display:none;position:fixed;top:0;left:0;right:0;z-index:551;background:rgba(253,246,238,.96);
+  border-bottom:1px solid var(--border);backdrop-filter:blur(8px);padding:5px 60px;box-shadow:0 1px 8px rgba(196,90,30,.06);}
+#boas-vindas-inner{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;max-width:700px;margin:0 auto;}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:600;letter-spacing:.06em;color:var(--text)}
+#user-logout-btn{background:none;border:1px solid var(--border);border-radius:14px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;padding:3px 10px;cursor:pointer;margin-left:6px}
+#user-logout-btn:hover{border-color:var(--gold);color:var(--gold)}
+
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:650;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{position:fixed;left:0;right:0;bottom:0;z-index:660;max-height:78vh;background:var(--bg);
+  border-top:1px solid var(--border);border-radius:18px 18px 0 0;box-shadow:0 -8px 32px rgba(46,26,14,.14);
+  transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+#drawer.open{transform:translateY(0)}
+.drawer-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px;cursor:pointer;flex-shrink:0}
+.drawer-handle-pill{width:32px;height:3px;border-radius:3px;background:rgba(196,90,30,.18)}
+.drawer-header{padding:6px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--gold);letter-spacing:.1em}
+.drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
+.drawer-close:hover{color:var(--gold)}
+.drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.drawer-section{padding:14px 16px 4px}
+.drawer-section-label{font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(196,90,30,.5);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.drawer-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
+.drawer-submenu{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 0 14px;}
+@media(min-width:420px){.drawer-submenu{grid-template-columns:repeat(4,1fr)}}
+.drawer-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:14px 8px 12px;background:rgba(255,255,255,.6);border:1px solid rgba(196,90,30,.1);
+  border-radius:12px;cursor:pointer;transition:all .18s;text-align:center;position:relative;min-height:76px;}
+.drawer-card:hover{background:#fff;border-color:rgba(196,57,107,.28);box-shadow:0 4px 14px rgba(196,57,107,.12);transform:translateY(-2px);}
+.drawer-card-icon{font-size:1.55rem;line-height:1}
+.drawer-card-name{font-family:'Cinzel',serif;font-size:.66rem;font-weight:600;letter-spacing:.02em;color:var(--text);line-height:1.25;}
+.drawer-card-dot-corner{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;background:rgba(196,90,30,.22)}
+.drawer-card-dot-corner.mem{background:var(--gold)}
 
 /* ── HEADER ── */
 .header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); box-shadow: 0 2px 20px rgba(180,60,90,.25);
@@ -68,8 +114,9 @@ a { color: inherit; }
   color: var(--text-dim); margin: 22px 0 10px; }
 .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px;
   box-shadow: 0 2px 10px rgba(180,60,90,.06); }
-.chart-card canvas { max-height: 220px; }
+.chart-wrap { position: relative; height: 220px; }
 .chart-hint { font-family: 'DM Sans', sans-serif; font-size: .64rem; color: var(--text-dim); text-align: center; margin-top: 6px; }
+.chart-erro { text-align: center; padding: 30px 10px; font-family: 'Crimson Pro', serif; font-style: italic; color: var(--text-dim); }
 
 /* ── TABELA MÊS A MÊS ── */
 .mtab-wrap { overflow-x: auto; }
@@ -126,6 +173,61 @@ a { color: inherit; }
 </style>
 </head>
 <body>
+
+<!-- HINT DE MENU — fixo no topo, abaixo da barra de boas-vindas -->
+<div id="menu-hint">
+  <button id="menu-hint-btn" onclick="toggleDrawer()">
+    <span id="menu-hint-label">Ferramentas</span>
+    <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--gold)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- GAVETÃO DE FERRAMENTAS -->
+<div id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()">
+    <div class="drawer-handle-pill"></div>
+  </div>
+  <div class="drawer-header">
+    <div>
+      <span class="drawer-logo">Bolhas de Luz</span>
+      <div style="font-family:'Crimson Pro',Georgia,serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:1px;">Ferramentas</div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div style="padding:2px 16px 10px">
+    <input type="text" id="drawer-busca" placeholder="🔍 Buscar uma ferramenta…"
+      oninput="drawerFiltrar(this.value)"
+      style="width:100%;background:rgba(255,255,255,.7);border:1px solid var(--border);border-radius:20px;padding:9px 16px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);outline:none;transition:border-color .2s;">
+  </div>
+  <div class="drawer-body-scroll">
+    <div id="drawer-body"></div>
+  </div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
+
+<!-- BOAS-VINDAS / LOGIN NO TOPO -->
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <div id="bv-logged" style="display:none;align-items:center;gap:7px;flex-wrap:wrap">
+      <img id="user-avatar" src="" alt="" style="display:none;width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid rgba(196,57,107,.3);flex-shrink:0">
+      <span id="bv-emoji"></span>
+      <span id="bv-nome"></span>
+      <button id="user-logout-btn" onclick="logoutGoogle()">Sair</button>
+    </div>
+    <div id="bv-guest" style="display:flex;align-items:center;gap:9px">
+      <span style="font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;color:var(--text-dim);font-style:italic">✦ Área das Filhas</span>
+      <button class="bl-btn-rosa" style="padding:5px 15px;font-size:.6rem;letter-spacing:.06em;width:auto" onclick="openLogin()">Entrar</button>
+    </div>
+  </div>
+</div>
+<script>
+// mostra a barra "Entrar" de cara, sem esperar o Firebase responder — se a
+// rede demorar ou falhar, a barra não fica escondida
+document.getElementById('boas-vindas').style.display = 'block';
+</script>
 
 <!-- LOGIN -->
 <div id="login-overlay" class="bl-overlay" onclick="if(event.target===this)fecharLoginOverlay()">
@@ -388,10 +490,10 @@ function renderRelatorio() {
   html += '</div>';
 
   html += '<div class="sec-title">Entradas × Gastos por mês</div>';
-  html += '<div class="chart-card"><canvas id="chart-barras"></canvas></div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-barras"></canvas></div></div>';
 
   html += '<div class="sec-title">Saldo ao longo do ano</div>';
-  html += '<div class="chart-card"><canvas id="chart-saldo"></canvas></div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-saldo"></canvas></div></div>';
 
   html += '<div class="sec-title">Mês a mês — clique nos números pra ver os detalhes</div>';
   html += '<div class="mtab-wrap"><table class="mtab"><tr><th>Mês</th><th>Entradas</th><th>Gastos</th><th>Saldo</th><th style="text-align:center">Pag.</th><th style="text-align:center">Cob.</th><th>Média</th><th>Faltam</th></tr>';
@@ -416,7 +518,7 @@ function renderRelatorio() {
   html += '</table></div>';
 
   html += '<div class="sec-title">Gastos por categoria no ano — clique pra detalhar</div>';
-  html += '<div class="chart-card"><canvas id="chart-categoria"></canvas></div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-categoria"></canvas></div></div>';
   html += '<div class="chart-card" style="padding:6px 14px;">';
   cat.categorias.forEach(function(c, i){
     html += '<button class="cat-item" onclick="detalheCategoria(\''+c.conta.replace(/'/g,"\\'")+'\')">'
@@ -442,7 +544,14 @@ function destruirGraficos() {
 
 function montarGraficos(dados, cat) {
   destruirGraficos();
-  if (typeof Chart === 'undefined') return; // CDN pode não ter carregado (ex: sem internet) — segue sem gráfico
+  if (typeof Chart === 'undefined') {
+    // CDN do Chart.js não carregou (ex: sem internet) — avisa em vez de deixar a caixa em branco
+    ['chart-barras', 'chart-saldo', 'chart-categoria'].forEach(function(id){
+      var cv = document.getElementById(id);
+      if (cv && cv.parentElement) cv.parentElement.innerHTML = '<div class="chart-erro">Não consegui carregar os gráficos agora. Atualize a página pra tentar de novo.</div>';
+    });
+    return;
+  }
 
   var linhasOrdem = dados.linhas; // já em ordem Jan→Dez
   var labelsCurtos = linhasOrdem.map(function(l){ return l.label.split('/')[0].slice(0,3); });
@@ -460,6 +569,7 @@ function montarGraficos(dados, cat) {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         onClick: function(evt, elems) {
           if (!elems.length) return;
           var idx = elems[0].index;
@@ -488,6 +598,7 @@ function montarGraficos(dados, cat) {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         onClick: function(evt, elems) {
           if (!elems.length) return;
           var l = linhasOrdem[elems[0].index];
@@ -509,6 +620,7 @@ function montarGraficos(dados, cat) {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         onClick: function(evt, elems) {
           if (!elems.length) return;
           var c = cat.categorias[elems[0].index];
@@ -521,6 +633,12 @@ function montarGraficos(dados, cat) {
       }
     });
   }
+
+  // segurança: se o container ainda não tinha o layout fechado no momento da
+  // criação (ex: fonte carregando), recalcula o tamanho no próximo frame
+  requestAnimationFrame(function(){
+    Object.keys(charts).forEach(function(k){ try { charts[k].resize(); } catch(e){} });
+  });
 }
 
 // ── DRILL-DOWN ─────────────────────────────────────────────────────
@@ -614,6 +732,163 @@ function carregarDados() {
 }
 
 function fecharLoginOverlay() { document.getElementById('login-overlay').classList.remove('open'); }
+function openLogin() { document.getElementById('login-overlay').classList.add('open'); }
+
+// ── MENU PADRÃO DO SITE — gavetão de ferramentas + barra de boas-vindas,
+// portado do tesouraria.html (mesma API /api/menu) ─────────────────────
+const BL_MENU_API = '/api/menu';
+const BL_ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+function blIsEmailAdmin(email) { return !!email && BL_ADMIN_EMAILS.includes(email); }
+let blMenuData = null;
+
+async function blLoadMenu() {
+  try {
+    const res = await fetch(BL_MENU_API);
+    if (!res.ok) throw new Error('KV indisponível');
+    blMenuData = await res.json();
+  } catch (e) {
+    blMenuData = null;
+  }
+  blRenderDrawer();
+}
+
+const BL_DRAWER_ICONES_PADRAO = {
+  inicio:'🏠', historia:'📜', sessoes:'📅', calendario:'📅', textos:'📖', blog:'✍️',
+  apoie:'💗', pontos:'🎵', lojas:'🛍️', tesouraria:'💰', filhas:'🌸',
+  regimento:'📋', compras:'🛒', estoque:'📦', manutencao:'🔧', resumo:'📋', orientacoes:'📢', admin:'⚙️'
+};
+function blDrawerIconeLabel(item) {
+  const label = item.label || '';
+  const m = label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})️?\s*(.*)$/u);
+  if (m && m[2]) return { icone: m[1], texto: m[2] };
+  return { icone: BL_DRAWER_ICONES_PADRAO[item.id] || '✦', texto: label };
+}
+
+function blDrawerOnclick(item) {
+  if (item.type === 'internal') return `onclick="location.href='index.html'"`;
+  if (item.type === 'members') {
+    return window._blCurrentUser
+      ? `onclick="window.open('${item.url}','_self')"`
+      : `onclick="openLogin()"`;
+  }
+  return `onclick="window.open('${item.url}','_blank')"`;
+}
+
+function blDrawerTile(item) {
+  const { icone, texto } = blDrawerIconeLabel(item);
+  const desc = (item.desc || '').replace(/"/g, '&quot;');
+  const dot = item.type === 'members' ? '<span class="drawer-card-dot-corner mem"></span>' : '';
+  return `<button class="drawer-card" ${blDrawerOnclick(item)} title="${desc}">
+    ${dot}
+    <span class="drawer-card-icon">${icone}</span>
+    <span class="drawer-card-name">${texto}</span>
+  </button>`;
+}
+
+function blRenderDrawer() {
+  const body = document.getElementById('drawer-body');
+  if (!body) return;
+  if (!blMenuData) {
+    body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Não consegui carregar o menu agora.</div>';
+    return;
+  }
+  const logada = !!window._blCurrentUser;
+  const ehAdmin = logada && blIsEmailAdmin(window._blCurrentUser.email);
+  let grupoUsuario = 'publico';
+  if (ehAdmin) grupoUsuario = 'admin';
+  else if (logada) grupoUsuario = (window._blPerfilData || {}).grupo || 'visitante';
+
+  body.innerHTML = blMenuData.sections.map(sec => {
+    const visiveis = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      if (i.adminOnly && grupoUsuario !== 'admin') return false;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
+      return grupos.includes(grupoUsuario);
+    });
+    if (!visiveis.length) return '';
+    return `
+      <div class="drawer-section">
+        <div class="drawer-section-label">${sec.label}</div>
+        <div class="drawer-submenu">${visiveis.map(blDrawerTile).join('')}</div>
+      </div>`;
+  }).join('');
+}
+
+function blDrawerFiltrar(texto) {
+  const t = (texto || '').toLowerCase().trim();
+  document.querySelectorAll('#drawer-body .drawer-card').forEach(el => {
+    const nome = el.querySelector('.drawer-card-name')?.textContent.toLowerCase() || '';
+    el.style.display = !t || nome.includes(t) ? '' : 'none';
+  });
+  document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
+    const temVisivel = [...sec.querySelectorAll('.drawer-card')].some(c => c.style.display !== 'none');
+    sec.style.display = temVisivel ? '' : 'none';
+  });
+}
+function drawerFiltrar(v) { blDrawerFiltrar(v); }
+
+function toggleDrawer() {
+  const d = document.getElementById('drawer'), o = document.getElementById('drawer-overlay'), btn = document.getElementById('menu-hint-btn');
+  const open = d.classList.contains('open');
+  if (!open && !blMenuData) blLoadMenu();
+  d.classList.toggle('open', !open);
+  o.classList.toggle('open', !open);
+  btn.classList.toggle('open', !open);
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('menu-hint-btn').classList.remove('open');
+}
+
+function blAtualizarVisibilidadeMenuHint() {
+  const hint = document.getElementById('menu-hint');
+  if (!hint) return;
+  const logada = !!window._blCurrentUser;
+  hint.style.display = logada ? 'flex' : 'none';
+  if (!logada) closeDrawer();
+}
+
+function blAjustarTopoFixo() {
+  blAtualizarVisibilidadeMenuHint();
+  requestAnimationFrame(() => {
+    const banner = document.getElementById('boas-vindas');
+    const hint = document.getElementById('menu-hint');
+    if (!banner || !hint) return;
+    const visivel = banner.style.display !== 'none' && getComputedStyle(banner).display !== 'none';
+    const alturaBanner = visivel ? banner.offsetHeight : 0;
+    hint.style.top = alturaBanner + 'px';
+    const alturaTotal = alturaBanner + (hint.style.display === 'none' ? 0 : hint.offsetHeight);
+    document.body.style.paddingTop = alturaTotal + 'px';
+  });
+}
+window.addEventListener('resize', blAjustarTopoFixo);
+window.addEventListener('load', blAjustarTopoFixo);
+
+function blAtualizarBoasVindas() {
+  const banner = document.getElementById('boas-vindas');
+  const logged = document.getElementById('bv-logged');
+  const guest = document.getElementById('bv-guest');
+  const user = window._blCurrentUser;
+  if (!user) {
+    logged.style.display = 'none'; guest.style.display = 'flex';
+    banner.style.display = 'block';
+    blAjustarTopoFixo();
+    return;
+  }
+  guest.style.display = 'none'; logged.style.display = 'flex';
+  const perfil = window._blPerfilData || {};
+  const nomeCompleto = perfil.nome || user.displayName || '';
+  document.getElementById('bv-emoji').textContent = perfil.emoji || '✦';
+  document.getElementById('bv-nome').textContent = nomeCompleto.split(' ')[0] || '';
+  const avatar = document.getElementById('user-avatar');
+  if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
+  banner.style.display = 'block';
+  blAjustarTopoFixo();
+}
+
+blLoadMenu();
 
 // ── PONTO DE ENTRADA — chamado pelo módulo Firebase quando o estado de
 // login for confirmado (ver <script type="module"> no fim do arquivo) ──
@@ -634,7 +909,7 @@ window._raAoConfirmarLogin = function(logado) {
      travar numa tela em branco — não é ideal, mas não quebra nada. -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -649,12 +924,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+async function blCarregarPerfil(email) {
+  try {
+    const res = await fetch(`/api/perfil?${new URLSearchParams({ email })}`);
+    window._blPerfilData = await res.json();
+  } catch (e) { window._blPerfilData = {}; }
+}
+
 window.loginGoogle = async function () {
   try { await signInWithPopup(auth, new GoogleAuthProvider()); }
   catch (e) { console.warn('login google:', e); }
 };
+window.logoutGoogle = function () { signOut(auth); };
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
+  window._blCurrentUser = user;
+  if (user) await blCarregarPerfil(user.email);
+  else window._blPerfilData = {};
+  window.blAtualizarBoasVindas?.();
+  if (typeof blRenderDrawer === 'function') blRenderDrawer();
   window._raAoConfirmarLogin(!!user);
 });
 </script>
