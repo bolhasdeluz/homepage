@@ -4311,35 +4311,18 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </select>
       <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Corte e Cruzamento entram no catálogo de datas da Minha História; Obrigação, Elebó e Firmeza de Reinos por enquanto só organizam o calendário da casa (a integração deles com a Minha História vem numa etapa seguinte)</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div><label class="form-label">Lado</label>
-        <select class="form-input" id="cal-fLado" style="margin-bottom:0">
-          <option value="">— Selecionar —</option>
-          <option value="Umbanda">Umbanda</option>
-          <option value="Quimbanda">Quimbanda</option>
-          <option value="Oriente">Oriente</option>
-          <option value="Reuniao">Reunião</option>
-          <option value="Visita">Visita</option>
-          <option value="Desenvolvimento">Desenvolvimento</option>
-        </select>
-      </div>
-      <div><label class="form-label">Onde</label>
-        <select class="form-input" id="cal-fOnde" style="margin-bottom:0" onchange="calToggleOndeOutro(this.value)">
-          <option value="">— Selecionar —</option>
-          <option value="Salão">Salão</option>
-          <option value="Jardim">Jardim</option>
-          <option value="Praia">Praia</option>
-          <option value="Pedreira">Pedreira</option>
-          <option value="Cruzeiro">Cruzeiro</option>
-          <option value="Cemitério">Cemitério</option>
-          <option value="Outro">Outro</option>
-        </select>
-      </div>
+    <div style="margin-bottom:12px"><label class="form-label">Lado</label>
+      <select class="form-input" id="cal-fLado" style="margin-bottom:0">
+        <option value="">— Selecionar —</option>
+        <option value="Umbanda">Umbanda</option>
+        <option value="Quimbanda">Quimbanda</option>
+        <option value="Oriente">Oriente</option>
+        <option value="Reuniao">Reunião</option>
+        <option value="Visita">Visita</option>
+        <option value="Desenvolvimento">Desenvolvimento</option>
+      </select>
     </div>
-    <div id="cal-fOndeOutro-wrap" style="display:none;margin-bottom:12px"><label class="form-label">Qual lugar?</label><input type="text" class="form-input" id="cal-fOndeOutro" placeholder="ex: Costa do Sol/Cidreira"></div>
     <div style="margin-bottom:12px"><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-fEndereco" placeholder="ex: Rua Exemplo, 123 - Bairro, Cidade"></div>
-    <div style="margin-bottom:12px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
-    <div style="margin-bottom:12px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-fResp"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tambor</label>
       <select class="form-input" id="cal-fTambor">
         <option value="">— Sem informação —</option>
@@ -4348,7 +4331,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <option value="nao">❌ Não vai ter</option>
       </select>
     </div>
-    <div style="margin-bottom:12px"><label class="form-label">Link da pasta do Drive</label><input type="url" class="form-input" id="cal-fDriveLink" placeholder="https://drive.google.com/..."></div>
+    <div style="margin-bottom:12px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
     <!-- a visibilidade e as informações para visitantes não são mais marcadas
          evento por evento — agora são definidas por TIPO de sessão, em painéis
          próprios (⚙️ Visibilidade por tipo e 📋 Informações por tipo, ao lado
@@ -4460,22 +4443,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           </select>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-        <div><label class="form-label">Onde</label>
-          <select class="form-input" id="cal-modelo-onde">
-            <option value="">— Selecionar —</option>
-            <option value="Salão">Salão</option>
-            <option value="Jardim">Jardim</option>
-            <option value="Praia">Praia</option>
-            <option value="Pedreira">Pedreira</option>
-            <option value="Cruzeiro">Cruzeiro</option>
-            <option value="Cemitério">Cemitério</option>
-            <option value="Outro">Outro</option>
-          </select>
-        </div>
-        <div><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-modelo-endereco"></div>
-      </div>
-      <div style="margin-bottom:10px"><label class="form-label">Responsável</label><input type="text" class="form-input" id="cal-modelo-responsavel"></div>
+      <div style="margin-bottom:10px"><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-modelo-endereco"></div>
       <div style="margin-bottom:14px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-modelo-descricao" rows="2" style="resize:vertical"></textarea></div>
       <div style="display:flex;justify-content:flex-end;gap:8px">
         <button onclick="calLimparFormModelo()" style="background:none;border:1px solid var(--border);color:var(--text-dim);padding:9px 18px;border-radius:6px;cursor:pointer;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase">Limpar</button>
@@ -7420,15 +7388,6 @@ function calTogglePassadas() {
   calRenderLista();
 }
 
-// opções fixas do campo "Onde" — usado tanto pra decidir se cai no
-// "Outro" quanto pelo modal de organização anual
-const CAL_ONDE_OPCOES = ['Salão', 'Jardim', 'Praia', 'Pedreira', 'Cruzeiro', 'Cemitério'];
-
-function calToggleOndeOutro(valor) {
-  const wrap = document.getElementById('cal-fOndeOutro-wrap');
-  if (wrap) wrap.style.display = valor === 'Outro' ? '' : 'none';
-}
-
 async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
@@ -7439,16 +7398,9 @@ async function calOpenModal() {
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
   document.getElementById('cal-fMarco').value = '';
-  // "Salão" é onde a imensa maioria das sessões acontece — deixa pré-marcado
-  // pra só precisar trocar quando for diferente
-  document.getElementById('cal-fOnde').value = 'Salão';
-  document.getElementById('cal-fOndeOutro').value = '';
-  calToggleOndeOutro('Salão');
   document.getElementById('cal-fEndereco').value = '';
   document.getElementById('cal-fDesc').value = '';
-  document.getElementById('cal-fResp').value = '';
   document.getElementById('cal-fTambor').value = '';
-  document.getElementById('cal-fDriveLink').value = CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-btn-excluir').style.display = 'none';
   document.getElementById('cal-confirmar-dia-wrap').style.display = 'none';
@@ -7463,8 +7415,8 @@ async function calOpenModal() {
 }
 
 // preenche o formulário de Nova Sessão com os dados de um modelo — nome,
-// tipo, lado, local, responsável, tambor e descrição. Data/hora ficam como
-// estavam, já que são específicas de cada ocorrência
+// tipo, lado, endereço, tambor e descrição. Data/hora ficam como estavam,
+// já que são específicas de cada ocorrência
 function calAplicarModelo(modeloId) {
   if (!modeloId) return;
   const m = calModelos.find(x => x.id === modeloId);
@@ -7472,12 +7424,7 @@ function calAplicarModelo(modeloId) {
   document.getElementById('cal-fNome').value = m.nome || '';
   document.getElementById('cal-fTipo').value = m.tipo || '';
   document.getElementById('cal-fLado').value = m.lado || '';
-  const ondeFixo = CAL_ONDE_OPCOES.includes(m.onde) ? m.onde : (m.onde ? 'Outro' : 'Salão');
-  document.getElementById('cal-fOnde').value = ondeFixo;
-  document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? m.onde : '';
-  calToggleOndeOutro(ondeFixo);
   document.getElementById('cal-fEndereco').value = m.endereco || '';
-  document.getElementById('cal-fResp').value = m.responsavel || '';
   document.getElementById('cal-fTambor').value = m.tambor || '';
   document.getElementById('cal-fDesc').value = m.descricao || '';
 }
@@ -7495,19 +7442,9 @@ function calOpenEdit(id) {
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
   document.getElementById('cal-fMarco').value = s.marco || '';
-  // sessões antigas (de antes desse campo existir) não tem "onde" salvo —
-  // trata como "Salão" também, já que é onde a maioria acontece. Se o valor
-  // salvo não bate com nenhuma opção fixa, trata como "Outro" com o texto customizado
-  const ondeSalvo = s.onde || 'Salão';
-  const ondeFixo = CAL_ONDE_OPCOES.includes(ondeSalvo) ? ondeSalvo : 'Outro';
-  document.getElementById('cal-fOnde').value = ondeFixo;
-  document.getElementById('cal-fOndeOutro').value = ondeFixo === 'Outro' ? ondeSalvo : '';
-  calToggleOndeOutro(ondeFixo);
   document.getElementById('cal-fEndereco').value = s.endereco || '';
   document.getElementById('cal-fDesc').value = s.descricao || '';
-  document.getElementById('cal-fResp').value = s.responsavel || '';
   document.getElementById('cal-fTambor').value = s.tambor || '';
-  document.getElementById('cal-fDriveLink').value = s.driveLink || CAL_DRIVE_LINK_PADRAO;
   document.getElementById('cal-btn-clonar').style.display = '';
   document.getElementById('cal-btn-excluir').style.display = '';
 
@@ -9157,19 +9094,19 @@ async function calSalvar() {
   const tipo = document.getElementById('cal-fTipo').value;
   if (!nome || !data || !tipo) { alert('Preencha nome, data e tipo.'); return; }
 
-  const ondeSelecionado = document.getElementById('cal-fOnde').value;
-  const onde = ondeSelecionado === 'Outro' ? document.getElementById('cal-fOndeOutro').value.trim() : ondeSelecionado;
   const marco = document.getElementById('cal-fMarco').value;
 
+  // onde/responsavel/driveLink não são mais pedidos no formulário — não
+  // entram no payload pra não apagar o que sessões antigas já tinham
+  // guardado nesses campos (o PUT faz merge raso: só sobrescreve as chaves
+  // que a gente manda, ver functions/api/sessoes.js)
   const payload = { nome, data,
     dataAlternativa: document.getElementById('cal-fDataAlt').value || '',
     hora: document.getElementById('cal-fHora').value,
-    tipo, lado: document.getElementById('cal-fLado').value, onde,
+    tipo, lado: document.getElementById('cal-fLado').value,
     endereco: document.getElementById('cal-fEndereco').value.trim(),
     descricao: document.getElementById('cal-fDesc').value.trim(),
-    responsavel: document.getElementById('cal-fResp').value.trim(),
     tambor: document.getElementById('cal-fTambor').value,
-    driveLink: document.getElementById('cal-fDriveLink').value.trim(),
     marco,
     marcoOutroNome: '',
   };
@@ -9798,9 +9735,7 @@ function calLimparFormModelo() {
   document.getElementById('cal-modelo-nome').value = '';
   document.getElementById('cal-modelo-tipo').value = '';
   document.getElementById('cal-modelo-lado').value = '';
-  document.getElementById('cal-modelo-onde').value = '';
   document.getElementById('cal-modelo-endereco').value = '';
-  document.getElementById('cal-modelo-responsavel').value = '';
   document.getElementById('cal-modelo-tambor').value = '';
   document.getElementById('cal-modelo-descricao').value = '';
   document.getElementById('cal-modelo-status').textContent = '';
@@ -9813,9 +9748,7 @@ function calEditarModelo(id) {
   document.getElementById('cal-modelo-nome').value = m.nome || '';
   document.getElementById('cal-modelo-tipo').value = m.tipo || '';
   document.getElementById('cal-modelo-lado').value = m.lado || '';
-  document.getElementById('cal-modelo-onde').value = m.onde || '';
   document.getElementById('cal-modelo-endereco').value = m.endereco || '';
-  document.getElementById('cal-modelo-responsavel').value = m.responsavel || '';
   document.getElementById('cal-modelo-tambor').value = m.tambor || '';
   document.getElementById('cal-modelo-descricao').value = m.descricao || '';
 }
@@ -9829,9 +9762,7 @@ async function calSalvarModelo() {
     nome,
     tipo: document.getElementById('cal-modelo-tipo').value,
     lado: document.getElementById('cal-modelo-lado').value,
-    onde: document.getElementById('cal-modelo-onde').value,
     endereco: document.getElementById('cal-modelo-endereco').value.trim(),
-    responsavel: document.getElementById('cal-modelo-responsavel').value.trim(),
     tambor: document.getElementById('cal-modelo-tambor').value,
     descricao: document.getElementById('cal-modelo-descricao').value.trim(),
   };
@@ -9892,9 +9823,7 @@ async function calGerarModelosAutomatico() {
       nome,
       tipo: maisComum(lista.map(s => s.tipo)),
       lado: maisComum(lista.map(s => s.lado)),
-      onde: maisComum(lista.map(s => s.onde)),
       endereco: maisComum(lista.map(s => s.endereco)),
-      responsavel: maisComum(lista.map(s => s.responsavel)),
       tambor: '',
       descricao: maisComum(lista.map(s => s.descricao)),
     };
