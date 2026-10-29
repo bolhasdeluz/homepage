@@ -10048,6 +10048,13 @@ async function calImportarCalendario2027() {
     } catch (e) { erroCriar++; }
   }
 
+  // o KV do Cloudflare é eventualmente consistente — uma escrita bem recente
+  // pode não aparecer ainda numa leitura imediata. Como essa importação cria
+  // muita coisa em sequência e recarrega os dados logo em seguida, dá uma
+  // folga pras últimas gravações assentarem antes de reler, senão as
+  // sessões criadas por último podem sumir da tela até a próxima recarga
+  await new Promise(r => setTimeout(r, 2000));
+
   await calLoad();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
   alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : ''));
