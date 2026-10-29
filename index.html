@@ -10049,15 +10049,30 @@ async function calImportarCalendario2027() {
   }
 
   // o KV do Cloudflare é eventualmente consistente — uma escrita bem recente
-  // pode não aparecer ainda numa leitura imediata. Como essa importação cria
-  // muita coisa em sequência e recarrega os dados logo em seguida, dá uma
-  // folga pras últimas gravações assentarem antes de reler, senão as
-  // sessões criadas por último podem sumir da tela até a próxima recarga
-  await new Promise(r => setTimeout(r, 2000));
+  // pode não aparecer ainda numa leitura (e, por réplicas diferentes entre
+  // uma leitura e outra, até "piscar": aparecer, sumir, variar de contagem)
+  // por até cerca de 1 minuto. Em vez de só esperar um tempo fixo e torcer,
+  // confere de verdade: relê a lista algumas vezes, com folga crescente
+  // entre elas, até bater a contagem de sessões de 2027 esperada — só então
+  // recarrega a tela pra valer. Se não bater dentro do prazo, segue assim
+  // mesmo (a tela mostra o que tiver), mas o aviso final avisa a diferença
+  const esperado = CAL_IMPORTACAO_2027.length;
+  let confirmadas = -1;
+  for (const espera of [1000, 2000, 4000, 8000, 15000]) {
+    await new Promise(r => setTimeout(r, espera));
+    try {
+      const res = await fetch(CAL_API);
+      const lista = await res.json();
+      confirmadas = Array.isArray(lista) ? lista.filter(s => s.data && s.data.startsWith('2027-')).length : -1;
+    } catch (e) { confirmadas = -1; }
+    if (confirmadas === esperado) break;
+  }
 
   await calLoad();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
-  alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : ''));
+  const avisoConsistencia = confirmadas === esperado ? ''
+    : ` A releitura ainda mostra ${confirmadas} de ${esperado} — o Cloudflare pode levar mais um pouco pra propagar tudo; espera uns minutos e recarrega a página antes de concluir que falhou algo.`;
+  alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : '') + avisoConsistencia);
 }
 window.calImportarCalendario2027 = calImportarCalendario2027;
 
