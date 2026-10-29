@@ -451,7 +451,7 @@ function gastosPorMesCategoriaEspecial(ano) {
     if (ref.slice(0,4) !== String(ano)) return;
     var mes = parseInt(ref.slice(5,7), 10);
     if (!porMes[mes]) return;
-    if (l.conta === 'Tambor') porMes[mes].tambor += l.valor;
+    if (l.conta === 'Tambor' || l.conta === 'Deslocamento') porMes[mes].tambor += l.valor;
     else if (l.conta === 'Alarme Serviço' && Math.abs(l.valor - 200) > 0.001) porMes[mes].seguranca += l.valor;
     else porMes[mes].outras += l.valor;
   });
@@ -466,6 +466,7 @@ function calcularGastosPorCategoriaAno(ano) {
     var ref = l.data ? l.data.slice(0,7) : '';
     if (ref.slice(0,4) !== String(ano)) return;
     var chave = l.conta || '—';
+    if (chave === 'Deslocamento') chave = 'Tambor'; // deslocamento de sessão é sempre custo de Tambor
     porConta[chave] = (porConta[chave] || 0) + l.valor;
     total += l.valor;
   });
@@ -1146,13 +1147,19 @@ function detalheMembrosMes(mes) {
 window.detalheMembrosMes = detalheMembrosMes;
 
 function detalheCategoria(conta) {
+  // deslocamento de sessão de tambor é sempre contado junto com Tambor
+  function bateConta(l) {
+    var c = l.conta || '—';
+    if (conta === 'Tambor') return c === 'Tambor' || c === 'Deslocamento';
+    return c === conta;
+  }
   var itens = lancamentos.filter(function(l) {
     if (l.tipo !== 'gasto' || l.status === 'pendente') return false;
     var ref = l.data ? l.data.slice(0,7) : '';
-    return ref.slice(0,4) === String(anoAtivo) && (l.conta||'—') === conta;
+    return ref.slice(0,4) === String(anoAtivo) && bateConta(l);
   }).sort(function(a,b){ return (a.data||'').localeCompare(b.data||''); })
-    .map(function(l){ return { label: fmtData(l.data), valor: fmt(l.valor), cor: 'var(--red)', sub: l.obs || '' }; });
-  var somaReal = lancamentos.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente' && (l.data||'').slice(0,4)===String(anoAtivo) && (l.conta||'—')===conta; }).reduce(function(s,l){ return s+l.valor; },0);
+    .map(function(l){ return { label: fmtData(l.data) + (l.conta==='Deslocamento'?' · Deslocamento':''), valor: fmt(l.valor), cor: 'var(--red)', sub: l.obs || '' }; });
+  var somaReal = lancamentos.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente' && (l.data||'').slice(0,4)===String(anoAtivo) && bateConta(l); }).reduce(function(s,l){ return s+l.valor; },0);
   abrirDetalhe('🧾 ' + conta + ' — ' + anoAtivo, itens.length + ' lançamento(s) · Total: ' + fmt(somaReal), itens);
 }
 window.detalheCategoria = detalheCategoria;
