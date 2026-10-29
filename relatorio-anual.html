@@ -514,6 +514,12 @@ function renderRelatorio() {
   html += '<div class="sec-title">Saldo ao longo do ano</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-saldo"></canvas></div></div>';
 
+  html += '<div class="sec-title">% de pagantes por mês — clique numa barra pra ver quem faltou</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-pagantes"></canvas></div></div>';
+
+  html += '<div class="sec-title">% das contas da casa cobertas pelas entradas</div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cobertura"></canvas></div></div>';
+
   html += '<div class="sec-title">Mês a mês — clique nos números pra ver os detalhes</div>';
   html += '<div class="mtab-wrap"><table class="mtab"><tr><th>Mês</th><th>Entradas</th><th>Gastos</th><th>Saldo</th><th style="text-align:center">Pag.</th><th style="text-align:center">Cob.</th><th>Média</th><th>Faltam</th></tr>';
   dados.linhas.slice().reverse().forEach(function(l){
@@ -565,7 +571,7 @@ function montarGraficos(dados, cat) {
   destruirGraficos();
   if (typeof Chart === 'undefined') {
     // CDN do Chart.js não carregou (ex: sem internet) — avisa em vez de deixar a caixa em branco
-    ['chart-barras', 'chart-saldo', 'chart-categoria'].forEach(function(id){
+    ['chart-barras', 'chart-saldo', 'chart-pagantes', 'chart-cobertura', 'chart-categoria'].forEach(function(id){
       var cv = document.getElementById(id);
       if (cv && cv.parentElement) cv.parentElement.innerHTML = '<div class="chart-erro">Não consegui carregar os gráficos agora. Atualize a página pra tentar de novo.</div>';
     });
@@ -625,6 +631,78 @@ function montarGraficos(dados, cat) {
         },
         plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c){ return 'Saldo: ' + fmt(c.parsed.y); } } } },
         scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxPagantes = document.getElementById('chart-pagantes');
+  if (ctxPagantes) {
+    charts.pagantes = new Chart(ctxPagantes, {
+      type: 'bar',
+      data: {
+        labels: labelsCurtos,
+        datasets: [{
+          label: '% pagantes',
+          data: linhasOrdem.map(function(l){ return l.pctPag; }),
+          backgroundColor: linhasOrdem.map(function(l){ return l.nPag===l.nTot && l.nTot>0 ? '#2a7a60' : '#c4a000'; }),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onClick: function(evt, elems) {
+          if (!elems.length) return;
+          var l = linhasOrdem[elems[0].index];
+          if (l) detalheFaltamMes(l.mes);
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){
+            var l = linhasOrdem[c.dataIndex];
+            return l.pctPag + '% (' + l.nPag + '/' + l.nTot + ' pagaram)';
+          } } }
+        },
+        scales: {
+          y: { min: 0, max: 100, ticks: { callback: function(v){ return v + '%'; }, font: { size: 10 } } },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  var ctxCobertura = document.getElementById('chart-cobertura');
+  if (ctxCobertura) {
+    charts.cobertura = new Chart(ctxCobertura, {
+      type: 'bar',
+      data: {
+        labels: labelsCurtos,
+        datasets: [{
+          label: '% cobertura',
+          data: linhasOrdem.map(function(l){ return l.pctCob; }),
+          backgroundColor: linhasOrdem.map(function(l){ return l.pctCob>=100 ? '#2a7a60' : '#c4a000'; }),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        onClick: function(evt, elems) {
+          if (!elems.length) return;
+          var l = linhasOrdem[elems[0].index];
+          if (l) detalheGastosMes(l.mes);
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(c){
+            var l = linhasOrdem[c.dataIndex];
+            return l.pctCob + '% — entradas ' + fmt(l.entradas) + ' / gastos ' + fmt(l.gastos);
+          } } }
+        },
+        scales: {
+          y: { min: 0, ticks: { callback: function(v){ return v + '%'; }, font: { size: 10 } } },
+          x: { ticks: { font: { size: 10 } } }
+        }
       }
     });
   }
