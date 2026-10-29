@@ -116,6 +116,7 @@ a { color: inherit; }
 .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 14px;
   box-shadow: 0 2px 10px rgba(180,60,90,.06); }
 .chart-wrap { position: relative; height: 220px; }
+.chart-wrap-tall { height: 320px; }
 .chart-hint { font-family: 'DM Sans', sans-serif; font-size: .64rem; color: var(--text-dim); text-align: center; margin-top: 6px; }
 .chart-erro { text-align: center; padding: 30px 10px; font-family: 'Crimson Pro', serif; font-style: italic; color: var(--text-dim); }
 
@@ -622,13 +623,17 @@ function renderComparativo() {
   html += '<div class="sec-title">% de cobertura por mês — comparativo</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-cobertura"></canvas></div></div>';
 
+  html += '<div class="sec-title">Gasto médio por mês, por categoria — comparativo</div>';
+  html += '<div class="chart-card"><div class="chart-wrap chart-wrap-tall"><canvas id="chart-cmp-categorias"></canvas></div>'
+    + '<div class="chart-hint">Média dos meses com lançamento naquele ano — ajuda a ver se um gasto específico (ex: Aluguel, Tambor, Alarme Serviço) é o motivo de um ano ter custado mais que o outro</div></div>';
+
   conteudo.innerHTML = html;
   montarGraficosComparativo(porAno);
 }
 
 function montarGraficosComparativo(porAno) {
   destruirGraficos();
-  var IDS_CMP = ['chart-cmp-totais', 'chart-cmp-entradas', 'chart-cmp-gastos', 'chart-cmp-membros', 'chart-cmp-pagantes', 'chart-cmp-cobertura'];
+  var IDS_CMP = ['chart-cmp-totais', 'chart-cmp-entradas', 'chart-cmp-gastos', 'chart-cmp-membros', 'chart-cmp-pagantes', 'chart-cmp-cobertura', 'chart-cmp-categorias'];
   if (typeof Chart === 'undefined') {
     IDS_CMP.forEach(function(id){
       var cv = document.getElementById(id);
@@ -735,6 +740,48 @@ function montarGraficosComparativo(porAno) {
         plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
           tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + c.parsed.y + '%'; } } } },
         scales: { y: { min: 0, ticks: { callback: function(v){ return v + '%'; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  var ctxCategorias = document.getElementById('chart-cmp-categorias');
+  if (ctxCategorias) {
+    // gasto médio por mês, por categoria — pra cada ano, divide o total da
+    // categoria pelos meses em que teve movimento naquele ano
+    var catsPorAno = porAno.map(function(x){ return calcularGastosPorCategoriaAno(x.ano); });
+    var todasCategorias = {};
+    catsPorAno.forEach(function(c){ c.categorias.forEach(function(cat){ todasCategorias[cat.conta] = true; }); });
+    var totalPorCategoria = {};
+    Object.keys(todasCategorias).forEach(function(cat){
+      totalPorCategoria[cat] = catsPorAno.reduce(function(s, c){
+        var f = c.categorias.find(function(x){ return x.conta === cat; });
+        return s + (f ? f.total : 0);
+      }, 0);
+    });
+    var categorias = Object.keys(todasCategorias).sort(function(a,b){ return totalPorCategoria[b] - totalPorCategoria[a]; });
+
+    var datasetsCategorias = porAno.map(function(x, i){
+      var catData = catsPorAno[i];
+      var nMeses = x.dados.linhas.length || 1;
+      return {
+        label: String(x.ano),
+        data: categorias.map(function(cat){
+          var f = catData.categorias.find(function(c){ return c.conta === cat; });
+          return f ? Math.round((f.total / nMeses) * 100) / 100 : 0;
+        }),
+        backgroundColor: corGrafico(i), borderRadius: 4
+      };
+    });
+
+    charts.cmpCategorias = new Chart(ctxCategorias, {
+      type: 'bar',
+      data: { labels: categorias, datasets: datasetsCategorias },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
+          tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.x) + '/mês'; } } } },
+        scales: { x: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, y: { ticks: { font: { size: 10 } } } }
       }
     });
   }
