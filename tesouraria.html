@@ -1057,6 +1057,31 @@ body{padding-bottom:64px}
   </div>
 </div>
 
+<!-- FECHAMENTO DO ANO MODAL — versão mais completa do extrato anual, com
+     gastos somados por categoria (pra onde foi o dinheiro no ano) -->
+<div class="modal-overlay" id="export-fechamento-overlay" onclick="fecharModal('export-fechamento-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">📊 Fechamento do Ano</div>
+      <button class="modal-close" onclick="document.getElementById('export-fechamento-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);">Igual o Extrato Anual (mês a mês), mas completo com o total gasto em cada categoria no ano inteiro — pronto pra apresentar o fechamento do ano pra casa.</div>
+      <div class="field"><label class="field-label">Ano</label>
+        <select id="export-fechamento-ano" onchange="atualizarPreviewExportFechamento()"></select>
+      </div>
+      <div style="background:var(--gold-dim);border:1px solid var(--border);border-radius:8px;padding:10px 13px;">
+        <div id="export-fechamento-preview-count" style="font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button onclick="exportarFechamentoAnual('pdf')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;">🖨️ PDF / Imprimir</button>
+        <button onclick="exportarFechamentoAnual('csv')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--green);">📊 Excel / CSV</button>
+        <button onclick="exportarFechamentoAnual('wpp')" class="btn-primary" style="display:flex;align-items:center;justify-content:center;gap:8px;background:#25d366;">💬 WhatsApp</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CLONAR (uma ou mais datas, um ou mais lançamentos) -->
 <div class="modal-overlay" id="clonar-overlay" onclick="fecharModal('clonar-overlay',event)">
   <div class="modal-sheet">
@@ -1776,7 +1801,10 @@ body{padding-bottom:64px}
       panoramaHTML = '<div style="margin-bottom:14px;">'
         + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
         +   '<div style="font-family:\'Cinzel\',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);">Extrato Mensal</div>'
-        +   '<button onclick="abrirExportAnualConfig()" style="background:none;border:1px solid var(--border);border-radius:16px;color:var(--gold);font-family:\'DM Sans\',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;">🖨️ Exportar ano</button>'
+        +   '<div style="display:flex;gap:6px;">'
+        +     '<button onclick="abrirExportAnualConfig()" style="background:none;border:1px solid var(--border);border-radius:16px;color:var(--gold);font-family:\'DM Sans\',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;white-space:nowrap;">🖨️ Exportar ano</button>'
+        +     '<button onclick="abrirExportFechamentoConfig()" style="background:var(--gold);border:1px solid var(--gold);border-radius:16px;color:#fff;font-family:\'DM Sans\',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;white-space:nowrap;">📊 Fechamento do ano</button>'
+        +   '</div>'
         + '</div>'
         + mesesOrdenados.map(function(mes) {
             var d = meses[mes];
@@ -3330,6 +3358,181 @@ body{padding-bottom:64px}
       msg += '↓ Gastos: *' + fmt(dados.totalGastos) + '*\n';
       msg += '💼 Saldo: *' + fmt(dados.saldoAno) + '*' + (dados.saldoAno<0?' 🕯️':'') + '\n';
       msg += '💵 Média da mensalidade no ano: *' + fmt(dados.mediaAnual) + '*\n';
+
+      document.getElementById('wpp-preview').textContent = msg;
+      document.getElementById('wpp-copy-btn').textContent = 'Copiar Mensagem';
+      document.getElementById('wpp-overlay').classList.add('open');
+    }
+  }
+
+  // ── FECHAMENTO DO ANO — igual o Extrato Anual (mês a mês), mas com uma
+  // seção a mais no final: total gasto em cada categoria no ano inteiro,
+  // da maior pra menor, pra dar pra apresentar pra casa onde o dinheiro foi
+  function calcularGastosPorCategoriaAno(ano) {
+    var porConta = {};
+    var total = 0;
+    lancamentos.forEach(function(l) {
+      if (l.tipo !== 'gasto' || l.status === 'pendente') return;
+      var ref = l.data ? l.data.slice(0,7) : '';
+      if (ref.slice(0,4) !== String(ano)) return;
+      var chave = l.conta || '—';
+      porConta[chave] = (porConta[chave] || 0) + l.valor;
+      total += l.valor;
+    });
+    var categorias = Object.keys(porConta).map(function(c){
+      return { conta: c, total: porConta[c], pct: total > 0 ? Math.round(porConta[c] / total * 100) : 0 };
+    }).sort(function(a,b){ return b.total - a.total; });
+    return { categorias: categorias, total: total };
+  }
+
+  function abrirExportFechamentoConfig() {
+    var meses = calcularMesesPanorama();
+    var anos = {};
+    Object.keys(meses).forEach(function(m){ anos[m.slice(0,4)] = true; });
+    var anoAtual = new Date().getFullYear();
+    anos[anoAtual] = true;
+    var listaAnos = Object.keys(anos).sort().reverse();
+    var select = document.getElementById('export-fechamento-ano');
+    select.innerHTML = listaAnos.map(function(a){ return '<option value="'+a+'">'+a+'</option>'; }).join('');
+    select.value = anoAtual;
+    atualizarPreviewExportFechamento();
+    document.getElementById('export-fechamento-overlay').classList.add('open');
+  }
+
+  function atualizarPreviewExportFechamento() {
+    var ano = document.getElementById('export-fechamento-ano').value;
+    if (!ano) return;
+    var dados = montarDadosExtratoAnual(ano);
+    var cat = calcularGastosPorCategoriaAno(ano);
+    document.getElementById('export-fechamento-preview-count').innerHTML =
+      '<strong>' + dados.linhas.length + '</strong> mês(es) com movimento · <strong>' + cat.categorias.length + '</strong> categoria(s) de gasto · Média mensalidade: <strong>' + fmt(dados.mediaAnual) + '</strong>';
+  }
+
+  function exportarFechamentoAnual(formato) {
+    var ano = document.getElementById('export-fechamento-ano').value;
+    if (!ano) { showToast('Escolha um ano'); return; }
+    var dados = montarDadosExtratoAnual(ano);
+    var cat = calcularGastosPorCategoriaAno(ano);
+    if (!dados.linhas.length) { showToast('Nenhum lançamento nesse ano'); return; }
+
+    document.getElementById('export-fechamento-overlay').classList.remove('open');
+
+    if (formato === 'pdf') {
+      var html = '<html><head><meta charset="UTF-8">';
+      html += '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">';
+      html += '<style>';
+      html += 'body{font-family:"DM Sans",sans-serif;color:#2a1a22;max-width:760px;margin:0 auto;padding:24px 20px;font-size:13px;}';
+      html += 'h1{font-family:"Cinzel",serif;font-size:1.1rem;font-weight:700;color:#c4396b;letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px;}';
+      html += 'h2{font-family:"Cinzel",serif;font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#c4396b;border-bottom:1px solid rgba(196,57,107,.2);padding-bottom:5px;margin:20px 0 8px;}';
+      html += '.sub{font-family:"DM Sans",sans-serif;font-size:.78rem;color:rgba(80,30,50,.5);margin-bottom:16px;}';
+      html += 'table{width:100%;border-collapse:collapse;margin-bottom:8px;}';
+      html += 'th{font-family:"Cinzel",serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:rgba(80,30,50,.5);text-align:left;padding:5px 7px;border-bottom:1.5px solid rgba(196,57,107,.15);}';
+      html += 'td{font-family:"Crimson Pro",serif;font-size:.84rem;padding:5px 7px;border-bottom:1px solid rgba(196,57,107,.07);}';
+      html += 'td.val{text-align:right;font-weight:600;}';
+      html += 'td.verde{color:#2a7a60;text-align:right;font-weight:600;}';
+      html += 'td.vermelho{color:#b84040;text-align:right;font-weight:600;}';
+      html += 'td.dim{color:rgba(80,30,50,.5);font-style:italic;font-size:.75rem;}';
+      html += '.total-row td{font-weight:700;border-top:1.5px solid rgba(196,57,107,.2);border-bottom:none;font-family:"Cinzel",serif;font-size:.65rem;letter-spacing:.04em;text-transform:uppercase;}';
+      html += '.saldo-box{background:rgba(196,57,107,.05);border:1px solid rgba(196,57,107,.2);border-radius:8px;padding:12px 16px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}';
+      html += '.saldo-box .label{font-family:"Cinzel",serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(80,30,50,.5);}';
+      html += '.saldo-box .valor{font-family:"Crimson Pro",serif;font-size:1.2rem;font-weight:600;}';
+      html += '.barra-cat{background:rgba(196,57,107,.08);border-radius:3px;height:6px;overflow:hidden;margin-top:3px;}';
+      html += '.barra-cat-fill{height:100%;background:var(--gold,#8c6000);background:#c4396b;}';
+      html += '@media print{body{padding:8px;}button{display:none!important;}}';
+      html += '</style></head><body>';
+
+      html += '<h1>Bolhas de Luz — Fechamento do Ano ' + ano + '</h1>';
+      html += '<div class="sub">Gerado em ' + new Date().toLocaleDateString('pt-BR') + (blNomesOcultos() ? ' · <strong>🔒 Nomes ocultos</strong>' : '') + '</div>';
+
+      html += '<div class="saldo-box">';
+      html += '<div><div class="label">Entradas no ano</div><div class="valor" style="color:#2a7a60">' + fmt(dados.totalEntradas) + '</div></div>';
+      html += '<div><div class="label">Gastos no ano</div><div class="valor" style="color:#b84040">' + fmt(dados.totalGastos) + '</div></div>';
+      html += '<div><div class="label">Saldo do ano</div><div class="valor" style="color:' + (dados.saldoAno>=0?'#2a7a60':'#b84040') + '">' + fmt(dados.saldoAno) + '</div></div>';
+      html += '<div><div class="label">Média mensalidade no ano</div><div class="valor" style="color:#c4396b">' + fmt(dados.mediaAnual) + '</div></div>';
+      html += '</div>';
+
+      html += '<h2>Mês a mês</h2>';
+      html += '<table><tr><th>Mês</th><th style="text-align:right">Entradas</th><th style="text-align:right">Gastos</th><th style="text-align:right">Saldo</th><th style="text-align:center">Pagantes</th><th style="text-align:center">Cobertura</th><th style="text-align:right">Média mens.</th><th>Faltaram</th></tr>';
+      dados.linhas.forEach(function(l){
+        html += '<tr><td>'+l.label+'</td><td class="verde">'+fmt(l.entradas)+'</td><td class="vermelho">'+fmt(l.gastos)+'</td>'
+          + '<td class="val" style="color:'+(l.saldo>=0?'#2a7a60':'#b84040')+'">'+fmt(l.saldo)+'</td>'
+          + '<td style="text-align:center">'+l.pctPag+'% ('+l.nPag+'/'+l.nTot+')</td>'
+          + '<td style="text-align:center">'+l.pctCob+'%</td>'
+          + '<td class="val">'+(l.nPag>0?fmt(l.mediaMensalidade):'—')+'</td>'
+          + '<td class="dim">'+(l.naoPag.length?blNomesLista(l.naoPag):'✓ todas pagaram')+'</td></tr>';
+      });
+      html += '<tr class="total-row"><td>TOTAL '+ano+'</td><td class="verde" style="text-align:right">'+fmt(dados.totalEntradas)+'</td><td class="vermelho" style="text-align:right">'+fmt(dados.totalGastos)+'</td>'
+        + '<td style="text-align:right;color:'+(dados.saldoAno>=0?'#2a7a60':'#b84040')+'">'+fmt(dados.saldoAno)+'</td><td></td><td></td>'
+        + '<td style="text-align:right">'+fmt(dados.mediaAnual)+'</td><td></td></tr>';
+      html += '</table>';
+
+      html += '<h2>Gastos por categoria no ano</h2>';
+      html += '<table><tr><th>Categoria</th><th style="text-align:right">Total</th><th style="text-align:right">% do ano</th><th></th></tr>';
+      cat.categorias.forEach(function(c){
+        html += '<tr><td>'+c.conta+'</td><td class="vermelho">'+fmt(c.total)+'</td><td style="text-align:right">'+c.pct+'%</td>'
+          + '<td style="width:120px;"><div class="barra-cat"><div class="barra-cat-fill" style="width:'+c.pct+'%;"></div></div></td></tr>';
+      });
+      html += '<tr class="total-row"><td>TOTAL GASTOS '+ano+'</td><td class="vermelho" style="text-align:right">'+fmt(cat.total)+'</td><td></td><td></td></tr>';
+      html += '</table>';
+
+      html += '</body></html>';
+
+      var win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(function(){ win.print(); }, 600);
+
+    } else if (formato === 'csv') {
+      var rows = [];
+      rows.push(['BOLHAS DE LUZ — FECHAMENTO DO ANO ' + ano]);
+      rows.push([]);
+      rows.push(['RESUMO']);
+      rows.push(['Total Entradas','Total Gastos','Saldo','Média mensalidade no ano']);
+      rows.push([dados.totalEntradas.toFixed(2), dados.totalGastos.toFixed(2), dados.saldoAno.toFixed(2), dados.mediaAnual.toFixed(2)]);
+      rows.push([]);
+      rows.push(['MÊS A MÊS']);
+      rows.push(['Mês','Entradas','Gastos','Saldo','% Pagantes','Pagantes','% Cobertura','Média mensalidade','Faltaram']);
+      dados.linhas.forEach(function(l){
+        rows.push([l.label, l.entradas.toFixed(2), l.gastos.toFixed(2), l.saldo.toFixed(2), l.pctPag+'%', l.nPag+'/'+l.nTot, l.pctCob+'%', l.nPag>0?l.mediaMensalidade.toFixed(2):'', blNomesLista(l.naoPag)]);
+      });
+      rows.push(['TOTAL '+ano, dados.totalEntradas.toFixed(2), dados.totalGastos.toFixed(2), dados.saldoAno.toFixed(2), '', '', '', dados.mediaAnual.toFixed(2), '']);
+      rows.push([]);
+      rows.push(['GASTOS POR CATEGORIA NO ANO']);
+      rows.push(['Categoria','Total','% do ano']);
+      cat.categorias.forEach(function(c){ rows.push([c.conta, c.total.toFixed(2), c.pct+'%']); });
+      rows.push(['TOTAL GASTOS '+ano, cat.total.toFixed(2), '']);
+      var csv = '﻿' + rows.map(function(r){
+        return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(',');
+      }).join('\n');
+      var blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'fechamento-ano-bolhasdeluz-' + ano + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV baixado ✓');
+
+    } else if (formato === 'wpp') {
+      var msg = '🕯️ *BOLHAS DE LUZ — FECHAMENTO DO ANO ' + ano + '*\n';
+      if (blNomesOcultos()) msg += '🔒 Nomes ocultos\n';
+      msg += '─'.repeat(28) + '\n\n';
+      msg += '💰 *RESUMO DO ANO*\n';
+      msg += '↑ Entradas: *' + fmt(dados.totalEntradas) + '*\n';
+      msg += '↓ Gastos: *' + fmt(dados.totalGastos) + '*\n';
+      msg += '💼 Saldo: *' + fmt(dados.saldoAno) + '*' + (dados.saldoAno<0?' 🕯️':'') + '\n';
+      msg += '💵 Média da mensalidade no ano: *' + fmt(dados.mediaAnual) + '*\n\n';
+
+      msg += '📅 *MÊS A MÊS*\n';
+      dados.linhas.forEach(function(l){
+        msg += '• ' + l.label + ': ↑' + fmt(l.entradas) + ' ↓' + fmt(l.gastos) + ' · Saldo ' + fmt(l.saldo) + (l.saldo<0?' 🕯️':'') + ' · 👥' + l.pctPag + '%\n';
+      });
+
+      msg += '\n🧾 *GASTOS POR CATEGORIA NO ANO*\n';
+      cat.categorias.forEach(function(c){
+        msg += '• ' + c.conta + ': ' + fmt(c.total) + ' (' + c.pct + '%)\n';
+      });
+      msg += '▸ *Total gastos: ' + fmt(cat.total) + '*\n';
 
       document.getElementById('wpp-preview').textContent = msg;
       document.getElementById('wpp-copy-btn').textContent = 'Copiar Mensagem';
