@@ -289,8 +289,12 @@ document.getElementById('boas-vindas').style.display = 'block';
 // ══════════════════════════════════════════════════════════════════
 
 var MESES_NOMES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07' };
-var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana'];
+var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07', 'Mikael': '2026-04', 'Miguel': '2026-02' };
+// mês (YYYY-MM) a partir do qual cada uma passou a contar — só precisa
+// entrada pra quem entrou depois do começo do histórico (ex-membros
+// cadastrados aqui só pra contar certinho em anos passados)
+var MEMBROS_ENTRADA = { 'Miguel': '2025-07' };
+var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana','Mikael','Miguel'];
 var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Cambona'];
 var MEMBROS_ISENTOS = {};
 var lancamentos = [];
@@ -309,6 +313,8 @@ function getMembrosAtivos(mesRef) {
   var ref = mesRef || today().slice(0,7);
   return MEMBROS_TODOS.filter(function(m){
     if (MEMBROS_ISENTOS[m]) return false;
+    var entrada = MEMBROS_ENTRADA[m];
+    if (entrada && ref < entrada) return false;
     var saida = MEMBROS_SAIDA[m];
     return !saida || ref < saida;
   });
