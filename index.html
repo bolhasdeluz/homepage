@@ -337,6 +337,7 @@ footer{
   .toggle-pill{font-size:.5rem;padding:3px 7px}
 }
 .toggle-pill{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);transition:all .2s;white-space:nowrap}
+.admin-move-section{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;padding:4px 8px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);max-width:150px}
 .toggle-pill.on{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 .toggle-pill.on-green{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
 .admin-del{background:none;border:none;color:rgba(184,64,64,.35);font-size:1rem;padding:2px 6px;transition:color .2s}
@@ -5911,6 +5912,11 @@ function renderAdminPanel() {
             <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
             <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
             <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
+            ${menuData.sections.length > 1 ? `
+            <select class="admin-move-section" title="Mover para outra seção" onchange="if(this.value!=='')moverItemParaSecao(${si},${ii},parseInt(this.value))">
+              <option value="">↪ Mover p/ seção…</option>
+              ${menuData.sections.map((s2, si2) => si2===si ? '' : `<option value="${si2}">${s2.label}</option>`).join('')}
+            </select>` : ''}
           </div>
           <!-- visibilidade por grupo -->
           <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
@@ -5986,6 +5992,15 @@ function moveItemToBottom(si, ii) {
   if (ii >= items.length - 1) return;
   const [moved] = items.splice(ii, 1);
   items.push(moved);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+}
+// move um item de uma seção pra outra (ex: de "Corrente" pra "Público") —
+// as setinhas só reordenam dentro da mesma seção, isso aqui muda de seção
+function moverItemParaSecao(si, ii, siAlvo) {
+  if (isNaN(siAlvo) || siAlvo === si || !menuData.sections[siAlvo]) return;
+  const [moved] = menuData.sections[si].items.splice(ii, 1);
+  menuData.sections[siAlvo].items.push(moved);
   renderAdminPanel(); renderDrawer(); renderCards();
   agendarSalvarMenu();
 }
