@@ -4277,50 +4277,28 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div><label class="form-label">Data *</label><input type="date" class="form-input" id="cal-fData"></div>
       <div><label class="form-label">Hora</label><input type="time" class="form-input" id="cal-fHora"></div>
     </div>
-    <div style="margin-bottom:12px">
-      <label class="form-label">📅 Data alternativa (opcional — se ainda não tá certo o dia)</label>
-      <input type="date" class="form-input" id="cal-fDataAlt">
-      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-top:4px">Preenchendo aqui, a sessão fica "a confirmar" entre as duas datas — nos dois lugares (calendário, agenda do Google, impressão) — até você escolher uma.</div>
-    </div>
-    <div style="margin-bottom:12px"><label class="form-label">Tipo *</label>
-      <select class="form-input" id="cal-fTipo">
-        <option value="">— Selecionar —</option>
-        <option value="Interna">Sessão Interna</option>
-        <option value="Atendimento">Sessão com Atendimento</option>
-        <option value="Visita">Sessão de Visita</option>
-        <option value="Familia">Sessão da Família</option>
-        <option value="Reuniao">Reunião</option>
-      </select>
-    </div>
-    <div style="margin-bottom:12px"><label class="form-label">Marco de Obrigações/Cruzamento (opcional)</label>
-      <select class="form-input" id="cal-fMarco" style="margin-bottom:0">
-        <option value="">— Nenhum —</option>
-        <option value="Corte">Corte</option>
-        <option value="Obrigacao">Obrigação</option>
-        <option value="Elebo">Elebó</option>
-        <option value="Cruz:Conga">Cruzamento — Conga</option>
-        <option value="Cruz:Mata">Cruzamento — Mata</option>
-        <option value="Cruz:Praia">Cruzamento — Praia</option>
-        <option value="Cruz:Rio">Cruzamento — Rio</option>
-        <option value="Cruz:Cachoeira">Cruzamento — Cachoeira</option>
-        <option value="Cruz:Pedreira">Cruzamento — Pedreira</option>
-        <option value="Firmeza:Cruzeiro">Firmeza de Reinos — Cruzeiro</option>
-        <option value="Firmeza:CalungaPequena">Firmeza de Reinos — Calunga Pequena</option>
-        <option value="Firmeza:CalungaMaior">Firmeza de Reinos — Calunga Maior</option>
-        <option value="Firmeza:Mato">Firmeza de Reinos — Mato</option>
-      </select>
-      <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Corte e Cruzamento entram no catálogo de datas da Minha História; Obrigação, Elebó e Firmeza de Reinos por enquanto só organizam o calendário da casa (a integração deles com a Minha História vem numa etapa seguinte)</div>
-    </div>
-    <div style="margin-bottom:12px"><label class="form-label">Lado</label>
-      <select class="form-input" id="cal-fLado" style="margin-bottom:0">
-        <option value="">— Selecionar —</option>
-        <option value="Umbanda">Umbanda</option>
-        <option value="Quimbanda">Quimbanda</option>
-        <option value="Oriente">Oriente</option>
-        <option value="Reuniao">Reunião</option>
-        <option value="Visita">Visita</option>
-        <option value="Desenvolvimento">Desenvolvimento</option>
-      </select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div><label class="form-label">Tipo *</label>
+        <select class="form-input" id="cal-fTipo" style="margin-bottom:0">
+          <option value="">— Selecionar —</option>
+          <option value="Interna">Sessão Interna</option>
+          <option value="Atendimento">Sessão com Atendimento</option>
+          <option value="Visita">Sessão de Visita</option>
+          <option value="Familia">Sessão da Família</option>
+          <option value="Reuniao">Reunião</option>
+        </select>
+      </div>
+      <div><label class="form-label">Lado</label>
+        <select class="form-input" id="cal-fLado" style="margin-bottom:0">
+          <option value="">— Selecionar —</option>
+          <option value="Umbanda">Umbanda</option>
+          <option value="Quimbanda">Quimbanda</option>
+          <option value="Oriente">Oriente</option>
+          <option value="Reuniao">Reunião</option>
+          <option value="Visita">Visita</option>
+          <option value="Desenvolvimento">Desenvolvimento</option>
+        </select>
+      </div>
     </div>
     <div style="margin-bottom:12px"><label class="form-label">Endereço</label><input type="text" class="form-input" id="cal-fEndereco" placeholder="ex: Rua Exemplo, 123 - Bairro, Cidade"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tambor</label>
@@ -4332,6 +4310,42 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </select>
     </div>
     <div style="margin-bottom:12px"><label class="form-label">Descrição (interna)</label><textarea class="form-input" id="cal-fDesc" rows="3" style="resize:vertical"></textarea></div>
+
+    <!-- campos usados só às vezes (data incerta, marcar corte/cruzamento/
+         obrigação) ficam escondidos atrás desse "Mais opções" pra não
+         disputar atenção com os campos preenchidos toda sessão — mas abrem
+         sozinhos ao editar uma sessão que já tinha algum dos dois preenchido,
+         ver calAbrirMaisOpcoes em calOpenEdit -->
+    <div onclick="calToggleMaisOpcoes()" style="cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)">
+      <span id="cal-mais-opcoes-seta">▸</span> Mais opções <span style="font-weight:400;text-transform:none;font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic">(data alternativa, marco de obrigações/cruzamento)</span>
+    </div>
+    <div id="cal-mais-opcoes-wrap" style="display:none">
+      <div style="margin-bottom:12px">
+        <label class="form-label">📅 Data alternativa (opcional — se ainda não tá certo o dia)</label>
+        <input type="date" class="form-input" id="cal-fDataAlt">
+        <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-top:4px">Preenchendo aqui, a sessão fica "a confirmar" entre as duas datas — nos dois lugares (calendário, agenda do Google, impressão) — até você escolher uma.</div>
+      </div>
+      <div style="margin-bottom:12px"><label class="form-label">Marco de Obrigações/Cruzamento (opcional)</label>
+        <select class="form-input" id="cal-fMarco" style="margin-bottom:0">
+          <option value="">— Nenhum —</option>
+          <option value="Corte">Corte</option>
+          <option value="Obrigacao">Obrigação</option>
+          <option value="Elebo">Elebó</option>
+          <option value="Cruz:Conga">Cruzamento — Conga</option>
+          <option value="Cruz:Mata">Cruzamento — Mata</option>
+          <option value="Cruz:Praia">Cruzamento — Praia</option>
+          <option value="Cruz:Rio">Cruzamento — Rio</option>
+          <option value="Cruz:Cachoeira">Cruzamento — Cachoeira</option>
+          <option value="Cruz:Pedreira">Cruzamento — Pedreira</option>
+          <option value="Firmeza:Cruzeiro">Firmeza de Reinos — Cruzeiro</option>
+          <option value="Firmeza:CalungaPequena">Firmeza de Reinos — Calunga Pequena</option>
+          <option value="Firmeza:CalungaMaior">Firmeza de Reinos — Calunga Maior</option>
+          <option value="Firmeza:Mato">Firmeza de Reinos — Mato</option>
+        </select>
+        <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Corte e Cruzamento entram no catálogo de datas da Minha História; Obrigação, Elebó e Firmeza de Reinos por enquanto só organizam o calendário da casa (a integração deles com a Minha História vem numa etapa seguinte)</div>
+      </div>
+    </div>
+
     <!-- a visibilidade e as informações para visitantes não são mais marcadas
          evento por evento — agora são definidas por TIPO de sessão, em painéis
          próprios (⚙️ Visibilidade por tipo e 📋 Informações por tipo, ao lado
@@ -7388,6 +7402,18 @@ function calTogglePassadas() {
   calRenderLista();
 }
 
+// "Mais opções" (data alternativa + marco) — fechado por padrão; chamado
+// sem argumento alterna, com argumento força aberto/fechado (usado ao abrir
+// pra editar uma sessão que já tinha algum dos dois preenchido)
+function calToggleMaisOpcoes(forcarAberto) {
+  const wrap = document.getElementById('cal-mais-opcoes-wrap');
+  const seta = document.getElementById('cal-mais-opcoes-seta');
+  if (!wrap) return;
+  const abrir = forcarAberto !== undefined ? forcarAberto : wrap.style.display === 'none';
+  wrap.style.display = abrir ? '' : 'none';
+  if (seta) seta.textContent = abrir ? '▾' : '▸';
+}
+
 async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
@@ -7404,6 +7430,7 @@ async function calOpenModal() {
   document.getElementById('cal-btn-clonar').style.display = 'none';
   document.getElementById('cal-btn-excluir').style.display = 'none';
   document.getElementById('cal-confirmar-dia-wrap').style.display = 'none';
+  calToggleMaisOpcoes(false);
 
   document.getElementById('cal-fModelo-wrap').style.display = '';
   if (!calModelos.length) await calCarregarModelos();
@@ -7447,6 +7474,7 @@ function calOpenEdit(id) {
   document.getElementById('cal-fTambor').value = s.tambor || '';
   document.getElementById('cal-btn-clonar').style.display = '';
   document.getElementById('cal-btn-excluir').style.display = '';
+  calToggleMaisOpcoes(!!(s.dataAlternativa || s.marco));
 
   const confirmarWrap = document.getElementById('cal-confirmar-dia-wrap');
   if (s.dataAlternativa) {
