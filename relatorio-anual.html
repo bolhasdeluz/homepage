@@ -516,83 +516,129 @@ function salvarPremissasPrevisao() {
 }
 window.salvarPremissasPrevisao = salvarPremissasPrevisao;
 
-// pega o ano mais recente com lançamento e usa a média mensal dele como
-// base pra cada categoria de gasto e pra entradas; se tiver um ano anterior
-// pra comparar, aplica a variação entre os dois (ano mais recente ÷ ano
-// anterior), categoria por categoria — assim um gasto que disparou (ex:
-// Tambor) não "puxa" a previsão de uma conta fixa que nunca mudou (ex:
-// Aluguel, Alarme Serviço). O gasto do mês previsto é a soma das
-// categorias. Membros ativos usa a média do ano mais recente. Tudo isso
-// pode ser substituído pelas premissas que a Anna ajustar manualmente
-// (ver carregarPremissasPrevisao/salvarPremissasPrevisao) — ex: ela já
-// sabe que o aluguel vai ficar em R$1.200 esse ano, não precisa confiar na
-// conta automática. A previsão sai como um valor fixo repetido nos 12
-// meses de 2027 — não dá pra saber a sazonalidade de um ano que ainda nem
-// começou, então não finge que dá.
+// quanto se gastou numa categoria específica, num mês específico, de um
+// ano específico — null se aquele mês nem teve movimento naquele ano
+// (pra diferenciar de "não gastou nessa categoria, mas o mês existiu")
+function gastoCategoriaMesAno(dadosDoAno, ano, mes, conta) {
+  var mesAtivo = dadosDoAno.linhas.some(function(l){ return l.mes === mes; });
+  if (!mesAtivo) return null;
+  var ref = ano + '-' + String(mes).padStart(2,'0');
+  var total = 0;
+  lancamentos.forEach(function(l){
+    if (l.tipo !== 'gasto' || l.status === 'pendente') return;
+    if ((l.data||'').slice(0,7) !== ref) return;
+    var chave = l.conta || '—';
+    if (chave === 'Deslocamento') chave = 'Tambor';
+    if (chave === conta) total += l.valor;
+  });
+  return total;
+}
+
+// a previsão de cada mês é a MÉDIA do mesmo mês nos anos com lançamento
+// (ex: a previsão de março/2027 é a média dos valores reais de março nos
+// anos anteriores) — guarda a variação que a casa costuma ter mês a mês
+// (meses que sempre entra mais, meses que sempre entra menos), em vez de
+// um número só repetido o ano inteiro. Isso vale pra entradas, membros
+// ativos e cada categoria de gasto, separadamente — assim um gasto que
+// disparou numa categoria (ex: Tambor) não "puxa" a previsão de uma conta
+// fixa que nunca muda de verdade (ex: Aluguel, Alarme Serviço). Quando um
+// mês não teve movimento em NENHUM ano, usa a média geral dos outros
+// meses no lugar, pra não abrir um buraco de zero num ano que ainda nem
+// começou. Tudo isso pode ser substituído pelas premissas que a Anna
+// ajustar manualmente (ver carregarPremissasPrevisao/salvarPremissasPrevisao)
+// — ex: ela já sabe que o aluguel vai ficar em R$1.200, não precisa
+// confiar na média histórica pra essa conta específica.
 function calcularPrevisao2027() {
   var anosComDados = anosDisponiveis().slice().reverse()
     .filter(function(a){ return montarDadosExtratoAnual(a).linhas.length > 0; });
   if (!anosComDados.length) return null;
 
-  var anoRecente = anosComDados[anosComDados.length - 1];
-  var anoBase = anosComDados.length >= 2 ? anosComDados[anosComDados.length - 2] : null;
-  var dadosRecente = montarDadosExtratoAnual(anoRecente);
-  var nMesesRecente = dadosRecente.linhas.length || 1;
+  var dadosPorAno = {};
+  anosComDados.forEach(function(a){ dadosPorAno[a] = montarDadosExtratoAnual(a); });
 
-  var catRecente = calcularGastosPorCategoriaAno(anoRecente);
-  var catBase = anoBase ? calcularGastosPorCategoriaAno(anoBase) : null;
+  function mediaCampoMes(campo, mes) {
+    var valores = [];
+    anosComDados.forEach(function(a){
+      var v = valorAnoMes(dadosPorAno[a], mes, campo);
+      if (v != null) valores.push(v);
+    });
+    return valores.length ? valores.reduce(function(s,v){ return s+v; }, 0) / valores.length : null;
+  }
+  // preenche os meses sem nenhum ano de referência (ex: Agosto nunca teve
+  // movimento) com a média geral dos meses que tiveram, em vez de deixar 0
+  function comFallback(valoresPorMes) {
+    var validos = valoresPorMes.filter(function(v){ return v != null; });
+    var mediaGeral = validos.length ? validos.reduce(function(s,v){ return s+v; }, 0) / validos.length : 0;
+    return valoresPorMes.map(function(v){ return v != null ? v : mediaGeral; });
+  }
+  var MESES_1A12 = [1,2,3,4,5,6,7,8,9,10,11,12];
+
+  var categoriasPorAno = {};
+  anosComDados.forEach(function(a){ categoriasPorAno[a] = calcularGastosPorCategoriaAno(a); });
+  var todasCategorias = {};
+  anosComDados.forEach(function(a){ categoriasPorAno[a].categorias.forEach(function(c){ todasCategorias[c.conta] = true; }); });
+  var nomesCategorias = Object.keys(todasCategorias);
+
+  function mediaCategoriaMes(conta, mes) {
+    var valores = [];
+    anosComDados.forEach(function(a){
+      var v = gastoCategoriaMesAno(dadosPorAno[a], a, mes, conta);
+      if (v != null) valores.push(v);
+    });
+    return valores.length ? valores.reduce(function(s,v){ return s+v; }, 0) / valores.length : 0;
+  }
 
   var premissas = premissasPrevisao || {};
   var OVERRIDES = { 'Aluguel': premissas.aluguelMes, 'Alarme Serviço': premissas.alarmeMes };
+  var variacaoMembros = (premissas.variacaoMembros != null && !isNaN(premissas.variacaoMembros)) ? Number(premissas.variacaoMembros) : 0;
 
-  var categoriasPrevistas = catRecente.categorias.map(function(c){
-    var mediaRecente = c.total / nMesesRecente;
-    var base = catBase ? catBase.categorias.find(function(x){ return x.conta === c.conta; }) : null;
-    var fator = (base && base.total > 0) ? c.total / base.total : 1;
-    var auto = Math.round(mediaRecente * fator * 100) / 100;
-    var override = OVERRIDES[c.conta];
-    var usaOverride = override != null && !isNaN(override);
-    var mensal = usaOverride ? Number(override) : auto;
-    return { conta: c.conta, mensal: mensal, auto: auto, total: Math.round(mensal * 12 * 100) / 100 };
+  var categoriasMensais = {}; // conta -> [12 valores, Jan..Dez]
+  nomesCategorias.forEach(function(conta){
+    var override = OVERRIDES[conta];
+    if (override != null && !isNaN(override)) {
+      categoriasMensais[conta] = MESES_1A12.map(function(){ return Number(override); });
+    } else {
+      categoriasMensais[conta] = MESES_1A12.map(function(m){ return Math.round(mediaCategoriaMes(conta, m) * 100) / 100; });
+    }
   });
 
-  var gastosMensal = Math.round(categoriasPrevistas.reduce(function(s,c){ return s + c.mensal; }, 0) * 100) / 100;
+  var entradasPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('entradas', m); }));
+  var nTotPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nTot', m); }));
+  var nPagPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nPag', m); }));
 
-  var totalEntradasBase = anoBase ? montarDadosExtratoAnual(anoBase).totalEntradas : 0;
-  var fatorEntradas = (anoBase && totalEntradasBase > 0) ? dadosRecente.totalEntradas / totalEntradasBase : 1;
-  var entradasMensal = Math.round((dadosRecente.totalEntradas / nMesesRecente) * fatorEntradas * 100) / 100;
+  var linhas = MESES_1A12.map(function(mes, idx){
+    var entradas = Math.round(entradasPorMes[idx] * 100) / 100;
+    var gastos = Math.round(nomesCategorias.reduce(function(s, conta){ return s + categoriasMensais[conta][idx]; }, 0) * 100) / 100;
+    var nTot = Math.max(0, Math.round(nTotPorMes[idx] + variacaoMembros));
+    var nPag = Math.min(Math.round(nPagPorMes[idx]), nTot);
+    return {
+      mes: mes, label: MESES_NOMES_FULL[mes-1] + '/2027 (previsão)',
+      entradas: entradas, gastos: gastos, saldo: Math.round((entradas - gastos) * 100) / 100,
+      nTot: nTot, nPag: nPag,
+      pctPag: nTot > 0 ? Math.round(nPag / nTot * 100) : 0,
+      pctCob: gastos > 0 ? Math.round(entradas / gastos * 100) : (entradas > 0 ? 100 : 0)
+    };
+  });
 
-  var mediaNTot = Math.round(dadosRecente.linhas.reduce(function(s,l){ return s + l.nTot; }, 0) / nMesesRecente);
-  var variacaoMembros = (premissas.variacaoMembros != null && !isNaN(premissas.variacaoMembros)) ? Number(premissas.variacaoMembros) : 0;
-  var nTotMensal = Math.max(0, mediaNTot + variacaoMembros);
+  var totalEntradas = Math.round(linhas.reduce(function(s,l){ return s + l.entradas; }, 0) * 100) / 100;
+  var totalGastos = Math.round(linhas.reduce(function(s,l){ return s + l.gastos; }, 0) * 100) / 100;
 
-  var mediaNPag = Math.round(dadosRecente.linhas.reduce(function(s,l){ return s + l.nPag; }, 0) / nMesesRecente);
-  var pctPagMensal = nTotMensal > 0 ? Math.round(Math.min(mediaNPag, nTotMensal) / nTotMensal * 100) : 0;
-  var pctCobMensal = gastosMensal > 0 ? Math.round(entradasMensal / gastosMensal * 100) : (entradasMensal > 0 ? 100 : 0);
-  var saldoMensal = Math.round((entradasMensal - gastosMensal) * 100) / 100;
-
-  var linhas = [];
-  for (var m = 1; m <= 12; m++) {
-    linhas.push({
-      mes: m, label: MESES_NOMES_FULL[m-1] + '/2027 (previsão)',
-      entradas: entradasMensal, gastos: gastosMensal, saldo: saldoMensal,
-      nTot: nTotMensal, nPag: Math.min(mediaNPag, nTotMensal), pctPag: pctPagMensal, pctCob: pctCobMensal
-    });
-  }
-
-  var catAluguel = categoriasPrevistas.find(function(c){ return c.conta === 'Aluguel'; });
-  var catAlarme = categoriasPrevistas.find(function(c){ return c.conta === 'Alarme Serviço'; });
+  var autoAluguelMes = Math.round((MESES_1A12.reduce(function(s,m){ return s + mediaCategoriaMes('Aluguel', m); }, 0) / 12) * 100) / 100;
+  var autoAlarmeMes = Math.round((MESES_1A12.reduce(function(s,m){ return s + mediaCategoriaMes('Alarme Serviço', m); }, 0) / 12) * 100) / 100;
+  var autoMembrosBase = Math.round(nTotPorMes.reduce(function(s,v){ return s+v; }, 0) / 12);
 
   return {
-    ano: '2027', previsto: true, anoRecenteUsado: anoRecente, anoBaseUsado: anoBase,
+    ano: '2027', previsto: true, anosUsados: anosComDados,
     dados: {
       linhas: linhas,
-      totalEntradas: Math.round(entradasMensal * 12 * 100) / 100,
-      totalGastos: Math.round(gastosMensal * 12 * 100) / 100,
-      saldoAno: Math.round((entradasMensal - gastosMensal) * 12 * 100) / 100
+      totalEntradas: totalEntradas,
+      totalGastos: totalGastos,
+      saldoAno: Math.round((totalEntradas - totalGastos) * 100) / 100
     },
-    categorias: categoriasPrevistas.map(function(c){ return { conta: c.conta, total: c.total }; }),
-    autoValores: { aluguelMes: catAluguel ? catAluguel.auto : 0, alarmeMes: catAlarme ? catAlarme.auto : 0, membrosBase: mediaNTot },
+    categorias: nomesCategorias.map(function(conta){
+      return { conta: conta, total: Math.round(categoriasMensais[conta].reduce(function(s,v){ return s+v; }, 0) * 100) / 100 };
+    }),
+    autoValores: { aluguelMes: autoAluguelMes, alarmeMes: autoAlarmeMes, membrosBase: autoMembrosBase },
     premissasAtuais: { aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], variacaoMembros: variacaoMembros }
   };
 }
@@ -788,9 +834,9 @@ function renderComparativo(comPrevisao) {
     html += '<div class="chart-card" style="border-top:3px solid ' + COR_PREVISAO + '">';
     html += '<div class="sec-title" style="margin-top:0">Premissas da previsão 2027</div>';
     html += '<div class="chart-hint" style="text-align:left;margin:0 0 12px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
-      + (previsao.anoBaseUsado
-          ? 'aplica a variação entre ' + previsao.anoBaseUsado + ' e ' + previsao.anoRecenteUsado + ' sobre a média mensal de ' + previsao.anoRecenteUsado + ', categoria por categoria'
-          : 'repete a média mensal de ' + previsao.anoRecenteUsado + ', sem nenhum outro ano pra comparar a tendência')
+      + (previsao.anosUsados.length > 1
+          ? 'cada mês usa a média do mesmo mês em ' + previsao.anosUsados.join(' e ') + ' (ex: a previsão de março é a média dos março reais desses anos), separado por categoria de gasto — assim guarda a variação que a casa costuma ter mês a mês, sem um gasto que disparou numa categoria puxar a previsão de outra'
+          : 'repete o padrão mensal de ' + previsao.anosUsados[0] + ', o único ano com lançamento ainda — sem outro ano pra tirar média')
       + '. Ajuste aqui embaixo o que você já sabe de verdade sobre o ano que vem — esses valores ficam salvos e valem pra previsão toda vez que você abrir essa tela.</div>';
     html += '<div style="display:flex;flex-direction:column;gap:12px;">';
     html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Aluguel por mês (R$)'
