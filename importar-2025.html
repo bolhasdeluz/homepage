@@ -59,12 +59,14 @@ th { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .04em; tex
     <div class="card">
       <div class="sec-title">O que isso faz</div>
       <div class="aviso">
-        Lança no sistema, como gastos e entradas de verdade do ano de 2025, os valores da sua planilha:
-        Luz, Água, Alarme Serviço, Internet, Aluguel e Tambor mês a mês, mais a entrada "Corrente"
-        (mensalidades recebidas). O que você cobriu do próprio bolso (a linha "Anna" da planilha) não
-        entra como lançamento — o sistema já calcula isso sozinho e mostra "coberto pela mãe de santo 🕯️"
-        sempre que o saldo do mês fica negativo. Agosto ficou de fora porque não tinha valor na planilha.
-        Depois de importar, esses meses aparecem normalmente na Tesouraria e no Relatório Anual, ano 2025.
+        Lança no sistema, como gastos e entradas de verdade do ano de 2025: os gastos mês a mês (Luz,
+        Água, Alarme Serviço, Internet, Aluguel, Tambor) e as mensalidades pagas por cada pessoa,
+        individualmente, com data e nome — tirado do controle de pagamentos que você mandou em PDF.
+        Mikael e Miguel pagam mas não são membras cadastradas no sistema, então entram como avulso, sem
+        contar na conta de "quem pagou" das membras. O que você cobriu do próprio bolso não entra como
+        lançamento — o sistema já calcula isso sozinho e mostra "coberto pela mãe de santo 🕯️" sempre que
+        o saldo do mês fica negativo. Agosto ficou de fora porque não tinha valor na planilha. Depois de
+        importar, esses meses aparecem normalmente na Tesouraria e no Relatório Anual, ano 2025.
       </div>
     </div>
     <div class="card" id="preview-card">
@@ -109,18 +111,92 @@ var GASTOS_2025 = [
 // a diferença entre entradas e gastos não entra como lançamento — o
 // próprio sistema já mostra "coberto pela mãe de santo 🕯️" sempre que o
 // saldo do mês fica negativo (ver relatorio-anual.html/tesouraria.html)
+//
+// cada mensalidade paga por uma membra cadastrada (Ness, Thali, Jaque,
+// Tassi, Brenda, Vitória, Manu, Juliana) entra com subTipo "membro", pra
+// contar certinho em "quem pagou" no relatório. Mikael e Miguel pagam
+// mensalidade mas não são membras cadastradas no sistema — entram como
+// "extra" pra não afetar essa conta de quem pagou
 var ENTRADAS_2025 = [
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '01', valor: 320.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '02', valor: 150.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '03', valor: 427.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '04', valor: 144.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '05', valor: 435.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '06', valor: 460.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '07', valor: 375.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '09', valor: 330.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '10', valor: 480.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '11', valor: 635.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '12', valor: 615.00 }
+  { membro: 'Ness', subTipo: 'membro', data: '2025-01-03', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-01-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-01-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-01-09', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-01-20', valor: 120.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-02-07', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-02-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-02-24', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-03-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-03-09', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-03-09', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-03-11', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-03-14', valor: 25.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-03-20', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Brenda', subTipo: 'membro', data: '2025-03-25', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-03-28', valor: 30.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-03-29', valor: 30.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-03-31', valor: 14.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-03-31', valor: 14.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-03-31', valor: 14.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Brenda', subTipo: 'membro', data: '2025-04-06', valor: 15.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-04-06', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-04-06', valor: 15.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-04-06', valor: 14.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-04-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-05-05', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-05-05', valor: 75.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-05-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-05-08', valor: 40.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-05-09', valor: 100.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-05-10', valor: 100.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-06-03', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-06-03', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Brenda', subTipo: 'membro', data: '2025-06-06', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-06-06', valor: 80.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-06-07', valor: 120.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-06-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-07-05', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-07-08', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-07-09', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-07-15', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-07-18', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-07-20', valor: 75.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Miguel', subTipo: 'extra', data: '2025-07-25', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-09-05', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-09-06', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-09-06', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-09-12', valor: 80.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-10-03', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-10-03', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-10-05', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-10-07', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-10-08', valor: 30.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-10-08', valor: 50.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-10-08', valor: 20.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-10-08', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Manu', subTipo: 'membro', data: '2025-10-16', valor: 80.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-11-06', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-11-11', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-11-11', valor: 70.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Manu', subTipo: 'membro', data: '2025-11-17', valor: 100.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Brenda', subTipo: 'membro', data: '2025-11-19', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Manu', subTipo: 'membro', data: '2025-11-22', valor: 60.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Juliana', subTipo: 'membro', data: '2025-11-24', valor: 75.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-11-28', valor: 30.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Juliana', subTipo: 'membro', data: '2025-11-29', valor: 100.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Manu', subTipo: 'membro', data: '2025-12-01', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Tassi', subTipo: 'membro', data: '2025-12-03', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Mikael', subTipo: 'extra', data: '2025-12-05', valor: 20.00, obs: 'Avulso — importado do histórico 2025' },
+  { membro: 'Ness', subTipo: 'membro', data: '2025-12-05', valor: 80.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Miguel', subTipo: 'extra', data: '2025-09-01', valor: 50.00, obs: 'Mensalidade paga com botijão de gás em agosto — importado do histórico 2025' },
+  { membro: 'Miguel', subTipo: 'extra', data: '2025-10-01', valor: 50.00, obs: 'Mensalidade paga com botijão de gás em agosto — importado do histórico 2025' },
+  { membro: 'Miguel', subTipo: 'extra', data: '2025-11-01', valor: 50.00, obs: 'Mensalidade paga com botijão de gás em agosto — importado do histórico 2025' },
+  { membro: 'Vitória', subTipo: 'membro', data: '2025-09-01', valor: 50.00, obs: 'Mensalidade paga em dinheiro — importado do histórico 2025' },
+  { membro: 'Brenda', subTipo: 'membro', data: '2025-12-09', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Thali', subTipo: 'membro', data: '2025-12-10', valor: 90.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Juliana', subTipo: 'membro', data: '2025-12-16', valor: 70.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Jaque', subTipo: 'membro', data: '2025-12-10', valor: 50.00, obs: 'Mensalidade — importado do histórico 2025' },
+  { membro: 'Miguel', subTipo: 'extra', data: '2025-12-16', valor: 115.00, obs: 'Avulso — importado do histórico 2025' }
 ];
 
 function slug(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
@@ -128,18 +204,23 @@ function fmt(v) { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFrac
 
 function montarRegistros() {
   var registros = [];
+  var contagemId = {};
+  function idUnico(base) {
+    contagemId[base] = (contagemId[base] || 0) + 1;
+    return contagemId[base] > 1 ? base + '-' + contagemId[base] : base;
+  }
   GASTOS_2025.forEach(function(g){
     registros.push({
-      id: 'imp25-g-' + slug(g.conta) + '-' + g.mes,
+      id: idUnico('imp25-g-' + slug(g.conta) + '-' + g.mes),
       tipo: 'gasto', valor: g.valor, data: '2025-' + g.mes + '-05',
       conta: g.conta, obs: 'Importado do histórico 2025', status: 'pago'
     });
   });
   ENTRADAS_2025.forEach(function(e){
     registros.push({
-      id: 'imp25-e-' + slug(e.membro) + '-' + e.mes,
-      tipo: 'entrada', valor: e.valor, data: '2025-' + e.mes + '-05',
-      competencia: '2025-' + e.mes, membro: e.membro, subTipo: 'extra', obs: e.obs
+      id: idUnico('imp25-e-' + slug(e.membro) + '-' + e.data),
+      tipo: 'entrada', valor: e.valor, data: e.data,
+      competencia: e.data.slice(0,7), membro: e.membro, subTipo: e.subTipo, obs: e.obs
     });
   });
   return registros;
