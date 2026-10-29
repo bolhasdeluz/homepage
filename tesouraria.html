@@ -1203,10 +1203,18 @@ body{padding-bottom:64px}
   }
   // ── Ocultar nomes (pra print sem expor quem falta pagar) ────────
   function blNomesOcultos() { return localStorage.getItem('bl-ocultar-nomes') === '1'; }
+  // Mostra os nomes de verdade ou só a contagem, conforme "Ocultar nomes" —
+  // usado em toda lista de "quem falta pagar" (Início, Histórico, Resumo
+  // Geral, Agosto/Aves, Extrato Anual), pra nunca expor quem está devendo
+  // quando a tela ou o relatório impresso vai ser compartilhado
+  function blNomesLista(nomes) {
+    if (!nomes || !nomes.length) return '';
+    if (blNomesOcultos()) return nomes.length + (nomes.length === 1 ? ' pessoa' : ' pessoas');
+    return nomes.join(', ');
+  }
   function blFaltamTexto(nomes) {
     if (!nomes || !nomes.length) return '✓ Todas pagaram!';
-    if (blNomesOcultos()) return 'Faltam: ' + nomes.length + (nomes.length === 1 ? ' pessoa' : ' pessoas');
-    return 'Faltam: ' + nomes.join(', ');
+    return 'Faltam: ' + blNomesLista(nomes);
   }
   function blAtualizarBotaoNomes() {
     var label = blNomesOcultos() ? '👁 Mostrar nomes' : '🙈 Ocultar nomes';
@@ -1809,7 +1817,7 @@ body{padding-bottom:64px}
               + '<div style="background:rgba(196,57,107,.06);border-radius:4px;height:3px;overflow:hidden;margin-bottom:'+(naoPag.length?'5px':'0')+';">'
               +   '<div style="height:100%;border-radius:4px;width:'+Math.min(pctValor,100)+'%;background:'+(pctValor>=100?'var(--green)':'var(--gold)')+'"></div>'
               + '</div>'
-              + (naoPag.length ? '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:var(--text-dim);">Faltam: '+naoPag.join(', ')+'</div>' : '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:var(--green);">✓ Todas pagaram</div>')
+              + (naoPag.length ? '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:var(--text-dim);">Faltam: '+blNomesLista(naoPag)+'</div>' : '<div style="font-family:\'DM Sans\',sans-serif;font-size:.65rem;color:var(--green);">✓ Todas pagaram</div>')
               + '</div>';
           }).join('')
         + '</div>';
@@ -3256,7 +3264,7 @@ body{padding-bottom:64px}
       html += '</style></head><body>';
 
       html += '<h1>Bolhas de Luz — Extrato Anual ' + ano + '</h1>';
-      html += '<div class="sub">Gerado em ' + new Date().toLocaleDateString('pt-BR') + '</div>';
+      html += '<div class="sub">Gerado em ' + new Date().toLocaleDateString('pt-BR') + (blNomesOcultos() ? ' · <strong>🔒 Nomes ocultos</strong>' : '') + '</div>';
 
       html += '<div class="saldo-box">';
       html += '<div><div class="label">Entradas no ano</div><div class="valor" style="color:#2a7a60">' + fmt(dados.totalEntradas) + '</div></div>';
@@ -3272,7 +3280,7 @@ body{padding-bottom:64px}
           + '<td style="text-align:center">'+l.pctPag+'% ('+l.nPag+'/'+l.nTot+')</td>'
           + '<td style="text-align:center">'+l.pctCob+'%</td>'
           + '<td class="val">'+(l.nPag>0?fmt(l.mediaMensalidade):'—')+'</td>'
-          + '<td class="dim">'+(l.naoPag.length?l.naoPag.join(', '):'✓ todas pagaram')+'</td></tr>';
+          + '<td class="dim">'+(l.naoPag.length?blNomesLista(l.naoPag):'✓ todas pagaram')+'</td></tr>';
       });
       html += '<tr class="total-row"><td>TOTAL '+ano+'</td><td class="verde" style="text-align:right">'+fmt(dados.totalEntradas)+'</td><td class="vermelho" style="text-align:right">'+fmt(dados.totalGastos)+'</td>'
         + '<td style="text-align:right;color:'+(dados.saldoAno>=0?'#2a7a60':'#b84040')+'">'+fmt(dados.saldoAno)+'</td><td></td><td></td>'
@@ -3290,7 +3298,7 @@ body{padding-bottom:64px}
       rows.push([]);
       rows.push(['Mês','Entradas','Gastos','Saldo','% Pagantes','Pagantes','% Cobertura','Média mensalidade','Faltaram']);
       dados.linhas.forEach(function(l){
-        rows.push([l.label, l.entradas.toFixed(2), l.gastos.toFixed(2), l.saldo.toFixed(2), l.pctPag+'%', l.nPag+'/'+l.nTot, l.pctCob+'%', l.nPag>0?l.mediaMensalidade.toFixed(2):'', l.naoPag.join(', ')]);
+        rows.push([l.label, l.entradas.toFixed(2), l.gastos.toFixed(2), l.saldo.toFixed(2), l.pctPag+'%', l.nPag+'/'+l.nTot, l.pctCob+'%', l.nPag>0?l.mediaMensalidade.toFixed(2):'', blNomesLista(l.naoPag)]);
       });
       rows.push(['TOTAL '+ano, dados.totalEntradas.toFixed(2), dados.totalGastos.toFixed(2), dados.saldoAno.toFixed(2), '', '', '', dados.mediaAnual.toFixed(2), '']);
       var csv = '﻿' + rows.map(function(r){
@@ -3307,13 +3315,14 @@ body{padding-bottom:64px}
 
     } else if (formato === 'wpp') {
       var msg = '🕯️ *BOLHAS DE LUZ — EXTRATO ANUAL ' + ano + '*\n';
+      if (blNomesOcultos()) msg += '🔒 Nomes ocultos\n';
       msg += '─'.repeat(28) + '\n\n';
       dados.linhas.forEach(function(l){
         msg += '📅 *' + l.label + '*\n';
         msg += '↑ ' + fmt(l.entradas) + ' · ↓ ' + fmt(l.gastos) + ' · Saldo ' + fmt(l.saldo) + (l.saldo<0?' 🕯️':'') + '\n';
         msg += '👥 ' + l.pctPag + '% (' + l.nPag + '/' + l.nTot + ') · 💰 Cob. ' + l.pctCob + '%\n';
         if (l.nPag > 0) msg += '💵 Média mensalidade: ' + fmt(l.mediaMensalidade) + '\n';
-        if (l.naoPag.length) msg += 'Faltaram: ' + l.naoPag.join(', ') + '\n';
+        if (l.naoPag.length) msg += 'Faltaram: ' + blNomesLista(l.naoPag) + '\n';
         msg += '\n';
       });
       msg += '📊 *RESUMO DO ANO*\n';
