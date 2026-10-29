@@ -127,6 +127,13 @@ html { overflow-x: hidden; }
 .lancamento-comprovante { display: inline-flex; align-items: center; gap: 4px; font-family: 'DM Sans', sans-serif; font-size: .65rem; color: var(--gold); margin-top: 4px; cursor: pointer; }
 .lancamento-clone { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--text-dim); font-size: .7rem; padding: 3px 8px; cursor: pointer; margin-top: 5px; font-family: 'DM Sans', sans-serif; transition: all .15s; display: inline-flex; align-items: center; gap: 3px; }
 .lancamento-clone:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+.selecionar-toggle { background: none; border: 1px solid var(--border); border-radius: 20px; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: .72rem; padding: 5px 12px; cursor: pointer; }
+.selecionar-toggle.ativo { background: var(--gold); border-color: var(--gold); color: #fff; }
+.lancamento-check { flex-shrink: 0; margin-top: 7px; display: flex; }
+.lancamento-check input { width: 19px; height: 19px; accent-color: var(--gold); cursor: pointer; }
+#selecao-bar { display: none; position: fixed; left: 12px; right: 12px; bottom: 60px; z-index: 400; background: #fff; border: 1px solid var(--gold); border-radius: 12px; box-shadow: 0 6px 24px rgba(140,90,0,.22); padding: 10px 12px; align-items: center; gap: 8px; }
+#selecao-bar .selecao-count { font-family: 'DM Sans', sans-serif; font-size: .78rem; color: var(--text); flex: 1; }
+#selecao-bar button { font-family: 'Cinzel', serif; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: none; border-radius: 8px; padding: 9px 10px; cursor: pointer; white-space: nowrap; }
 
 /* BADGES */
 .cat-badge { display: inline-block; background: #fce8ef; color: var(--gold); border-radius: 20px; font-size: .62rem; font-weight: 500; letter-spacing: .04em; padding: 2px 8px; text-transform: uppercase; font-family: 'DM Sans', sans-serif; margin-top: 3px; }
@@ -559,7 +566,9 @@ body{padding-bottom:64px}
       <button class="fbtn" onclick="setInicioFiltro('pendente', this)" style="color:var(--red);border-color:rgba(184,64,64,.25);">🔴 Pendentes</button>
     </div>
 
-    <div class="section-header"><div class="section-title" id="lancamentos-label">Últimos lançamentos</div></div>
+    <div class="section-header"><div class="section-title" id="lancamentos-label">Últimos lançamentos</div>
+      <button class="selecionar-toggle" id="btn-selecionar-inicio" onclick="toggleModoSelecao()">☑️ Selecionar</button>
+    </div>
     <div id="lista-recente"></div>
   </div>
 
@@ -579,7 +588,8 @@ body{padding-bottom:64px}
 
   <!-- HISTÓRICO -->
   <div id="painel-historico" class="panel">
-    <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:10px;">
+      <button class="selecionar-toggle" id="btn-selecionar-historico" onclick="toggleModoSelecao()">☑️ Selecionar</button>
       <button onclick="abrirLote()" style="background:linear-gradient(135deg,#2a7a60,#3a9a78);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.07em;padding:7px 12px;cursor:pointer;white-space:nowrap;">🗂️ Lote</button>
     </div>
     <div id="lista-historico"></div>
@@ -1016,6 +1026,30 @@ body{padding-bottom:64px}
 
 <div class="toast" id="toast"></div>
 
+<!-- BARRA DE SELEÇÃO (excluir/clonar em lote) -->
+<div id="selecao-bar">
+  <div class="selecao-count" id="selecao-count">0 selecionados</div>
+  <button onclick="cancelarSelecao()" style="background:none;border:1px solid var(--border);color:var(--text-dim);">Cancelar</button>
+  <button onclick="clonarSelecionados()" style="background:var(--gold);color:#fff;">⧉ Clonar</button>
+  <button onclick="excluirSelecionados()" style="background:var(--red);color:#fff;">🗑 Excluir</button>
+</div>
+
+<!-- MODAL CLONAR (uma ou mais datas, um ou mais lançamentos) -->
+<div class="modal-overlay" id="clonar-overlay" onclick="fecharModal('clonar-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">⧉ Clonar Lançamento</div>
+      <button class="modal-close" onclick="document.getElementById('clonar-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="clonar-info" style="font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);"></div>
+      <div id="clonar-datas"></div>
+      <button onclick="adicionarCampoData()" style="background:none;border:1px dashed rgba(196,57,107,.3);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.07em;padding:8px;cursor:pointer;">+ Adicionar outra data</button>
+      <button onclick="confirmarClonagem()" class="btn-primary" style="margin-top:6px;">Confirmar clonagem</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ── HELPERS ───────────────────────────────────────────────
   // Membros que saíram da casa, com o mês (YYYY-MM) a partir do qual não contam mais
@@ -1443,7 +1477,11 @@ body{padding-bottom:64px}
     var pagarBtn = (l.status === 'pendente')
       ? '<button class="lancamento-clone" style="border-color:var(--green);color:var(--green);" onclick="marcarPago(' + l.id + ')">✅ Marcar pago</button>'
       : '';
+    var checkbox = modoSelecao
+      ? '<label class="lancamento-check"><input type="checkbox" ' + (selecionadosIds[l.id] ? 'checked' : '') + ' onchange="toggleSelecaoItem(' + l.id + ')"></label>'
+      : '';
     return '<div class="lancamento-item" style="animation-delay:' + (idx * 0.05) + 's' + (l.status==='pendente' ? ';border-left:3px solid var(--red);' : '') + '">'
+      + checkbox
       + '<div class="lancamento-dot ' + l.tipo + '">' + (isEntrada ? '💚' : (l.status==='pendente' ? '🔴' : '🧾')) + '</div>'
       + '<div class="lancamento-info">'
       + '<div class="lancamento-nome">' + nome + '</div>'
@@ -1930,15 +1968,115 @@ body{padding-bottom:64px}
     });
   }
 
-  // ── CLONE ─────────────────────────────────────────────────
+  // ── CLONE — sempre pergunta a(s) data(s), nunca clona direto pra hoje.
+  // Dá pra clonar um lançamento só (botão "Clonar" do item) ou vários de
+  // uma vez (seleção em lote), e pra uma data só ou várias (ex: repetir o
+  // aluguel pros próximos 3 meses de uma vez) ──────────────────────
+  var clonarIdsAtual = [];
+
   function clonarLancamento(id) {
-    var original = lancamentos.find(function(l){ return l.id === id; });
-    if (!original) return;
-    var clone = Object.assign({}, original, { id: Date.now(), data: today() });
-    lancamentos.unshift(clone);
+    abrirClonar([id]);
+  }
+
+  function clonarSelecionados() {
+    var ids = Object.keys(selecionadosIds).map(Number);
+    if (!ids.length) return;
+    abrirClonar(ids);
+  }
+
+  function abrirClonar(ids) {
+    clonarIdsAtual = ids;
+    var n = ids.length;
+    document.getElementById('clonar-info').textContent = n + ' lançamento' + (n > 1 ? 's' : '') + ' selecionado' + (n > 1 ? 's' : '') + ' — escolha pra qual(is) data(s) clonar:';
+    document.getElementById('clonar-datas').innerHTML = '';
+    adicionarCampoData(today());
+    document.getElementById('clonar-overlay').classList.add('open');
+  }
+
+  function adicionarCampoData(valor) {
+    var wrap = document.getElementById('clonar-datas');
+    var ehPrimeira = wrap.children.length === 0;
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:8px;';
+    row.innerHTML = '<input type="date" class="clonar-data-input" value="' + (valor || '') + '" style="flex:1;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:16px;padding:10px 12px;background:transparent;color:var(--text);">'
+      + (ehPrimeira ? '' : '<button onclick="this.parentElement.remove()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--text-dim);width:38px;height:38px;cursor:pointer;flex-shrink:0;">✕</button>');
+    wrap.appendChild(row);
+  }
+
+  function confirmarClonagem() {
+    var datas = Array.prototype.map.call(document.querySelectorAll('.clonar-data-input'), function(i){ return i.value; }).filter(Boolean);
+    if (!datas.length) { showToast('Escolha ao menos uma data'); return; }
+    var criados = 0;
+    clonarIdsAtual.forEach(function(id) {
+      var original = lancamentos.find(function(l){ return l.id === id; });
+      if (!original) return;
+      datas.forEach(function(data) {
+        var clone = Object.assign({}, original, { id: Date.now() + Math.random(), data: data });
+        if (original.vencimento) clone.vencimento = data;
+        lancamentos.unshift(clone);
+        criados++;
+      });
+    });
+    lancamentos.sort(function(a, b) { return new Date(b.data) - new Date(a.data); });
     save();
+    document.getElementById('clonar-overlay').classList.remove('open');
+    cancelarSelecao();
     renderPainelAtivo();
-    showToast('Lançamento clonado ✓');
+    showToast(criados + ' lançamento' + (criados > 1 ? 's' : '') + ' clonado' + (criados > 1 ? 's' : '') + ' ✓');
+  }
+
+  // ── SELEÇÃO EM LOTE — selecionar vários lançamentos pra excluir ou
+  // clonar de uma vez, em vez de item por item ────────────────────
+  var modoSelecao = false;
+  var selecionadosIds = {};
+
+  function toggleModoSelecao() {
+    modoSelecao = !modoSelecao;
+    selecionadosIds = {};
+    ['btn-selecionar-inicio', 'btn-selecionar-historico'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.classList.toggle('ativo', modoSelecao);
+    });
+    atualizarBarraSelecao();
+    renderPainelAtivo();
+  }
+
+  function cancelarSelecao() {
+    modoSelecao = false;
+    selecionadosIds = {};
+    ['btn-selecionar-inicio', 'btn-selecionar-historico'].forEach(function(id) {
+      var btn = document.getElementById(id);
+      if (btn) btn.classList.remove('ativo');
+    });
+    atualizarBarraSelecao();
+    renderPainelAtivo();
+  }
+
+  function toggleSelecaoItem(id) {
+    if (selecionadosIds[id]) delete selecionadosIds[id];
+    else selecionadosIds[id] = true;
+    atualizarBarraSelecao();
+  }
+
+  function atualizarBarraSelecao() {
+    var bar = document.getElementById('selecao-bar');
+    var n = Object.keys(selecionadosIds).length;
+    if (modoSelecao && n > 0) {
+      bar.style.display = 'flex';
+      document.getElementById('selecao-count').textContent = n + ' selecionado' + (n > 1 ? 's' : '');
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
+  function excluirSelecionados() {
+    var n = Object.keys(selecionadosIds).length;
+    if (!n) return;
+    if (!confirm('Excluir ' + n + ' lançamento' + (n > 1 ? 's' : '') + '? Essa ação não pode ser desfeita.')) return;
+    lancamentos = lancamentos.filter(function(l){ return !selecionadosIds[l.id]; });
+    save();
+    cancelarSelecao();
+    showToast(n + ' lançamento' + (n > 1 ? 's' : '') + ' excluído' + (n > 1 ? 's' : '') + ' ✓');
   }
 
   // ── LOTE ──────────────────────────────────────────────────
