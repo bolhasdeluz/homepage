@@ -880,9 +880,10 @@ body{padding-bottom:64px}
           <button id="toggle-extra" onclick="setEntradaTipo('extra')" style="flex:1;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.07em;padding:9px;cursor:pointer;transition:all .2s;">✨ Extra</button>
         </div>
         <div id="campo-membro" class="field"><label class="field-label">Membro</label>
-          <select id="entrada-membro">
+          <select id="entrada-membro" onchange="onEntradaMembroChange()">
             <option value="">Selecionar membro…</option>
           </select>
+          <input type="text" id="entrada-membro-nome" placeholder="Nome da pessoa" style="display:none;margin-top:6px;">
         </div>
         <div id="campo-extra" class="field" style="display:none;"><label class="field-label">Descrição</label>
           <input type="text" id="entrada-extra-desc" placeholder="Ex: Doação, Rifa, Venda de vela…">
@@ -1093,31 +1094,35 @@ body{padding-bottom:64px}
   }
 
   // preenche os <select> de "Membro" (nova entrada, editar lançamento, caixa)
-  // a partir de MEMBROS_TODOS — chamado no início e de novo sempre que a
-  // sincronização por cargo adiciona alguém, pra elas aparecerem sem
-  // precisar recarregar a página. Preserva o valor já escolhido, se ainda
-  // existir na lista nova.
+  // — chamado no início e de novo sempre que a sincronização por cargo
+  // adiciona alguém, pra elas aparecerem sem precisar recarregar a página.
+  // Preserva o valor já escolhido, se ainda existir na lista nova.
+  // "Nova entrada" e "Caixa" (ações do dia a dia) só mostram quem está ativa
+  // hoje — não faz sentido lançar um pagamento novo em nome de quem já
+  // saiu. "Editar lançamento" continua com a lista histórica completa, pra
+  // não quebrar a edição de um lançamento antigo de alguém que já saiu.
   function renderMembroSelects() {
-    var opcoesBase = MEMBROS_TODOS.map(function(m){ return '<option>'+m+'</option>'; }).join('');
+    var opcoesAtivas = getMembrosAtivos().map(function(m){ return '<option>'+m+'</option>'; }).join('');
+    var opcoesTodas = MEMBROS_TODOS.map(function(m){ return '<option>'+m+'</option>'; }).join('');
 
     var elEntrada = document.getElementById('entrada-membro');
     if (elEntrada) {
       var valEntrada = elEntrada.value;
-      elEntrada.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase;
+      elEntrada.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesAtivas + '<option value="__custom">✍️ Outro nome (não é da casa)</option>';
       elEntrada.value = valEntrada;
     }
 
     var elEdit = document.getElementById('edit-membro');
     if (elEdit) {
       var valEdit = elEdit.value;
-      elEdit.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase;
+      elEdit.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesTodas;
       elEdit.value = valEdit;
     }
 
     var elCaixa = document.getElementById('caixa-membro');
     if (elCaixa) {
       var valCaixa = elCaixa.value;
-      elCaixa.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesBase + '<option value="__externo">Externo / não é membro</option>';
+      elCaixa.innerHTML = '<option value="">Selecionar membro…</option>' + opcoesAtivas + '<option value="__externo">Externo / não é membro</option>';
       elCaixa.value = valCaixa;
     }
   }
@@ -1324,6 +1329,14 @@ body{padding-bottom:64px}
     btnE.style.border = isMembro ? '1px solid var(--border)' : 'none';
   }
 
+  // Mostra/esconde o campo de nome personalizado quando "✍️ Outro nome" é
+  // escolhido no select de Membro (pra doação de quem não é filha da casa)
+  function onEntradaMembroChange() {
+    var select = document.getElementById('entrada-membro');
+    var campoNome = document.getElementById('entrada-membro-nome');
+    campoNome.style.display = select.value === '__custom' ? 'block' : 'none';
+  }
+
   function salvarEntrada() {
     var valor = parseFloat(document.getElementById('entrada-valor').value);
     var data = document.getElementById('entrada-data').value;
@@ -1333,7 +1346,15 @@ body{padding-bottom:64px}
 
     var obj = { id: Date.now(), tipo: 'entrada', valor: valor, data: data, obs: obs, competencia: competencia };
 
-    if (entradaTipo === 'membro') {
+    if (entradaTipo === 'membro' && document.getElementById('entrada-membro').value === '__custom') {
+      // doação de quem não é da casa, com nome personalizado — entra como
+      // "extra" (não entra na % de pagantes das mensalidades, que é só
+      // pras filhas da casa), mas guarda o nome digitado pra identificar
+      var nomeCustom = document.getElementById('entrada-membro-nome').value.trim();
+      if (!nomeCustom) { showToast('Informe o nome'); return; }
+      obj.membro = nomeCustom;
+      obj.subTipo = 'extra';
+    } else if (entradaTipo === 'membro') {
       var membro = document.getElementById('entrada-membro').value;
       if (!membro) { showToast('Selecione um membro'); return; }
       obj.membro = membro;
@@ -1348,6 +1369,8 @@ body{padding-bottom:64px}
     lancamentos.unshift(obj);
     save();
     document.getElementById('entrada-membro').value = '';
+    document.getElementById('entrada-membro-nome').value = '';
+    document.getElementById('entrada-membro-nome').style.display = 'none';
     document.getElementById('entrada-extra-desc').value = '';
     document.getElementById('entrada-valor').value = '';
     document.getElementById('entrada-obs').value = '';
