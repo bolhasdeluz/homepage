@@ -238,7 +238,8 @@ function gcalFormatarDataNota(dataStr) {
 const GCAL_TIPO_ASSISTENCIA = { Interna: 'Fechada', Atendimento: 'Aberta' };
 
 // rótulo de cada valor de Marco, igual ao texto das opções do dropdown
-// (ver cal-fMarco no index.html) — usado só pra montar o título do evento
+// (ver cal-fMarco no index.html) — usado na descrição do evento (o título
+// é só o Nome, sem prefixo — ver gcalEventoDe)
 const GCAL_MARCO_LABEL = {
   'Corte': 'Corte',
   'Obrigacao': 'Obrigação',
@@ -269,17 +270,16 @@ const GCAL_LINHA_COR = {
 };
 const GCAL_COR_PADRAO = '4'; // Flamingo (rosa) — "outras sessões"
 
-// prefixo do título do evento — Marco (Cruzamento/Corte/Elebó/Obrigação/
-// Firmeza de Reinos) tem prioridade por marcar uma data significativa pra
-// casa; sem Marco, usa a Linha de trabalho (Caboclo, Exu...); sem nenhum
-// dos dois, o evento fica só com o Nome, como sempre foi
-function gcalTituloPrefixo(sessao) {
+// rótulo de Marco pra descrição do evento — igual ao que gcalEventoDe usava
+// antes pro título; agora só entra no corpo do texto
+function gcalMarcoLabel(sessao) {
   if (sessao.marco === 'Cruz:Outro' && sessao.marcoOutroNome) return `Cruzamento — ${sessao.marcoOutroNome}`;
-  if (sessao.marco && GCAL_MARCO_LABEL[sessao.marco]) return GCAL_MARCO_LABEL[sessao.marco];
-  if (sessao.linha) return sessao.linha;
-  return '';
+  return GCAL_MARCO_LABEL[sessao.marco] || '';
 }
 
+// o título do evento é sempre só o Nome da sessão — a Anna prefere ajustar
+// o Nome na mão quando quiser ele mais descritivo, em vez do site montar um
+// título composto. Marco, Linha de trabalho e Assistência ficam na descrição
 function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
   const outraData = ehAlternativa ? sessao.data : sessao.dataAlternativa;
   const nota = tentativa
@@ -288,26 +288,16 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
   const tipoEhAssistencia = !!GCAL_TIPO_ASSISTENCIA[sessao.tipo];
   const linhaAssistencia = tipoEhAssistencia ? `Assistência: ${GCAL_TIPO_ASSISTENCIA[sessao.tipo]}`
     : sessao.tipo ? `Tipo: ${sessao.tipo}` : '';
+  const marcoLabel = gcalMarcoLabel(sessao);
   const corpo = [
+    marcoLabel ? `Marco: ${marcoLabel}` : '',
     sessao.linha ? `Linha de trabalho: ${sessao.linha}` : '',
     linhaAssistencia,
     sessao.descricao,
     sessao.responsavel ? `Responsável: ${sessao.responsavel}` : '',
   ].filter(Boolean).join('\n\n');
-  const prefixo = gcalTituloPrefixo(sessao);
-  // quando o Nome já traz a mesma informação do prefixo — igual
-  // ("Desenvolvimento" com Linha="Desenvolvimento") ou contida dentro de um
-  // nome maior ("Festa dos Cosmes" com Linha="Cosme") — não repete, fica só
-  // o Nome (ignora maiúscula/minúscula e plural na comparação)
-  const normalizaFrase = (s) => String(s || '').trim().toLowerCase()
-    .split(/\s+/).filter(Boolean).map(w => w.replace(/s$/, '')).join(' ');
-  const prefixoNorm = normalizaFrase(prefixo);
-  const jaContemPrefixo = prefixo && prefixoNorm && normalizaFrase(sessao.nome).includes(prefixoNorm);
-  const nomeBase = jaContemPrefixo ? (sessao.nome || 'Sessão')
-    : prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}`
-    : (sessao.nome || 'Sessão');
   const evento = {
-    summary: (tentativa ? '❓ ' : '') + nomeBase,
+    summary: (tentativa ? '❓ ' : '') + (sessao.nome || 'Sessão'),
     colorId: GCAL_LINHA_COR[sessao.linha] || GCAL_COR_PADRAO,
     location: sessao.endereco || sessao.onde || undefined,
     description: (nota + corpo) || undefined,
