@@ -670,7 +670,7 @@ function montarGraficosComparativo(porAno) {
       return {
         label: String(x.ano),
         data: MESES_LABEL_CURTO.map(function(_, idx){ return valorAnoMes(x.dados, idx + 1, campo); }),
-        borderColor: corGrafico(i), backgroundColor: corGrafico(i), fill: false, tension: .3,
+        borderColor: corComparativo(i), backgroundColor: corComparativo(i), fill: false, tension: .3,
         spanGaps: true, pointRadius: 3
       };
     });
@@ -792,7 +792,7 @@ function montarGraficosComparativo(porAno) {
           var f = catData.categorias.find(function(c){ return c.conta === cat; });
           return f ? Math.round((f.total / nMeses) * 100) / 100 : 0;
         }),
-        backgroundColor: corGrafico(i), borderRadius: 4
+        backgroundColor: corComparativo(i), borderRadius: 4
       };
     });
 
@@ -812,6 +812,12 @@ function montarGraficosComparativo(porAno) {
 
 var PALETA_GRAFICO = ['#c4396b','#e8688a','#8c5a00','#2a7a60','#3a9a78','#b84040','#6a4c93','#1f7a8c','#f2a541','#9d6b53'];
 function corGrafico(i) { return PALETA_GRAFICO[i % PALETA_GRAFICO.length]; }
+
+// paleta separada pro comparativo entre anos — a de cima tem duas cores de
+// rosa próximas uma da outra (ficam parecidas comparando só 2 anos, o caso
+// mais comum), então aqui a ordem prioriza o contraste entre as primeiras cores
+var PALETA_COMPARATIVO = ['#c4396b','#2a7a60','#f2a541','#1f7a8c','#6a4c93','#8c5a00','#b84040','#3a9a78'];
+function corComparativo(i) { return PALETA_COMPARATIVO[i % PALETA_COMPARATIVO.length]; }
 
 function destruirGraficos() {
   Object.keys(charts).forEach(function(k){ try { charts[k].destroy(); } catch(e){} });
