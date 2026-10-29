@@ -59,11 +59,12 @@ th { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .04em; tex
     <div class="card">
       <div class="sec-title">O que isso faz</div>
       <div class="aviso">
-        Lança no sistema, como gastos e entradas de verdade do ano de 2025, os valores da sua planilha
-        (Luz, Água, Alarme Serviço, Internet, Aluguel e Tambor mês a mês, mais as entradas "Corrente"
-        — mensalidades recebidas — e "Anna" — o que você cobriu do próprio bolso). Agosto ficou de fora
-        porque não tinha valor na planilha. Depois de importar, esses meses aparecem normalmente na
-        Tesouraria e no Relatório Anual, ano 2025.
+        Lança no sistema, como gastos e entradas de verdade do ano de 2025, os valores da sua planilha:
+        Luz, Água, Alarme Serviço, Internet, Aluguel e Tambor mês a mês, mais a entrada "Corrente"
+        (mensalidades recebidas). O que você cobriu do próprio bolso (a linha "Anna" da planilha) não
+        entra como lançamento — o sistema já calcula isso sozinho e mostra "coberto pela mãe de santo 🕯️"
+        sempre que o saldo do mês fica negativo. Agosto ficou de fora porque não tinha valor na planilha.
+        Depois de importar, esses meses aparecem normalmente na Tesouraria e no Relatório Anual, ano 2025.
       </div>
     </div>
     <div class="card" id="preview-card">
@@ -105,6 +106,9 @@ var GASTOS_2025 = [
   { conta: 'Tambor', mes: '10', valor: 190.00 }, { conta: 'Tambor', mes: '11', valor: 297.61 }, { conta: 'Tambor', mes: '12', valor: 201.58 }
 ];
 
+// a diferença entre entradas e gastos não entra como lançamento — o
+// próprio sistema já mostra "coberto pela mãe de santo 🕯️" sempre que o
+// saldo do mês fica negativo (ver relatorio-anual.html/tesouraria.html)
 var ENTRADAS_2025 = [
   { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '01', valor: 320.00 },
   { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '02', valor: 150.00 },
@@ -116,19 +120,7 @@ var ENTRADAS_2025 = [
   { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '09', valor: 330.00 },
   { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '10', valor: 480.00 },
   { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '11', valor: 635.00 },
-  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '12', valor: 615.00 },
-
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '01', valor: 274.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '02', valor: 409.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '03', valor: 345.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '04', valor: 685.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '05', valor: 460.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '06', valor: 802.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '07', valor: 579.00 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '09', valor: 664.46 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '10', valor: 384.54 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '11', valor: 314.89 },
-  { membro: 'Anna', obs: 'Coberto pela Mãe de Santo — importado do histórico 2025', mes: '12', valor: 232.88 }
+  { membro: 'Corrente', obs: 'Mensalidades do mês (lançamento agregado) — importado do histórico 2025', mes: '12', valor: 615.00 }
 ];
 
 function slug(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,''); }
