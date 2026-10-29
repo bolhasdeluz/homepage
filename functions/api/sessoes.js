@@ -295,12 +295,15 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
     sessao.responsavel ? `Responsável: ${sessao.responsavel}` : '',
   ].filter(Boolean).join('\n\n');
   const prefixo = gcalTituloPrefixo(sessao);
-  // quando o Nome já é (a menos de maiúscula/plural) a própria palavra do
-  // prefixo — ex: Nome="Desenvolvimento" com Linha="Desenvolvimento" — não
-  // repete ("Desenvolvimento — Desenvolvimento"), fica só o prefixo
-  const normaliza = (s) => String(s || '').trim().toLowerCase().replace(/s$/, '');
-  const repetido = prefixo && normaliza(prefixo) === normaliza(sessao.nome);
-  const nomeBase = repetido ? prefixo
+  // quando o Nome já traz a mesma informação do prefixo — igual
+  // ("Desenvolvimento" com Linha="Desenvolvimento") ou contida dentro de um
+  // nome maior ("Festa dos Cosmes" com Linha="Cosme") — não repete, fica só
+  // o Nome (ignora maiúscula/minúscula e plural na comparação)
+  const normalizaFrase = (s) => String(s || '').trim().toLowerCase()
+    .split(/\s+/).filter(Boolean).map(w => w.replace(/s$/, '')).join(' ');
+  const prefixoNorm = normalizaFrase(prefixo);
+  const jaContemPrefixo = prefixo && prefixoNorm && normalizaFrase(sessao.nome).includes(prefixoNorm);
+  const nomeBase = jaContemPrefixo ? (sessao.nome || 'Sessão')
     : prefixo ? `${prefixo} — ${sessao.nome || 'Sessão'}`
     : (sessao.nome || 'Sessão');
   const evento = {
