@@ -480,12 +480,55 @@ function calcularGastosPorCategoriaAno(ano) {
 }
 
 // ── PREVISÃO 2027 ────────────────────────────────────────────────
-// pega o ano mais recente com lançamento e usa o padrão mensal dele como
-// base; se tiver um ano anterior pra comparar, aplica a variação entre os
-// dois (ano mais recente ÷ ano anterior) sobre essa base — assim a previsão
-// carrega a sazonalidade do ano mais recente e a tendência de crescimento
-// (ou queda) entre os dois últimos anos. Sem ano anterior pra comparar,
-// repete o padrão do ano mais recente sem nenhum ajuste de tendência.
+// guarda as premissas que a Anna ajustou manualmente (ex: valor do aluguel
+// já sabido pro ano que vem) — carregada uma vez em carregarDados()
+var premissasPrevisao = {};
+
+function carregarPremissasPrevisao() {
+  return fetch('/api/dados?chave=previsao2027')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ premissasPrevisao = (d && typeof d === 'object') ? d : {}; })
+    .catch(function(){ premissasPrevisao = {}; });
+}
+
+function salvarPremissasPrevisao() {
+  var aluguel = document.getElementById('prev-aluguel').value;
+  var alarme = document.getElementById('prev-alarme').value;
+  var membros = document.getElementById('prev-membros').value;
+  var nova = {
+    aluguelMes: aluguel !== '' ? Number(aluguel) : null,
+    alarmeMes: alarme !== '' ? Number(alarme) : null,
+    variacaoMembros: membros !== '' ? Number(membros) : null
+  };
+  var status = document.getElementById('prev-premissas-status');
+  if (status) status.textContent = 'Salvando…';
+  fetch('/api/dados?chave=previsao2027', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+    body: JSON.stringify(nova)
+  })
+    .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
+    .then(function(){
+      premissasPrevisao = nova;
+      renderRelatorio();
+    })
+    .catch(function(){ if (status) status.textContent = 'Não consegui salvar agora — tenta de novo.'; });
+}
+window.salvarPremissasPrevisao = salvarPremissasPrevisao;
+
+// pega o ano mais recente com lançamento e usa a média mensal dele como
+// base pra cada categoria de gasto e pra entradas; se tiver um ano anterior
+// pra comparar, aplica a variação entre os dois (ano mais recente ÷ ano
+// anterior), categoria por categoria — assim um gasto que disparou (ex:
+// Tambor) não "puxa" a previsão de uma conta fixa que nunca mudou (ex:
+// Aluguel, Alarme Serviço). O gasto do mês previsto é a soma das
+// categorias. Membros ativos usa a média do ano mais recente. Tudo isso
+// pode ser substituído pelas premissas que a Anna ajustar manualmente
+// (ver carregarPremissasPrevisao/salvarPremissasPrevisao) — ex: ela já
+// sabe que o aluguel vai ficar em R$1.200 esse ano, não precisa confiar na
+// conta automática. A previsão sai como um valor fixo repetido nos 12
+// meses de 2027 — não dá pra saber a sazonalidade de um ano que ainda nem
+// começou, então não finge que dá.
 function calcularPrevisao2027() {
   var anosComDados = anosDisponiveis().slice().reverse()
     .filter(function(a){ return montarDadosExtratoAnual(a).linhas.length > 0; });
@@ -494,37 +537,63 @@ function calcularPrevisao2027() {
   var anoRecente = anosComDados[anosComDados.length - 1];
   var anoBase = anosComDados.length >= 2 ? anosComDados[anosComDados.length - 2] : null;
   var dadosRecente = montarDadosExtratoAnual(anoRecente);
-  var dadosBase = anoBase ? montarDadosExtratoAnual(anoBase) : null;
-
-  var fatorEntradas = (dadosBase && dadosBase.totalEntradas > 0) ? dadosRecente.totalEntradas / dadosBase.totalEntradas : 1;
-  var fatorGastos = (dadosBase && dadosBase.totalGastos > 0) ? dadosRecente.totalGastos / dadosBase.totalGastos : 1;
-
-  var linhas = dadosRecente.linhas.map(function(l){
-    var entradas = Math.round(l.entradas * fatorEntradas * 100) / 100;
-    var gastos = Math.round(l.gastos * fatorGastos * 100) / 100;
-    return {
-      mes: l.mes, label: MESES_NOMES_FULL[l.mes-1] + '/2027 (previsão)',
-      entradas: entradas, gastos: gastos, saldo: Math.round((entradas - gastos) * 100) / 100,
-      nTot: l.nTot, nPag: l.nPag,
-      pctPag: l.pctPag,
-      pctCob: gastos > 0 ? Math.round(entradas / gastos * 100) : (entradas > 0 ? 100 : 0)
-    };
-  });
-  var totalEntradas = linhas.reduce(function(s,l){ return s + l.entradas; }, 0);
-  var totalGastos = linhas.reduce(function(s,l){ return s + l.gastos; }, 0);
+  var nMesesRecente = dadosRecente.linhas.length || 1;
 
   var catRecente = calcularGastosPorCategoriaAno(anoRecente);
   var catBase = anoBase ? calcularGastosPorCategoriaAno(anoBase) : null;
-  var categorias = catRecente.categorias.map(function(c){
+
+  var premissas = premissasPrevisao || {};
+  var OVERRIDES = { 'Aluguel': premissas.aluguelMes, 'Alarme Serviço': premissas.alarmeMes };
+
+  var categoriasPrevistas = catRecente.categorias.map(function(c){
+    var mediaRecente = c.total / nMesesRecente;
     var base = catBase ? catBase.categorias.find(function(x){ return x.conta === c.conta; }) : null;
     var fator = (base && base.total > 0) ? c.total / base.total : 1;
-    return { conta: c.conta, total: Math.round(c.total * fator * 100) / 100 };
+    var auto = Math.round(mediaRecente * fator * 100) / 100;
+    var override = OVERRIDES[c.conta];
+    var usaOverride = override != null && !isNaN(override);
+    var mensal = usaOverride ? Number(override) : auto;
+    return { conta: c.conta, mensal: mensal, auto: auto, total: Math.round(mensal * 12 * 100) / 100 };
   });
+
+  var gastosMensal = Math.round(categoriasPrevistas.reduce(function(s,c){ return s + c.mensal; }, 0) * 100) / 100;
+
+  var totalEntradasBase = anoBase ? montarDadosExtratoAnual(anoBase).totalEntradas : 0;
+  var fatorEntradas = (anoBase && totalEntradasBase > 0) ? dadosRecente.totalEntradas / totalEntradasBase : 1;
+  var entradasMensal = Math.round((dadosRecente.totalEntradas / nMesesRecente) * fatorEntradas * 100) / 100;
+
+  var mediaNTot = Math.round(dadosRecente.linhas.reduce(function(s,l){ return s + l.nTot; }, 0) / nMesesRecente);
+  var variacaoMembros = (premissas.variacaoMembros != null && !isNaN(premissas.variacaoMembros)) ? Number(premissas.variacaoMembros) : 0;
+  var nTotMensal = Math.max(0, mediaNTot + variacaoMembros);
+
+  var mediaNPag = Math.round(dadosRecente.linhas.reduce(function(s,l){ return s + l.nPag; }, 0) / nMesesRecente);
+  var pctPagMensal = nTotMensal > 0 ? Math.round(Math.min(mediaNPag, nTotMensal) / nTotMensal * 100) : 0;
+  var pctCobMensal = gastosMensal > 0 ? Math.round(entradasMensal / gastosMensal * 100) : (entradasMensal > 0 ? 100 : 0);
+  var saldoMensal = Math.round((entradasMensal - gastosMensal) * 100) / 100;
+
+  var linhas = [];
+  for (var m = 1; m <= 12; m++) {
+    linhas.push({
+      mes: m, label: MESES_NOMES_FULL[m-1] + '/2027 (previsão)',
+      entradas: entradasMensal, gastos: gastosMensal, saldo: saldoMensal,
+      nTot: nTotMensal, nPag: Math.min(mediaNPag, nTotMensal), pctPag: pctPagMensal, pctCob: pctCobMensal
+    });
+  }
+
+  var catAluguel = categoriasPrevistas.find(function(c){ return c.conta === 'Aluguel'; });
+  var catAlarme = categoriasPrevistas.find(function(c){ return c.conta === 'Alarme Serviço'; });
 
   return {
     ano: '2027', previsto: true, anoRecenteUsado: anoRecente, anoBaseUsado: anoBase,
-    dados: { linhas: linhas, totalEntradas: totalEntradas, totalGastos: totalGastos, saldoAno: totalEntradas - totalGastos },
-    categorias: categorias
+    dados: {
+      linhas: linhas,
+      totalEntradas: Math.round(entradasMensal * 12 * 100) / 100,
+      totalGastos: Math.round(gastosMensal * 12 * 100) / 100,
+      saldoAno: Math.round((entradasMensal - gastosMensal) * 12 * 100) / 100
+    },
+    categorias: categoriasPrevistas.map(function(c){ return { conta: c.conta, total: c.total }; }),
+    autoValores: { aluguelMes: catAluguel ? catAluguel.auto : 0, alarmeMes: catAlarme ? catAlarme.auto : 0, membrosBase: mediaNTot },
+    premissasAtuais: { aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], variacaoMembros: variacaoMembros }
   };
 }
 
@@ -714,11 +783,28 @@ function renderComparativo(comPrevisao) {
 
   var html = '';
   if (previsao) {
-    html += '<div class="chart-hint" style="margin-bottom:14px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
+    var auto = previsao.autoValores;
+    var atuais = previsao.premissasAtuais;
+    html += '<div class="chart-card" style="border-top:3px solid ' + COR_PREVISAO + '">';
+    html += '<div class="sec-title" style="margin-top:0">Premissas da previsão 2027</div>';
+    html += '<div class="chart-hint" style="text-align:left;margin:0 0 12px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
       + (previsao.anoBaseUsado
-          ? 'aplica a variação entre ' + previsao.anoBaseUsado + ' e ' + previsao.anoRecenteUsado + ' sobre o padrão mensal de ' + previsao.anoRecenteUsado
-          : 'repete o padrão de ' + previsao.anoRecenteUsado + ', sem nenhum outro ano pra comparar a tendência')
-      + '. Trate como estimativa.</div>';
+          ? 'aplica a variação entre ' + previsao.anoBaseUsado + ' e ' + previsao.anoRecenteUsado + ' sobre a média mensal de ' + previsao.anoRecenteUsado + ', categoria por categoria'
+          : 'repete a média mensal de ' + previsao.anoRecenteUsado + ', sem nenhum outro ano pra comparar a tendência')
+      + '. Ajuste aqui embaixo o que você já sabe de verdade sobre o ano que vem — esses valores ficam salvos e valem pra previsão toda vez que você abrir essa tela.</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Aluguel por mês (R$)'
+      + '<input type="number" step="0.01" id="prev-aluguel" value="' + (atuais.aluguelMes != null ? atuais.aluguelMes : '') + '" placeholder="automático: ' + fmt(auto.aluguelMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+      + '</label>';
+    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Alarme Serviço por mês (R$)'
+      + '<input type="number" step="0.01" id="prev-alarme" value="' + (atuais.alarmeMes != null ? atuais.alarmeMes : '') + '" placeholder="automático: ' + fmt(auto.alarmeMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+      + '</label>';
+    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Variação de membros ativos (número, pode ser negativo)'
+      + '<input type="number" step="1" id="prev-membros" value="' + (atuais.variacaoMembros || '') + '" placeholder="0 — hoje a média é ' + auto.membrosBase + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+      + '</label>';
+    html += '<button class="bl-btn-rosa" onclick="salvarPremissasPrevisao()">Salvar premissas</button>';
+    html += '<div id="prev-premissas-status" style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:center"></div>';
+    html += '</div></div>';
   }
   html += '<div class="sec-title">Totais do ano — comparativo</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-totais"></canvas></div></div>';
@@ -1264,9 +1350,12 @@ window.detalheCategoria = detalheCategoria;
 
 // ── CARREGAMENTO DE DADOS ────────────────────────────────────────
 function carregarDados() {
-  fetch('/api/dados?chave=lancamentos')
-    .then(function(r){ return r.json(); })
-    .then(function(dados){
+  Promise.all([
+    fetch('/api/dados?chave=lancamentos').then(function(r){ return r.json(); }),
+    carregarPremissasPrevisao()
+  ])
+    .then(function(resultados){
+      var dados = resultados[0];
       lancamentos = Array.isArray(dados) ? dados : [];
       anoAtivo = escolherAnoInicial();
       modoComparativo = new URLSearchParams(window.location.search).get('comparar') === '1';
