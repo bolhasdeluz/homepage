@@ -509,7 +509,8 @@ function renderRelatorio() {
   html += '</div>';
 
   html += '<div class="sec-title">Entradas × Gastos por mês</div>';
-  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-barras"></canvas></div></div>';
+  html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-barras"></canvas></div>'
+    + '<div class="chart-hint">As linhas tracejadas são a média do ano — compare a barra do mês com elas pra ver se a cobertura baixa foi por gasto acima do normal, arrecadação abaixo do normal, ou os dois</div></div>';
 
   html += '<div class="sec-title">Saldo ao longo do ano</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-saldo"></canvas></div></div>';
@@ -583,13 +584,22 @@ function montarGraficos(dados, cat) {
 
   var ctxBarras = document.getElementById('chart-barras');
   if (ctxBarras) {
+    // linhas tracejadas de média — pra dar pra ver, num mês de cobertura
+    // baixa, se o motivo foi gasto acima do normal ou arrecadação abaixo do
+    // normal (ou os dois)
+    var mediaEntradasMes = linhasOrdem.reduce(function(s,l){ return s+l.entradas; }, 0) / linhasOrdem.length;
+    var mediaGastosMes = linhasOrdem.reduce(function(s,l){ return s+l.gastos; }, 0) / linhasOrdem.length;
     charts.barras = new Chart(ctxBarras, {
       type: 'bar',
       data: {
         labels: labelsCurtos,
         datasets: [
           { label: 'Entradas', data: linhasOrdem.map(function(l){ return l.entradas; }), backgroundColor: '#2a7a60', borderRadius: 4 },
-          { label: 'Gastos', data: linhasOrdem.map(function(l){ return l.gastos; }), backgroundColor: '#b84040', borderRadius: 4 }
+          { label: 'Gastos', data: linhasOrdem.map(function(l){ return l.gastos; }), backgroundColor: '#b84040', borderRadius: 4 },
+          { label: 'Média de entradas', type: 'line', data: linhasOrdem.map(function(){ return mediaEntradasMes; }),
+            borderColor: '#1f5c47', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false },
+          { label: 'Média de gastos', type: 'line', data: linhasOrdem.map(function(){ return mediaGastosMes; }),
+            borderColor: '#7a2020', borderDash: [6,4], borderWidth: 1.5, pointRadius: 0, fill: false }
         ]
       },
       options: {
@@ -597,12 +607,13 @@ function montarGraficos(dados, cat) {
         maintainAspectRatio: false,
         onClick: function(evt, elems) {
           if (!elems.length) return;
-          var idx = elems[0].index;
-          var l = linhasOrdem[idx];
+          var el = elems[0];
+          if (el.datasetIndex > 1) return; // linha de média não é clicável
+          var l = linhasOrdem[el.index];
           if (!l) return;
-          if (elems[0].datasetIndex === 0) detalheEntradasMes(l.mes); else detalheGastosMes(l.mes);
+          if (el.datasetIndex === 0) detalheEntradasMes(l.mes); else detalheGastosMes(l.mes);
         },
-        plugins: { legend: { labels: { font: { family: 'DM Sans' }, boxWidth: 12 } },
+        plugins: { legend: { labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } },
           tooltip: { callbacks: { label: function(c){ return c.dataset.label + ': ' + fmt(c.parsed.y); } } } },
         scales: { y: { ticks: { callback: function(v){ return 'R$' + v; }, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
       }
