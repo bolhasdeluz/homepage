@@ -2150,22 +2150,16 @@ body{padding-bottom:64px}
 
   function mudarQtdTambor(tipo, delta) {
     var mes = filtroMesAtivo || today().slice(0, 7);
-    var qtd = Math.max(0, qtdTamborDoMes(tipo, mes) + delta);
+    var qtdAntes = qtdTamborDoMes(tipo, mes);
+    var qtd = Math.max(0, qtdAntes + delta);
+    var deltaReal = qtd - qtdAntes; // quantas sessões de fato mudaram (marcou/desmarcou)
 
     var idx = lancamentos.findIndex(function(l) {
       return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
     });
-    var idxDesloc = lancamentos.findIndex(function(l) {
-      return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
-    });
 
     if (qtd === 0) {
       if (idx !== -1) lancamentos.splice(idx, 1);
-      // reacha o índice do deslocamento (pode ter mudado depois do splice acima)
-      idxDesloc = lancamentos.findIndex(function(l) {
-        return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
-      });
-      if (idxDesloc !== -1) lancamentos.splice(idxDesloc, 1);
     } else {
       var obs = TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '');
       var valor = tamborConfig[tipo] * qtd;
@@ -2179,20 +2173,33 @@ body{padding-bottom:64px}
           quantidade: qtd, valor: valor, data: mes + '-01', obs: obs, comprovante: null
         });
       }
+    }
 
-      var obsDesloc = 'Deslocamento — ' + TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '');
-      var valorDesloc = tamborConfig.deslocamento * qtd;
-      if (idxDesloc !== -1) {
-        lancamentos[idxDesloc].quantidade = qtd;
-        lancamentos[idxDesloc].valor = valorDesloc;
-        lancamentos[idxDesloc].obs = obsDesloc;
-      } else {
+    // Deslocamento — um lançamento PRÓPRIO por sessão marcada (não um total
+    // agregado), já preenchido com o valor padrão, mas editável sessão a
+    // sessão como qualquer outro lançamento (ex: se o trajeto daquele dia
+    // custou diferente do normal)
+    if (deltaReal > 0) {
+      for (var i = 0; i < deltaReal; i++) {
         lancamentos.push({
-          id: Date.now() + Math.random() + 1, tipo: 'gasto', conta: 'Deslocamento', tipoTambor: tipo,
-          quantidade: qtd, valor: valorDesloc, data: mes + '-01', obs: obsDesloc, comprovante: null
+          id: Date.now() + Math.random(), tipo: 'gasto', conta: 'Deslocamento', tipoTambor: tipo,
+          valor: tamborConfig.deslocamento, data: mes + '-01', obs: 'Deslocamento — ' + TAMBOR_LABELS[tipo], comprovante: null
         });
       }
+    } else if (deltaReal < 0) {
+      // ao desmarcar uma sessão, remove o deslocamento lançado mais
+      // recentemente pra esse tipo/mês (o último marcado é o primeiro a sair)
+      for (var j = 0; j < -deltaReal; j++) {
+        var candidatos = lancamentos.filter(function(l) {
+          return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+        });
+        if (!candidatos.length) break;
+        var maisRecente = candidatos.reduce(function(a, b) { return a.id > b.id ? a : b; });
+        var idxDel = lancamentos.indexOf(maisRecente);
+        if (idxDel !== -1) lancamentos.splice(idxDel, 1);
+      }
     }
+
     lancamentos.sort(function(a, b) { return new Date(b.data) - new Date(a.data); });
     save();
     renderPainelAtivo();
