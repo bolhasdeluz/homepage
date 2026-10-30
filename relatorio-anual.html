@@ -499,7 +499,7 @@ function salvarPremissasPrevisao() {
   var nova = {
     aluguelMes: aluguel !== '' ? Number(aluguel) : null,
     alarmeMes: alarme !== '' ? Number(alarme) : null,
-    variacaoMembros: membros !== '' ? Number(membros) : null,
+    totalMembrosAtivos: membros !== '' ? Number(membros) : null,
     mediaMensalidadeMes: mensalidade !== '' ? Number(mensalidade) : null
   };
   var status = document.getElementById('prev-premissas-status');
@@ -592,7 +592,10 @@ function calcularPrevisao2027() {
 
   var premissas = premissasPrevisao || {};
   var OVERRIDES = { 'Aluguel': premissas.aluguelMes, 'Alarme Serviço': premissas.alarmeMes };
-  var variacaoMembros = (premissas.variacaoMembros != null && !isNaN(premissas.variacaoMembros)) ? Number(premissas.variacaoMembros) : 0;
+  // número real de membros ativos hoje — substitui direto a média histórica
+  // quando preenchido (em vez de somar uma variação a ela), já que a Anna
+  // sabe esse número de cabeça melhor do que qualquer média calculada
+  var totalMembrosAtivos = (premissas.totalMembrosAtivos != null && !isNaN(premissas.totalMembrosAtivos)) ? Number(premissas.totalMembrosAtivos) : null;
 
   var categoriasMensais = {}; // conta -> [12 valores, Jan..Dez]
   nomesCategorias.forEach(function(conta){
@@ -637,7 +640,7 @@ function calcularPrevisao2027() {
     var mensalidadeMes = Math.round(mediaMensalidadeMes * nPagPorMes[idx] * 100) / 100;
     var entradas = Math.round((mensalidadeMes + extraPorMes[idx]) * 100) / 100;
     var gastos = Math.round(nomesCategorias.reduce(function(s, conta){ return s + categoriasMensais[conta][idx]; }, 0) * 100) / 100;
-    var nTot = Math.max(0, Math.round(nTotPorMes[idx] + variacaoMembros));
+    var nTot = totalMembrosAtivos != null ? Math.max(0, Math.round(totalMembrosAtivos)) : Math.max(0, Math.round(nTotPorMes[idx]));
     var nPag = Math.min(Math.round(nPagPorMes[idx]), nTot);
     return {
       mes: mes, label: MESES_NOMES_FULL[mes-1] + '/2027 (previsão)',
@@ -671,7 +674,7 @@ function calcularPrevisao2027() {
       mediaMensalidadeMes: autoMediaMensalidadeMes, mediaMensalidadeRecente: mediaAnualRecente, mediaMensalidadeAumento: aumentoMediaMensalidade
     },
     premissasAtuais: {
-      aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], variacaoMembros: variacaoMembros,
+      aluguelMes: OVERRIDES['Aluguel'], alarmeMes: OVERRIDES['Alarme Serviço'], totalMembrosAtivos: totalMembrosAtivos,
       mediaMensalidadeMes: overrideMediaMensalidade
     }
   };
@@ -879,8 +882,8 @@ function renderComparativo(comPrevisao) {
     html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Alarme Serviço por mês (R$)'
       + '<input type="number" step="0.01" id="prev-alarme" value="' + (atuais.alarmeMes != null ? atuais.alarmeMes : '') + '" placeholder="automático: ' + fmt(auto.alarmeMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
       + '</label>';
-    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Variação de membros ativos (número, pode ser negativo)'
-      + '<input type="number" step="1" id="prev-membros" value="' + (atuais.variacaoMembros || '') + '" placeholder="0 — hoje a média é ' + auto.membrosBase + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Quantos membros ativos tem hoje (número real, não uma variação)'
+      + '<input type="number" step="1" id="prev-membros" value="' + (atuais.totalMembrosAtivos != null ? atuais.totalMembrosAtivos : '') + '" placeholder="automático: ' + auto.membrosBase + ' (média histórica)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
       + '</label>';
     html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Valor médio por mensalidade em 2027 (R$)'
       + '<input type="number" step="0.01" id="prev-mensalidade" value="' + (atuais.mediaMensalidadeMes != null ? atuais.mediaMensalidadeMes : '') + '" placeholder="automático: ' + fmt(auto.mediaMensalidadeMes) + ' (' + fmt(auto.mediaMensalidadeRecente) + ' do último ano ' + (auto.mediaMensalidadeAumento >= 0 ? '+ ' + fmt(auto.mediaMensalidadeAumento) + ' de aumento' : '- ' + fmt(Math.abs(auto.mediaMensalidadeAumento)) + ' de redução') + ', igual ao que já aconteceu de um ano pro outro)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
