@@ -1537,6 +1537,15 @@ body{padding-bottom:64px}
     return MESES_NOMES_CURTOS[parseInt(parts[1]) - 1] + '/' + parts[0].slice(2);
   }
 
+  // representa um id de lançamento como literal JS seguro pra embutir num
+  // onclick/onchange — ids numéricos (Date.now()+Math.random(), de sempre)
+  // continuam crus, mas os novos ids de texto (ex: "tambor-cal-desloc-s1",
+  // criados pela sincronização automática do calendário) precisam vir entre
+  // aspas, senão viram um erro de JS silencioso e o botão não faz nada
+  function idJs(id) {
+    return typeof id === 'string' ? ("'" + id.replace(/'/g, "\\'") + "'") : id;
+  }
+
   function itemHTML(l, idx) {
     var isEntrada = l.tipo === 'entrada';
     var nome = isEntrada ? l.membro : l.conta;
@@ -1554,10 +1563,10 @@ body{padding-bottom:64px}
       ? '<span style="display:inline-block;background:rgba(184,64,64,.1);border:1px solid rgba(184,64,64,.25);color:var(--red);border-radius:6px;font-family:\'Cinzel\',serif;font-size:.6rem;font-weight:700;letter-spacing:.05em;padding:2px 7px;margin-top:3px;">🔴 Pendente' + (l.vencimento ? ' · ' + fmtData(l.vencimento) : '') + '</span>'
       : '';
     var pagarBtn = (l.status === 'pendente')
-      ? '<button class="lancamento-clone" style="border-color:var(--green);color:var(--green);" onclick="marcarPago(' + l.id + ')">✅ Marcar pago</button>'
+      ? '<button class="lancamento-clone" style="border-color:var(--green);color:var(--green);" onclick="marcarPago(' + idJs(l.id) + ')">✅ Marcar pago</button>'
       : '';
     var checkbox = modoSelecao
-      ? '<label class="lancamento-check"><input type="checkbox" ' + (selecionadosIds[l.id] ? 'checked' : '') + ' onchange="toggleSelecaoItem(' + l.id + ')"></label>'
+      ? '<label class="lancamento-check"><input type="checkbox" ' + (selecionadosIds[l.id] ? 'checked' : '') + ' onchange="toggleSelecaoItem(' + idJs(l.id) + ')"></label>'
       : '';
     return '<div class="lancamento-item" style="animation-delay:' + (idx * 0.05) + 's' + (l.status==='pendente' ? ';border-left:3px solid var(--red);' : '') + '">'
       + checkbox
@@ -1565,9 +1574,9 @@ body{padding-bottom:64px}
       + '<div class="lancamento-info">'
       + '<div class="lancamento-nome">' + nome + '</div>'
       + badge + pendenteBadge + competenciaBadge + obs + comp
-      + '<button class="lancamento-clone" onclick="abrirEdicao(' + l.id + ')">✏️ Editar</button>'
+      + '<button class="lancamento-clone" onclick="abrirEdicao(' + idJs(l.id) + ')">✏️ Editar</button>'
       + pagarBtn
-      + '<button class="lancamento-clone" onclick="clonarLancamento(' + l.id + ')">⧉ Clonar</button>'
+      + '<button class="lancamento-clone" onclick="clonarLancamento(' + idJs(l.id) + ')">⧉ Clonar</button>'
       + '</div>'
       + '<div class="lancamento-right">'
       + '<div class="lancamento-valor ' + l.tipo + '" style="' + (l.status==='pendente'?'color:var(--red);opacity:.7;':'') + '">' + (isEntrada ? '+' : '−') + ' ' + fmt(l.valor) + '</div>'
@@ -2166,7 +2175,11 @@ body{padding-bottom:64px}
   }
 
   function clonarSelecionados() {
-    var ids = Object.keys(selecionadosIds).map(Number);
+    // pega o id de verdade (número ou texto) direto do lançamento, em vez
+    // de reconstruir a partir de Object.keys() — essas chaves são sempre
+    // string, e forçar Number() de volta quebrava os ids de texto (ex:
+    // "tambor-cal-desloc-s1", da sincronização automática do calendário)
+    var ids = lancamentos.filter(function(l){ return selecionadosIds[l.id]; }).map(function(l){ return l.id; });
     if (!ids.length) return;
     abrirClonar(ids);
   }
