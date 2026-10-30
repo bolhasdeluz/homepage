@@ -521,26 +521,28 @@ body{padding-bottom:64px}
     <div id="saldo-nota-mae" style="display:none;text-align:right;margin-top:-8px;margin-bottom:6px;padding-right:4px;font-family:'Crimson Pro',serif;font-style:italic;font-size:.78rem;color:var(--text-dim);">coberto pela mãe de santo 🕯️</div>
 
     <div id="tambor-mes-box" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-        <div style="font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🪘 Tambor do mês</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
+        <div style="font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🪘 Tambor</div>
         <button onclick="toggleEditarPrecosTambor()" id="tambor-editar-btn" title="Editar valores" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:.85rem;padding:2px 4px;">✏️</button>
       </div>
+      <div id="tambor-mes-contexto" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-bottom:8px;"></div>
 
       <div id="tambor-precos-display">
+        <div id="tambor-ano-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;">Selecione um mês pra marcar/editar o Tambor.</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
           <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Umbanda (<span id="tambor-preco-umbanda-label">R$ 130,00</span> cada)</span>
           <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="mudarQtdTambor('umbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
+            <button onclick="mudarQtdTambor('umbanda',-1)" id="tambor-umbanda-menos" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
             <input type="number" min="0" id="tambor-umbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-            <button onclick="mudarQtdTambor('umbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
+            <button onclick="mudarQtdTambor('umbanda',1)" id="tambor-umbanda-mais" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Quimbanda (<span id="tambor-preco-quimbanda-label">R$ 230,00</span> cada)</span>
           <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="mudarQtdTambor('quimbanda',-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
+            <button onclick="mudarQtdTambor('quimbanda',-1)" id="tambor-quimbanda-menos" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
             <input type="number" min="0" id="tambor-quimbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-            <button onclick="mudarQtdTambor('quimbanda',1)" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
+            <button onclick="mudarQtdTambor('quimbanda',1)" id="tambor-quimbanda-mais" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
           </div>
         </div>
         <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:6px;">+ deslocamento de <span id="tambor-preco-deslocamento-label">R$ 60,00</span> por sessão, lançado separado em "Deslocamento"</div>
@@ -1726,10 +1728,19 @@ body{padding-bottom:64px}
 
   function mudarMesFiltro(delta) {
     if (!filtroMesAtivo) {
+      // saindo do "ano inteiro" — o primeiro clique só entra no modo mês
+      // (sem também tentar mover pro mês seguinte/anterior nesse mesmo
+      // clique), senão o clique podia cair fora do ano e não acontecer nada
+      // na tela, parecendo que o botão tinha travado
       var agora = new Date();
       filtroMesAtivo = (anoAtivo === String(agora.getFullYear()))
         ? agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0')
         : anoAtivo + '-01';
+      atualizarLabelMes();
+      var painelAtivoInicial = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
+      if (painelAtivoInicial === 'painel-contas') renderContas();
+      else renderInicio();
+      return;
     }
     var parts = filtroMesAtivo.split('-');
     var ano = parseInt(parts[0]), mes = parseInt(parts[1]) - 1;
@@ -1761,7 +1772,7 @@ body{padding-bottom:64px}
   // ── RENDER PANELS ─────────────────────────────────────────
   function renderInicio() {
     atualizarLabelMes();
-    renderTamborMes(filtroMesAtivo || (anoAtivo === String(new Date().getFullYear()) ? today().slice(0, 7) : anoAtivo + '-01'));
+    renderTamborMes(filtroMesAtivo);
     var lista = filtroMesAtivo ? lancamentosDoMes(filtroMesAtivo) : lancamentosDoAno(anoAtivo);
     var totalE = lista.filter(function(l){ return l.tipo === 'entrada'; }).reduce(function(a,l){ return a + l.valor; }, 0);
     var totalG = lista.filter(function(l){ return l.tipo === 'gasto'; }).reduce(function(a,l){ return a + l.valor; }, 0);
@@ -2480,16 +2491,42 @@ body{padding-bottom:64px}
     return l ? (l.quantidade || 1) : 0;
   }
 
+  function qtdTamborDoAno(tipo, ano) {
+    return lancamentos
+      .filter(function(l){ return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 4) : '') === ano; })
+      .reduce(function(s, l){ return s + (l.quantidade || 1); }, 0);
+  }
+
+  // mes = 'YYYY-MM' mostra os steppers daquele mês pra editar; mes = null
+  // (modo "ano inteiro") mostra só o total somado do ano, sem steppers —
+  // não tem UM mês específico pra marcar/desmarcar nesse modo
   function renderTamborMes(mes) {
-    ['umbanda', 'quimbanda'].forEach(function(tipo) {
-      var input = document.getElementById('tambor-' + tipo + '-qtd');
-      if (input) input.value = qtdTamborDoMes(tipo, mes);
-    });
+    var aviso = document.getElementById('tambor-ano-aviso');
+    var contexto = document.getElementById('tambor-mes-contexto');
+    var btns = ['tambor-umbanda-menos', 'tambor-umbanda-mais', 'tambor-quimbanda-menos', 'tambor-quimbanda-mais'];
+    if (mes) {
+      if (aviso) aviso.style.display = 'none';
+      btns.forEach(function(id){ var b = document.getElementById(id); if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; } });
+      if (contexto) contexto.textContent = MESES_NOMES_FULL[parseInt(mes.split('-')[1]) - 1] + '/' + mes.split('-')[0];
+      ['umbanda', 'quimbanda'].forEach(function(tipo) {
+        var input = document.getElementById('tambor-' + tipo + '-qtd');
+        if (input) input.value = qtdTamborDoMes(tipo, mes);
+      });
+    } else {
+      if (aviso) aviso.style.display = 'block';
+      btns.forEach(function(id){ var b = document.getElementById(id); if (b) { b.disabled = true; b.style.opacity = '.35'; b.style.cursor = 'default'; } });
+      if (contexto) contexto.textContent = 'Total do ano ' + anoAtivo;
+      ['umbanda', 'quimbanda'].forEach(function(tipo) {
+        var input = document.getElementById('tambor-' + tipo + '-qtd');
+        if (input) input.value = qtdTamborDoAno(tipo, anoAtivo);
+      });
+    }
     renderPrecosTamborLabels();
   }
 
   function mudarQtdTambor(tipo, delta) {
-    var mes = filtroMesAtivo || today().slice(0, 7);
+    if (!filtroMesAtivo) return; // modo "ano inteiro" — sem um mês escolhido não dá pra marcar/desmarcar
+    var mes = filtroMesAtivo;
     var qtdAntes = qtdTamborDoMes(tipo, mes);
     var qtd = Math.max(0, qtdAntes + delta);
     var deltaReal = qtd - qtdAntes; // quantas sessões de fato mudaram (marcou/desmarcou)
