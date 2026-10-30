@@ -284,6 +284,18 @@ document.getElementById('boas-vindas').style.display = 'block';
   </div>
 </div>
 
+<!-- MODAL DAS PREMISSAS DA PREVISÃO 2027 — ficava sempre aberto, ocupando a
+     tela inteira; agora só abre quando a Anna pede, pelo botão na view de
+     previsão. O conteúdo (premissas-corpo) é preenchido pelo JS em
+     renderComparativo, não fica fixo aqui, porque depende dos valores
+     automáticos/atuais calculados a cada render -->
+<div class="modal-overlay" id="premissas-overlay" onclick="if(event.target===this)fecharPremissas()">
+  <div class="modal-sheet" style="border-top-color:#c9a227">
+    <button class="modal-close" onclick="fecharPremissas()">✕</button>
+    <div id="premissas-corpo"></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════════════════════
 // Lógica portada de tesouraria.html — mesma conta, mesmos dados, só a
@@ -865,6 +877,40 @@ function valorAnoMes(dados, mes, campo) {
   return l ? l[campo] : null;
 }
 
+// conteúdo do modal de premissas da previsão 2027 — era uma seção fixa na
+// tela, mas ficava grande demais pra algo que só se mexe de vez em quando;
+// agora vive num popup (ver abrirPremissas/fecharPremissas), preenchido
+// aqui de novo a cada render porque os valores automáticos/atuais vêm do
+// cálculo fresco de calcularPrevisao2027()
+function premissasModalHtml(previsao) {
+  var auto = previsao.autoValores;
+  var atuais = previsao.premissasAtuais;
+  var html = '';
+  html += '<div class="sec-title" style="margin-top:0">Premissas da previsão 2027</div>';
+  html += '<div class="chart-hint" style="text-align:left;margin:0 0 12px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
+    + (previsao.anosUsados.length > 1
+        ? 'cada mês usa a média do mesmo mês em ' + previsao.anosUsados.join(' e ') + ' (ex: a previsão de março é a média dos março reais desses anos), separado por categoria de gasto — assim guarda a variação que a casa costuma ter mês a mês, sem um gasto que disparou numa categoria puxar a previsão de outra'
+        : 'repete o padrão mensal de ' + previsao.anosUsados[0] + ', o único ano com lançamento ainda — sem outro ano pra tirar média')
+    + '. Ajuste aqui embaixo o que você já sabe de verdade sobre o ano que vem — esses valores ficam salvos e valem pra previsão toda vez que você abrir essa tela.</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:12px;">';
+  html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Aluguel por mês (R$)'
+    + '<input type="number" step="0.01" id="prev-aluguel" value="' + (atuais.aluguelMes != null ? atuais.aluguelMes : '') + '" placeholder="automático: ' + fmt(auto.aluguelMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+    + '</label>';
+  html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Alarme Serviço por mês (R$)'
+    + '<input type="number" step="0.01" id="prev-alarme" value="' + (atuais.alarmeMes != null ? atuais.alarmeMes : '') + '" placeholder="automático: ' + fmt(auto.alarmeMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+    + '</label>';
+  html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Quantos membros ativos tem hoje (número real, não uma variação)'
+    + '<input type="number" step="1" id="prev-membros" value="' + (atuais.totalMembrosAtivos != null ? atuais.totalMembrosAtivos : '') + '" placeholder="automático: ' + auto.membrosBase + ' (média histórica)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+    + '</label>';
+  html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Valor médio por mensalidade em 2027 (R$)'
+    + '<input type="number" step="0.01" id="prev-mensalidade" value="' + (atuais.mediaMensalidadeMes != null ? atuais.mediaMensalidadeMes : '') + '" placeholder="automático: ' + fmt(auto.mediaMensalidadeMes) + ' (' + fmt(auto.mediaMensalidadeRecente) + ' do último ano ' + (auto.mediaMensalidadeAumento >= 0 ? '+ ' + fmt(auto.mediaMensalidadeAumento) + ' de aumento' : '- ' + fmt(Math.abs(auto.mediaMensalidadeAumento)) + ' de redução') + ', igual ao que já aconteceu de um ano pro outro)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
+    + '</label>';
+  html += '<button class="bl-btn-rosa" onclick="salvarPremissasPrevisao()">Salvar premissas</button>';
+  html += '<div id="prev-premissas-status" style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:center"></div>';
+  html += '</div>';
+  return html;
+}
+
 function renderComparativo(comPrevisao) {
   var anos = anosDisponiveis().slice().reverse(); // ordem crescente, do mais antigo pro mais novo
   var conteudo = document.getElementById('conteudo');
@@ -890,31 +936,10 @@ function renderComparativo(comPrevisao) {
 
   var html = '';
   if (previsao) {
-    var auto = previsao.autoValores;
-    var atuais = previsao.premissasAtuais;
-    html += '<div class="chart-card" style="border-top:3px solid ' + COR_PREVISAO + '">';
-    html += '<div class="sec-title" style="margin-top:0">Premissas da previsão 2027</div>';
-    html += '<div class="chart-hint" style="text-align:left;margin:0 0 12px">🔮 2027 é uma <strong>previsão</strong>, não dado real — '
-      + (previsao.anosUsados.length > 1
-          ? 'cada mês usa a média do mesmo mês em ' + previsao.anosUsados.join(' e ') + ' (ex: a previsão de março é a média dos março reais desses anos), separado por categoria de gasto — assim guarda a variação que a casa costuma ter mês a mês, sem um gasto que disparou numa categoria puxar a previsão de outra'
-          : 'repete o padrão mensal de ' + previsao.anosUsados[0] + ', o único ano com lançamento ainda — sem outro ano pra tirar média')
-      + '. Ajuste aqui embaixo o que você já sabe de verdade sobre o ano que vem — esses valores ficam salvos e valem pra previsão toda vez que você abrir essa tela.</div>';
-    html += '<div style="display:flex;flex-direction:column;gap:12px;">';
-    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Aluguel por mês (R$)'
-      + '<input type="number" step="0.01" id="prev-aluguel" value="' + (atuais.aluguelMes != null ? atuais.aluguelMes : '') + '" placeholder="automático: ' + fmt(auto.aluguelMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
-      + '</label>';
-    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Alarme Serviço por mês (R$)'
-      + '<input type="number" step="0.01" id="prev-alarme" value="' + (atuais.alarmeMes != null ? atuais.alarmeMes : '') + '" placeholder="automático: ' + fmt(auto.alarmeMes) + '" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
-      + '</label>';
-    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Quantos membros ativos tem hoje (número real, não uma variação)'
-      + '<input type="number" step="1" id="prev-membros" value="' + (atuais.totalMembrosAtivos != null ? atuais.totalMembrosAtivos : '') + '" placeholder="automático: ' + auto.membrosBase + ' (média histórica)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
-      + '</label>';
-    html += '<label style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim)">Valor médio por mensalidade em 2027 (R$)'
-      + '<input type="number" step="0.01" id="prev-mensalidade" value="' + (atuais.mediaMensalidadeMes != null ? atuais.mediaMensalidadeMes : '') + '" placeholder="automático: ' + fmt(auto.mediaMensalidadeMes) + ' (' + fmt(auto.mediaMensalidadeRecente) + ' do último ano ' + (auto.mediaMensalidadeAumento >= 0 ? '+ ' + fmt(auto.mediaMensalidadeAumento) + ' de aumento' : '- ' + fmt(Math.abs(auto.mediaMensalidadeAumento)) + ' de redução') + ', igual ao que já aconteceu de um ano pro outro)" style="display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid var(--border);border-radius:6px;font-family:\'Crimson Pro\',serif;font-size:1rem;color:var(--text);">'
-      + '</label>';
-    html += '<button class="bl-btn-rosa" onclick="salvarPremissasPrevisao()">Salvar premissas</button>';
-    html += '<div id="prev-premissas-status" style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:center"></div>';
-    html += '</div></div>';
+    document.getElementById('premissas-corpo').innerHTML = premissasModalHtml(previsao);
+    html += '<div style="text-align:center;margin-bottom:18px">'
+      + '<button class="bl-btn-rosa" onclick="abrirPremissas()" style="background:#c9a227">⚙️ Premissas da previsão 2027</button>'
+      + '</div>';
 
     var pctAnoPrev = calcularPctAno(previsao.dados);
     html += '<div class="sec-title">Totais previstos — 2027</div>';
@@ -1382,6 +1407,11 @@ function abrirDetalhe(titulo, nota, itens) {
   document.getElementById('detalhe-overlay').classList.add('open');
 }
 function fecharDetalhe() { document.getElementById('detalhe-overlay').classList.remove('open'); }
+
+function abrirPremissas() { document.getElementById('premissas-overlay').classList.add('open'); }
+function fecharPremissas() { document.getElementById('premissas-overlay').classList.remove('open'); }
+window.abrirPremissas = abrirPremissas;
+window.fecharPremissas = fecharPremissas;
 window.fecharDetalhe = fecharDetalhe;
 
 function lancamentosDoMes(mes) {
