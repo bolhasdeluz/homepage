@@ -648,9 +648,16 @@ function calcularPrevisao2027() {
   var totaisReais2027 = {};
   lancamentos.forEach(function(l){
     if (l.tipo !== 'gasto' || !l.data || l.data.slice(0,4) !== '2027') return;
-    if (!totaisReais2027[l.conta]) totaisReais2027[l.conta] = {};
+    // deslocamento de sessão é sempre custo de Tambor — mesma regra de
+    // calcularGastosPorCategoriaAno() (anos reais). Antes da sincronização
+    // automática do calendário, esse custo sempre foi registrado junto do
+    // Tambor; só virou um lançamento à parte agora. Sem juntar aqui, o
+    // comparativo por categoria mostraria Deslocamento como um gasto novo
+    // de 2027 e o Tambor de 2027 artificialmente mais baixo que o real
+    var conta = l.conta === 'Deslocamento' ? 'Tambor' : l.conta;
+    if (!totaisReais2027[conta]) totaisReais2027[conta] = {};
     var mes = parseInt(l.data.slice(5,7), 10);
-    totaisReais2027[l.conta][mes] = (totaisReais2027[l.conta][mes] || 0) + l.valor;
+    totaisReais2027[conta][mes] = (totaisReais2027[conta][mes] || 0) + l.valor;
   });
   Object.keys(totaisReais2027).forEach(function(conta){
     var override = OVERRIDES[conta];
