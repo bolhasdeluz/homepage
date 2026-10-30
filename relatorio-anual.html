@@ -634,14 +634,19 @@ function calcularPrevisao2027() {
     return valores.length ? valores.reduce(function(s,v){ return s+v; }, 0) / valores.length : null;
   }));
   var nTotPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nTot', m); }));
-  var nPagPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('nPag', m); }));
+  // % histórica de pagantes (não o número absoluto) — assim, quando o total
+  // real de membros ativos é maior que a média histórica, os pagantes
+  // previstos crescem junto na mesma proporção, em vez de ficar travados no
+  // número absoluto de anos com uma casa menor (o que fazia a % de
+  // pagantes prevista cair artificialmente)
+  var pctPagPorMes = comFallback(MESES_1A12.map(function(m){ return mediaCampoMes('pctPag', m); }));
 
   var linhas = MESES_1A12.map(function(mes, idx){
-    var mensalidadeMes = Math.round(mediaMensalidadeMes * nPagPorMes[idx] * 100) / 100;
+    var nTot = totalMembrosAtivos != null ? Math.max(0, Math.round(totalMembrosAtivos)) : Math.max(0, Math.round(nTotPorMes[idx]));
+    var nPag = Math.min(Math.round(nTot * pctPagPorMes[idx] / 100), nTot);
+    var mensalidadeMes = Math.round(mediaMensalidadeMes * nPag * 100) / 100;
     var entradas = Math.round((mensalidadeMes + extraPorMes[idx]) * 100) / 100;
     var gastos = Math.round(nomesCategorias.reduce(function(s, conta){ return s + categoriasMensais[conta][idx]; }, 0) * 100) / 100;
-    var nTot = totalMembrosAtivos != null ? Math.max(0, Math.round(totalMembrosAtivos)) : Math.max(0, Math.round(nTotPorMes[idx]));
-    var nPag = Math.min(Math.round(nPagPorMes[idx]), nTot);
     return {
       mes: mes, label: MESES_NOMES_FULL[mes-1] + '/2027 (previsão)',
       entradas: entradas, gastos: gastos, saldo: Math.round((entradas - gastos) * 100) / 100,
