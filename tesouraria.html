@@ -520,53 +520,8 @@ body{padding-bottom:64px}
     </div>
     <div id="saldo-nota-mae" style="display:none;text-align:right;margin-top:-8px;margin-bottom:6px;padding-right:4px;font-family:'Crimson Pro',serif;font-style:italic;font-size:.78rem;color:var(--text-dim);">coberto pela mãe de santo 🕯️</div>
 
-    <div id="tambor-mes-box" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px;">
-        <div style="font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">🪘 Tambor</div>
-        <button onclick="toggleEditarPrecosTambor()" id="tambor-editar-btn" title="Editar valores" style="background:none;border:none;color:var(--gold);cursor:pointer;font-size:.85rem;padding:2px 4px;">✏️</button>
-      </div>
-      <div id="tambor-mes-contexto" style="font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);margin-bottom:8px;"></div>
-
-      <div id="tambor-precos-display">
-        <div id="tambor-ano-aviso" style="display:none;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;">Selecione um mês pra marcar/editar o Tambor.</div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
-          <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Umbanda (<span id="tambor-preco-umbanda-label">R$ 130,00</span> cada)</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="mudarQtdTambor('umbanda',-1)" id="tambor-umbanda-menos" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
-            <input type="number" min="0" id="tambor-umbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-            <button onclick="mudarQtdTambor('umbanda',1)" id="tambor-umbanda-mais" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-          <span style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);">Quimbanda (<span id="tambor-preco-quimbanda-label">R$ 230,00</span> cada)</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <button onclick="mudarQtdTambor('quimbanda',-1)" id="tambor-quimbanda-menos" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">−</button>
-            <input type="number" min="0" id="tambor-quimbanda-qtd" readonly style="width:36px;text-align:center;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:4px 0;">
-            <button onclick="mudarQtdTambor('quimbanda',1)" id="tambor-quimbanda-mais" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--gold);width:26px;height:26px;cursor:pointer;font-size:.9rem;">+</button>
-          </div>
-        </div>
-        <div style="font-family:'DM Sans',sans-serif;font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:6px;">+ deslocamento de <span id="tambor-preco-deslocamento-label">R$ 60,00</span> por sessão, lançado separado em "Deslocamento"</div>
-      </div>
-
-      <div id="tambor-precos-editar" style="display:none;">
-        <div style="display:flex;gap:8px;margin-bottom:8px;">
-          <div style="flex:1;">
-            <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Umbanda (R$)</label>
-            <input type="number" id="tambor-edit-umbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
-          </div>
-          <div style="flex:1;">
-            <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Quimbanda (R$)</label>
-            <input type="number" id="tambor-edit-quimbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
-          </div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Deslocamento por sessão (R$)</label>
-          <input type="number" id="tambor-edit-deslocamento" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
-        </div>
-        <button onclick="salvarPrecosTambor()" class="btn-primary" style="width:100%;">Salvar valores</button>
-      </div>
-
-      <button onclick="abrirExportTamborConfig()" style="width:100%;margin-top:10px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px;cursor:pointer;">🖨️ Extrato do Tambor</button>
+    <div style="text-align:center;margin-bottom:14px;">
+      <button onclick="abrirTamborInfo()" style="background:none;border:1px solid var(--border);border-radius:20px;color:var(--gold);font-family:'Cinzel',serif;font-size:.72rem;font-weight:700;letter-spacing:.06em;padding:7px 16px;cursor:pointer;">🪘 Tambor</button>
     </div>
 
     <!-- Filtros de tipo -->
@@ -693,6 +648,40 @@ body{padding-bottom:64px}
         <input id="ficha-novo-valor" type="number" placeholder="Valor padrão" step="0.01" min="0" style="width:100px;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;padding:8px 10px;">
         <button onclick="adicionarContaFixa()" style="background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:.06em;padding:0 14px;cursor:pointer;white-space:nowrap;">+ Add</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAMBOR — informação + preços (usados pela sincronização automática do
+     calendário 2027) + extrato. O registro em si (quantas vezes teve
+     Tambor) é um lançamento normal, categoria "Tambor", pelo + de sempre —
+     não precisa mais de um contador dedicado aqui. -->
+<div class="modal-overlay" id="tambor-info-overlay" onclick="fecharModal('tambor-info-overlay',event)">
+  <div class="modal-sheet">
+    <div class="modal-header">
+      <div class="modal-title">🪘 Tambor</div>
+      <button class="modal-close" onclick="document.getElementById('tambor-info-overlay').classList.remove('open')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:14px;">
+        Tambor é uma conta de gasto normal — lance pelo + de sempre, escolhendo "Tambor" (e "Deslocamento" à parte). As sessões confirmadas no calendário de 2027 já entram sozinhas aqui, usando os preços abaixo.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <div style="flex:1;">
+          <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Umbanda (R$)</label>
+          <input type="number" id="tambor-edit-umbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+        </div>
+        <div style="flex:1;">
+          <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Quimbanda (R$)</label>
+          <input type="number" id="tambor-edit-quimbanda" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+        </div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="display:block;font-family:'Cinzel',serif;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;">Deslocamento por sessão (R$)</label>
+        <input type="number" id="tambor-edit-deslocamento" min="0" step="0.01" style="width:100%;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.85rem;padding:6px 8px;">
+      </div>
+      <button onclick="salvarPrecosTambor()" class="btn-primary" style="width:100%;margin-bottom:10px;">Salvar valores</button>
+      <button onclick="abrirExportTamborConfig()" style="width:100%;background:none;border:1px solid var(--border);border-radius:8px;color:var(--gold);font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:8px;cursor:pointer;">🖨️ Extrato do Tambor</button>
     </div>
   </div>
 </div>
@@ -1772,7 +1761,6 @@ body{padding-bottom:64px}
   // ── RENDER PANELS ─────────────────────────────────────────
   function renderInicio() {
     atualizarLabelMes();
-    renderTamborMes(filtroMesAtivo);
     var lista = filtroMesAtivo ? lancamentosDoMes(filtroMesAtivo) : lancamentosDoAno(anoAtivo);
     var totalE = lista.filter(function(l){ return l.tipo === 'entrada'; }).reduce(function(a,l){ return a + l.valor; }, 0);
     var totalG = lista.filter(function(l){ return l.tipo === 'gasto'; }).reduce(function(a,l){ return a + l.valor; }, 0);
@@ -2454,26 +2442,15 @@ body{padding-bottom:64px}
     kvSet('tambor_config', tamborConfig);
   }
 
-  function renderPrecosTamborLabels() {
-    var lblU = document.getElementById('tambor-preco-umbanda-label');
-    var lblQ = document.getElementById('tambor-preco-quimbanda-label');
-    var lblD = document.getElementById('tambor-preco-deslocamento-label');
-    if (lblU) lblU.textContent = fmt(tamborConfig.umbanda);
-    if (lblQ) lblQ.textContent = fmt(tamborConfig.quimbanda);
-    if (lblD) lblD.textContent = fmt(tamborConfig.deslocamento);
-  }
-
-  function toggleEditarPrecosTambor() {
-    var display = document.getElementById('tambor-precos-display');
-    var editar = document.getElementById('tambor-precos-editar');
-    var abrindo = editar.style.display === 'none';
-    display.style.display = abrindo ? 'none' : 'block';
-    editar.style.display = abrindo ? 'block' : 'none';
-    if (abrindo) {
-      document.getElementById('tambor-edit-umbanda').value = tamborConfig.umbanda;
-      document.getElementById('tambor-edit-quimbanda').value = tamborConfig.quimbanda;
-      document.getElementById('tambor-edit-deslocamento').value = tamborConfig.deslocamento;
-    }
+  // abre o popup de info/preços do Tambor — o registro em si (quantas vezes
+  // teve Tambor) é um lançamento normal, categoria "Tambor", pelo + de
+  // sempre; esse popup só guarda os preços usados pela sincronização
+  // automática do calendário 2027 e dá acesso ao extrato
+  function abrirTamborInfo() {
+    document.getElementById('tambor-edit-umbanda').value = tamborConfig.umbanda;
+    document.getElementById('tambor-edit-quimbanda').value = tamborConfig.quimbanda;
+    document.getElementById('tambor-edit-deslocamento').value = tamborConfig.deslocamento;
+    document.getElementById('tambor-info-overlay').classList.add('open');
   }
 
   function salvarPrecosTambor() {
@@ -2483,114 +2460,9 @@ body{padding-bottom:64px}
     if (isNaN(u) || u < 0 || isNaN(q) || q < 0 || isNaN(d) || d < 0) { showToast('Valores inválidos'); return; }
     tamborConfig = { umbanda: u, quimbanda: q, deslocamento: d };
     salvarTamborConfig();
-    renderPrecosTamborLabels();
-    toggleEditarPrecosTambor();
     showToast('Valores do Tambor atualizados ✓');
-    // os lançamentos já feitos no mês não mudam retroativamente — só os
-    // próximos ajustes de quantidade passam a usar os novos valores
-  }
-
-  function qtdTamborDoMes(tipo, mes) {
-    var l = lancamentos.find(function(l) {
-      return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
-    });
-    return l ? (l.quantidade || 1) : 0;
-  }
-
-  function qtdTamborDoAno(tipo, ano) {
-    return lancamentos
-      .filter(function(l){ return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 4) : '') === ano; })
-      .reduce(function(s, l){ return s + (l.quantidade || 1); }, 0);
-  }
-
-  // mes = 'YYYY-MM' mostra os steppers daquele mês pra editar; mes = null
-  // (modo "ano inteiro") mostra só o total somado do ano, sem steppers —
-  // não tem UM mês específico pra marcar/desmarcar nesse modo
-  function renderTamborMes(mes) {
-    var aviso = document.getElementById('tambor-ano-aviso');
-    var contexto = document.getElementById('tambor-mes-contexto');
-    var btns = ['tambor-umbanda-menos', 'tambor-umbanda-mais', 'tambor-quimbanda-menos', 'tambor-quimbanda-mais'];
-    if (mes) {
-      if (aviso) aviso.style.display = 'none';
-      btns.forEach(function(id){ var b = document.getElementById(id); if (b) { b.disabled = false; b.style.opacity = '1'; b.style.cursor = 'pointer'; } });
-      if (contexto) contexto.textContent = MESES_NOMES_FULL[parseInt(mes.split('-')[1]) - 1] + '/' + mes.split('-')[0];
-      ['umbanda', 'quimbanda'].forEach(function(tipo) {
-        var input = document.getElementById('tambor-' + tipo + '-qtd');
-        if (input) input.value = qtdTamborDoMes(tipo, mes);
-      });
-    } else {
-      if (aviso) aviso.style.display = 'block';
-      btns.forEach(function(id){ var b = document.getElementById(id); if (b) { b.disabled = true; b.style.opacity = '.35'; b.style.cursor = 'default'; } });
-      if (contexto) contexto.textContent = 'Total do ano ' + anoAtivo;
-      ['umbanda', 'quimbanda'].forEach(function(tipo) {
-        var input = document.getElementById('tambor-' + tipo + '-qtd');
-        if (input) input.value = qtdTamborDoAno(tipo, anoAtivo);
-      });
-    }
-    renderPrecosTamborLabels();
-  }
-
-  function mudarQtdTambor(tipo, delta) {
-    if (!filtroMesAtivo) return; // modo "ano inteiro" — sem um mês escolhido não dá pra marcar/desmarcar
-    var mes = filtroMesAtivo;
-    var qtdAntes = qtdTamborDoMes(tipo, mes);
-    var qtd = Math.max(0, qtdAntes + delta);
-    var deltaReal = qtd - qtdAntes; // quantas sessões de fato mudaram (marcou/desmarcou)
-
-    var idx = lancamentos.findIndex(function(l) {
-      return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
-    });
-
-    if (qtd === 0) {
-      if (idx !== -1) lancamentos.splice(idx, 1);
-    } else {
-      var obs = TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '');
-      var valor = tamborConfig[tipo] * qtd;
-      if (idx !== -1) {
-        lancamentos[idx].quantidade = qtd;
-        lancamentos[idx].valor = valor;
-        lancamentos[idx].obs = obs;
-        // mexeu na mão num lançamento que a sincronização do calendário
-        // criava sozinha — a partir de agora ela não mexe mais nesse mês
-        if (lancamentos[idx].origemCalendario) lancamentos[idx].tamborAutoEditado = true;
-      } else {
-        lancamentos.push({
-          id: Date.now() + Math.random(), tipo: 'gasto', conta: 'Tambor', tipoTambor: tipo,
-          quantidade: qtd, valor: valor, data: mes + '-01', obs: obs, comprovante: null
-        });
-      }
-    }
-
-    // Deslocamento — um lançamento PRÓPRIO por sessão marcada (não um total
-    // agregado), já preenchido com o valor padrão, mas editável sessão a
-    // sessão como qualquer outro lançamento (ex: se o trajeto daquele dia
-    // custou diferente do normal)
-    if (deltaReal > 0) {
-      for (var i = 0; i < deltaReal; i++) {
-        lancamentos.push({
-          id: Date.now() + Math.random(), tipo: 'gasto', conta: 'Deslocamento', tipoTambor: tipo,
-          valor: tamborConfig.deslocamento, data: mes + '-01', obs: 'Deslocamento — ' + TAMBOR_LABELS[tipo], comprovante: null
-        });
-      }
-    } else if (deltaReal < 0) {
-      // ao desmarcar uma sessão, remove o deslocamento lançado mais
-      // recentemente pra esse tipo/mês (o último marcado é o primeiro a sair)
-      // — nunca mexe num deslocamento que veio do calendário (origemSessaoId),
-      // esse só é removido pela própria sincronização
-      for (var j = 0; j < -deltaReal; j++) {
-        var candidatos = lancamentos.filter(function(l) {
-          return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && !l.origemSessaoId && (l.data ? l.data.slice(0, 7) : '') === mes;
-        });
-        if (!candidatos.length) break;
-        var maisRecente = candidatos.reduce(function(a, b) { return a.id > b.id ? a : b; });
-        var idxDel = lancamentos.indexOf(maisRecente);
-        if (idxDel !== -1) lancamentos.splice(idxDel, 1);
-      }
-    }
-
-    lancamentos.sort(function(a, b) { return new Date(b.data) - new Date(a.data); });
-    save();
-    renderPainelAtivo();
+    // os lançamentos já feitos não mudam retroativamente — só os próximos
+    // (manuais ou sincronizados do calendário) usam os novos valores
   }
 
   // ── TAMBOR AUTOMÁTICO A PARTIR DO CALENDÁRIO 2027 ─────────────────
@@ -4281,7 +4153,6 @@ body{padding-bottom:64px}
   } catch(e){}
   renderSeletorAno();
   try { renderInicio(); } catch(e){ console.error('renderInicio:', e); }
-  try { renderPrecosTamborLabels(); } catch(e){}
   try { renderHistorico(); } catch(e){ console.error('renderHistorico:', e); }
   try { renderResumo(); } catch(e){ console.error('renderResumo:', e); }
   try { renderCaixa(); } catch(e){ console.error('renderCaixa:', e); }
@@ -4343,7 +4214,6 @@ body{padding-bottom:64px}
       if (dadosKV && typeof dadosKV === 'object' && dadosKV.umbanda !== undefined) {
         tamborConfig = dadosKV;
         try { localStorage.setItem('bdl-tambor-config', JSON.stringify(dadosKV)); } catch(e){}
-        try { renderPrecosTamborLabels(); } catch(e){}
       } else {
         // KV vazio — envia os padrões (ou o que já tinha local) pro KV
         kvSet('tambor_config', tamborConfig);
