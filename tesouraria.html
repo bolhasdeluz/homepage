@@ -395,6 +395,15 @@ body{padding-bottom:64px}
   </div>
 </div>
 
+<!-- FILTRO DE ANO — global, bem no topo, afeta Início/Contas/Histórico/Resumo
+     (não a Caixa — é uma caixa de entrada de pendências, não um extrato) -->
+<div id="filtro-ano-bar" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;background:rgba(196,57,107,.06);border-bottom:1px solid var(--border);">
+  <span style="font-family:'Cinzel',serif;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);">Ano</span>
+  <button onclick="mudarAnoFiltro(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:.9rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">‹</button>
+  <select id="seletor-ano" onchange="selecionarAno(this.value)" style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--text);background:none;border:none;text-align:center;cursor:pointer;min-width:60px;"></select>
+  <button onclick="mudarAnoFiltro(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:.9rem;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">›</button>
+</div>
+
 <header class="header">
   <div style="display:flex;align-items:center;gap:10px;">
     <a href="https://bolhasdeluz.ong.br" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:20px;color:rgba(255,255,255,.9);font-family:'DM Sans',sans-serif;font-size:.72rem;padding:5px 11px;text-decoration:none;white-space:nowrap;flex-shrink:0;">← Voltar</a>
@@ -1621,7 +1630,74 @@ body{padding-bottom:64px}
     }
   });
   var MESES_NOMES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  var filtroMesAtivo = null; // null = todos, 'YYYY-MM' = mês específico
+  var filtroMesAtivo = null; // null = ano inteiro, 'YYYY-MM' = mês específico (sempre dentro de anoAtivo)
+
+  // ── FILTRO DE ANO — global, afeta Início/Contas/Histórico/Resumo (não a
+  // Caixa, que é uma caixa de entrada de pendências, não um extrato por
+  // data). Fica fixo bem no topo da página ─────────────────────────
+  var anoAtivo = null; // 'YYYY'
+
+  function anosDisponiveis() {
+    var anos = {};
+    lancamentos.forEach(function(l){
+      var ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data || l.vencimento || '');
+      if (ref && ref.length >= 4) anos[ref.slice(0, 4)] = true;
+    });
+    anos[String(new Date().getFullYear())] = true;
+    return Object.keys(anos).sort().reverse();
+  }
+
+  function lancamentosDoAno(ano) {
+    return lancamentos.filter(function(l) {
+      if (l.status === 'pendente' && !l.data && !l.vencimento) return true;
+      var ref = (l.tipo === 'entrada' && l.competencia)
+        ? l.competencia
+        : (l.data ? l.data.slice(0, 7) : (l.vencimento ? l.vencimento.slice(0, 7) : ''));
+      if (!ref) return true;
+      return ref.slice(0, 4) === ano;
+    });
+  }
+
+  function inicializarFiltroAno() {
+    anoAtivo = String(new Date().getFullYear());
+    renderSeletorAno();
+  }
+
+  function renderSeletorAno() {
+    var sel = document.getElementById('seletor-ano');
+    if (!sel) return;
+    var anos = anosDisponiveis();
+    if (anos.indexOf(anoAtivo) === -1) anos = [anoAtivo].concat(anos).sort().reverse();
+    sel.innerHTML = anos.map(function(a){ return '<option value="'+a+'"'+(a===anoAtivo?' selected':'')+'>'+a+'</option>'; }).join('');
+  }
+
+  function mudarAnoFiltro(delta) {
+    var anos = anosDisponiveis();
+    if (anos.indexOf(anoAtivo) === -1) anos = [anoAtivo].concat(anos).sort().reverse();
+    var idx = anos.indexOf(anoAtivo);
+    // lista vem do mais recente pro mais antigo — "próximo ano" é idx-1
+    var novoIdx = idx - delta;
+    if (novoIdx < 0 || novoIdx >= anos.length) return;
+    selecionarAno(anos[novoIdx]);
+  }
+
+  function selecionarAno(ano) {
+    ano = String(ano);
+    if (ano === anoAtivo) return;
+    anoAtivo = ano;
+    var agora = new Date();
+    // ano de hoje cai no mês atual; ano passado cai em janeiro — mais útil
+    // do que abrir sempre no "ano inteiro"
+    filtroMesAtivo = (ano === String(agora.getFullYear()))
+      ? agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0')
+      : ano + '-01';
+    renderSeletorAno();
+    atualizarLabelMes();
+    try { renderInicio(); } catch(e){}
+    try { renderContas(); } catch(e){}
+    try { renderHistorico(); } catch(e){}
+    try { renderResumo(); } catch(e){}
+  }
 
   function inicializarFiltroMes() {
     // Começa no mês atual
@@ -1635,7 +1711,7 @@ body{padding-bottom:64px}
     var sub = document.getElementById('filtro-mes-sub');
     var btnTodos = document.getElementById('btn-todos-meses');
     if (!filtroMesAtivo) {
-      label.textContent = 'Todos os meses';
+      label.textContent = 'Ano ' + anoAtivo + ' inteiro';
       sub.textContent = '';
       btnTodos.style.color = 'var(--gold)';
       btnTodos.style.borderColor = 'var(--gold)';
@@ -1651,11 +1727,15 @@ body{padding-bottom:64px}
   function mudarMesFiltro(delta) {
     if (!filtroMesAtivo) {
       var agora = new Date();
-      filtroMesAtivo = agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0');
+      filtroMesAtivo = (anoAtivo === String(agora.getFullYear()))
+        ? agora.getFullYear() + '-' + String(agora.getMonth() + 1).padStart(2, '0')
+        : anoAtivo + '-01';
     }
     var parts = filtroMesAtivo.split('-');
     var ano = parseInt(parts[0]), mes = parseInt(parts[1]) - 1;
     var d = new Date(ano, mes + delta, 1);
+    // não passa pro ano seguinte/anterior — pra isso é o filtro de ano lá em cima
+    if (String(d.getFullYear()) !== anoAtivo) return;
     filtroMesAtivo = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     atualizarLabelMes();
     var painelAtivo = document.querySelector('.panel.active') ? document.querySelector('.panel.active').id : '';
@@ -1681,8 +1761,8 @@ body{padding-bottom:64px}
   // ── RENDER PANELS ─────────────────────────────────────────
   function renderInicio() {
     atualizarLabelMes();
-    renderTamborMes(filtroMesAtivo || today().slice(0, 7));
-    var lista = lancamentosDoMes(filtroMesAtivo);
+    renderTamborMes(filtroMesAtivo || (anoAtivo === String(new Date().getFullYear()) ? today().slice(0, 7) : anoAtivo + '-01'));
+    var lista = filtroMesAtivo ? lancamentosDoMes(filtroMesAtivo) : lancamentosDoAno(anoAtivo);
     var totalE = lista.filter(function(l){ return l.tipo === 'entrada'; }).reduce(function(a,l){ return a + l.valor; }, 0);
     var totalG = lista.filter(function(l){ return l.tipo === 'gasto'; }).reduce(function(a,l){ return a + l.valor; }, 0);
     var saldo = totalE - totalG;
@@ -1724,12 +1804,9 @@ body{padding-bottom:64px}
       document.getElementById('saldo-nota-mae').style.display = 'none';
 
     } else {
-      // Modo total: mostra dados do ano atual
-      var anoAtual = new Date().getFullYear().toString();
-      var listaAno = lancamentos.filter(function(l){
-        var ref = (l.tipo==='entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0,7) : '');
-        return ref.startsWith(anoAtual);
-      });
+      // Modo ano inteiro: mostra dados do ano escolhido no filtro lá em cima
+      var anoAtual = anoAtivo;
+      var listaAno = lista; // já veio de lancamentosDoAno(anoAtivo)
       var totalEAno = listaAno.filter(function(l){ return l.tipo==='entrada'; }).reduce(function(a,l){ return a+l.valor; },0);
       var totalGAno = listaAno.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente'; }).reduce(function(a,l){ return a+l.valor; },0);
       var saldoAno = totalEAno - totalGAno;
@@ -1819,7 +1896,7 @@ body{padding-bottom:64px}
 
     var agora = new Date();
     var mesAtualStr = agora.getFullYear() + '-' + String(agora.getMonth()+1).padStart(2,'0');
-    var mesesOrdenados = Object.keys(meses).filter(function(m){ return m <= mesAtualStr; }).sort().reverse();
+    var mesesOrdenados = Object.keys(meses).filter(function(m){ return m <= mesAtualStr && m.slice(0,4) === anoAtivo; }).sort().reverse();
     var panoramaHTML = '';
     if (mesesOrdenados.length) {
       panoramaHTML = '<div style="margin-bottom:14px;">'
@@ -1875,8 +1952,9 @@ body{padding-bottom:64px}
         + '</div>';
     }
 
-    // ── Lista de lançamentos ─────────────────────────────────
-    var lista = filtroAtivo === 'todos' ? lancamentos : lancamentos.filter(function(l){ return l.tipo === filtroAtivo; });
+    // ── Lista de lançamentos (sempre dentro do ano escolhido lá em cima) ──
+    var lancamentosAno = lancamentosDoAno(anoAtivo);
+    var lista = filtroAtivo === 'todos' ? lancamentosAno : lancamentosAno.filter(function(l){ return l.tipo === filtroAtivo; });
     var listaHTML = lista.length
       ? lista.map(itemHTML).join('')
       : '<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">Nenhum lançamento encontrado</div></div>';
@@ -1894,9 +1972,11 @@ body{padding-bottom:64px}
   }
 
   function renderResumo() {
+    // ── Tudo aqui é escopado ao ano escolhido lá em cima (anoAtivo) ──
+    var lancamentosAno = lancamentosDoAno(anoAtivo);
     var MEMBROS_FIXOS = MEMBROS_TODOS;
     var mesesSet = {};
-    lancamentos.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; }).forEach(function(l){
+    lancamentosAno.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; }).forEach(function(l){
       var ref = l.competencia || (l.data ? l.data.slice(0,7) : null);
       if (ref) mesesSet[ref] = true;
     });
@@ -1910,7 +1990,7 @@ body{padding-bottom:64px}
       // Monta mapa membro → mês → valor
       var mapa = {};
       MEMBROS_FIXOS.forEach(function(m){ mapa[m] = {}; });
-      lancamentos.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; }).forEach(function(l){
+      lancamentosAno.filter(function(l){ return l.tipo==='entrada' && l.subTipo!=='extra'; }).forEach(function(l){
         var ref = l.competencia || (l.data ? l.data.slice(0,7) : null);
         if (!ref || !mapa[l.membro]) return;
         mapa[l.membro][ref] = (mapa[l.membro][ref]||0) + l.valor;
@@ -1966,7 +2046,7 @@ body{padding-bottom:64px}
     // ── Gastos por conta — média mensal ──────────────────────
     var contasMeses = {};
     var mesesComGasto = {};
-    lancamentos.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente'; }).forEach(function(l){
+    lancamentosAno.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente'; }).forEach(function(l){
       var mes = l.data ? l.data.slice(0,7) : null;
       if (!mes) return;
       if (!contasMeses[l.conta]) contasMeses[l.conta] = {};
@@ -2614,7 +2694,7 @@ body{padding-bottom:64px}
   }
 
   function renderContas() {
-    var mes = filtroMesAtivo || today().slice(0,7);
+    var mes = filtroMesAtivo || (anoAtivo === String(new Date().getFullYear()) ? today().slice(0,7) : anoAtivo + '-01');
     var partes = mes.split('-');
     var label = document.getElementById('contas-mes-label');
     if (label) label.textContent = MESES_NOMES_FULL[parseInt(partes[1])-1] + ' ' + partes[0];
@@ -4119,6 +4199,7 @@ body{padding-bottom:64px}
   }
 
   // ── INIT ──────────────────────────────────────────────────
+  inicializarFiltroAno();
   inicializarFiltroMes();
   blAtualizarBotaoNomes();
   renderMembroSelects();
@@ -4150,6 +4231,7 @@ body{padding-bottom:64px}
       if (parsedTamborConfig && typeof parsedTamborConfig === 'object') tamborConfig = parsedTamborConfig;
     }
   } catch(e){}
+  renderSeletorAno();
   try { renderInicio(); } catch(e){ console.error('renderInicio:', e); }
   try { renderPrecosTamborLabels(); } catch(e){}
   try { renderHistorico(); } catch(e){ console.error('renderHistorico:', e); }
@@ -4164,6 +4246,7 @@ body{padding-bottom:64px}
         // KV tem dados — usa eles e salva no localStorage
         lancamentos = dadosKV;
         try { localStorage.setItem('bdl-tesouraria', JSON.stringify(dadosKV)); } catch(e){}
+        renderSeletorAno();
         try { renderInicio(); renderHistorico(); renderResumo(); } catch(e){ console.error(e); }
       } else if (lancamentos.length > 0) {
         // KV vazio mas temos dados locais — envia pro KV
