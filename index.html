@@ -4417,6 +4417,23 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- BARRA DE PROGRESSO DA IMPORTAÇÃO DO CALENDÁRIO 2027 — a importação apaga
+     e recria dezenas de sessões em sequência (cada uma sincronizando com o
+     Google Agenda por trás, o que não é instantâneo), então sem isso aqui a
+     tela fica "parada" por bastante tempo e dá a impressão de ter travado ou
+     terminado — ver calImportProgresso* em calImportarCalendario2027 -->
+<div id="cal-import-progresso-overlay" style="display:none;position:fixed;inset:0;background:rgba(40,10,20,.7);z-index:600;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border:1px solid var(--border);border-top:3px solid var(--rosa);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.2);width:100%;max-width:400px;padding:28px 24px;text-align:center">
+    <div style="font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text);margin-bottom:4px">📥 Importando calendário 2027</div>
+    <div id="cal-import-progresso-etapa" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:16px">Preparando…</div>
+    <div style="background:var(--border);border-radius:99px;height:10px;overflow:hidden;margin-bottom:10px">
+      <div id="cal-import-progresso-barra" style="background:var(--rosa);height:100%;width:0%;transition:width .3s ease;border-radius:99px"></div>
+    </div>
+    <div id="cal-import-progresso-pct" style="font-family:'Cinzel',serif;font-size:.85rem;letter-spacing:.06em;color:var(--rosa);font-weight:700">0%</div>
+    <div style="font-family:'Crimson Pro',serif;font-size:.76rem;color:var(--text-dim);font-style:italic;margin-top:14px">Não sai dessa tela nem fecha o navegador até terminar.</div>
+  </div>
+</div>
+
 <!-- MODAL GERENCIAR MODELOS DE SESSÃO — cadastro das "peças" reaproveitáveis
      usadas no Planejamento Anual (arrastar-pra-criar). Fica em modal
      separado pra não poluir o quadro principal -->
@@ -10025,6 +10042,24 @@ const CAL_IMPORTACAO_2027 = [
   { nome: 'Marmitas', data: '2027-08-22' },
 ];
 
+// barra de progresso da importação — feita = quantas das `total` etapas já
+// passaram (apagar + criar + conferir, essa última contada como 1 etapa
+// só, pro usuário não achar que travou durante a espera de consistência)
+function calImportProgressoMostrar() {
+  document.getElementById('cal-import-progresso-overlay').style.display = 'flex';
+  calImportProgressoAtualizar('Preparando…', 0);
+}
+function calImportProgressoAtualizar(etapa, pct) {
+  const el = document.getElementById('cal-import-progresso-overlay');
+  if (!el || el.style.display === 'none') return;
+  document.getElementById('cal-import-progresso-etapa').textContent = etapa;
+  document.getElementById('cal-import-progresso-barra').style.width = pct + '%';
+  document.getElementById('cal-import-progresso-pct').textContent = Math.round(pct) + '%';
+}
+function calImportProgressoEsconder() {
+  document.getElementById('cal-import-progresso-overlay').style.display = 'none';
+}
+
 async function calImportarCalendario2027() {
   const existentes = calSessoes.filter(s => s.data && s.data.startsWith('2027-'));
   const aviso = existentes.length
@@ -10032,12 +10067,20 @@ async function calImportarCalendario2027() {
     : `Isso vai criar as ${CAL_IMPORTACAO_2027.length} sessões de 2027 combinadas com a Anna. Continuar?`;
   if (!confirm(aviso)) return;
 
+  // total de "etapas" pra barra: cada apagar e cada criar conta 1, mais 1
+  // etapa só pra conferência final de consistência (ver mais abaixo)
+  const totalEtapas = existentes.length + CAL_IMPORTACAO_2027.length + 1;
+  let feitas = 0;
+  calImportProgressoMostrar();
+
   let apagadas = 0, erroApagar = 0;
   for (const s of existentes) {
     try {
       const res = await fetch(CAL_API, { method: 'DELETE', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id: s.id }) });
       if (res.ok) apagadas++; else erroApagar++;
     } catch (e) { erroApagar++; }
+    feitas++;
+    calImportProgressoAtualizar(`Apagando sessões antigas de 2027… (${apagadas + erroApagar}/${existentes.length})`, feitas / totalEtapas * 100);
   }
 
   let criadas = 0, erroCriar = 0;
@@ -10046,6 +10089,8 @@ async function calImportarCalendario2027() {
       const res = await fetch(CAL_API, { method: 'POST', headers: CAL_ADMIN_HEADERS, body: JSON.stringify(s) });
       if (res.ok) criadas++; else erroCriar++;
     } catch (e) { erroCriar++; }
+    feitas++;
+    calImportProgressoAtualizar(`Criando as sessões novas… (${criadas + erroCriar}/${CAL_IMPORTACAO_2027.length})`, feitas / totalEtapas * 100);
   }
 
   // o KV do Cloudflare é eventualmente consistente — uma escrita bem recente
@@ -10058,8 +10103,10 @@ async function calImportarCalendario2027() {
   // mesmo (a tela mostra o que tiver), mas o aviso final avisa a diferença
   const esperado = CAL_IMPORTACAO_2027.length;
   let confirmadas = -1;
-  for (const espera of [1000, 2000, 4000, 8000, 15000]) {
-    await new Promise(r => setTimeout(r, espera));
+  const esperas = [1000, 2000, 4000, 8000, 15000];
+  for (let i = 0; i < esperas.length; i++) {
+    calImportProgressoAtualizar(`Conferindo se tudo já propagou no servidor… (tentativa ${i + 1}/${esperas.length})`, (feitas + i / esperas.length) / totalEtapas * 100);
+    await new Promise(r => setTimeout(r, esperas[i]));
     try {
       const res = await fetch(CAL_API);
       const lista = await res.json();
@@ -10067,9 +10114,12 @@ async function calImportarCalendario2027() {
     } catch (e) { confirmadas = -1; }
     if (confirmadas === esperado) break;
   }
+  feitas++;
+  calImportProgressoAtualizar('Pronto!', 100);
 
   await calLoad();
   if (document.getElementById('cal-anual-overlay').style.display === 'flex') calAnualRender();
+  calImportProgressoEsconder();
   const avisoConsistencia = confirmadas === esperado ? ''
     : ` A releitura ainda mostra ${confirmadas} de ${esperado} — o Cloudflare pode levar mais um pouco pra propagar tudo; espera uns minutos e recarrega a página antes de concluir que falhou algo.`;
   alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : '') + avisoConsistencia);
@@ -10129,7 +10179,11 @@ function calImprimirCalendarioAnual() {
     const primeiroDia = new Date(ano, mes, 1).getDay();
     const ultimoDia = new Date(ano, mes + 1, 0).getDate();
     let diasHtml = '';
-    const diasDoMes = [];
+    // uma entrada por SESSÃO (não por dia) — uma sessão "a confirmar" entre
+    // duas datas ocupa duas casas na grade do mês, mas só uma linha na
+    // legenda embaixo, com as duas datas juntas (ex: "26/27"), em vez de
+    // repetir o nome duas vezes
+    const sessoesDoMes = new Map();
     for (let i = 0; i < primeiroDia; i++) diasHtml += `<div class="pcal-dia vazio"></div>`;
     for (let d = 1; d <= ultimoDia; d++) {
       const dataStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -10144,18 +10198,25 @@ function calImprimirCalendarioAnual() {
           ${fechada ? '<span class="pcal-estrela">★</span>' : ''}
           ${tentativa ? '<span class="pcal-interrogacao">？</span>' : ''}
         </div>`;
-        diasDoMes.push({ dia: d, cor, fechada, tentativa, textos: doDia.map(s => pcalNomeLimpo(s.nome)) });
+        doDia.forEach(s => {
+          const chave = s.id || (s.nome + s.data);
+          if (!sessoesDoMes.has(chave)) {
+            sessoesDoMes.set(chave, { dias: [], nome: s.nome, cor: pcalCorDaSessao(s.nome), fechada: pcalEhFechada(s), tentativa: s._tentativa });
+          }
+          sessoesDoMes.get(chave).dias.push(d);
+        });
       } else {
         const classe = feriados[dataStr] ? 'pcal-dia feriado' : 'pcal-dia';
         diasHtml += `<div class="${classe}"><span class="pcal-dia-num">${d}</span></div>`;
       }
     }
-    const legendaMesHtml = diasDoMes.map(item => {
+    const legendaMesHtml = [...sessoesDoMes.values()].map(item => {
       const estiloNum = item.tentativa ? `border-color:${item.cor};color:${item.cor}` : `background:${item.cor}`;
+      const diasTexto = item.dias.join('/');
       return `
       <div class="pcal-legenda-dia">
-        <span class="pcal-legenda-dia-num${item.tentativa ? ' tentativa' : ''}" style="${estiloNum}">${item.dia}</span>
-        <span>${calEsc(item.textos.join(', '))}${item.fechada ? ' ★' : ''}${item.tentativa ? ' ？ a confirmar' : ''}</span>
+        <span class="pcal-legenda-dia-num${item.tentativa ? ' tentativa' : ''}" style="${estiloNum}">${diasTexto}</span>
+        <span>${calEsc(pcalNomeLimpo(item.nome))}${item.fechada ? ' ★' : ''}${item.tentativa ? ' ？ a confirmar' : ''}</span>
       </div>`;
     }).join('');
     mesesHtml += `<div class="pcal-mes">
@@ -10199,7 +10260,7 @@ function calImprimirCalendarioAnual() {
       .pcal-legenda-dia-num.tentativa{background:#fff!important;border:1.5px dashed;font-weight:700}
       .pcal-legenda-mes{margin-top:5px;padding-top:4px;border-top:1px dashed #e3b8a0;font-size:.52rem;color:#555;line-height:1.5}
       .pcal-legenda-dia{display:flex;align-items:center;gap:4px}
-      .pcal-legenda-dia-num{display:inline-flex;align-items:center;justify-content:center;width:12px;height:12px;border-radius:50%;color:#fff;font-weight:700;font-size:.48rem;flex-shrink:0}
+      .pcal-legenda-dia-num{display:inline-flex;align-items:center;justify-content:center;min-width:12px;height:12px;padding:0 3px;border-radius:7px;color:#fff;font-weight:700;font-size:.44rem;flex-shrink:0}
       .pcal-legenda{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 16px;margin-top:14px;font-size:.62rem;color:#555}
       .pcal-legenda-item{display:flex;align-items:center;gap:5px}
       .pcal-legenda-bola{display:inline-block;width:9px;height:9px;border-radius:50%}
