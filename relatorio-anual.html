@@ -311,6 +311,22 @@ function today() { return new Date().toISOString().split('T')[0]; }
 function fmt(val) { return 'R$ ' + Number(val).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtData(d) { if (!d) return ''; var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
 
+// % Pagantes e % Cobertura do ano inteiro (não só por mês), a partir de um
+// objeto "dados" (mesmo formato tanto pra um ano real — montarDadosExtratoAnual
+// — quanto pra previsão 2027 — calcularPrevisao2027().dados): % pagantes é a
+// média dos % de cada mês com lançamento (mesma lógica da tesouraria.html);
+// % cobertura é entradas totais ÷ gastos totais do ano. O "X/Y membros" da
+// legenda usa o nTot do mês mais recente com dado, pra servir tanto de
+// referência num ano já fechado quanto na previsão
+function calcularPctAno(dados) {
+  if (!dados.linhas.length) return { pctPag: 0, pctCob: 0, nPagAprox: 0, nTotRef: 0 };
+  var pctPag = Math.round(dados.linhas.reduce(function(s,l){ return s + l.pctPag; }, 0) / dados.linhas.length);
+  var pctCob = dados.totalGastos > 0 ? Math.round(dados.totalEntradas / dados.totalGastos * 100) : (dados.totalEntradas > 0 ? 100 : 0);
+  var nTotRef = dados.linhas[dados.linhas.length - 1].nTot;
+  var nPagAprox = Math.round(pctPag / 100 * nTotRef);
+  return { pctPag: pctPag, pctCob: pctCob, nPagAprox: nPagAprox, nTotRef: nTotRef };
+}
+
 function vinculoNormalizar(s) {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
@@ -779,6 +795,9 @@ function renderRelatorio() {
   html += '<div class="stat-card"><div class="stat-label">↓ Gastos no ano</div><div class="stat-valor" style="color:var(--red)">' + fmt(dados.totalGastos) + '</div></div>';
   html += '<div class="stat-card"><div class="stat-label">Saldo do ano</div><div class="stat-valor" style="color:' + (dados.saldoAno>=0?'var(--green)':'var(--red)') + '">' + fmt(dados.saldoAno) + (dados.saldoAno<0?' 🕯️':'') + '</div></div>';
   html += '<div class="stat-card"><div class="stat-label">Média mensalidade</div><div class="stat-valor" style="color:var(--gold)">' + fmt(dados.mediaAnual) + '</div></div>';
+  var pctAno = calcularPctAno(dados);
+  html += '<div class="stat-card"><div class="stat-label">👥 Pagantes</div><div class="stat-valor" style="color:var(--gold)">' + pctAno.pctPag + '%</div><div class="chart-hint" style="margin:2px 0 0">' + pctAno.nPagAprox + '/' + pctAno.nTotRef + ' membros</div></div>';
+  html += '<div class="stat-card"><div class="stat-label">💰 Coberto</div><div class="stat-valor" style="color:var(--gold)">' + pctAno.pctCob + '%</div><div class="chart-hint" style="margin:2px 0 0">' + fmt(dados.totalEntradas) + ' / ' + fmt(dados.totalGastos) + '</div></div>';
   html += '</div>';
 
   html += '<div class="sec-title">Entradas × Gastos por mês</div>';
@@ -896,6 +915,16 @@ function renderComparativo(comPrevisao) {
     html += '<button class="bl-btn-rosa" onclick="salvarPremissasPrevisao()">Salvar premissas</button>';
     html += '<div id="prev-premissas-status" style="font-family:\'DM Sans\',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:center"></div>';
     html += '</div></div>';
+
+    var pctAnoPrev = calcularPctAno(previsao.dados);
+    html += '<div class="sec-title">Totais previstos — 2027</div>';
+    html += '<div class="stats-grid">';
+    html += '<div class="stat-card" style="border-top:3px solid ' + COR_PREVISAO + '"><div class="stat-label">↑ Entradas previstas</div><div class="stat-valor" style="color:var(--green)">' + fmt(previsao.dados.totalEntradas) + '</div></div>';
+    html += '<div class="stat-card" style="border-top:3px solid ' + COR_PREVISAO + '"><div class="stat-label">↓ Gastos previstos</div><div class="stat-valor" style="color:var(--red)">' + fmt(previsao.dados.totalGastos) + '</div></div>';
+    html += '<div class="stat-card" style="border-top:3px solid ' + COR_PREVISAO + '"><div class="stat-label">Saldo previsto</div><div class="stat-valor" style="color:' + (previsao.dados.saldoAno>=0?'var(--green)':'var(--red)') + '">' + fmt(previsao.dados.saldoAno) + (previsao.dados.saldoAno<0?' 🕯️':'') + '</div></div>';
+    html += '<div class="stat-card" style="border-top:3px solid ' + COR_PREVISAO + '"><div class="stat-label">👥 Pagantes</div><div class="stat-valor" style="color:var(--gold)">' + pctAnoPrev.pctPag + '%</div><div class="chart-hint" style="margin:2px 0 0">' + pctAnoPrev.nPagAprox + '/' + pctAnoPrev.nTotRef + ' membros</div></div>';
+    html += '<div class="stat-card" style="border-top:3px solid ' + COR_PREVISAO + '"><div class="stat-label">💰 Coberto</div><div class="stat-valor" style="color:var(--gold)">' + pctAnoPrev.pctCob + '%</div><div class="chart-hint" style="margin:2px 0 0">' + fmt(previsao.dados.totalEntradas) + ' / ' + fmt(previsao.dados.totalGastos) + '</div></div>';
+    html += '</div>';
   }
   html += '<div class="sec-title">Totais do ano — comparativo</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-totais"></canvas></div></div>';
