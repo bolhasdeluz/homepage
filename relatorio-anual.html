@@ -512,26 +512,6 @@ function calcularGastosPorCategoriaAno(ano) {
 // já sabido pro ano que vem) — carregada uma vez em carregarDados()
 var premissasPrevisao = {};
 
-// sessões já marcadas no Calendário pra 2027 (ver index.html, /api/sessoes)
-// — usadas pra prever o gasto de Tambor a partir do que já tá planejado em
-// vez de só uma média histórica (ver calcularPrevisao2027)
-var calendario2027 = [];
-function carregarCalendario2027() {
-  return fetch('/api/sessoes')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ calendario2027 = Array.isArray(d) ? d.filter(function(s){ return s.data && s.data.startsWith('2027-'); }) : []; })
-    .catch(function(){ calendario2027 = []; });
-}
-
-// preço do Tambor por lado + deslocamento — mesmo dado editável pela Anna em
-// tesouraria.html ("🪘 Tambor do mês"), carregado aqui só pra leitura
-var tamborConfig = { umbanda: 130, quimbanda: 230, deslocamento: 60 };
-function carregarTamborConfig() {
-  return fetch('/api/dados?chave=tambor_config')
-    .then(function(r){ return r.json(); })
-    .then(function(d){ if (d && typeof d === 'object') tamborConfig = d; })
-    .catch(function(){});
-}
 
 function carregarPremissasPrevisao() {
   return fetch('/api/dados?chave=previsao2027')
@@ -656,28 +636,29 @@ function calcularPrevisao2027() {
     }
   });
 
-  // Tambor de 2027 vem do que já está planejado no Calendário (sessões
-  // marcadas como Tambor "confirmado"), não da média histórica — é um dado
-  // real que a casa já tem, mais preciso do que uma média de anos
-  // anteriores. Preço por sessão = Tambor de Umbanda ou de Quimbanda
-  // (Oriente e Desenvolvimento usam o mesmo preço da Quimbanda, combinado
-  // com a Anna) + o deslocamento, igual já é configurado em tesouraria.html.
-  // Sessões "depende de arrecadação" ou "não vai ter" não entram — só
-  // conta o que já tá garantido. Sem nenhuma sessão de 2027 cadastrada
-  // ainda, cai de volta na média histórica calculada acima
-  if (calendario2027.length) {
-    var tamborPorMes = {};
-    MESES_1A12.forEach(function(m){ tamborPorMes[m] = 0; });
-    calendario2027.forEach(function(s){
-      if (s.tambor !== 'confirmado' || !s.data) return;
-      var mes = parseInt(s.data.slice(5,7), 10);
-      if (!tamborPorMes.hasOwnProperty(mes)) return;
-      var precoTambor = s.lado === 'Umbanda' ? tamborConfig.umbanda : tamborConfig.quimbanda;
-      tamborPorMes[mes] += precoTambor + tamborConfig.deslocamento;
-    });
-    if (nomesCategorias.indexOf('Tambor') === -1) nomesCategorias.push('Tambor');
-    categoriasMensais['Tambor'] = MESES_1A12.map(function(m){ return Math.round(tamborPorMes[m] * 100) / 100; });
-  }
+  // contas que já têm lançamento de verdade datado em 2027 (ex: Tambor e
+  // Deslocamento sincronizados automaticamente a partir do calendário —
+  // ver sincronizarTamborCalendario em tesouraria.html) usam esse dado real
+  // direto, em vez da média histórica — a tesouraria é a referência, então
+  // qualquer ajuste manual feito lá (valor, mês, criar/remover lançamento)
+  // já aparece certo aqui também, sem duplicar cálculo. Premissa manual
+  // (OVERRIDES) sempre ganha de qualquer um dos dois. Mês sem lançamento
+  // em 2027 vira R$0 nessa conta (e não a média de anos anteriores), já
+  // que a casa já sabe o que tem planejado pra esse mês
+  var totaisReais2027 = {};
+  lancamentos.forEach(function(l){
+    if (l.tipo !== 'gasto' || !l.data || l.data.slice(0,4) !== '2027') return;
+    if (!totaisReais2027[l.conta]) totaisReais2027[l.conta] = {};
+    var mes = parseInt(l.data.slice(5,7), 10);
+    totaisReais2027[l.conta][mes] = (totaisReais2027[l.conta][mes] || 0) + l.valor;
+  });
+  Object.keys(totaisReais2027).forEach(function(conta){
+    var override = OVERRIDES[conta];
+    if (override != null && !isNaN(override)) return;
+    if (nomesCategorias.indexOf(conta) === -1) nomesCategorias.push(conta);
+    var porMes = totaisReais2027[conta];
+    categoriasMensais[conta] = MESES_1A12.map(function(m){ return Math.round((porMes[m] || 0) * 100) / 100; });
+  });
 
   // valor médio pago por mensalidade: parte do valor real do ano mais
   // recente (não de uma média de anos — o valor de hoje já é o número
@@ -1546,9 +1527,7 @@ window.detalheCategoria = detalheCategoria;
 function carregarDados() {
   Promise.all([
     fetch('/api/dados?chave=lancamentos').then(function(r){ return r.json(); }),
-    carregarPremissasPrevisao(),
-    carregarCalendario2027(),
-    carregarTamborConfig()
+    carregarPremissasPrevisao()
   ])
     .then(function(resultados){
       var dados = resultados[0];
