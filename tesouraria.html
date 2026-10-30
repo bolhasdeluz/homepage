@@ -1819,7 +1819,11 @@ body{padding-bottom:64px}
       var anoAtual = anoAtivo;
       var listaAno = lista; // já veio de lancamentosDoAno(anoAtivo)
       var totalEAno = listaAno.filter(function(l){ return l.tipo==='entrada'; }).reduce(function(a,l){ return a+l.valor; },0);
-      var totalGAno = listaAno.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente'; }).reduce(function(a,l){ return a+l.valor; },0);
+      // sem excluir "pendente" aqui — igual já funciona na visão de um mês só
+      // (senão o Tambor/Deslocamento previsto do calendário, que nasce
+      // pendente até a sessão acontecer, some do total do ano mesmo
+      // aparecendo certinho mês a mês)
+      var totalGAno = listaAno.filter(function(l){ return l.tipo==='gasto'; }).reduce(function(a,l){ return a+l.valor; },0);
       var saldoAno = totalEAno - totalGAno;
 
       // % pagantes anual = média dos % apenas dos meses com mensalidade de membro
@@ -2055,9 +2059,11 @@ body{padding-bottom:64px}
     }
 
     // ── Gastos por conta — média mensal ──────────────────────
+    // sem excluir "pendente" — senão o Tambor/Deslocamento previsto do
+    // calendário (nasce pendente até a sessão acontecer) some dessa tabela
     var contasMeses = {};
     var mesesComGasto = {};
-    lancamentosAno.filter(function(l){ return l.tipo==='gasto' && l.status!=='pendente'; }).forEach(function(l){
+    lancamentosAno.filter(function(l){ return l.tipo==='gasto'; }).forEach(function(l){
       var mes = l.data ? l.data.slice(0,7) : null;
       if (!mes) return;
       if (!contasMeses[l.conta]) contasMeses[l.conta] = {};
@@ -2603,10 +2609,15 @@ body{padding-bottom:64px}
   // que ainda não foram tocados.
   function sincronizarTamborCalendario() {
     return Promise.all([
-      fetchComTimeout('/api/sessoes', 8000).then(function(r){ return r.json(); }).catch(function(){ return []; }),
+      fetchComTimeout('/api/sessoes', 8000).then(function(r){ return r.json(); }).then(function(d){ return { ok: true, dados: d }; }).catch(function(){ return { ok: false, dados: [] }; }),
       fetchComTimeout('/api/dados?chave=tambor_config', 8000).then(function(r){ return r.json(); }).catch(function(){ return null; })
     ]).then(function(resultados){
-      var sessoes = Array.isArray(resultados[0]) ? resultados[0] : [];
+      // se a busca do calendário falhou (rede, timeout, KV fora do ar), não
+      // dá pra confiar que "nenhuma sessão confirmada" é verdade — melhor
+      // não sincronizar agora do que apagar lançamentos que ainda são
+      // válidos só porque essa checagem não conseguiu confirmar
+      if (!resultados[0].ok) return;
+      var sessoes = Array.isArray(resultados[0].dados) ? resultados[0].dados : [];
       var config = (resultados[1] && typeof resultados[1] === 'object' && resultados[1].umbanda !== undefined) ? resultados[1] : tamborConfig;
       var confirmadas = sessoes.filter(function(s){ return s.data && s.data.slice(0, 4) === '2027' && s.tambor === 'confirmado'; });
       var mudou = false;
