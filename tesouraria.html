@@ -2427,6 +2427,9 @@ body{padding-bottom:64px}
         lancamentos[idx].quantidade = qtd;
         lancamentos[idx].valor = valor;
         lancamentos[idx].obs = obs;
+        // mexeu na mão num lançamento que a sincronização do calendário
+        // criava sozinha — a partir de agora ela não mexe mais nesse mês
+        if (lancamentos[idx].origemCalendario) lancamentos[idx].tamborAutoEditado = true;
       } else {
         lancamentos.push({
           id: Date.now() + Math.random(), tipo: 'gasto', conta: 'Tambor', tipoTambor: tipo,
@@ -2449,9 +2452,11 @@ body{padding-bottom:64px}
     } else if (deltaReal < 0) {
       // ao desmarcar uma sessão, remove o deslocamento lançado mais
       // recentemente pra esse tipo/mês (o último marcado é o primeiro a sair)
+      // — nunca mexe num deslocamento que veio do calendário (origemSessaoId),
+      // esse só é removido pela própria sincronização
       for (var j = 0; j < -deltaReal; j++) {
         var candidatos = lancamentos.filter(function(l) {
-          return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+          return l.tipo === 'gasto' && l.conta === 'Deslocamento' && l.tipoTambor === tipo && !l.origemSessaoId && (l.data ? l.data.slice(0, 7) : '') === mes;
         });
         if (!candidatos.length) break;
         var maisRecente = candidatos.reduce(function(a, b) { return a.id > b.id ? a : b; });
@@ -2463,6 +2468,117 @@ body{padding-bottom:64px}
     lancamentos.sort(function(a, b) { return new Date(b.data) - new Date(a.data); });
     save();
     renderPainelAtivo();
+  }
+
+  // ── TAMBOR AUTOMÁTICO A PARTIR DO CALENDÁRIO 2027 ─────────────────
+  // Sessão marcada como Tambor "Confirmado" no calendário de 2027 (ver
+  // index.html, /api/sessoes) já cria sozinha o lançamento de Tambor do mês
+  // + o Deslocamento correspondente aqui — sem precisar clicar no +/-. A
+  // Previsão 2027 do Relatório Anual lê esses mesmos lançamentos (ver
+  // relatorio-anual.html), então a tesouraria é a referência única: ajustar
+  // algo aqui na mão já reflete lá também, sem duplicar cálculo em outro
+  // lugar. Lançamentos criados por essa sincronização nascem com status
+  // "pendente" (sessão ainda não aconteceu, não é dinheiro já gasto — não
+  // mexe no saldo em caixa real, igual qualquer outro pendente). Se a Anna
+  // editar um desses lançamentos na mão (pelo modal, ou pelo próprio +/- do
+  // Tambor do mês), ele ganha a marca "tamborAutoEditado" e essa
+  // sincronização nunca mais mexe nele — só continua criando/removendo os
+  // que ainda não foram tocados.
+  function sincronizarTamborCalendario() {
+    return Promise.all([
+      fetchComTimeout('/api/sessoes', 8000).then(function(r){ return r.json(); }).catch(function(){ return []; }),
+      fetchComTimeout('/api/dados?chave=tambor_config', 8000).then(function(r){ return r.json(); }).catch(function(){ return null; })
+    ]).then(function(resultados){
+      var sessoes = Array.isArray(resultados[0]) ? resultados[0] : [];
+      var config = (resultados[1] && typeof resultados[1] === 'object' && resultados[1].umbanda !== undefined) ? resultados[1] : tamborConfig;
+      var confirmadas = sessoes.filter(function(s){ return s.data && s.data.slice(0, 4) === '2027' && s.tambor === 'confirmado'; });
+      var mudou = false;
+
+      // ── Tambor agregado por mês+tipo (mesmo formato do +/- manual) ──
+      var contagemPorChave = {}; // "2027-01:umbanda" -> qtd confirmada
+      confirmadas.forEach(function(s){
+        var tipo = s.lado === 'Umbanda' ? 'umbanda' : 'quimbanda';
+        var chave = s.data.slice(0, 7) + ':' + tipo;
+        contagemPorChave[chave] = (contagemPorChave[chave] || 0) + 1;
+      });
+      ['umbanda', 'quimbanda'].forEach(function(tipo){
+        var mesesRelevantes = {};
+        Object.keys(contagemPorChave).forEach(function(c){
+          if (c.slice(-tipo.length) === tipo) mesesRelevantes[c.slice(0, 7)] = true;
+        });
+        lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data || '').slice(0, 4) === '2027'; })
+          .forEach(function(l){ mesesRelevantes[(l.data || '').slice(0, 7)] = true; });
+
+        Object.keys(mesesRelevantes).forEach(function(mes){
+          var qtd = contagemPorChave[mes + ':' + tipo] || 0;
+          var idx = lancamentos.findIndex(function(l){
+            return l.tipo === 'gasto' && l.conta === 'Tambor' && l.tipoTambor === tipo && (l.data ? l.data.slice(0, 7) : '') === mes;
+          });
+          if (qtd > 0) {
+            var obs = TAMBOR_LABELS[tipo] + (qtd > 1 ? ' (' + qtd + 'x)' : '') + ' (calendário 2027)';
+            if (idx === -1) {
+              lancamentos.push({
+                id: 'tambor-cal-' + mes + '-' + tipo, tipo: 'gasto', conta: 'Tambor', tipoTambor: tipo,
+                quantidade: qtd, valor: config[tipo] * qtd, data: mes + '-01', status: 'pendente',
+                origemCalendario: true, tamborAutoEditado: false, obs: obs, comprovante: null
+              });
+              mudou = true;
+            } else if (lancamentos[idx].origemCalendario && !lancamentos[idx].tamborAutoEditado) {
+              var novoValor = config[tipo] * qtd;
+              if (lancamentos[idx].quantidade !== qtd || lancamentos[idx].valor !== novoValor) {
+                lancamentos[idx].quantidade = qtd;
+                lancamentos[idx].valor = novoValor;
+                lancamentos[idx].obs = obs;
+                mudou = true;
+              }
+            }
+          } else if (idx !== -1 && lancamentos[idx].origemCalendario && !lancamentos[idx].tamborAutoEditado) {
+            lancamentos.splice(idx, 1);
+            mudou = true;
+          }
+        });
+      });
+
+      // ── Deslocamento, um lançamento por sessão confirmada ──
+      var porSessaoId = {};
+      confirmadas.forEach(function(s){ porSessaoId[s.id] = s; });
+      lancamentos = lancamentos.filter(function(l){
+        if (l.conta !== 'Deslocamento' || !l.origemSessaoId) return true;
+        var s = porSessaoId[l.origemSessaoId];
+        if (!s) {
+          if (l.tamborAutoEditado) return true;
+          mudou = true;
+          return false;
+        }
+        if (!l.tamborAutoEditado) {
+          var tipo = s.lado === 'Umbanda' ? 'umbanda' : 'quimbanda';
+          if (l.valor !== config.deslocamento || l.data !== s.data || l.tipoTambor !== tipo) {
+            l.valor = config.deslocamento; l.data = s.data; l.tipoTambor = tipo;
+            mudou = true;
+          }
+        }
+        delete porSessaoId[l.origemSessaoId];
+        return true;
+      });
+      Object.keys(porSessaoId).forEach(function(sid){
+        var s = porSessaoId[sid];
+        var tipo = s.lado === 'Umbanda' ? 'umbanda' : 'quimbanda';
+        lancamentos.push({
+          id: 'tambor-cal-desloc-' + sid, tipo: 'gasto', conta: 'Deslocamento', tipoTambor: tipo,
+          valor: config.deslocamento, data: s.data, status: 'pendente',
+          origemSessaoId: sid, tamborAutoEditado: false,
+          obs: 'Deslocamento — ' + TAMBOR_LABELS[tipo] + ' (calendário 2027)', comprovante: null
+        });
+        mudou = true;
+      });
+
+      if (mudou) {
+        lancamentos.sort(function(a, b){ return new Date(b.data) - new Date(a.data); });
+        save();
+        try { renderPainelAtivo(); } catch(e){}
+        try { renderResumo(); } catch(e){}
+      }
+    }).catch(function(){});
   }
 
   // Mês anterior a 'YYYY-MM'
@@ -3732,6 +3848,11 @@ body{padding-bottom:64px}
     l.data = document.getElementById('edit-data').value;
     l.obs = document.getElementById('edit-obs').value.trim();
 
+    // editou na mão um lançamento que a sincronização do calendário mantém
+    // sozinha (Tambor do mês ou Deslocamento) — a partir de agora ela
+    // respeita e nunca mais sobrescreve esse lançamento específico
+    if (l.origemCalendario || l.origemSessaoId) l.tamborAutoEditado = true;
+
     save();
     document.getElementById('edit-overlay').classList.remove('open');
     showToast('Lançamento atualizado ✓');
@@ -4048,6 +4169,10 @@ body{padding-bottom:64px}
         // KV vazio mas temos dados locais — envia pro KV
         kvSet('lancamentos', lancamentos);
       }
+      // só sincroniza o Tambor do calendário depois que os lançamentos de
+      // verdade (do KV) estão carregados — senão a sincronização salvaria
+      // por cima do dado ainda desatualizado do localStorage
+      sincronizarTamborCalendario();
     })
     .catch(function(err){
       // KV indisponível — segue com localStorage (já renderizado)
