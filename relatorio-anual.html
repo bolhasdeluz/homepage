@@ -994,12 +994,50 @@ function renderComparativo(comPrevisao) {
   html += '<div class="sec-title">% de cobertura por mês — comparativo</div>';
   html += '<div class="chart-card"><div class="chart-wrap"><canvas id="chart-cmp-cobertura"></canvas></div></div>';
 
-  html += '<div class="sec-title">Gasto médio por mês, por categoria — comparativo</div>';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin:22px 0 10px;">'
+    + '<div class="sec-title" style="margin:0;">Gasto médio por mês, por categoria — comparativo</div>'
+    + '<button onclick="exportarGraficoCategorias(this)" style="background:none;border:1px solid var(--border);border-radius:14px;color:var(--gold);font-family:\'DM Sans\',sans-serif;font-size:.68rem;padding:4px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;">⬇️ Exportar</button>'
+    + '</div>';
   html += '<div class="chart-card"><div class="chart-wrap chart-wrap-tall"><canvas id="chart-cmp-categorias"></canvas></div>'
     + '<div class="chart-hint">Média dos meses com lançamento naquele ano — ajuda a ver se um gasto específico (ex: Aluguel, Tambor, Alarme Serviço) é o motivo de um ano ter custado mais que o outro</div></div>';
 
   conteudo.innerHTML = html;
   montarGraficosComparativo(porAno);
+}
+
+// exporta o gráfico de barras como uma imagem PNG — no celular abre o menu
+// de compartilhar de verdade (dá pra mandar direto pelo WhatsApp, por
+// exemplo); sem isso, baixa o arquivo normal
+function exportarGraficoCategorias(btn) {
+  var origem = document.getElementById('chart-cmp-categorias');
+  if (!origem) return;
+  var textoOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+  // desenha num canvas novo com fundo sólido — o canvas do gráfico é
+  // transparente, e isso ficaria ilegível em fundo escuro (ex: WhatsApp)
+  var destino = document.createElement('canvas');
+  destino.width = origem.width;
+  destino.height = origem.height;
+  var ctx = destino.getContext('2d');
+  ctx.fillStyle = '#fff5f7';
+  ctx.fillRect(0, 0, destino.width, destino.height);
+  ctx.drawImage(origem, 0, 0);
+
+  destino.toBlob(async function(blob) {
+    if (btn) { btn.textContent = textoOriginal; btn.disabled = false; }
+    if (!blob) { alert('Não consegui gerar a imagem agora.'); return; }
+    var nomeArquivo = 'gasto-por-categoria-comparativo-' + today() + '.png';
+    var arquivo = new File([blob], nomeArquivo, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [arquivo] })) {
+      try { await navigator.share({ files: [arquivo], title: 'Gasto por categoria — Bolhas de Luz' }); return; }
+      catch (e) { /* cancelou o compartilhamento — cai no download abaixo */ }
+    }
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = nomeArquivo; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }, 'image/png');
 }
 
 function montarGraficosComparativo(porAno) {
