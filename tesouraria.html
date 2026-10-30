@@ -548,6 +548,9 @@ body{padding-bottom:64px}
       <button onclick="mudarMesFiltro(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:1rem;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">›</button>
       <button onclick="abrirGerenciarFicha()" title="Gerenciar contas fixas" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--gold);font-size:1rem;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">⚙</button>
     </div>
+    <div style="text-align:center;margin-bottom:12px;">
+      <button onclick="replicarContasAteDezembro()" style="background:none;border:1px solid var(--border);border-radius:20px;color:var(--gold);font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;letter-spacing:.06em;padding:6px 14px;cursor:pointer;">📋 Repetir essas contas até dezembro</button>
+    </div>
     <div id="lista-contas"></div>
     <div id="contas-vazio" style="display:none;text-align:center;padding:30px 10px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.9rem;">Nenhuma conta fixa cadastrada ainda. Toque em ⚙ pra adicionar (aluguel, luz, água…).</div>
   </div>
@@ -2610,6 +2613,42 @@ body{padding-bottom:64px}
     if (criou) {
       lancamentos.sort(function(a,b){ return new Date(b.data) - new Date(a.data); });
       save();
+    }
+  }
+
+  // copia as contas fixas do mês que a Anna tá olhando pros meses seguintes
+  // do mesmo ano, até dezembro — útil pra já deixar o ano inteiro previsto
+  // de uma vez (ex: lançou janeiro/2027, replica até dezembro/2027), em vez
+  // de esperar garantirContasDoMes criar mês a mês conforme ela navega
+  function replicarContasAteDezembro() {
+    var mesBase = filtroMesAtivo || (anoAtivo === String(new Date().getFullYear()) ? today().slice(0,7) : anoAtivo + '-01');
+    var partes = mesBase.split('-');
+    var ano = partes[0], mesNum = parseInt(partes[1], 10);
+    if (mesNum >= 12) { showToast('Esse mês já é dezembro'); return; }
+
+    var contasDoMesBase = lancamentos.filter(function(l){ return l.tipo === 'gasto' && l.contaFixaId && (l.data ? l.data.slice(0,7) : '') === mesBase; });
+    if (!contasDoMesBase.length) { showToast('Nenhuma conta fixa nesse mês pra repetir'); return; }
+
+    var criadas = 0;
+    for (var m = mesNum + 1; m <= 12; m++) {
+      var mesAlvo = ano + '-' + String(m).padStart(2, '0');
+      contasDoMesBase.forEach(function(base){
+        var jaExiste = lancamentos.some(function(l){ return l.tipo === 'gasto' && l.contaFixaId === base.contaFixaId && (l.data ? l.data.slice(0,7) : '') === mesAlvo; });
+        if (jaExiste) return;
+        var dia = (base.vencimento || base.data || '').split('-')[2] || '10';
+        var vencimento = mesAlvo + '-' + dia;
+        lancamentos.push({ id: Date.now() + base.contaFixaId + Math.random(), tipo: 'gasto', conta: base.conta, valor: base.valor, contaFixaId: base.contaFixaId, status: 'pendente', vencimento: vencimento, data: vencimento, obs: '', comprovante: null });
+        criadas++;
+      });
+    }
+
+    if (criadas) {
+      lancamentos.sort(function(a,b){ return new Date(b.data) - new Date(a.data); });
+      save();
+      renderContas();
+      showToast(criadas + ' conta(s) criada(s) até dezembro ✓');
+    } else {
+      showToast('Já estava tudo criado até dezembro');
     }
   }
 
