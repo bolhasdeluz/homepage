@@ -15,7 +15,7 @@ export async function onRequest(context) {
 
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
-  const CHAVES_VALIDAS = ['lancamentos', 'ag_pgtos', 'ag_gastos', 'ag_cats', 'ag_catalogo', 'ag_pessoas', 'caixa', 'contas_fixas', 'vinculo_membros', 'previsao2027'];
+  const CHAVES_VALIDAS = ['lancamentos', 'ag_pgtos', 'ag_gastos', 'ag_cats', 'ag_catalogo', 'ag_pessoas', 'caixa', 'contas_fixas', 'vinculo_membros', 'previsao2027', 'tambor_config'];
 
   if (!chave || !CHAVES_VALIDAS.includes(chave)) {
     return new Response(JSON.stringify({ erro: 'Chave inválida' }), { status: 400, headers });

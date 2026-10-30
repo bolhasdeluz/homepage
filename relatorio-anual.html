@@ -512,6 +512,27 @@ function calcularGastosPorCategoriaAno(ano) {
 // já sabido pro ano que vem) — carregada uma vez em carregarDados()
 var premissasPrevisao = {};
 
+// sessões já marcadas no Calendário pra 2027 (ver index.html, /api/sessoes)
+// — usadas pra prever o gasto de Tambor a partir do que já tá planejado em
+// vez de só uma média histórica (ver calcularPrevisao2027)
+var calendario2027 = [];
+function carregarCalendario2027() {
+  return fetch('/api/sessoes')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ calendario2027 = Array.isArray(d) ? d.filter(function(s){ return s.data && s.data.startsWith('2027-'); }) : []; })
+    .catch(function(){ calendario2027 = []; });
+}
+
+// preço do Tambor por lado + deslocamento — mesmo dado editável pela Anna em
+// tesouraria.html ("🪘 Tambor do mês"), carregado aqui só pra leitura
+var tamborConfig = { umbanda: 130, quimbanda: 230, deslocamento: 60 };
+function carregarTamborConfig() {
+  return fetch('/api/dados?chave=tambor_config')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d && typeof d === 'object') tamborConfig = d; })
+    .catch(function(){});
+}
+
 function carregarPremissasPrevisao() {
   return fetch('/api/dados?chave=previsao2027')
     .then(function(r){ return r.json(); })
@@ -634,6 +655,29 @@ function calcularPrevisao2027() {
       categoriasMensais[conta] = MESES_1A12.map(function(m){ return Math.round(mediaCategoriaMes(conta, m) * 100) / 100; });
     }
   });
+
+  // Tambor de 2027 vem do que já está planejado no Calendário (sessões
+  // marcadas como Tambor "confirmado"), não da média histórica — é um dado
+  // real que a casa já tem, mais preciso do que uma média de anos
+  // anteriores. Preço por sessão = Tambor de Umbanda ou de Quimbanda
+  // (Oriente e Desenvolvimento usam o mesmo preço da Quimbanda, combinado
+  // com a Anna) + o deslocamento, igual já é configurado em tesouraria.html.
+  // Sessões "depende de arrecadação" ou "não vai ter" não entram — só
+  // conta o que já tá garantido. Sem nenhuma sessão de 2027 cadastrada
+  // ainda, cai de volta na média histórica calculada acima
+  if (calendario2027.length) {
+    var tamborPorMes = {};
+    MESES_1A12.forEach(function(m){ tamborPorMes[m] = 0; });
+    calendario2027.forEach(function(s){
+      if (s.tambor !== 'confirmado' || !s.data) return;
+      var mes = parseInt(s.data.slice(5,7), 10);
+      if (!tamborPorMes.hasOwnProperty(mes)) return;
+      var precoTambor = s.lado === 'Umbanda' ? tamborConfig.umbanda : tamborConfig.quimbanda;
+      tamborPorMes[mes] += precoTambor + tamborConfig.deslocamento;
+    });
+    if (nomesCategorias.indexOf('Tambor') === -1) nomesCategorias.push('Tambor');
+    categoriasMensais['Tambor'] = MESES_1A12.map(function(m){ return Math.round(tamborPorMes[m] * 100) / 100; });
+  }
 
   // valor médio pago por mensalidade: parte do valor real do ano mais
   // recente (não de uma média de anos — o valor de hoje já é o número
@@ -1502,7 +1546,9 @@ window.detalheCategoria = detalheCategoria;
 function carregarDados() {
   Promise.all([
     fetch('/api/dados?chave=lancamentos').then(function(r){ return r.json(); }),
-    carregarPremissasPrevisao()
+    carregarPremissasPrevisao(),
+    carregarCalendario2027(),
+    carregarTamborConfig()
   ])
     .then(function(resultados){
       var dados = resultados[0];
