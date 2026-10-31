@@ -541,6 +541,28 @@ footer{
 .cal-topo{margin-bottom:20px}
 .cal-btn-admin{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 14px;cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap}
 .cal-btn-admin-principal{background:var(--rosa);border:none;color:#fff;font-weight:700}
+
+/* ── RELATÓRIO DO CALENDÁRIO ── */
+.rc-topo{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:4px}
+.rc-ano-btn{background:none;border:1px solid var(--border);border-radius:6px;color:var(--rosa);width:30px;height:30px;cursor:pointer;font-size:1rem}
+.rc-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text)}
+.rc-sub{text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:14px}
+.rc-toggle-wrap{text-align:center;margin-bottom:18px}
+.rc-toggle-btn{background:none;border:1px dashed var(--rosa);border-radius:8px;color:var(--rosa);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;padding:7px 14px;cursor:pointer}
+.rc-toggle-btn.ativo{background:var(--rosa);border-style:solid;color:#fff}
+.rc-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+.rc-stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;box-shadow:0 2px 10px rgba(180,60,90,.06)}
+.rc-stat-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px}
+.rc-stat-valor{font-family:'Crimson Pro',serif;font-size:1.3rem;font-weight:600;color:var(--text)}
+.rc-stat-sub{font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim)}
+.rc-sec-title{font-family:'Cinzel',serif;font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin:22px 0 10px}
+.rc-chart-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;box-shadow:0 2px 10px rgba(180,60,90,.06)}
+.rc-chart-wrap{position:relative;height:230px}
+.rc-tabela-wrap{overflow-x:auto;margin-top:10px}
+.rc-tabela{width:100%;border-collapse:collapse;font-size:.8rem}
+.rc-tabela th{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:5px 6px;border-bottom:1.5px solid var(--border)}
+.rc-tabela td{padding:6px;border-bottom:1px solid rgba(196,57,107,.07);font-family:'Crimson Pro',serif}
+.rc-vazio{text-align:center;padding:40px 16px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
 .cal-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
 @media(max-width:680px){
   .cal-layout{grid-template-columns:1fr}
@@ -2033,6 +2055,7 @@ input.pg-cel-input[type=number]{min-width:60px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -4102,6 +4125,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div class="cal-anual-legenda" id="cal-anual2-legenda"></div>
       <div class="cal-anual-grid" id="cal-anual2-grade"></div>
     </div>
+  </div>
+</div>
+
+<!-- PÁGINA RELATÓRIO DO CALENDÁRIO — quantas sessões por ano, por lado, por
+     tipo, por tambor, frequência mensal, e um comparativo entre anos. Só
+     admin — ver o "if (name === 'relatorio-calendario')" em showPage() -->
+<div id="page-relatorio-calendario" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('calendario')">← Voltar ao Calendário</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">📊 Relatório do Calendário</div>
+    <p class="section-sub">Sessões por ano, por tipo, por tambor — e como isso mudou com o tempo ✦</p>
+
+    <div id="rc-conteudo"><div class="rc-vazio">Carregando...</div></div>
   </div>
 </div>
 
@@ -6866,6 +6903,11 @@ function showPage(name) {
     if (!calSessoes.length) calLoad();
     else calRenderLista();
   }
+  if (name === 'relatorio-calendario') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    window.rcCarregar?.();
+  }
   if (name === 'guias') {
     if (!guiasData.length) guiasLoad();
     else guiasRenderGrid(guiasData);
@@ -9518,6 +9560,7 @@ function calAtualizarControlesAdmin() {
       <button id="cal-btn-lote" onclick="calAlternarModoLote()" class="cal-btn-admin">☑ Selecionar vários</button>
       <button onclick="calToggleMaisFerramentasCal()" class="cal-btn-admin"><span id="cal-mais-ferramentas-seta">▸</span> Mais ferramentas</button>
       <div id="cal-mais-ferramentas-wrap" style="display:none;width:100%;gap:6px;flex-wrap:wrap">
+        <button onclick="showPage('relatorio-calendario')" class="cal-btn-admin">📊 Relatório do Calendário</button>
         <button onclick="calAbrirVisibilidadeTipo()" class="cal-btn-admin">⚙️ Visibilidade por tipo</button>
         <button onclick="calAbrirInfoTipo()" class="cal-btn-admin">📋 Informações por tipo</button>
         <button onclick="calAbrirVincular()" class="cal-btn-admin">🔗 Vincular Google Agenda</button>
@@ -9875,6 +9918,276 @@ async function calImportarCalendario2027() {
   alert(`Pronto! ${apagadas} apagada(s) e ${criadas} criada(s).` + ((erroApagar || erroCriar) ? ` (${erroApagar} falha(s) ao apagar, ${erroCriar} falha(s) ao criar — confere e tenta de novo se precisar)` : '') + avisoConsistencia);
 }
 window.calImportarCalendario2027 = calImportarCalendario2027;
+
+// ══════════════════════════════════════════════════════════════════
+// RELATÓRIO DO CALENDÁRIO — quantas sessões por ano, por lado, por tipo
+// (aberta/fechada), com tambor ou não, frequência mensal, e um comparativo
+// entre anos. Busca /api/sessoes direto (não reaproveita calSessoes, pra
+// não depender de a admin já ter aberto o Calendário antes)
+// ══════════════════════════════════════════════════════════════════
+let rcSessoes = [];
+let rcAno = null;
+let rcComparativo = false;
+let rcCharts = {};
+
+const RC_TIPO_LABEL = { Interna: 'Interna (fechada)', Atendimento: 'Atendimento (aberta)', Visita: 'Visita', Familia: 'Família', Reuniao: 'Reunião', '': 'Sem tipo' };
+const RC_TIPO_COR = { Interna: '#8a8a9a', Atendimento: '#4a6fa5', Visita: '#2a7a60', Familia: '#c9963c', Reuniao: '#9e6a9e', 'Sem tipo': '#c9b8bc' };
+const RC_TAMBOR_LABEL = { confirmado: '✅ Confirmado', arrecadacao: '🪘 Depende de arrecadação', nao: '❌ Não vai ter', '': '➖ Sem informação' };
+const RC_TAMBOR_COR = { confirmado: '#2a7a60', arrecadacao: '#c9963c', nao: '#b84040', '': '#8a8a9a' };
+const RC_MESES_CURTO = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+window.rcCarregar = async function() {
+  const conteudo = document.getElementById('rc-conteudo');
+  if (conteudo) conteudo.innerHTML = '<div class="rc-vazio">Carregando...</div>';
+  try {
+    const res = await fetch('/api/sessoes');
+    const dados = await res.json();
+    rcSessoes = Array.isArray(dados) ? dados.filter(s => s && s.data) : [];
+  } catch (e) {
+    rcSessoes = [];
+  }
+  if (!rcSessoes.length) {
+    if (conteudo) conteudo.innerHTML = '<div class="rc-vazio">Nenhuma sessão cadastrada ainda.</div>';
+    return;
+  }
+  const anos = rcAnosDisponiveis();
+  if (!rcAno || anos.indexOf(rcAno) === -1) rcAno = anos[anos.length - 1];
+  rcRender();
+};
+
+function rcAnosDisponiveis() {
+  const anos = new Set(rcSessoes.map(s => s.data.slice(0, 4)));
+  return Array.from(anos).sort();
+}
+
+// conta quantas sessões de "lista" caem em cada valor de agrupadorFn(s) —
+// devolve um objeto { valor: contagem }, na ordem em que cada valor apareceu
+function rcContarPor(lista, agrupadorFn) {
+  const contagem = {};
+  lista.forEach(s => { const k = agrupadorFn(s); contagem[k] = (contagem[k] || 0) + 1; });
+  return contagem;
+}
+
+function rcMudarAno(delta) {
+  const anos = rcAnosDisponiveis();
+  const idx = anos.indexOf(rcAno);
+  const novoIdx = idx + delta;
+  if (novoIdx < 0 || novoIdx >= anos.length) return;
+  rcAno = anos[novoIdx];
+  rcRender();
+}
+
+function rcAlternarComparativo() {
+  rcComparativo = !rcComparativo;
+  rcRender();
+}
+
+function rcRender() {
+  const conteudo = document.getElementById('rc-conteudo');
+  if (!conteudo) return;
+  Object.keys(rcCharts).forEach(k => { try { rcCharts[k].destroy(); } catch (e) {} });
+  rcCharts = {};
+  conteudo.innerHTML = rcComparativo ? rcHtmlComparativo() : rcHtmlAno();
+  if (typeof Chart === 'undefined') {
+    conteudo.insertAdjacentHTML('beforeend', '<p class="rc-vazio">Não consegui carregar os gráficos agora (sem internet?) — os números acima continuam certos.</p>');
+    return;
+  }
+  if (rcComparativo) rcMontarGraficosComparativo();
+  else rcMontarGraficosAno();
+}
+
+// tabela simples {valor: contagem}, ordenada da maior pra menor — acompanha
+// todo gráfico, tanto pra quem prefere número exato quanto por acessibilidade
+// (não depender só da cor pra identificar cada fatia)
+function rcTabelaHtml(contagem, total) {
+  const linhas = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
+  if (!linhas.length) return '<p class="rc-vazio" style="padding:14px">Nenhuma sessão nesse período.</p>';
+  return `<div class="rc-tabela-wrap"><table class="rc-tabela">
+    <tr><th>Tipo</th><th>Qtde.</th><th>%</th></tr>
+    ${linhas.map(k => `<tr><td>${calEsc(k)}</td><td>${contagem[k]}</td><td>${total ? Math.round(contagem[k] / total * 100) : 0}%</td></tr>`).join('')}
+  </table></div>`;
+}
+
+function rcHtmlAno() {
+  const anos = rcAnosDisponiveis();
+  const idx = anos.indexOf(rcAno);
+  const doAno = rcSessoes.filter(s => s.data.slice(0, 4) === rcAno);
+  const total = doAno.length;
+  const porTambor = rcContarPor(doAno, s => s.tambor || '');
+  const confirmadas = porTambor['confirmado'] || 0;
+  const pctConfirmado = total ? Math.round(confirmadas / total * 100) : 0;
+  const abertas = doAno.filter(s => s.tipo === 'Atendimento').length;
+  const fechadas = doAno.filter(s => s.tipo === 'Interna').length;
+
+  return `
+    <div class="rc-topo">
+      <button class="rc-ano-btn" onclick="rcMudarAno(-1)" ${idx <= 0 ? 'disabled' : ''}>‹</button>
+      <div class="rc-titulo">${rcAno}</div>
+      <button class="rc-ano-btn" onclick="rcMudarAno(1)" ${idx >= anos.length - 1 ? 'disabled' : ''}>›</button>
+    </div>
+    <p class="rc-sub">${total} sessão(ões) registrada(s) em ${rcAno}</p>
+    <div class="rc-toggle-wrap"><button class="rc-toggle-btn" onclick="rcAlternarComparativo()">📈 Ver comparativo entre anos</button></div>
+
+    <div class="rc-stats-grid">
+      <div class="rc-stat-card"><div class="rc-stat-label">Total de sessões</div><div class="rc-stat-valor">${total}</div></div>
+      <div class="rc-stat-card"><div class="rc-stat-label">Tambor confirmado</div><div class="rc-stat-valor">${pctConfirmado}%</div><div class="rc-stat-sub">${confirmadas} de ${total}</div></div>
+      <div class="rc-stat-card"><div class="rc-stat-label">Abertas (Atendimento)</div><div class="rc-stat-valor">${abertas}</div></div>
+      <div class="rc-stat-card"><div class="rc-stat-label">Fechadas (Interna)</div><div class="rc-stat-valor">${fechadas}</div></div>
+    </div>
+
+    <div class="rc-sec-title">Sessões por lado</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-lado"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => s.lado || 'Sem lado'), total)}</div>
+
+    <div class="rc-sec-title">Sessões por tipo (aberta/fechada)</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-tipo"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => RC_TIPO_LABEL[s.tipo || '']), total)}</div>
+
+    <div class="rc-sec-title">Tambor</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-tambor"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => RC_TAMBOR_LABEL[s.tambor || '']), total)}</div>
+
+    <div class="rc-sec-title">Frequência ao longo do ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-mes"></canvas></div></div>
+  `;
+}
+
+function rcFonteOpcoes(extra) {
+  return Object.assign({
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+    scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' } }, beginAtZero: true } }
+  }, extra || {});
+}
+
+function rcMontarGraficosAno() {
+  const doAno = rcSessoes.filter(s => s.data.slice(0, 4) === rcAno);
+
+  const porLado = rcContarPor(doAno, s => s.lado || 'Sem lado');
+  const ladoLabels = Object.keys(porLado).sort((a, b) => porLado[b] - porLado[a]);
+  const ctxLado = document.getElementById('rc-chart-lado');
+  if (ctxLado) {
+    rcCharts.lado = new Chart(ctxLado, {
+      type: 'bar',
+      data: { labels: ladoLabels, datasets: [{ data: ladoLabels.map(l => porLado[l]), backgroundColor: ladoLabels.map(l => CAL_LADO_COR[l] || '#c9b8bc'), borderRadius: 4 }] },
+      options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
+    });
+  }
+
+  const porTipo = rcContarPor(doAno, s => RC_TIPO_LABEL[s.tipo || '']);
+  const tipoLabels = Object.keys(porTipo).sort((a, b) => porTipo[b] - porTipo[a]);
+  const ctxTipo = document.getElementById('rc-chart-tipo');
+  if (ctxTipo) {
+    rcCharts.tipo = new Chart(ctxTipo, {
+      type: 'bar',
+      data: { labels: tipoLabels, datasets: [{ data: tipoLabels.map(l => porTipo[l]), backgroundColor: tipoLabels.map(l => RC_TIPO_COR[l] || '#c9b8bc'), borderRadius: 4 }] },
+      options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
+    });
+  }
+
+  const porTambor = rcContarPor(doAno, s => RC_TAMBOR_LABEL[s.tambor || '']);
+  const tamborLabels = Object.keys(RC_TAMBOR_LABEL).map(k => RC_TAMBOR_LABEL[k]).filter(l => porTambor[l]);
+  const ctxTambor = document.getElementById('rc-chart-tambor');
+  if (ctxTambor) {
+    rcCharts.tambor = new Chart(ctxTambor, {
+      type: 'bar',
+      data: { labels: tamborLabels, datasets: [{ data: tamborLabels.map(l => porTambor[l]), backgroundColor: tamborLabels.map(l => RC_TAMBOR_COR[Object.keys(RC_TAMBOR_LABEL).find(k => RC_TAMBOR_LABEL[k] === l)]), borderRadius: 4 }] },
+      options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
+    });
+  }
+
+  const porMes = RC_MESES_CURTO.map((_, i) => doAno.filter(s => parseInt(s.data.slice(5, 7), 10) === i + 1).length);
+  const ctxMes = document.getElementById('rc-chart-mes');
+  if (ctxMes) {
+    rcCharts.mes = new Chart(ctxMes, {
+      type: 'bar',
+      data: { labels: RC_MESES_CURTO, datasets: [{ data: porMes, backgroundColor: '#c4396b', borderRadius: 4 }] },
+      options: rcFonteOpcoes({ scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } } })
+    });
+  }
+}
+
+function rcHtmlComparativo() {
+  const anos = rcAnosDisponiveis();
+  return `
+    <div class="rc-topo"><div class="rc-titulo">Comparativo entre anos</div></div>
+    <p class="rc-sub">${anos[0]} a ${anos[anos.length - 1]} — ${rcSessoes.length} sessões no total</p>
+    <div class="rc-toggle-wrap"><button class="rc-toggle-btn ativo" onclick="rcAlternarComparativo()">📅 Ver um ano específico</button></div>
+
+    <div class="rc-sec-title">Total de sessões por ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-total"></canvas></div></div>
+
+    <div class="rc-sec-title">Sessões por lado, ano a ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap" style="height:280px"><canvas id="rc-chart-cmp-lado"></canvas></div></div>
+
+    <div class="rc-sec-title">% com tambor confirmado, por ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-tambor"></canvas></div></div>
+
+    <div class="rc-sec-title">Abertas × fechadas, por ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-tipo"></canvas></div></div>
+  `;
+}
+
+function rcMontarGraficosComparativo() {
+  const anos = rcAnosDisponiveis();
+  const porAno = anos.map(ano => rcSessoes.filter(s => s.data.slice(0, 4) === ano));
+
+  const ctxTotal = document.getElementById('rc-chart-cmp-total');
+  if (ctxTotal) {
+    rcCharts.cmpTotal = new Chart(ctxTotal, {
+      type: 'bar',
+      data: { labels: anos, datasets: [{ data: porAno.map(l => l.length), backgroundColor: '#c4396b', borderRadius: 4 }] },
+      options: rcFonteOpcoes({ scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } } })
+    });
+  }
+
+  const todosLados = Array.from(new Set(rcSessoes.map(s => s.lado || 'Sem lado')));
+  const ctxLado = document.getElementById('rc-chart-cmp-lado');
+  if (ctxLado) {
+    rcCharts.cmpLado = new Chart(ctxLado, {
+      type: 'bar',
+      data: {
+        labels: anos,
+        datasets: todosLados.map(lado => ({
+          label: lado, data: porAno.map(l => l.filter(s => (s.lado || 'Sem lado') === lado).length),
+          backgroundColor: CAL_LADO_COR[lado] || '#c9b8bc', borderRadius: 3
+        }))
+      },
+      options: rcFonteOpcoes({
+        plugins: { legend: { display: true, labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+        scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } } }
+      })
+    });
+  }
+
+  const ctxTambor = document.getElementById('rc-chart-cmp-tambor');
+  if (ctxTambor) {
+    const pct = porAno.map(l => l.length ? Math.round(l.filter(s => s.tambor === 'confirmado').length / l.length * 100) : 0);
+    rcCharts.cmpTambor = new Chart(ctxTambor, {
+      type: 'bar',
+      data: { labels: anos, datasets: [{ data: pct, backgroundColor: '#2a7a60', borderRadius: 4 }] },
+      options: rcFonteOpcoes({
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + '%' }, titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+        scales: { y: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      })
+    });
+  }
+
+  const ctxTipo = document.getElementById('rc-chart-cmp-tipo');
+  if (ctxTipo) {
+    rcCharts.cmpTipo = new Chart(ctxTipo, {
+      type: 'bar',
+      data: {
+        labels: anos,
+        datasets: [
+          { label: 'Abertas (Atendimento)', data: porAno.map(l => l.filter(s => s.tipo === 'Atendimento').length), backgroundColor: RC_TIPO_COR.Atendimento, borderRadius: 4 },
+          { label: 'Fechadas (Interna)', data: porAno.map(l => l.filter(s => s.tipo === 'Interna').length), backgroundColor: RC_TIPO_COR.Interna, borderRadius: 4 }
+        ]
+      },
+      options: rcFonteOpcoes({
+        plugins: { legend: { display: true, labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, x: { ticks: { font: { size: 10 } } } }
+      })
+    });
+  }
+}
 
 // cor por entidade no calendário impresso — a primeira que bater com o
 // nome da sessão vence; o que não casa com nenhuma usa a cor padrão (rosa)
