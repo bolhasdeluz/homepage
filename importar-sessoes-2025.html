@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar sessões 2025 — Bolhas de Luz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c4396b; --gold-light: #e8688a; --gold-dim: rgba(196,57,107,.08);
+  --bg: #fff5f7; --surface: #ffffff; --border: rgba(196,57,107,.15);
+  --text: #2a1a22; --text-dim: rgba(80,30,50,.5);
+  --red: #b84040; --red-dim: rgba(184,64,64,.08);
+  --green: #2a7a60; --green-light: #3a9a78; --green-dim: #e8f4f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; padding-bottom: 40px; }
+a { color: var(--gold); }
+.header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); padding: 18px 20px 16px; }
+.header-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: #fff; }
+.header-sub { font-family: 'DM Sans', sans-serif; font-size: .72rem; color: rgba(255,255,255,.78); }
+.wrap { max-width: 640px; margin: 0 auto; padding: 18px 14px 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(180,60,90,.06); }
+.sec-title { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px; }
+.aviso { font-family: 'Crimson Pro', serif; font-style: italic; color: var(--text-dim); font-size: .88rem; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid rgba(196,57,107,.08); font-size: .82rem; }
+th { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .04em; text-transform: uppercase; color: var(--text-dim); }
+.btn { background: var(--gold); border: none; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: .08em; font-weight: 700; padding: 11px 22px; cursor: pointer; }
+.btn:hover { background: var(--gold-light); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.msg-ok { background: var(--green-dim); color: var(--green); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.msg-erro { background: var(--red-dim); color: var(--red); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.progresso-barra-fundo { background: var(--border); border-radius: 99px; height: 10px; overflow: hidden; margin: 10px 0 6px; }
+.progresso-barra { background: var(--gold); height: 100%; width: 0%; transition: width .3s ease; border-radius: 99px; }
+.bl-overlay{display:flex;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.bl-overlay.off{display:none}
+.bl-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:36px 32px;width:100%;max-width:360px;text-align:center}
+.bl-modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.bl-modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.bl-btn-rosa{background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;font-weight:700;padding:11px 24px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+</style>
+</head>
+<body>
+
+<div id="login-overlay" class="bl-overlay">
+  <div class="bl-modal">
+    <div class="bl-modal-title">Área da Mãe da Casa</div>
+    <div class="bl-modal-sub">Essa ferramenta é só pra importar o histórico de sessões de 2025 no Calendário</div>
+    <button class="bl-btn-rosa" onclick="window.loginGoogle && window.loginGoogle()">Entrar com Google</button>
+    <p id="login-msg" style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:14px"></p>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <div class="header">
+    <div class="header-title">🗓️ Importar sessões 2025</div>
+    <div class="header-sub">Terreiro Bolhas de Luz · Calendário de Sessões</div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <div class="sec-title">O que isso faz</div>
+      <div class="aviso">
+        Cria no Calendário de Sessões, como sessões de verdade de 2025, as 27 giras/eventos que você
+        passou (data, lado — Umbanda/Quimbanda — e descrição). Cada sessão criada já nasce vinculada a
+        um evento no Google Agenda da casa, igual qualquer sessão criada pelo formulário normal. Horário
+        considerado 20:30 pra sessões comuns e 08:00 pra cruzamentos (convenção já usada no site). Rodar
+        de novo não duplica — confere pelo nome e pela data antes de criar.
+      </div>
+    </div>
+    <div class="card" id="preview-card">
+      <div class="sec-title">Prévia</div>
+      <div id="preview-conteudo" class="aviso">Carregando o que já existe no sistema…</div>
+    </div>
+    <div class="card" id="acao-card" style="display:none;">
+      <button class="btn" id="btn-importar" onclick="importar()">Importar pro sistema</button>
+      <div id="progresso-wrap" style="display:none">
+        <div class="progresso-barra-fundo"><div class="progresso-barra" id="progresso-barra"></div></div>
+        <div id="progresso-etapa" class="aviso" style="font-style:normal"></div>
+      </div>
+      <div id="resultado"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Dados passados pela Anna — nome é a descrição da sessão (nome:data no
+// Calendário), lado é Umbanda/Quimbanda (vazio pros encontros "Social",
+// que no site não têm lado/tipo — mesma convenção já usada pra
+// Confraternização/Marmitas em outras importações). hora 08:00 nos
+// cruzamentos (convenção do site: cruzamento de manhã, sessão normal
+// 20:30 à noite). marco e linha só quando dava pra identificar com
+// segurança a partir do texto — o resto fica em branco de propósito, pra
+// não arriscar marcar errado; dá pra completar depois direto no Calendário.
+var SESSOES_2025 = [
+  { nome: 'Reunião e Manutenção', data: '2025-03-10' },
+  { nome: 'Sessão do Cruzeiro, Limpeza', data: '2025-03-14', hora: '20:30', lado: 'Quimbanda' },
+  { nome: 'Cruzamento de Conga (Caboclos, Homenagem Iemanjá)', data: '2025-03-29', hora: '08:00', lado: 'Umbanda', linha: 'Caboclo', marco: 'Cruz:Conga' },
+  { nome: 'Cruzamento das 7 Bebidas do Pai Xangô', data: '2025-04-09', hora: '08:00', lado: 'Umbanda' },
+  { nome: 'Mesa de Cacicamento do Pai Xangô', data: '2025-04-12', hora: '20:30', lado: 'Umbanda' },
+  { nome: 'Cruzamento das 7 Bebidas do Vô Chico', data: '2025-04-16', hora: '08:00', lado: 'Umbanda', linha: 'Preto Velho' },
+  { nome: 'Homenagem aos Pretos Velhos, Mesa de Cacicamento do Vô Chico (Cacicamento da Vanessa)', data: '2025-05-10', hora: '20:30', lado: 'Umbanda', linha: 'Preto Velho' },
+  { nome: 'Festa de Santa Sara, Ciganos', data: '2025-05-23', hora: '20:30', lado: 'Umbanda', linha: 'Cigano' },
+  { nome: 'Sessão de Exus', data: '2025-06-06', hora: '20:30', lado: 'Quimbanda', linha: 'Exu' },
+  { nome: 'Cruzamento de Mata (Homenagem Oxóssi e Ogum)', data: '2025-06-21', hora: '08:00', lado: 'Umbanda', marco: 'Cruz:Mata', endereco: 'Mata' },
+  { nome: 'Sessão Cigana', data: '2025-07-04', hora: '20:30', lado: 'Umbanda', linha: 'Cigano' },
+  { nome: 'Sessão de Exus', data: '2025-07-18', hora: '20:30', lado: 'Quimbanda', linha: 'Exu' },
+  { nome: 'Reunião e Manutenção', data: '2025-07-21' },
+  { nome: 'Abertura da Obrigação, Sessão de Pretos Velhos', data: '2025-08-09', hora: '20:30', lado: 'Umbanda', linha: 'Preto Velho', marco: 'Obrigacao' },
+  { nome: 'Firmeza de Cruzeiro e Calunga, entrega das frentes (sem tambor)', data: '2025-08-11', hora: '20:30', lado: 'Quimbanda', tambor: 'nao' },
+  { nome: 'Obrigação de Quimbanda, fechada/restrita', data: '2025-08-16', hora: '20:30', lado: 'Quimbanda', tipo: 'Interna', marco: 'Obrigacao' },
+  { nome: 'Levantação e Elebó, com assistência e convidados', data: '2025-08-23', hora: '20:30', lado: 'Quimbanda', tipo: 'Atendimento', marco: 'Elebo' },
+  { nome: 'Sessão Cigana', data: '2025-09-12', hora: '20:30', lado: 'Umbanda', linha: 'Cigano' },
+  { nome: 'Homenagem Cosmes e Xangô', data: '2025-09-27', hora: '20:30', lado: 'Umbanda', linha: 'Cosme' },
+  { nome: 'Sessão de Quimbanda', data: '2025-10-10', hora: '20:30', lado: 'Quimbanda' },
+  { nome: 'Sessão de Pretos Velhos', data: '2025-10-24', hora: '20:30', lado: 'Umbanda', linha: 'Preto Velho' },
+  { nome: 'Sessão das Almas, Limpeza', data: '2025-11-01', hora: '20:30', lado: 'Quimbanda' },
+  { nome: 'Cruzamento de Rio/Cachoeira', data: '2025-11-15', hora: '08:00', lado: 'Umbanda' },
+  { nome: 'Sessão Cigana, com tambor e comida', data: '2025-11-28', hora: '20:30', lado: 'Umbanda', linha: 'Cigano', tambor: 'confirmado' },
+  { nome: 'Manutenção + corte das guias que faltaram', data: '2025-12-08' },
+  { nome: 'Limpeza, Segurança e Homenagem Oxum e Iansã, entrega das frentes', data: '2025-12-12', hora: '20:30', lado: 'Umbanda' },
+  { nome: 'Confraternização', data: '2025-12-14' }
+];
+
+var sessoesAtuais = null;
+var sessoesParaAdicionar = [];
+
+function chave(s) { return (s.nome || '') + '|' + (s.data || ''); }
+
+function carregarPreview() {
+  fetch('/api/sessoes')
+    .then(function(r){ return r.json(); })
+    .then(function(dados){
+      sessoesAtuais = Array.isArray(dados) ? dados : [];
+      var jaExistentes = {};
+      sessoesAtuais.forEach(function(s){ jaExistentes[chave(s)] = true; });
+      sessoesParaAdicionar = SESSOES_2025.filter(function(s){ return !jaExistentes[chave(s)]; });
+      var jaExistem = SESSOES_2025.length - sessoesParaAdicionar.length;
+
+      var html = '';
+      if (!sessoesParaAdicionar.length) {
+        html = '<p>✅ Essas sessões de 2025 já estão todas no sistema — nada pra importar.</p>';
+      } else {
+        html += '<table><tr><th>Data</th><th>Lado</th><th>Sessão</th></tr>';
+        sessoesParaAdicionar.forEach(function(s){
+          var p = s.data.split('-');
+          html += '<tr><td>' + p[2] + '/' + p[1] + '</td><td>' + (s.lado || '—') + '</td><td>' + s.nome + '</td></tr>';
+        });
+        html += '</table>';
+        if (jaExistem) html += '<p style="margin-top:8px">(' + jaExistem + ' já estavam no sistema e não serão duplicadas.)</p>';
+        document.getElementById('acao-card').style.display = 'block';
+        document.getElementById('btn-importar').textContent = 'Importar ' + sessoesParaAdicionar.length + ' sessão(ões) pro sistema';
+      }
+      document.getElementById('preview-conteudo').innerHTML = html;
+    })
+    .catch(function(){
+      document.getElementById('preview-conteudo').textContent = 'Não consegui carregar os dados atuais agora — tenta de novo mais tarde.';
+    });
+}
+
+function importar() {
+  var btn = document.getElementById('btn-importar');
+  btn.disabled = true;
+  btn.style.display = 'none';
+  var progWrap = document.getElementById('progresso-wrap');
+  var barra = document.getElementById('progresso-barra');
+  var etapaEl = document.getElementById('progresso-etapa');
+  progWrap.style.display = 'block';
+
+  var criadas = 0, falhas = 0;
+  var total = sessoesParaAdicionar.length;
+
+  function proxima(i) {
+    if (i >= total) {
+      var msg = '✅ Importado! ' + criadas + ' sessão(ões) de 2025 criadas';
+      if (falhas) msg += ' (' + falhas + ' falharam — roda de novo que só tenta criar o que ainda falta).';
+      else msg += '. <a href="/#calendario">Ver no Calendário</a>';
+      document.getElementById('resultado').innerHTML = '<div class="msg-ok">' + msg + '</div>';
+      progWrap.style.display = 'none';
+      return;
+    }
+    var s = sessoesParaAdicionar[i];
+    etapaEl.textContent = 'Criando sessões… (' + (i + 1) + '/' + total + ') — ' + s.data + ' ' + s.nome;
+    barra.style.width = Math.round((i / total) * 100) + '%';
+    fetch('/api/sessoes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify(s)
+    })
+      .then(function(r){ if (r.ok) criadas++; else falhas++; })
+      .catch(function(){ falhas++; })
+      .then(function(){ proxima(i + 1); });
+  }
+  proxima(0);
+}
+
+window._raAoConfirmarLogin = function(logado, user) {
+  var overlay = document.getElementById('login-overlay');
+  var app = document.getElementById('app');
+  var msg = document.getElementById('login-msg');
+  var ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+  if (logado && user && ADMIN_EMAILS.indexOf(user.email) !== -1) {
+    overlay.classList.add('off');
+    app.style.display = 'block';
+    carregarPreview();
+  } else if (logado) {
+    msg.textContent = 'Essa conta não tem acesso de administradora.';
+  } else {
+    msg.textContent = '';
+  }
+};
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.loginGoogle = async function () {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { console.warn('login google:', e); }
+};
+
+onAuthStateChanged(auth, (user) => {
+  window._raAoConfirmarLogin(!!user, user);
+});
+</script>
+
+</body>
+</html>
