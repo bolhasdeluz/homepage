@@ -11890,17 +11890,38 @@ function exMontarCsvPerfis(perfis, arquivosPorEmail) {
   });
   return exCsv(linhas);
 }
-function exMontarCsvPagamentos(lancamentos) {
-  const linhas = [['Nome','Tipo','Subtipo','Valor (R$)','Data','Competência','Status','Categoria','Observação']];
-  lancamentos
-    .filter(l => l && l.membro)
-    .sort((a, b) => String(a.data || a.competencia || '').localeCompare(String(b.data || b.competencia || '')))
-    .forEach(l => {
+function exMontarCsvPagamentos(lancamentos, caixa) {
+  const linhas = [['Nome','Origem','Tipo','Subtipo','Valor (R$)','Data','Competência','Status','Categoria','Observação']];
+  const todos = lancamentos.map(l => ({ l, origem: 'Tesouraria' })).concat((caixa || []).map(l => ({ l, origem: 'Caixa' })));
+  todos
+    .filter(x => x.l && x.l.membro)
+    .sort((a, b) => String(a.l.data || a.l.competencia || '').localeCompare(String(b.l.data || b.l.competencia || '')))
+    .forEach(({ l, origem }) => {
       linhas.push([
-        l.membro, l.tipo || '', l.subTipo || '', Number(l.valor || 0).toFixed(2),
-        l.data || '', l.competencia || '', l.status || '', l.conta || '', l.obs || '',
+        l.membro, origem, l.tipo || '', l.subTipo || '', Number(l.valor || 0).toFixed(2),
+        l.data || '', l.competencia || '', l.status || '', l.conta || l.desc || '', l.obs || '',
       ]);
     });
+  return exCsv(linhas);
+}
+// pagamentos/promessas da festa de Agosto (toques/obrigação por pessoa) —
+// fica numa aba separada porque não é um lançamento com data, é um total
+// acumulado por pessoa (ver "MODAL AGOSTO" na Tesouraria)
+function exMontarCsvAgosto(agPessoas, agPgtos) {
+  const linhas = [['Nome','Galos prometidos','Galinhas prometidas','Pago — Obrigação (R$)','Pago — Aves (R$)']];
+  (agPessoas || []).forEach(p => {
+    const pg = (agPgtos || {})[p.nome] || {};
+    linhas.push([p.nome || '', p.galos || 0, p.galinhas || 0, Number(pg.obr || 0).toFixed(2), Number(pg.aves || 0).toFixed(2)]);
+  });
+  return exCsv(linhas);
+}
+// vínculo nome (como aparece na Tesouraria) → e-mail de login, usado por
+// "Meus Pagamentos" pra achar o extrato de cada uma
+function exMontarCsvVinculos(vinculoMembros) {
+  const linhas = [['Nome (Tesouraria)','E-mail vinculado']];
+  Object.keys(vinculoMembros || {}).forEach(nome => {
+    linhas.push([nome, vinculoMembros[nome] || '']);
+  });
   return exCsv(linhas);
 }
 // baixa a foto e devolve o nome de arquivo usado dentro do .zip (ou null se
@@ -11926,16 +11947,26 @@ async function adminExportarDadosPerfis() {
   if (typeof JSZip === 'undefined') { setStatus('⚠ Não consegui carregar a ferramenta de .zip — tenta recarregar a página.', 'var(--red)'); return; }
   setStatus('⏳ Buscando dados...');
   try {
-    const [perfisRes, lancamentosRes] = await Promise.all([
+    const [perfisRes, lancamentosRes, caixaRes, agPessoasRes, agPgtosRes, vinculoRes] = await Promise.all([
       fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }),
       fetch('/api/dados?chave=lancamentos'),
+      fetch('/api/dados?chave=caixa'),
+      fetch('/api/dados?chave=ag_pessoas'),
+      fetch('/api/dados?chave=ag_pgtos'),
+      fetch('/api/dados?chave=vinculo_membros'),
     ]);
     const perfisTodos = perfisRes.ok ? await perfisRes.json() : [];
     const lancamentos = lancamentosRes.ok ? await lancamentosRes.json() : [];
+    const caixa = caixaRes.ok ? await caixaRes.json() : [];
+    const agPessoas = agPessoasRes.ok ? await agPessoasRes.json() : [];
+    const agPgtos = agPgtosRes.ok ? await agPgtosRes.json() : {};
+    const vinculoMembros = vinculoRes.ok ? await vinculoRes.json() : {};
     const perfis = (Array.isArray(perfisTodos) ? perfisTodos : []).filter(p => p && p.nome);
 
     const zip = new JSZip();
-    zip.file('pagamentos.csv', exMontarCsvPagamentos(Array.isArray(lancamentos) ? lancamentos : []));
+    zip.file('pagamentos.csv', exMontarCsvPagamentos(Array.isArray(lancamentos) ? lancamentos : [], Array.isArray(caixa) ? caixa : []));
+    if (Array.isArray(agPessoas) && agPessoas.length) zip.file('pagamentos-agosto.csv', exMontarCsvAgosto(agPessoas, agPgtos));
+    if (vinculoMembros && typeof vinculoMembros === 'object' && Object.keys(vinculoMembros).length) zip.file('vinculos-email.csv', exMontarCsvVinculos(vinculoMembros));
 
     setStatus('⏳ Baixando fotos (' + perfis.length + ' perfis)...');
     const pastaFotos = zip.folder('fotos');
@@ -11959,7 +11990,9 @@ async function adminExportarDadosPerfis() {
       'Exportação de dados dos perfis — Bolhas de Luz\n' +
       'Gerado em ' + new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + '\n\n' +
       'perfis.csv — nome, cargo, datas de entrada/coroação/apronte, guias e demais campos da ficha de cada pessoa\n' +
-      'pagamentos.csv — todos os lançamentos da Tesouraria vinculados a um nome\n' +
+      'pagamentos.csv — lançamentos da Tesouraria e do Caixa vinculados a um nome\n' +
+      (zip.file('pagamentos-agosto.csv') ? 'pagamentos-agosto.csv — toques/obrigação prometidos e pagos na festa de Agosto, por pessoa\n' : '') +
+      (zip.file('vinculos-email.csv') ? 'vinculos-email.csv — qual e-mail de login está vinculado a cada nome na Tesouraria\n' : '') +
       'fotos/ — foto da ficha e fotos de Pontos Riscados de cada pessoa (quando cadastradas)\n'
     );
 
