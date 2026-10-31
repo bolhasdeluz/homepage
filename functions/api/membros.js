@@ -27,6 +27,20 @@ function vinculoNormalizar(s) {
   return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 }
 
+// mesmo índice de e-mails mantido por perfil.js — evita cair no list(), que
+// no plano Free do Cloudflare tem uma cota do dia bem mais baixa que get/put
+// (é por conta inteira, compartilhada com todos os outros projetos)
+const PERFIL_INDICE_KEY = 'perfil:_index';
+
+async function perfilIndiceObter(KV) {
+  const indice = await KV.get(PERFIL_INDICE_KEY, { type: 'json' });
+  if (indice) return indice;
+  const list = await KV.list({ prefix: 'perfil:' });
+  const emails = list.keys.map(k => k.name.slice('perfil:'.length)).filter(e => e !== '_index');
+  await KV.put(PERFIL_INDICE_KEY, JSON.stringify(emails));
+  return emails;
+}
+
 export async function onRequest(context) {
   const { request, env } = context;
 
@@ -46,9 +60,9 @@ export async function onRequest(context) {
   // isenta de mensalidade e pega a data de entrada registrada no perfil —
   // mesma lógica que antes vivia duplicada em cada página
   try {
-    const lista = await env.MENU_DATA.list({ prefix: 'perfil:' });
-    const perfis = (await Promise.all(lista.keys.map(async (k) => {
-      const val = await env.MENU_DATA.get(k.name);
+    const emails = await perfilIndiceObter(env.MENU_DATA);
+    const perfis = (await Promise.all(emails.map(async (email) => {
+      const val = await env.MENU_DATA.get('perfil:' + email);
       return val ? JSON.parse(val) : null;
     }))).filter(Boolean);
 

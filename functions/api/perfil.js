@@ -6,6 +6,37 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+// --- Índice de e-mails, pra não depender de list() a cada carregamento --
+//
+// O plano Free do Cloudflare dá uma cota de list() muito menor que a de
+// get()/put() (list() é por conta inteira, compartilhada com todos os
+// outros projetos — foi o que esgotou e tirou o site do ar). Como o
+// cadastro de perfis é lido por várias telas (Quadro das Filhas, Planilha
+// Geral, /api/membros...), guardamos a lista de e-mails num único registro
+// (atualizado a cada perfil novo) em vez de perguntar pro KV "quais chaves
+// existem" todo carregamento. Esse mesmo registro é reaproveitado por
+// membros.js e cartinha-email.js. Só recorre ao list() de verdade se o
+// índice ainda não existir — primeira leitura depois desse deploy,
+// reconstrói e guarda uma vez só.
+const PERFIL_INDICE_KEY = 'perfil:_index';
+
+async function perfilIndiceObter(KV) {
+  const indice = await KV.get(PERFIL_INDICE_KEY, { type: 'json' });
+  if (indice) return indice;
+  const list = await KV.list({ prefix: 'perfil:' });
+  const emails = list.keys.map(k => k.name.slice('perfil:'.length)).filter(e => e !== '_index');
+  await KV.put(PERFIL_INDICE_KEY, JSON.stringify(emails));
+  return emails;
+}
+
+async function perfilIndiceAdicionar(KV, email) {
+  const indice = await perfilIndiceObter(KV);
+  if (indice.indexOf(email) === -1) {
+    indice.push(email);
+    await KV.put(PERFIL_INDICE_KEY, JSON.stringify(indice));
+  }
+}
+
 async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
   const RESEND_KEY = env.RESEND_API_KEY;
   if (!RESEND_KEY) return;
@@ -222,9 +253,9 @@ export async function onRequest(context) {
   // GET ?todos=1 — admin lista todos os perfis
   if (request.method === 'GET' && url.searchParams.get('todos') === '1') {
     if (!isAdmin) return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: CORS });
-    const list = await env.MENU_DATA.list({ prefix: 'perfil:' });
-    const perfis = await Promise.all(list.keys.map(async k => {
-      const val = await env.MENU_DATA.get(k.name);
+    const emails = await perfilIndiceObter(env.MENU_DATA);
+    const perfis = await Promise.all(emails.map(async email => {
+      const val = await env.MENU_DATA.get('perfil:' + email);
       return val ? JSON.parse(val) : null;
     }));
     return new Response(JSON.stringify(perfis.filter(Boolean)), { status: 200, headers: CORS });
@@ -259,6 +290,7 @@ export async function onRequest(context) {
         criadoEm: Date.now(), primeiroLogin: Date.now()
       };
       await env.MENU_DATA.put(key, JSON.stringify(novo));
+      await perfilIndiceAdicionar(env.MENU_DATA, email);
       // notifica por e-mail (async, não bloqueia resposta)
       context.waitUntil(enviarEmail(env, { email, nome, foto, novoPerfil: true }));
       return new Response(JSON.stringify(novo), { status: 200, headers: CORS });
@@ -323,6 +355,7 @@ export async function onRequest(context) {
 
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
+    await perfilIndiceAdicionar(env.MENU_DATA, targetEmail);
 
     // espera todos terminarem (em vez de só disparar e esquecer) pra poder
     // contar pra admin se realmente deu certo, com o motivo quando não deu
