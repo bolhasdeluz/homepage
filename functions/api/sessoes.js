@@ -37,10 +37,8 @@ export async function onRequest(context) {
   try {
     // LIST — GET /api/sessoes
     if (method === 'GET') {
-      const list = await KV.list({ prefix: 'sessao:' });
-      const items = await Promise.all(
-        list.keys.map(k => KV.get(k.name, { type: 'json' }))
-      );
+      const ids = await sessoesIndiceObter(KV);
+      const items = await Promise.all(ids.map(id => KV.get(id, { type: 'json' })));
       const sessoes = items
         .filter(Boolean)
         .sort((a, b) => a.data.localeCompare(b.data));
@@ -90,6 +88,7 @@ export async function onRequest(context) {
         try { sessao.googleEventIdAlt = await gcalCriarEvento(env, sessao, sessao.dataAlternativa, temAlt, true); } catch (e) {}
       }
       await KV.put(id, JSON.stringify(sessao));
+      await sessoesIndiceAdicionar(KV, id);
       return json(sessao);
     }
 
@@ -149,6 +148,7 @@ export async function onRequest(context) {
         if (existing.googleEventIdAlt) { try { await gcalExcluirEvento(env, existing.googleEventIdAlt); } catch (e) {} }
       }
       await KV.delete(id);
+      await sessoesIndiceRemover(KV, id);
       return json({ ok: true });
     }
 
@@ -161,6 +161,45 @@ export async function onRequest(context) {
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers: CORS });
+}
+
+// --- Índice de ids, pra não depender de list() a cada carregamento -----
+//
+// O plano Free do Cloudflare dá uma cota de list() muito menor que a de
+// get()/put() (list() é por conta inteira, compartilhada com todos os
+// outros projetos — foi o que esgotou e tirou o site do ar). Como o
+// Calendário é lido a toda hora (sessões, relatório, Minha História...),
+// guardamos a lista de ids num único registro (atualizado a cada
+// criação/exclusão) em vez de perguntar pro KV "quais chaves existem" todo
+// carregamento. Só recorre ao list() de verdade se esse índice ainda não
+// existir — primeira leitura depois desse deploy, reconstrói e guarda uma
+// vez só.
+const SESSOES_INDICE_KEY = 'sessao:_index';
+
+async function sessoesIndiceObter(KV) {
+  const indice = await KV.get(SESSOES_INDICE_KEY, { type: 'json' });
+  if (indice) return indice;
+  const list = await KV.list({ prefix: 'sessao:' });
+  const ids = list.keys.map(k => k.name).filter(n => n !== SESSOES_INDICE_KEY);
+  await KV.put(SESSOES_INDICE_KEY, JSON.stringify(ids));
+  return ids;
+}
+
+async function sessoesIndiceAdicionar(KV, id) {
+  const indice = await sessoesIndiceObter(KV);
+  if (indice.indexOf(id) === -1) {
+    indice.push(id);
+    await KV.put(SESSOES_INDICE_KEY, JSON.stringify(indice));
+  }
+}
+
+async function sessoesIndiceRemover(KV, id) {
+  const indice = await sessoesIndiceObter(KV);
+  const i = indice.indexOf(id);
+  if (i !== -1) {
+    indice.splice(i, 1);
+    await KV.put(SESSOES_INDICE_KEY, JSON.stringify(indice));
+  }
 }
 
 // --- Sincronização com o Google Agenda ---------------------------------

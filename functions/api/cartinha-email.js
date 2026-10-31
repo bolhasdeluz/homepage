@@ -5,12 +5,26 @@ const CORS = {
   'Content-Type': 'application/json',
 };
 
+// mesmo índice de e-mails mantido por perfil.js — evita cair no list(), que
+// no plano Free do Cloudflare tem uma cota do dia bem mais baixa que get/put
+// (é por conta inteira, compartilhada com todos os outros projetos)
+const PERFIL_INDICE_KEY = 'perfil:_index';
+
+async function perfilIndiceObter(env) {
+  const indice = await env.MENU_DATA.get(PERFIL_INDICE_KEY, { type: 'json' });
+  if (indice) return indice;
+  const list = await env.MENU_DATA.list({ prefix: 'perfil:' });
+  const emails = list.keys.map(k => k.name.slice('perfil:'.length)).filter(e => e !== '_index');
+  await env.MENU_DATA.put(PERFIL_INDICE_KEY, JSON.stringify(emails));
+  return emails;
+}
+
 // acha o perfil (com e-mail de login) a partir do uid do Firebase — os perfis
 // ficam guardados na KV por e-mail, então precisa varrer procurando o uid salvo
 async function buscarPerfilPorUid(env, uid) {
-  const list = await env.MENU_DATA.list({ prefix: 'perfil:' });
-  for (const k of list.keys) {
-    const val = await env.MENU_DATA.get(k.name);
+  const emails = await perfilIndiceObter(env);
+  for (const email of emails) {
+    const val = await env.MENU_DATA.get('perfil:' + email);
     if (!val) continue;
     try {
       const perfil = JSON.parse(val);
