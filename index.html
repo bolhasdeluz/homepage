@@ -4344,10 +4344,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <option value="Cruz:Praia">Cruzamento — Praia</option>
           <option value="Cruz:Rio">Cruzamento — Rio</option>
           <option value="Cruz:Cachoeira">Cruzamento — Cachoeira</option>
+          <option value="Cruz:RioCachoeira">Cruzamento — Rio + Cachoeira (no mesmo dia)</option>
           <option value="Cruz:Pedreira">Cruzamento — Pedreira</option>
           <option value="Firmeza:Cruzeiro">Firmeza de Reinos — Cruzeiro</option>
           <option value="Firmeza:CalungaPequena">Firmeza de Reinos — Calunga Pequena</option>
           <option value="Firmeza:CalungaMaior">Firmeza de Reinos — Calunga Maior</option>
+          <option value="Firmeza:CruzeiroCalunga">Firmeza de Reinos — Cruzeiro + Calunga (no mesmo dia)</option>
           <option value="Firmeza:Mato">Firmeza de Reinos — Mato</option>
         </select>
         <div style="font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;margin-top:4px">Corte e Cruzamento entram no catálogo de datas da Minha História; Obrigação, Elebó e Firmeza de Reinos por enquanto só organizam o calendário da casa (a integração deles com a Minha História vem numa etapa seguinte)</div>
@@ -11953,10 +11955,25 @@ const CATALOGO_CRUZAMENTOS_FIXO = [
   { data: '2024-03-09', tipo: 'Conga' }, { data: '2024-04-06', tipo: 'Praia' },
   { data: '2024-11-15', tipo: 'Pedreira' },
   { data: '2025-03-29', tipo: 'Conga' }, { data: '2025-04-12', tipo: 'Praia' },
-  { data: '2025-11-15', tipo: 'Rio/Cachoeira' },
+  // 2025-11-15 saiu daqui: agora é uma sessão de verdade no Calendário,
+  // marcada com o combo Rio+Cachoeira (ver MARCO_COMBOS) — o catálogo já
+  // pega ela de lá, separada em Rio e em Cachoeira
   { data: '2026-03-07', tipo: 'Conga' }, { data: '2026-04-25', tipo: 'Praia' },
   { data: '2026-10-02', tipo: 'Conga' },
 ];
+
+// marcos "combo" do seletor da sessão (Marco de Obrigações/Cruzamento) que
+// representam duas coisas acontecendo no mesmo dia — a sessão guarda só um
+// marco (pra não mudar o modelo de dados), mas no catálogo cada combo vira
+// duas entradas separadas, uma pra cada tipo, igual se tivessem sido
+// marcadas uma por uma. Hoje só Cruzamento usa o catálogo de verdade (ver
+// window.carregarCatalogoCortesCruzamentos); o combo de Firmeza já existe no
+// seletor pronto pra quando a integração de Firmeza com a Minha História
+// acontecer (ver comentário perto do campo Marco)
+const MARCO_COMBOS = {
+  'Cruz:RioCachoeira': ['Rio', 'Cachoeira'],
+  'Firmeza:CruzeiroCalunga': ['Cruzeiro', 'Calunga'],
+};
 
 // soma os itens de novaLista que ainda não têm a mesma data em listaBase —
 // evita duplicar se uma data já registrada na mão também for marcada na agenda
@@ -11980,7 +11997,10 @@ window.carregarCatalogoCortesCruzamentos = async function() {
       .map(s => ({ data: s.data }));
     const cruzDaAgenda = sessoesComMarco
       .filter(s => s.marco && s.marco.startsWith('Cruz:') && s.data)
-      .map(s => ({ data: s.data, tipo: s.marco === 'Cruz:Outro' ? (s.marcoOutroNome || 'Outro') : s.marco.slice(5) }));
+      .flatMap(s => {
+        if (MARCO_COMBOS[s.marco]) return MARCO_COMBOS[s.marco].map(tipo => ({ data: s.data, tipo }));
+        return [{ data: s.data, tipo: s.marco === 'Cruz:Outro' ? (s.marcoOutroNome || 'Outro') : s.marco.slice(5) }];
+      });
     return {
       cortes: catalogoMesclarPorData(CATALOGO_CORTES_FIXO, cortesDaAgenda),
       cruzamentos: catalogoMesclarPorData(CATALOGO_CRUZAMENTOS_FIXO, cruzDaAgenda),
