@@ -2055,7 +2055,7 @@ input.pg-cel-input[type=number]{min-width:60px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js" onerror="this.onerror=null;document.write('&lt;scr'+'ipt src=&quot;https://unpkg.com/chart.js@4.4.4/dist/chart.umd.js&quot;&gt;&lt;/scr'+'ipt&gt;');"></script>
 </head>
 <body>
 
@@ -6892,7 +6892,7 @@ function showPage(name) {
     // conta o próprio painel admin, que é só a Anna usando
     if (name !== 'admin') fetch('/api/visita?pagina=item-' + name, { method: 'POST' }).catch(() => {});
   }
-  document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos');
+  document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos' || name === 'relatorio-calendario');
   if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); qrCarregarCriados(); }
   if (name === 'blog')  { blogInit(); }
   if (name === 'calendario') {
