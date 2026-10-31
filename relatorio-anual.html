@@ -306,13 +306,12 @@ document.getElementById('boas-vindas').style.display = 'block';
 // ══════════════════════════════════════════════════════════════════
 
 var MESES_NOMES_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07', 'Mikael': '2026-04', 'Miguel': '2026-02' };
-// mês (YYYY-MM) a partir do qual cada uma passou a contar — só precisa
-// entrada pra quem entrou depois do começo do histórico (ex-membros
-// cadastrados aqui só pra contar certinho em anos passados)
-var MEMBROS_ENTRADA = { 'Miguel': '2025-07' };
-var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana','Mikael','Miguel'];
-var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Cambona'];
+// Lista de membros, quem saiu/entrou quando e quem está isenta vêm de
+// /api/membros (fonte única, compartilhada com Tesouraria e Meus
+// Pagamentos) — ver carregarMembros() mais abaixo.
+var MEMBROS_SAIDA = {};
+var MEMBROS_ENTRADA = {};
+var MEMBROS_TODOS = [];
 var MEMBROS_ISENTOS = {};
 var lancamentos = [];
 var anoAtivo = null;
@@ -340,10 +339,6 @@ function calcularPctAno(dados) {
   return { pctPag: pctPag, pctCob: pctCob, nPagAprox: nPagAprox, nTotRef: nTotRef };
 }
 
-function vinculoNormalizar(s) {
-  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-}
-
 function getMembrosAtivos(mesRef) {
   var ref = mesRef || today().slice(0,7);
   return MEMBROS_TODOS.filter(function(m){
@@ -353,48 +348,6 @@ function getMembrosAtivos(mesRef) {
     var saida = MEMBROS_SAIDA[m];
     return !saida || ref < saida;
   });
-}
-
-function sincronizarMembrosDosCargos() {
-  fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
-    .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
-    .then(function(perfis){
-      perfis = Array.isArray(perfis) ? perfis : [];
-      perfis
-        .filter(function(p){ return p && p.nome && p.ativo !== false && !p.isento && MEMBROS_CARGOS_PERMITIDOS.indexOf(p.cargo) !== -1; })
-        .forEach(function(p){
-          var normalizado = vinculoNormalizar(p.nome);
-          var jaTemAlguem = MEMBROS_TODOS.some(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-          if (jaTemAlguem) return;
-          var apelido = p.nome.trim().split(' ')[0];
-          if (MEMBROS_TODOS.indexOf(apelido) !== -1) return;
-          MEMBROS_TODOS.push(apelido);
-        });
-      var isentos = {};
-      perfis
-        .filter(function(p){ return p && p.nome && p.isento; })
-        .forEach(function(p){
-          var normalizado = vinculoNormalizar(p.nome);
-          var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-          if (membro) isentos[membro] = true;
-        });
-      MEMBROS_ISENTOS = isentos;
-
-      // data de entrada de cada uma, puxada do próprio perfil (campo "Data de
-      // Entrada" no cadastro) — assim quem for cadastrada daqui pra frente já
-      // entra com a data certa nos relatórios de anos passados, sem precisar
-      // mexer no código. Só sobrescreve quem tem perfil; quem não tem (ex:
-      // alguém que já saiu antes do site existir) mantém a data fixada abaixo
-      perfis
-        .filter(function(p){ return p && p.nome && p.historia && p.historia.data_entrada; })
-        .forEach(function(p){
-          var normalizado = vinculoNormalizar(p.nome);
-          var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-          if (membro) MEMBROS_ENTRADA[membro] = p.historia.data_entrada.slice(0,7);
-        });
-      renderRelatorio();
-    })
-    .catch(function(){});
 }
 
 // ── Ocultar nomes — mesma chave de localStorage que a Tesouraria usa,
@@ -1609,18 +1562,25 @@ window.detalheCategoria = detalheCategoria;
 function carregarDados() {
   Promise.all([
     fetch('/api/dados?chave=lancamentos').then(function(r){ return r.json(); }),
-    carregarPremissasPrevisao()
+    carregarPremissasPrevisao(),
+    fetch('/api/membros').then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
   ])
     .then(function(resultados){
       var dados = resultados[0];
+      var membros = resultados[2];
       lancamentos = Array.isArray(dados) ? dados : [];
+      if (membros) {
+        MEMBROS_TODOS = membros.membrosTodos || [];
+        MEMBROS_SAIDA = membros.membrosSaida || {};
+        MEMBROS_ENTRADA = membros.membrosEntrada || {};
+        MEMBROS_ISENTOS = membros.membrosIsentos || {};
+      }
       anoAtivo = escolherAnoInicial();
       modoComparativo = new URLSearchParams(window.location.search).get('comparar') === '1';
       modoPrevisao = new URLSearchParams(window.location.search).get('previsao') === '1';
       document.getElementById('tela-carregando').style.display = 'none';
       document.getElementById('app').style.display = 'block';
       renderRelatorio();
-      sincronizarMembrosDosCargos();
       fetch('/api/visita?pagina=relatorio-anual', { method: 'POST' }).catch(function(){});
     })
     .catch(function(){

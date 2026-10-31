@@ -5358,54 +5358,30 @@ function isEmailAdmin(email) { return !!email && ADMIN_EMAILS.includes(email); }
 
 
 // ── CARREGAR MENU DO KV ──
+// O menu padrão vive só em functions/api/menu.js — aqui não guardamos mais
+// cópia dele (duas listas hard-coded do mesmo menu só saem de sincronia como
+// já aconteceu antes). Se o /api/menu falhar, tenta de novo uma vez (falha
+// passageira de rede); se continuar falhando, renderDrawer()/renderCards()
+// já sabem lidar com menuData nulo (mostram "Carregando menu...").
+async function buscarMenu() {
+  const res = await fetch(API);
+  if (!res.ok) throw new Error('KV indisponível');
+  return res.json();
+}
 async function loadMenu() {
   try {
-    const res = await fetch(API);
-    if (!res.ok) throw new Error('KV indisponível');
-    menuData = await res.json();
+    menuData = await buscarMenu();
   } catch(e) {
-    menuData = getDefaultMenu();
+    try {
+      await new Promise(r => setTimeout(r, 1500));
+      menuData = await buscarMenu();
+    } catch(e2) {
+      menuData = null;
+    }
   }
   renderDrawer();
   renderCards();
   window.dashvRenderApresentacao?.();
-}
-
-function getDefaultMenu() {
-  return {
-    sections: [
-      { id: 'publico', label: 'Público', items: [
-        { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
-        { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true },
-        { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true },
-        { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
-        { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true },
-        { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true },
-        { id: 'completaponto', label: '🎮 Completa o Ponto', type: 'external', url: 'https://pontoscantados.pages.dev/jogo.html', desc: 'Jogo de roda pra jogar na espera da terreirinha', showCard: true, showMenu: true },
-        { id: 'lojas',    label: 'Guia de Lojas',     type: 'external', url: 'https://floraselojas.pages.dev',  showCard: true, showMenu: true },
-        { id: 'compras',  label: '🛒 Necessidades da casa', type: 'internal', page: 'compras', desc: 'Veja o que a casa está precisando', showCard: true, showMenu: true },
-        { id: 'rifa',     label: '🎟️ Rifa',  type: 'internal', page: 'rifa', desc: 'Escolha seu número e ajude o terreiro', showCard: true, showMenu: true },
-        { id: 'flora',    label: '🌿 Flora — Nossa Loja', type: 'external', url: '/loja.html', desc: 'Velas, ervas, guias e mais — direto da nossa lojinha', showCard: true, showMenu: true },
-        { id: 'pix',      label: 'Pix para doações',   type: 'internal', page: 'pix', desc: 'Chave: bolhasdeluz@gmail.com', showCard: true, showMenu: true },
-        { id: 'manutencao', label: '🔧 Manutenção',     type: 'external', url: '/manutencao.html', desc: 'Tarefas e reparos da casa', showCard: true, showMenu: true },
-        { id: 'cosmes',     label: '🍬 Cosme e Damião',  type: 'external', url: '/cosmes', desc: 'Inscreva sua criança para a festa', showCard: true, showMenu: true },
-        { id: 'quiz',       label: '🔮 Quiz de Fundamentos', type: 'external', url: '/quiz.html', desc: 'Teste seus conhecimentos, com ranking da casa', showCard: true, showMenu: true },
-        { id: 'textos-historicos', label: '📚 Textos Históricos', type: 'external', url: '/textos-historicos.html', desc: 'Estudos acadêmicos com embasamento histórico sobre a religião', showCard: true, showMenu: true },
-        { id: 'jogos',      label: '🏠 Sua Terreirinha',    type: 'internal', page: 'jogos', desc: 'Monte seu cantinho, ganhe objetos novos e jogue os desafios da casa', showCard: true, showMenu: true },
-        { id: 'resumo', label: '📋 Resumo Mensal',       type: 'internal', page: 'resumo', desc: 'Tudo pronto pra printar e mandar no grupo', showCard: true, showMenu: true },
-        { id: 'eventos', label: '📌 Próximas Sessões', type: 'internal', page: 'eventos', desc: 'Eventos da agenda em destaque, com a descrição interna', showCard: true, showMenu: true },
-        { id: 'orientacoes', label: '📢 Orientações da Sessão', type: 'internal', page: 'orientacoes', desc: 'Monte o aviso da próxima sessão rapidinho', showCard: true, showMenu: true },
-      ]},
-      { id: 'corrente', label: 'Corrente', items: [
-        { id: 'tesouraria', label: '💰 Tesouraria',      type: 'external', url: '/tesouraria', desc: 'Extrato e separação de valores por categoria', showCard: true, showMenu: true },
-        { id: 'relatorio-anual', label: '📈 Relatório Anual', type: 'external', url: '/relatorio-anual.html', desc: 'Relatório financeiro anual interativo, com gráficos e detalhes', showCard: true, showMenu: true },
-        { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true },
-        { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', desc: 'Nome, cargo e tempo de casa de cada uma — só admin', showCard: true, showMenu: true, adminOnly: true },
-        { id: 'planilha-geral', label: '🗂️ Planilha Geral', type: 'internal', page: 'planilha-geral', desc: 'Visão em planilha de todos os campos das fichas — só admin', showCard: true, showMenu: true, adminOnly: true },
-        { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true },
-      ]}
-    ]
-  };
 }
 
 // ── RENDERIZAR DRAWER ──
