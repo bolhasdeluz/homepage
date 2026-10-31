@@ -1103,83 +1103,37 @@ body{padding-bottom:64px}
 
 <script>
   // ── HELPERS ───────────────────────────────────────────────
-  // Membros que saíram da casa, com o mês (YYYY-MM) a partir do qual não contam mais
-  var MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07', 'Mikael': '2026-04', 'Miguel': '2026-02' };
-  // mês (YYYY-MM) a partir do qual cada uma passou a contar — só precisa
-  // entrada pra quem entrou depois do começo do histórico (ex-membros
-  // cadastrados aqui só pra contar certinho em anos passados)
-  var MEMBROS_ENTRADA = { 'Miguel': '2025-07' };
-  // Lista completa histórica (usada para não quebrar cálculos de meses antigos) —
-  // serve de base e é completada automaticamente por sincronizarMembrosDosCargos(),
-  // que busca no cadastro do site quem tem um cargo de casa e ainda não está aqui
-  var MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana','Mikael','Miguel'];
-
-  // cargos "de casa" que contam como membro pagante da Tesouraria — mesma
-  // escada usada no Quadro das Filhas, menos Mãe da Casa (ela não paga
-  // mensalidade pra própria casa)
-  var MEMBROS_CARGOS_PERMITIDOS = ['Curumim', 'Tamoio', 'Naurú', 'Cacique', 'Cambona'];
-
-  // apelidos marcados como isentas de mensalidade no perfil (admin > Isenta de
-  // mensalidade) — preenchido por sincronizarMembrosDosCargos() e consultado
-  // por getMembrosAtivos() pra elas não contarem mais nos cálculos/cobrança
+  // Lista de membros, quem saiu/entrou quando e quem está isenta — tudo isso
+  // agora vem de /api/membros (fonte única, compartilhada com Meus Pagamentos
+  // e Relatório Anual, pra não sair de sincronia como já aconteceu antes).
+  // Começam vazios e são preenchidos por carregarMembros(); até lá, um cache
+  // em localStorage evita a tela abrir zerada.
+  var MEMBROS_SAIDA = {};
+  var MEMBROS_ENTRADA = {};
+  var MEMBROS_TODOS = [];
+  var MEMBROS_CARGOS_PERMITIDOS = [];
   var MEMBROS_ISENTOS = {};
 
-  // busca os perfis do site: (1) adiciona à lista quem tem um cargo de casa,
-  // está ativa, não é isenta e ainda não está cadastrada aqui (ex.: alguém
-  // que acabou de entrar) — usa o primeiro nome como apelido e não mexe em
-  // quem já está na lista, pra não perder apelidos já em uso (tipo "Ness"
-  // pra Vanessa); (2) atualiza quem já está na lista mas foi marcada como
-  // isenta, pra sumir da cobrança sem precisar sair da lista
-  function sincronizarMembrosDosCargos() {
-    fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
+  // busca a lista de membros pronta (já cruzada com o cadastro de perfis) em
+  // /api/membros e atualiza as telas que dependem dela
+  function carregarMembros() {
+    var antes = MEMBROS_TODOS.slice();
+    fetch('/api/membros')
       .then(function(r){ if (!r.ok) throw new Error('falhou'); return r.json(); })
-      .then(function(perfis){
-        perfis = Array.isArray(perfis) ? perfis : [];
+      .then(function(dados){
+        MEMBROS_TODOS = dados.membrosTodos || [];
+        MEMBROS_SAIDA = dados.membrosSaida || {};
+        MEMBROS_ENTRADA = dados.membrosEntrada || {};
+        MEMBROS_ISENTOS = dados.membrosIsentos || {};
+        MEMBROS_CARGOS_PERMITIDOS = dados.membrosCargosPermitidos || [];
+        try { localStorage.setItem('bdl-membros', JSON.stringify(dados)); } catch(e){}
 
-        var adicionados = [];
-        perfis
-          .filter(function(p){ return p && p.nome && p.ativo !== false && !p.isento && MEMBROS_CARGOS_PERMITIDOS.indexOf(p.cargo) !== -1; })
-          .forEach(function(p){
-            var normalizado = vinculoNormalizar(p.nome);
-            var jaTemAlguem = MEMBROS_TODOS.some(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-            if (jaTemAlguem) return;
-            var apelido = p.nome.trim().split(' ')[0];
-            if (MEMBROS_TODOS.indexOf(apelido) !== -1) return;
-            MEMBROS_TODOS.push(apelido);
-            adicionados.push(apelido);
-          });
-
-        var isentos = {};
-        perfis
-          .filter(function(p){ return p && p.nome && p.isento; })
-          .forEach(function(p){
-            var normalizado = vinculoNormalizar(p.nome);
-            var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-            if (membro) isentos[membro] = true;
-          });
-        MEMBROS_ISENTOS = isentos;
-
-        // data de entrada de cada uma, puxada do próprio perfil (campo "Data
-        // de Entrada" no cadastro) — assim quem for cadastrada daqui pra
-        // frente já entra com a data certa nos relatórios de anos passados,
-        // sem precisar mexer no código. Só sobrescreve quem tem perfil; quem
-        // não tem (ex: alguém que já saiu antes do site existir) mantém a
-        // data fixada no MEMBROS_ENTRADA acima
-        perfis
-          .filter(function(p){ return p && p.nome && p.historia && p.historia.data_entrada; })
-          .forEach(function(p){
-            var normalizado = vinculoNormalizar(p.nome);
-            var membro = MEMBROS_TODOS.find(function(m){ return normalizado.indexOf(vinculoNormalizar(m)) !== -1; });
-            if (membro) MEMBROS_ENTRADA[membro] = p.historia.data_entrada.slice(0,7);
-          });
-
-        if (adicionados.length) {
-          try { renderInicio(); } catch(e){}
-          try { renderVinculos(); } catch(e){}
-          try { renderMembroSelects(); } catch(e){}
+        var adicionados = MEMBROS_TODOS.filter(function(m){ return antes.indexOf(m) === -1; });
+        try { renderInicio(); } catch(e){}
+        try { renderVinculos(); } catch(e){}
+        try { renderMembroSelects(); } catch(e){}
+        if (adicionados.length && antes.length) {
           showToast('✓ ' + adicionados.join(', ') + ' adicionada(s) automaticamente na Tesouraria');
-        } else {
-          try { renderInicio(); } catch(e){}
         }
       })
       .catch(function(){});
@@ -4203,6 +4157,19 @@ body{padding-bottom:64px}
       if (parsedTamborConfig && typeof parsedTamborConfig === 'object') tamborConfig = parsedTamborConfig;
     }
   } catch(e){}
+  try {
+    var localMembros = localStorage.getItem('bdl-membros');
+    if (localMembros) {
+      var parsedMembros = JSON.parse(localMembros);
+      if (parsedMembros && typeof parsedMembros === 'object') {
+        MEMBROS_TODOS = parsedMembros.membrosTodos || [];
+        MEMBROS_SAIDA = parsedMembros.membrosSaida || {};
+        MEMBROS_ENTRADA = parsedMembros.membrosEntrada || {};
+        MEMBROS_ISENTOS = parsedMembros.membrosIsentos || {};
+        MEMBROS_CARGOS_PERMITIDOS = parsedMembros.membrosCargosPermitidos || [];
+      }
+    }
+  } catch(e){}
   renderSeletorAno();
   try { renderInicio(); } catch(e){ console.error('renderInicio:', e); }
   try { renderHistorico(); } catch(e){ console.error('renderHistorico:', e); }
@@ -4285,9 +4252,8 @@ body{padding-bottom:64px}
     })
     .catch(function(){});
 
-  // Completa a lista de membros com quem tem cargo de casa no cadastro e
-  // ainda não está aqui (ex.: alguém que acabou de entrar)
-  sincronizarMembrosDosCargos();
+  // Busca a lista de membros atualizada (ver /api/membros)
+  carregarMembros();
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════

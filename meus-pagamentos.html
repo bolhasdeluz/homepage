@@ -212,13 +212,38 @@ function fmtCompetencia(ref) {
   const nomeMes = MESES_NOMES[idx] || ref;
   return nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1) + ' de ' + ano;
 }
-// mesma lista/lógica de "membros ativos" da Tesouraria — se alguém sair ou
-// entrar na casa por lá, espelhar aqui também
-const MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07', 'Mikael': '2026-04', 'Miguel': '2026-02' };
+// lista de membros, quem saiu/entrou quando e quem está isenta vêm de
+// /api/membros (fonte única, compartilhada com Tesouraria e Relatório
+// Anual) — ver carregarMembros() mais abaixo. Começam vazios e só ficam
+// certos depois que a primeira busca responde.
+let MEMBROS_SAIDA = {};
+let MEMBROS_ENTRADA = {};
+let MEMBROS_ISENTOS = {};
 function today() { return new Date().toISOString().slice(0, 10); }
 function getMembrosAtivos(mesRef) {
   const ref = mesRef || today().slice(0, 7);
-  return MEMBROS_TODOS.filter(m => { const s = MEMBROS_SAIDA[m]; return !s || ref < s; });
+  return MEMBROS_TODOS.filter(m => {
+    if (MEMBROS_ISENTOS[m]) return false;
+    const entrada = MEMBROS_ENTRADA[m];
+    if (entrada && ref < entrada) return false;
+    const s = MEMBROS_SAIDA[m];
+    return !s || ref < s;
+  });
+}
+// busca a lista de membros pronta (já cruzada com o cadastro de perfis) em
+// /api/membros — mesma fonte usada pela Tesouraria e pelo Relatório Anual
+async function carregarMembros() {
+  try {
+    const res = await fetch('/api/membros');
+    if (!res.ok) throw new Error('falhou');
+    const dados = await res.json();
+    MEMBROS_TODOS = dados.membrosTodos || [];
+    MEMBROS_SAIDA = dados.membrosSaida || {};
+    MEMBROS_ENTRADA = dados.membrosEntrada || {};
+    MEMBROS_ISENTOS = dados.membrosIsentos || {};
+  } catch (e) {
+    console.warn('membros:', e);
+  }
 }
 function lancamentosDoMes(lista, mes) {
   return lista.filter(l => {
@@ -329,9 +354,9 @@ async function carregarCardMensalidade() {
 
 // e-mails com acesso de admin — mesma lista usada na Tesouraria (blIsEmailAdmin)
 const BL_ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
-// lista completa histórica de membros — mesma da Tesouraria (MEMBROS_TODOS); se
-// alguém sair ou entrar na casa por lá, espelhar aqui também
-const MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani','Luana','Mikael','Miguel'];
+// lista completa histórica de membros — preenchida por carregarMembros() (ver
+// acima), vinda de /api/membros
+let MEMBROS_TODOS = [];
 
 // meses sem mensalidade registrada, do primeiro pagamento dela até o mês
 // atual — ajuda a ver de cara onde tem buraco no histórico
@@ -493,7 +518,7 @@ function montarSeletorAdmin() {
   document.getElementById('mp-admin-picker').style.display = 'block';
 }
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   const statusEl = document.getElementById('login-status');
   const avatarEl = document.getElementById('login-avatar');
@@ -513,6 +538,7 @@ onAuthStateChanged(auth, (user) => {
     avatarEl.style.display = user.photoURL ? 'block' : 'none';
     loginBtn.style.display = 'none';
     logoutBtn.style.display = 'inline-block';
+    await carregarMembros();
     carregarCardMensalidade();
     if (BL_ADMIN_EMAILS.includes((user.email || '').toLowerCase())) {
       // admin não costuma ter vínculo próprio — mostra o seletor direto,
