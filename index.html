@@ -4834,9 +4834,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
-        <input type="checkbox" id="cp-ativo" checked style="accent-color:var(--rosa);width:16px;height:16px">
+        <input type="checkbox" id="cp-ativo" checked style="accent-color:var(--rosa);width:16px;height:16px" onchange="cpAtualizarVisibilidadeSaida()">
         Perfil ativo (desmarque se a pessoa saiu da casa — some de tudo, mas os dados ficam guardados)
       </label>
+      <!-- só aparece quando "Perfil ativo" está desmarcado — visível só pra admin, nunca pra própria pessoa -->
+      <div id="cp-saida-campos" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div><label class="form-label">Data da saída</label><input type="date" class="form-input" id="cp-data_saida"></div>
+        <div><label class="form-label">Motivo da saída</label><input type="text" class="form-input" id="cp-motivo_saida" placeholder="Ex: mudou de cidade"></div>
+      </div>
     </div>
     <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
@@ -6483,9 +6488,17 @@ function mfTab(tab, btn) {
 // cruz_conga e corte_1 saíram daqui — cortes e cruzamentos agora só se editam
 // pela tela de "Simular visão" (mesmo editor da Minha História da própria filha)
 const cpCampos = {
-  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data'],
+  historia:     ['data_entrada','guia_chefe','apronte','apronte_galinhas','apronte_galos','coroacao','cacicamento','madrinha','madrinha_data','afilhada_1','afilhada_1_data','afilhada_2','afilhada_2_data','data_saida','motivo_saida'],
   guias:        ['caboclo','caboclo_data','exu','exu_data','pomba_gira','pomba_gira_data','preto_velho','preto_velho_data','cigana','cigana_data','cosme','cosme_data'],
 };
+// mostra os campos de data/motivo da saída só quando "Perfil ativo" está
+// desmarcado — eles vivem dentro do form (cpCampos.historia) o tempo todo,
+// só a visibilidade que é condicional
+function cpAtualizarVisibilidadeSaida() {
+  const ativo = document.getElementById('cp-ativo')?.checked !== false;
+  const bloco = document.getElementById('cp-saida-campos');
+  if (bloco) bloco.style.display = ativo ? 'none' : 'grid';
+}
 // guarda o perfil completo (todos os campos, inclusive os que não têm input neste formulário)
 // pra garantir que salvar não apague foto, notas, cortes extras, cruzamentos extras, marcos, etc.
 let cpPerfilOriginal = null;
@@ -6541,6 +6554,7 @@ function abrirCriarPerfil(emailParaEditar) {
   document.getElementById('cp-email').disabled = false;
   document.getElementById('criar-modal-titulo').textContent = 'Criar Perfil';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
+  cpAtualizarVisibilidadeSaida();
   if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = false;
   if (document.getElementById('cp-boasvindas')) document.getElementById('cp-boasvindas').checked = !emailParaEditar;
   if (document.getElementById('cp-calendario')) document.getElementById('cp-calendario').checked = !emailParaEditar;
@@ -6588,6 +6602,7 @@ function preencherFormPerfil(p) {
   if (document.getElementById('cp-terreiro_nome'))    document.getElementById('cp-terreiro_nome').value    = c.terreiro_nome    || '';
   if (document.getElementById('cp-terreiro_data'))    document.getElementById('cp-terreiro_data').value    = c.terreiro_data    || '';
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = p.ativo !== false;
+  cpAtualizarVisibilidadeSaida();
   if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = !!p.isento;
   if (document.getElementById('cp-visivelGuias')) document.getElementById('cp-visivelGuias').checked = !!p.visivelGuias;
 }
@@ -11710,6 +11725,11 @@ const PG_COLUNAS = [
   // convenção (ativo !== false) usada no resto do site, pra não mostrar como
   // inativa uma filha que nunca teve esse campo definido
   { grupo:'basico', key:'ativo', label:'Ativo', campo:'ativo', tipo:'checkbox', ler:p => p.ativo !== false },
+  // só mostram campo editável quando a filha está inativa (mostrarSe) — do
+  // contrário a célula fica com "—", já que não faz sentido ter data/motivo
+  // de saída de alguém que ainda está na casa
+  { grupo:'basico', key:'data_saida', label:'Data da Saída', secao:'historia', campo:'data_saida', tipo:'date', mostrarSe:p => p.ativo === false },
+  { grupo:'basico', key:'motivo_saida', label:'Motivo da Saída', secao:'historia', campo:'motivo_saida', tipo:'text', mostrarSe:p => p.ativo === false },
   { grupo:'basico', key:'isento', label:'Isento de Mensalidade', campo:'isento', tipo:'checkbox', ler:p => !!p.isento },
   { grupo:'basico', key:'data_entrada', label:'Data de Entrada', secao:'historia', campo:'data_entrada', tipo:'date' },
   { grupo:'basico', key:'tempo_casa', label:'Tempo de Casa', tipo:'readonly', valor:p => window.textoTempoCasa(p) },
@@ -11776,6 +11796,9 @@ function pgSetValor(p, col, valor) {
 }
 
 function pgCelulaHtml(p, col) {
+  if (col.mostrarSe && !col.mostrarSe(p)) {
+    return `<td style="text-align:center"><span style="color:var(--text-dim)">—</span></td>`;
+  }
   const valor = pgValor(p, col);
   if (col.tipo === 'readonly') {
     return `<td>${valor ? calEsc(valor) : '<span style="color:var(--text-dim)">—</span>'}</td>`;
@@ -11845,7 +11868,7 @@ function exCsv(linhas) {
 function exMontarCsvPerfis(perfis, arquivosPorEmail) {
   arquivosPorEmail = arquivosPorEmail || {};
   const linhas = [[
-    'Nome','E-mail','Cargo','Grupo de Acesso','Ativo','Isento de Mensalidade','Data de Entrada',
+    'Nome','E-mail','Cargo','Grupo de Acesso','Ativo','Isento de Mensalidade','Data de Entrada','Data da Saída','Motivo da Saída',
     'Guia Chefe','Madrinha','Data — Madrinha','Afilhada 1','Data — Afilhada 1','Afilhada 2','Data — Afilhada 2',
     'Coroação','Cacicamento','Apronte','Apronte — Galinhas','Apronte — Galos',
     'Caboclo','Data — Caboclo','Exu','Data — Exu','Pomba-Gira','Data — Pomba-Gira',
@@ -11876,7 +11899,7 @@ function exMontarCsvPerfis(perfis, arquivosPorEmail) {
     linhas.push([
       p.nome || '', p.email || '', p.cargo || '', p.grupo || '',
       p.ativo !== false ? 'sim' : 'não', p.isento ? 'sim' : 'não',
-      window.fmtData(h.data_entrada),
+      window.fmtData(h.data_entrada), window.fmtData(h.data_saida), h.motivo_saida || '',
       h.guia_chefe || '', h.madrinha || '', window.fmtData(h.madrinha_data),
       h.afilhada_1 || '', window.fmtData(h.afilhada_1_data), h.afilhada_2 || '', window.fmtData(h.afilhada_2_data),
       window.fmtData(h.coroacao), window.fmtData(h.cacicamento),
