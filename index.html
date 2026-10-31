@@ -2030,6 +2030,7 @@ input.pg-cel-input[type=number]{min-width:60px}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -5108,7 +5109,13 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-label">Planilha Geral</span>
         <span class="admin-menu-item-desc">Visão em planilha de todos os campos das fichas</span>
       </button>
+      <button class="admin-menu-item" onclick="adminExportarDadosPerfis()">
+        <span class="admin-menu-item-icon">📦</span>
+        <span class="admin-menu-item-label">Exportar Dados dos Perfis</span>
+        <span class="admin-menu-item-desc">Nomes, datas, pagamentos e fotos — tudo num .zip</span>
+      </button>
     </div>
+    <div id="admin-export-status" style="text-align:center;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:-6px 0 14px"></div>
 
     <!-- MENU DO SITE (cards + seções) -->
     <div id="admin-sub-menu" style="display:none">
@@ -11822,6 +11829,155 @@ function pgRenderCorpo() {
   const lista = qfOrdenarPorTempo(pgListaFiltradaAtual());
   if (!lista.length) { tbody.innerHTML = '<tr><td class="pg-col-fixa">Nenhuma filha encontrada.</td></tr>'; return; }
   tbody.innerHTML = lista.map(pgLinhaHtml).join('');
+}
+
+// ── EXPORTAR DADOS DOS PERFIS (admin) ───────────────────────────────
+// Junta num .zip só tudo que o site guarda vinculado a uma pessoa: os dados
+// da ficha (nomes de guias/madrinha/afilhadas, todas as datas), os
+// pagamentos dela na Tesouraria e as fotos (a da ficha e as de Pontos
+// Riscados). Útil pra backup ou pra alguém pedir os próprios dados.
+function exNomeArquivo(s) {
+  return String(s || 'sem-nome').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'sem-nome';
+}
+function exCsv(linhas) {
+  return '﻿' + linhas.map(l => l.map(c => '"' + String(c == null ? '' : c).replace(/"/g, '""') + '"').join(',')).join('\n');
+}
+function exMontarCsvPerfis(perfis, arquivosPorEmail) {
+  arquivosPorEmail = arquivosPorEmail || {};
+  const linhas = [[
+    'Nome','E-mail','Cargo','Grupo de Acesso','Ativo','Isento de Mensalidade','Data de Entrada',
+    'Guia Chefe','Madrinha','Data — Madrinha','Afilhada 1','Data — Afilhada 1','Afilhada 2','Data — Afilhada 2',
+    'Coroação','Cacicamento','Apronte','Apronte — Galinhas','Apronte — Galos',
+    'Caboclo','Data — Caboclo','Exu','Data — Exu','Pomba-Gira','Data — Pomba-Gira',
+    'Preto-Velho','Data — Preto-Velho','Cigana','Data — Cigana','Cosme/Damião','Data — Cosme/Damião',
+    'Cortes','Cruzamentos','Guias Extras','Pontos Riscados','Arquivo da foto',
+  ]];
+  perfis.forEach(p => {
+    const h = p.historia || {};
+    const g = p.guias || {};
+    const arquivos = arquivosPorEmail[p.email] || {};
+    const cortes = window.obterCortesCombinados(p).map(c => {
+      let t = window.fmtData(c.data);
+      if (c.galinhas) t += ' galinhas:' + c.galinhas;
+      if (c.galos) t += ' galos:' + c.galos;
+      if (c.cambonagem) t += ' (cambonagem)';
+      return t;
+    }).join(' | ');
+    const cruzamentos = window.obterCruzamentosCombinados(p).map(c => {
+      return (c.nome || '') + ' ' + window.fmtData(c.data) + (c.cambonagem ? ' (cambonagem)' : '');
+    }).join(' | ');
+    const guiasExtras = (p.guiasExtras || []).map(ge => {
+      return (ge.tipo || 'Guia') + (ge.nome ? ' — ' + ge.nome : '') + ' ' + window.fmtData(ge.data);
+    }).join(' | ');
+    const pontosRiscados = (p.pontosRiscados || []).map((pt, i) => {
+      const arquivoFoto = arquivos.pontos && arquivos.pontos[i];
+      return (pt.descricao || 'Ponto riscado') + (pt.data ? ' ' + window.fmtData(pt.data) : '') + (arquivoFoto ? ' [foto: ' + arquivoFoto + ']' : '');
+    }).join(' | ');
+    linhas.push([
+      p.nome || '', p.email || '', p.cargo || '', p.grupo || '',
+      p.ativo !== false ? 'sim' : 'não', p.isento ? 'sim' : 'não',
+      window.fmtData(h.data_entrada),
+      h.guia_chefe || '', h.madrinha || '', window.fmtData(h.madrinha_data),
+      h.afilhada_1 || '', window.fmtData(h.afilhada_1_data), h.afilhada_2 || '', window.fmtData(h.afilhada_2_data),
+      window.fmtData(h.coroacao), window.fmtData(h.cacicamento),
+      window.fmtData(h.apronte), h.apronte_galinhas || '', h.apronte_galos || '',
+      g.caboclo || '', window.fmtData(g.caboclo_data), g.exu || '', window.fmtData(g.exu_data),
+      g.pomba_gira || '', window.fmtData(g.pomba_gira_data), g.preto_velho || '', window.fmtData(g.preto_velho_data),
+      g.cigana || '', window.fmtData(g.cigana_data), g.cosme || '', window.fmtData(g.cosme_data),
+      cortes, cruzamentos, guiasExtras, pontosRiscados,
+      arquivos.foto || '',
+    ]);
+  });
+  return exCsv(linhas);
+}
+function exMontarCsvPagamentos(lancamentos) {
+  const linhas = [['Nome','Tipo','Subtipo','Valor (R$)','Data','Competência','Status','Categoria','Observação']];
+  lancamentos
+    .filter(l => l && l.membro)
+    .sort((a, b) => String(a.data || a.competencia || '').localeCompare(String(b.data || b.competencia || '')))
+    .forEach(l => {
+      linhas.push([
+        l.membro, l.tipo || '', l.subTipo || '', Number(l.valor || 0).toFixed(2),
+        l.data || '', l.competencia || '', l.status || '', l.conta || '', l.obs || '',
+      ]);
+    });
+  return exCsv(linhas);
+}
+// baixa a foto e devolve o nome de arquivo usado dentro do .zip (ou null se
+// não tiver foto ou a busca falhar — nesse caso regista em relatorioFalhas)
+async function exBaixarFoto(pasta, url, nomeBase, relatorioFalhas) {
+  if (!url) return null;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('status ' + res.status);
+    const blob = await res.blob();
+    const ext = (blob.type.split('/')[1] || 'jpg').split(';')[0].split('+')[0];
+    const arquivo = nomeBase + '.' + ext;
+    pasta.file(arquivo, blob);
+    return arquivo;
+  } catch (e) {
+    relatorioFalhas.push(nomeBase + ' — ' + (e.message || 'falha ao baixar'));
+    return null;
+  }
+}
+async function adminExportarDadosPerfis() {
+  const status = document.getElementById('admin-export-status');
+  const setStatus = (txt, cor) => { if (status) { status.textContent = txt; status.style.color = cor || ''; } };
+  if (typeof JSZip === 'undefined') { setStatus('⚠ Não consegui carregar a ferramenta de .zip — tenta recarregar a página.', 'var(--red)'); return; }
+  setStatus('⏳ Buscando dados...');
+  try {
+    const [perfisRes, lancamentosRes] = await Promise.all([
+      fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/dados?chave=lancamentos'),
+    ]);
+    const perfisTodos = perfisRes.ok ? await perfisRes.json() : [];
+    const lancamentos = lancamentosRes.ok ? await lancamentosRes.json() : [];
+    const perfis = (Array.isArray(perfisTodos) ? perfisTodos : []).filter(p => p && p.nome);
+
+    const zip = new JSZip();
+    zip.file('pagamentos.csv', exMontarCsvPagamentos(Array.isArray(lancamentos) ? lancamentos : []));
+
+    setStatus('⏳ Baixando fotos (' + perfis.length + ' perfis)...');
+    const pastaFotos = zip.folder('fotos');
+    const falhas = [];
+    const arquivosPorEmail = {};
+    await Promise.all(perfis.map(async p => {
+      const base = exNomeArquivo(p.nome);
+      const pontos = await Promise.all((p.pontosRiscados || []).map((pt, i) => {
+        return pt.foto ? exBaixarFoto(pastaFotos, pt.foto, base + '-ponto-' + (i + 1), falhas) : null;
+      }));
+      const foto = p.foto ? await exBaixarFoto(pastaFotos, p.foto, base, falhas) : null;
+      arquivosPorEmail[p.email] = { foto, pontos };
+    }));
+    if (falhas.length) {
+      zip.file('fotos/_nao-baixadas.txt', 'Essas fotos não puderam ser baixadas automaticamente (geralmente por bloqueio de CORS do servidor de origem) — pegue o link direto no perfil, no site:\n\n' + falhas.join('\n'));
+    }
+
+    zip.file('perfis.csv', exMontarCsvPerfis(perfis, arquivosPorEmail));
+
+    zip.file('leia-me.txt',
+      'Exportação de dados dos perfis — Bolhas de Luz\n' +
+      'Gerado em ' + new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + '\n\n' +
+      'perfis.csv — nome, cargo, datas de entrada/coroação/apronte, guias e demais campos da ficha de cada pessoa\n' +
+      'pagamentos.csv — todos os lançamentos da Tesouraria vinculados a um nome\n' +
+      'fotos/ — foto da ficha e fotos de Pontos Riscados de cada pessoa (quando cadastradas)\n'
+    );
+
+    setStatus('⏳ Gerando .zip...');
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bolhasdeluz-dados-perfis-' + new Date().toISOString().slice(0, 10) + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    setStatus('✓ Exportado — ' + perfis.length + ' perfis' + (falhas.length ? ' (' + falhas.length + ' foto(s) não baixada(s), ver leia-me)' : ''), 'var(--green)');
+  } catch (e) {
+    console.error('exportar dados perfis:', e);
+    setStatus('⚠ Erro ao exportar: ' + e.message, 'var(--red)');
+  }
 }
 
 function pgFiltrar(busca) {
