@@ -539,6 +539,8 @@ footer{
 
 .cal-wrap{max-width:1000px;margin:0 auto;padding:40px 20px 200px;position:relative;z-index:10}
 .cal-topo{margin-bottom:20px}
+.cal-btn-admin{background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 14px;cursor:pointer;backdrop-filter:blur(4px);white-space:nowrap}
+.cal-btn-admin-principal{background:var(--rosa);border:none;color:#fff;font-weight:700}
 .cal-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
 @media(max-width:680px){
   .cal-layout{grid-template-columns:1fr}
@@ -7474,6 +7476,19 @@ function calToggleMaisOpcoes(forcarAberto) {
   if (seta) seta.textContent = abrir ? '▾' : '▸';
 }
 
+// mesmo padrão do "Mais opções" do formulário de sessão (calToggleMaisOpcoes)
+// — esconde as ferramentas usadas com menos frequência (visibilidade/
+// informações por tipo, vínculo com o Google) atrás de um toggle, pra barra
+// de admin do Calendário não empilhar 7 botões antes do calendário em si
+function calToggleMaisFerramentasCal() {
+  const wrap = document.getElementById('cal-mais-ferramentas-wrap');
+  const seta = document.getElementById('cal-mais-ferramentas-seta');
+  if (!wrap) return;
+  const abrir = wrap.style.display === 'none';
+  wrap.style.display = abrir ? 'flex' : 'none';
+  if (seta) seta.textContent = abrir ? '▾' : '▸';
+}
+
 async function calOpenModal() {
   document.getElementById('cal-modal-titulo').textContent = 'Nova Sessão';
   document.getElementById('cal-edit-id').value = '';
@@ -9592,14 +9607,21 @@ function calAtualizarControlesAdmin() {
   const isAdmin = calGetGrupo() === 'admin';
   const calFO = document.querySelectorAll('.cal-filhas-only');
   if (isAdmin) {
+    // só os botões usados toda hora ficam sempre à vista — o resto
+    // (visibilidade/informações por tipo, vínculo com o Google) fica atrás
+    // de "Mais ferramentas", que abre do lado, pra não empilhar 7 botões
+    // antes da admin conseguir ver o calendário em si (ver calToggleMaisFerramentasCal)
     el.innerHTML = `
-      <button onclick="calOpenModal()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Nova Sessão</button>
-      <button onclick="calAnualAbrir()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🗓️ Planejamento Anual</button>
-      <button onclick="calAbrirVisibilidadeTipo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">⚙️ Visibilidade por tipo</button>
-      <button onclick="calAbrirInfoTipo()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">📋 Informações por tipo</button>
-      <button onclick="calAbrirVincular()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔗 Vincular Google Agenda</button>
-      <button onclick="calAbrirVerificarMudancas()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">🔄 Verificar mudanças no Google</button>
-      <button id="cal-btn-lote" onclick="calAlternarModoLote()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">☑ Selecionar vários</button>
+      <button onclick="calOpenModal()" class="cal-btn-admin cal-btn-admin-principal">+ Nova Sessão</button>
+      <button onclick="calAnualAbrir()" class="cal-btn-admin">🗓️ Planejamento Anual</button>
+      <button id="cal-btn-lote" onclick="calAlternarModoLote()" class="cal-btn-admin">☑ Selecionar vários</button>
+      <button onclick="calToggleMaisFerramentasCal()" class="cal-btn-admin"><span id="cal-mais-ferramentas-seta">▸</span> Mais ferramentas</button>
+      <div id="cal-mais-ferramentas-wrap" style="display:none;width:100%;gap:6px;flex-wrap:wrap">
+        <button onclick="calAbrirVisibilidadeTipo()" class="cal-btn-admin">⚙️ Visibilidade por tipo</button>
+        <button onclick="calAbrirInfoTipo()" class="cal-btn-admin">📋 Informações por tipo</button>
+        <button onclick="calAbrirVincular()" class="cal-btn-admin">🔗 Vincular Google Agenda</button>
+        <button onclick="calAbrirVerificarMudancas()" class="cal-btn-admin">🔄 Verificar mudanças no Google</button>
+      </div>
     `;
     calFO.forEach(x => x.style.display = '');
   } else {
