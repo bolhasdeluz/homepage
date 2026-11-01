@@ -4154,6 +4154,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title">Editar sessão</div>
     <div class="modal-sub" id="rc-edit-data"></div>
     <div style="margin-bottom:12px"><label class="form-label">Nome</label><input type="text" class="form-input" id="rc-edit-nome" style="margin-bottom:0"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Tipo</label><select class="form-input" id="rc-edit-tipo" style="margin-bottom:0"></select></div>
     <div style="margin-bottom:12px"><label class="form-label">Linha de trabalho</label><select class="form-input" id="rc-edit-linha" style="margin-bottom:0"></select></div>
     <div style="margin-bottom:20px"><label class="form-label">Tambor</label><select class="form-input" id="rc-edit-tambor" style="margin-bottom:0"></select></div>
     <button class="btn-rosa" style="width:100%;text-align:center" onclick="rcSalvarEdicaoRapida()">Salvar</button>
@@ -9952,6 +9953,11 @@ let rcCharts = {};
 
 const RC_TIPO_LABEL = { Interna: 'Interna (fechada)', Atendimento: 'Atendimento (aberta)', Visita: 'Visita', Familia: 'Família', Reuniao: 'Reunião', '': 'Sem tipo' };
 const RC_TIPO_COR = { Interna: '#8a8a9a', Atendimento: '#4a6fa5', Visita: '#2a7a60', Familia: '#c9963c', Reuniao: '#9e6a9e', 'Sem tipo': '#c9b8bc' };
+// sessão de Visita (a casa indo visitar outro terreiro) e Reunião (não é
+// sessão de culto) não contam como sessão da casa — ficam de fora de todo
+// o relatório; reaproveitado tanto no carregamento quanto na edição rápida
+// (se a admin mudar o Tipo pra um desses na edição, a sessão some do relatório)
+const RC_TIPOS_EXCLUIDOS = ['Visita', 'Reuniao'];
 const RC_TAMBOR_LABEL = { confirmado: '✅ Confirmado', arrecadacao: '🪘 Depende de arrecadação', nao: '❌ Não vai ter', '': '➖ Sem informação' };
 const RC_TAMBOR_COR = { confirmado: '#2a7a60', arrecadacao: '#c9963c', nao: '#b84040', '': '#8a8a9a' };
 // mesmas cores por entidade já usadas no calendário impresso (PCAL_CORES_ENTIDADE)
@@ -9969,10 +9975,6 @@ window.rcCarregar = async function() {
   try {
     const res = await fetch('/api/sessoes');
     const dados = await res.json();
-    // sessão de Visita (a casa indo visitar outro terreiro) e Reunião
-    // (não é sessão de culto) não contam como sessão da casa — ficam de
-    // fora de todo o relatório (contagens, gráficos, comparativos...)
-    const RC_TIPOS_EXCLUIDOS = ['Visita', 'Reuniao'];
     rcSessoes = Array.isArray(dados) ? dados.filter(s => s && s.data && RC_TIPOS_EXCLUIDOS.indexOf(s.tipo) === -1) : [];
   } catch (e) {
     rcSessoes = [];
@@ -10139,6 +10141,10 @@ async function rcAbrirEdicaoRapida(id) {
   document.getElementById('rc-edit-data').textContent = s.data.split('-').reverse().join('/') + (s.lado ? ' · ' + s.lado : '');
   document.getElementById('rc-edit-nome').value = s.nome || '';
 
+  const selTipo = document.getElementById('rc-edit-tipo');
+  selTipo.innerHTML = '<option value="">— Selecionar —</option>' + Object.keys(RC_TIPO_LABEL).filter(v => v !== '').map(v => `<option value="${v}">${calEsc(RC_TIPO_LABEL[v])}</option>`).join('');
+  selTipo.value = s.tipo || '';
+
   const selLinha = document.getElementById('rc-edit-linha');
   selLinha.innerHTML = '<option value="">— Nenhuma —</option>' + calLinhas.map(l => `<option value="${calEsc(l)}">${calEsc(l)}</option>`).join('');
   selLinha.value = (s.linha && calLinhas.includes(s.linha)) ? s.linha : '';
@@ -10161,13 +10167,20 @@ async function rcSalvarEdicaoRapida() {
   const id = overlay.dataset.sessaoId;
   if (!id) return;
   const nome = document.getElementById('rc-edit-nome').value.trim();
+  const tipo = document.getElementById('rc-edit-tipo').value;
   const linha = document.getElementById('rc-edit-linha').value;
   const tambor = document.getElementById('rc-edit-tambor').value;
   try {
-    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, linha, tambor }) });
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, tipo, linha, tambor }) });
     if (!res.ok) throw new Error('falhou');
-    const s = rcSessoes.find(x => x.id === id);
-    if (s) { s.nome = nome; s.linha = linha; s.tambor = tambor; }
+    // se o novo Tipo for Visita/Reunião, a sessão deixa de contar como
+    // dados da casa — some do relatório em vez de só atualizar o tipo nela
+    if (RC_TIPOS_EXCLUIDOS.indexOf(tipo) !== -1) {
+      rcSessoes = rcSessoes.filter(x => x.id !== id);
+    } else {
+      const s = rcSessoes.find(x => x.id === id);
+      if (s) { s.nome = nome; s.tipo = tipo; s.linha = linha; s.tambor = tambor; }
+    }
     rcFecharEdicaoRapida();
     showToast('Sessão atualizada ✓');
     rcRender();
