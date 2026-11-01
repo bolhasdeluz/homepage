@@ -562,6 +562,8 @@ footer{
 .rc-tabela{width:100%;border-collapse:collapse;font-size:.8rem}
 .rc-tabela th{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim);text-align:left;padding:5px 6px;border-bottom:1.5px solid var(--border)}
 .rc-tabela td{padding:6px;border-bottom:1px solid rgba(196,57,107,.07);font-family:'Crimson Pro',serif}
+.rc-tabela-clicavel tr:not(:first-child){cursor:pointer}
+.rc-tabela-clicavel tr:not(:first-child):hover td{background:var(--rosa-dim)}
 .rc-vazio{text-align:center;padding:40px 16px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
 .cal-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
 @media(max-width:680px){
@@ -10063,6 +10065,44 @@ function rcTabelaHtml(contagem, total) {
   </table></div>`;
 }
 
+// mesma tabela de rcTabelaHtml, mas com as linhas clicáveis (usa
+// data-rc-linha em vez de onclick inline, pra não quebrar se o nome da
+// linha tiver aspas) — clicar mostra as datas daquela categoria em
+// #rc-linha-detalhe, ver rcLinhaDetalhe()
+function rcTabelaClicavelHtml(contagem, total) {
+  const linhas = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
+  if (!linhas.length) return '<p class="rc-vazio" style="padding:14px">Nenhuma sessão nesse período.</p>';
+  return `<div class="rc-tabela-wrap"><table class="rc-tabela rc-tabela-clicavel">
+    <tr><th>Tipo</th><th>Qtde.</th><th>%</th></tr>
+    ${linhas.map(k => `<tr data-rc-linha="${calEsc(k)}"><td>${calEsc(k)} ▸</td><td>${contagem[k]}</td><td>${total ? Math.round(contagem[k] / total * 100) : 0}%</td></tr>`).join('')}
+  </table></div>`;
+}
+
+// mostra (ou esconde, se clicar de novo na mesma) as datas das sessões
+// daquela linha/categoria no ano atual — chamada tanto pelo clique na
+// tabela quanto pelo clique numa barra do gráfico
+function rcLinhaDetalhe(label) {
+  const el = document.getElementById('rc-linha-detalhe');
+  if (!el) return;
+  if (el.dataset.linhaAtual === label) {
+    el.innerHTML = '';
+    delete el.dataset.linhaAtual;
+    return;
+  }
+  el.dataset.linhaAtual = label;
+  const doAno = rcSessoes
+    .filter(s => s.data.slice(0, 4) === rcAno && rcLinhaLabel(s.linha) === label)
+    .slice().sort((a, b) => a.data.localeCompare(b.data));
+  const linhasHtml = doAno.map(s => {
+    const dataFmt = s.data.split('-').reverse().join('/');
+    return `<tr><td>${dataFmt}</td><td>${calEsc(s.nome || '—')}</td></tr>`;
+  }).join('');
+  el.innerHTML = `<div class="rc-tabela-wrap" style="margin-top:10px"><table class="rc-tabela">
+    <tr><th colspan="2">${calEsc(label)} — ${doAno.length} sessão(ões) em ${rcAno}</th></tr>
+    ${linhasHtml || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">Nenhuma sessão</td></tr>'}
+  </table></div>`;
+}
+
 function rcHtmlAno() {
   const anos = rcAnosDisponiveis();
   const idx = anos.indexOf(rcAno);
@@ -10103,7 +10143,7 @@ function rcHtmlAno() {
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-tambor"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => RC_TAMBOR_LABEL[s.tambor || '']), total)}</div>
 
     <div class="rc-sec-title">Sessões por linha de trabalho</div>
-    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-linha"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => rcLinhaLabel(s.linha)), total)}</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-linha"></canvas></div>${rcTabelaClicavelHtml(rcContarPor(doAno, s => rcLinhaLabel(s.linha)), total)}<div id="rc-linha-detalhe"></div></div>
 
     <div class="rc-sec-title">Frequência ao longo do ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-mes"></canvas></div></div>
@@ -10223,7 +10263,20 @@ function rcMontarGraficosAno() {
     rcCharts.linha = new Chart(ctxLinha, {
       type: 'bar',
       data: { labels: linhaLabels, datasets: [{ data: linhaLabels.map(l => porLinha[l]), backgroundColor: linhaLabels.map(l => rcLinhaCor(l === 'Sem linha' ? '' : l)), borderRadius: 4 }] },
-      options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
+      options: rcFonteOpcoes({
+        indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) rcLinhaDetalhe(linhaLabels[elements[0].index]); },
+        scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } }
+      })
+    });
+    ctxLinha.style.cursor = 'pointer';
+  }
+  const tabelaLinha = document.querySelector('.rc-tabela-clicavel');
+  if (tabelaLinha && !tabelaLinha.dataset.rcLigada) {
+    tabelaLinha.dataset.rcLigada = '1';
+    tabelaLinha.addEventListener('click', (ev) => {
+      const tr = ev.target.closest('tr[data-rc-linha]');
+      if (tr) rcLinhaDetalhe(tr.dataset.rcLinha);
     });
   }
 
