@@ -4140,6 +4140,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="section-title">📊 Relatório do Calendário</div>
     <p class="section-sub">Sessões por ano, por tipo, por tambor — e como isso mudou com o tempo ✦</p>
 
+    <div class="rc-toggle-wrap"><button class="rc-toggle-btn" onclick="rcExportarSessoesComTambor()">⬇️ Exportar sessões com tambor</button></div>
+
     <div id="rc-conteudo"><div class="rc-vazio">Carregando...</div></div>
   </div>
 </div>
@@ -9987,6 +9989,24 @@ window.rcCarregar = async function() {
   if (!rcAno || anos.indexOf(rcAno) === -1) rcAno = anos[anos.length - 1];
   rcRender();
 };
+
+// CSV com data, horário e lado de toda sessão com Tambor confirmado, de
+// todos os anos (não só o que está selecionado na tela no momento) — só
+// esses 3 campos, nada mais
+function rcExportarSessoesComTambor() {
+  const comTambor = rcSessoes.filter(s => s.tambor === 'confirmado').slice().sort((a, b) => a.data.localeCompare(b.data));
+  if (!comTambor.length) { alert('Nenhuma sessão com tambor confirmado pra exportar ainda.'); return; }
+  const linhas = [['Data', 'Horário', 'Lado']];
+  comTambor.forEach(s => {
+    linhas.push([s.data.split('-').reverse().join('/'), s.hora || '', s.lado || '']);
+  });
+  const csv = '﻿' + linhas.map(l => l.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'sessoes-com-tambor.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 
 function rcAnosDisponiveis() {
   const anos = new Set(rcSessoes.map(s => s.data.slice(0, 4)));
