@@ -4154,7 +4154,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   <div class="modal" style="max-width:380px">
     <button class="modal-close" onclick="rcFecharEdicaoRapida()">×</button>
     <div class="modal-title">Editar sessão</div>
-    <div class="modal-sub" id="rc-edit-data"></div>
+    <div class="modal-sub" id="rc-edit-lado-info"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Data</label><input type="date" class="form-input" id="rc-edit-data" style="margin-bottom:0"></div>
     <div style="margin-bottom:12px"><label class="form-label">Nome</label><input type="text" class="form-input" id="rc-edit-nome" style="margin-bottom:0"></div>
     <div style="margin-bottom:12px"><label class="form-label">Horário</label><input type="time" class="form-input" id="rc-edit-hora" style="margin-bottom:0"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tipo</label><select class="form-input" id="rc-edit-tipo" style="margin-bottom:0"></select></div>
@@ -10185,7 +10186,8 @@ async function rcAbrirEdicaoRapida(id) {
   if (!s) return;
   if (!calLinhas.length) await calCarregarLinhas();
 
-  document.getElementById('rc-edit-data').textContent = s.data.split('-').reverse().join('/') + (s.lado ? ' · ' + s.lado : '');
+  document.getElementById('rc-edit-lado-info').textContent = s.lado || '';
+  document.getElementById('rc-edit-data').value = s.data || '';
   document.getElementById('rc-edit-nome').value = s.nome || '';
   document.getElementById('rc-edit-hora').value = s.hora || '';
 
@@ -10214,13 +10216,15 @@ async function rcSalvarEdicaoRapida() {
   const overlay = document.getElementById('rc-edit-overlay');
   const id = overlay.dataset.sessaoId;
   if (!id) return;
+  const data = document.getElementById('rc-edit-data').value;
   const nome = document.getElementById('rc-edit-nome').value.trim();
   const hora = document.getElementById('rc-edit-hora').value;
   const tipo = document.getElementById('rc-edit-tipo').value;
   const linha = document.getElementById('rc-edit-linha').value;
   const tambor = document.getElementById('rc-edit-tambor').value;
+  if (!data) { showToast('A data não pode ficar vazia', true); return; }
   try {
-    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, hora, tipo, linha, tambor }) });
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, data, nome, hora, tipo, linha, tambor }) });
     if (!res.ok) throw new Error('falhou');
     // se o novo Tipo for Visita/Reunião, a sessão deixa de contar como
     // dados da casa — some do relatório em vez de só atualizar o tipo nela
@@ -10228,7 +10232,7 @@ async function rcSalvarEdicaoRapida() {
       rcSessoes = rcSessoes.filter(x => x.id !== id);
     } else {
       const s = rcSessoes.find(x => x.id === id);
-      if (s) { s.nome = nome; s.hora = hora; s.tipo = tipo; s.linha = linha; s.tambor = tambor; }
+      if (s) { s.data = data; s.nome = nome; s.hora = hora; s.tipo = tipo; s.linha = linha; s.tambor = tambor; }
     }
     rcFecharEdicaoRapida();
     showToast('Sessão atualizada ✓');
