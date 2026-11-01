@@ -9934,6 +9934,13 @@ const RC_TIPO_LABEL = { Interna: 'Interna (fechada)', Atendimento: 'Atendimento 
 const RC_TIPO_COR = { Interna: '#8a8a9a', Atendimento: '#4a6fa5', Visita: '#2a7a60', Familia: '#c9963c', Reuniao: '#9e6a9e', 'Sem tipo': '#c9b8bc' };
 const RC_TAMBOR_LABEL = { confirmado: '✅ Confirmado', arrecadacao: '🪘 Depende de arrecadação', nao: '❌ Não vai ter', '': '➖ Sem informação' };
 const RC_TAMBOR_COR = { confirmado: '#2a7a60', arrecadacao: '#c9963c', nao: '#b84040', '': '#8a8a9a' };
+// mesmas cores por entidade já usadas no calendário impresso (PCAL_CORES_ENTIDADE)
+// — linha sem mapa aqui (Cosme, Desenvolvimento, uma nova que a Anna cadastrar...)
+// ou sessão sem linha marcada cai no cinza padrão
+const RC_LINHA_COR = { Caboclo: '#2f6fb3', 'Preto Velho': '#3f8f4f', Cigano: '#d98a1f', Exu: '#c0392b' };
+const RC_LINHA_COR_PADRAO = '#8a8a9a';
+function rcLinhaLabel(linha) { return linha || 'Sem linha'; }
+function rcLinhaCor(linha) { return RC_LINHA_COR[linha] || RC_LINHA_COR_PADRAO; }
 const RC_MESES_CURTO = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 window.rcCarregar = async function() {
@@ -10044,6 +10051,9 @@ function rcHtmlAno() {
     <div class="rc-sec-title">Tambor</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-tambor"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => RC_TAMBOR_LABEL[s.tambor || '']), total)}</div>
 
+    <div class="rc-sec-title">Sessões por linha de trabalho</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-linha"></canvas></div>${rcTabelaHtml(rcContarPor(doAno, s => rcLinhaLabel(s.linha)), total)}</div>
+
     <div class="rc-sec-title">Frequência ao longo do ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-mes"></canvas></div></div>
   `;
@@ -10089,6 +10099,17 @@ function rcMontarGraficosAno() {
     rcCharts.tambor = new Chart(ctxTambor, {
       type: 'bar',
       data: { labels: tamborLabels, datasets: [{ data: tamborLabels.map(l => porTambor[l]), backgroundColor: tamborLabels.map(l => RC_TAMBOR_COR[Object.keys(RC_TAMBOR_LABEL).find(k => RC_TAMBOR_LABEL[k] === l)]), borderRadius: 4 }] },
+      options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
+    });
+  }
+
+  const porLinha = rcContarPor(doAno, s => rcLinhaLabel(s.linha));
+  const linhaLabels = Object.keys(porLinha).sort((a, b) => porLinha[b] - porLinha[a]);
+  const ctxLinha = document.getElementById('rc-chart-linha');
+  if (ctxLinha) {
+    rcCharts.linha = new Chart(ctxLinha, {
+      type: 'bar',
+      data: { labels: linhaLabels, datasets: [{ data: linhaLabels.map(l => porLinha[l]), backgroundColor: linhaLabels.map(l => rcLinhaCor(l === 'Sem linha' ? '' : l)), borderRadius: 4 }] },
       options: rcFonteOpcoes({ indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } } })
     });
   }
