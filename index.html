@@ -4156,6 +4156,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title">Editar sessão</div>
     <div class="modal-sub" id="rc-edit-data"></div>
     <div style="margin-bottom:12px"><label class="form-label">Nome</label><input type="text" class="form-input" id="rc-edit-nome" style="margin-bottom:0"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Horário</label><input type="time" class="form-input" id="rc-edit-hora" style="margin-bottom:0"></div>
     <div style="margin-bottom:12px"><label class="form-label">Tipo</label><select class="form-input" id="rc-edit-tipo" style="margin-bottom:0"></select></div>
     <div style="margin-bottom:12px"><label class="form-label">Linha de trabalho</label><select class="form-input" id="rc-edit-linha" style="margin-bottom:0"></select></div>
     <div style="margin-bottom:20px"><label class="form-label">Tambor</label><select class="form-input" id="rc-edit-tambor" style="margin-bottom:0"></select></div>
@@ -9950,6 +9951,7 @@ let rcSessoes = [];
 let rcAno = null;
 let rcComparativo = false;
 let rcTamborView = false;
+let rcRevisaoView = false;
 let rcLancamentos = null; // lançamentos da Tesouraria, carregados sob demanda só quando abre a conferência de Tambor
 let rcCharts = {};
 
@@ -10033,6 +10035,7 @@ function rcMudarAno(delta) {
 function rcAlternarComparativo() {
   rcComparativo = !rcComparativo;
   rcTamborView = false;
+  rcRevisaoView = false;
   rcRender();
 }
 
@@ -10056,6 +10059,14 @@ async function rcCarregarLancamentos() {
 function rcAlternarTamborView() {
   rcTamborView = !rcTamborView;
   rcComparativo = false;
+  rcRevisaoView = false;
+  rcRender();
+}
+
+function rcAlternarRevisaoView() {
+  rcRevisaoView = !rcRevisaoView;
+  rcComparativo = false;
+  rcTamborView = false;
   rcRender();
 }
 
@@ -10084,6 +10095,15 @@ function rcRender() {
   if (rcTamborView) {
     conteudo.innerHTML = '<div class="rc-vazio">Carregando pagamentos da Tesouraria...</div>';
     rcCarregarLancamentos().then(() => { conteudo.innerHTML = rcHtmlTambor(); });
+    return;
+  }
+  if (rcRevisaoView) {
+    conteudo.innerHTML = rcHtmlRevisao();
+    const tabelaRevisao = document.getElementById('rc-tabela-revisao');
+    if (tabelaRevisao) tabelaRevisao.addEventListener('click', (ev) => {
+      const tr = ev.target.closest('tr[data-rc-sessao-id]');
+      if (tr) rcAbrirEdicaoRapida(tr.dataset.rcSessaoId);
+    });
     return;
   }
   conteudo.innerHTML = rcComparativo ? rcHtmlComparativo() : rcHtmlAno();
@@ -10166,6 +10186,7 @@ async function rcAbrirEdicaoRapida(id) {
 
   document.getElementById('rc-edit-data').textContent = s.data.split('-').reverse().join('/') + (s.lado ? ' · ' + s.lado : '');
   document.getElementById('rc-edit-nome').value = s.nome || '';
+  document.getElementById('rc-edit-hora').value = s.hora || '';
 
   const selTipo = document.getElementById('rc-edit-tipo');
   selTipo.innerHTML = '<option value="">— Selecionar —</option>' + Object.keys(RC_TIPO_LABEL).filter(v => v !== '').map(v => `<option value="${v}">${calEsc(RC_TIPO_LABEL[v])}</option>`).join('');
@@ -10193,11 +10214,12 @@ async function rcSalvarEdicaoRapida() {
   const id = overlay.dataset.sessaoId;
   if (!id) return;
   const nome = document.getElementById('rc-edit-nome').value.trim();
+  const hora = document.getElementById('rc-edit-hora').value;
   const tipo = document.getElementById('rc-edit-tipo').value;
   const linha = document.getElementById('rc-edit-linha').value;
   const tambor = document.getElementById('rc-edit-tambor').value;
   try {
-    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, tipo, linha, tambor }) });
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, hora, tipo, linha, tambor }) });
     if (!res.ok) throw new Error('falhou');
     // se o novo Tipo for Visita/Reunião, a sessão deixa de contar como
     // dados da casa — some do relatório em vez de só atualizar o tipo nela
@@ -10205,7 +10227,7 @@ async function rcSalvarEdicaoRapida() {
       rcSessoes = rcSessoes.filter(x => x.id !== id);
     } else {
       const s = rcSessoes.find(x => x.id === id);
-      if (s) { s.nome = nome; s.tipo = tipo; s.linha = linha; s.tambor = tambor; }
+      if (s) { s.nome = nome; s.hora = hora; s.tipo = tipo; s.linha = linha; s.tambor = tambor; }
     }
     rcFecharEdicaoRapida();
     showToast('Sessão atualizada ✓');
@@ -10236,6 +10258,7 @@ function rcHtmlAno() {
     <div class="rc-toggle-wrap">
       <button class="rc-toggle-btn" onclick="rcAlternarComparativo()">📈 Ver comparativo entre anos</button>
       <button class="rc-toggle-btn" onclick="rcAlternarTamborView()">🥁 Conferir pagamentos de Tambor</button>
+      <button class="rc-toggle-btn" onclick="rcAlternarRevisaoView()">📋 Revisar sessões do ano</button>
     </div>
 
     <div class="rc-stats-grid">
@@ -10345,6 +10368,44 @@ function rcHtmlTambor() {
     <p class="rc-sub">A Tesouraria só sabe quantas vezes teve tambor por mês, não em qual dia — compare com as sessões daquele mês pra marcar o dia certo.</p>
 
     ${blocosMes || `<p class="rc-vazio">Nenhum pagamento de Tambor nem sessão registrada em ${rcAno}</p>`}
+  `;
+}
+
+// lista o ano inteiro numa tabela só, com os campos que mais importam pra
+// revisar rápido (sobretudo o Horário, que não aparece em nenhuma outra
+// tabela do relatório) — clicar numa linha abre a mesma edição rápida de
+// sempre
+function rcHtmlRevisao() {
+  const anos = rcAnosDisponiveis();
+  const idx = anos.indexOf(rcAno);
+  const doAno = rcSessoes.filter(s => s.data.slice(0, 4) === rcAno).slice().sort((a, b) => a.data.localeCompare(b.data) || (a.hora || '').localeCompare(b.hora || ''));
+
+  const linhas = doAno.map(s => {
+    const dataFmt = s.data.split('-').reverse().join('/');
+    return `<tr data-rc-sessao-id="${calEsc(s.id)}">
+      <td>${dataFmt}</td>
+      <td>${calEsc(s.hora || '—')}</td>
+      <td>${calEsc(s.nome || '—')}</td>
+      <td>${calEsc(RC_TIPO_LABEL[s.tipo || ''] || s.tipo)}</td>
+      <td>${calEsc(s.lado || '—')}</td>
+      <td>${calEsc(rcLinhaLabel(s.linha))}</td>
+      <td>${calEsc(RC_TAMBOR_LABEL[s.tambor || ''] || s.tambor)}</td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="rc-topo">
+      <button class="rc-ano-btn" onclick="rcMudarAno(-1)" ${idx <= 0 ? 'disabled' : ''}>‹</button>
+      <div class="rc-titulo">Revisar sessões — ${rcAno}</div>
+      <button class="rc-ano-btn" onclick="rcMudarAno(1)" ${idx >= anos.length - 1 ? 'disabled' : ''}>›</button>
+    </div>
+    <div class="rc-toggle-wrap"><button class="rc-toggle-btn ativo" onclick="rcAlternarRevisaoView()">📊 Voltar pro relatório</button></div>
+    <p class="rc-sub">${doAno.length} sessão(ões) em ${rcAno} — clique numa linha pra editar.</p>
+
+    <div class="rc-chart-card"><div class="rc-tabela-wrap"><table class="rc-tabela rc-tabela-clicavel" id="rc-tabela-revisao">
+      <tr><th>Data</th><th>Horário</th><th>Nome</th><th>Tipo</th><th>Lado</th><th>Linha</th><th>Tambor</th></tr>
+      ${linhas || `<tr><td colspan="7" style="text-align:center;color:var(--text-dim)">Nenhuma sessão em ${rcAno}</td></tr>`}
+    </table></div></div>
   `;
 }
 
