@@ -9928,6 +9928,8 @@ window.calImportarCalendario2027 = calImportarCalendario2027;
 let rcSessoes = [];
 let rcAno = null;
 let rcComparativo = false;
+let rcTamborView = false;
+let rcLancamentos = null; // lançamentos da Tesouraria, carregados sob demanda só quando abre a conferência de Tambor
 let rcCharts = {};
 
 const RC_TIPO_LABEL = { Interna: 'Interna (fechada)', Atendimento: 'Atendimento (aberta)', Visita: 'Visita', Familia: 'Família', Reuniao: 'Reunião', '': 'Sem tipo' };
@@ -9986,7 +9988,48 @@ function rcMudarAno(delta) {
 
 function rcAlternarComparativo() {
   rcComparativo = !rcComparativo;
+  rcTamborView = false;
   rcRender();
+}
+
+// pagamentos de Tambor só existem na Tesouraria (outro namespace do KV) —
+// busca só quando a admin realmente abre a conferência, não em todo
+// carregamento do relatório, e guarda em cache (todos os anos de uma vez,
+// filtrado por ano na hora de montar a tabela) pra não buscar de novo
+// toda vez que ela troca de ano com a view já aberta
+async function rcCarregarLancamentos() {
+  if (rcLancamentos) return rcLancamentos;
+  try {
+    const res = await fetch('/api/dados?chave=lancamentos');
+    const dados = await res.json();
+    rcLancamentos = Array.isArray(dados) ? dados : [];
+  } catch (e) {
+    rcLancamentos = [];
+  }
+  return rcLancamentos;
+}
+
+function rcAlternarTamborView() {
+  rcTamborView = !rcTamborView;
+  rcComparativo = false;
+  rcRender();
+}
+
+// grava o Tambor marcado direto na sessão (mesmo PUT /api/sessoes do
+// formulário de edição) e atualiza só aquela linha, sem recarregar a
+// lista inteira nem perder a posição de rolagem
+async function rcMarcarTambor(id, valor) {
+  const linha = document.querySelector(`tr[data-rc-sessao="${CSS.escape(id)}"]`);
+  try {
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, tambor: valor }) });
+    if (!res.ok) throw new Error('falhou');
+    const s = rcSessoes.find(x => x.id === id);
+    if (s) s.tambor = valor;
+    if (linha) { linha.style.background = 'rgba(42,122,96,.14)'; setTimeout(() => { linha.style.background = ''; }, 900); }
+    showToast('Tambor atualizado ✓');
+  } catch (e) {
+    showToast('Não consegui salvar — tenta de novo', true);
+  }
 }
 
 function rcRender() {
@@ -9994,6 +10037,11 @@ function rcRender() {
   if (!conteudo) return;
   Object.keys(rcCharts).forEach(k => { try { rcCharts[k].destroy(); } catch (e) {} });
   rcCharts = {};
+  if (rcTamborView) {
+    conteudo.innerHTML = '<div class="rc-vazio">Carregando pagamentos da Tesouraria...</div>';
+    rcCarregarLancamentos().then(() => { conteudo.innerHTML = rcHtmlTambor(); });
+    return;
+  }
   conteudo.innerHTML = rcComparativo ? rcHtmlComparativo() : rcHtmlAno();
   if (typeof Chart === 'undefined') {
     conteudo.insertAdjacentHTML('beforeend', '<p class="rc-vazio">Não consegui carregar os gráficos agora (sem internet?) — os números acima continuam certos.</p>');
@@ -10033,7 +10081,10 @@ function rcHtmlAno() {
       <button class="rc-ano-btn" onclick="rcMudarAno(1)" ${idx >= anos.length - 1 ? 'disabled' : ''}>›</button>
     </div>
     <p class="rc-sub">${total} sessão(ões) registrada(s) em ${rcAno}</p>
-    <div class="rc-toggle-wrap"><button class="rc-toggle-btn" onclick="rcAlternarComparativo()">📈 Ver comparativo entre anos</button></div>
+    <div class="rc-toggle-wrap">
+      <button class="rc-toggle-btn" onclick="rcAlternarComparativo()">📈 Ver comparativo entre anos</button>
+      <button class="rc-toggle-btn" onclick="rcAlternarTamborView()">🥁 Conferir pagamentos de Tambor</button>
+    </div>
 
     <div class="rc-stats-grid">
       <div class="rc-stat-card"><div class="rc-stat-label">Total de sessões</div><div class="rc-stat-valor">${total}</div></div>
@@ -10056,6 +10107,68 @@ function rcHtmlAno() {
 
     <div class="rc-sec-title">Frequência ao longo do ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-mes"></canvas></div></div>
+  `;
+}
+
+// conferência manual entre o que a Tesouraria registrou de Tambor (por mês
+// + tipo, sem saber o dia exato) e os dias da agenda daquele ano — pra
+// admin marcar, sessão por sessão, qual teve tambor de verdade, deixando
+// o Relatório do Calendário mais preciso
+function rcHtmlTambor() {
+  const anos = rcAnosDisponiveis();
+  const idx = anos.indexOf(rcAno);
+  const doAno = rcSessoes.filter(s => s.data.slice(0, 4) === rcAno).slice().sort((a, b) => a.data.localeCompare(b.data));
+  const lancTambor = (rcLancamentos || []).filter(l => l && l.conta === 'Tambor' && (l.data || '').slice(0, 4) === rcAno);
+
+  const porMes = {};
+  lancTambor.forEach(l => {
+    const mes = (l.data || '').slice(5, 7);
+    if (!mes) return;
+    if (!porMes[mes]) porMes[mes] = { umbanda: 0, quimbanda: 0 };
+    if (l.tipoTambor === 'umbanda' || l.tipoTambor === 'quimbanda') porMes[mes][l.tipoTambor] += (l.quantidade || 1);
+  });
+  const linhasPagamentos = Object.keys(porMes).sort().map(mes => {
+    const m = porMes[mes];
+    const partes = [];
+    if (m.umbanda) partes.push(`Umbanda ${m.umbanda}x`);
+    if (m.quimbanda) partes.push(`Quimbanda ${m.quimbanda}x`);
+    return `<tr><td>${RC_MESES_CURTO[parseInt(mes, 10) - 1] || mes}</td><td>${partes.join(' · ') || '—'}</td></tr>`;
+  }).join('');
+
+  const linhasSessoes = doAno.map(s => {
+    const dataFmt = s.data.split('-').reverse().join('/');
+    const opcoes = Object.keys(RC_TAMBOR_LABEL).map(v =>
+      `<option value="${v}" ${(s.tambor || '') === v ? 'selected' : ''}>${calEsc(RC_TAMBOR_LABEL[v])}</option>`
+    ).join('');
+    return `<tr data-rc-sessao="${calEsc(s.id)}">
+      <td>${dataFmt}</td>
+      <td>${calEsc(s.nome || '—')}</td>
+      <td>${calEsc(s.lado || '—')}</td>
+      <td><select onchange="rcMarcarTambor('${s.id}', this.value)" style="font-family:'Crimson Pro',serif;font-size:.78rem;padding:3px 4px;border-radius:5px;border:1px solid var(--border)">${opcoes}</select></td>
+    </tr>`;
+  }).join('');
+
+  return `
+    <div class="rc-topo">
+      <button class="rc-ano-btn" onclick="rcMudarAno(-1)" ${idx <= 0 ? 'disabled' : ''}>‹</button>
+      <div class="rc-titulo">Conferir Tambor — ${rcAno}</div>
+      <button class="rc-ano-btn" onclick="rcMudarAno(1)" ${idx >= anos.length - 1 ? 'disabled' : ''}>›</button>
+    </div>
+    <div class="rc-toggle-wrap"><button class="rc-toggle-btn ativo" onclick="rcAlternarTamborView()">📊 Voltar pro relatório</button></div>
+
+    <div class="rc-sec-title">Pagamentos de Tambor registrados na Tesouraria</div>
+    <div class="rc-chart-card"><div class="rc-tabela-wrap"><table class="rc-tabela">
+      <tr><th>Mês</th><th>Registrado</th></tr>
+      ${linhasPagamentos || `<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">Nenhum pagamento de Tambor lançado em ${rcAno}</td></tr>`}
+    </table></div></div>
+
+    <p class="rc-sub">A Tesouraria só sabe quantas vezes teve tambor por mês, não em qual dia — use a lista abaixo pra marcar o dia certo em cada sessão.</p>
+
+    <div class="rc-sec-title">Dias da agenda em ${rcAno}</div>
+    <div class="rc-chart-card"><div class="rc-tabela-wrap"><table class="rc-tabela">
+      <tr><th>Data</th><th>Sessão</th><th>Lado</th><th>Tambor</th></tr>
+      ${linhasSessoes || `<tr><td colspan="4" style="text-align:center;color:var(--text-dim)">Nenhuma sessão em ${rcAno}</td></tr>`}
+    </table></div></div>
   `;
 }
 
