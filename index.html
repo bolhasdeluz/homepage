@@ -4144,6 +4144,22 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- edição rápida de uma sessão, aberta ao clicar numa data na lista de
+     detalhe do Relatório do Calendário (ver rcAbrirEdicaoRapida) — só os
+     campos úteis pra essa conferência (Nome, Linha, Tambor), não o
+     formulário inteiro do Calendário -->
+<div id="rc-edit-overlay" class="overlay" onclick="if(event.target===this)rcFecharEdicaoRapida()">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="rcFecharEdicaoRapida()">×</button>
+    <div class="modal-title">Editar sessão</div>
+    <div class="modal-sub" id="rc-edit-data"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Nome</label><input type="text" class="form-input" id="rc-edit-nome" style="margin-bottom:0"></div>
+    <div style="margin-bottom:12px"><label class="form-label">Linha de trabalho</label><select class="form-input" id="rc-edit-linha" style="margin-bottom:0"></select></div>
+    <div style="margin-bottom:20px"><label class="form-label">Tambor</label><select class="form-input" id="rc-edit-tambor" style="margin-bottom:0"></select></div>
+    <button class="btn-rosa" style="width:100%;text-align:center" onclick="rcSalvarEdicaoRapida()">Salvar</button>
+  </div>
+</div>
+
 <!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
      organizados por categoria/palavra-chave/data, com linha do tempo como
      visualização principal. Visibilidade por grupo igual sessões/menu. -->
@@ -10099,12 +10115,65 @@ function rcLinhaDetalhe(label) {
     .slice().sort((a, b) => a.data.localeCompare(b.data));
   const linhasHtml = doAno.map(s => {
     const dataFmt = s.data.split('-').reverse().join('/');
-    return `<tr><td>${dataFmt}</td><td>${calEsc(s.nome || '—')}</td></tr>`;
+    return `<tr data-rc-sessao-id="${calEsc(s.id)}"><td>${dataFmt}</td><td>${calEsc(s.nome || '—')} ▸</td></tr>`;
   }).join('');
-  el.innerHTML = `<div class="rc-tabela-wrap" style="margin-top:10px"><table class="rc-tabela">
+  el.innerHTML = `<div class="rc-tabela-wrap" style="margin-top:10px"><table class="rc-tabela rc-tabela-clicavel">
     <tr><th colspan="2">${calEsc(label)} — ${doAno.length} sessão(ões) em ${rcAno}</th></tr>
     ${linhasHtml || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">Nenhuma sessão</td></tr>'}
   </table></div>`;
+  const tabela = el.querySelector('table');
+  if (tabela) tabela.addEventListener('click', (ev) => {
+    const tr = ev.target.closest('tr[data-rc-sessao-id]');
+    if (tr) rcAbrirEdicaoRapida(tr.dataset.rcSessaoId);
+  });
+}
+
+// popup de edição rápida, aberto ao clicar numa sessão na lista de detalhe
+// — só os campos úteis pra essa conferência (Nome, Linha, Tambor), não o
+// formulário inteiro do Calendário
+async function rcAbrirEdicaoRapida(id) {
+  const s = rcSessoes.find(x => x.id === id);
+  if (!s) return;
+  if (!calLinhas.length) await calCarregarLinhas();
+
+  document.getElementById('rc-edit-data').textContent = s.data.split('-').reverse().join('/') + (s.lado ? ' · ' + s.lado : '');
+  document.getElementById('rc-edit-nome').value = s.nome || '';
+
+  const selLinha = document.getElementById('rc-edit-linha');
+  selLinha.innerHTML = '<option value="">— Nenhuma —</option>' + calLinhas.map(l => `<option value="${calEsc(l)}">${calEsc(l)}</option>`).join('');
+  selLinha.value = (s.linha && calLinhas.includes(s.linha)) ? s.linha : '';
+
+  const selTambor = document.getElementById('rc-edit-tambor');
+  selTambor.innerHTML = Object.keys(RC_TAMBOR_LABEL).map(v => `<option value="${v}">${calEsc(RC_TAMBOR_LABEL[v])}</option>`).join('');
+  selTambor.value = s.tambor || '';
+
+  const overlay = document.getElementById('rc-edit-overlay');
+  overlay.dataset.sessaoId = id;
+  overlay.classList.add('open');
+}
+
+function rcFecharEdicaoRapida() {
+  document.getElementById('rc-edit-overlay').classList.remove('open');
+}
+
+async function rcSalvarEdicaoRapida() {
+  const overlay = document.getElementById('rc-edit-overlay');
+  const id = overlay.dataset.sessaoId;
+  if (!id) return;
+  const nome = document.getElementById('rc-edit-nome').value.trim();
+  const linha = document.getElementById('rc-edit-linha').value;
+  const tambor = document.getElementById('rc-edit-tambor').value;
+  try {
+    const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, nome, linha, tambor }) });
+    if (!res.ok) throw new Error('falhou');
+    const s = rcSessoes.find(x => x.id === id);
+    if (s) { s.nome = nome; s.linha = linha; s.tambor = tambor; }
+    rcFecharEdicaoRapida();
+    showToast('Sessão atualizada ✓');
+    rcRender();
+  } catch (e) {
+    showToast('Não consegui salvar — tenta de novo', true);
+  }
 }
 
 function rcHtmlAno() {
