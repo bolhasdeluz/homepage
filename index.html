@@ -10240,38 +10240,73 @@ function rcHtmlAno() {
 // + tipo, sem saber o dia exato) e os dias da agenda daquele ano — pra
 // admin marcar, sessão por sessão, qual teve tambor de verdade, deixando
 // o Relatório do Calendário mais preciso
+// cartão com Umbanda e Quimbanda lado a lado (não um texto só concatenado) —
+// usado tanto no resumo de cada mês quanto, se precisar, em qualquer outro
+// lugar que precise mostrar esses dois números juntos
+function rcCartaoUmbandaQuimbanda(umbanda, quimbanda) {
+  return `<div style="display:flex;gap:8px;margin-bottom:10px">
+    <div style="flex:1;text-align:center;padding:8px;background:var(--rosa-dim);border-radius:8px">
+      <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim)">Umbanda</div>
+      <div style="font-size:1.1rem;font-weight:600;color:var(--text)">${umbanda}x</div>
+    </div>
+    <div style="flex:1;text-align:center;padding:8px;background:var(--rosa-dim);border-radius:8px">
+      <div style="font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim)">Quimbanda</div>
+      <div style="font-size:1.1rem;font-weight:600;color:var(--text)">${quimbanda}x</div>
+    </div>
+  </div>`;
+}
+
+// organizado mês a mês (em vez de duas tabelas longas e separadas) — cada
+// bloco mostra, pro mesmo mês, o que a Tesouraria registrou (Umbanda e
+// Quimbanda lado a lado) e logo abaixo as sessões daquele mês com o select
+// de Tambor, pra comparar os dois sem precisar rolar pra lá e pra cá
 function rcHtmlTambor() {
   const anos = rcAnosDisponiveis();
   const idx = anos.indexOf(rcAno);
   const doAno = rcSessoes.filter(s => s.data.slice(0, 4) === rcAno).slice().sort((a, b) => a.data.localeCompare(b.data));
   const lancTambor = (rcLancamentos || []).filter(l => l && l.conta === 'Tambor' && (l.data || '').slice(0, 4) === rcAno);
 
-  const porMes = {};
+  const porMesPagamento = {};
   lancTambor.forEach(l => {
     const mes = (l.data || '').slice(5, 7);
     if (!mes) return;
-    if (!porMes[mes]) porMes[mes] = { umbanda: 0, quimbanda: 0 };
-    if (l.tipoTambor === 'umbanda' || l.tipoTambor === 'quimbanda') porMes[mes][l.tipoTambor] += (l.quantidade || 1);
+    if (!porMesPagamento[mes]) porMesPagamento[mes] = { umbanda: 0, quimbanda: 0 };
+    if (l.tipoTambor === 'umbanda' || l.tipoTambor === 'quimbanda') porMesPagamento[mes][l.tipoTambor] += (l.quantidade || 1);
   });
-  const linhasPagamentos = Object.keys(porMes).sort().map(mes => {
-    const m = porMes[mes];
-    const partes = [];
-    if (m.umbanda) partes.push(`Umbanda ${m.umbanda}x`);
-    if (m.quimbanda) partes.push(`Quimbanda ${m.quimbanda}x`);
-    return `<tr><td>${RC_MESES_CURTO[parseInt(mes, 10) - 1] || mes}</td><td>${partes.join(' · ') || '—'}</td></tr>`;
-  }).join('');
 
-  const linhasSessoes = doAno.map(s => {
-    const dataFmt = s.data.split('-').reverse().join('/');
-    const opcoes = Object.keys(RC_TAMBOR_LABEL).map(v =>
-      `<option value="${v}" ${(s.tambor || '') === v ? 'selected' : ''}>${calEsc(RC_TAMBOR_LABEL[v])}</option>`
-    ).join('');
-    return `<tr data-rc-sessao="${calEsc(s.id)}">
-      <td>${dataFmt}</td>
-      <td>${calEsc(s.nome || '—')}</td>
-      <td>${calEsc(s.lado || '—')}</td>
-      <td><select onchange="rcMarcarTambor('${s.id}', this.value)" style="font-family:'Crimson Pro',serif;font-size:.78rem;padding:3px 4px;border-radius:5px;border:1px solid var(--border)">${opcoes}</select></td>
-    </tr>`;
+  const porMesSessoes = {};
+  doAno.forEach(s => {
+    const mes = s.data.slice(5, 7);
+    if (!porMesSessoes[mes]) porMesSessoes[mes] = [];
+    porMesSessoes[mes].push(s);
+  });
+
+  const mesesComAlgo = Array.from(new Set([...Object.keys(porMesPagamento), ...Object.keys(porMesSessoes)])).sort();
+
+  const blocosMes = mesesComAlgo.map(mes => {
+    const pag = porMesPagamento[mes] || { umbanda: 0, quimbanda: 0 };
+    const sessoesDoMes = porMesSessoes[mes] || [];
+    const linhasSessoes = sessoesDoMes.map(s => {
+      const dataFmt = s.data.split('-').reverse().join('/');
+      const opcoes = Object.keys(RC_TAMBOR_LABEL).map(v =>
+        `<option value="${v}" ${(s.tambor || '') === v ? 'selected' : ''}>${calEsc(RC_TAMBOR_LABEL[v])}</option>`
+      ).join('');
+      return `<tr data-rc-sessao="${calEsc(s.id)}">
+        <td>${dataFmt}</td>
+        <td>${calEsc(s.nome || '—')}</td>
+        <td>${calEsc(s.lado || '—')}</td>
+        <td><select onchange="rcMarcarTambor('${s.id}', this.value)" style="font-family:'Crimson Pro',serif;font-size:.78rem;padding:3px 4px;border-radius:5px;border:1px solid var(--border)">${opcoes}</select></td>
+      </tr>`;
+    }).join('');
+    return `
+    <div class="rc-chart-card" style="margin-bottom:14px">
+      <div class="rc-sec-title" style="margin-top:0">${RC_MESES_CURTO[parseInt(mes, 10) - 1] || mes}</div>
+      ${rcCartaoUmbandaQuimbanda(pag.umbanda, pag.quimbanda)}
+      ${sessoesDoMes.length ? `<div class="rc-tabela-wrap"><table class="rc-tabela">
+        <tr><th>Data</th><th>Sessão</th><th>Lado</th><th>Tambor</th></tr>
+        ${linhasSessoes}
+      </table></div>` : '<p class="rc-vazio" style="padding:8px;text-align:center">Nenhuma sessão da agenda nesse mês</p>'}
+    </div>`;
   }).join('');
 
   return `
@@ -10281,20 +10316,9 @@ function rcHtmlTambor() {
       <button class="rc-ano-btn" onclick="rcMudarAno(1)" ${idx >= anos.length - 1 ? 'disabled' : ''}>›</button>
     </div>
     <div class="rc-toggle-wrap"><button class="rc-toggle-btn ativo" onclick="rcAlternarTamborView()">📊 Voltar pro relatório</button></div>
+    <p class="rc-sub">A Tesouraria só sabe quantas vezes teve tambor por mês, não em qual dia — compare com as sessões daquele mês pra marcar o dia certo.</p>
 
-    <div class="rc-sec-title">Pagamentos de Tambor registrados na Tesouraria</div>
-    <div class="rc-chart-card"><div class="rc-tabela-wrap"><table class="rc-tabela">
-      <tr><th>Mês</th><th>Registrado</th></tr>
-      ${linhasPagamentos || `<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">Nenhum pagamento de Tambor lançado em ${rcAno}</td></tr>`}
-    </table></div></div>
-
-    <p class="rc-sub">A Tesouraria só sabe quantas vezes teve tambor por mês, não em qual dia — use a lista abaixo pra marcar o dia certo em cada sessão.</p>
-
-    <div class="rc-sec-title">Dias da agenda em ${rcAno}</div>
-    <div class="rc-chart-card"><div class="rc-tabela-wrap"><table class="rc-tabela">
-      <tr><th>Data</th><th>Sessão</th><th>Lado</th><th>Tambor</th></tr>
-      ${linhasSessoes || `<tr><td colspan="4" style="text-align:center;color:var(--text-dim)">Nenhuma sessão em ${rcAno}</td></tr>`}
-    </table></div></div>
+    ${blocosMes || `<p class="rc-vazio">Nenhum pagamento de Tambor nem sessão registrada em ${rcAno}</p>`}
   `;
 }
 
