@@ -10407,6 +10407,24 @@ function rcMontarGraficosAno() {
   }
 }
 
+// tabela com os anos lado a lado (uma coluna por ano), em vez do gráfico
+// empilhado — pra quem quer o número exato de cada linha em cada ano sem
+// precisar ficar lendo a altura da barra
+function rcTabelaLinhaAnoAnoHtml() {
+  const anos = rcAnosDisponiveis();
+  const porLinhaTotal = rcContarPor(rcSessoes, s => rcLinhaLabel(s.linha));
+  const linhasOrdenadas = Object.keys(porLinhaTotal).sort((a, b) => porLinhaTotal[b] - porLinhaTotal[a]);
+  if (!linhasOrdenadas.length) return '<p class="rc-vazio" style="padding:14px">Nenhuma sessão registrada.</p>';
+  const porAno = anos.map(ano => rcSessoes.filter(s => s.data.slice(0, 4) === ano));
+  return `<div class="rc-tabela-wrap"><table class="rc-tabela">
+    <tr><th>Linha</th>${anos.map(a => `<th style="text-align:center">${a}</th>`).join('')}<th style="text-align:center">Total</th></tr>
+    ${linhasOrdenadas.map(linha => {
+      const contagemPorAno = porAno.map(l => l.filter(s => rcLinhaLabel(s.linha) === linha).length);
+      return `<tr><td>${calEsc(linha)}</td>${contagemPorAno.map(n => `<td style="text-align:center">${n || '—'}</td>`).join('')}<td style="text-align:center;font-weight:600">${porLinhaTotal[linha]}</td></tr>`;
+    }).join('')}
+  </table></div>`;
+}
+
 function rcHtmlComparativo() {
   const anos = rcAnosDisponiveis();
   return `
@@ -10425,6 +10443,9 @@ function rcHtmlComparativo() {
 
     <div class="rc-sec-title">Sessões por linha de trabalho — total</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-linha-total"></canvas></div>${rcTabelaClicavelHtml(rcContarPor(rcSessoes, s => rcLinhaLabel(s.linha)), rcSessoes.length, 'rc-tabela-linha-cmp')}<div id="rc-linha-detalhe-cmp"></div></div>
+
+    <div class="rc-sec-title">Sessões por linha de trabalho — ano a ano, lado a lado</div>
+    <div class="rc-chart-card">${rcTabelaLinhaAnoAnoHtml()}</div>
 
     <div class="rc-sec-title">% com tambor confirmado, por ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-tambor"></canvas></div></div>
