@@ -4458,6 +4458,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <p style="text-align:center;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:6px">Arraste um modelo pra um dia pra criar a sessão, ou clique num dia pra criar/editar na mão.</p>
     <div style="text-align:center;margin-bottom:14px">
       <button onclick="calImprimirCalendarioAnual()" style="background:none;border:none;color:var(--text-dim);font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;text-decoration:underline;cursor:pointer;padding:2px">🖨️ Exportar PDF do calendário</button>
+      <button id="cal-anual-btn-imagem" onclick="calExportarCalendarioImagem()" style="background:none;border:none;color:var(--text-dim);font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;text-decoration:underline;cursor:pointer;padding:2px;margin-left:10px">🖼️ Exportar como imagem</button>
     </div>
 
     <div class="cal-anual-legenda" id="cal-anual-legenda"></div>
@@ -10668,8 +10669,11 @@ function pcalNomeLimpo(nome) { return String(nome || '').replace(/\s*\(sem\s*ass
 // embaixo de cada mês — abre numa aba nova e chama print(), a pessoa
 // escolhe "Salvar como PDF" no diálogo de impressão do navegador, igual já
 // acontece com o talão da rifa (rifaImprimirTalao)
-function calImprimirCalendarioAnual() {
-  const ano = calAnualAno;
+// monta o HTML completo (cabeçalho + grade dos 12 meses + legenda), igual
+// tanto pra imprimir/gerar PDF (calImprimirCalendarioAnual) quanto pra
+// exportar como imagem (calExportarCalendarioImagem) — sempre um documento
+// HTML autossuficiente, pra poder ser escrito numa janela nova ou num iframe
+function pcalGerarHtmlCompleto(ano) {
   const feriados = calFeriadosDoAno(ano);
   const sessoesPorDia = {};
   // sessão com data alternativa (ainda "a confirmar" entre dois dias) entra
@@ -10797,6 +10801,11 @@ function calImprimirCalendarioAnual() {
       </div>
     </body></html>`;
 
+  return html;
+}
+
+function calImprimirCalendarioAnual() {
+  const html = pcalGerarHtmlCompleto(calAnualAno);
   const win = window.open('', '_blank');
   if (!win) { alert('O navegador bloqueou a janela de impressão — permite pop-ups pra esse site.'); return; }
   win.document.write(html);
@@ -10804,6 +10813,80 @@ function calImprimirCalendarioAnual() {
   setTimeout(() => win.print(), 400);
 }
 window.calImprimirCalendarioAnual = calImprimirCalendarioAnual;
+
+// carrega a html2canvas sob demanda (só quando a admin realmente pede pra
+// exportar como imagem) — mesmo padrão de fallback cdnjs→unpkg já usado
+// pro Chart.js no Relatório do Calendário
+function pcalCarregarHtml2Canvas() {
+  if (window.html2canvas) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+    s.onload = () => resolve();
+    s.onerror = () => {
+      const s2 = document.createElement('script');
+      s2.src = 'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s2.onload = () => resolve();
+      s2.onerror = () => reject(new Error('não consegui carregar html2canvas'));
+      document.head.appendChild(s2);
+    };
+    document.head.appendChild(s);
+  });
+}
+
+// o PDF (calImprimirCalendarioAnual) depende do navegador decidir onde
+// quebrar a página, e às vezes quebra no meio do calendário — essa versão
+// "fotografa" o calendário inteiro com a html2canvas e baixa como um PNG
+// só, em alta resolução (escala 3x), sem depender de paginação nenhuma
+async function calExportarCalendarioImagem() {
+  const btn = document.getElementById('cal-anual-btn-imagem');
+  const textoOriginal = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Gerando imagem...'; btn.disabled = true; }
+
+  const limpar = () => { if (btn) { btn.textContent = textoOriginal; btn.disabled = false; } };
+
+  try {
+    await pcalCarregarHtml2Canvas();
+  } catch (e) {
+    alert('Não consegui carregar a ferramenta de exportar imagem agora (sem internet?). Tenta de novo.');
+    limpar();
+    return;
+  }
+
+  const html = pcalGerarHtmlCompleto(calAnualAno);
+  const iframe = document.createElement('iframe');
+  iframe.style.cssText = 'position:fixed;left:-99999px;top:0;width:900px;height:1400px;border:0';
+  document.body.appendChild(iframe);
+
+  try {
+    await new Promise((resolve, reject) => {
+      iframe.onload = resolve;
+      iframe.onerror = reject;
+      iframe.srcdoc = html;
+    });
+    // tempinho pra fonte/imagem terminarem de carregar dentro do iframe
+    // antes de capturar — sem isso a imagem às vezes sai com a fonte errada
+    await new Promise(r => setTimeout(r, 400));
+
+    const alvo = iframe.contentDocument.querySelector('.pcal-pagina');
+    const canvas = await window.html2canvas(alvo, { scale: 3, backgroundColor: '#ffffff' });
+    await new Promise(resolve => {
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `calendario-${calAnualAno}-bolhas-de-luz.png`; a.click();
+        URL.revokeObjectURL(url);
+        resolve();
+      }, 'image/png');
+    });
+  } catch (e) {
+    alert('Não consegui gerar a imagem agora — tenta de novo.');
+  } finally {
+    document.body.removeChild(iframe);
+    limpar();
+  }
+}
+window.calExportarCalendarioImagem = calExportarCalendarioImagem;
 
 function calAnualRender() {
   const grade = document.getElementById('cal-anual-grade');
