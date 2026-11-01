@@ -10308,6 +10308,9 @@ function rcHtmlComparativo() {
     <div class="rc-sec-title">Sessões por lado, ano a ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap" style="height:280px"><canvas id="rc-chart-cmp-lado"></canvas></div></div>
 
+    <div class="rc-sec-title">Sessões por linha de trabalho, ano a ano</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap" style="height:280px"><canvas id="rc-chart-cmp-linha"></canvas></div></div>
+
     <div class="rc-sec-title">% com tambor confirmado, por ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-tambor"></canvas></div></div>
 
@@ -10339,6 +10342,25 @@ function rcMontarGraficosComparativo() {
         datasets: todosLados.map(lado => ({
           label: lado, data: porAno.map(l => l.filter(s => (s.lado || 'Sem lado') === lado).length),
           backgroundColor: CAL_LADO_COR[lado] || '#c9b8bc', borderRadius: 3
+        }))
+      },
+      options: rcFonteOpcoes({
+        plugins: { legend: { display: true, labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+        scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } } }
+      })
+    });
+  }
+
+  const todasLinhas = Array.from(new Set(rcSessoes.map(s => rcLinhaLabel(s.linha))));
+  const ctxLinha = document.getElementById('rc-chart-cmp-linha');
+  if (ctxLinha) {
+    rcCharts.cmpLinha = new Chart(ctxLinha, {
+      type: 'bar',
+      data: {
+        labels: anos,
+        datasets: todasLinhas.map(linha => ({
+          label: linha, data: porAno.map(l => l.filter(s => rcLinhaLabel(s.linha) === linha).length),
+          backgroundColor: rcLinhaCor(linha === 'Sem linha' ? '' : linha), borderRadius: 3
         }))
       },
       options: rcFonteOpcoes({
