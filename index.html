@@ -10091,20 +10091,25 @@ function rcTabelaHtml(contagem, total) {
 // data-rc-linha em vez de onclick inline, pra não quebrar se o nome da
 // linha tiver aspas) — clicar mostra as datas daquela categoria em
 // #rc-linha-detalhe, ver rcLinhaDetalhe()
-function rcTabelaClicavelHtml(contagem, total) {
+function rcTabelaClicavelHtml(contagem, total, tabelaId) {
   const linhas = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
   if (!linhas.length) return '<p class="rc-vazio" style="padding:14px">Nenhuma sessão nesse período.</p>';
-  return `<div class="rc-tabela-wrap"><table class="rc-tabela rc-tabela-clicavel">
+  const idAttr = tabelaId ? ` id="${tabelaId}"` : '';
+  return `<div class="rc-tabela-wrap"><table class="rc-tabela rc-tabela-clicavel"${idAttr}>
     <tr><th>Tipo</th><th>Qtde.</th><th>%</th></tr>
     ${linhas.map(k => `<tr data-rc-linha="${calEsc(k)}"><td>${calEsc(k)} ▸</td><td>${contagem[k]}</td><td>${total ? Math.round(contagem[k] / total * 100) : 0}%</td></tr>`).join('')}
   </table></div>`;
 }
 
 // mostra (ou esconde, se clicar de novo na mesma) as datas das sessões
-// daquela linha/categoria no ano atual — chamada tanto pelo clique na
-// tabela quanto pelo clique numa barra do gráfico
-function rcLinhaDetalhe(label) {
-  const el = document.getElementById('rc-linha-detalhe');
+// daquela linha/categoria — chamada tanto pelo clique na tabela quanto pelo
+// clique numa barra do gráfico. Por padrão olha só o ano atual (rcAno) e
+// escreve em #rc-linha-detalhe (visão de um ano); passando
+// todosOsAnos:true (visão comparativa) ignora o ano e escreve no elId
+// indicado, pra não conflitar com o detalhe da outra visão
+function rcLinhaDetalhe(label, opts) {
+  const { elId = 'rc-linha-detalhe', todosOsAnos = false } = opts || {};
+  const el = document.getElementById(elId);
   if (!el) return;
   if (el.dataset.linhaAtual === label) {
     el.innerHTML = '';
@@ -10112,15 +10117,16 @@ function rcLinhaDetalhe(label) {
     return;
   }
   el.dataset.linhaAtual = label;
-  const doAno = rcSessoes
-    .filter(s => s.data.slice(0, 4) === rcAno && rcLinhaLabel(s.linha) === label)
+  const lista = rcSessoes
+    .filter(s => (todosOsAnos || s.data.slice(0, 4) === rcAno) && rcLinhaLabel(s.linha) === label)
     .slice().sort((a, b) => a.data.localeCompare(b.data));
-  const linhasHtml = doAno.map(s => {
+  const linhasHtml = lista.map(s => {
     const dataFmt = s.data.split('-').reverse().join('/');
     return `<tr data-rc-sessao-id="${calEsc(s.id)}"><td>${dataFmt}</td><td>${calEsc(s.nome || '—')} ▸</td></tr>`;
   }).join('');
+  const tituloSufixo = todosOsAnos ? `${lista.length} sessão(ões) em todos os anos` : `${lista.length} sessão(ões) em ${rcAno}`;
   el.innerHTML = `<div class="rc-tabela-wrap" style="margin-top:10px"><table class="rc-tabela rc-tabela-clicavel">
-    <tr><th colspan="2">${calEsc(label)} — ${doAno.length} sessão(ões) em ${rcAno}</th></tr>
+    <tr><th colspan="2">${calEsc(label)} — ${tituloSufixo}</th></tr>
     ${linhasHtml || '<tr><td colspan="2" style="text-align:center;color:var(--text-dim)">Nenhuma sessão</td></tr>'}
   </table></div>`;
   const tabela = el.querySelector('table');
@@ -10417,6 +10423,9 @@ function rcHtmlComparativo() {
     <div class="rc-sec-title">Sessões por linha de trabalho, ano a ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap" style="height:280px"><canvas id="rc-chart-cmp-linha"></canvas></div></div>
 
+    <div class="rc-sec-title">Sessões por linha de trabalho — total</div>
+    <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-linha-total"></canvas></div>${rcTabelaClicavelHtml(rcContarPor(rcSessoes, s => rcLinhaLabel(s.linha)), rcSessoes.length, 'rc-tabela-linha-cmp')}<div id="rc-linha-detalhe-cmp"></div></div>
+
     <div class="rc-sec-title">% com tambor confirmado, por ano</div>
     <div class="rc-chart-card"><div class="rc-chart-wrap"><canvas id="rc-chart-cmp-tambor"></canvas></div></div>
 
@@ -10473,6 +10482,29 @@ function rcMontarGraficosComparativo() {
         plugins: { legend: { display: true, labels: { font: { family: 'DM Sans', size: 10 }, boxWidth: 12 } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
         scales: { x: { stacked: true, ticks: { font: { size: 10 } } }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } } }
       })
+    });
+  }
+
+  const porLinhaTotal = rcContarPor(rcSessoes, s => rcLinhaLabel(s.linha));
+  const linhaTotalLabels = Object.keys(porLinhaTotal).sort((a, b) => porLinhaTotal[b] - porLinhaTotal[a]);
+  const ctxLinhaTotal = document.getElementById('rc-chart-cmp-linha-total');
+  if (ctxLinhaTotal) {
+    rcCharts.cmpLinhaTotal = new Chart(ctxLinhaTotal, {
+      type: 'bar',
+      data: { labels: linhaTotalLabels, datasets: [{ data: linhaTotalLabels.map(l => porLinhaTotal[l]), backgroundColor: linhaTotalLabels.map(l => rcLinhaCor(l === 'Sem linha' ? '' : l)), borderRadius: 4 }] },
+      options: rcFonteOpcoes({
+        indexAxis: 'y',
+        onClick: (evt, elements) => { if (elements.length) rcLinhaDetalhe(linhaTotalLabels[elements[0].index], { elId: 'rc-linha-detalhe-cmp', todosOsAnos: true }); },
+        scales: { x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } }, y: { ticks: { font: { size: 11, family: 'DM Sans' } } } }
+      })
+    });
+  }
+  const tabelaLinhaCmp = document.getElementById('rc-tabela-linha-cmp');
+  if (tabelaLinhaCmp && !tabelaLinhaCmp.dataset.rcLigada) {
+    tabelaLinhaCmp.dataset.rcLigada = '1';
+    tabelaLinhaCmp.addEventListener('click', (ev) => {
+      const tr = ev.target.closest('tr[data-rc-linha]');
+      if (tr) rcLinhaDetalhe(tr.dataset.rcLinha, { elId: 'rc-linha-detalhe-cmp', todosOsAnos: true });
     });
   }
 
