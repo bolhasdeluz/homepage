@@ -9953,7 +9953,10 @@ window.rcCarregar = async function() {
   try {
     const res = await fetch('/api/sessoes');
     const dados = await res.json();
-    rcSessoes = Array.isArray(dados) ? dados.filter(s => s && s.data) : [];
+    // sessão de Visita (Tipo = "Sessão de Visita") é a casa indo visitar
+    // outro terreiro — não é uma sessão da própria casa, então fica de
+    // fora de todo o relatório (contagens, gráficos, comparativos...)
+    rcSessoes = Array.isArray(dados) ? dados.filter(s => s && s.data && s.tipo !== 'Visita') : [];
   } catch (e) {
     rcSessoes = [];
   }
