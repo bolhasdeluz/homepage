@@ -62,6 +62,10 @@ export async function onRequest(context) {
         // marcada como "a confirmar", até alguém escolher uma (ver calConfirmarDia)
         dataAlternativa: body.dataAlternativa || '',
         hora: body.hora || '',
+        // horário próprio da data alternativa, só quando diferente do
+        // principal (ex: sexta às 20:30 ou sábado de manhã) — vazio usa o
+        // mesmo horário do campo "hora" em ambas as datas, ver gcalEventoDe
+        horaAlternativa: body.horaAlternativa || '',
         tipo: body.tipo || '',
         lado: body.lado || '',
         // linha de trabalho (Caboclo, Preto Velho, Exu, Cigano...) —
@@ -342,8 +346,11 @@ function gcalEventoDe(sessao, dataAlvo, tentativa, ehAlternativa) {
     description: (nota + corpo) || undefined,
     status: tentativa ? 'tentative' : 'confirmed',
   };
-  if (sessao.hora) {
-    const inicio = new Date(`${dataAlvo}T${sessao.hora}:00`);
+  // a data alternativa pode ter um horário próprio (ex: sexta às 20:30 ou
+  // sábado de manhã) — sem um definido, usa o mesmo horário da data principal
+  const horaAlvo = ehAlternativa ? (sessao.horaAlternativa || sessao.hora) : sessao.hora;
+  if (horaAlvo) {
+    const inicio = new Date(`${dataAlvo}T${horaAlvo}:00`);
     const fim = new Date(inicio.getTime() + 3 * 60 * 60 * 1000);
     const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}T${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:00`;
     evento.start = { dateTime: fmt(inicio), timeZone: 'America/Sao_Paulo' };

@@ -4401,6 +4401,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <input type="date" class="form-input" id="cal-fDataAlt">
         <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-top:4px">Preenchendo aqui, a sessão fica "a confirmar" entre as duas datas — nos dois lugares (calendário, agenda do Google, impressão) — até você escolher uma.</div>
       </div>
+      <div style="margin-bottom:12px">
+        <label class="form-label">Horário da data alternativa (opcional — só se for diferente do horário principal)</label>
+        <input type="time" class="form-input" id="cal-fHoraAlt">
+      </div>
       <div style="margin-bottom:12px"><label class="form-label">Marco de Obrigações/Cruzamento (opcional)</label>
         <select class="form-input" id="cal-fMarco" style="margin-bottom:0">
           <option value="">— Nenhum —</option>
@@ -7432,7 +7436,7 @@ function calRenderLista() {
         </div>
         <div class="cal-card-meta">
           <span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>
-          ${s.dataAlternativa ? `<span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:#fff3d6;color:#8a6020;border:1px dashed #c89a3f">❓ a confirmar: ${calFmtDiaSemana(s.data)} ou ${calFmtDiaSemana(s.dataAlternativa)}</span>` : ''}
+          ${s.dataAlternativa ? `<span style="font-size:.72rem;padding:2px 8px;border-radius:20px;background:#fff3d6;color:#8a6020;border:1px dashed #c89a3f">❓ a confirmar: ${calFmtDiaSemana(s.data)}${s.horaAlternativa ? ` (${s.hora||'—'})` : ''} ou ${calFmtDiaSemana(s.dataAlternativa)}${s.horaAlternativa ? ` (${s.horaAlternativa})` : ''}</span>` : ''}
           ${isLogada && s.tambor ? `<span class="cal-tambor-badge">${CAL_TAMBOR[s.tambor]||''}</span>` : ''}
           ${isLogada && s.responsavel ? `<span style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic">Resp.: ${calEsc(s.responsavel)}</span>` : ''}
         </div>
@@ -7539,6 +7543,7 @@ async function calOpenModal() {
   calRenderOpcoesLinha('');
   document.getElementById('cal-fData').value = calDiaSelecionado || calFmtDate(new Date());
   document.getElementById('cal-fDataAlt').value = '';
+  document.getElementById('cal-fHoraAlt').value = '';
   document.getElementById('cal-fHora').value = '20:30';
   document.getElementById('cal-fTipo').value = '';
   document.getElementById('cal-fLado').value = '';
@@ -7563,6 +7568,7 @@ function calOpenEdit(id) {
   calRenderOpcoesLinha(s.linha || '');
   document.getElementById('cal-fData').value = s.data || '';
   document.getElementById('cal-fDataAlt').value = s.dataAlternativa || '';
+  document.getElementById('cal-fHoraAlt').value = s.horaAlternativa || '';
   document.getElementById('cal-fHora').value = s.hora || '';
   document.getElementById('cal-fTipo').value = s.tipo || '';
   document.getElementById('cal-fLado').value = s.lado || '';
@@ -7577,8 +7583,10 @@ function calOpenEdit(id) {
   const confirmarWrap = document.getElementById('cal-confirmar-dia-wrap');
   if (s.dataAlternativa) {
     confirmarWrap.style.display = 'block';
-    document.getElementById('cal-btn-confirmar-principal').textContent = `✓ Confirmar ${calFmtDiaSemana(s.data)}`;
-    document.getElementById('cal-btn-confirmar-alternativa').textContent = `✓ Confirmar ${calFmtDiaSemana(s.dataAlternativa)}`;
+    const sufixoPrincipal = s.horaAlternativa && s.hora ? ` (${s.hora})` : '';
+    const sufixoAlt = s.horaAlternativa ? ` (${s.horaAlternativa})` : '';
+    document.getElementById('cal-btn-confirmar-principal').textContent = `✓ Confirmar ${calFmtDiaSemana(s.data)}${sufixoPrincipal}`;
+    document.getElementById('cal-btn-confirmar-alternativa').textContent = `✓ Confirmar ${calFmtDiaSemana(s.dataAlternativa)}${sufixoAlt}`;
   } else {
     confirmarWrap.style.display = 'none';
   }
@@ -7601,7 +7609,10 @@ async function calConfirmarDia(ehPrincipal) {
   const s = calSessoes.find(x => x.id === id);
   if (!s || !s.dataAlternativa) return;
   const diaEscolhido = ehPrincipal ? s.data : s.dataAlternativa;
-  const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, data: diaEscolhido, dataAlternativa: '' }) });
+  // se o dia vencedor foi o alternativo e ele tinha um horário próprio,
+  // esse horário vira o principal — senão mantém o horário que já tinha
+  const horaEscolhida = ehPrincipal ? s.hora : (s.horaAlternativa || s.hora);
+  const res = await fetch(CAL_API, { method: 'PUT', headers: CAL_ADMIN_HEADERS, body: JSON.stringify({ id, data: diaEscolhido, dataAlternativa: '', hora: horaEscolhida, horaAlternativa: '' }) });
   if (!res.ok) { alert('Não consegui confirmar o dia — tenta de novo.'); return; }
   const json = await res.json();
   const idx = calSessoes.findIndex(x => x.id === id);
@@ -9169,7 +9180,7 @@ async function calPreencherInfoModal(s, mostrarLinkCalendario) {
   document.getElementById('cal-info-titulo').textContent = s.nome || '';
   const subBase = `${dow}, ${sd}/${sm}` + (s.hora ? ` às ${s.hora}` : '');
   document.getElementById('cal-info-sub').textContent = s.dataAlternativa
-    ? `❓ Ainda a confirmar: ${calFmtDiaSemana(s.data)} ou ${calFmtDiaSemana(s.dataAlternativa)}`
+    ? `❓ Ainda a confirmar: ${calFmtDiaSemana(s.data)}${s.horaAlternativa ? ` (${s.hora||'—'})` : ''} ou ${calFmtDiaSemana(s.dataAlternativa)}${s.horaAlternativa ? ` (${s.horaAlternativa})` : ''}`
     : subBase;
 
   let meta = `<span class="cal-tipo-badge">${CAL_TIPO_LABEL[s.tipo]||s.tipo||''}</span>`;
@@ -9227,6 +9238,7 @@ async function calSalvar() {
   const payload = { nome, data,
     dataAlternativa: document.getElementById('cal-fDataAlt').value || '',
     hora: document.getElementById('cal-fHora').value,
+    horaAlternativa: document.getElementById('cal-fHoraAlt').value || '',
     tipo, lado: document.getElementById('cal-fLado').value,
     linha: document.getElementById('cal-fLinha').value === '__nova__' ? '' : document.getElementById('cal-fLinha').value,
     endereco: document.getElementById('cal-fEndereco').value.trim(),
