@@ -7757,14 +7757,33 @@ async function rifaLoad() {
   document.getElementById('rf-carregando').style.display = '';
   document.getElementById('rf-vazia').style.display = 'none';
   document.getElementById('rf-conteudo').style.display = 'none';
+  // distingue "de verdade não tem rifa ativa" de "não consegui checar" —
+  // antes as duas situações mostravam a mesma mensagem ("não há rifa
+  // ativa"), o que assustou a Anna quando na real era um erro ao buscar
+  // (provavelmente a cota do KV), não a rifa/dados tendo sumido
+  let erroCarregar = '';
   try {
     const res = await fetch(RIFA_API);
-    rifaAtual = res.ok ? await res.json() : null;
-  } catch (e) { rifaAtual = null; }
+    if (!res.ok) {
+      let detalhe = '';
+      try { const corpo = await res.json(); detalhe = corpo && corpo.error ? ': ' + corpo.error : ''; } catch (e2) {}
+      erroCarregar = 'HTTP ' + res.status + detalhe;
+      rifaAtual = null;
+    } else {
+      rifaAtual = await res.json();
+    }
+  } catch (e) {
+    rifaAtual = null;
+    erroCarregar = 'erro de rede — ' + ((e && e.message) || e);
+  }
   document.getElementById('rf-carregando').style.display = 'none';
   document.getElementById('rf-btn-nova').style.display = rifaEhAdmin() ? '' : 'none';
   if (!rifaAtual) {
-    document.getElementById('rf-vazia').style.display = '';
+    const vaziaEl = document.getElementById('rf-vazia');
+    vaziaEl.innerHTML = erroCarregar
+      ? `⚠️ Não consegui carregar a rifa (${calEsc(erroCarregar)}) — os dados não foram apagados, só não deu pra buscar agora.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="rifaLoad()">↺ Tentar de novo</button>`
+      : 'Não há nenhuma rifa ativa no momento ✦';
+    vaziaEl.style.display = '';
     document.getElementById('rf-btn-editar').style.display = 'none';
     document.getElementById('rf-btn-atribuir').style.display = 'none';
     document.getElementById('rf-btn-lote').style.display = 'none';
@@ -8921,7 +8940,15 @@ async function adminExportarDadosRifa() {
   setStatus('⏳ Buscando dados da rifa...');
   try {
     const res = await fetch('/api/rifa?historico=1', { headers: { 'X-Admin-Password': 'admin' } });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      // mostra o erro de verdade que veio do servidor (rifa.js devolve
+      // {error: e.message} em qualquer falha) em vez de um texto genérico —
+      // é a única forma de saber se é a cota do KV estourada, algum outro
+      // erro do Cloudflare, ou um bug de verdade no código
+      let detalhe = '';
+      try { const corpo = await res.json(); detalhe = corpo && corpo.error ? ' — ' + corpo.error : ''; } catch (e2) {}
+      throw new Error('HTTP ' + res.status + detalhe);
+    }
     const rifas = await res.json();
     if (!Array.isArray(rifas) || !rifas.length) { setStatus('Nenhuma rifa encontrada ainda.'); return; }
 
@@ -8944,7 +8971,7 @@ async function adminExportarDadosRifa() {
     URL.revokeObjectURL(url);
     setStatus(`✓ ${linhas.length - 1} número(s) vendido(s) exportado(s), de ${rifas.length} rifa(s).`, 'var(--green)');
   } catch (e) {
-    setStatus('⚠ Não consegui buscar os dados da rifa — tenta de novo.', 'var(--red)');
+    setStatus('⚠ ' + ((e && e.message) || e) + ' — tenta de novo.', 'var(--red)');
   }
 }
 window.adminExportarDadosRifa = adminExportarDadosRifa;
