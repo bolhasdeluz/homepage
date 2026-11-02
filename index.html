@@ -20128,6 +20128,14 @@ function rfFmtDuracaoDias(diasTotal) {
   return partes.join(' e ');
 }
 
+// só aceita datas no formato esperado (YYYY-MM-DD) — alguns perfis antigos/
+// importados podem ter o campo vazio, ausente ou num formato estranho, e sem
+// essa checagem um .slice()/new Date() num valor inesperado quebrava o
+// relatório inteiro no meio do render, travado em "Carregando..."
+function rfDataValida(d) {
+  return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+}
+
 function rfRender() {
   const el = document.getElementById('rf-conteudo');
   if (!el) return;
@@ -20136,11 +20144,12 @@ function rfRender() {
 
   if (!rfPerfis.length) { el.innerHTML = '<div class="rc-vazio">Nenhum perfil cadastrado ainda.</div>'; return; }
 
-  const entradas = rfPerfis.filter(p => p.historia?.data_entrada);
-  const saidas = rfPerfis.filter(p => p.historia?.data_saida);
-  const comApronte = rfPerfis.filter(p => p.historia?.data_entrada && p.historia?.apronte && p.historia.apronte >= p.historia.data_entrada);
-  const comCoroacao = rfPerfis.filter(p => p.historia?.coroacao).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
-  const comCacicamento = rfPerfis.filter(p => p.historia?.cacicamento).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
+  try {
+  const entradas = rfPerfis.filter(p => rfDataValida(p.historia?.data_entrada));
+  const saidas = rfPerfis.filter(p => rfDataValida(p.historia?.data_saida));
+  const comApronte = rfPerfis.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.apronte) && p.historia.apronte >= p.historia.data_entrada);
+  const comCoroacao = rfPerfis.filter(p => rfDataValida(p.historia?.coroacao)).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
+  const comCacicamento = rfPerfis.filter(p => rfDataValida(p.historia?.cacicamento)).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
   const ativos = rfPerfis.filter(p => p.ativo !== false).length;
 
   let tempoApronteTxt = '—';
@@ -20198,7 +20207,7 @@ function rfRender() {
     const hist = p.historia || {};
     RF_MARCOS.forEach(key => {
       const data = hist[key];
-      if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+      if (!rfDataValida(data)) return;
       itens.push({ data, key, quem: nome });
     });
   });
@@ -20264,6 +20273,10 @@ function rfRender() {
         }
       });
     }
+  }
+  } catch (e) {
+    console.warn('relatório filhas da casa:', e);
+    el.innerHTML = '<div class="rc-vazio">Não foi possível montar o relatório — algum perfil tem um dado fora do esperado. Já foi avisado no console pra investigar.</div>';
   }
 }
 
