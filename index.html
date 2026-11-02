@@ -4179,6 +4179,19 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- PÁGINA RELATÓRIO DE FILHAS DA CASA — entradas, saídas, tempo médio de
+     apronte, cacicamento e linha do tempo de marcos de todas as filhas. Só
+     admin — ver o "if (name === 'relatorio-filhas')" em showPage() -->
+<div id="page-relatorio-filhas" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('admin')">← Voltar ao Painel Admin</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">👥 Relatório de Filhas da Casa</div>
+    <p class="section-sub">Entradas, saídas e os marcos da caminhada de cada uma ✦</p>
+    <div id="rf-conteudo"><div class="rc-vazio">Carregando...</div></div>
+  </div>
+</div>
+
 <!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
      organizados por categoria/palavra-chave/data, com linha do tempo como
      visualização principal. Visibilidade por grupo igual sessões/menu. -->
@@ -5227,6 +5240,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
             <span class="admin-menu-item-icon">📋</span>
             <span class="admin-menu-item-label">Resumo Mensal</span>
             <span class="admin-menu-item-desc">Tudo pronto pra printar e mandar no grupo</span>
+          </button>
+          <button class="admin-menu-item" onclick="showPage('relatorio-filhas')">
+            <span class="admin-menu-item-icon">👥</span>
+            <span class="admin-menu-item-label">Filhas da Casa</span>
+            <span class="admin-menu-item-desc">Entradas, saídas, tempo médio de apronte, cacicamento e linha do tempo</span>
           </button>
         </div>
       </div>
@@ -6995,6 +7013,11 @@ function showPage(name) {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
     if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
     window.lgCarregar?.();
+  }
+  if (name === 'relatorio-filhas') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    window.rfCarregar?.();
   }
   if (name === 'quadro-filhas') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -20067,6 +20090,133 @@ function lgRenderLista(perfis, sessoesTodas) {
   });
 
   lista.innerHTML = html;
+}
+
+// ── RELATÓRIO DE FILHAS DA CASA (admin) — entradas, saídas, tempo médio
+// até o Apronte, Cacicamento e uma linha do tempo com esses marcos de
+// todas as filhas (atuais e desligadas) juntas ──
+let rfPerfis = [];
+let rfCharts = {};
+const RF_MARCOS = ['data_entrada', 'data_saida', 'apronte', 'cacicamento'];
+const RF_MARCO_LABEL = { data_entrada: 'Entrada na Casa', data_saida: 'Saída da Casa', apronte: 'Apronte', cacicamento: 'Cacicamento' };
+const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: '#6a9e6a', cacicamento: '#9e6a9e' };
+
+window.rfCarregar = async function() {
+  const el = document.getElementById('rf-conteudo');
+  if (el) el.innerHTML = '<div class="rc-vazio">Carregando...</div>';
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const dados = await res.json();
+    rfPerfis = Array.isArray(dados) ? dados.filter(p => p && p.nome) : [];
+  } catch (e) {
+    rfPerfis = [];
+  }
+  rfRender();
+};
+
+// converte uma quantidade de dias numa duração legível ("2 anos e 3 meses") —
+// usa meses de 30,44 dias (média do calendário) só pra essa conversão, não
+// pra nenhum cálculo de data de verdade
+function rfFmtDuracaoDias(diasTotal) {
+  if (diasTotal < 30) return Math.round(diasTotal) + (Math.round(diasTotal) === 1 ? ' dia' : ' dias');
+  const totalMeses = Math.round(diasTotal / 30.44);
+  const anos = Math.floor(totalMeses / 12);
+  const meses = totalMeses % 12;
+  if (anos === 0) return meses + (meses === 1 ? ' mês' : ' meses');
+  const partes = [anos + (anos === 1 ? ' ano' : ' anos')];
+  if (meses) partes.push(meses + (meses === 1 ? ' mês' : ' meses'));
+  return partes.join(' e ');
+}
+
+function rfRender() {
+  const el = document.getElementById('rf-conteudo');
+  if (!el) return;
+  Object.keys(rfCharts).forEach(k => { try { rfCharts[k].destroy(); } catch(e){} });
+  rfCharts = {};
+
+  if (!rfPerfis.length) { el.innerHTML = '<div class="rc-vazio">Nenhum perfil cadastrado ainda.</div>'; return; }
+
+  const entradas = rfPerfis.filter(p => p.historia?.data_entrada);
+  const saidas = rfPerfis.filter(p => p.historia?.data_saida);
+  const comApronte = rfPerfis.filter(p => p.historia?.data_entrada && p.historia?.apronte && p.historia.apronte >= p.historia.data_entrada);
+  const comCacicamento = rfPerfis.filter(p => p.historia?.cacicamento).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
+  const ativos = rfPerfis.filter(p => p.ativo !== false).length;
+
+  let tempoApronteTxt = '—';
+  if (comApronte.length) {
+    const mediaDias = comApronte.reduce((soma, p) => soma + (new Date(p.historia.apronte) - new Date(p.historia.data_entrada)) / 86400000, 0) / comApronte.length;
+    tempoApronteTxt = rfFmtDuracaoDias(mediaDias);
+  }
+
+  let html = `<div class="rc-stats-grid">
+    <div class="rc-stat-card"><div class="rc-stat-label">Filhas ativas hoje</div><div class="rc-stat-valor">${ativos}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Entradas (histórico)</div><div class="rc-stat-valor">${entradas.length}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Saídas (histórico)</div><div class="rc-stat-valor">${saidas.length}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Tempo médio até o Apronte</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoApronteTxt}</div><div class="rc-stat-sub">${comApronte.length} com as duas datas registradas</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Cacicamento</div><div class="rc-stat-valor">${comCacicamento.length}</div><div class="rc-stat-sub">${comCacicamento.map(p => calEsc(p.nome.split(' ')[0])).join(', ') || '—'}</div></div>
+  </div>`;
+
+  // entradas × saídas por ano
+  const porAnoEntrada = {}, porAnoSaida = {};
+  entradas.forEach(p => { const a = p.historia.data_entrada.slice(0,4); porAnoEntrada[a] = (porAnoEntrada[a]||0)+1; });
+  saidas.forEach(p => { const a = p.historia.data_saida.slice(0,4); porAnoSaida[a] = (porAnoSaida[a]||0)+1; });
+  const anosOrdenados = Array.from(new Set([...Object.keys(porAnoEntrada), ...Object.keys(porAnoSaida)])).sort();
+  if (anosOrdenados.length) {
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rf-chart-entsai"></canvas></div></div>`;
+  }
+
+  // linha do tempo com os 4 marcos (entrada, saída, apronte, cacicamento) de todo mundo junto
+  let itens = [];
+  rfPerfis.forEach(p => {
+    const nome = p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
+    const hist = p.historia || {};
+    RF_MARCOS.forEach(key => {
+      const data = hist[key];
+      if (!data || !data.match(/^\d{4}-\d{2}-\d{2}$/)) return;
+      itens.push({ data, key, quem: nome });
+    });
+  });
+  itens.sort((a,b) => b.data.localeCompare(a.data));
+
+  html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:10px">Linha do Tempo</div>`;
+  if (!itens.length) {
+    html += `<div class="rc-vazio" style="padding:14px 0">Nenhum marco registrado ainda.</div>`;
+  } else {
+    html += itens.map(it => {
+      const [y,m,d] = it.data.split('-');
+      return `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px">
+        <div style="flex-shrink:0;width:58px;text-align:right;font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)">${d}/${m}/${y}</div>
+        <div style="flex:1;border-left:2px solid ${RF_MARCO_COR[it.key]};padding-left:12px">
+          <span style="font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:${RF_MARCO_COR[it.key]}">${RF_MARCO_LABEL[it.key]}</span>
+          <span style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic"> — ${calEsc(it.quem)}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  html += `</div>`;
+
+  el.innerHTML = html;
+
+  if (anosOrdenados.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('rf-chart-entsai');
+    if (ctx) {
+      rfCharts.entsai = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: anosOrdenados,
+          datasets: [
+            { label: 'Entradas', data: anosOrdenados.map(a => porAnoEntrada[a]||0), backgroundColor: '#2a7a60', borderRadius: 4 },
+            { label: 'Saídas', data: anosOrdenados.map(a => porAnoSaida[a]||0), backgroundColor: '#b84040', borderRadius: 4 },
+          ]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' } } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+        }
+      });
+    }
+  }
 }
 
 // ── DASHBOARD PESSOAL NA HOME ──
