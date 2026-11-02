@@ -2,39 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script>
-// ── DIAGNÓSTICO TEMPORÁRIO ── captura qualquer erro de JS ou promise não
-// tratada da página inteira e mostra num aviso no topo da tela. Só existe
-// pra investigar o Relatório de Filhas da Casa travando sem dar nenhum
-// erro visível no celular — remover depois que resolver.
-(function() {
-  var pendingMsgs = [];
-  var banner = null;
-  function flush() {
-    if (!document.body || !pendingMsgs.length) return;
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'debug-erro-banner';
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#2a1a22;color:#ffd4df;font-family:monospace;font-size:10px;line-height:1.5;padding:8px 10px;max-height:35vh;overflow:auto;white-space:pre-wrap;word-break:break-word;border-bottom:2px solid #c4396b';
-      document.body.prepend(banner);
-    }
-    pendingMsgs.forEach(function(m){ banner.textContent += (banner.textContent ? '\n---\n' : '') + m; });
-    pendingMsgs = [];
-  }
-  function mostrarErro(msg) {
-    pendingMsgs.push('⚠️ ' + msg);
-    flush();
-  }
-  document.addEventListener('DOMContentLoaded', flush);
-  window.addEventListener('error', function(ev) {
-    mostrarErro('Erro JS: ' + (ev.message || (ev.error && ev.error.message) || ev.error) + ' — ' + String(ev.filename || '').split('/').pop() + ':' + (ev.lineno || '') + ':' + (ev.colno || ''));
-  });
-  window.addEventListener('unhandledrejection', function(ev) {
-    var r = ev.reason;
-    mostrarErro('Promise sem tratar: ' + (r && (r.stack || r.message) || r));
-  });
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bolhas de Luz — Terreiro de Umbanda e Quimbanda</title>
 <meta name="description" content="Terreiro Bolhas de Luz — Umbanda e Quimbanda em Porto Alegre, RS.">
@@ -4221,7 +4188,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="eyebrow">Terreiro Bolhas de Luz</div>
     <div class="section-title">👥 Relatório de Filhas da Casa</div>
     <p class="section-sub">Entradas, saídas e os marcos da caminhada de cada uma ✦</p>
-    <div id="rf-conteudo"><div class="rc-vazio">Carregando...</div></div>
+    <div id="rfc-conteudo"><div class="rc-vazio">Carregando...</div></div>
   </div>
 </div>
 
@@ -7050,7 +7017,20 @@ function showPage(name) {
   if (name === 'relatorio-filhas') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
     if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
-    window.rfCarregar?.();
+    if (typeof window.rfCarregar === 'function') {
+      window.rfCarregar();
+    } else {
+      // não deveria acontecer (a função é definida bem antes disso no mesmo
+      // script), mas se por algum motivo ainda não existir nesse exato
+      // momento, tenta de novo logo em seguida em vez de ficar preso
+      // silenciosamente pra sempre — e se mesmo assim não existir, avisa
+      // na tela em vez de deixar a Anna sem nenhuma pista
+      setTimeout(() => {
+        if (typeof window.rfCarregar === 'function') { window.rfCarregar(); return; }
+        const el = document.getElementById('rfc-conteudo');
+        if (el) el.innerHTML = '<div class="rc-vazio">⚠️ Bug a investigar: a função de carregar não existe. Avisa o Claude com um print disso.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="location.reload()">↺ Recarregar a página</button></div>';
+      }, 500);
+    }
   }
   if (name === 'quadro-filhas') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -20135,7 +20115,7 @@ const RF_MARCO_LABEL = { data_entrada: 'Entrada na Casa', data_saida: 'Saída da
 const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: '#6a9e6a', coroacao: '#4a6fa5', cacicamento: '#9e6a9e' };
 
 window.rfCarregar = async function() {
-  const el = document.getElementById('rf-conteudo');
+  const el = document.getElementById('rfc-conteudo');
   // texto muda de fase em fase — serve de diagnóstico visual: se a tela
   // ficar presa em "Carregando..." (sem nunca virar "Buscando perfis..."),
   // o travamento é antes do fetch; se ficar presa em "Buscando perfis...",
@@ -20187,7 +20167,7 @@ function rfDataValida(d) {
 }
 
 function rfRender() {
-  const el = document.getElementById('rf-conteudo');
+  const el = document.getElementById('rfc-conteudo');
   if (!el) return;
   Object.keys(rfCharts).forEach(k => { try { rfCharts[k].destroy(); } catch(e){} });
   rfCharts = {};
@@ -20227,7 +20207,7 @@ function rfRender() {
   saidas.forEach(p => { const a = p.historia.data_saida.slice(0,4); porAnoSaida[a] = (porAnoSaida[a]||0)+1; });
   const anosOrdenados = Array.from(new Set([...Object.keys(porAnoEntrada), ...Object.keys(porAnoSaida)])).sort();
   if (anosOrdenados.length) {
-    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rf-chart-entsai"></canvas></div></div>`;
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rfc-chart-entsai"></canvas></div></div>`;
   }
 
   // crescimento da casa — total acumulado de filhas (cada entrada soma 1,
@@ -20251,7 +20231,7 @@ function rfRender() {
       crescimentoLabels.push(String(ano));
       crescimentoValores.push(total);
     }
-    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rf-chart-crescimento"></canvas></div></div>`;
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rfc-chart-crescimento"></canvas></div></div>`;
   }
 
   // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto
@@ -20287,7 +20267,7 @@ function rfRender() {
   el.innerHTML = html;
 
   if (anosOrdenados.length && typeof Chart !== 'undefined') {
-    const ctx = document.getElementById('rf-chart-entsai');
+    const ctx = document.getElementById('rfc-chart-entsai');
     if (ctx) {
       rfCharts.entsai = new Chart(ctx, {
         type: 'bar',
@@ -20308,7 +20288,7 @@ function rfRender() {
   }
 
   if (crescimentoLabels.length && typeof Chart !== 'undefined') {
-    const ctx = document.getElementById('rf-chart-crescimento');
+    const ctx = document.getElementById('rfc-chart-crescimento');
     if (ctx) {
       rfCharts.crescimento = new Chart(ctx, {
         type: 'line',
