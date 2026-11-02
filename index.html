@@ -20104,12 +20104,21 @@ const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: 
 window.rfCarregar = async function() {
   const el = document.getElementById('rf-conteudo');
   if (el) el.innerHTML = '<div class="rc-vazio">Carregando...</div>';
+  // timeout próprio — sem isso, se o fetch travar (rede ruim, função lenta
+  // no Cloudflare etc.) a tela ficava presa em "Carregando..." pra sempre,
+  // sem nenhuma mensagem nem jeito de tentar de novo sem sair da página
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' }, signal: controller.signal });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const dados = await res.json();
     rfPerfis = Array.isArray(dados) ? dados.filter(p => p && p.nome) : [];
   } catch (e) {
-    rfPerfis = [];
+    console.warn('relatório filhas da casa — falha ao buscar perfis:', e);
+    rfPerfis = null; // null = falhou de verdade (diferente de [] = carregou e não tinha ninguém)
+  } finally {
+    clearTimeout(timeoutId);
   }
   rfRender();
 };
@@ -20142,6 +20151,10 @@ function rfRender() {
   Object.keys(rfCharts).forEach(k => { try { rfCharts[k].destroy(); } catch(e){} });
   rfCharts = {};
 
+  if (rfPerfis === null) {
+    el.innerHTML = '<div class="rc-vazio">Não consegui carregar os perfis agora.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="window.rfCarregar()">↺ Tentar de novo</button></div>';
+    return;
+  }
   if (!rfPerfis.length) { el.innerHTML = '<div class="rc-vazio">Nenhum perfil cadastrado ainda.</div>'; return; }
 
   try {
