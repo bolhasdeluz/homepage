@@ -5084,6 +5084,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-label">Menu do Site</span>
         <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
       </button>
+      <button class="admin-menu-item" onclick="adminAbrirSecao('relatorios')">
+        <span class="admin-menu-item-icon">📊</span>
+        <span class="admin-menu-item-label">Relatórios</span>
+        <span class="admin-menu-item-desc">Calendário, financeiro e resumo mensal, tudo num só lugar</span>
+      </button>
       <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
         <span class="admin-menu-item-icon">📜</span>
         <span class="admin-menu-item-label">Sua História</span>
@@ -5189,6 +5194,34 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <div class="admin-filhas-grid" id="admin-filhas-grid">
             <div class="admin-filhas-vazio">Carregando perfis...</div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS -->
+    <div id="admin-sub-relatorios" style="display:none">
+      <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
+      <div class="admin-section-block" style="margin-bottom:20px">
+        <div class="admin-section-header">
+          <span class="admin-section-title">📊 Relatórios</span>
+        </div>
+        <div style="padding:12px 16px 0;font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text-dim);font-style:italic">Tudo que antes estava espalhado, agora num só lugar.</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:14px 16px 18px">
+          <button class="admin-menu-item" onclick="showPage('relatorio-calendario')">
+            <span class="admin-menu-item-icon">📅</span>
+            <span class="admin-menu-item-label">Relatório do Calendário</span>
+            <span class="admin-menu-item-desc">Sessões por ano, comparativo e conferência de tambor</span>
+          </button>
+          <button class="admin-menu-item" onclick="window.open('/relatorio-anual.html','_blank')">
+            <span class="admin-menu-item-icon">📈</span>
+            <span class="admin-menu-item-label">Relatório Anual</span>
+            <span class="admin-menu-item-desc">Financeiro interativo, com gráficos e detalhes</span>
+          </button>
+          <button class="admin-menu-item" onclick="showPage('resumo')">
+            <span class="admin-menu-item-icon">📋</span>
+            <span class="admin-menu-item-label">Resumo Mensal</span>
+            <span class="admin-menu-item-desc">Tudo pronto pra printar e mandar no grupo</span>
+          </button>
         </div>
       </div>
     </div>
@@ -5677,7 +5710,7 @@ function renderCards() {
 
 // ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
 // empilhado numa rolagem só ──
-const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'qr', 'filhas'];
+const ADMIN_SUBSECOES = ['menu', 'historia', 'avisos', 'qr', 'filhas', 'relatorios'];
 function adminAbrirSecao(nome) {
   document.getElementById('admin-menu-principal').style.display = 'none';
   ADMIN_SUBSECOES.forEach(n => {
