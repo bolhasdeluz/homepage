@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Importar perfis desligados — Bolhas de Luz</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Playfair+Display:wght@600&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #c4396b; --gold-light: #e8688a; --gold-dim: rgba(196,57,107,.08);
+  --bg: #fff5f7; --surface: #ffffff; --border: rgba(196,57,107,.15);
+  --text: #2a1a22; --text-dim: rgba(80,30,50,.5);
+  --red: #b84040; --red-dim: rgba(184,64,64,.08);
+  --green: #2a7a60; --green-light: #3a9a78; --green-dim: #e8f4f0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 15px; min-height: 100vh; padding-bottom: 40px; }
+a { color: var(--gold); }
+.header { background: linear-gradient(135deg, var(--gold), var(--gold-light)); padding: 18px 20px 16px; }
+.header-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 600; color: #fff; }
+.header-sub { font-family: 'DM Sans', sans-serif; font-size: .72rem; color: rgba(255,255,255,.78); }
+.wrap { max-width: 680px; margin: 0 auto; padding: 18px 14px 0; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 2px 10px rgba(180,60,90,.06); }
+.sec-title { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px; }
+.aviso { font-family: 'Crimson Pro', serif; font-style: italic; color: var(--text-dim); font-size: .88rem; line-height: 1.5; }
+.pessoa { border-bottom: 1px solid rgba(196,57,107,.08); padding: 10px 0; }
+.pessoa:last-child { border-bottom: none; }
+.pessoa-nome { font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1rem; }
+.pessoa-periodo { font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .06em; color: var(--text-dim); text-transform: uppercase; margin-top: 2px; }
+.pessoa-detalhe { font-family: 'Crimson Pro', serif; font-size: .82rem; color: var(--text-dim); margin-top: 4px; line-height: 1.5; }
+.tag-ja-existe { display: inline-block; font-family: 'Cinzel', serif; font-size: .56rem; letter-spacing: .04em; text-transform: uppercase; color: var(--green); background: var(--green-dim); border-radius: 20px; padding: 2px 8px; margin-top: 4px; }
+.btn { background: var(--gold); border: none; border-radius: 6px; color: #fff; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: .08em; font-weight: 700; padding: 11px 22px; cursor: pointer; }
+.btn:hover { background: var(--gold-light); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.msg-ok { background: var(--green-dim); color: var(--green); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.msg-erro { background: var(--red-dim); color: var(--red); border-radius: 8px; padding: 12px 14px; font-size: .85rem; margin-top: 10px; }
+.progresso-barra-fundo { background: var(--border); border-radius: 99px; height: 10px; overflow: hidden; margin: 10px 0 6px; }
+.progresso-barra { background: var(--gold); height: 100%; width: 0%; transition: width .3s ease; border-radius: 99px; }
+.bl-overlay{display:flex;position:fixed;inset:0;background:rgba(40,10,20,.55);backdrop-filter:blur(4px);z-index:500;align-items:center;justify-content:center;padding:20px}
+.bl-overlay.off{display:none}
+.bl-modal{background:#fff;border:1px solid var(--border);border-top:3px solid var(--gold);border-radius:12px;box-shadow:0 8px 40px rgba(196,57,107,.15);padding:36px 32px;width:100%;max-width:360px;text-align:center}
+.bl-modal-title{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.bl-modal-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:24px}
+.bl-btn-rosa{background:var(--gold);border:none;border-radius:6px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;font-weight:700;padding:11px 24px;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
+</style>
+</head>
+<body>
+
+<div id="login-overlay" class="bl-overlay">
+  <div class="bl-modal">
+    <div class="bl-modal-title">Área da Mãe da Casa</div>
+    <div class="bl-modal-sub">Essa ferramenta é só pra importar os perfis das pessoas desligadas que tinham ficha na planilha antiga</div>
+    <button class="bl-btn-rosa" onclick="window.loginGoogle && window.loginGoogle()">Entrar com Google</button>
+    <p id="login-msg" style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:14px"></p>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <div class="header">
+    <div class="header-title">🗓️ Importar perfis desligados</div>
+    <div class="header-sub">Terreiro Bolhas de Luz · Perfis das Filhas</div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <div class="sec-title">O que isso faz</div>
+      <div class="aviso">
+        Cria o perfil de 7 pessoas que saíram da casa (Bruno, Santa Helena, Natália, Mikael, Duda, Alan e
+        Miguel) com os dados da planilha antiga — guias, cruzamentos e datas de entrada/saída — pra essa
+        história não ficar só na planilha. Cada perfil nasce com um e-mail fictício só pra identificação
+        (ex: bruno@desligado.bolhasdeluz — ninguém loga com ele) e <strong>"Ativo" já marcado como não</strong>,
+        então eles aparecem como inativos/desligados em qualquer lugar do site que mostra perfis, sem contar
+        como filha atual em nenhum lugar. O Mikael e o Miguel já têm entrada e saída registradas na
+        Tesouraria (mensalidade/relatório) — essa importação não mexe nisso, só completa a ficha deles no
+        site; confere pelo e-mail antes de criar, então rodar de novo não duplica. Cargo ficou em branco de
+        propósito, porque a planilha não dizia qual era o cargo deles quando saíram — completa na Planilha
+        Geral se quiser.
+      </div>
+    </div>
+    <div class="card" id="preview-card">
+      <div class="sec-title">Prévia</div>
+      <div id="preview-conteudo" class="aviso">Carregando o que já existe no sistema…</div>
+    </div>
+    <div class="card" id="acao-card" style="display:none;">
+      <button class="btn" id="btn-importar" onclick="importar()">Importar pro sistema</button>
+      <div id="progresso-wrap" style="display:none">
+        <div class="progresso-barra-fundo"><div class="progresso-barra" id="progresso-barra"></div></div>
+        <div id="progresso-etapa" class="aviso" style="font-style:normal"></div>
+      </div>
+      <div id="resultado"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Dados tirados da planilha antiga (TERREIRO BOLHAS DE LUZ.pdf, aba principal) —
+// só os campos que tinham um nome de verdade (célula "Sim"/"Não" sem nome junto
+// foi ignorada de propósito, pra não inventar guia que não dá pra confirmar).
+// Mapeamento guia a guia conferido contra o próprio perfil da Anna no site:
+// "Frente Exu" = guias.exu, "Casal" = guias.pomba_gira, "Falangeiro"/"Passagem"/
+// "Fundo"/"Casal Fundo" (sem campo próprio) viram guiasExtras.
+// Coroação/Apronte do Mikael ficaram de fora porque as datas na planilha são
+// depois da saída dele (18/07/2026 e 01/08/2027, saiu em 10/04/2026) — parecem
+// ter sido planejadas e nunca aconteceram de verdade.
+var PERFIS_DESLIGADOS = [
+  {
+    email: 'bruno@desligado.bolhasdeluz',
+    nome: 'Bruno',
+    historia: { data_entrada: '2021-10-05', data_saida: '2023-06-21', guia_chefe: 'Ogum Megê' },
+    guias: { caboclo: 'Iemanjá', exu: 'João Caveira', pomba_gira: 'PG Cacurucaia' },
+    guiasExtras: [],
+    cruzamentosExtras: [],
+  },
+  {
+    email: 'santa-helena@desligado.bolhasdeluz',
+    nome: 'Santa Helena',
+    historia: { data_entrada: '2021-12-09', data_saida: '2023-06-14', guia_chefe: 'Oxum' },
+    guias: { exu: 'Maria Mulambo' },
+    guiasExtras: [ { tipo: 'Caboclo', nome: 'Xangô (passagem)', data: '' } ],
+    cruzamentosExtras: [ { nome: 'Conga', data: '2022-07-23', cambonagem: false } ],
+  },
+  {
+    email: 'natalia@desligado.bolhasdeluz',
+    nome: 'Natália',
+    historia: { data_entrada: '2022-04-30', data_saida: '2023-03-16', guia_chefe: 'Rompe Mato' },
+    guias: { caboclo: 'Rompe Mato', exu: 'Maria Mulambo', pomba_gira: 'Sete Catacumbas' },
+    guiasExtras: [ { tipo: 'Caboclo', nome: 'Oxum (falangeiro)', data: '' } ],
+    cruzamentosExtras: [ { nome: 'Conga', data: '2022-07-23', cambonagem: false } ],
+  },
+  {
+    // nome "Mikael" (não "Mika") pra bater com o mesmo nome já usado na
+    // Tesouraria/relatório — assim fica uma coisa só, não duas grafias
+    email: 'mikael@desligado.bolhasdeluz',
+    nome: 'Mikael',
+    historia: { data_entrada: '2023-02-06', data_saida: '2026-04-10', guia_chefe: 'Xango das Matas' },
+    guias: { caboclo: 'Xango das Matas', exu: 'Rei das 7 Encruzilhadas', pomba_gira: 'Rosa Vermelha', preto_velho: 'Vô Joaquim', cosme: 'Joãozinho' },
+    guiasExtras: [ { tipo: 'Caboclo', nome: 'Iansã (falangeira)', data: '' } ],
+    cruzamentosExtras: [ { nome: 'Conga', data: '2023-06-23', cambonagem: false } ],
+  },
+  {
+    email: 'duda@desligado.bolhasdeluz',
+    nome: 'Duda',
+    historia: { data_entrada: '2023-08-19', data_saida: '2024-12-16', guia_chefe: 'Jurema' },
+    guias: { caboclo: 'Jurema' },
+    guiasExtras: [ { tipo: 'Caboclo', nome: 'Oxum (falangeira)', data: '' } ],
+    cruzamentosExtras: [ { nome: 'Conga', data: '2024-03-09', cambonagem: false } ],
+  },
+  {
+    email: 'alan@desligado.bolhasdeluz',
+    nome: 'Alan',
+    historia: { data_entrada: '2025-06-27', data_saida: '2025-08-30', guia_chefe: 'Rompe Mato' },
+    guias: { caboclo: 'Rompe Mato', exu: 'João Caveira' },
+    guiasExtras: [],
+    cruzamentosExtras: [],
+  },
+  {
+    email: 'miguel@desligado.bolhasdeluz',
+    nome: 'Miguel',
+    historia: { data_entrada: '2025-07-19', data_saida: '2026-02-21', guia_chefe: 'Ogum das Matas' },
+    guias: { caboclo: 'Ogum das Matas', exu: 'Maria Mulambo' },
+    guiasExtras: [],
+    cruzamentosExtras: [],
+  },
+];
+
+var perfisAtuais = null;
+var perfisParaAdicionar = [];
+
+function montarPayload(p) {
+  return {
+    email: p.email,
+    nome: p.nome,
+    cargo: '',
+    grupo: 'filhas',
+    emoji: '🌸',
+    ativo: false,
+    isento: false,
+    boasVindas: { comoConheceu: '', tempoFrequenta: '' },
+    historia: p.historia,
+    guias: p.guias,
+    guiasExtras: p.guiasExtras,
+    cruzamentosExtras: p.cruzamentosExtras,
+    cruzamentos: {},
+    cortes: [],
+    notas: 'Importado da planilha antiga (TERREIRO BOLHAS DE LUZ.pdf) — ver importar-perfis-desligados.html',
+    criadoEm: Date.now(),
+  };
+}
+
+function carregarPreview() {
+  fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } })
+    .then(function (r) { return r.json(); })
+    .then(function (dados) {
+      perfisAtuais = Array.isArray(dados) ? dados : [];
+      var jaExistentes = {};
+      perfisAtuais.forEach(function (p) { if (p && p.email) jaExistentes[p.email.toLowerCase()] = true; });
+      perfisParaAdicionar = PERFIS_DESLIGADOS.filter(function (p) { return !jaExistentes[p.email.toLowerCase()]; });
+
+      var html = '';
+      PERFIS_DESLIGADOS.forEach(function (p) {
+        var h = p.historia;
+        var guiasTexto = Object.keys(p.guias).map(function (k) {
+          var label = { caboclo: 'Caboclo', exu: 'Exu', pomba_gira: 'Pombagira', preto_velho: 'Preto Velho', cosme: 'Cosme' }[k] || k;
+          return label + ': ' + p.guias[k];
+        }).join(' · ');
+        var existe = jaExistentes[p.email.toLowerCase()];
+        html += '<div class="pessoa">' +
+          '<div class="pessoa-nome">' + p.nome + '</div>' +
+          '<div class="pessoa-periodo">' + h.data_entrada.split('-').reverse().join('/') + ' até ' + h.data_saida.split('-').reverse().join('/') + '</div>' +
+          '<div class="pessoa-detalhe">' + (guiasTexto || 'sem guias registradas') + '</div>' +
+          (existe ? '<div class="tag-ja-existe">✓ já existe no sistema</div>' : '') +
+          '</div>';
+      });
+      document.getElementById('preview-conteudo').innerHTML = html;
+
+      if (!perfisParaAdicionar.length) {
+        document.getElementById('preview-conteudo').insertAdjacentHTML('beforeend', '<p style="margin-top:10px">✅ Todos esses perfis já estão no sistema — nada pra importar.</p>');
+      } else {
+        document.getElementById('acao-card').style.display = 'block';
+        document.getElementById('btn-importar').textContent = 'Importar ' + perfisParaAdicionar.length + ' perfil(is) pro sistema';
+      }
+    })
+    .catch(function () {
+      document.getElementById('preview-conteudo').textContent = 'Não consegui carregar os dados atuais agora — tenta de novo mais tarde.';
+    });
+}
+
+function importar() {
+  var btn = document.getElementById('btn-importar');
+  btn.disabled = true;
+  btn.style.display = 'none';
+  var progWrap = document.getElementById('progresso-wrap');
+  var barra = document.getElementById('progresso-barra');
+  var etapaEl = document.getElementById('progresso-etapa');
+  progWrap.style.display = 'block';
+
+  var criados = 0, falhas = 0;
+  var total = perfisParaAdicionar.length;
+
+  function proxima(i) {
+    if (i >= total) {
+      var msg = '✅ Importado! ' + criados + ' perfil(is) criado(s)';
+      if (falhas) msg += ' (' + falhas + ' falharam — roda de novo que só tenta criar o que ainda falta).';
+      else msg += '.';
+      document.getElementById('resultado').innerHTML = '<div class="msg-ok">' + msg + '</div>';
+      progWrap.style.display = 'none';
+      return;
+    }
+    var p = perfisParaAdicionar[i];
+    etapaEl.textContent = 'Criando perfis… (' + (i + 1) + '/' + total + ') — ' + p.nome;
+    barra.style.width = Math.round((i / total) * 100) + '%';
+    fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify(montarPayload(p))
+    })
+      .then(function (r) { if (r.ok) criados++; else falhas++; })
+      .catch(function () { falhas++; })
+      .then(function () { proxima(i + 1); });
+  }
+  proxima(0);
+}
+
+window._raAoConfirmarLogin = function (logado, user) {
+  var overlay = document.getElementById('login-overlay');
+  var app = document.getElementById('app');
+  var msg = document.getElementById('login-msg');
+  var ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+  if (logado && user && ADMIN_EMAILS.indexOf(user.email) !== -1) {
+    overlay.classList.add('off');
+    app.style.display = 'block';
+    carregarPreview();
+  } else if (logado) {
+    msg.textContent = 'Essa conta não tem acesso de administradora.';
+  } else {
+    msg.textContent = '';
+  }
+};
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.loginGoogle = async function () {
+  try { await signInWithPopup(auth, new GoogleAuthProvider()); }
+  catch (e) { console.warn('login google:', e); }
+};
+
+onAuthStateChanged(auth, (user) => {
+  window._raAoConfirmarLogin(!!user, user);
+});
+</script>
+
+</body>
+</html>
