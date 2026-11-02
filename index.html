@@ -20167,7 +20167,31 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rf-chart-entsai"></canvas></div></div>`;
   }
 
-  // linha do tempo com os 4 marcos (entrada, saída, apronte, cacicamento) de todo mundo junto
+  // crescimento da casa — total acumulado de filhas (cada entrada soma 1,
+  // cada saída subtrai 1), amostrado no fim de cada ano até hoje
+  let eventosCrescimento = [];
+  entradas.forEach(p => eventosCrescimento.push({ data: p.historia.data_entrada, delta: 1 }));
+  saidas.forEach(p => eventosCrescimento.push({ data: p.historia.data_saida, delta: -1 }));
+  eventosCrescimento.sort((a,b) => a.data.localeCompare(b.data));
+
+  let crescimentoLabels = [], crescimentoValores = [];
+  if (eventosCrescimento.length) {
+    const anoIni = parseInt(eventosCrescimento[0].data.slice(0,4));
+    const anoFim = new Date().getFullYear();
+    let total = 0, idx = 0;
+    for (let ano = anoIni; ano <= anoFim; ano++) {
+      const fimAno = `${ano}-12-31`;
+      while (idx < eventosCrescimento.length && eventosCrescimento[idx].data <= fimAno) {
+        total += eventosCrescimento[idx].delta;
+        idx++;
+      }
+      crescimentoLabels.push(String(ano));
+      crescimentoValores.push(total);
+    }
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rf-chart-crescimento"></canvas></div></div>`;
+  }
+
+  // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto
   let itens = [];
   rfPerfis.forEach(p => {
     const nome = p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
@@ -20214,6 +20238,28 @@ function rfRender() {
         options: {
           responsive: true, maintainAspectRatio: false,
           plugins: { legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' } } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+        }
+      });
+    }
+  }
+
+  if (crescimentoLabels.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('rf-chart-crescimento');
+    if (ctx) {
+      rfCharts.crescimento = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: crescimentoLabels,
+          datasets: [{
+            label: 'Filhas na casa', data: crescimentoValores,
+            borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
+            fill: true, tension: .25, pointRadius: 3, pointBackgroundColor: '#c4396b',
+          }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
           scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
         }
       });
