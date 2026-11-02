@@ -5244,7 +5244,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <button class="admin-menu-item" onclick="showPage('relatorio-filhas')">
             <span class="admin-menu-item-icon">👥</span>
             <span class="admin-menu-item-label">Filhas da Casa</span>
-            <span class="admin-menu-item-desc">Entradas, saídas, tempo médio de apronte, cacicamento e linha do tempo</span>
+            <span class="admin-menu-item-desc">Entradas, saídas, apronte, coroação, cacicamento e linha do tempo</span>
           </button>
         </div>
       </div>
@@ -20097,9 +20097,9 @@ function lgRenderLista(perfis, sessoesTodas) {
 // todas as filhas (atuais e desligadas) juntas ──
 let rfPerfis = [];
 let rfCharts = {};
-const RF_MARCOS = ['data_entrada', 'data_saida', 'apronte', 'cacicamento'];
-const RF_MARCO_LABEL = { data_entrada: 'Entrada na Casa', data_saida: 'Saída da Casa', apronte: 'Apronte', cacicamento: 'Cacicamento' };
-const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: '#6a9e6a', cacicamento: '#9e6a9e' };
+const RF_MARCOS = ['data_entrada', 'data_saida', 'apronte', 'coroacao', 'cacicamento'];
+const RF_MARCO_LABEL = { data_entrada: 'Entrada na Casa', data_saida: 'Saída da Casa', apronte: 'Apronte', coroacao: 'Coroação', cacicamento: 'Cacicamento' };
+const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: '#6a9e6a', coroacao: '#4a6fa5', cacicamento: '#9e6a9e' };
 
 window.rfCarregar = async function() {
   const el = document.getElementById('rf-conteudo');
@@ -20139,6 +20139,7 @@ function rfRender() {
   const entradas = rfPerfis.filter(p => p.historia?.data_entrada);
   const saidas = rfPerfis.filter(p => p.historia?.data_saida);
   const comApronte = rfPerfis.filter(p => p.historia?.data_entrada && p.historia?.apronte && p.historia.apronte >= p.historia.data_entrada);
+  const comCoroacao = rfPerfis.filter(p => p.historia?.coroacao).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
   const comCacicamento = rfPerfis.filter(p => p.historia?.cacicamento).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
   const ativos = rfPerfis.filter(p => p.ativo !== false).length;
 
@@ -20153,6 +20154,7 @@ function rfRender() {
     <div class="rc-stat-card"><div class="rc-stat-label">Entradas (histórico)</div><div class="rc-stat-valor">${entradas.length}</div></div>
     <div class="rc-stat-card"><div class="rc-stat-label">Saídas (histórico)</div><div class="rc-stat-valor">${saidas.length}</div></div>
     <div class="rc-stat-card"><div class="rc-stat-label">Tempo médio até o Apronte</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoApronteTxt}</div><div class="rc-stat-sub">${comApronte.length} com as duas datas registradas</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Coroação</div><div class="rc-stat-valor">${comCoroacao.length}</div><div class="rc-stat-sub">${comCoroacao.map(p => calEsc(p.nome.split(' ')[0])).join(', ') || '—'}</div></div>
     <div class="rc-stat-card"><div class="rc-stat-label">Cacicamento</div><div class="rc-stat-valor">${comCacicamento.length}</div><div class="rc-stat-sub">${comCacicamento.map(p => calEsc(p.nome.split(' ')[0])).join(', ') || '—'}</div></div>
   </div>`;
 
