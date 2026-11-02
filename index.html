@@ -18588,12 +18588,18 @@ const auth = getAuth(app);
     let rmTesouraria = null;
     let rmTesEntradas = 0, rmTesSaidas = 0, rmTesMesLabel = '';
     let rmTesPctPag = 0, rmTesNPag = 0, rmTesTotalMembros = 0, rmTesPctCob = 0;
-    // mesma lista de membros da Tesouraria real (não vem de API — é fixa lá também).
-    // se alguém sair da casa por lá, espelhar aqui também em RM_MEMBROS_SAIDA.
-    const RM_MEMBROS_TODOS = ['Ness','Thali','Jaque','Tassi','Brenda','Anne','Vitória','Manu','Juliana','Gabi','Márcia','Nicole','Stephani'];
-    const RM_MEMBROS_SAIDA = { 'Juliana': '2026-07', 'Ness': '2026-07' };
+    // mesma fonte única da Tesouraria real, Meus Pagamentos e Relatório Anual —
+    // ver /api/membros. Antes esse widget tinha sua própria lista fixa, que saiu
+    // de sincronia (faltava a Luana) e mostrava um total diferente do da Tesouraria.
+    let rmMembrosTodos = [], rmMembrosSaida = {}, rmMembrosEntrada = {}, rmMembrosIsentos = {};
     function rmMembrosAtivos(mesRef) {
-      return RM_MEMBROS_TODOS.filter(m => { const s = RM_MEMBROS_SAIDA[m]; return !s || mesRef < s; });
+      return rmMembrosTodos.filter(m => {
+        if (rmMembrosIsentos[m]) return false;
+        const entrada = rmMembrosEntrada[m];
+        if (entrada && mesRef < entrada) return false;
+        const saida = rmMembrosSaida[m];
+        return !saida || mesRef < saida;
+      });
     }
     let rmRecado = null;
     let rmSessoes = [];
@@ -18820,7 +18826,17 @@ const auth = getAuth(app);
       const { mesRef, label } = rmMesPassadoInfo();
       rmTesMesLabel = label;
       try {
-        const res = await fetch('/api/dados?chave=lancamentos');
+        const [res, resMembros] = await Promise.all([
+          fetch('/api/dados?chave=lancamentos'),
+          fetch('/api/membros'),
+        ]);
+        try {
+          const dadosMembros = await resMembros.json();
+          rmMembrosTodos = dadosMembros.membrosTodos || [];
+          rmMembrosSaida = dadosMembros.membrosSaida || {};
+          rmMembrosEntrada = dadosMembros.membrosEntrada || {};
+          rmMembrosIsentos = dadosMembros.membrosIsentos || {};
+        } catch(e) { console.warn('membros (resumo mensal) load:', e); }
         const lancamentos = await res.json();
         const lista = Array.isArray(lancamentos) ? lancamentos : [];
         const doMes = lista.filter(l => {
