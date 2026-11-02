@@ -2,39 +2,6 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script>
-// ── DIAGNÓSTICO TEMPORÁRIO ── captura qualquer erro de JS ou promise não
-// tratada da página inteira e mostra num aviso no topo da tela. Só existe
-// pra investigar o Relatório de Filhas da Casa travando sem dar nenhum
-// erro visível no celular — remover depois que resolver.
-(function() {
-  var pendingMsgs = [];
-  var banner = null;
-  function flush() {
-    if (!document.body || !pendingMsgs.length) return;
-    if (!banner) {
-      banner = document.createElement('div');
-      banner.id = 'debug-erro-banner';
-      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:999999;background:#2a1a22;color:#ffd4df;font-family:monospace;font-size:10px;line-height:1.5;padding:8px 10px;max-height:35vh;overflow:auto;white-space:pre-wrap;word-break:break-word;border-bottom:2px solid #c4396b';
-      document.body.prepend(banner);
-    }
-    pendingMsgs.forEach(function(m){ banner.textContent += (banner.textContent ? '\n---\n' : '') + m; });
-    pendingMsgs = [];
-  }
-  function mostrarErro(msg) {
-    pendingMsgs.push('⚠️ ' + msg);
-    flush();
-  }
-  document.addEventListener('DOMContentLoaded', flush);
-  window.addEventListener('error', function(ev) {
-    mostrarErro('Erro JS: ' + (ev.message || (ev.error && ev.error.message) || ev.error) + ' — ' + String(ev.filename || '').split('/').pop() + ':' + (ev.lineno || '') + ':' + (ev.colno || ''));
-  });
-  window.addEventListener('unhandledrejection', function(ev) {
-    var r = ev.reason;
-    mostrarErro('Promise sem tratar: ' + (r && (r.stack || r.message) || r));
-  });
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bolhas de Luz — Terreiro de Umbanda e Quimbanda</title>
 <meta name="description" content="Terreiro Bolhas de Luz — Umbanda e Quimbanda em Porto Alegre, RS.">
