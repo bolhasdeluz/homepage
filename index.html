@@ -3181,6 +3181,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <div class="rm-lista" id="rm-sessoes-lista"><div class="rm-vazio-secao">Carregando...</div></div>
         </div>
 
+        <!-- SESSÕES DE VISITA -->
+        <div class="rm-secao">
+          <div class="rm-secao-titulo"><span class="ic">🚶</span> Sessões de Visita</div>
+          <div class="rm-lista" id="rm-sessoes-visita-lista"><div class="rm-vazio-secao">Carregando...</div></div>
+        </div>
+
         <!-- ANIVERSARIANTES -->
         <div class="rm-secao">
           <div class="rm-secao-titulo"><span class="ic">🎂</span> Aniversariantes do Mês</div>
@@ -18636,6 +18642,7 @@ const auth = getAuth(app);
     }
     let rmRecado = null;
     let rmSessoes = [];
+    let rmSessoesVisita = [];
     let rmManutencao = [];
     let rmCompras = [];
     const hojeISO = new Date();
@@ -18929,9 +18936,10 @@ const auth = getAuth(app);
       } catch(e) { alert('Erro ao salvar tesouraria.'); }
     }
 
-    // ── PRÓXIMAS SESSÕES ──
+    // ── PRÓXIMAS SESSÕES ── (sessões de visita ficam à parte, ver rm-sessoes-visita-lista)
     async function rmCarregarSessoes() {
       const wrap = document.getElementById('rm-sessoes-lista');
+      const wrapVisita = document.getElementById('rm-sessoes-visita-lista');
       try {
         const res = await fetch('/api/sessoes');
         const sessoes = await res.json();
@@ -18941,11 +18949,21 @@ const auth = getAuth(app);
         const fimMes = `${ano}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
         const hoje = new Date().toISOString().slice(0,10);
         const limiteInferior = inicioMes > hoje ? inicioMes : hoje;
-        rmSessoes = sessoes.filter(s => s.data >= limiteInferior && s.data <= fimMes).sort((a,b) => a.data.localeCompare(b.data));
-      } catch(e) { rmSessoes = []; }
-      if (!wrap) return;
-      if (!rmSessoes.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhuma sessão marcada para este mês</div>'; return; }
-      wrap.innerHTML = rmSessoes.map(s => `<div class="rm-linha"><span>${s.nome}</span><span class="rm-linha-tag">${rmFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`).join('');
+        const doMes = sessoes.filter(s => s.data >= limiteInferior && s.data <= fimMes).sort((a,b) => a.data.localeCompare(b.data));
+        rmSessoes = doMes.filter(s => s.tipo !== 'Visita');
+        rmSessoesVisita = doMes.filter(s => s.tipo === 'Visita');
+      } catch(e) { rmSessoes = []; rmSessoesVisita = []; }
+      const linhaHtml = s => `<div class="rm-linha"><span>${s.nome}</span><span class="rm-linha-tag">${rmFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}</span></div>`;
+      if (wrap) {
+        wrap.innerHTML = rmSessoes.length
+          ? rmSessoes.map(linhaHtml).join('')
+          : '<div class="rm-vazio-secao">Nenhuma sessão marcada para este mês</div>';
+      }
+      if (wrapVisita) {
+        wrapVisita.innerHTML = rmSessoesVisita.length
+          ? rmSessoesVisita.map(linhaHtml).join('')
+          : '<div class="rm-vazio-secao">Nenhuma sessão de visita marcada para este mês</div>';
+      }
     }
 
     // ── ANIVERSARIANTES DO MÊS ──
@@ -19030,6 +19048,11 @@ const auth = getAuth(app);
       txt += `📅 *Próximas Sessões:*\n`;
       if (rmSessoes.length) rmSessoes.forEach(s => { txt += `• ${s.nome} — ${rmFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`; });
       else txt += `Nenhuma sessão marcada no momento\n`;
+      txt += `\n`;
+
+      txt += `🚶 *Sessões de Visita:*\n`;
+      if (rmSessoesVisita.length) rmSessoesVisita.forEach(s => { txt += `• ${s.nome} — ${rmFmtDataISO(s.data)}${s.hora ? ' às ' + s.hora : ''}\n`; });
+      else txt += `Nenhuma sessão de visita marcada no momento\n`;
       txt += `\n`;
 
       const doMes = (window.ANIVERSARIOS || []).filter(a => a.mes === rmMesNumero()).sort((a,b) => a.dia - b.dia);
