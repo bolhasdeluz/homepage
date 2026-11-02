@@ -296,9 +296,35 @@ function gerarNumeros(total) {
   return numeros;
 }
 
-async function buscarAtiva(KV) {
+// mesmo índice usado por perfil.js/sessoes.js/membros.js — evita o
+// KV.list(), que no plano Free do Cloudflare tem uma cota do dia bem mais
+// baixa que get/put (é por conta inteira, compartilhada com todos os outros
+// projetos — foi exatamente isso que já tirou o site do ar antes). Esse
+// arquivo tinha ficado de fora daquela migração: buscarAtiva() é chamada em
+// praticamente toda ação da rifa (comprar, reservar, atribuir, sortear...),
+// então era o maior consumidor de list() do site inteiro.
+const RIFA_INDICE_KEY = 'rifa:item:_index';
+
+async function rifaIndiceObter(KV) {
+  const indice = await KV.get(RIFA_INDICE_KEY, { type: 'json' });
+  if (indice) return indice;
   const list = await KV.list({ prefix: 'rifa:item:' });
-  const itens = await Promise.all(list.keys.map(k => KV.get(k.name, { type: 'json' })));
+  const chaves = list.keys.map(k => k.name).filter(k => k !== RIFA_INDICE_KEY);
+  await KV.put(RIFA_INDICE_KEY, JSON.stringify(chaves));
+  return chaves;
+}
+
+async function rifaIndiceAdicionar(KV, chave) {
+  const indice = await rifaIndiceObter(KV);
+  if (indice.indexOf(chave) === -1) {
+    indice.push(chave);
+    await KV.put(RIFA_INDICE_KEY, JSON.stringify(indice));
+  }
+}
+
+async function buscarAtiva(KV) {
+  const chaves = await rifaIndiceObter(KV);
+  const itens = await Promise.all(chaves.map(k => KV.get(k, { type: 'json' })));
   return itens.filter(Boolean).find(r => r.status === 'ativa') || null;
 }
 
@@ -324,8 +350,8 @@ export async function onRequest(context) {
     if (method === 'GET') {
       if (url.searchParams.get('historico') === '1') {
         if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
-        const list = await KV.list({ prefix: 'rifa:item:' });
-        const itens = await Promise.all(list.keys.map(k => KV.get(k.name, { type: 'json' })));
+        const chaves = await rifaIndiceObter(KV);
+        const itens = await Promise.all(chaves.map(k => KV.get(k, { type: 'json' })));
         const rifas = itens.filter(Boolean).sort((a, b) => b.criadoEm - a.criadoEm);
         return json(rifas);
       }
@@ -389,6 +415,7 @@ export async function onRequest(context) {
         criadoEm: Date.now(),
       };
       await KV.put(id, JSON.stringify(rifa));
+      await rifaIndiceAdicionar(KV, id);
       return json(rifa);
     }
 
