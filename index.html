@@ -5143,6 +5143,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-label">Exportar Dados dos Perfis</span>
         <span class="admin-menu-item-desc">Nomes, datas, pagamentos e fotos — tudo num .zip</span>
       </button>
+      <button class="admin-menu-item" onclick="adminExportarDadosRifa()">
+        <span class="admin-menu-item-icon">🎟️</span>
+        <span class="admin-menu-item-label">Exportar Dados da Rifa</span>
+        <span class="admin-menu-item-desc">Nome, telefone e número de cada rifa vendido — todas as campanhas</span>
+      </button>
     </div>
     <div id="admin-export-status" style="text-align:center;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:-6px 0 14px"></div>
 
@@ -8903,6 +8908,46 @@ function rifaExportarVendidos() {
   URL.revokeObjectURL(url);
 }
 window.rifaExportarVendidos = rifaExportarVendidos;
+
+// ── EXPORTAR DADOS DA RIFA (Painel Admin) — nome, telefone e número de
+// todo número vendido (pago), de TODAS as rifas (ativa + arquivadas),
+// numa planilha só. Diferente de rifaExportarVendidos() (que só pega a
+// rifa aberta na tela), esse puxa direto do histórico completo — serve
+// de cópia de segurança fora do site, pra ter os dados de compradores
+// salvos em algum lugar além do KV.
+async function adminExportarDadosRifa() {
+  const status = document.getElementById('admin-export-status');
+  const setStatus = (txt, cor) => { if (status) { status.textContent = txt; status.style.color = cor || ''; } };
+  setStatus('⏳ Buscando dados da rifa...');
+  try {
+    const res = await fetch('/api/rifa?historico=1', { headers: { 'X-Admin-Password': 'admin' } });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rifas = await res.json();
+    if (!Array.isArray(rifas) || !rifas.length) { setStatus('Nenhuma rifa encontrada ainda.'); return; }
+
+    const linhas = [['Rifa', 'Número', 'Nome', 'Telefone']];
+    rifas.forEach(r => {
+      Object.keys(r.numeros || {}).sort().forEach(numero => {
+        const info = r.numeros[numero];
+        if (!info || info.status !== 'pago') return;
+        linhas.push([r.titulo || '', numero, info.nome || '', info.telefone || '']);
+      });
+    });
+    if (linhas.length === 1) { setStatus('Nenhum número vendido (pago) em nenhuma rifa ainda.'); return; }
+
+    const csv = '﻿' + linhas.map(l => l.map(c => '"' + String(c).replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const hoje = new Date().toISOString().slice(0, 10);
+    a.href = url; a.download = `rifa-dados-${hoje}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    setStatus(`✓ ${linhas.length - 1} número(s) vendido(s) exportado(s), de ${rifas.length} rifa(s).`, 'var(--green)');
+  } catch (e) {
+    setStatus('⚠ Não consegui buscar os dados da rifa — tenta de novo.', 'var(--red)');
+  }
+}
+window.adminExportarDadosRifa = adminExportarDadosRifa;
 
 function rifaCopiarLinkVendedora() {
   const inp = document.getElementById('rf-atribuir-link');
