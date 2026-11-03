@@ -20482,6 +20482,13 @@ function rfRender() {
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (evt, elements) => {
+            if (!elements.length) return;
+            const { datasetIndex, index } = elements[0];
+            const tipo = datasetIndex === 0 ? 'entradas' : 'saidas';
+            window.rfAbrirDetalheAno(tipo, anosOrdenados[index]);
+          },
           plugins: { legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' } } }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
           scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
         }
@@ -20567,6 +20574,20 @@ function rfAbrirDetalhe(tipo) {
 function rfFecharDetalhe() {
   document.getElementById('rfc-detalhe-overlay').classList.remove('open');
 }
+// clique numa barra do gráfico "Entradas × Saídas por ano" — mesmo overlay de
+// detalhe dos cards, só que filtrado pro ano daquela barra específica
+function rfAbrirDetalheAno(tipo, ano) {
+  const campo = tipo === 'entradas' ? 'data_entrada' : 'data_saida';
+  const lista = (rfDetalheCache[tipo] || []).filter(p => (p.historia?.[campo] || '').slice(0, 4) === String(ano));
+  document.getElementById('rfc-detalhe-titulo').textContent = `${tipo === 'entradas' ? 'Entradas' : 'Saídas'} em ${ano}`;
+  document.getElementById('rfc-detalhe-sub').textContent = `${lista.length} perfil(is) — toque num nome pra editar`;
+  const corpo = document.getElementById('rfc-detalhe-lista');
+  corpo.innerHTML = lista.length
+    ? lista.map(p => rfLinhaDetalheHtml(tipo, p)).join('')
+    : '<div class="rc-vazio" style="padding:14px 0">Nenhum perfil aqui.</div>';
+  document.getElementById('rfc-detalhe-overlay').classList.add('open');
+}
+window.rfAbrirDetalheAno = rfAbrirDetalheAno;
 // delegação de clique — a lista é recriada toda vez que um card abre, então
 // é mais simples ouvir uma vez no container fixo do que religar a cada render
 document.getElementById('rfc-detalhe-lista')?.addEventListener('click', (ev) => {
