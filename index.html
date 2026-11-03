@@ -20377,6 +20377,7 @@ function lgRenderLista(perfis, sessoesTodas) {
 let rfPerfis = [];
 let rfCharts = {};
 let rfDetalheCache = {}; // guarda as listas por trás de cada card de estatística, pro clique abrir o detalhe
+let rfMaeDaCasaExtra = {}; // dados da Mãe da Casa por tipo — só pra mostrar no detalhe, nunca entra na média/contagem do card
 let rfOcultarSaidasJornada = false; // checkbox "ocultar quem já saiu" do gráfico de jornada — guardado fora do render pra sobreviver ao re-render
 window.rfToggleJornadaSaidas = function(checkbox) {
   rfOcultarSaidasJornada = checkbox.checked;
@@ -20529,6 +20530,37 @@ function rfRender() {
     cruzamento: comCruzamento, corte: comCorte, guia_primeiro: comPrimeiroGuia,
   };
   guiasPorTipo.forEach(g => { rfDetalheCache['guia_' + g.campo] = g.lista; });
+
+  // Mãe da Casa some de todo cálculo acima (ver rfPerfisFilhas) — mas ela
+  // pediu pra conseguir ver os próprios dados em cada card de tempo médio,
+  // só pra conferência, sem contar na média nem na contagem do card. Monta
+  // em paralelo, com o mesmo critério (entrada válida + marco válido +
+  // marco não anterior à entrada) de cada lista acima, só que aplicado nela
+  const rfMae = rfPerfis.find(p => p.cargo === 'Mãe da Casa') || null;
+  const rfMaeEntradaOk = !!(rfMae && rfDataValida(rfMae.historia?.data_entrada));
+  function rfMaeSe(valido, extra) {
+    return (rfMaeEntradaOk && valido) ? { ...rfMae, ...extra } : null;
+  }
+  const maePrimeiroCruzamento = rfMaeEntradaOk
+    ? (window.obterCruzamentosCombinados ? window.obterCruzamentosCombinados(rfMae) : []).find(c => rfDataValida(c.data) && !c.cambonagem)
+    : null;
+  const maePrimeiroCorte = rfMaeEntradaOk
+    ? (window.obterCortesCombinados ? window.obterCortesCombinados(rfMae) : []).find(c => rfDataValida(c.data) && !c.cambonagem)
+    : null;
+  const maePrimeiroGuia = rfMaeEntradaOk
+    ? (window.obterGuiasCombinados ? window.obterGuiasCombinados(rfMae) : []).find(g => rfDataValida(g.data))
+    : null;
+  rfMaeDaCasaExtra = {
+    apronte: rfMaeSe(rfDataValida(rfMae?.historia?.apronte) && rfMae.historia.apronte >= rfMae.historia.data_entrada),
+    coroacao: rfMaeSe(rfDataValida(rfMae?.historia?.coroacao) && rfMae.historia.coroacao >= rfMae.historia.data_entrada),
+    cacicamento: rfMaeSe(rfDataValida(rfMae?.historia?.cacicamento) && rfMae.historia.cacicamento >= rfMae.historia.data_entrada),
+    cruzamento: rfMaeSe(!!maePrimeiroCruzamento && maePrimeiroCruzamento.data >= rfMae.historia.data_entrada, { _primeiroCruzamento: maePrimeiroCruzamento?.data }),
+    corte: rfMaeSe(!!maePrimeiroCorte && maePrimeiroCorte.data >= rfMae.historia.data_entrada, { _primeiroCorte: maePrimeiroCorte?.data }),
+    guia_primeiro: rfMaeSe(!!maePrimeiroGuia && maePrimeiroGuia.data >= rfMae.historia.data_entrada, { _primeiroGuia: maePrimeiroGuia?.data }),
+  };
+  RF_GUIAS_FIXOS.forEach(([campo]) => {
+    rfMaeDaCasaExtra['guia_' + campo] = rfMaeSe(rfDataValida(rfMae?.guias?.[campo + '_data']) && rfMae.guias[campo + '_data'] >= rfMae.historia.data_entrada);
+  });
 
   let html = `<div class="rc-stats-grid">
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('ativas')"><div class="rc-stat-label">Filhas ativas hoje</div><div class="rc-stat-valor">${ativos}</div></div>
@@ -20789,9 +20821,17 @@ function rfAbrirDetalhe(tipo) {
   document.getElementById('rfc-detalhe-titulo').textContent = RF_DETALHE_TITULO[tipo] || '';
   document.getElementById('rfc-detalhe-sub').textContent = `${lista.length} perfil(is) — toque num nome pra editar`;
   const corpo = document.getElementById('rfc-detalhe-lista');
-  corpo.innerHTML = lista.length
+  let html = lista.length
     ? lista.map(p => rfLinhaDetalheHtml(tipo, p)).join('')
     : '<div class="rc-vazio" style="padding:14px 0">Nenhum perfil aqui ainda.</div>';
+  // Mãe da Casa não entra na contagem/média acima (ver rfMaeDaCasaExtra em
+  // rfRender) — só aparece aqui embaixo, separada, pra ela poder conferir
+  const mae = rfMaeDaCasaExtra[tipo];
+  if (mae) {
+    html += `<div style="margin:16px 0 8px;text-align:center;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)">✦ fora da média — só conferência ✦</div>`;
+    html += rfLinhaDetalheHtml(tipo, mae);
+  }
+  corpo.innerHTML = html;
   document.getElementById('rfc-detalhe-overlay').classList.add('open');
 }
 function rfFecharDetalhe() {
