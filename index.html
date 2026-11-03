@@ -20257,21 +20257,6 @@ function rfDataValida(d) {
   return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
 }
 
-// desenha o emoji num canvas à parte — é assim que dá pra usar um emoji como
-// "pointStyle" do Chart.js (ele só aceita formas prontas ou uma imagem/canvas,
-// não um caractere de texto direto)
-function rfEmojiPointStyle(emoji, tam) {
-  tam = tam || 28;
-  const c = document.createElement('canvas');
-  c.width = c.height = tam;
-  const cx = c.getContext('2d');
-  cx.font = `${tam - 6}px serif`;
-  cx.textAlign = 'center';
-  cx.textBaseline = 'middle';
-  cx.fillText(emoji, tam / 2, tam / 2 + 1);
-  return c;
-}
-
 function rfNomeDe(p) {
   return p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
 }
@@ -20386,14 +20371,50 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rfc-chart-crescimento"></canvas></div></div>`;
   }
 
-  // jornada por filha — uma linha horizontal por pessoa (entrada → saída, ou
-  // até hoje se ainda ativa) com os marcos de apronte/coroação/cacicamento
-  // marcados em cima, na data exata de cada uma — pedido pra não ficar tudo
-  // espremido numa única linha de crescimento da casa
+  // jornada por filha — uma linha fina por pessoa (entrada → saída, ou até
+  // hoje se ainda ativa) com os marcos de apronte/coroação/cacicamento
+  // flutuando acima dela, numa hastezinha — feito em HTML/CSS puro (não
+  // Chart.js) porque é exatamente o layout que a Anna escolheu num mockup de
+  // 3 opções; pedido pra não ficar tudo espremido numa única linha de
+  // crescimento da casa
   const jornadaPessoas = entradas.slice().sort((a,b) => a.historia.data_entrada.localeCompare(b.historia.data_entrada));
   if (jornadaPessoas.length) {
-    const alturaJornada = Math.max(220, jornadaPessoas.length * 32);
-    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📍 Jornada na Casa (por filha)</div><div style="height:${alturaJornada}px"><canvas id="rfc-chart-jornada"></canvas></div></div>`;
+    const diaDe = (d) => Math.floor(new Date(d).getTime() / 86400000);
+    const hojeDia = Math.floor(Date.now() / 86400000);
+    const minDia = Math.min(...jornadaPessoas.map(p => diaDe(p.historia.data_entrada)));
+    const spanDias = Math.max(1, hojeDia - minDia);
+    const pctDia = (dia) => Math.min(100, Math.max(0, (dia - minDia) / spanDias * 100));
+    const MARCOS_JORNADA = [['apronte', '🔪'], ['coroacao', '👑'], ['cacicamento', '🪶']];
+    const linhasJornada = jornadaPessoas.map(p => {
+      const nome = rfNomeDe(p);
+      const saiu = rfDataValida(p.historia?.data_saida);
+      const p0 = pctDia(diaDe(p.historia.data_entrada));
+      const p1 = pctDia(saiu ? diaDe(p.historia.data_saida) : hojeDia);
+      const corLinha = saiu ? '#b9a8ad' : '#e8a9c2';
+      const marcosHtml = MARCOS_JORNADA.map(([campo, emoji]) => {
+        const d = p.historia?.[campo];
+        if (!rfDataValida(d) || d < p.historia.data_entrada) return '';
+        const pm = pctDia(diaDe(d));
+        return `<div style="position:absolute;left:${pm}%;bottom:14px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center" title="${calEsc(RF_MARCO_LABEL[campo])} — ${calEsc(nome)}, ${window.fmtData(d)}">
+          <span style="font-size:.95rem;line-height:1">${emoji}</span>
+          <span style="width:1px;height:9px;background:var(--text-dim);opacity:.5"></span>
+        </div>`;
+      }).join('');
+      return `<div style="display:flex;align-items:center;gap:10px">
+        <div style="flex:0 0 76px;font-family:'Playfair Display',serif;font-size:.78rem;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${calEsc(nome)}">${calEsc(nome)}</div>
+        <div style="position:relative;flex:1;height:28px;min-width:0">
+          <div style="position:absolute;left:0;right:0;top:50%;height:1px;background:var(--border);transform:translateY(-50%)"></div>
+          <div style="position:absolute;top:50%;left:${p0}%;width:${Math.max(0, p1 - p0)}%;height:2px;border-radius:2px;transform:translateY(-50%);background:${corLinha}"></div>
+          <div style="position:absolute;top:50%;left:${p0}%;width:6px;height:6px;border-radius:50%;background:#c4396b;transform:translate(-50%,-50%)"></div>
+          ${!saiu ? `<div style="position:absolute;top:50%;left:${p1}%;width:6px;height:6px;border-radius:50%;background:#c4396b;transform:translate(-50%,-50%)"></div>` : ''}
+          ${marcosHtml}
+        </div>
+      </div>`;
+    }).join('');
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">📍 Jornada na Casa (por filha)</div>
+      <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">🔪 Apronte · 👑 Coroação · 🪶 Cacicamento — ● rosa: ativa · ● cinza: saiu</div>
+      <div style="display:flex;flex-direction:column;gap:14px">${linhasJornada}</div>
+    </div>`;
   }
 
   // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto (menos a Mãe da Casa, ver rfPerfisFilhas)
@@ -20471,68 +20492,6 @@ function rfRender() {
     }
   }
 
-  if (jornadaPessoas.length && typeof Chart !== 'undefined') {
-    const ctx = document.getElementById('rfc-chart-jornada');
-    if (ctx) {
-      const diaDe = (d) => Math.floor(new Date(d).getTime() / 86400000);
-      const hojeDia = Math.floor(Date.now() / 86400000);
-      const nomes = jornadaPessoas.map(rfNomeDe);
-      const barras = jornadaPessoas.map(p => {
-        const inicio = diaDe(p.historia.data_entrada);
-        const fim = rfDataValida(p.historia?.data_saida) ? diaDe(p.historia.data_saida) : hojeDia;
-        return { x: [inicio, Math.max(fim, inicio)], y: rfNomeDe(p) };
-      });
-      const corBarra = jornadaPessoas.map(p => rfDataValida(p.historia?.data_saida) ? '#b9a8ad' : '#e8a9c2');
-      // eixo do tempo (x) precisa de min/max explícitos — sem isso o Chart.js
-      // tende a incluir o dia 0 (1970) no cálculo automático de um eixo linear
-      // usado por um gráfico de barras, e aí as barras (que começam lá por
-      // 2020+) ficam todas espremidas, praticamente invisíveis, coladas na
-      // ponta direita
-      const minDia = Math.min(...barras.map(b => b.x[0]));
-      const marcoDataset = (label, lista, pegarData, emoji) => ({
-        type: 'line', label, showLine: false,
-        data: lista.filter(p => nomes.includes(rfNomeDe(p))).map(p => ({ x: diaDe(pegarData(p)), y: rfNomeDe(p), _nome: p.nome })),
-        pointStyle: rfEmojiPointStyle(emoji), pointRadius: 9, pointHoverRadius: 11,
-      });
-      rfCharts.jornada = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: nomes,
-          datasets: [
-            { label: 'Tempo de casa', data: barras, backgroundColor: corBarra, borderRadius: 6, barThickness: 14 },
-            marcoDataset('🔪 Apronte', comApronte, p => p.historia.apronte, '🔪'),
-            marcoDataset('👑 Coroação', comCoroacao, p => p.historia.coroacao, '👑'),
-            marcoDataset('🪶 Cacicamento', comCacicamento, p => p.historia.cacicamento, '🪶'),
-          ]
-        },
-        options: {
-          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' }, usePointStyle: true, boxWidth: 16, filter: (item) => item.text !== 'Tempo de casa' } },
-            tooltip: {
-              titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' },
-              callbacks: {
-                label: (c) => {
-                  if (c.dataset.label === 'Tempo de casa') {
-                    const [ini, fim] = c.raw.x;
-                    return `${window.fmtData(new Date(ini*86400000).toISOString().slice(0,10))} → ${window.fmtData(new Date(fim*86400000).toISOString().slice(0,10))}`;
-                  }
-                  return c.dataset.label;
-                }
-              }
-            },
-          },
-          scales: {
-            x: {
-              type: 'linear', min: minDia, max: hojeDia, grace: 0, beginAtZero: false,
-              ticks: { font: { size: 10, family: 'DM Sans' }, callback: (v) => new Date(v*86400000).getFullYear() },
-            },
-            y: { ticks: { font: { size: 10, family: 'DM Sans' } } }
-          }
-        }
-      });
-    }
-  }
   } catch (e) {
     console.warn('relatório filhas da casa:', e);
     el.innerHTML = '<div class="rc-vazio">Não foi possível montar o relatório — algum perfil tem um dado fora do esperado. Já foi avisado no console pra investigar.</div>';
