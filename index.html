@@ -18780,6 +18780,14 @@ const auth = getAuth(app);
     }
 
     async function cpExcluir(id) {
+      // Necessidades da Casa é compartilhada — item de qualquer pessoa podia
+      // ser apagado por qualquer uma logada, sem checar nada. Agora quem tem
+      // acesso de visitante (inclusive perfil inativo, ver grupoEfetivoDoPerfil)
+      // só consegue marcar/desmarcar, não apagar
+      if (!isEmailAdmin(currentUser?.email) && grupoEfetivoDoPerfil(perfilData) === 'visitante') {
+        cpToast('Só quem é filha da casa (ou admin) pode remover item da prateleira.', true);
+        return;
+      }
       if (!confirm('Remover este item da prateleira fixa?')) return;
       try { await deleteDoc(doc(db, 'lista_compras', id)); } catch (e) { cpToast('Erro ao remover', true); }
     }
@@ -18804,9 +18812,13 @@ const auth = getAuth(app);
       badge.textContent = precisando ? '🔴 Precisando' : '✓ Em dia';
       acoes.appendChild(badge);
 
-      const del = document.createElement('button'); del.className = 'cp-btn-del'; del.textContent = '✕'; del.title = 'Remover da prateleira';
-      del.addEventListener('click', () => cpExcluir(item.id));
-      acoes.appendChild(del);
+      // visitante (inclusive perfil inativo) nem vê o botão — cpExcluir já
+      // bloqueia de qualquer forma, isso aqui é só não oferecer o que não pode usar
+      if (isEmailAdmin(currentUser?.email) || grupoEfetivoDoPerfil(perfilData) !== 'visitante') {
+        const del = document.createElement('button'); del.className = 'cp-btn-del'; del.textContent = '✕'; del.title = 'Remover da prateleira';
+        del.addEventListener('click', () => cpExcluir(item.id));
+        acoes.appendChild(del);
+      }
 
       const topo = document.createElement('div'); topo.className = 'cp-item-topo';
       topo.appendChild(info); topo.appendChild(acoes);
