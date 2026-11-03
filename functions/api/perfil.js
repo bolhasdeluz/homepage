@@ -342,8 +342,9 @@ export async function onRequest(context) {
       };
       await env.MENU_DATA.put(key, JSON.stringify(novo));
       await perfilIndiceAdicionar(env.MENU_DATA, email);
-      // notifica por e-mail (async, não bloqueia resposta)
-      context.waitUntil(enviarEmail(env, { email, nome, foto, novoPerfil: true }));
+      // notifica por e-mail (async, não bloqueia resposta) — só quando é de
+      // fato alguém entrando, não a admin simulando/abrindo o perfil de outra
+      if (!isAdmin) context.waitUntil(enviarEmail(env, { email, nome, foto, novoPerfil: true }));
       return new Response(JSON.stringify(novo), { status: 200, headers: CORS });
     }
 
@@ -359,13 +360,17 @@ export async function onRequest(context) {
     if (!perfil.foto && fotoGoogle) { perfil.foto = fotoGoogle; precisaSalvar = true; }
     if (precisaSalvar) await env.MENU_DATA.put(key, JSON.stringify(perfil));
 
-    context.waitUntil(enviarEmail(env, {
-      email,
-      nome: perfil.nome || '',
-      foto: perfil.foto || '',
-      novoPerfil: false,
-      inativo: perfil.ativo === false,
-    }));
+    // mesma coisa aqui — "Simular visão" e editar perfil usam essa mesma
+    // rota pra buscar os dados, e isso não é um login de verdade pra avisar
+    if (!isAdmin) {
+      context.waitUntil(enviarEmail(env, {
+        email,
+        nome: perfil.nome || '',
+        foto: perfil.foto || '',
+        novoPerfil: false,
+        inativo: perfil.ativo === false,
+      }));
+    }
 
     return new Response(JSON.stringify(perfil), { status: 200, headers: CORS });
   }
