@@ -5485,6 +5485,17 @@ let menuData = null;
 const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
 function isEmailAdmin(email) { return !!email && ADMIN_EMAILS.includes(email); }
 
+// perfil inativo (desligada da casa) conta como "visitante" pra tudo que é
+// visibilidade por grupo (menu/Ferramentas, Calendário, Textos...) — mas só
+// pra isso: NUNCA mexe no p.grupo/p.cargo de verdade, que continuam salvos
+// como estavam, pra relatórios (Filhas da Casa etc.) continuarem contando
+// certinho pelo cargo/histórico real da pessoa, não pelo acesso dela hoje
+function grupoEfetivoDoPerfil(p) {
+  if (p && p.ativo === false) return 'visitante';
+  return p?.grupo || 'visitante';
+}
+window.grupoEfetivoDoPerfil = grupoEfetivoDoPerfil; // usado também pelo script do dashboard pessoal, que não compartilha escopo com este
+
 
 // ── CARREGAR MENU DO KV ──
 // O menu padrão vive só em functions/api/menu.js — aqui não guardamos mais
@@ -5529,7 +5540,7 @@ function renderDrawer() {
   let grupoUsuario = 'publico';
   if (logada) {
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
-    grupoUsuario = pd.grupo || 'visitante';
+    grupoUsuario = grupoEfetivoDoPerfil(pd);
     if (!emSimulacao && isEmailAdmin(userNow.email)) grupoUsuario = 'admin';
   } else if (ehAdmin) {
     grupoUsuario = 'admin';
@@ -5612,7 +5623,7 @@ function renderDrawerItem(item, ctx) {
   if (item.id === 'historia') {
     if (!logada) return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
-    const grupoUser = pd.grupo || 'visitante';
+    const grupoUser = grupoEfetivoDoPerfil(pd);
     if (!ehAdmin && !suaHistoriaGrupos.includes(grupoUser)) {
       return drawerTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
     }
@@ -5733,7 +5744,7 @@ function renderCards() {
       let grupoUsuario = 'publico';
       if (logada) {
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
-        grupoUsuario = pd.grupo || 'visitante';
+        grupoUsuario = grupoEfetivoDoPerfil(pd);
         // só é admin se NÃO estiver simulando
         if (!emSimulacao && isEmailAdmin(user.email)) grupoUsuario = 'admin';
       } else if (ehAdmin) {
@@ -5755,7 +5766,7 @@ function renderCards() {
       if (item.id === 'historia') {
         if (!logada) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         const pd = window._simUsuario?._perfil || window._getPerfilData?.() || {};
-        const grupoUser = pd.grupo || 'visitante';
+        const grupoUser = grupoEfetivoDoPerfil(pd);
         const isAdminReal = ehAdmin;
         if (!isAdminReal && !suaHistoriaGrupos.includes(grupoUser)) { html += widgetTile({ id:'historia', label:'Nossa História' }, `onclick="showPage('historia');return false"`, 'A fundação do Bolhas de Luz'); return; }
         return; // é filha da casa/admin — já tem o editar na Início, não precisa do card aqui
@@ -7422,7 +7433,7 @@ function calGetGrupo() {
   const u = window._getCurrentUser && window._getCurrentUser();
   if (souAdminAtivo(u)) return 'admin';
   if (!u) return 'publico';
-  return window._getPerfilData?.()?.grupo || 'visitante';
+  return grupoEfetivoDoPerfil(window._getPerfilData?.());
 }
 
 function calSessaoVisivel(s) {
@@ -21176,7 +21187,7 @@ function renderDashPessoal(p, user) {
   if (wrapTerreiro) wrapTerreiro.style.display = 'none';
 
   p = p || {};
-  const grupoAtual = p.grupo || 'visitante';
+  const grupoAtual = window.grupoEfetivoDoPerfil ? window.grupoEfetivoDoPerfil(p) : (p.grupo || 'visitante');
 
   // Assistência tem painel próprio: presença, agendinha pessoal e informativos
   if (grupoAtual === 'assistencia') {
@@ -21931,15 +21942,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   if (user) {
-    // checa ANTES de abrir qualquer coisa — perfil marcado como inativo
-    // (desligada da casa) não pode ficar logada, mesmo que o Google já
-    // tenha autenticado; admin nunca é barrado por essa checagem
+    // perfil marcado como inativo (desligada da casa) não é deslogada — ela
+    // continua entrando normalmente, só que com o mesmo acesso de uma
+    // visitante (perde Textos, Quadro das Filhas etc.), sem precisar mexer
+    // no grupo/cargo salvo no perfil dela (ver grupoEfetivoDoPerfil, que é
+    // quem de fato aplica isso em todo lugar que decide visibilidade por
+    // grupo) — assim os relatórios continuam contando pelo cargo real dela
     await carregarPerfil(user.email);
-    if (perfilData?.ativo === false && !isEmailAdmin(user.email)) {
-      await signOut(auth);
-      alert('Seu acesso ao site do Terreiro Bolhas de Luz foi desativado. Se achar que isso é um engano, fale com a Mãe da Casa.');
-      return;
-    }
     const avatar = document.getElementById('user-avatar');
     if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
     document.getElementById('drawer-user-section').style.display = 'block';
