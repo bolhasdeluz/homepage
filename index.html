@@ -20291,6 +20291,15 @@ function rfRender() {
       return primeiro ? { ...p, _primeiroCruzamento: primeiro.data } : null;
     })
     .filter(p => p && rfDataValida(p.historia?.data_entrada) && p._primeiroCruzamento >= p.historia.data_entrada);
+  // mesmo critério do marco "Assentamento" da linha do tempo pessoal — o
+  // primeiro corte que de fato aconteceu, sem contar cambonagem
+  const comCorte = rfPerfisFilhas
+    .map(p => {
+      const primeiro = (window.obterCortesCombinados ? window.obterCortesCombinados(p) : [])
+        .find(c => rfDataValida(c.data) && !c.cambonagem);
+      return primeiro ? { ...p, _primeiroCorte: primeiro.data } : null;
+    })
+    .filter(p => p && rfDataValida(p.historia?.data_entrada) && p._primeiroCorte >= p.historia.data_entrada);
   // só quem tem um cargo de verdade de filha da casa conta como "ativa" aqui
   // — visitante/assistência/família não é filha da casa, mesmo com perfil
   // ativo no site (mesma lista usada no Quadro das Filhas, ver QF_CARGOS_PERMITIDOS)
@@ -20308,10 +20317,11 @@ function rfRender() {
   const tempoCoroacaoTxt = rfTempoMedio(comCoroacao, p => p.historia.coroacao);
   const tempoCacicamentoTxt = rfTempoMedio(comCacicamento, p => p.historia.cacicamento);
   const tempoCruzamentoTxt = rfTempoMedio(comCruzamento, p => p._primeiroCruzamento);
+  const tempoCorteTxt = rfTempoMedio(comCorte, p => p._primeiroCorte);
 
   // guarda as listas por trás de cada card — é nelas que rfAbrirDetalhe() vai
   // procurar quando a Anna clicar num card pra ver os perfis que compõem aquele número
-  rfDetalheCache = { ativas, entradas, saidas, apronte: comApronte, coroacao: comCoroacao, cacicamento: comCacicamento, cruzamento: comCruzamento };
+  rfDetalheCache = { ativas, entradas, saidas, apronte: comApronte, coroacao: comCoroacao, cacicamento: comCacicamento, cruzamento: comCruzamento, corte: comCorte };
 
   let html = `<div class="rc-stats-grid">
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('ativas')"><div class="rc-stat-label">Filhas ativas hoje</div><div class="rc-stat-valor">${ativos}</div></div>
@@ -20321,6 +20331,7 @@ function rfRender() {
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('coroacao')"><div class="rc-stat-label">Tempo médio até a Coroação</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCoroacaoTxt}</div><div class="rc-stat-sub">${comCoroacao.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('cacicamento')"><div class="rc-stat-label">Tempo médio até o Cacicamento</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCacicamentoTxt}</div><div class="rc-stat-sub">${comCacicamento.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('cruzamento')"><div class="rc-stat-label">Tempo médio até o 1º Cruzamento</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCruzamentoTxt}</div><div class="rc-stat-sub">${comCruzamento.length} com as duas datas registradas</div></div>
+    <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('corte')"><div class="rc-stat-label">Tempo médio até o 1º Corte</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCorteTxt}</div><div class="rc-stat-sub">${comCorte.length} com as duas datas registradas</div></div>
   </div>`;
 
   // entradas × saídas por ano
@@ -20412,19 +20423,63 @@ function rfRender() {
   if (crescimentoLabels.length && typeof Chart !== 'undefined') {
     const ctx = document.getElementById('rfc-chart-crescimento');
     if (ctx) {
+      // desenha o emoji num canvas à parte — é assim que dá pra usar um
+      // emoji como "pointStyle" do Chart.js (ele só aceita formas prontas
+      // ou uma imagem/canvas, não um caractere de texto direto)
+      const emojiPointStyle = (emoji, tam) => {
+        tam = tam || 28;
+        const c = document.createElement('canvas');
+        c.width = c.height = tam;
+        const cx = c.getContext('2d');
+        cx.font = `${tam - 6}px serif`;
+        cx.textAlign = 'center';
+        cx.textBaseline = 'middle';
+        cx.fillText(emoji, tam / 2, tam / 2 + 1);
+        return c;
+      };
+      // marca cada apronte/coroação/cacicamento "em cima" da própria linha
+      // de crescimento — usa o valor que a linha já tinha naquele ano como
+      // y, em vez de inventar um eixo novo só pros marcos
+      const marcosParaPontos = (lista, pegarData) => lista.map(p => {
+        const ano = String(pegarData(p)).slice(0, 4);
+        const idx = crescimentoLabels.indexOf(ano);
+        if (idx === -1) return null;
+        return { x: ano, y: crescimentoValores[idx], _nome: p.nome };
+      }).filter(Boolean);
+
       rfCharts.crescimento = new Chart(ctx, {
         type: 'line',
         data: {
           labels: crescimentoLabels,
-          datasets: [{
-            label: 'Filhas na casa', data: crescimentoValores,
-            borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
-            fill: true, tension: .25, pointRadius: 3, pointBackgroundColor: '#c4396b',
-          }]
+          datasets: [
+            {
+              label: 'Filhas na casa', data: crescimentoValores,
+              borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
+              fill: true, tension: .25, pointRadius: 3, pointBackgroundColor: '#c4396b',
+            },
+            {
+              label: '🔪 Apronte', data: marcosParaPontos(comApronte, p => p.historia.apronte),
+              showLine: false, pointStyle: emojiPointStyle('🔪'), pointRadius: 11, pointHoverRadius: 13,
+            },
+            {
+              label: '👑 Coroação', data: marcosParaPontos(comCoroacao, p => p.historia.coroacao),
+              showLine: false, pointStyle: emojiPointStyle('👑'), pointRadius: 11, pointHoverRadius: 13,
+            },
+            {
+              label: '🪶 Cacicamento', data: marcosParaPontos(comCacicamento, p => p.historia.cacicamento),
+              showLine: false, pointStyle: emojiPointStyle('🪶'), pointRadius: 11, pointHoverRadius: 13,
+            },
+          ]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
-          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          plugins: {
+            legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' }, usePointStyle: true, boxWidth: 16 } },
+            tooltip: {
+              titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' },
+              callbacks: { label: (c) => c.raw?._nome ? `${c.dataset.label} — ${c.raw._nome}` : `${c.dataset.label}: ${c.formattedValue}` },
+            },
+          },
           scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
         }
       });
@@ -20444,6 +20499,7 @@ const RF_DETALHE_TITULO = {
   ativas: 'Filhas ativas hoje', entradas: 'Entradas (histórico)', saidas: 'Saídas (histórico)',
   apronte: 'Tempo médio até o Apronte', coroacao: 'Tempo médio até a Coroação',
   cacicamento: 'Tempo médio até o Cacicamento', cruzamento: 'Tempo médio até o 1º Cruzamento',
+  corte: 'Tempo médio até o 1º Corte',
 };
 // "entrada → marco (duração)" — mesmo formato pros quatro tempos médios
 function rfInfoDuracao(dataEntrada, dataMarco) {
@@ -20459,6 +20515,7 @@ function rfLinhaDetalheHtml(tipo, p) {
   else if (tipo === 'coroacao') infoData = rfInfoDuracao(hist.data_entrada, hist.coroacao);
   else if (tipo === 'cacicamento') infoData = rfInfoDuracao(hist.data_entrada, hist.cacicamento);
   else if (tipo === 'cruzamento') infoData = rfInfoDuracao(hist.data_entrada, p._primeiroCruzamento);
+  else if (tipo === 'corte') infoData = rfInfoDuracao(hist.data_entrada, p._primeiroCorte);
   // clicável — leva direto pra edição do perfil (mesmo modal usado em
   // Filhas da Casa/Quadro das Filhas), pra já poder corrigir o que tiver
   // errado sem precisar procurar a pessoa de novo em outro lugar
