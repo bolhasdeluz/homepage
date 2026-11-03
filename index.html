@@ -20264,21 +20264,20 @@ function rfRender() {
   if (!rfPerfis.length) { el.innerHTML = '<div class="rc-vazio">Nenhum perfil cadastrado ainda.</div>'; return; }
 
   try {
-  // a Mãe da Casa não "entrou" na casa — ela fundou — então a data pessoal
-  // dela de entrada na religião (que pode ser bem anterior à própria casa
-  // existir) não entra nem na contagem de Entradas nem no Crescimento da
-  // Casa, pra não fazer parecer que a casa já existia desde aquela data
-  const entradas = rfPerfis.filter(p => p.cargo !== 'Mãe da Casa' && rfDataValida(p.historia?.data_entrada));
-  const saidas = rfPerfis.filter(p => p.cargo !== 'Mãe da Casa' && rfDataValida(p.historia?.data_saida));
-  const comApronte = rfPerfis.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.apronte) && p.historia.apronte >= p.historia.data_entrada);
-  const comCoroacao = rfPerfis.filter(p => rfDataValida(p.historia?.coroacao)).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
-  const comCacicamento = rfPerfis.filter(p => rfDataValida(p.historia?.cacicamento)).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
+  // a Mãe da Casa não é uma "filha da casa" — é quem funda/dirige — então o
+  // relatório inteiro (todo card, gráfico e a linha do tempo) ignora o
+  // perfil dela por completo, não só a entrada/saída
+  const rfPerfisFilhas = rfPerfis.filter(p => p.cargo !== 'Mãe da Casa');
+
+  const entradas = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada));
+  const saidas = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_saida));
+  const comApronte = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.apronte) && p.historia.apronte >= p.historia.data_entrada);
+  const comCoroacao = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.coroacao)).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
+  const comCacicamento = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.cacicamento)).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
   // só quem tem um cargo de verdade de filha da casa conta como "ativa" aqui
   // — visitante/assistência/família não é filha da casa, mesmo com perfil
-  // ativo no site (parte da mesma lista usada no Quadro das Filhas, ver
-  // QF_CARGOS_PERMITIDOS, mas sem a Mãe da Casa — ela não é uma "filha", é
-  // quem funda/dirige a casa)
-  const ativas = rfPerfis.filter(p => p.ativo !== false && p.cargo !== 'Mãe da Casa' && QF_CARGOS_PERMITIDOS.includes(p.cargo));
+  // ativo no site (mesma lista usada no Quadro das Filhas, ver QF_CARGOS_PERMITIDOS)
+  const ativas = rfPerfisFilhas.filter(p => p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo));
   const ativos = ativas.length;
 
   let tempoApronteTxt = '—';
@@ -20333,15 +20332,12 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rfc-chart-crescimento"></canvas></div></div>`;
   }
 
-  // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto
+  // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto (menos a Mãe da Casa, ver rfPerfisFilhas)
   let itens = [];
-  rfPerfis.forEach(p => {
+  rfPerfisFilhas.forEach(p => {
     const nome = p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
     const hist = p.historia || {};
     RF_MARCOS.forEach(key => {
-      // mesmo motivo do filtro lá em cima: a entrada/saída da Mãe da Casa
-      // não é um marco da casa, é da vida religiosa dela antes da casa existir
-      if (p.cargo === 'Mãe da Casa' && (key === 'data_entrada' || key === 'data_saida')) return;
       const data = hist[key];
       if (!rfDataValida(data)) return;
       itens.push({ data, key, quem: nome });
