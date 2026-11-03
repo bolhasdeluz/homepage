@@ -2,16 +2,26 @@
 // Contador de acessos diários, separado por página (?pagina=site|rifa-digital|
 // cosmes|...) — cada página pública chama POST aqui ao carregar (sem corpo),
 // que soma 1 no contador do dia (UTC) da página no KV MENU_DATA (chave
-// "visita:<pagina>:YYYY-MM-DD") e marca o IP de quem acessou como visto
-// hoje (chave "visita:<pagina>:<dia>:ip:<hash>"), pra dar pra contar quantas
-// pessoas diferentes (por IP) passaram no dia, sem guardar o IP de verdade.
-// Quando a pessoa está logada, o site manda um segundo POST com
-// {email, nome} — esse só identifica quem acessou (guardado em
-// "visita:<pagina>:<dia>:user:<email>"), sem contar de novo no total nem no
-// IP (isso já foi feito no primeiro POST anônimo).
+// "visita:<pagina>:YYYY-MM-DD") e guarda o IP de quem acessou (com hash, não
+// o endereço de verdade) numa lista única do dia ("visita:<pagina>:<dia>:ips"),
+// pra dar pra contar quantas pessoas diferentes passaram. Quando a pessoa
+// está logada, o site manda um segundo POST com {email, nome} — esse só
+// identifica quem acessou (guardado em "visita:<pagina>:<dia>:users"), sem
+// contar de novo no total nem no IP (isso já rolou no POST anônimo).
 // GET (só admin) devolve, pra cada página já vista (registradas em
 // "visita:paginas"), o total de acessos, quantos IPs diferentes e quem
-// estava logada nos últimos dias — pro painel de administração.
+// estava logada nos últimos dias — pro painel de administração e pro
+// Relatório de Visitas e QR Code.
+//
+// "ips" e "users" do dia ficam numa chave só por dia (lida/escrita com
+// get/put) em vez de uma chave por IP/usuário lida com list() — list() é a
+// operação mais limitada de KV no plano gratuito, e esse endpoint antes
+// fazia 2 list() por dia × por página toda vez que o relatório abria (foi
+// exatamente esse padrão, só que na rifa, que já derrubou a leitura dela
+// uma vez por estourar a cota — ver rifa.js). Dias registrados antes dessa
+// mudança não tinham essa chave agregada; pra esses, "únicos"/"logados"
+// aparece zerado (o total de acessos do dia continua certo, esse nunca usou
+// list()).
 
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
@@ -78,10 +88,11 @@ export async function onRequest(context) {
       // novo no total nem no IP, isso já rolou no POST anônimo
       const email = String(body.email).toLowerCase().trim();
       if (!email) return json({ error: 'E-mail inválido.' }, 400);
-      const chaveUser = `visita:${pagina}:${dia}:user:${email}`;
-      const existente = await KV.get(chaveUser, { type: 'json' });
-      const nome = (body.nome || '').trim() || existente?.nome || email;
-      await KV.put(chaveUser, JSON.stringify({ nome, email, acessos: (existente?.acessos || 0) + 1 }));
+      const chaveUsers = `visita:${pagina}:${dia}:users`;
+      const users = (await KV.get(chaveUsers, { type: 'json' })) || {};
+      const nome = (body.nome || '').trim() || users[email]?.nome || email;
+      users[email] = { nome, email, acessos: (users[email]?.acessos || 0) + 1 };
+      await KV.put(chaveUsers, JSON.stringify(users));
       return json({ ok: true });
     }
 
@@ -90,9 +101,14 @@ export async function onRequest(context) {
     const atual = parseInt(await KV.get(chaveTotal), 10) || 0;
     await KV.put(chaveTotal, String(atual + 1));
 
+    const chaveIps = `visita:${pagina}:${dia}:ips`;
     const ip = request.headers.get('CF-Connecting-IP') || 'desconhecido';
     const ipHash = await hashTexto(ip);
-    await KV.put(`visita:${pagina}:${dia}:ip:${ipHash}`, '1');
+    const ips = (await KV.get(chaveIps, { type: 'json' })) || [];
+    if (!ips.includes(ipHash)) {
+      ips.push(ipHash);
+      await KV.put(chaveIps, JSON.stringify(ips));
+    }
 
     return json({ ok: true });
   }
@@ -122,15 +138,13 @@ export async function onRequest(context) {
         if (inicio && dia < inicio) {
           return { dia, contagem: null, unicos: null, logados: [], semDados: true };
         }
-        const [totalRaw, listaIps, listaUsers] = await Promise.all([
+        const [totalRaw, ips, users] = await Promise.all([
           KV.get(`visita:${pag}:${dia}`),
-          KV.list({ prefix: `visita:${pag}:${dia}:ip:` }),
-          KV.list({ prefix: `visita:${pag}:${dia}:user:` }),
+          KV.get(`visita:${pag}:${dia}:ips`, { type: 'json' }),
+          KV.get(`visita:${pag}:${dia}:users`, { type: 'json' }),
         ]);
-        const logados = (await Promise.all(listaUsers.keys.map(k => KV.get(k.name, { type: 'json' }))))
-          .filter(Boolean)
-          .sort((a, b) => b.acessos - a.acessos);
-        return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: listaIps.keys.length, logados, semDados: false };
+        const logados = Object.values(users || {}).sort((a, b) => b.acessos - a.acessos);
+        return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: (ips || []).length, logados, semDados: false };
       }));
     }
     return json({ paginas: paginasResultado });
