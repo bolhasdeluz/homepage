@@ -6466,6 +6466,25 @@ window.obterCruzamentosCombinados = function(p) {
   extras.sort((a, b) => (a.data || '9999-99-99').localeCompare(b.data || '9999-99-99'));
   return extras;
 };
+// mesma ideia dos dois de cima — combina os 6 guias fixos (p.guias) com os
+// guias extras (p.guiasExtras, tipo livre) numa lista só, ordenada por data
+window.obterGuiasCombinados = function(p) {
+  const guias = (p && p.guias) || {};
+  const FIXOS = [
+    ['caboclo', 'Caboclo'], ['exu', 'Exu'], ['pomba_gira', 'Pomba Gira'],
+    ['preto_velho', 'Preto Velho'], ['cigana', 'Cigana'], ['cosme', 'Cosme'],
+  ];
+  const lista = [];
+  FIXOS.forEach(([campo, label]) => {
+    const data = guias[campo + '_data'];
+    if (data) lista.push({ tipo: campo, label, nome: guias[campo] || '', data });
+  });
+  ((p && p.guiasExtras) || []).forEach(g => {
+    if (g.data) lista.push({ tipo: 'extra', label: g.tipo || 'Guia', nome: g.nome || '', data: g.data });
+  });
+  lista.sort((a, b) => (a.data || '9999-99-99').localeCompare(b.data || '9999-99-99'));
+  return lista;
+};
 
 async function carregarFilhasAdmin() {
   const grid = document.getElementById('admin-filhas-grid');
@@ -20466,6 +20485,22 @@ function rfRender() {
       return primeiro ? { ...p, _primeiroCorte: primeiro.data } : null;
     })
     .filter(p => p && rfDataValida(p.historia?.data_entrada) && p._primeiroCorte >= p.historia.data_entrada);
+  // guia — primeiro de qualquer tipo (fixo ou extra, ver window.obterGuiasCombinados)
+  const comPrimeiroGuia = rfPerfisFilhas
+    .map(p => {
+      const primeiro = (window.obterGuiasCombinados ? window.obterGuiasCombinados(p) : [])
+        .find(g => rfDataValida(g.data));
+      return primeiro ? { ...p, _primeiroGuia: primeiro.data } : null;
+    })
+    .filter(p => p && rfDataValida(p.historia?.data_entrada) && p._primeiroGuia >= p.historia.data_entrada);
+  // breakdown por guia fixo (Caboclo, Exu, Pomba Gira, Preto Velho, Cigana,
+  // Cosme) — guias extras (tipo livre) só entram no "1º guia" acima, não dá
+  // pra agrupar tempo médio por um tipo que cada perfil escreve diferente
+  const RF_GUIAS_FIXOS = [['caboclo','Caboclo'],['exu','Exu'],['pomba_gira','Pomba Gira'],['preto_velho','Preto Velho'],['cigana','Cigana'],['cosme','Cosme']];
+  const guiasPorTipo = RF_GUIAS_FIXOS.map(([campo, label]) => ({
+    campo, label,
+    lista: rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.guias?.[campo + '_data']) && p.guias[campo + '_data'] >= p.historia.data_entrada),
+  }));
   // só quem tem um cargo de verdade de filha da casa conta como "ativa" aqui
   // — visitante/assistência/família não é filha da casa, mesmo com perfil
   // ativo no site (mesma lista usada no Quadro das Filhas, ver QF_CARGOS_PERMITIDOS)
@@ -20484,10 +20519,16 @@ function rfRender() {
   const tempoCacicamentoTxt = rfTempoMedio(comCacicamento, p => p.historia.cacicamento);
   const tempoCruzamentoTxt = rfTempoMedio(comCruzamento, p => p._primeiroCruzamento);
   const tempoCorteTxt = rfTempoMedio(comCorte, p => p._primeiroCorte);
+  const tempoPrimeiroGuiaTxt = rfTempoMedio(comPrimeiroGuia, p => p._primeiroGuia);
+  guiasPorTipo.forEach(g => { g.tempoTxt = rfTempoMedio(g.lista, p => p.guias[g.campo + '_data']); });
 
   // guarda as listas por trás de cada card — é nelas que rfAbrirDetalhe() vai
   // procurar quando a Anna clicar num card pra ver os perfis que compõem aquele número
-  rfDetalheCache = { ativas, entradas, saidas, apronte: comApronte, coroacao: comCoroacao, cacicamento: comCacicamento, cruzamento: comCruzamento, corte: comCorte };
+  rfDetalheCache = {
+    ativas, entradas, saidas, apronte: comApronte, coroacao: comCoroacao, cacicamento: comCacicamento,
+    cruzamento: comCruzamento, corte: comCorte, guia_primeiro: comPrimeiroGuia,
+  };
+  guiasPorTipo.forEach(g => { rfDetalheCache['guia_' + g.campo] = g.lista; });
 
   let html = `<div class="rc-stats-grid">
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('ativas')"><div class="rc-stat-label">Filhas ativas hoje</div><div class="rc-stat-valor">${ativos}</div></div>
@@ -20498,6 +20539,26 @@ function rfRender() {
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('cacicamento')"><div class="rc-stat-label">Tempo médio até o Cacicamento</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCacicamentoTxt}</div><div class="rc-stat-sub">${comCacicamento.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('cruzamento')"><div class="rc-stat-label">Tempo médio até o 1º Cruzamento</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCruzamentoTxt}</div><div class="rc-stat-sub">${comCruzamento.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('corte')"><div class="rc-stat-label">Tempo médio até o 1º Corte</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCorteTxt}</div><div class="rc-stat-sub">${comCorte.length} com as duas datas registradas</div></div>
+    <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('guia_primeiro')"><div class="rc-stat-label">Tempo médio até o 1º Guia</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoPrimeiroGuiaTxt}</div><div class="rc-stat-sub">${comPrimeiroGuia.length} com as duas datas registradas</div></div>
+  </div>`;
+
+  // breakdown por guia — não cabe tudo em card, então vira uma listinha só,
+  // no mesmo estilo de ranking já usado no Relatório de Visitas
+  const maxGuia = Math.max(1, ...guiasPorTipo.map(g => g.lista.length));
+  html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">🔮 Guias — tempo médio até a chegada de cada um</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">Toque num guia pra ver quem já recebeu e quando</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${guiasPorTipo.map(g => {
+        const pct = Math.max(4, g.lista.length / maxGuia * 100);
+        return `<div style="cursor:pointer" onclick="rfAbrirDetalhe('guia_${g.campo}')">
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);margin-bottom:3px">
+            <span>${g.label}</span>
+            <span style="color:var(--text-dim);flex-shrink:0">${g.tempoTxt} · ${g.lista.length}</span>
+          </div>
+          <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#9e6a9e;border-radius:4px"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
   </div>`;
 
   // entradas × saídas por ano
@@ -20689,7 +20750,10 @@ const RF_DETALHE_TITULO = {
   ativas: 'Filhas ativas hoje', entradas: 'Entradas (histórico)', saidas: 'Saídas (histórico)',
   apronte: 'Tempo médio até o Apronte', coroacao: 'Tempo médio até a Coroação',
   cacicamento: 'Tempo médio até o Cacicamento', cruzamento: 'Tempo médio até o 1º Cruzamento',
-  corte: 'Tempo médio até o 1º Corte',
+  corte: 'Tempo médio até o 1º Corte', guia_primeiro: 'Tempo médio até o 1º Guia',
+  guia_caboclo: 'Tempo médio até o Caboclo', guia_exu: 'Tempo médio até o Exu',
+  guia_pomba_gira: 'Tempo médio até a Pomba Gira', guia_preto_velho: 'Tempo médio até o Preto Velho',
+  guia_cigana: 'Tempo médio até a Cigana', guia_cosme: 'Tempo médio até o Cosme',
 };
 // "entrada → marco (duração)" — mesmo formato pros quatro tempos médios
 function rfInfoDuracao(dataEntrada, dataMarco) {
@@ -20706,6 +20770,8 @@ function rfLinhaDetalheHtml(tipo, p) {
   else if (tipo === 'cacicamento') infoData = rfInfoDuracao(hist.data_entrada, hist.cacicamento);
   else if (tipo === 'cruzamento') infoData = rfInfoDuracao(hist.data_entrada, p._primeiroCruzamento);
   else if (tipo === 'corte') infoData = rfInfoDuracao(hist.data_entrada, p._primeiroCorte);
+  else if (tipo === 'guia_primeiro') infoData = rfInfoDuracao(hist.data_entrada, p._primeiroGuia);
+  else if (tipo.startsWith('guia_')) infoData = rfInfoDuracao(hist.data_entrada, (p.guias || {})[tipo.slice('guia_'.length) + '_data']);
   // clicável — leva direto pra edição do perfil (mesmo modal usado em
   // Filhas da Casa/Quadro das Filhas), pra já poder corrigir o que tiver
   // errado sem precisar procurar a pessoa de novo em outro lugar
