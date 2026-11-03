@@ -5398,7 +5398,13 @@ const API = '/api/menu';
 // rodapé — serve só pra conferir se um deploy já propagou (compara com o
 // hash do commit mais recente no GitHub), sem precisar abrir o painel do
 // Cloudflare. Se não vier (versao.js ainda não foi deployado, por exemplo),
-// o rodapé continua igual, sem o texto
+// o rodapé continua igual, sem o texto. O horário mostrado é o do commit
+// (que a Function busca no GitHub e já deixa em cache) — como o deploy
+// dispara automaticamente a cada push, é uma aproximação bem próxima do
+// horário real do deploy. Só cai pro horário "agora" se não conseguir
+// buscar o do commit (daí o horarioEhDoDeploy não entra na mensagem — não
+// tem como avisar visualmente qual dos dois é, mas o valor em si já é o
+// melhor disponível em cada caso)
 fetch('/api/versao').then(r => r.ok ? r.json() : null).then(dados => {
   if (!dados || !dados.sha) return;
   const partes = [`v. ${dados.sha.slice(0, 7)}`];
