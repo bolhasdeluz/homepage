@@ -20275,8 +20275,10 @@ function rfRender() {
   const comCacicamento = rfPerfis.filter(p => rfDataValida(p.historia?.cacicamento)).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
   // só quem tem um cargo de verdade de filha da casa conta como "ativa" aqui
   // — visitante/assistência/família não é filha da casa, mesmo com perfil
-  // ativo no site (mesma lista usada no Quadro das Filhas, ver QF_CARGOS_PERMITIDOS)
-  const ativas = rfPerfis.filter(p => p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo));
+  // ativo no site (parte da mesma lista usada no Quadro das Filhas, ver
+  // QF_CARGOS_PERMITIDOS, mas sem a Mãe da Casa — ela não é uma "filha", é
+  // quem funda/dirige a casa)
+  const ativas = rfPerfis.filter(p => p.ativo !== false && p.cargo !== 'Mãe da Casa' && QF_CARGOS_PERMITIDOS.includes(p.cargo));
   const ativos = ativas.length;
 
   let tempoApronteTxt = '—';
