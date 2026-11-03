@@ -20483,6 +20483,12 @@ function rfRender() {
         return { x: [inicio, Math.max(fim, inicio)], y: rfNomeDe(p) };
       });
       const corBarra = jornadaPessoas.map(p => rfDataValida(p.historia?.data_saida) ? '#b9a8ad' : '#e8a9c2');
+      // eixo do tempo (x) precisa de min/max explícitos — sem isso o Chart.js
+      // tende a incluir o dia 0 (1970) no cálculo automático de um eixo linear
+      // usado por um gráfico de barras, e aí as barras (que começam lá por
+      // 2020+) ficam todas espremidas, praticamente invisíveis, coladas na
+      // ponta direita
+      const minDia = Math.min(...barras.map(b => b.x[0]));
       const marcoDataset = (label, lista, pegarData, emoji) => ({
         type: 'line', label, showLine: false,
         data: lista.filter(p => nomes.includes(rfNomeDe(p))).map(p => ({ x: diaDe(pegarData(p)), y: rfNomeDe(p), _nome: p.nome })),
@@ -20517,7 +20523,10 @@ function rfRender() {
             },
           },
           scales: {
-            x: { ticks: { font: { size: 10, family: 'DM Sans' }, callback: (v) => new Date(v*86400000).getFullYear() } },
+            x: {
+              type: 'linear', min: minDia, max: hojeDia, grace: 0, beginAtZero: false,
+              ticks: { font: { size: 10, family: 'DM Sans' }, callback: (v) => new Date(v*86400000).getFullYear() },
+            },
             y: { ticks: { font: { size: 10, family: 'DM Sans' } } }
           }
         }
