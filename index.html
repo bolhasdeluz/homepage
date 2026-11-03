@@ -20428,7 +20428,10 @@ function rfLinhaDetalheHtml(tipo, p) {
   else if (tipo === 'apronte') infoData = `${window.fmtData(hist.data_entrada)} → ${window.fmtData(hist.apronte)} (${rfFmtDuracaoDias((new Date(hist.apronte) - new Date(hist.data_entrada)) / 86400000)})`;
   else if (tipo === 'coroacao') infoData = window.fmtData(hist.coroacao);
   else if (tipo === 'cacicamento') infoData = window.fmtData(hist.cacicamento);
-  return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)">
+  // clicável — leva direto pra edição do perfil (mesmo modal usado em
+  // Filhas da Casa/Quadro das Filhas), pra já poder corrigir o que tiver
+  // errado sem precisar procurar a pessoa de novo em outro lugar
+  return `<div data-email="${calEsc(p.email || '')}" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer">
     <div>
       <div style="font-family:'Playfair Display',serif;font-size:.92rem;font-weight:600;color:var(--text)">${calEsc(p.nome || '—')}</div>
       <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim)">${calEsc(p.email || '')}${p.ativo === false ? ' · desligada' : ''}</div>
@@ -20439,7 +20442,7 @@ function rfLinhaDetalheHtml(tipo, p) {
 function rfAbrirDetalhe(tipo) {
   const lista = rfDetalheCache[tipo] || [];
   document.getElementById('rfc-detalhe-titulo').textContent = RF_DETALHE_TITULO[tipo] || '';
-  document.getElementById('rfc-detalhe-sub').textContent = `${lista.length} perfil(is)`;
+  document.getElementById('rfc-detalhe-sub').textContent = `${lista.length} perfil(is) — toque num nome pra editar`;
   const corpo = document.getElementById('rfc-detalhe-lista');
   corpo.innerHTML = lista.length
     ? lista.map(p => rfLinhaDetalheHtml(tipo, p)).join('')
@@ -20449,6 +20452,15 @@ function rfAbrirDetalhe(tipo) {
 function rfFecharDetalhe() {
   document.getElementById('rfc-detalhe-overlay').classList.remove('open');
 }
+// delegação de clique — a lista é recriada toda vez que um card abre, então
+// é mais simples ouvir uma vez no container fixo do que religar a cada render
+document.getElementById('rfc-detalhe-lista')?.addEventListener('click', (ev) => {
+  const linha = ev.target.closest('[data-email]');
+  const email = linha?.dataset.email;
+  if (!email) return;
+  rfFecharDetalhe();
+  abrirCriarPerfil(email);
+});
 window.rfAbrirDetalhe = rfAbrirDetalhe;
 window.rfFecharDetalhe = rfFecharDetalhe;
 
