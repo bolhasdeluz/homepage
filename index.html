@@ -20201,6 +20201,11 @@ function lgRenderLista(perfis, sessoesTodas) {
 let rfPerfis = [];
 let rfCharts = {};
 let rfDetalheCache = {}; // guarda as listas por trás de cada card de estatística, pro clique abrir o detalhe
+let rfOcultarSaidasJornada = false; // checkbox "ocultar quem já saiu" do gráfico de jornada — guardado fora do render pra sobreviver ao re-render
+window.rfToggleJornadaSaidas = function(checkbox) {
+  rfOcultarSaidasJornada = checkbox.checked;
+  rfRender();
+};
 const RF_MARCOS = ['data_entrada', 'data_saida', 'apronte', 'coroacao', 'cacicamento'];
 const RF_MARCO_LABEL = { data_entrada: 'Entrada na Casa', data_saida: 'Saída da Casa', apronte: 'Apronte', coroacao: 'Coroação', cacicamento: 'Cacicamento' };
 const RF_MARCO_COR = { data_entrada: '#2a7a60', data_saida: '#b84040', apronte: '#6a9e6a', coroacao: '#4a6fa5', cacicamento: '#9e6a9e' };
@@ -20378,14 +20383,20 @@ function rfRender() {
   // 3 opções; pedido pra não ficar tudo espremido numa única linha de
   // crescimento da casa
   const jornadaPessoas = entradas.slice().sort((a,b) => a.historia.data_entrada.localeCompare(b.historia.data_entrada));
+  // "ocultar quem já saiu" filtra só o que é mostrado nas linhas — o eixo do
+  // tempo também recalcula só em cima de quem ficou visível, pra não deixar
+  // uma faixa de anos vazia por causa de gente escondida
+  const jornadaVisiveis = rfOcultarSaidasJornada
+    ? jornadaPessoas.filter(p => !rfDataValida(p.historia?.data_saida))
+    : jornadaPessoas;
   if (jornadaPessoas.length) {
     const diaDe = (d) => Math.floor(new Date(d).getTime() / 86400000);
     const hojeDia = Math.floor(Date.now() / 86400000);
-    const minDia = Math.min(...jornadaPessoas.map(p => diaDe(p.historia.data_entrada)));
+    const minDia = jornadaVisiveis.length ? Math.min(...jornadaVisiveis.map(p => diaDe(p.historia.data_entrada))) : hojeDia;
     const spanDias = Math.max(1, hojeDia - minDia);
     const pctDia = (dia) => Math.min(100, Math.max(0, (dia - minDia) / spanDias * 100));
     const MARCOS_JORNADA = [['apronte', '🔪'], ['coroacao', '👑'], ['cacicamento', '🪶']];
-    const linhasJornada = jornadaPessoas.map(p => {
+    const linhasJornada = jornadaVisiveis.map(p => {
       const nome = rfNomeDe(p);
       const saiu = rfDataValida(p.historia?.data_saida);
       const p0 = pctDia(diaDe(p.historia.data_entrada));
@@ -20411,9 +20422,17 @@ function rfRender() {
         </div>
       </div>`;
     }).join('');
-    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">📍 Jornada na Casa (por filha)</div>
+    html += `<div class="rc-chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+        <div class="rc-stat-label">📍 Jornada na Casa (por filha)</div>
+        <label style="display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);cursor:pointer">
+          <input type="checkbox" onchange="window.rfToggleJornadaSaidas(this)" ${rfOcultarSaidasJornada ? 'checked' : ''}> Ocultar quem já saiu
+        </label>
+      </div>
       <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">🔪 Apronte · 👑 Coroação · 🪶 Cacicamento — ● rosa: ativa · ● cinza: saiu</div>
-      <div style="display:flex;flex-direction:column;gap:14px">${linhasJornada}</div>
+      ${jornadaVisiveis.length
+        ? `<div style="display:flex;flex-direction:column;gap:14px">${linhasJornada}</div>`
+        : `<div class="rc-vazio" style="padding:14px 0">Todo mundo que já saiu está oculto.</div>`}
     </div>`;
   }
 
