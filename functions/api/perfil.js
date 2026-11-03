@@ -384,6 +384,19 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 403, headers: CORS });
     }
 
+    // perfil inativo não pode mexer no próprio histórico (entrada, cortes,
+    // cruzamentos, guias...) — mesmo sendo dono do e-mail. Olha o perfil
+    // GRAVADO no KV, não o que veio no body, pra não dar pra burlar mandando
+    // um payload com "ativo: true" direto; só se aplica a quem salva sozinha
+    // (self-edit) — admin continua podendo editar perfil inativo normalmente
+    if (!isAdmin) {
+      const atualRaw = await env.MENU_DATA.get('perfil:' + targetEmail);
+      const atual = atualRaw ? JSON.parse(atualRaw) : null;
+      if (atual?.ativo === false) {
+        return new Response(JSON.stringify({ error: 'Esse perfil está inativo — só a admin pode editar os dados dele agora.' }), { status: 403, headers: CORS });
+      }
+    }
+
     // salvar histórico
     const histKey = 'historico:' + targetEmail;
     const histRaw = await env.MENU_DATA.get(histKey);

@@ -19926,9 +19926,13 @@ window.showSuaHistoria = function() {
   const user = window._getCurrentUser && window._getCurrentUser();
   if (!user) { openLogin(); return; }
   // em modo simulação usa o perfil simulado
-  const perfilParaUsar = (_modoSimulacao !== null && window._simUsuario?._perfil)
-    ? window._simUsuario._perfil
-    : perfilData;
+  const emSimulacao = _modoSimulacao !== null && !!window._simUsuario;
+  const perfilParaUsar = emSimulacao ? (window._simUsuario._perfil || {}) : perfilData;
+  // perfil inativo (ou visitante de verdade) não edita o próprio histórico —
+  // o salvar já é recusado no servidor (ver o POST de perfil.js), isso aqui
+  // só evita abrir um formulário que nunca vai conseguir salvar. Admin
+  // simulando continua podendo editar normalmente (a gravação vai como admin)
+  if (!emSimulacao && grupoEfetivoDoPerfil(perfilParaUsar) === 'visitante') return;
   renderMinhaHistoria(perfilParaUsar, user);
   document.getElementById('mh-modal-overlay').style.display = 'flex';
   document.body.style.overflow = 'hidden';
