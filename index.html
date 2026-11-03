@@ -6361,8 +6361,10 @@ function mudarSimulacao(valor) {
       { nome: 'Filha da Casa', cargo: '', grupo: 'filhas', emoji: '🌸', historia: {} }
     );
   } else {
-    // email específico — busca perfil real
-    fetch(`/api/perfil?email=${encodeURIComponent(valor)}`)
+    // email específico — busca perfil real. Manda a senha de admin pra essa
+    // busca não disparar o e-mail de "login" lá no servidor — simular visão
+    // não é a pessoa entrando de verdade
+    fetch(`/api/perfil?email=${encodeURIComponent(valor)}`, { headers: { 'X-Admin-Password': 'admin' } })
       .then(r => r.json())
       .then(p => {
         // uid salvo no perfil (guardado no primeiro login real dessa pessoa depois desse
