@@ -20257,6 +20257,25 @@ function rfDataValida(d) {
   return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
 }
 
+// desenha o emoji num canvas à parte — é assim que dá pra usar um emoji como
+// "pointStyle" do Chart.js (ele só aceita formas prontas ou uma imagem/canvas,
+// não um caractere de texto direto)
+function rfEmojiPointStyle(emoji, tam) {
+  tam = tam || 28;
+  const c = document.createElement('canvas');
+  c.width = c.height = tam;
+  const cx = c.getContext('2d');
+  cx.font = `${tam - 6}px serif`;
+  cx.textAlign = 'center';
+  cx.textBaseline = 'middle';
+  cx.fillText(emoji, tam / 2, tam / 2 + 1);
+  return c;
+}
+
+function rfNomeDe(p) {
+  return p.nome || (p.email ? p.email.split('@')[0] : 'Sem nome');
+}
+
 function rfRender() {
   const el = document.getElementById('rfc-conteudo');
   if (!el) return;
@@ -20367,6 +20386,16 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Crescimento da Casa</div><div style="height:220px"><canvas id="rfc-chart-crescimento"></canvas></div></div>`;
   }
 
+  // jornada por filha — uma linha horizontal por pessoa (entrada → saída, ou
+  // até hoje se ainda ativa) com os marcos de apronte/coroação/cacicamento
+  // marcados em cima, na data exata de cada uma — pedido pra não ficar tudo
+  // espremido numa única linha de crescimento da casa
+  const jornadaPessoas = entradas.slice().sort((a,b) => a.historia.data_entrada.localeCompare(b.historia.data_entrada));
+  if (jornadaPessoas.length) {
+    const alturaJornada = Math.max(220, jornadaPessoas.length * 32);
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📍 Jornada na Casa (por filha)</div><div style="height:${alturaJornada}px"><canvas id="rfc-chart-jornada"></canvas></div></div>`;
+  }
+
   // linha do tempo com os marcos (entrada, saída, apronte, coroação, cacicamento) de todo mundo junto (menos a Mãe da Casa, ver rfPerfisFilhas)
   let itens = [];
   rfPerfisFilhas.forEach(p => {
@@ -20423,64 +20452,74 @@ function rfRender() {
   if (crescimentoLabels.length && typeof Chart !== 'undefined') {
     const ctx = document.getElementById('rfc-chart-crescimento');
     if (ctx) {
-      // desenha o emoji num canvas à parte — é assim que dá pra usar um
-      // emoji como "pointStyle" do Chart.js (ele só aceita formas prontas
-      // ou uma imagem/canvas, não um caractere de texto direto)
-      const emojiPointStyle = (emoji, tam) => {
-        tam = tam || 28;
-        const c = document.createElement('canvas');
-        c.width = c.height = tam;
-        const cx = c.getContext('2d');
-        cx.font = `${tam - 6}px serif`;
-        cx.textAlign = 'center';
-        cx.textBaseline = 'middle';
-        cx.fillText(emoji, tam / 2, tam / 2 + 1);
-        return c;
-      };
-      // marca cada apronte/coroação/cacicamento "em cima" da própria linha
-      // de crescimento — usa o valor que a linha já tinha naquele ano como
-      // y, em vez de inventar um eixo novo só pros marcos
-      const marcosParaPontos = (lista, pegarData) => lista.map(p => {
-        const ano = String(pegarData(p)).slice(0, 4);
-        const idx = crescimentoLabels.indexOf(ano);
-        if (idx === -1) return null;
-        return { x: ano, y: crescimentoValores[idx], _nome: p.nome };
-      }).filter(Boolean);
-
       rfCharts.crescimento = new Chart(ctx, {
         type: 'line',
         data: {
           labels: crescimentoLabels,
-          datasets: [
-            {
-              label: 'Filhas na casa', data: crescimentoValores,
-              borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
-              fill: true, tension: .25, pointRadius: 3, pointBackgroundColor: '#c4396b',
-            },
-            {
-              label: '🔪 Apronte', data: marcosParaPontos(comApronte, p => p.historia.apronte),
-              showLine: false, pointStyle: emojiPointStyle('🔪'), pointRadius: 11, pointHoverRadius: 13,
-            },
-            {
-              label: '👑 Coroação', data: marcosParaPontos(comCoroacao, p => p.historia.coroacao),
-              showLine: false, pointStyle: emojiPointStyle('👑'), pointRadius: 11, pointHoverRadius: 13,
-            },
-            {
-              label: '🪶 Cacicamento', data: marcosParaPontos(comCacicamento, p => p.historia.cacicamento),
-              showLine: false, pointStyle: emojiPointStyle('🪶'), pointRadius: 11, pointHoverRadius: 13,
-            },
-          ]
+          datasets: [{
+            label: 'Filhas na casa', data: crescimentoValores,
+            borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
+            fill: true, tension: .25, pointRadius: 3, pointBackgroundColor: '#c4396b',
+          }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+        }
+      });
+    }
+  }
+
+  if (jornadaPessoas.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('rfc-chart-jornada');
+    if (ctx) {
+      const diaDe = (d) => Math.floor(new Date(d).getTime() / 86400000);
+      const hojeDia = Math.floor(Date.now() / 86400000);
+      const nomes = jornadaPessoas.map(rfNomeDe);
+      const barras = jornadaPessoas.map(p => {
+        const inicio = diaDe(p.historia.data_entrada);
+        const fim = rfDataValida(p.historia?.data_saida) ? diaDe(p.historia.data_saida) : hojeDia;
+        return { x: [inicio, Math.max(fim, inicio)], y: rfNomeDe(p) };
+      });
+      const corBarra = jornadaPessoas.map(p => rfDataValida(p.historia?.data_saida) ? '#b9a8ad' : '#e8a9c2');
+      const marcoDataset = (label, lista, pegarData, emoji) => ({
+        type: 'line', label, showLine: false,
+        data: lista.filter(p => nomes.includes(rfNomeDe(p))).map(p => ({ x: diaDe(pegarData(p)), y: rfNomeDe(p), _nome: p.nome })),
+        pointStyle: rfEmojiPointStyle(emoji), pointRadius: 9, pointHoverRadius: 11,
+      });
+      rfCharts.jornada = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: nomes,
+          datasets: [
+            { label: 'Tempo de casa', data: barras, backgroundColor: corBarra, borderRadius: 6, barThickness: 14 },
+            marcoDataset('🔪 Apronte', comApronte, p => p.historia.apronte, '🔪'),
+            marcoDataset('👑 Coroação', comCoroacao, p => p.historia.coroacao, '👑'),
+            marcoDataset('🪶 Cacicamento', comCacicamento, p => p.historia.cacicamento, '🪶'),
+          ]
+        },
+        options: {
+          indexAxis: 'y', responsive: true, maintainAspectRatio: false,
           plugins: {
-            legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' }, usePointStyle: true, boxWidth: 16 } },
+            legend: { display: true, labels: { font: { size: 10, family: 'DM Sans' }, usePointStyle: true, boxWidth: 16, filter: (item) => item.text !== 'Tempo de casa' } },
             tooltip: {
               titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' },
-              callbacks: { label: (c) => c.raw?._nome ? `${c.dataset.label} — ${c.raw._nome}` : `${c.dataset.label}: ${c.formattedValue}` },
+              callbacks: {
+                label: (c) => {
+                  if (c.dataset.label === 'Tempo de casa') {
+                    const [ini, fim] = c.raw.x;
+                    return `${window.fmtData(new Date(ini*86400000).toISOString().slice(0,10))} → ${window.fmtData(new Date(fim*86400000).toISOString().slice(0,10))}`;
+                  }
+                  return c.dataset.label;
+                }
+              }
             },
           },
-          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+          scales: {
+            x: { ticks: { font: { size: 10, family: 'DM Sans' }, callback: (v) => new Date(v*86400000).getFullYear() } },
+            y: { ticks: { font: { size: 10, family: 'DM Sans' } } }
+          }
         }
       });
     }
