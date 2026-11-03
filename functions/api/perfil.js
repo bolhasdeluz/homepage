@@ -37,13 +37,22 @@ async function perfilIndiceAdicionar(KV, email) {
   }
 }
 
-async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
+async function enviarEmail(env, { email, nome, foto, novoPerfil, inativo }) {
   const RESEND_KEY = env.RESEND_API_KEY;
   if (!RESEND_KEY) return;
 
-  const assunto = novoPerfil
+  const assunto = inativo
+    ? `🚫 Login de perfil INATIVO — ${nome || email}`
+    : novoPerfil
     ? `🌸 Novo login — ${nome || email}`
     : `✦ Login — ${nome || email}`;
+
+  // perfil inativo é barrado no próprio site (ver onAuthStateChanged no
+  // index.html — desloga na hora), mas o e-mail dispara mesmo assim, pra
+  // admin saber que alguém tentou entrar mesmo depois de desativado
+  const situacao = inativo
+    ? '🚫 Perfil inativo — acesso barrado'
+    : novoPerfil ? '🆕 Primeiro login' : '↩️ Login recorrente';
 
   const html = `
     <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
@@ -55,7 +64,7 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil }) {
       <table style="width:100%;border-collapse:collapse;font-size:14px">
         <tr><td style="padding:6px 0;color:#8a6070">Nome</td><td style="padding:6px 0;color:#2a1a22"><b>${nome || '—'}</b></td></tr>
         <tr><td style="padding:6px 0;color:#8a6070">E-mail</td><td style="padding:6px 0;color:#2a1a22">${email}</td></tr>
-        <tr><td style="padding:6px 0;color:#8a6070">Situação</td><td style="padding:6px 0;color:#c4396b">${novoPerfil ? '🆕 Primeiro login' : '↩️ Login recorrente'}</td></tr>
+        <tr><td style="padding:6px 0;color:#8a6070">Situação</td><td style="padding:6px 0;color:#c4396b">${situacao}</td></tr>
       </table>
       <div style="margin-top:20px;padding:12px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15)">
         <a href="https://homepage-3vx.pages.dev" style="color:#c4396b;font-size:13px">Acessar painel admin →</a>
@@ -117,6 +126,46 @@ async function enviarEmailBoasVindas(env, { email, nome, comAgenda, comDrive }) 
         from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
         to: [email],
         subject: '✦ Seu acesso ao Bolhas de Luz foi liberado!',
+        html
+      })
+    });
+    if (!resp.ok) {
+      const corpo = await resp.text().catch(() => '');
+      return { ok: false, erro: `Resend recusou (status ${resp.status}): ${corpo.slice(0, 300)}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, erro: e.message };
+  }
+}
+
+// e-mail avisando que o acesso foi desativado — espelha enviarEmailBoasVindas
+// (mesmo padrão {ok, erro}, pra admin saber na hora se não deu certo em vez
+// de só descobrir quando a pessoa reclamar que não recebeu nada)
+async function enviarEmailDesativacao(env, { email, nome, motivo }) {
+  const RESEND_KEY = env.RESEND_API_KEY;
+  if (!RESEND_KEY) return { ok: false, erro: 'RESEND_API_KEY não configurada no Cloudflare.' };
+  if (!email) return { ok: false, erro: 'E-mail vazio.' };
+
+  const html = `
+    <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
+      <h2 style="font-family:Georgia,serif;color:#c4396b;margin-bottom:16px">✦ Seu acesso foi desativado</h2>
+      <p style="color:#2a1a22;font-size:15px;line-height:1.5">
+        Olá${nome ? ', ' + nome : ''}!<br><br>
+        Seu acesso ao site do Terreiro Bolhas de Luz foi desativado — isso não apaga seu histórico
+        nem seus dados, só tira o acesso às áreas internas do site (login).${motivo ? `<br><br>Motivo: ${motivo}` : ''}
+        <br><br>Se achar que isso é um engano, é só falar com a Mãe da Casa.
+      </p>
+    </div>`;
+
+  try {
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'Bolhas de Luz <notificacoes@bolhasdeluz.ong.br>',
+        to: [email],
+        subject: '✦ Seu acesso ao Bolhas de Luz foi desativado',
         html
       })
     });
@@ -312,7 +361,8 @@ export async function onRequest(context) {
       email,
       nome: perfil.nome || '',
       foto: perfil.foto || '',
-      novoPerfil: false
+      novoPerfil: false,
+      inativo: perfil.ativo === false,
     }));
 
     return new Response(JSON.stringify(perfil), { status: 200, headers: CORS });
@@ -349,9 +399,11 @@ export async function onRequest(context) {
     const enviarBoasVindas = isAdmin && !!body.enviarBoasVindas;
     const darAcessoCalendario = isAdmin && !!body.darAcessoCalendario;
     const darAcessoDrive = isAdmin && !!body.darAcessoDrive;
+    const enviarDesativacao = isAdmin && !!body.enviarDesativacao;
     delete body.enviarBoasVindas;
     delete body.darAcessoCalendario;
     delete body.darAcessoDrive;
+    delete body.enviarDesativacao;
 
     body.atualizadoEm = Date.now();
     await env.MENU_DATA.put('perfil:' + targetEmail, JSON.stringify(body));
@@ -373,6 +425,9 @@ export async function onRequest(context) {
     const comDrive = darAcessoDrive && resultado.drive?.ok;
     if (enviarBoasVindas || comAgenda || comDrive) {
       resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: body.nome || '', comAgenda, comDrive });
+    }
+    if (enviarDesativacao) {
+      resultado.emailDesativacao = await enviarEmailDesativacao(env, { email: targetEmail, nome: body.nome || '', motivo: (body.historia || {}).motivo_saida || '' });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
@@ -398,6 +453,7 @@ export async function onRequest(context) {
     const enviarBoasVindas = !!body.enviarBoasVindas;
     const darAcessoCalendario = !!body.darAcessoCalendario;
     const darAcessoDrive = !!body.darAcessoDrive;
+    const enviarDesativacao = !!body.enviarDesativacao;
 
     const resultado = { ok: true };
     if (darAcessoCalendario) resultado.agenda = await gcalDarAcessoAgenda(env, targetEmail);
@@ -408,6 +464,9 @@ export async function onRequest(context) {
     const comDrive = darAcessoDrive && resultado.drive?.ok;
     if (enviarBoasVindas || comAgenda || comDrive) {
       resultado.email = await enviarEmailBoasVindas(env, { email: targetEmail, nome: perfil.nome || '', comAgenda, comDrive });
+    }
+    if (enviarDesativacao) {
+      resultado.emailDesativacao = await enviarEmailDesativacao(env, { email: targetEmail, nome: perfil.nome || '', motivo: body.motivo || perfil.historia?.motivo_saida || '' });
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });

@@ -4897,6 +4897,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div><label class="form-label">Data da saída</label><input type="date" class="form-input" id="cp-data_saida"></div>
         <div><label class="form-label">Motivo da saída</label><input type="text" class="form-input" id="cp-motivo_saida" placeholder="Ex: mudou de cidade"></div>
       </div>
+      <!-- só aparece editando um perfil que já está inativo (não faz sentido
+           pra perfil novo) — manda na hora, sem precisar salvar o resto do
+           formulário primeiro; perfil inativo já é barrado automaticamente
+           no login (ver onAuthStateChanged), isso aqui é só o aviso por e-mail -->
+      <div id="cp-desativacao-wrap" style="display:none;margin-top:10px">
+        <button type="button" id="cp-btn-desativacao" class="rc-toggle-btn" onclick="cpEnviarEmailDesativacao()">📧 Avisar que o acesso foi desativado</button>
+        <span id="cp-desativacao-status" style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-left:8px"></span>
+      </div>
     </div>
     <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
@@ -6607,10 +6615,45 @@ function cpAtualizarVisibilidadeSaida() {
   const ativo = document.getElementById('cp-ativo')?.checked !== false;
   const bloco = document.getElementById('cp-saida-campos');
   if (bloco) bloco.style.display = ativo ? 'none' : 'grid';
+  // botão de avisar desativação só faz sentido editando um perfil que já
+  // existe e já está marcado inativo — não pra alguém criando um perfil novo
+  const blocoEmail = document.getElementById('cp-desativacao-wrap');
+  if (blocoEmail) blocoEmail.style.display = (!ativo && cpPerfilOriginal) ? 'block' : 'none';
 }
 // guarda o perfil completo (todos os campos, inclusive os que não têm input neste formulário)
 // pra garantir que salvar não apague foto, notas, cortes extras, cruzamentos extras, marcos, etc.
 let cpPerfilOriginal = null;
+
+// dispara na hora (PUT, não reescreve o perfil) — não depende de clicar em
+// "Salvar" depois; o perfil já fica inativo automaticamente (acesso barrado
+// no login, ver onAuthStateChanged), isso aqui é só o aviso por e-mail
+async function cpEnviarEmailDesativacao() {
+  const email = document.getElementById('cp-email').value.trim();
+  if (!email) return;
+  const btn = document.getElementById('cp-btn-desativacao');
+  const status = document.getElementById('cp-desativacao-status');
+  btn.disabled = true;
+  status.textContent = 'Enviando...';
+  try {
+    const motivo = document.getElementById('cp-motivo_saida')?.value.trim() || '';
+    const res = await fetch('/api/perfil', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ email, enviarDesativacao: true, motivo }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.emailDesativacao?.ok === false) {
+      status.textContent = '⚠️ ' + (data.emailDesativacao?.erro || data.error || 'Não consegui enviar.');
+    } else {
+      status.textContent = '✅ E-mail enviado.';
+    }
+  } catch (e) {
+    status.textContent = '⚠️ Não consegui enviar agora.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+window.cpEnviarEmailDesativacao = cpEnviarEmailDesativacao;
 
 // popula a lista de sugestão de nomes usada nos campos de Madrinha/Afilhada
 // (editar ficha e criar/editar perfil admin) com as filhas já cadastradas —
@@ -21888,11 +21931,19 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   if (user) {
+    // checa ANTES de abrir qualquer coisa — perfil marcado como inativo
+    // (desligada da casa) não pode ficar logada, mesmo que o Google já
+    // tenha autenticado; admin nunca é barrado por essa checagem
+    await carregarPerfil(user.email);
+    if (perfilData?.ativo === false && !isEmailAdmin(user.email)) {
+      await signOut(auth);
+      alert('Seu acesso ao site do Terreiro Bolhas de Luz foi desativado. Se achar que isso é um engano, fale com a Mãe da Casa.');
+      return;
+    }
     const avatar = document.getElementById('user-avatar');
     if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
     document.getElementById('drawer-user-section').style.display = 'block';
     document.getElementById('login-overlay').classList.remove('open');
-    await carregarPerfil(user.email);
     atualizarWidgetHistoria(true);
     window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
