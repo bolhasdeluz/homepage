@@ -4204,6 +4204,30 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- RELATÓRIO DE VISITAS E QR CODE — acessos por página/função do site
+     (dados já coletados por /api/visita em todo carregamento de página, ver
+     showPage()) e leituras de QR code (/api/qr-contagem), pro painel admin -->
+<div id="page-relatorio-visitas" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('admin')">← Voltar ao Painel Admin</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">📶 Relatório de Visitas e QR Code</div>
+    <p class="section-sub">Quem acessa o site, quais funções mais usam e quantas vezes cada QR code foi lido ✦</p>
+    <div id="rv-conteudo"><div class="rc-vazio">Carregando...</div></div>
+  </div>
+</div>
+
+<!-- detalhe de uma função (página) ou QR code do Relatório de Visitas —
+     mostra o dia a dia de acessos/leituras daquele item específico -->
+<div id="rv-detalhe-overlay" class="overlay" onclick="if(event.target===this)rvFecharDetalhe()">
+  <div class="modal" style="max-width:420px;max-height:80vh;overflow-y:auto">
+    <button class="modal-close" onclick="rvFecharDetalhe()">×</button>
+    <div class="modal-title" id="rv-detalhe-titulo"></div>
+    <div class="modal-sub" id="rv-detalhe-sub" style="margin-bottom:10px"></div>
+    <div id="rv-detalhe-lista"></div>
+  </div>
+</div>
+
 <!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
      organizados por categoria/palavra-chave/data, com linha do tempo como
      visualização principal. Visibilidade por grupo igual sessões/menu. -->
@@ -5262,6 +5286,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
             <span class="admin-menu-item-icon">👥</span>
             <span class="admin-menu-item-label">Filhas da Casa</span>
             <span class="admin-menu-item-desc">Entradas, saídas, apronte, coroação, cacicamento e linha do tempo</span>
+          </button>
+          <button class="admin-menu-item" onclick="showPage('relatorio-visitas')">
+            <span class="admin-menu-item-icon">📶</span>
+            <span class="admin-menu-item-label">Visitas e QR Code</span>
+            <span class="admin-menu-item-desc">Acessos ao site, funções mais usadas e leituras de QR code</span>
           </button>
         </div>
       </div>
@@ -7051,6 +7080,19 @@ function showPage(name) {
       setTimeout(() => {
         if (typeof window.rfCarregar === 'function') { window.rfCarregar(); return; }
         const el = document.getElementById('rfc-conteudo');
+        if (el) el.innerHTML = '<div class="rc-vazio">⚠️ Bug a investigar: a função de carregar não existe. Avisa o Claude com um print disso.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="location.reload()">↺ Recarregar a página</button></div>';
+      }, 500);
+    }
+  }
+  if (name === 'relatorio-visitas') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    if (typeof window.rvCarregar === 'function') {
+      window.rvCarregar();
+    } else {
+      setTimeout(() => {
+        if (typeof window.rvCarregar === 'function') { window.rvCarregar(); return; }
+        const el = document.getElementById('rv-conteudo');
         if (el) el.innerHTML = '<div class="rc-vazio">⚠️ Bug a investigar: a função de carregar não existe. Avisa o Claude com um print disso.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="location.reload()">↺ Recarregar a página</button></div>';
       }, 500);
     }
@@ -20599,6 +20641,211 @@ document.getElementById('rfc-detalhe-lista')?.addEventListener('click', (ev) => 
 });
 window.rfAbrirDetalhe = rfAbrirDetalhe;
 window.rfFecharDetalhe = rfFecharDetalhe;
+
+// ── RELATÓRIO DE VISITAS E QR CODE — acessos por página/função do site
+// (coletados em todo showPage(), ver "fetch('/api/visita?pagina=item-'...")
+// e leituras de QR code (/api/qr-contagem + /api/qr-slugs pros criados pela
+// própria Anna) ──
+let rvDias = 14;
+let rvPaginasDados = {};
+let rvQrDados = {};
+let rvQrSlugsInfo = [];
+const RV_QR_FIXOS = { site: '🏠 Site principal', rifa: '🎟️ Rifa', cosmes: '🎈 Cosme e Damião', banner: '📣 Banner do site' };
+function rvLabelQr(slug) {
+  if (RV_QR_FIXOS[slug]) return RV_QR_FIXOS[slug];
+  const custom = rvQrSlugsInfo.find(it => it.slug === slug);
+  return custom?.label || slug;
+}
+
+async function rvCarregar() {
+  const el = document.getElementById('rv-conteudo');
+  if (!el) return;
+  el.innerHTML = '<div class="rc-vazio">Carregando...</div>';
+  try {
+    const [resVisita, resQr, resSlugs] = await Promise.all([
+      fetch(`/api/visita?dias=${rvDias}`, { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/qr-contagem', { headers: { 'X-Admin-Password': 'admin' } }),
+      fetch('/api/qr-slugs', { headers: { 'X-Admin-Password': 'admin' } }),
+    ]);
+    if (!resVisita.ok) {
+      const erro = await resVisita.json().catch(() => ({}));
+      el.innerHTML = `<div class="rc-vazio">Não consegui carregar os acessos (${calEsc(erro.error || String(resVisita.status))}).<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="window.rvCarregar()">↺ Tentar de novo</button></div>`;
+      return;
+    }
+    rvPaginasDados = (await resVisita.json()).paginas || {};
+    rvQrDados = resQr.ok ? await resQr.json() : {};
+    rvQrSlugsInfo = (resSlugs.ok ? (await resSlugs.json()).itens : []) || [];
+    rvRender();
+  } catch (e) {
+    el.innerHTML = '<div class="rc-vazio">Não consegui carregar os dados agora.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="window.rvCarregar()">↺ Tentar de novo</button></div>';
+  }
+}
+window.rvCarregar = rvCarregar;
+
+function rvMudarPeriodo(dias) {
+  rvDias = dias;
+  rvCarregar();
+}
+window.rvMudarPeriodo = rvMudarPeriodo;
+
+function rvRender() {
+  const el = document.getElementById('rv-conteudo');
+  if (!el) return;
+  try {
+  const nomesPaginas = Object.keys(rvPaginasDados);
+  const site = rvPaginasDados['site'] || [];
+  const hoje = site[0] || { contagem: 0, unicos: 0 };
+  const totalPeriodoSite = site.reduce((s, d) => s + (d.contagem || 0), 0);
+
+  let html = `<div style="display:flex;gap:8px;margin-bottom:16px">
+    ${[7, 14, 30].map(n => `<button class="rc-toggle-btn" style="${n === rvDias ? 'background:#c4396b;color:#fff;border-color:#c4396b' : ''}" onclick="window.rvMudarPeriodo(${n})">${n} dias</button>`).join('')}
+  </div>`;
+
+  html += `<div class="rc-stats-grid">
+    <div class="rc-stat-card"><div class="rc-stat-label">Acessos hoje (site)</div><div class="rc-stat-valor">${hoje.contagem}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Pessoas diferentes hoje</div><div class="rc-stat-valor">${hoje.unicos}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Acessos em ${rvDias} dias (site)</div><div class="rc-stat-valor">${totalPeriodoSite}</div></div>
+  </div>`;
+
+  if (site.length) {
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">📈 Acessos ao site por dia</div><div style="height:200px"><canvas id="rv-chart-site"></canvas></div></div>`;
+  }
+
+  // ranking de funções — soma o período inteiro de cada página já coletada
+  // (toda vez que alguém navega pra uma seção do site, ver showPage())
+  const ranking = nomesPaginas.map(pagina => ({
+    pagina, total: (rvPaginasDados[pagina] || []).reduce((s, d) => s + (d.contagem || 0), 0),
+  })).filter(r => r.total > 0).sort((a, b) => b.total - a.total);
+  const maxTotal = ranking.length ? ranking[0].total : 1;
+
+  html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">🔎 Funções mais acessadas</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">Em ${rvDias} dias — toque numa função pra ver o dia a dia</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${ranking.map(r => {
+        const nome = ADMIN_NOMES_PAGINAS_ACESSO[r.pagina] || calEsc(r.pagina);
+        const pct = Math.max(4, r.total / maxTotal * 100);
+        return `<div style="cursor:pointer" onclick="window.rvAbrirDetalhePagina('${r.pagina}')">
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);margin-bottom:3px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nome}</span><span style="color:var(--text-dim);flex-shrink:0">${r.total}</span></div>
+          <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#c4396b;border-radius:4px"></div></div>
+        </div>`;
+      }).join('') || '<div class="rc-vazio">Nenhum acesso registrado ainda.</div>'}
+    </div>
+  </div>`;
+
+  // ranking de QR codes — fixos do sistema (ver RV_QR_FIXOS) + os que a
+  // própria Anna criou no painel (ver /api/qr-slugs)
+  const slugsFixos = Object.keys(RV_QR_FIXOS);
+  const slugsCustom = rvQrSlugsInfo.map(it => it.slug);
+  const todosSlugs = Array.from(new Set([...slugsFixos, ...slugsCustom]));
+  const limiteDias = Date.now() - rvDias * 86400000;
+  const rankingQr = todosSlugs.map(slug => {
+    const leituras = rvQrDados[slug] || [];
+    const noPeriodo = leituras.filter(ts => ts >= limiteDias).length;
+    return { slug, total: leituras.length, noPeriodo };
+  }).filter(r => r.total > 0).sort((a, b) => b.noPeriodo - a.noPeriodo || b.total - a.total);
+  const maxQr = rankingQr.length ? Math.max(1, ...rankingQr.map(r => r.noPeriodo)) : 1;
+
+  html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">📷 QR Codes lidos</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">Em ${rvDias} dias (e total desde sempre, entre parênteses) — toque num QR pra ver quando foi lido</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${rankingQr.map(r => {
+        const pct = Math.max(4, r.noPeriodo / maxQr * 100);
+        return `<div style="cursor:pointer" onclick="window.rvAbrirDetalheQr('${r.slug}')">
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);margin-bottom:3px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${calEsc(rvLabelQr(r.slug))}</span><span style="color:var(--text-dim);flex-shrink:0">${r.noPeriodo} (${r.total})</span></div>
+          <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#4a6fa5;border-radius:4px"></div></div>
+        </div>`;
+      }).join('') || '<div class="rc-vazio">Nenhuma leitura registrada ainda.</div>'}
+    </div>
+  </div>`;
+
+  el.innerHTML = html;
+
+  if (site.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('rv-chart-site');
+    if (ctx) {
+      const cronologico = site.slice().reverse();
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: cronologico.map(d => { const [, m, dd] = d.dia.split('-'); return `${dd}/${m}`; }),
+          datasets: [{
+            label: 'Acessos', data: cronologico.map(d => d.semDados ? null : d.contagem),
+            borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)',
+            fill: true, tension: .25, pointRadius: 2, spanGaps: true,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { beginAtZero: true, ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 } } }
+        }
+      });
+    }
+  }
+  } catch (e) {
+    console.warn('relatório de visitas:', e);
+    el.innerHTML = '<div class="rc-vazio">Não foi possível montar o relatório.</div>';
+  }
+}
+window.rvRender = rvRender;
+
+function rvAbrirDetalhePagina(pagina) {
+  const dias = rvPaginasDados[pagina] || [];
+  document.getElementById('rv-detalhe-titulo').textContent = ADMIN_NOMES_PAGINAS_ACESSO[pagina] || pagina;
+  const totalPeriodo = dias.reduce((s, d) => s + (d.contagem || 0), 0);
+  document.getElementById('rv-detalhe-sub').textContent = `${totalPeriodo} acesso(s) em ${rvDias} dias`;
+  const corpo = document.getElementById('rv-detalhe-lista');
+  const temSemDados = dias.some(d => d.semDados);
+  corpo.innerHTML = (dias.length
+    ? dias.map(d => {
+        const [, m, dd] = d.dia.split('-');
+        const logados = (d.logados || []).map(l => calEsc(l.nome)).join(', ');
+        return `<div style="padding:9px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)">
+            <span>${dd}/${m}</span>
+            <span>${d.semDados ? 'sem dados*' : `${d.contagem} acesso(s) · ${d.unicos} único(s)`}</span>
+          </div>
+          ${logados ? `<div style="font-family:'Crimson Pro',serif;font-style:italic;font-size:.76rem;color:var(--text-dim);margin-top:2px">👤 ${logados}</div>` : ''}
+        </div>`;
+      }).join('')
+    : '<div class="rc-vazio" style="padding:14px 0">Nenhum acesso registrado ainda.</div>')
+    + (temSemDados ? '<div style="font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:8px">*antes do contador dessa página existir — não quer dizer que ninguém acessou, só que ainda não contava</div>' : '');
+  document.getElementById('rv-detalhe-overlay').classList.add('open');
+}
+window.rvAbrirDetalhePagina = rvAbrirDetalhePagina;
+
+function rvAbrirDetalheQr(slug) {
+  const leituras = rvQrDados[slug] || [];
+  document.getElementById('rv-detalhe-titulo').textContent = rvLabelQr(slug);
+  document.getElementById('rv-detalhe-sub').textContent = `${leituras.length} leitura(s) ao todo`;
+  const porDia = {};
+  leituras.forEach(ts => {
+    const d = new Date(ts).toISOString().slice(0, 10);
+    (porDia[d] = porDia[d] || []).push(ts);
+  });
+  const diasOrdenados = Object.keys(porDia).sort().reverse();
+  const corpo = document.getElementById('rv-detalhe-lista');
+  corpo.innerHTML = diasOrdenados.length
+    ? diasOrdenados.map(d => {
+        const [, m, dd] = d.split('-');
+        const horarios = porDia[d]
+          .sort((a, b) => b - a)
+          .map(ts => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }))
+          .join(', ');
+        return `<div style="padding:9px 0;border-bottom:1px solid var(--border)">
+          <div style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);font-weight:600">${dd}/${m} — ${porDia[d].length} leitura(s)</div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:.76rem;color:var(--text-dim);margin-top:2px">${horarios}</div>
+        </div>`;
+      }).join('')
+    : '<div class="rc-vazio" style="padding:14px 0">Nenhuma leitura registrada ainda.</div>';
+  document.getElementById('rv-detalhe-overlay').classList.add('open');
+}
+window.rvAbrirDetalheQr = rvAbrirDetalheQr;
+
+function rvFecharDetalhe() {
+  document.getElementById('rv-detalhe-overlay').classList.remove('open');
+}
+window.rvFecharDetalhe = rvFecharDetalhe;
 
 // ── DASHBOARD PESSOAL NA HOME ──
 const DASH_FRASES_CARGO = {
