@@ -20273,7 +20273,10 @@ function rfRender() {
   const comApronte = rfPerfis.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.apronte) && p.historia.apronte >= p.historia.data_entrada);
   const comCoroacao = rfPerfis.filter(p => rfDataValida(p.historia?.coroacao)).sort((a,b) => a.historia.coroacao.localeCompare(b.historia.coroacao));
   const comCacicamento = rfPerfis.filter(p => rfDataValida(p.historia?.cacicamento)).sort((a,b) => a.historia.cacicamento.localeCompare(b.historia.cacicamento));
-  const ativas = rfPerfis.filter(p => p.ativo !== false);
+  // só quem tem um cargo de verdade de filha da casa conta como "ativa" aqui
+  // — visitante/assistência/família não é filha da casa, mesmo com perfil
+  // ativo no site (mesma lista usada no Quadro das Filhas, ver QF_CARGOS_PERMITIDOS)
+  const ativas = rfPerfis.filter(p => p.ativo !== false && QF_CARGOS_PERMITIDOS.includes(p.cargo));
   const ativos = ativas.length;
 
   let tempoApronteTxt = '—';
