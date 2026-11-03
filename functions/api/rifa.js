@@ -287,6 +287,48 @@ async function enviarEmailLembrete(env, { paraEmail, titulo, numeros, precoPorNu
   await enviarEmailRifa(env, { paraEmail, assunto: `⏰ Lembrete de pagamento — ${titulo}`, html });
 }
 
+// e-mail de EXTRATO COMPLETO pra admin, com todos os números já vendidos
+// (pagos) daquela rifa até agora — não só o que acabou de vender. Disparado
+// toda vez que um pagamento novo é confirmado (confirmar-pagamento,
+// confirmar-pagamento-lote, registrar-venda(s)-atribuido e o InfinitePay),
+// em paralelo aos e-mails de confirmação que já existiam. Serve de cópia de
+// segurança por e-mail dos dados de quem comprou — pedido depois do susto
+// da cota do KV esgotada deixando os dados temporariamente inacessíveis.
+function montarLinhasExtratoRifa(rifa) {
+  return Object.keys(rifa.numeros || {})
+    .filter(numero => rifa.numeros[numero] && rifa.numeros[numero].status === 'pago')
+    .sort()
+    .map(numero => {
+      const info = rifa.numeros[numero];
+      return `<tr>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(196,57,107,.1)">${numero}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(196,57,107,.1)">${info.nome || ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(196,57,107,.1)">${info.telefone || ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(196,57,107,.1)">${info.email || ''}</td>
+        <td style="padding:6px 8px;border-bottom:1px solid rgba(196,57,107,.1)">${info.origem === 'digital' ? 'Digital' : 'Físico'}</td>
+      </tr>`;
+    });
+}
+
+async function enviarExtratoRifa(env, rifa) {
+  const linhas = montarLinhasExtratoRifa(rifa);
+  const total = linhas.length * Number(rifa.precoPorNumero || 0);
+  const html = envelopeEmail({
+    corTopo: '#2a7a60',
+    titulo: `🎟️ Extrato de vendas — ${rifa.titulo}`,
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px"><b>${linhas.length}</b> número(s) vendido(s) até agora · <b>${fmtPrecoEmail(total)}</b> arrecadado(s)</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;color:#2a1a22;margin-bottom:10px">
+        <tr style="text-align:left;color:#8a6070;font-size:11px;text-transform:uppercase">
+          <th style="padding:6px 8px">Número</th><th style="padding:6px 8px">Nome</th><th style="padding:6px 8px">Telefone</th><th style="padding:6px 8px">E-mail</th><th style="padding:6px 8px">Origem</th>
+        </tr>
+        ${linhas.join('') || '<tr><td colspan="5" style="padding:10px 8px;color:#8a6070;font-style:italic">Nenhum número vendido ainda.</td></tr>'}
+      </table>
+      <p style="color:#8a6070;font-size:12px;font-style:italic">Esse e-mail chega toda vez que um número novo é confirmado como pago — serve de cópia de segurança dos dados dos compradores ✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail: ADMIN_NOTIFY_EMAIL, assunto: `🎟️ Extrato — ${rifa.titulo} (${linhas.length} vendido${linhas.length === 1 ? '' : 's'})`, html });
+}
+
 function gerarNumeros(total) {
   const largura = Math.max(2, String(total).length);
   const numeros = {};
@@ -461,6 +503,7 @@ export async function onRequest(context) {
         if (infoPrimeiro.email) {
           context.waitUntil(enviarEmailConfirmado(env, { paraEmail: infoPrimeiro.email, titulo: alvo.titulo, numeros: numerosConfirmados }));
         }
+        context.waitUntil(enviarExtratoRifa(env, alvo));
         return json({ ok: true, numeros: numerosConfirmados, nome: infoPrimeiro.nome, ...respostaRifa });
       }
 
@@ -598,6 +641,7 @@ export async function onRequest(context) {
         if (alvo.status !== 'atribuido') return json({ error: 'Esse número já foi registrado.' }, 409);
         rifa.numeros[numero] = { ...alvo, status: 'pago', nome, telefone, pagoEm: Date.now() };
         await KV.put(rifa.id, JSON.stringify(rifa));
+        context.waitUntil(enviarExtratoRifa(env, rifa));
         return json({ ok: true, numero });
       }
 
@@ -623,7 +667,10 @@ export async function onRequest(context) {
           rifa.numeros[num] = { ...alvo, status: 'pago', nome: nomeComprador, telefone: (telefone || '').trim(), pagoEm: Date.now() };
           confirmados.push(num);
         });
-        if (confirmados.length) await KV.put(rifa.id, JSON.stringify(rifa));
+        if (confirmados.length) {
+          await KV.put(rifa.id, JSON.stringify(rifa));
+          context.waitUntil(enviarExtratoRifa(env, rifa));
+        }
         return json({ ok: true, confirmados, ignorados });
       }
 
@@ -782,6 +829,7 @@ export async function onRequest(context) {
         if (emailParaAvisar) {
           context.waitUntil(enviarEmailConfirmado(env, { paraEmail: emailParaAvisar, titulo: rifa.titulo, numeros: [numero] }));
         }
+        context.waitUntil(enviarExtratoRifa(env, rifa));
         return json(rifa);
       }
 
@@ -812,6 +860,7 @@ export async function onRequest(context) {
         Object.entries(porEmail).forEach(([emailDoComprador, numerosDoComprador]) => {
           context.waitUntil(enviarEmailConfirmado(env, { paraEmail: emailDoComprador, titulo: rifa.titulo, numeros: numerosDoComprador }));
         });
+        if (confirmados.length) context.waitUntil(enviarExtratoRifa(env, rifa));
         return json({ ...rifa, _confirmados: confirmados, _ignorados: ignorados });
       }
 
