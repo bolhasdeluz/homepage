@@ -7059,6 +7059,48 @@ document.addEventListener('keydown', e => {
     sessionStorage.removeItem('paginaAposLogin');
   }
 });
+// ── tempo gasto em cada página/função do site — começa a contar quando
+// entra numa seção (showPage) e fecha quando sai dela, a aba perde o foco ou
+// é fechada; pausa em segundo plano (aba minimizada/trocada) pra não contar
+// como "uso" tempo que a pessoa nem estava olhando. Manda pro mesmo endpoint
+// que já conta os acessos (/api/visita), só que com "segundos" no corpo —
+// reaproveita todo o resto da contagem (por dia, por página, por pessoa
+// quando logada) já existente lá ──
+let tpPaginaAtual = null;
+let tpInicioMs = 0;
+let tpAcumuladoMs = 0;
+function tpIniciar(pagina) {
+  tpFechar();
+  tpPaginaAtual = pagina;
+  tpAcumuladoMs = 0;
+  tpInicioMs = (typeof document !== 'undefined' && document.visibilityState === 'visible') ? Date.now() : 0;
+}
+function tpPausar() {
+  if (tpInicioMs) { tpAcumuladoMs += Date.now() - tpInicioMs; tpInicioMs = 0; }
+}
+function tpRetomar() {
+  if (tpPaginaAtual && document.visibilityState === 'visible' && !tpInicioMs) tpInicioMs = Date.now();
+}
+function tpFechar(viaBeacon) {
+  tpPausar();
+  const pagina = tpPaginaAtual, segundos = Math.round(tpAcumuladoMs / 1000);
+  tpPaginaAtual = null;
+  tpAcumuladoMs = 0;
+  if (!pagina || segundos < 1) return; // ruído — passagem rápida demais não conta
+  const user = window._getCurrentUser && window._getCurrentUser();
+  const payload = JSON.stringify({ segundos, email: user?.email || undefined, nome: user?.displayName || undefined });
+  const url = '/api/visita?pagina=' + encodeURIComponent(pagina);
+  if (viaBeacon && navigator.sendBeacon) {
+    navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+  } else {
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload, keepalive: true }).catch(() => {});
+  }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') tpPausar(); else tpRetomar();
+});
+window.addEventListener('pagehide', () => tpFechar(true));
+
 function showPage(name) {
   // fecha o gavetão se estiver aberto
   closeDrawer();
@@ -7091,7 +7133,7 @@ function showPage(name) {
     setTimeout(() => p.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     // conta acesso por item de menu, separado do contador geral do site — não
     // conta o próprio painel admin, que é só a Anna usando
-    if (name !== 'admin') fetch('/api/visita?pagina=item-' + name, { method: 'POST' }).catch(() => {});
+    if (name !== 'admin') { fetch('/api/visita?pagina=item-' + name, { method: 'POST' }).catch(() => {}); tpIniciar('item-' + name); }
   }
   document.getElementById('bolhas-container')?.classList.toggle('tv-pausar-bolhas', name === 'jogos' || name === 'relatorio-calendario');
   if (name === 'admin') { adminVoltarMenu(); renderAdminPanel(); carregarFilhasAdmin(); avCarregar(); adminCarregarAcessos(); adminCarregarQr(); qrCarregarCriados(); }
@@ -14120,6 +14162,7 @@ loadMenu();
 
 // contador de acessos diários — só registra, sem bloquear nada se falhar
 fetch('/api/visita?pagina=site', { method: 'POST' }).catch(() => {});
+tpIniciar('site'); // tempo na tela de Início, até a pessoa entrar numa função específica (showPage troca pra "item-X")
 
 // ── PRÓXIMA SESSÃO NO HEADER ──
 function sincronizarMiniCardsPerfil() {
@@ -20760,14 +20803,29 @@ function rvMudarPeriodo(dias) {
 }
 window.rvMudarPeriodo = rvMudarPeriodo;
 
+// formata segundos acumulados em texto curto — mesma ideia do rfFmtDuracaoDias
+// do Relatório de Filhas da Casa, só que em segundos/minutos/horas
+function rvFmtTempo(seg) {
+  seg = Math.round(seg || 0);
+  if (seg < 60) return seg + 's';
+  const min = Math.round(seg / 60);
+  if (min < 60) return min + 'min';
+  const h = Math.floor(min / 60), m = min % 60;
+  return h + 'h' + (m ? ' ' + m + 'min' : '');
+}
+
 function rvRender() {
   const el = document.getElementById('rv-conteudo');
   if (!el) return;
   try {
   const nomesPaginas = Object.keys(rvPaginasDados);
   const site = rvPaginasDados['site'] || [];
-  const hoje = site[0] || { contagem: 0, unicos: 0 };
+  const hoje = site[0] || { contagem: 0, unicos: 0, segundos: 0 };
   const totalPeriodoSite = site.reduce((s, d) => s + (d.contagem || 0), 0);
+  // tempo gasto no site inteiro = soma do tempo de todas as páginas/funções
+  // (cada showPage fecha a anterior e abre a nova, ver tpIniciar/tpFechar) —
+  // não dá pra usar só rvPaginasDados['site'], que é a tela de Início
+  const tempoTotalPeriodo = nomesPaginas.reduce((s, p) => s + (rvPaginasDados[p] || []).reduce((s2, d) => s2 + (d.segundos || 0), 0), 0);
 
   let html = `<div style="display:flex;gap:8px;margin-bottom:16px">
     ${[7, 14, 30].map(n => `<button class="rc-toggle-btn" style="${n === rvDias ? 'background:#c4396b;color:#fff;border-color:#c4396b' : ''}" onclick="window.rvMudarPeriodo(${n})">${n} dias</button>`).join('')}
@@ -20777,6 +20835,7 @@ function rvRender() {
     <div class="rc-stat-card"><div class="rc-stat-label">Acessos hoje (site)</div><div class="rc-stat-valor">${hoje.contagem}</div></div>
     <div class="rc-stat-card"><div class="rc-stat-label">Pessoas diferentes hoje</div><div class="rc-stat-valor">${hoje.unicos}</div></div>
     <div class="rc-stat-card"><div class="rc-stat-label">Acessos em ${rvDias} dias (site)</div><div class="rc-stat-valor">${totalPeriodoSite}</div></div>
+    <div class="rc-stat-card"><div class="rc-stat-label">Tempo total no site em ${rvDias} dias</div><div class="rc-stat-valor" style="font-size:1.3rem">${rvFmtTempo(tempoTotalPeriodo)}</div></div>
   </div>`;
 
   if (site.length) {
@@ -20785,19 +20844,24 @@ function rvRender() {
 
   // ranking de funções — soma o período inteiro de cada página já coletada
   // (toda vez que alguém navega pra uma seção do site, ver showPage())
-  const ranking = nomesPaginas.map(pagina => ({
-    pagina, total: (rvPaginasDados[pagina] || []).reduce((s, d) => s + (d.contagem || 0), 0),
-  })).filter(r => r.total > 0).sort((a, b) => b.total - a.total);
+  const ranking = nomesPaginas.map(pagina => {
+    const dias = rvPaginasDados[pagina] || [];
+    return {
+      pagina,
+      total: dias.reduce((s, d) => s + (d.contagem || 0), 0),
+      segundos: dias.reduce((s, d) => s + (d.segundos || 0), 0),
+    };
+  }).filter(r => r.total > 0).sort((a, b) => b.total - a.total);
   const maxTotal = ranking.length ? ranking[0].total : 1;
 
   html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:4px">🔎 Funções mais acessadas</div>
-    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">Em ${rvDias} dias — toque numa função pra ver o dia a dia</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-bottom:14px">Em ${rvDias} dias — toque numa função pra ver o dia a dia e quem usou quanto tempo</div>
     <div style="display:flex;flex-direction:column;gap:10px">
       ${ranking.map(r => {
         const nome = ADMIN_NOMES_PAGINAS_ACESSO[r.pagina] || calEsc(r.pagina);
         const pct = Math.max(4, r.total / maxTotal * 100);
         return `<div style="cursor:pointer" onclick="window.rvAbrirDetalhePagina('${r.pagina}')">
-          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);margin-bottom:3px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nome}</span><span style="color:var(--text-dim);flex-shrink:0">${r.total}</span></div>
+          <div style="display:flex;justify-content:space-between;gap:8px;font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text);margin-bottom:3px"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nome}</span><span style="color:var(--text-dim);flex-shrink:0">${r.total} acesso(s) · ${rvFmtTempo(r.segundos)}</span></div>
           <div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#c4396b;border-radius:4px"></div></div>
         </div>`;
       }).join('') || '<div class="rc-vazio">Nenhum acesso registrado ainda.</div>'}
@@ -20865,23 +20929,39 @@ function rvAbrirDetalhePagina(pagina) {
   const dias = rvPaginasDados[pagina] || [];
   document.getElementById('rv-detalhe-titulo').textContent = ADMIN_NOMES_PAGINAS_ACESSO[pagina] || pagina;
   const totalPeriodo = dias.reduce((s, d) => s + (d.contagem || 0), 0);
-  document.getElementById('rv-detalhe-sub').textContent = `${totalPeriodo} acesso(s) em ${rvDias} dias`;
-  const corpo = document.getElementById('rv-detalhe-lista');
+  const tempoPeriodo = dias.reduce((s, d) => s + (d.segundos || 0), 0);
+  document.getElementById('rv-detalhe-sub').textContent = `${totalPeriodo} acesso(s) · ${rvFmtTempo(tempoPeriodo)} em ${rvDias} dias`;
+
+  // consolida por pessoa somando os dias todos — responde "quem usou mais
+  // tempo aqui no período", não só "quem apareceu em qual dia"
+  const porPessoa = {};
+  dias.forEach(d => (d.logados || []).forEach(l => {
+    const atual = porPessoa[l.email] || { nome: l.nome, acessos: 0, segundos: 0 };
+    porPessoa[l.email] = { nome: l.nome, acessos: atual.acessos + (l.acessos || 0), segundos: atual.segundos + (l.segundos || 0) };
+  }));
+  const ranqueadas = Object.values(porPessoa).sort((a, b) => b.segundos - a.segundos || b.acessos - a.acessos);
+
   const temSemDados = dias.some(d => d.semDados);
-  corpo.innerHTML = (dias.length
+  let html = '';
+  if (ranqueadas.length) {
+    html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px">👤 Por pessoa, no período</div>`;
+    html += ranqueadas.map(p => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text)">
+      <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${calEsc(p.nome)}</span>
+      <span style="color:var(--text-dim);flex-shrink:0">${rvFmtTempo(p.segundos)} · ${p.acessos} acesso(s)</span>
+    </div>`).join('');
+    html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin:16px 0 8px">📅 Dia a dia</div>`;
+  }
+  html += dias.length
     ? dias.map(d => {
         const [, m, dd] = d.dia.split('-');
-        const logados = (d.logados || []).map(l => calEsc(l.nome)).join(', ');
-        return `<div style="padding:9px 0;border-bottom:1px solid var(--border)">
-          <div style="display:flex;justify-content:space-between;font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)">
-            <span>${dd}/${m}</span>
-            <span>${d.semDados ? 'sem dados*' : `${d.contagem} acesso(s) · ${d.unicos} único(s)`}</span>
-          </div>
-          ${logados ? `<div style="font-family:'Crimson Pro',serif;font-style:italic;font-size:.76rem;color:var(--text-dim);margin-top:2px">👤 ${logados}</div>` : ''}
+        return `<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)">
+          <span>${dd}/${m}</span>
+          <span>${d.semDados ? 'sem dados*' : `${d.contagem} acesso(s) · ${d.unicos} único(s) · ${rvFmtTempo(d.segundos)}`}</span>
         </div>`;
       }).join('')
-    : '<div class="rc-vazio" style="padding:14px 0">Nenhum acesso registrado ainda.</div>')
-    + (temSemDados ? '<div style="font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:8px">*antes do contador dessa página existir — não quer dizer que ninguém acessou, só que ainda não contava</div>' : '');
+    : '<div class="rc-vazio" style="padding:14px 0">Nenhum acesso registrado ainda.</div>';
+  html += temSemDados ? '<div style="font-size:.7rem;font-style:italic;color:var(--text-dim);margin-top:8px">*antes do contador dessa página existir — não quer dizer que ninguém acessou, só que ainda não contava</div>' : '';
+  document.getElementById('rv-detalhe-lista').innerHTML = html;
   document.getElementById('rv-detalhe-overlay').classList.add('open');
 }
 window.rvAbrirDetalhePagina = rvAbrirDetalhePagina;

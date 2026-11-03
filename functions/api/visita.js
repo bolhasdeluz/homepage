@@ -7,11 +7,15 @@
 // pra dar pra contar quantas pessoas diferentes passaram. Quando a pessoa
 // está logada, o site manda um segundo POST com {email, nome} — esse só
 // identifica quem acessou (guardado em "visita:<pagina>:<dia>:users"), sem
-// contar de novo no total nem no IP (isso já rolou no POST anônimo).
+// contar de novo no total nem no IP (isso já rolou no POST anônimo). Um
+// terceiro tipo de POST, com {segundos} (e opcionalmente email/nome), manda
+// quanto tempo a pessoa ficou naquela página — disparado ao trocar de seção,
+// esconder a aba ou fechá-la (ver tpIniciar/tpFechar no index.html); também
+// não conta como acesso novo, só soma tempo.
 // GET (só admin) devolve, pra cada página já vista (registradas em
-// "visita:paginas"), o total de acessos, quantos IPs diferentes e quem
-// estava logada nos últimos dias — pro painel de administração e pro
-// Relatório de Visitas e QR Code.
+// "visita:paginas"), o total de acessos, quantos IPs diferentes, o tempo
+// total gasto (segundos) e quem estava logada nos últimos dias — pro painel
+// de administração e pro Relatório de Visitas e QR Code.
 //
 // "ips" e "users" do dia ficam numa chave só por dia (lida/escrita com
 // get/put) em vez de uma chave por IP/usuário lida com list() — list() é a
@@ -83,6 +87,30 @@ export async function onRequest(context) {
     if (!(await KV.get(`visita:${pagina}:inicio`))) await KV.put(`visita:${pagina}:inicio`, dia);
     await registrarPagina(KV, pagina);
 
+    // ping de "tempo gasto na página" (ver tpFechar/tpIniciar no index.html,
+    // disparado ao trocar de seção, esconder a aba ou fechar) — não conta
+    // como acesso novo (isso já rolou no ping de chegada), só soma no tempo:
+    // no total do dia e, quando tem e-mail, no tempo daquela pessoa também
+    if (body && typeof body.segundos === 'number' && body.segundos > 0) {
+      const segundos = Math.min(3600, Math.round(body.segundos)); // tampa 1h por ping — uma aba travada/esquecida não estraga a média
+      const chaveTempo = `visita:${pagina}:${dia}:segundos`;
+      const atual = parseInt(await KV.get(chaveTempo), 10) || 0;
+      await KV.put(chaveTempo, String(atual + segundos));
+
+      if (body.email) {
+        const email = String(body.email).toLowerCase().trim();
+        if (email) {
+          const chaveUsers = `visita:${pagina}:${dia}:users`;
+          const users = (await KV.get(chaveUsers, { type: 'json' })) || {};
+          const existente = users[email] || { acessos: 0, segundos: 0 };
+          const nome = (body.nome || '').trim() || existente.nome || email;
+          users[email] = { nome, email, acessos: existente.acessos || 0, segundos: (existente.segundos || 0) + segundos };
+          await KV.put(chaveUsers, JSON.stringify(users));
+        }
+      }
+      return json({ ok: true });
+    }
+
     if (body && body.email) {
       // segundo POST, só pra identificar quem já logou — não conta de
       // novo no total nem no IP, isso já rolou no POST anônimo
@@ -91,7 +119,8 @@ export async function onRequest(context) {
       const chaveUsers = `visita:${pagina}:${dia}:users`;
       const users = (await KV.get(chaveUsers, { type: 'json' })) || {};
       const nome = (body.nome || '').trim() || users[email]?.nome || email;
-      users[email] = { nome, email, acessos: (users[email]?.acessos || 0) + 1 };
+      const existente = users[email] || { segundos: 0 };
+      users[email] = { nome, email, acessos: (existente.acessos || 0) + 1, segundos: existente.segundos || 0 };
       await KV.put(chaveUsers, JSON.stringify(users));
       return json({ ok: true });
     }
@@ -136,15 +165,16 @@ export async function onRequest(context) {
         // dia anterior ao contador existir — não é "0 acessos", é "não
         // tinha contador ainda"; deixa isso claro em vez de mostrar zero
         if (inicio && dia < inicio) {
-          return { dia, contagem: null, unicos: null, logados: [], semDados: true };
+          return { dia, contagem: null, unicos: null, logados: [], segundos: null, semDados: true };
         }
-        const [totalRaw, ips, users] = await Promise.all([
+        const [totalRaw, ips, users, segundosRaw] = await Promise.all([
           KV.get(`visita:${pag}:${dia}`),
           KV.get(`visita:${pag}:${dia}:ips`, { type: 'json' }),
           KV.get(`visita:${pag}:${dia}:users`, { type: 'json' }),
+          KV.get(`visita:${pag}:${dia}:segundos`),
         ]);
         const logados = Object.values(users || {}).sort((a, b) => b.acessos - a.acessos);
-        return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: (ips || []).length, logados, semDados: false };
+        return { dia, contagem: parseInt(totalRaw, 10) || 0, unicos: (ips || []).length, logados, segundos: parseInt(segundosRaw, 10) || 0, semDados: false };
       }));
     }
     return json({ paginas: paginasResultado });
