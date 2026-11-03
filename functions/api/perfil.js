@@ -47,11 +47,12 @@ async function enviarEmail(env, { email, nome, foto, novoPerfil, inativo }) {
     ? `🌸 Novo login — ${nome || email}`
     : `✦ Login — ${nome || email}`;
 
-  // perfil inativo é barrado no próprio site (ver onAuthStateChanged no
-  // index.html — desloga na hora), mas o e-mail dispara mesmo assim, pra
-  // admin saber que alguém tentou entrar mesmo depois de desativado
+  // perfil inativo não é barrado — continua entrando, só com acesso de
+  // visitante (ver grupoEfetivoDoPerfil no index.html), sem mexer no
+  // grupo/cargo salvo dela. O e-mail avisa mesmo assim, pra admin ter
+  // visibilidade de quem desativado ainda está acessando o site
   const situacao = inativo
-    ? '🚫 Perfil inativo — acesso barrado'
+    ? '🚫 Perfil inativo — entrou com acesso de visitante'
     : novoPerfil ? '🆕 Primeiro login' : '↩️ Login recorrente';
 
   const html = `
@@ -152,8 +153,9 @@ async function enviarEmailDesativacao(env, { email, nome, motivo }) {
       <h2 style="font-family:Georgia,serif;color:#c4396b;margin-bottom:16px">✦ Seu acesso foi desativado</h2>
       <p style="color:#2a1a22;font-size:15px;line-height:1.5">
         Olá${nome ? ', ' + nome : ''}!<br><br>
-        Seu acesso ao site do Terreiro Bolhas de Luz foi desativado — isso não apaga seu histórico
-        nem seus dados, só tira o acesso às áreas internas do site (login).${motivo ? `<br><br>Motivo: ${motivo}` : ''}
+        Seu acesso de filha da casa ao site do Terreiro Bolhas de Luz foi desativado — isso não apaga
+        seu histórico nem seus dados, só tira o acesso às áreas internas (Textos, Quadro das Filhas...).
+        Se você entrar de novo, o site vai te tratar como visitante.${motivo ? `<br><br>Motivo: ${motivo}` : ''}
         <br><br>Se achar que isso é um engano, é só falar com a Mãe da Casa.
       </p>
     </div>`;
