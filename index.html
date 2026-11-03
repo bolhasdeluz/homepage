@@ -20463,6 +20463,9 @@ function rfRender() {
 
   const entradas = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada));
   const saidas = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_saida));
+  // indicador de retenção — tempo de casa de quem já saiu (precisa das duas
+  // datas, não só a saída, pra dar pra calcular a duração)
+  const comPermanencia = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.data_saida) && p.historia.data_saida >= p.historia.data_entrada);
   const comApronte = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.apronte) && p.historia.apronte >= p.historia.data_entrada);
   const comCoroacao = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.coroacao) && p.historia.coroacao >= p.historia.data_entrada);
   const comCacicamento = rfPerfisFilhas.filter(p => rfDataValida(p.historia?.data_entrada) && rfDataValida(p.historia?.cacicamento) && p.historia.cacicamento >= p.historia.data_entrada);
@@ -20515,6 +20518,7 @@ function rfRender() {
     const mediaDias = lista.reduce((soma, p) => soma + (new Date(pegarData(p)) - new Date(p.historia.data_entrada)) / 86400000, 0) / lista.length;
     return rfFmtDuracaoDias(mediaDias);
   }
+  const tempoPermanenciaTxt = rfTempoMedio(comPermanencia, p => p.historia.data_saida);
   const tempoApronteTxt = rfTempoMedio(comApronte, p => p.historia.apronte);
   const tempoCoroacaoTxt = rfTempoMedio(comCoroacao, p => p.historia.coroacao);
   const tempoCacicamentoTxt = rfTempoMedio(comCacicamento, p => p.historia.cacicamento);
@@ -20526,8 +20530,8 @@ function rfRender() {
   // guarda as listas por trás de cada card — é nelas que rfAbrirDetalhe() vai
   // procurar quando a Anna clicar num card pra ver os perfis que compõem aquele número
   rfDetalheCache = {
-    ativas, entradas, saidas, apronte: comApronte, coroacao: comCoroacao, cacicamento: comCacicamento,
-    cruzamento: comCruzamento, corte: comCorte, guia_primeiro: comPrimeiroGuia,
+    ativas, entradas, saidas, permanencia: comPermanencia, apronte: comApronte, coroacao: comCoroacao,
+    cacicamento: comCacicamento, cruzamento: comCruzamento, corte: comCorte, guia_primeiro: comPrimeiroGuia,
   };
   guiasPorTipo.forEach(g => { rfDetalheCache['guia_' + g.campo] = g.lista; });
 
@@ -20551,6 +20555,7 @@ function rfRender() {
     ? (window.obterGuiasCombinados ? window.obterGuiasCombinados(rfMae) : []).find(g => rfDataValida(g.data))
     : null;
   rfMaeDaCasaExtra = {
+    permanencia: rfMaeSe(rfDataValida(rfMae?.historia?.data_saida) && rfMae.historia.data_saida >= rfMae.historia.data_entrada),
     apronte: rfMaeSe(rfDataValida(rfMae?.historia?.apronte) && rfMae.historia.apronte >= rfMae.historia.data_entrada),
     coroacao: rfMaeSe(rfDataValida(rfMae?.historia?.coroacao) && rfMae.historia.coroacao >= rfMae.historia.data_entrada),
     cacicamento: rfMaeSe(rfDataValida(rfMae?.historia?.cacicamento) && rfMae.historia.cacicamento >= rfMae.historia.data_entrada),
@@ -20566,6 +20571,7 @@ function rfRender() {
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('ativas')"><div class="rc-stat-label">Filhas ativas hoje</div><div class="rc-stat-valor">${ativos}</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('entradas')"><div class="rc-stat-label">Entradas (histórico)</div><div class="rc-stat-valor">${entradas.length}</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('saidas')"><div class="rc-stat-label">Saídas (histórico)</div><div class="rc-stat-valor">${saidas.length}</div></div>
+    <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('permanencia')"><div class="rc-stat-label">Tempo médio de permanência (de quem saiu)</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoPermanenciaTxt}</div><div class="rc-stat-sub">${comPermanencia.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('apronte')"><div class="rc-stat-label">Tempo médio até o Apronte</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoApronteTxt}</div><div class="rc-stat-sub">${comApronte.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('coroacao')"><div class="rc-stat-label">Tempo médio até a Coroação</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCoroacaoTxt}</div><div class="rc-stat-sub">${comCoroacao.length} com as duas datas registradas</div></div>
     <div class="rc-stat-card" style="cursor:pointer" onclick="rfAbrirDetalhe('cacicamento')"><div class="rc-stat-label">Tempo médio até o Cacicamento</div><div class="rc-stat-valor" style="font-size:1.05rem">${tempoCacicamentoTxt}</div><div class="rc-stat-sub">${comCacicamento.length} com as duas datas registradas</div></div>
@@ -20780,6 +20786,7 @@ function rfRender() {
 // duplicata de verdade no cadastro) ──
 const RF_DETALHE_TITULO = {
   ativas: 'Filhas ativas hoje', entradas: 'Entradas (histórico)', saidas: 'Saídas (histórico)',
+  permanencia: 'Tempo médio de permanência (de quem saiu)',
   apronte: 'Tempo médio até o Apronte', coroacao: 'Tempo médio até a Coroação',
   cacicamento: 'Tempo médio até o Cacicamento', cruzamento: 'Tempo médio até o 1º Cruzamento',
   corte: 'Tempo médio até o 1º Corte', guia_primeiro: 'Tempo médio até o 1º Guia',
@@ -20797,6 +20804,7 @@ function rfLinhaDetalheHtml(tipo, p) {
   if (tipo === 'ativas') infoData = p.cargo || p.grupo || '';
   else if (tipo === 'entradas') infoData = window.fmtData(hist.data_entrada);
   else if (tipo === 'saidas') infoData = window.fmtData(hist.data_saida) + (hist.motivo_saida ? ' — ' + calEsc(hist.motivo_saida) : '');
+  else if (tipo === 'permanencia') infoData = rfInfoDuracao(hist.data_entrada, hist.data_saida) + (hist.motivo_saida ? ' — ' + calEsc(hist.motivo_saida) : '');
   else if (tipo === 'apronte') infoData = rfInfoDuracao(hist.data_entrada, hist.apronte);
   else if (tipo === 'coroacao') infoData = rfInfoDuracao(hist.data_entrada, hist.coroacao);
   else if (tipo === 'cacicamento') infoData = rfInfoDuracao(hist.data_entrada, hist.cacicamento);
