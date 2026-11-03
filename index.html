@@ -20462,12 +20462,13 @@ function rfLinhaDetalheHtml(tipo, p) {
   // clicável — leva direto pra edição do perfil (mesmo modal usado em
   // Filhas da Casa/Quadro das Filhas), pra já poder corrigir o que tiver
   // errado sem precisar procurar a pessoa de novo em outro lugar
-  return `<div data-email="${calEsc(p.email || '')}" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer">
-    <div>
-      <div style="font-family:'Playfair Display',serif;font-size:.92rem;font-weight:600;color:var(--text)">${calEsc(p.nome || '—')}</div>
-      <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim)">${calEsc(p.email || '')}${p.ativo === false ? ' · desligada' : ''}</div>
-    </div>
-    <div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);text-align:right;white-space:nowrap">${infoData}</div>
+  // em coluna (nome em cima, data embaixo) em vez de lado a lado — o texto
+  // de duração ("entrada → marco (X anos e Y meses)") é longo demais pra
+  // caber ao lado do nome sem estourar a largura do modal no celular
+  return `<div data-email="${calEsc(p.email || '')}" style="padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer">
+    <div style="font-family:'Playfair Display',serif;font-size:.92rem;font-weight:600;color:var(--text)">${calEsc(p.nome || '—')}</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim)">${calEsc(p.email || '')}${p.ativo === false ? ' · desligada' : ''}</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);margin-top:2px">${infoData}</div>
   </div>`;
 }
 function rfAbrirDetalhe(tipo) {
