@@ -2877,6 +2877,8 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
       <button class="rf-admin-btn" id="rf-btn-corrigir-origem" style="display:none" onclick="rifaCorrigirOrigemDigital()">🔧 Corrigir origem dos números digitais</button>
       <button class="rf-admin-btn" id="rf-btn-qr" style="display:none" onclick="rifaAbrirQr()">📷 QR code da venda digital</button>
+      <button class="rf-admin-btn" id="rf-btn-qr-presencial" style="display:none" onclick="rifaAbrirQrPresencial()">📷 QR code pagamento presencial</button>
+      <button class="rf-admin-btn" id="rf-btn-presenciais-pendentes" style="display:none" onclick="rifaAbrirPresenciaisPendentes()">📋 Presenciais aguardando número</button>
       <button class="rf-admin-btn" id="rf-btn-proximos100" style="display:none" onclick="rifaSelecionarProximos100()">➕ Próximos 100 livres</button>
     </div>
 
@@ -2951,6 +2953,27 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="rf-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
     <div id="rf-qr-canvas" style="margin:0 auto"></div>
     <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/rifa</span>
+  </div>
+</div>
+
+<div id="rf-qr-presencial-overlay" class="overlay" onclick="if(event.target===this)rifaFecharQrPresencial()">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <button class="modal-close" onclick="rifaFecharQrPresencial()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📷 QR code pagamento presencial</div>
+    <p class="modal-sub">Pra imprimir e colar no telão — a pessoa escolhe quantos números quer, paga, e escolhe o número dela ali mesmo ✦</p>
+    <button class="rm-btn-mes" id="rf-qr-presencial-contagem" onclick="rifaToggleLeiturasQrPresencial()" style="display:none;width:100%;margin-bottom:10px"></button>
+    <div id="rf-qr-presencial-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
+    <div id="rf-qr-presencial-canvas" style="margin:0 auto"></div>
+    <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/rifa-presencial</span>
+  </div>
+</div>
+
+<div id="rf-presenciais-pendentes-overlay" class="overlay" onclick="if(event.target===this)rifaFecharPresenciaisPendentes()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="rifaFecharPresenciaisPendentes()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📋 Pagamentos presenciais aguardando número</div>
+    <p class="modal-sub">Quem já pagou pelo QR code mas ainda não teve o número atribuído — assim que a pessoa disser qual número escolheu no telão, usa "Lançar compra" pra atribuir e depois marca como resolvido aqui ✦</p>
+    <div id="rf-presenciais-pendentes-lista"></div>
   </div>
 </div>
 
@@ -8086,6 +8109,96 @@ function rifaToggleLeiturasQr() {
 }
 window.rifaToggleLeiturasQr = rifaToggleLeiturasQr;
 
+// QR code pro pagamento presencial (telão/impresso) — igual ao de cima, só
+// que aponta pro link curto /ir/rifa-presencial (quantidade → InfinitePay,
+// sem reservar número nenhum)
+let rifaLeiturasQrPresencial = [];
+
+async function rifaAbrirQrPresencial() {
+  if (!rifaEhAdmin()) return;
+  document.getElementById('rf-qr-presencial-overlay').classList.add('open');
+  const canvasWrap = document.getElementById('rf-qr-presencial-canvas');
+  if (!canvasWrap.hasChildNodes()) {
+    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/rifa-presencial', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+  }
+  const btn = document.getElementById('rf-qr-presencial-contagem');
+  btn.style.display = 'none';
+  document.getElementById('rf-qr-presencial-leituras').style.display = 'none';
+  try {
+    const res = await fetch('/api/qr-contagem', { headers: RIFA_ADMIN_HEADERS });
+    if (res.ok) {
+      const porSlug = await res.json();
+      rifaLeiturasQrPresencial = porSlug['rifa-presencial'] || [];
+      const n = rifaLeiturasQrPresencial.length;
+      btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
+      btn.style.display = n ? 'block' : 'none';
+    }
+  } catch (e) { /* não trava o popup se essa parte falhar */ }
+}
+window.rifaAbrirQrPresencial = rifaAbrirQrPresencial;
+
+function rifaFecharQrPresencial() { document.getElementById('rf-qr-presencial-overlay').classList.remove('open'); }
+window.rifaFecharQrPresencial = rifaFecharQrPresencial;
+
+function rifaToggleLeiturasQrPresencial() {
+  const wrap = document.getElementById('rf-qr-presencial-leituras');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = rifaLeiturasQrPresencial.map(ts => `<div>${rifaFormatarDataHoraQr(ts)}</div>`).join('') || '<div>Nenhuma leitura ainda ✦</div>';
+  wrap.style.display = 'block';
+}
+window.rifaToggleLeiturasQrPresencial = rifaToggleLeiturasQrPresencial;
+
+// lista de admin: pagamentos presenciais feitos pelo QR (criar-pagamento-
+// presencial) que ainda não tiveram o número atribuído na mão — cada um
+// some da lista quando a admin marca como resolvido
+function rifaFormatarDataHoraPendente(ts) {
+  return new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function rifaAbrirPresenciaisPendentes() {
+  if (!rifaEhAdmin()) return;
+  document.getElementById('rf-presenciais-pendentes-overlay').classList.add('open');
+  rifaRenderPresenciaisPendentes();
+}
+window.rifaAbrirPresenciaisPendentes = rifaAbrirPresenciaisPendentes;
+
+function rifaFecharPresenciaisPendentes() { document.getElementById('rf-presenciais-pendentes-overlay').classList.remove('open'); }
+window.rifaFecharPresenciaisPendentes = rifaFecharPresenciaisPendentes;
+
+function rifaRenderPresenciaisPendentes() {
+  const lista = document.getElementById('rf-presenciais-pendentes-lista');
+  const pendentes = ((rifaAtual && rifaAtual.pendentesPresenciais) || []).filter(p => p.status === 'pago');
+  if (!pendentes.length) {
+    lista.innerHTML = '<p class="modal-sub">Nenhum pagamento presencial aguardando número ✦</p>';
+    return;
+  }
+  lista.innerHTML = pendentes.slice().sort((a, b) => (b.pagoEm || 0) - (a.pagoEm || 0)).map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text)">
+        <b>${p.quantidade}</b> número(s) — pago ${rifaFormatarDataHoraPendente(p.pagoEm)}
+      </div>
+      <button class="rm-btn-mes" style="padding:7px 12px;white-space:nowrap" onclick="rifaResolverPendentePresencial('${p.orderNsu}')">✓ Já atribuí</button>
+    </div>
+  `).join('');
+}
+
+async function rifaResolverPendentePresencial(orderNsu) {
+  if (!rifaEhAdmin()) return;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'remover-pendente-presencial', orderNsu }),
+    });
+    if (res.ok) {
+      rifaAtual = await res.json();
+      rifaRenderPresenciaisPendentes();
+      rifaRenderPagina();
+    }
+  } catch (e) { /* tenta de novo depois, se precisar */ }
+}
+window.rifaResolverPendentePresencial = rifaResolverPendentePresencial;
+
 function rifaRenderPagina() {
   const r = rifaAtual;
   rifaAtualizarResumoVendas(r);
@@ -8153,6 +8266,13 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
   document.getElementById('rf-btn-qr').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
+  document.getElementById('rf-btn-qr-presencial').style.display = (admin && r.precoPorNumero > 0) ? '' : 'none';
+  const pendentesPresenciais = (r.pendentesPresenciais || []).filter(p => p.status === 'pago');
+  const btnPendentes = document.getElementById('rf-btn-presenciais-pendentes');
+  btnPendentes.style.display = admin ? '' : 'none';
+  btnPendentes.textContent = pendentesPresenciais.length
+    ? `📋 Presenciais aguardando número (${pendentesPresenciais.length})`
+    : '📋 Presenciais aguardando número';
   document.getElementById('rf-btn-lote100').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-mensagem-links').style.display = admin ? '' : 'none';
 }

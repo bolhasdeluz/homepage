@@ -329,6 +329,22 @@ async function enviarExtratoRifa(env, rifa) {
   await enviarEmailRifa(env, { paraEmail: ADMIN_NOTIFY_EMAIL, assunto: `🎟️ Extrato — ${rifa.titulo} (${linhas.length} vendido${linhas.length === 1 ? '' : 's'})`, html });
 }
 
+// e-mail pra admin quando um pagamento presencial (QR → InfinitePay, sem
+// escolher número — ver "criar-pagamento-presencial") é confirmado. O
+// número não é atribuído sozinho (a pessoa escolhe no telão físico), então
+// isso aqui é só o aviso de "chegou dinheiro, falta lançar a venda" —
+// pendentesPresenciais (guardado na própria rifa) é o checklist disso
+async function enviarEmailPresencialConfirmado(env, { titulo, quantidade, total }) {
+  const html = envelopeEmail({
+    corTopo: '#2a7a60',
+    titulo: '💵 Pagamento presencial confirmado',
+    corpoHtml: `
+      <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Alguém pagou <b>${quantidade}</b> número(s) da rifa <b>${titulo}</b> pelo QR Code de venda presencial — total <b>${fmtPrecoEmail(total)}</b>.</p>
+      <p style="color:#8a6070;font-size:13px;font-style:italic">O número ainda não foi atribuído — assim que a pessoa escolher no telão, lança a venda normalmente no painel da rifa (ela aparece na lista "pagamentos presenciais aguardando número" até você marcar como lançada) ✦</p>`,
+  });
+  await enviarEmailRifa(env, { paraEmail: ADMIN_NOTIFY_EMAIL, assunto: `💵 Pagamento presencial confirmado — ${titulo}`, html });
+}
+
 function gerarNumeros(total) {
   const largura = Math.max(2, String(total).length);
   const numeros = {};
@@ -507,6 +523,37 @@ export async function onRequest(context) {
         return json({ ok: true, numeros: numerosConfirmados, nome: infoPrimeiro.nome, ...respostaRifa });
       }
 
+      // VERIFICAR PAGAMENTO PRESENCIAL (InfinitePay) — pública, chamada pela
+      // rifa-presencial-confirmacao.html na volta do checkout. Mesma ideia da
+      // verificação digital acima, só que o pedido não está ligado a nenhum
+      // número (ver "criar-pagamento-presencial" — aqui a pessoa só paga
+      // uma quantidade, o número ela escolhe no telão físico depois), então
+      // confere pelo registro em rifa.pendentesPresenciais, não em rifa.numeros
+      if (acao === 'verificar-pagamento-presencial') {
+        const rifaId = String(body.rifaId || '');
+        const pedidoNsu = String(body.pedido || '');
+        if (!rifaId || !pedidoNsu) return json({ error: 'Pedido inválido.' }, 400);
+        const alvo = await KV.get(rifaId, { type: 'json' });
+        if (!alvo) return json({ error: 'Rifa não encontrada.' }, 404);
+        const pendente = (alvo.pendentesPresenciais || []).find(p => p.orderNsu === pedidoNsu);
+        if (!pendente) return json({ error: 'Pedido não encontrado.' }, 404);
+        const respostaRifa = { titulo: alvo.titulo, premio: alvo.premio, precoPorNumero: alvo.precoPorNumero, dataSorteio: alvo.dataSorteio };
+        if (pendente.status === 'pago') {
+          return json({ ok: true, quantidade: pendente.quantidade, ...respostaRifa });
+        }
+        const transactionNsu = String(body.transactionNsu || '');
+        const slugDaVolta = String(body.slug || '') || pendente.checkoutSlug;
+        const { aprovado, debug } = await conferirPagamentoInfinitePay({ orderNsu: pedidoNsu, slug: slugDaVolta, transactionNsu });
+        if (!aprovado) return json({ ok: false, debug, slug: slugDaVolta || null, transactionNsu: transactionNsu || null });
+        pendente.status = 'pago';
+        pendente.pagoEm = Date.now();
+        await KV.put(rifaId, JSON.stringify(alvo));
+        context.waitUntil(enviarEmailPresencialConfirmado(env, {
+          titulo: alvo.titulo, quantidade: pendente.quantidade, total: pendente.quantidade * Number(alvo.precoPorNumero || 0),
+        }));
+        return json({ ok: true, quantidade: pendente.quantidade, ...respostaRifa });
+      }
+
       const rifa = await buscarAtiva(KV);
       if (!rifa) return json({ error: 'Não há rifa ativa no momento.' }, 404);
 
@@ -625,6 +672,40 @@ export async function onRequest(context) {
         return json({ ...rifa, _reservados: escolhidos, _checkoutUrl: linkPagamento.url || null });
       }
 
+      // COMPRAR PRESENCIAL — QR Code físico (telão/impresso). A pessoa só
+      // escolhe QUANTOS números quer e paga; nenhum número é reservado aqui
+      // — ela escolhe o número dela pessoalmente, depois, no telão físico, e
+      // a admin confere/atribui na mão (confirmar-pagamento-lote) quando ela
+      // disser qual número pegou. Por isso não pede nome/e-mail: só guarda
+      // um registro "aguardando número" pra admin não perder o pagamento de
+      // vista.
+      if (acao === 'criar-pagamento-presencial') {
+        const quantidade = parseInt(body.quantidade, 10) || 0;
+        if (!quantidade || quantidade < 1) return json({ error: 'Escolha quantos números você quer.' }, 400);
+        if (quantidade > 50) return json({ error: 'No máximo 50 números por pagamento.' }, 400);
+        if (!rifa.precoPorNumero) return json({ error: 'Essa rifa não tem preço definido.' }, 400);
+
+        const orderNsu = gerarOrderNsu();
+        const origin = new URL(request.url).origin;
+        const redirectUrl = `${origin}/rifa-presencial-confirmacao.html?pedido=${encodeURIComponent(orderNsu)}&rifa=${encodeURIComponent(rifa.id)}`;
+        const linkPagamento = await criarLinkInfinitePay({
+          orderNsu,
+          descricao: `${rifa.titulo} — ${quantidade} número(s) (compra no local)`,
+          quantidade,
+          precoCentavosUnitario: Math.round(Number(rifa.precoPorNumero || 0) * 100),
+          redirectUrl,
+        });
+        if (!linkPagamento.url) {
+          return json({ error: `Não consegui gerar o pagamento agora (${linkPagamento.erro || 'motivo desconhecido'}). Tenta de novo em instantes.` }, 502);
+        }
+
+        if (!Array.isArray(rifa.pendentesPresenciais)) rifa.pendentesPresenciais = [];
+        rifa.pendentesPresenciais.push({ orderNsu, quantidade, criadoEm: Date.now(), status: 'aguardando', checkoutSlug: linkPagamento.slug || null });
+        await KV.put(rifa.id, JSON.stringify(rifa));
+
+        return json({ checkoutUrl: linkPagamento.url, orderNsu });
+      }
+
       // REGISTRAR VENDA (vendedora) — pública, mas só funciona com o token
       // individual dela (vem do link rifa-vendedor.html?token=...). Como ela
       // já entregou o número físico e recebeu o dinheiro na hora, vai direto
@@ -733,6 +814,16 @@ export async function onRequest(context) {
 
       // demais ações são só de admin
       if (!isAdmin) return json({ error: 'Não autorizado' }, 403);
+
+      // REMOVER PENDENTE PRESENCIAL — tira da lista "aguardando número" um
+      // pagamento presencial que a admin já conferiu/atribuiu na mão (pelo
+      // confirmar-pagamento-lote) ou que ela decidiu descartar
+      if (acao === 'remover-pendente-presencial') {
+        const orderNsu = String(body.orderNsu || '');
+        rifa.pendentesPresenciais = (rifa.pendentesPresenciais || []).filter(p => p.orderNsu !== orderNsu);
+        await KV.put(rifa.id, JSON.stringify(rifa));
+        return json(rifa);
+      }
 
       // EDITAR RIFA — ajusta os dados da rifa ativa (título, prêmio, preço,
       // data do sorteio) sem precisar encerrar e criar outra. A quantidade de
