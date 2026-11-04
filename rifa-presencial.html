@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rifa — Pagamento Presencial — Bolhas de Luz</title>
+<meta name="description" content="Pague sua rifa do Terreiro Bolhas de Luz — escolha quantos números quer e pague na hora, você escolhe o número no telão depois.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Rifa Presencial — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:460px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+
+.cp-carregando, .rp-vazia{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
+.rf-premio-img{width:100%;max-width:220px;margin:0 auto 14px;border-radius:12px;overflow:hidden}
+.rf-premio-img img{width:100%;display:block}
+.rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
+.rf-premio-desc{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);margin-bottom:10px}
+.rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim);display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+
+.rp-aviso-telao{background:var(--rosa-dim);border:1px solid var(--rosa-border);border-radius:14px;padding:14px 18px;margin-bottom:20px;font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text);text-align:center;line-height:1.5}
+
+.rp-form-box{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:26px 22px;margin-bottom:20px;box-shadow:0 8px 32px rgba(196,57,107,.1);text-align:center}
+.rp-qtd-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:18px}
+.rp-qtd-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--rosa-border);background:#fff;color:var(--rosa);font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rp-qtd-btn:hover{background:var(--rosa-dim)}
+.rp-qtd-valor{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--text);min-width:64px;text-align:center}
+.rp-total{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--rosa);margin-bottom:20px}
+.rp-total b{font-size:1.2rem}
+
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+
+.rp-erro{font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:12px;display:none}
+
+.rp-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
+.rp-saiba-mais a{color:var(--rosa);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎟️ Rifa — Pagamento no Local</div>
+  <p class="section-sub">Escolha quantos números quer e pague agora ✦</p>
+
+  <div id="rp-carregando" class="cp-carregando">Carregando rifa...</div>
+
+  <div id="rp-vazia" class="rp-vazia" style="display:none"></div>
+
+  <div id="rp-conteudo" style="display:none">
+    <div class="rf-premio-frame">
+      <div class="rf-premio-img" id="rp-premio-img" style="display:none"></div>
+      <div class="rf-premio-titulo" id="rp-premio-titulo"></div>
+      <div class="rf-premio-desc" id="rp-premio-desc"></div>
+      <div class="rf-premio-meta" id="rp-premio-meta"></div>
+    </div>
+
+    <p class="rp-aviso-telao">✦ Depois de pagar, escolha seu número pessoalmente no telão aqui no salão ✦</p>
+
+    <div class="rp-form-box">
+      <div class="rp-qtd-row">
+        <button class="rp-qtd-btn" onclick="rpMudarQtd(-1)">−</button>
+        <div class="rp-qtd-valor" id="rp-qtd-valor">1</div>
+        <button class="rp-qtd-btn" onclick="rpMudarQtd(1)">+</button>
+      </div>
+      <div class="rp-total" id="rp-total"></div>
+      <p class="rp-erro" id="rp-erro"></p>
+      <button class="btn-rosa" id="rp-btn-pagar" onclick="rpPagar()">Pagar com InfinitePay</button>
+    </div>
+  </div>
+
+  <p class="rp-saiba-mais">✦ Quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
+</div>
+
+<script>
+const RIFA_API = '/api/rifa';
+let rpRifa = null;
+let rpQtd = 1;
+
+function rpFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rpCarregar() {
+  document.getElementById('rp-carregando').style.display = '';
+  document.getElementById('rp-vazia').style.display = 'none';
+  document.getElementById('rp-conteudo').style.display = 'none';
+  try {
+    const res = await fetch(RIFA_API);
+    rpRifa = res.ok ? await res.json() : null;
+  } catch (e) { rpRifa = null; }
+  document.getElementById('rp-carregando').style.display = 'none';
+
+  if (!rpRifa) {
+    document.getElementById('rp-vazia').style.display = '';
+    document.getElementById('rp-vazia').textContent = 'Não há nenhuma rifa ativa no momento ✦';
+    return;
+  }
+  if (!rpRifa.precoPorNumero) {
+    document.getElementById('rp-vazia').style.display = '';
+    document.getElementById('rp-vazia').textContent = 'Essa rifa ainda não tem preço definido — fale com a administração ✦';
+    return;
+  }
+
+  document.getElementById('rp-conteudo').style.display = '';
+  rpRenderPagina();
+}
+
+function rpRenderPagina() {
+  const r = rpRifa;
+  const imgWrap = document.getElementById('rp-premio-img');
+  if (r.imagemPremio) { imgWrap.style.display = ''; imgWrap.innerHTML = `<img src="${r.imagemPremio}" alt="${r.titulo}">`; }
+  else { imgWrap.style.display = 'none'; imgWrap.innerHTML = ''; }
+  document.getElementById('rp-premio-titulo').textContent = r.titulo || '';
+  document.getElementById('rp-premio-desc').textContent = r.premio || '';
+  const metaPartes = [`Número: ${rpFormatarPreco(r.precoPorNumero)}`];
+  if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  document.getElementById('rp-premio-meta').textContent = metaPartes.join('  ·  ');
+  rpAtualizarTotal();
+}
+
+function rpMudarQtd(delta) {
+  rpQtd = Math.max(1, Math.min(50, rpQtd + delta));
+  document.getElementById('rp-qtd-valor').textContent = rpQtd;
+  rpAtualizarTotal();
+}
+
+function rpAtualizarTotal() {
+  document.getElementById('rp-total').innerHTML = `Total: <b>${rpFormatarPreco(rpQtd * (rpRifa.precoPorNumero || 0))}</b>`;
+}
+
+async function rpPagar() {
+  const erroEl = document.getElementById('rp-erro');
+  erroEl.style.display = 'none';
+  const btn = document.getElementById('rp-btn-pagar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Gerando pagamento...'; btn.disabled = true;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'criar-pagamento-presencial', quantidade: rpQtd }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      erroEl.textContent = data.error || 'Não consegui gerar o pagamento agora.'; erroEl.style.display = 'block';
+      btn.textContent = textoOriginal; btn.disabled = false;
+      return;
+    }
+    btn.textContent = 'Te levando pro pagamento...';
+    window.location.href = data.checkoutUrl;
+  } catch (e) {
+    erroEl.textContent = 'Não consegui gerar o pagamento — tenta de novo.'; erroEl.style.display = 'block';
+    btn.textContent = textoOriginal; btn.disabled = false;
+  }
+}
+
+rpCarregar();
+
+// contador de acessos diários — só registra, sem bloquear nada se falhar
+fetch('/api/visita?pagina=rifa-presencial', { method: 'POST' }).catch(() => {});
+</script>
+
+</body>
+</html>
