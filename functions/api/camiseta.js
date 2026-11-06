@@ -46,6 +46,18 @@ function listaItens(itens) {
   return (itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(', ');
 }
 
+// "2026-12-15" -> "15/12/2026", pro corpo dos e-mails
+function fmtDataBR(iso) {
+  const [ano, mes, dia] = String(iso || '').split('-');
+  return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
+}
+
+// hoje em YYYY-MM-DD (America/Sao_Paulo) — usado só pra não aceitar uma data
+// de pagamento combinado já passada
+function hojeISO() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+}
+
 function envelopeEmail({ corTopo, titulo, corpoHtml }) {
   return `
     <div style="font-family:Georgia,serif;max-width:480px;margin:0 auto;padding:24px;background:#fff5f7;border-radius:12px">
@@ -82,7 +94,7 @@ async function enviarEmailCamiseta(env, { paraEmail, assunto, html }) {
 // e-mail enviado assim que a pessoa faz o pedido — avisa que o pagamento é
 // conferido manualmente se o link automático não tiver dado certo (mesmo
 // espírito do e-mail "reservado" da rifa)
-async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, total, comLinkAutomatico }) {
+async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, total, comLinkAutomatico, pagarDepois, dataPagamentoPrevista }) {
   const html = envelopeEmail({
     corTopo: '#c4396b',
     titulo: '🎽 Pedido registrado!',
@@ -90,19 +102,26 @@ async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, tota
       <p style="color:#2a1a22;font-size:15px;margin-bottom:14px">Seu pedido de <b>${titulo}</b>:</p>
       <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15);color:#2a1a22;font-size:16px;font-weight:bold;text-align:center;margin-bottom:14px">${listaItens(itens)}</div>
       <p style="color:#2a1a22;font-size:14px;margin-bottom:14px">Total: <b>${fmtPrecoEmail(total)}</b></p>
-      ${comLinkAutomatico ? '' : `
+      ${pagarDepois ? `
+      <div style="padding:14px;background:rgba(196,57,107,.06);border-radius:8px;margin-bottom:14px">
+        <p style="color:#2a1a22;font-size:14px;margin-bottom:8px">Seu pedido já está confirmado — o pagamento fica combinado pra <b>${fmtDataBR(dataPagamentoPrevista)}</b>.</p>
+        <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Se quiser adiantar, a chave Pix é</p>
+        <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
+      </div>` : (comLinkAutomatico ? '' : `
       <div style="padding:14px;background:rgba(196,57,107,.06);border-radius:8px;margin-bottom:14px">
         <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px">Chave Pix (copia e cola)</p>
         <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>
-      </div>`}
-      <p style="color:#8a6070;font-size:13px;font-style:italic">${comLinkAutomatico ? 'Pagamento confirmado automaticamente assim que concluir no InfinitePay.' : 'O pagamento é conferido manualmente.'} Guarde esse e-mail ✦</p>`,
+      </div>`)}
+      <p style="color:#8a6070;font-size:13px;font-style:italic">${pagarDepois ? 'Vamos aguardar o pagamento até a data combinada.' : (comLinkAutomatico ? 'Pagamento confirmado automaticamente assim que concluir no InfinitePay.' : 'O pagamento é conferido manualmente.')} Guarde esse e-mail ✦</p>`,
   });
   await enviarEmailCamiseta(env, { paraEmail, assunto: `🎽 Pedido registrado — ${titulo}`, html });
 }
 
-async function enviarEmailAvisoAdminPedido(env, { titulo, itens, total, nome, telefone, email, comLinkAutomatico, erroLinkAutomatico }) {
+async function enviarEmailAvisoAdminPedido(env, { titulo, itens, total, nome, telefone, email, comLinkAutomatico, erroLinkAutomatico, pagarDepois, dataPagamentoPrevista }) {
   let notaRodape = 'Confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦';
-  if (comLinkAutomatico) {
+  if (pagarDepois) {
+    notaRodape = `O pagamento ficou combinado pra ${fmtDataBR(dataPagamentoPrevista)} — confirma na mão (painel da Loja de Camisetas) quando a pessoa pagar ✦`;
+  } else if (comLinkAutomatico) {
     notaRodape = 'Esse pedido tem link de pagamento automático (InfinitePay) — se a pessoa pagar por ele, confirma sozinho. Se não confirmar, confira o Pix e fala com a pessoa pelo WhatsApp ✦';
   } else if (erroLinkAutomatico) {
     notaRodape = `Não deu pra criar o link automático do InfinitePay dessa vez (${erroLinkAutomatico}) — confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦`;
@@ -288,6 +307,7 @@ export async function onRequest(context) {
         precoPorUnidade: Number(body.precoPorUnidade) || 0,
         tamanhos: Array.isArray(body.tamanhos) ? body.tamanhos : [],
         tabelaMedidas: Array.isArray(body.tabelaMedidas) ? body.tabelaMedidas : [],
+        imagemTabelaMedidas: body.imagemTabelaMedidas || '',
         status: 'ativa',
         pedidos: [],
         criadoEm: Date.now(),
@@ -358,10 +378,27 @@ export async function onRequest(context) {
         const quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
         const total = quantidadeTotal * Number(produto.precoPorUnidade || 0);
 
+        // PAGAR DEPOIS — a pessoa não vai pagar agora (ex: combinou de pagar
+        // só no dia do evento). O pedido fica confirmado e contado do mesmo
+        // jeito, só não cria link de pagamento nenhum agora: o pagamento
+        // fica "combinado" pra aquela data, e a admin confirma na mão
+        // (confirmar-pagamento) sempre que a pessoa pagar de verdade.
+        const pagarDepois = !!body.pagarDepois;
+        let dataPagamentoPrevista = null;
+        if (pagarDepois) {
+          dataPagamentoPrevista = String(body.dataPagamentoPrevista || '');
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamentoPrevista)) {
+            return json({ error: 'Escolha uma data válida pro pagamento.' }, 400);
+          }
+          if (dataPagamentoPrevista < hojeISO()) {
+            return json({ error: 'Essa data já passou — escolhe uma data a partir de hoje.' }, 400);
+          }
+        }
+
         const orderNsu = gerarOrderNsu();
         const origin = new URL(request.url).origin;
         const redirectUrl = `${origin}/camiseta-confirmacao.html?pedido=${encodeURIComponent(orderNsu)}&produto=${encodeURIComponent(produto.id)}`;
-        const linkPagamento = await criarLinkInfinitePay({
+        const linkPagamento = pagarDepois ? {} : await criarLinkInfinitePay({
           orderNsu,
           descricao: `${produto.titulo} — ${listaItens(itens)}`,
           quantidade: quantidadeTotal,
@@ -374,20 +411,21 @@ export async function onRequest(context) {
           orderNsu, itens, nome, telefone, email, total,
           status: 'aguardando', criadoEm: Date.now(),
           checkoutSlug: (linkPagamento && linkPagamento.slug) || null,
+          ...(pagarDepois ? { pagarDepois: true, dataPagamentoPrevista } : {}),
         };
         if (!Array.isArray(produto.pedidos)) produto.pedidos = [];
         produto.pedidos.push(pedido);
         await KV.put(produto.id, JSON.stringify(produto));
 
         context.waitUntil(enviarEmailPedidoRegistrado(env, {
-          paraEmail: email, titulo: produto.titulo, itens, total, comLinkAutomatico: !!linkPagamento.url,
+          paraEmail: email, titulo: produto.titulo, itens, total, comLinkAutomatico: !!linkPagamento.url, pagarDepois, dataPagamentoPrevista,
         }));
         context.waitUntil(enviarEmailAvisoAdminPedido(env, {
           titulo: produto.titulo, itens, total, nome, telefone, email,
-          comLinkAutomatico: !!linkPagamento.url, erroLinkAutomatico: linkPagamento.erro,
+          comLinkAutomatico: !!linkPagamento.url, erroLinkAutomatico: linkPagamento.erro, pagarDepois, dataPagamentoPrevista,
         }));
 
-        return json({ orderNsu, total, _checkoutUrl: linkPagamento.url || null });
+        return json({ orderNsu, total, _checkoutUrl: linkPagamento.url || null, _pagarDepois: pagarDepois, _dataPagamentoPrevista: dataPagamentoPrevista });
       }
 
       // demais ações são só de admin
@@ -404,6 +442,7 @@ export async function onRequest(context) {
         produto.precoPorUnidade = Number(body.precoPorUnidade) || 0;
         produto.tamanhos = Array.isArray(body.tamanhos) ? body.tamanhos : [];
         produto.tabelaMedidas = Array.isArray(body.tabelaMedidas) ? body.tabelaMedidas : [];
+        produto.imagemTabelaMedidas = body.imagemTabelaMedidas || '';
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
