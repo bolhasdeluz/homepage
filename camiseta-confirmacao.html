@@ -83,13 +83,14 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div id="rc-conteudo" style="display:none">
     <div class="rc-aviso">
-      <div class="rc-aviso-titulo">✦ Pagamento confirmado! ✦</div>
+      <div class="rc-aviso-titulo" id="rc-aviso-titulo">✦ Pagamento confirmado! ✦</div>
       <p>Seu pedido já está valendo:</p>
       <div class="rc-itens" id="rc-itens"></div>
-      <p id="rc-total"></p>
+      <p id="rc-valor-pago"></p>
+      <p id="rc-saldo" style="display:none"></p>
     </div>
 
-    <a class="btn-outra" href="/camiseta.html">Fazer outro pedido</a>
+    <a class="btn-outra" href="/#pagina=camiseta">Fazer outro pedido</a>
   </div>
 
   <p class="rc-saiba-mais">✦ Quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
@@ -100,6 +101,10 @@ const CAMISETA_API = '/api/camiseta';
 let rcUltimoDebug = '';
 
 function rcFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+function rcFormatarDataBR(iso) {
+  const [ano, mes, dia] = String(iso || '').split('-');
+  return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
+}
 
 async function rcVerificar(tentativa) {
   tentativa = tentativa || 1;
@@ -130,8 +135,16 @@ async function rcVerificar(tentativa) {
     if (res.ok && data.ok) {
       document.getElementById('rc-carregando').style.display = 'none';
       document.getElementById('rc-conteudo').style.display = '';
-      document.getElementById('rc-itens').textContent = (data.itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(' · ');
-      document.getElementById('rc-total').textContent = `Total: ${rcFormatarPreco(data.total)}`;
+      document.getElementById('rc-itens').textContent = (data.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(' · ');
+      const rotulo = data.valorEscolhido === 'sinal' ? 'Sinal pago' : 'Valor total pago';
+      document.getElementById('rc-valor-pago').textContent = `${rotulo}: ${rcFormatarPreco(data.valorPedido)} (pedido de ${rcFormatarPreco(data.total)})`;
+      const saldoEl = document.getElementById('rc-saldo');
+      if (data.valorEscolhido === 'sinal' && data.dataPagamentoSaldo) {
+        saldoEl.textContent = `O saldo restante fica previsto pra ${rcFormatarDataBR(data.dataPagamentoSaldo)}.`;
+        saldoEl.style.display = '';
+      } else {
+        saldoEl.style.display = 'none';
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
