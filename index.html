@@ -1340,6 +1340,27 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-barra-selecao.open{display:flex}
 .rf-barra-selecao-botoes{display:flex;gap:8px}
 
+/* ═══ PÁGINA CAMISETA ═══ */
+.ct-cor-tabs{display:flex;gap:8px;margin-bottom:14px}
+.ct-cor-tab{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--text)}
+.ct-cor-tab img{width:100%;max-width:120px;border-radius:8px;margin:0 auto 6px;display:block}
+.ct-cor-tab-ativa{border-color:var(--rosa);box-shadow:0 0 0 2px var(--rosa) inset}
+.ct-tamanho-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.ct-tamanho-row:last-child{border-bottom:none}
+.ct-tamanho-label{font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:var(--text)}
+.ct-qtd-row{display:flex;align-items:center;gap:10px}
+.ct-qtd-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--rosa-border);background:#fff;color:var(--rosa);font-size:1.05rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ct-qtd-btn:hover{background:var(--rosa-dim)}
+.ct-qtd-valor{font-family:'DM Sans',sans-serif;font-weight:700;font-size:.95rem;min-width:18px;text-align:center}
+.ct-total-row{display:flex;justify-content:space-between;align-items:center;font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:var(--rosa);margin:14px 0}
+.ct-total-row b{font-size:1.1rem}
+.ct-toggle{display:flex;gap:8px;margin-bottom:10px}
+.ct-toggle-btn{flex:1;background:#fff;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:8px;padding:10px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.04em;font-weight:700}
+.ct-toggle-btn-ativo{background:var(--rosa);color:#fff}
+.ct-medidas table{width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:.8rem}
+.ct-medidas th,.ct-medidas td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)}
+.ct-medidas th{color:var(--rosa);font-weight:700;text-transform:uppercase;font-size:.66rem;letter-spacing:.03em}
+
 /* ═══ PÁGINA EVENTOS SELECIONADOS ═══ */
 .ed-evento{background:var(--rosa-dim);border-radius:9px;padding:12px 14px;margin-bottom:8px;position:relative}
 .ed-evento-topo{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:4px;padding-right:22px}
@@ -2852,6 +2873,82 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- PÁGINA CAMISETA — só pra quem está logada (perfil da casa); a pessoa
+     escolhe cor+tamanho+quantidade (pode misturar as duas cores no mesmo
+     pedido), vê a tabela de medidas, e escolhe quanto vai pagar agora
+     (sinal, mínimo 20%, ou o valor total) e quando (agora, via InfinitePay,
+     ou combina uma data) — ver /api/camiseta -->
+<div id="page-camiseta" class="page">
+  <div class="section-wrap">
+    <button class="back-btn" onclick="showPage('inicio')">← Voltar</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">🎽 Camiseta</div>
+    <p class="section-sub">Escolha a cor, o tamanho e a quantidade ✦</p>
+
+    <div id="ct-carregando" class="cp-carregando">Carregando...</div>
+    <div id="ct-vazia" style="display:none;text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)"></div>
+
+    <div id="ct-conteudo" style="display:none">
+      <div class="rf-premio-frame">
+        <div class="rf-premio-titulo" id="ct-produto-titulo"></div>
+        <div class="rf-premio-desc" id="ct-produto-desc"></div>
+        <div class="rf-premio-meta" id="ct-produto-meta"></div>
+      </div>
+
+      <div id="ct-medidas-wrap" class="ct-medidas" style="display:none;background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px">
+        <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center">📏 Tabela de medidas</div>
+        <div id="ct-medidas-tabela"></div>
+      </div>
+
+      <div class="ct-cor-tabs" id="ct-cor-tabs"></div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px">
+        <div id="ct-tamanhos-lista"></div>
+      </div>
+
+      <div class="ct-total-row" id="ct-total" style="display:none"></div>
+
+      <div id="ct-sucesso" style="display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:22px 20px;text-align:center;margin-bottom:20px">
+        <div style="font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--green);margin-bottom:10px">✦ Pedido registrado! ✦</div>
+        <p id="ct-sucesso-texto" style="font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim)"></p>
+      </div>
+
+      <div id="ct-form-pagamento" style="background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:22px 20px">
+        <p id="ct-usuario-atual" style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:14px"></p>
+
+        <label class="form-label">Quanto você vai pagar agora?</label>
+        <div class="ct-toggle">
+          <button type="button" class="ct-toggle-btn ct-toggle-btn-ativo" id="ct-valor-total" onclick="ctEscolherValor('total')">Valor total</button>
+          <button type="button" class="ct-toggle-btn" id="ct-valor-sinal" onclick="ctEscolherValor('sinal')">Só o sinal</button>
+        </div>
+        <div id="ct-sinal-wrap" style="display:none">
+          <label class="form-label">Valor do sinal (mínimo 20% do total)</label>
+          <input type="number" step="0.01" class="form-input" id="ct-sinal-valor">
+          <label class="form-label">Previsão de pagamento do saldo restante</label>
+          <input type="date" class="form-input" id="ct-data-saldo">
+        </div>
+
+        <label class="form-label">Quando?</label>
+        <div class="ct-toggle">
+          <button type="button" class="ct-toggle-btn ct-toggle-btn-ativo" id="ct-quando-agora" onclick="ctEscolherQuando('agora')">Agora</button>
+          <button type="button" class="ct-toggle-btn" id="ct-quando-depois" onclick="ctEscolherQuando('depois')">Depois</button>
+        </div>
+        <div id="ct-depois-wrap" style="display:none">
+          <label class="form-label">Previsão de pagamento</label>
+          <input type="date" class="form-input" id="ct-data-pagamento">
+        </div>
+        <p id="ct-pagamento-dica" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin:-6px 0 14px"></p>
+
+        <label class="form-label">Telefone (opcional)</label>
+        <input type="tel" class="form-input" id="ct-telefone" placeholder="(51) 99999-9999">
+
+        <p class="ct-erro" id="ct-erro" style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:10px;display:none"></p>
+        <button class="rm-btn-mes" id="ct-btn-confirmar" style="width:100%" onclick="ctConfirmar()">Confirmar pedido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PÁGINA RIFA -->
 <div id="page-rifa" class="page">
   <div class="section-wrap">
@@ -4252,8 +4349,9 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 </div>
 
 <!-- PAINEL ADMIN — LOJA DE CAMISETAS: cadastro do produto (título, preço,
-     tamanhos, tabela de medidas), QR code do link público (camiseta.html)
-     e lista de pedidos (aguardando pagamento / aguardando entrega / já
+     cores, tamanhos, tabela de medidas), QR code do link público (abre
+     #page-camiseta, dentro do site — pede login) e lista de pedidos
+     (aguardando pagamento / aguardando entrega / já
      entregues) — ver /api/camiseta -->
 <div id="page-camiseta-admin" class="page">
   <div class="section-wrap narrow">
@@ -7179,6 +7277,12 @@ function showPage(name) {
     try { sessionStorage.setItem('paginaAposLogin', name); } catch (e) {}
     openLogin(); return;
   }
+  // camiseta também é só pra quem está logada (perfil da casa) — o pedido
+  // já sai em nome de quem comprou, sem precisar digitar nome/e-mail
+  if (name === 'camiseta' && !(window._getCurrentUser && window._getCurrentUser())) {
+    try { sessionStorage.setItem('paginaAposLogin', name); } catch (e) {}
+    openLogin(); return;
+  }
   // textos também é só pra quem está logada (filhas/tamboreiro) — sem isso,
   // quem chega por um link direto (#pagina=textos) via a página vazia e sem
   // cabeçalho, sem nenhum jeito de entrar (o botão "Ferramentas" só aparece
@@ -7278,6 +7382,9 @@ function showPage(name) {
   }
   if (name === 'rifa') {
     window.rifaLoad?.();
+  }
+  if (name === 'camiseta') {
+    window.ctLoad?.();
   }
   if (name === 'jogos') {
     gpAtualizarPortal();
@@ -7972,6 +8079,295 @@ function rifaUsuarioAtual() {
   return { email: (user.email || '').toLowerCase(), nome: perfil.nome || user.displayName || user.email || '' };
 }
 function rifaFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+// ── PÁGINA CAMISETA — compra, só pra quem está logada ──
+const CAMISETA_API = '/api/camiseta';
+const CAMISETA_PIX_CHAVE = 'bolhasdeluz@gmail.com';
+let ctProduto = null;
+let ctQuantidades = {}; // chave "cor::tamanho" -> quantidade
+let ctCorAtiva = null;
+let ctValorEscolhido = 'total';
+let ctQuando = 'agora';
+let ctSinalEditadoManualmente = false;
+
+function ctUsuarioAtual() {
+  const user = window._getCurrentUser && window._getCurrentUser();
+  if (!user) return null;
+  const perfil = (window._getPerfilData && window._getPerfilData()) || {};
+  return { email: (user.email || '').toLowerCase(), nome: perfil.nome || user.displayName || user.email || '' };
+}
+
+function ctFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+function ctChave(cor, tamanho) { return cor + '::' + tamanho; }
+
+async function ctLoad() {
+  document.getElementById('ct-carregando').style.display = '';
+  document.getElementById('ct-vazia').style.display = 'none';
+  document.getElementById('ct-conteudo').style.display = 'none';
+  try {
+    const res = await fetch(CAMISETA_API);
+    ctProduto = res.ok ? await res.json() : null;
+  } catch (e) { ctProduto = null; }
+  document.getElementById('ct-carregando').style.display = 'none';
+
+  if (!ctProduto) {
+    document.getElementById('ct-vazia').style.display = '';
+    document.getElementById('ct-vazia').textContent = 'Não há venda de camiseta ativa no momento ✦';
+    return;
+  }
+  if (!ctProduto.precoPorUnidade || !(ctProduto.cores || []).length || !(ctProduto.tamanhos || []).length) {
+    document.getElementById('ct-vazia').style.display = '';
+    document.getElementById('ct-vazia').textContent = 'Essa venda ainda não está pronta — fale com a administração ✦';
+    return;
+  }
+
+  ctQuantidades = {};
+  ctCorAtiva = ctProduto.cores[0].nome;
+  ctValorEscolhido = 'total';
+  ctQuando = 'agora';
+  ctSinalEditadoManualmente = false;
+  document.getElementById('ct-sucesso').style.display = 'none';
+  document.getElementById('ct-form-pagamento').style.display = '';
+  document.getElementById('ct-valor-total').classList.add('ct-toggle-btn-ativo');
+  document.getElementById('ct-valor-sinal').classList.remove('ct-toggle-btn-ativo');
+  document.getElementById('ct-sinal-wrap').style.display = 'none';
+  document.getElementById('ct-quando-agora').classList.add('ct-toggle-btn-ativo');
+  document.getElementById('ct-quando-depois').classList.remove('ct-toggle-btn-ativo');
+  document.getElementById('ct-depois-wrap').style.display = 'none';
+  document.getElementById('ct-sinal-valor').value = '';
+  document.getElementById('ct-data-saldo').value = '';
+  document.getElementById('ct-data-pagamento').value = '';
+  document.getElementById('ct-telefone').value = '';
+  document.getElementById('ct-erro').style.display = 'none';
+  ctAtualizarDica();
+
+  document.getElementById('ct-conteudo').style.display = '';
+  ctRenderPagina();
+}
+window.ctLoad = ctLoad;
+
+function ctRenderPagina() {
+  const p = ctProduto;
+  document.getElementById('ct-produto-titulo').textContent = p.titulo || '';
+  document.getElementById('ct-produto-desc').textContent = p.descricao || '';
+  document.getElementById('ct-produto-meta').textContent = `Unidade: ${ctFormatarPreco(p.precoPorUnidade)}`;
+
+  const usuario = ctUsuarioAtual();
+  document.getElementById('ct-usuario-atual').textContent = usuario ? `Pedido em nome de ${usuario.nome} (${usuario.email})` : '';
+
+  ctRenderMedidas();
+  ctRenderCorTabs();
+  ctRenderTamanhos();
+}
+
+function ctRenderMedidas() {
+  const wrap = document.getElementById('ct-medidas-wrap');
+  if (ctProduto.imagemTabelaMedidas) {
+    document.getElementById('ct-medidas-tabela').innerHTML = `<img src="${ctProduto.imagemTabelaMedidas}" alt="Tabela de medidas" style="width:100%;border-radius:8px">`;
+    wrap.style.display = '';
+    return;
+  }
+  const tabela = (ctProduto.tabelaMedidas || []).filter(linha => Array.isArray(linha) && linha.some(c => String(c || '').trim()));
+  if (tabela.length < 2) { wrap.style.display = 'none'; return; }
+  const [cabecalho, ...linhas] = tabela;
+  document.getElementById('ct-medidas-tabela').innerHTML = `<table>
+    <tr>${cabecalho.map(c => `<th>${c}</th>`).join('')}</tr>
+    ${linhas.map(l => `<tr>${l.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}
+  </table>`;
+  wrap.style.display = '';
+}
+
+function ctRenderCorTabs() {
+  const wrap = document.getElementById('ct-cor-tabs');
+  wrap.innerHTML = ctProduto.cores.map(c => `
+    <div class="ct-cor-tab ${c.nome === ctCorAtiva ? 'ct-cor-tab-ativa' : ''}" onclick="ctEscolherCor('${c.nome.replace(/'/g, "\\'")}')">
+      ${c.imagem ? `<img src="${c.imagem}" alt="${c.nome}">` : ''}
+      <span>${c.nome}</span>
+    </div>
+  `).join('');
+}
+
+function ctEscolherCor(nome) {
+  ctCorAtiva = nome;
+  ctRenderCorTabs();
+  ctRenderTamanhos();
+}
+window.ctEscolherCor = ctEscolherCor;
+
+function ctRenderTamanhos() {
+  const wrap = document.getElementById('ct-tamanhos-lista');
+  wrap.innerHTML = ctProduto.tamanhos.map(t => {
+    const chave = ctChave(ctCorAtiva, t);
+    return `
+    <div class="ct-tamanho-row">
+      <span class="ct-tamanho-label">${t}</span>
+      <div class="ct-qtd-row">
+        <button class="ct-qtd-btn" onclick="ctMudarQtd('${ctCorAtiva.replace(/'/g, "\\'")}','${t}',-1)">−</button>
+        <span class="ct-qtd-valor" id="ct-qtd-${chave}">${ctQuantidades[chave] || 0}</span>
+        <button class="ct-qtd-btn" onclick="ctMudarQtd('${ctCorAtiva.replace(/'/g, "\\'")}','${t}',1)">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  ctAtualizarTotal();
+}
+
+function ctMudarQtd(cor, tamanho, delta) {
+  const chave = ctChave(cor, tamanho);
+  ctQuantidades[chave] = Math.max(0, Math.min(50, (ctQuantidades[chave] || 0) + delta));
+  const el = document.getElementById('ct-qtd-' + chave);
+  if (el) el.textContent = ctQuantidades[chave];
+  ctAtualizarTotal();
+}
+window.ctMudarQtd = ctMudarQtd;
+
+function ctItensSelecionados() {
+  return Object.entries(ctQuantidades).filter(([, q]) => q > 0).map(([chave, quantidade]) => {
+    const [cor, tamanho] = chave.split('::');
+    return { cor, tamanho, quantidade };
+  });
+}
+
+function ctTotalPedido() {
+  const itens = ctItensSelecionados();
+  const qtdTotal = itens.reduce((s, i) => s + i.quantidade, 0);
+  return qtdTotal * (ctProduto ? ctProduto.precoPorUnidade : 0);
+}
+
+function ctAtualizarTotal() {
+  const itens = ctItensSelecionados();
+  const totalEl = document.getElementById('ct-total');
+  if (!itens.length) { totalEl.style.display = 'none'; return; }
+  const qtdTotal = itens.reduce((s, i) => s + i.quantidade, 0);
+  const total = ctTotalPedido();
+  totalEl.style.display = 'flex';
+  totalEl.innerHTML = `<span>${qtdTotal} peça(s)</span><b>${ctFormatarPreco(total)}</b>`;
+  ctAtualizarSinalMinimo();
+}
+
+function ctAtualizarSinalMinimo() {
+  if (ctValorEscolhido !== 'sinal') return;
+  const total = ctTotalPedido();
+  const minimo = Math.round(total * 0.2 * 100) / 100;
+  const input = document.getElementById('ct-sinal-valor');
+  input.min = minimo.toFixed(2);
+  if (!ctSinalEditadoManualmente || !input.value || parseFloat(input.value) < minimo) {
+    input.value = minimo.toFixed(2);
+  }
+}
+
+function ctEscolherValor(valor) {
+  ctValorEscolhido = valor;
+  document.getElementById('ct-valor-total').classList.toggle('ct-toggle-btn-ativo', valor === 'total');
+  document.getElementById('ct-valor-sinal').classList.toggle('ct-toggle-btn-ativo', valor === 'sinal');
+  document.getElementById('ct-sinal-wrap').style.display = valor === 'sinal' ? '' : 'none';
+  if (valor === 'sinal') {
+    ctSinalEditadoManualmente = false;
+    ctAtualizarSinalMinimo();
+    const hoje = new Date().toISOString().slice(0, 10);
+    const dataSaldo = document.getElementById('ct-data-saldo');
+    dataSaldo.min = hoje;
+    if (!dataSaldo.value) dataSaldo.value = hoje;
+  }
+  ctAtualizarDica();
+}
+window.ctEscolherValor = ctEscolherValor;
+
+function ctEscolherQuando(quando) {
+  ctQuando = quando;
+  document.getElementById('ct-quando-agora').classList.toggle('ct-toggle-btn-ativo', quando === 'agora');
+  document.getElementById('ct-quando-depois').classList.toggle('ct-toggle-btn-ativo', quando === 'depois');
+  document.getElementById('ct-depois-wrap').style.display = quando === 'depois' ? '' : 'none';
+  if (quando === 'depois') {
+    const hoje = new Date().toISOString().slice(0, 10);
+    const dataPagamento = document.getElementById('ct-data-pagamento');
+    dataPagamento.min = hoje;
+    if (!dataPagamento.value) dataPagamento.value = hoje;
+  }
+  ctAtualizarDica();
+}
+window.ctEscolherQuando = ctEscolherQuando;
+
+function ctAtualizarDica() {
+  const rotulo = ctValorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
+  const dica = document.getElementById('ct-pagamento-dica');
+  if (ctQuando === 'agora') {
+    dica.textContent = `Seu pedido já fica confirmado. Na próxima tela você paga ${rotulo} via Pix (ou cartão), com segurança, pelo InfinitePay ✦`;
+  } else {
+    dica.textContent = `Seu pedido já fica confirmado — só o pagamento de ${rotulo} que fica combinado pra data escolhida acima ✦`;
+  }
+}
+
+function ctCopiarPix() {
+  navigator.clipboard?.writeText(CAMISETA_PIX_CHAVE).catch(() => {});
+}
+
+async function ctConfirmar() {
+  const itens = ctItensSelecionados();
+  const erroEl = document.getElementById('ct-erro');
+  erroEl.style.display = 'none';
+
+  if (!itens.length) { erroEl.textContent = 'Escolha pelo menos uma cor, tamanho e quantidade.'; erroEl.style.display = 'block'; return; }
+  const usuario = ctUsuarioAtual();
+  if (!usuario) { erroEl.textContent = 'Você precisa estar logada pra fazer o pedido.'; erroEl.style.display = 'block'; return; }
+
+  const telefone = document.getElementById('ct-telefone').value.trim();
+  const body = {
+    acao: 'criar-pedido', itens, nome: usuario.nome, email: usuario.email, telefone,
+    valorEscolhido: ctValorEscolhido, quando: ctQuando,
+  };
+  if (ctValorEscolhido === 'sinal') {
+    body.valorSinal = parseFloat(document.getElementById('ct-sinal-valor').value) || 0;
+    body.dataPagamentoSaldo = document.getElementById('ct-data-saldo').value;
+    if (!body.dataPagamentoSaldo) { erroEl.textContent = 'Escolha a previsão de pagamento do saldo restante.'; erroEl.style.display = 'block'; return; }
+  }
+  if (ctQuando === 'depois') {
+    body.dataPagamentoPrevista = document.getElementById('ct-data-pagamento').value;
+    if (!body.dataPagamentoPrevista) { erroEl.textContent = 'Escolha a data em que você vai pagar.'; erroEl.style.display = 'block'; return; }
+  }
+
+  const btn = document.getElementById('ct-btn-confirmar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Registrando...'; btn.disabled = true;
+  try {
+    const res = await fetch(CAMISETA_API, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) {
+      erroEl.textContent = data.error || 'Não consegui registrar o pedido.'; erroEl.style.display = 'block';
+      btn.textContent = textoOriginal; btn.disabled = false;
+      return;
+    }
+
+    if (data._checkoutUrl) {
+      btn.textContent = 'Te levando pro pagamento...';
+      window.location.href = data._checkoutUrl;
+      return;
+    }
+
+    document.getElementById('ct-form-pagamento').style.display = 'none';
+    document.getElementById('ct-sucesso').style.display = 'block';
+    const rotulo = data.valorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
+    let texto = `${itens.map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(', ')}. `;
+    if (data._quando === 'depois') {
+      texto += `Combinado: pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) pra ${ctFormatarDataBR(data._dataPagamentoPrevista)}.`;
+    } else {
+      texto += `Pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) conferido manualmente — chave Pix: ${CAMISETA_PIX_CHAVE}.`;
+    }
+    if (data._dataPagamentoSaldo) {
+      texto += ` Saldo restante previsto pra ${ctFormatarDataBR(data._dataPagamentoSaldo)}.`;
+    }
+    document.getElementById('ct-sucesso-texto').textContent = texto;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (e) {
+    erroEl.textContent = 'Não consegui registrar o pedido — tenta de novo.'; erroEl.style.display = 'block';
+  }
+  btn.textContent = textoOriginal; btn.disabled = false;
+}
+window.ctConfirmar = ctConfirmar;
+
+function ctFormatarDataBR(iso) {
+  const [ano, mes, dia] = String(iso || '').split('-');
+  return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
+}
 
 async function rifaLoad() {
   rifaModo = null;
@@ -21292,6 +21688,17 @@ function ctAdminTextoParaTabelaMedidas(texto) {
   return String(texto || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|').map(c => c.trim()));
 }
 
+function ctAdminCoresParaTexto(cores) {
+  return (cores || []).map(c => `${c.nome} | ${c.imagem || ''}`).join('\n');
+}
+
+function ctAdminTextoParaCores(texto) {
+  return String(texto || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+    const [nome, imagem] = l.split('|').map(c => (c || '').trim());
+    return { nome, imagem: imagem || '' };
+  }).filter(c => c.nome);
+}
+
 function ctAdminRender() {
   const el = document.getElementById('ct-admin-conteudo');
   const p = ctAdminProduto;
@@ -21302,19 +21709,20 @@ function ctAdminRender() {
       <input type="text" class="form-input" id="ct-admin-titulo" value="${p ? ctAdminEscAttr(p.titulo || '') : ''}" placeholder="Camiseta Bolhas de Luz 2026">
       <label class="form-label">Descrição</label>
       <textarea class="form-input" id="ct-admin-descricao" rows="3" placeholder="100% algodão, estampa...">${p ? calEsc(p.descricao || '') : ''}</textarea>
-      <label class="form-label">URL da imagem</label>
-      <input type="text" class="form-input" id="ct-admin-imagem" value="${p ? ctAdminEscAttr(p.imagemProduto || '') : ''}" placeholder="https://...">
-      <label class="form-label">Preço por unidade (R$)</label>
-      <input type="number" step="0.01" class="form-input" id="ct-admin-preco" value="${p ? p.precoPorUnidade || '' : ''}" placeholder="60.00">
-      <label class="form-label">Tamanhos disponíveis (separados por vírgula)</label>
-      <input type="text" class="form-input" id="ct-admin-tamanhos" value="${p ? ctAdminEscAttr((p.tamanhos || []).join(', ')) : 'PP, P, M, G, GG, XG'}" placeholder="PP, P, M, G, GG, XG">
+      <label class="form-label">Preço por unidade (R$) — mesmo preço pra todas as cores</label>
+      <input type="number" step="0.01" class="form-input" id="ct-admin-preco" value="${p ? p.precoPorUnidade || '' : ''}" placeholder="55.00">
+      <label class="form-label">Cores disponíveis — uma por linha, "Nome | URL da imagem"</label>
+      <textarea class="form-input" id="ct-admin-cores" rows="3" style="font-family:monospace;font-size:.82rem" placeholder="Preta | https://...
+Colorida | https://...">${p ? calEsc(ctAdminCoresParaTexto(p.cores)) : ''}</textarea>
+      <label class="form-label">Tamanhos disponíveis (separados por vírgula) — mesmos tamanhos pras duas cores</label>
+      <input type="text" class="form-input" id="ct-admin-tamanhos" value="${p ? ctAdminEscAttr((p.tamanhos || []).join(', ')) : 'PP, P, M, G, GG, XG, 2X, 3X'}" placeholder="PP, P, M, G, GG, XG, 2X, 3X">
       <label class="form-label">URL da imagem da tabela de medidas (se preencher, ela substitui a tabela de texto abaixo)</label>
       <input type="text" class="form-input" id="ct-admin-imagem-medidas" value="${p ? ctAdminEscAttr(p.imagemTabelaMedidas || '') : ''}" placeholder="https://...">
       <label class="form-label">Tabela de medidas (texto) — uma linha por tamanho, colunas separadas por "|". A primeira linha é o cabeçalho. Só usada se não tiver imagem acima.</label>
-      <textarea class="form-input" id="ct-admin-medidas" rows="7" style="font-family:monospace;font-size:.82rem" placeholder="Tamanho | Largura (cm) | Comprimento (cm)
-P | 48 | 68
-M | 50 | 70
-G | 52 | 72">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}</textarea>
+      <textarea class="form-input" id="ct-admin-medidas" rows="7" style="font-family:monospace;font-size:.82rem" placeholder="Tamanho | Altura (cm) | Largura (cm)
+P | 73 | 51
+M | 76 | 54
+G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}</textarea>
       <p id="ct-admin-erro" style="color:#b84040;font-size:.82rem;margin-bottom:10px;display:none"></p>
       <button class="rm-btn-mes" style="width:100%" onclick="ctAdminSalvar()">💾 Salvar produto</button>
       ${p ? `<button class="rm-btn-mes" style="width:100%;margin-top:8px;background:none;border:1px solid var(--rosa-border);color:var(--rosa)" onclick="ctAdminEncerrarECriarNovo()">✨ Encerrar este e cadastrar outro do zero</button>` : ''}
@@ -21323,7 +21731,7 @@ G | 52 | 72">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
     ${p ? `
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;text-align:center">
       <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px;text-align:left">📷 QR code da venda</div>
-      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;text-align:left">Pra imprimir e colar onde quiser ✦</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;text-align:left">Leva pra tela de compra dentro do site (pede login) — pra imprimir e colar onde quiser ✦</div>
       <button class="rm-btn-mes" id="ct-admin-qr-contagem" onclick="ctAdminToggleLeiturasQr()" style="display:none;width:100%;margin-bottom:10px"></button>
       <div id="ct-admin-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
       <div id="ct-admin-qr-canvas" style="margin:0 auto"></div>
@@ -21342,29 +21750,43 @@ function ctAdminRenderPedidos(pedidos) {
   if (!pedidos.length) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
   const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
   return ordenados.map(ped => {
-    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(', ');
+    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(', ');
+    const rotuloValor = ped.valorEscolhido === 'sinal' ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
-      statusTxt = (ped.pagarDepois && ped.dataPagamentoPrevista)
-        ? `📅 Pagamento combinado pra ${ctAdminFormatarDataBR(ped.dataPagamentoPrevista)}`
-        : '⏳ Aguardando pagamento';
+      statusTxt = (ped.quando === 'depois' && ped.dataPagamentoPrevista)
+        ? `📅 Pagamento do ${rotuloValor} combinado pra ${ctAdminFormatarDataBR(ped.dataPagamentoPrevista)}`
+        : `⏳ Aguardando pagamento do ${rotuloValor}`;
       statusCor = '#8c5a00';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
     } else if (!ped.entregue) {
-      statusTxt = '💰 Pago — aguardando entrega'; statusCor = 'var(--green)';
+      statusTxt = `💰 ${rotuloValor[0].toUpperCase()}${rotuloValor.slice(1)} pago — aguardando entrega`; statusCor = 'var(--green)';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', true)">📦 Marcar como entregue</button>`;
     } else {
       statusTxt = '✅ Entregue'; statusCor = 'var(--text-dim)';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', false)">↩️ Desfazer entrega</button>`;
+    }
+    // saldo restante (só existe quando o pedido escolheu pagar sinal) — status
+    // independente do valorPedido acima, confirmado na mão também
+    let saldoHtml = '';
+    if (ped.valorEscolhido === 'sinal') {
+      if (ped.statusSaldo === 'pago') {
+        saldoHtml = `<div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) pago</div>`;
+      } else {
+        saldoHtml = `
+          <div style="font-size:.72rem;font-weight:700;color:#8c5a00;margin-top:2px">📅 Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) previsto pra ${ctAdminFormatarDataBR(ped.dataPagamentoSaldo)}</div>
+          <button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px" onclick="ctAdminConfirmarPagamentoSaldo('${ped.orderNsu}')">✓ Confirmar pagamento do saldo</button>`;
+      }
     }
     return `
       <div style="padding:10px 0;border-bottom:1px solid var(--border)">
         <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
           <div>
             <div style="font-weight:700;font-size:.88rem">${calEsc(ped.nome || '')}</div>
-            <div style="font-size:.78rem;color:var(--text-dim)">${calEsc(itensTxt)} — ${ctAdminFormatarPreco(ped.total)}</div>
+            <div style="font-size:.78rem;color:var(--text-dim)">${calEsc(itensTxt)} — pedido ${ctAdminFormatarPreco(ped.total)}</div>
             <div style="font-size:.74rem;color:var(--text-dim)">${calEsc(ped.telefone || 'sem telefone')} · ${calEsc(ped.email || '')}</div>
             <div style="font-size:.72rem;font-weight:700;color:${statusCor};margin-top:2px">${statusTxt}</div>
+            ${saldoHtml}
           </div>
           <div style="display:flex;align-items:center">${acaoHtml}</div>
         </div>
@@ -21405,12 +21827,13 @@ async function ctAdminSalvar() {
   const titulo = document.getElementById('ct-admin-titulo').value.trim();
   if (!titulo) { erroEl.textContent = 'O título é obrigatório.'; erroEl.style.display = 'block'; return; }
   const descricao = document.getElementById('ct-admin-descricao').value.trim();
-  const imagemProduto = document.getElementById('ct-admin-imagem').value.trim();
   const imagemTabelaMedidas = document.getElementById('ct-admin-imagem-medidas').value.trim();
   const precoPorUnidade = parseFloat(document.getElementById('ct-admin-preco').value) || 0;
+  const cores = ctAdminTextoParaCores(document.getElementById('ct-admin-cores').value);
+  if (!cores.length) { erroEl.textContent = 'Cadastre ao menos uma cor.'; erroEl.style.display = 'block'; return; }
   const tamanhos = document.getElementById('ct-admin-tamanhos').value.split(',').map(t => t.trim()).filter(Boolean);
   const tabelaMedidas = ctAdminTextoParaTabelaMedidas(document.getElementById('ct-admin-medidas').value);
-  const body = { titulo, descricao, imagemProduto, imagemTabelaMedidas, precoPorUnidade, tamanhos, tabelaMedidas };
+  const body = { titulo, descricao, imagemTabelaMedidas, precoPorUnidade, cores, tamanhos, tabelaMedidas };
 
   try {
     const res = await fetch('/api/camiseta', {
@@ -21445,6 +21868,17 @@ async function ctAdminConfirmarPagamento(orderNsu) {
   } catch (e) { /* tenta de novo depois, se precisar */ }
 }
 window.ctAdminConfirmarPagamento = ctAdminConfirmarPagamento;
+
+async function ctAdminConfirmarPagamentoSaldo(orderNsu) {
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'confirmar-pagamento-saldo', orderNsu }),
+    });
+    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
+  } catch (e) { /* tenta de novo depois, se precisar */ }
+}
+window.ctAdminConfirmarPagamentoSaldo = ctAdminConfirmarPagamentoSaldo;
 
 async function ctAdminMarcarEntregue(orderNsu, entregue) {
   try {

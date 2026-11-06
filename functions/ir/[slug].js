@@ -13,7 +13,9 @@ const DESTINOS = {
   cosmes: '/cosmes',
   rifa: '/rifa-digital',
   'rifa-presencial': '/rifa-presencial.html',
-  camiseta: '/camiseta.html',
+  // a venda de camiseta mora dentro do site principal (pede login — ver
+  // showPage('camiseta') no index.html), não é uma página solta como a rifa
+  camiseta: '/#pagina=camiseta',
   site: '/',
   banner: '/proxima-sessao.html',
 };
