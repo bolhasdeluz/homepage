@@ -528,6 +528,17 @@ export async function onRequest(context) {
         return json(produto);
       }
 
+      // REMOVER PEDIDO — apaga de vez um pedido (ex: teste da própria admin,
+      // ou um registro errado) — não dá pra desfazer
+      if (acao === 'remover-pedido') {
+        const orderNsu = String(body.orderNsu || '');
+        const antes = (produto.pedidos || []).length;
+        produto.pedidos = (produto.pedidos || []).filter(p => p.orderNsu !== orderNsu);
+        if (produto.pedidos.length === antes) return json({ error: 'Pedido não encontrado.' }, 404);
+        await KV.put(produto.id, JSON.stringify(produto));
+        return json(produto);
+      }
+
       return json({ error: 'Ação desconhecida.' }, 400);
     }
 

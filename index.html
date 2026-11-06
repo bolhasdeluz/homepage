@@ -21633,6 +21633,86 @@ function ctAdminFormatarDataBR(iso) {
   return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
 }
 
+function ctAdminFormatarDataHora(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+// resumo de vendas pro topo do painel — ignora pedidos que a admin já
+// removeu (eles nem existem mais no array nesse ponto)
+function ctAdminCalcularResumo(pedidos) {
+  const lista = pedidos || [];
+  const pagos = lista.filter(p => p.status === 'pago');
+  const aguardando = lista.filter(p => p.status !== 'pago');
+  const totalArrecadado = pagos.reduce((s, p) => s + (p.valorPedido || 0), 0);
+  const totalEmAberto = aguardando.reduce((s, p) => s + (p.valorPedido || 0), 0);
+  const saldosPendentes = lista.filter(p => p.valorEscolhido === 'sinal' && p.statusSaldo !== 'pago');
+  const saldoAReceber = saldosPendentes.reduce((s, p) => s + Math.max(0, (p.total || 0) - (p.valorPedido || 0)), 0);
+  const pecasTotais = lista.reduce((s, p) => s + (p.itens || []).reduce((s2, i) => s2 + (i.quantidade || 0), 0), 0);
+  const datas = lista.map(p => p.criadoEm).filter(Boolean).sort((a, b) => a - b);
+  return {
+    totalPedidos: lista.length, pagosCount: pagos.length, aguardandoCount: aguardando.length,
+    totalArrecadado, totalEmAberto, saldoAReceber, saldosPendentesCount: saldosPendentes.length,
+    pecasTotais, primeira: datas[0], ultima: datas[datas.length - 1],
+  };
+}
+
+function ctAdminRenderResumo(pedidos) {
+  const r = ctAdminCalcularResumo(pedidos);
+  if (!r.totalPedidos) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
+  const periodoTxt = r.primeira === r.ultima
+    ? ctAdminFormatarDataHora(r.primeira)
+    : `${ctAdminFormatarDataHora(r.primeira)} até ${ctAdminFormatarDataHora(r.ultima)}`;
+  const linha = (label, valor) => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem"><span style="color:var(--text-dim)">${label}</span><strong>${valor}</strong></div>`;
+  return `
+    ${linha('Pedidos', `${r.totalPedidos} (${r.pecasTotais} peça(s))`)}
+    ${linha('Pagos · Aguardando pagamento', `${r.pagosCount} · ${r.aguardandoCount}`)}
+    ${linha('Arrecadado', ctAdminFormatarPreco(r.totalArrecadado))}
+    ${linha('Em aberto (aguardando pagamento)', ctAdminFormatarPreco(r.totalEmAberto))}
+    ${r.saldosPendentesCount ? linha(`Saldo a receber (${r.saldosPendentesCount} pedido(s))`, ctAdminFormatarPreco(r.saldoAReceber)) : ''}
+    ${linha('Período', periodoTxt)}
+  `;
+}
+
+// lista simplificada (texto) pra mandar pra fábrica — soma a quantidade de
+// cada cor+tamanho em todos os pedidos que ainda estão na lista (a admin já
+// deve ter removido os de teste antes de exportar)
+function ctAdminGerarListaFabrica() {
+  const p = ctAdminProduto;
+  const porCor = {};
+  (p.pedidos || []).forEach(ped => (ped.itens || []).forEach(i => {
+    const cor = i.cor || '—';
+    if (!porCor[cor]) porCor[cor] = {};
+    porCor[cor][i.tamanho] = (porCor[cor][i.tamanho] || 0) + (i.quantidade || 0);
+  }));
+  const ordemTamanhos = p.tamanhos || [];
+  const linhas = [`${p.titulo} — pedido pra fábrica (${new Date().toLocaleDateString('pt-BR')})`, ''];
+  let totalGeral = 0;
+  Object.keys(porCor).forEach(cor => {
+    linhas.push(cor.toUpperCase());
+    const tamanhosDaCor = Object.keys(porCor[cor]).sort((a, b) => ordemTamanhos.indexOf(a) - ordemTamanhos.indexOf(b));
+    tamanhosDaCor.forEach(t => { linhas.push(`${t}: ${porCor[cor][t]}`); totalGeral += porCor[cor][t]; });
+    linhas.push('');
+  });
+  linhas.push(`Total: ${totalGeral} peça(s)`);
+  return linhas.join('\n');
+}
+
+function ctAdminToggleExportar() {
+  const wrap = document.getElementById('ct-admin-exportar-wrap');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  document.getElementById('ct-admin-exportar-texto').value = ctAdminGerarListaFabrica();
+  wrap.style.display = 'block';
+}
+window.ctAdminToggleExportar = ctAdminToggleExportar;
+
+function ctAdminCopiarExportar() {
+  const texto = document.getElementById('ct-admin-exportar-texto');
+  texto.select();
+  navigator.clipboard?.writeText(texto.value).catch(() => {});
+}
+window.ctAdminCopiarExportar = ctAdminCopiarExportar;
+
 function ctAdminTabelaMedidasParaTexto(tabela) {
   return (tabela || []).map(linha => (linha || []).join(' | ')).join('\n');
 }
@@ -21692,7 +21772,19 @@ G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
     </div>
 
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
-      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">📋 Pedidos</div>
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">📊 Resumo de vendas</div>
+      ${ctAdminRenderResumo(p.pedidos || [])}
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa)">📋 Pedidos</div>
+        <button class="rm-btn-mes" style="padding:7px 12px;font-size:10px" onclick="ctAdminToggleExportar()">📤 Exportar lista pra fábrica</button>
+      </div>
+      <div id="ct-admin-exportar-wrap" style="display:none;margin-bottom:14px">
+        <textarea id="ct-admin-exportar-texto" readonly rows="8" class="form-input" style="font-family:monospace;font-size:.78rem"></textarea>
+        <button class="rm-btn-mes" style="width:100%" onclick="ctAdminCopiarExportar()">📋 Copiar</button>
+      </div>
       ${ctAdminRenderPedidos(p.pedidos || [])}
     </div>` : ''}
   `;
@@ -21703,7 +21795,7 @@ function ctAdminRenderPedidos(pedidos) {
   if (!pedidos.length) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
   const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
   return ordenados.map(ped => {
-    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(', ');
+    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor || '—'})`).join(', ');
     const rotuloValor = ped.valorEscolhido === 'sinal' ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
@@ -21739,7 +21831,10 @@ function ctAdminRenderPedidos(pedidos) {
             <div style="font-size:.72rem;font-weight:700;color:${statusCor};margin-top:2px">${statusTxt}</div>
             ${saldoHtml}
           </div>
-          <div style="display:flex;align-items:center">${acaoHtml}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${acaoHtml}
+            <button class="rm-btn-mes" style="padding:7px 10px;background:none;border:1px solid var(--border);color:#b84040" onclick="ctAdminRemoverPedido('${ped.orderNsu}')" title="Remover pedido">🗑️</button>
+          </div>
         </div>
       </div>`;
   }).join('');
@@ -21841,6 +21936,18 @@ async function ctAdminMarcarEntregue(orderNsu, entregue) {
   } catch (e) { /* tenta de novo depois, se precisar */ }
 }
 window.ctAdminMarcarEntregue = ctAdminMarcarEntregue;
+
+async function ctAdminRemoverPedido(orderNsu) {
+  if (!confirm('Remover esse pedido pra sempre? Não dá pra desfazer.')) return;
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'remover-pedido', orderNsu }),
+    });
+    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
+  } catch (e) { /* tenta de novo depois, se precisar */ }
+}
+window.ctAdminRemoverPedido = ctAdminRemoverPedido;
 
 // ── DASHBOARD PESSOAL NA HOME ──
 const DASH_FRASES_CARGO = {
