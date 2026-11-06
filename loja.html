@@ -806,11 +806,11 @@ function ljAtualizarTotaisFrete() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// FINALIZAR PEDIDO — cria o registro e tenta abrir o pagamento (Mercado
-// Pago). Enquanto a chave de acesso não estiver configurada no Cloudflare
-// Pages (env.MP_ACCESS_TOKEN), o endpoint /api/loja-criar-pagamento não
-// existe/retorna erro, e aqui a gente cai no combinado manual por
-// WhatsApp — o pedido já fica salvo do mesmo jeito.
+// FINALIZAR PEDIDO — cria o registro e tenta abrir o pagamento (InfinitePay,
+// mesmo serviço já usado na rifa e na venda de camiseta). Se a chamada ao
+// InfinitePay não der certo por qualquer motivo (API fora do ar, etc.), a
+// gente cai no combinado manual por WhatsApp — o pedido já fica salvo do
+// mesmo jeito.
 // ══════════════════════════════════════════════════════════════
 window.ljFinalizarPedido = async function() {
   const statusEl = document.getElementById('lj-frete-status');
@@ -850,7 +850,7 @@ window.ljFinalizarPedido = async function() {
       frete: { tipo: ljFreteEscolhido, endereco, dataAgendada, horarioAgendado },
       cliente: { nome, telefone },
       status: 'aguardando_pagamento',
-      pagamento: { provedor: 'mercadopago', status: 'pendente' },
+      pagamento: { provedor: 'infinitepay', status: 'pendente' },
       criadoEm: serverTimestamp()
     });
 
@@ -859,13 +859,13 @@ window.ljFinalizarPedido = async function() {
       const resp = await fetch('/api/loja-criar-pagamento', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pedidoId: pedidoRef.id, total, itens: ljCarrinho, cliente: { nome, telefone } })
+        body: JSON.stringify({ pedidoId: pedidoRef.id, total, itens: ljCarrinho, taxaEntrega: taxa, cliente: { nome, telefone } })
       });
       if (resp.ok) {
         const dados = await resp.json();
-        if (dados.initPoint) { window.location.href = dados.initPoint; redirecionou = true; }
+        if (dados.checkoutUrl) { window.location.href = dados.checkoutUrl; redirecionou = true; }
       }
-    } catch (e) { console.warn('pagamento ainda não configurado:', e); }
+    } catch (e) { console.warn('pagamento automático indisponível:', e); }
 
     if (!redirecionou) {
       statusEl.style.color = 'var(--green)';
@@ -1180,50 +1180,54 @@ window.ljAdminAvancarStatus = async function(id, novoStatus) {
 };
 
 // ══════════════════════════════════════════════════════════════
-// RETORNO DO MERCADO PAGO — depois do Checkout Pro, a pessoa volta pra cá
-// com ?pagamento=sucesso|pendente|falhou&pedido=ID&payment_id=XXX na URL.
-// Nunca confia direto nesses parâmetros: confere de verdade com o Mercado
-// Pago (server-side, via /api/loja-verificar-pagamento) antes de marcar o
-// pedido como pago no Firestore.
+// RETORNO DO INFINITEPAY — depois do checkout hospedado, a pessoa volta pra
+// cá com ?pagamento=sucesso&pedido=ID (mais os parâmetros próprios do
+// InfinitePay, como slug e transaction_nsu). Nunca confia direto nesses
+// parâmetros: confere de verdade com o InfinitePay (server-side, via
+// /api/loja-verificar-pagamento) antes de marcar o pedido como pago no
+// Firestore. A confirmação pode demorar alguns segundos, então tenta de
+// novo algumas vezes antes de desistir (mesmo padrão da rifa e da venda de
+// camiseta).
 // ══════════════════════════════════════════════════════════════
-async function ljConferirRetornoPagamento() {
+async function ljConferirRetornoPagamento(tentativa) {
+  tentativa = tentativa || 1;
   const params = new URLSearchParams(window.location.search);
-  const pagamento = params.get('pagamento');
   const pedidoId = params.get('pedido');
-  const paymentId = params.get('payment_id');
-  if (!pagamento || !pedidoId) return;
+  if (!pedidoId) return;
+  const slug = params.get('slug') || '';
+  const transactionNsu = params.get('transaction_nsu') || params.get('transactionNsu') || params.get('nsu') || params.get('transaction_id') || '';
 
   const banner = document.getElementById('lj-status-pagamento');
   banner.style.display = 'block';
+  banner.style.background = 'var(--gold-dim)';
+  banner.style.color = 'var(--gold)';
+  banner.textContent = '⏳ Confirmando seu pagamento...';
 
-  if (pagamento === 'sucesso' && paymentId) {
-    banner.textContent = '⏳ Confirmando seu pagamento...';
-    try {
-      const resp = await fetch(`/api/loja-verificar-pagamento?payment_id=${encodeURIComponent(paymentId)}&pedido=${encodeURIComponent(pedidoId)}`);
-      const dados = await resp.json();
-      if (dados.ok) {
-        await setDoc(doc(db, 'loja_pedidos', pedidoId), {
-          status: 'pago',
-          pagamento: { provedor: 'mercadopago', status: 'aprovado', paymentId }
-        }, { merge: true });
-        banner.style.background = 'var(--green-dim)';
-        banner.style.color = 'var(--green)';
-        banner.textContent = '✔ Pagamento confirmado! Muito obrigada — seu pedido já está com a gente ✦';
-      } else {
-        banner.textContent = '⚠️ Não consegui confirmar o pagamento ainda. Se você já pagou, fala com a gente pelo WhatsApp.';
-      }
-    } catch (e) {
-      console.warn('conferir pagamento:', e);
-      banner.textContent = '⚠️ Não consegui confirmar o pagamento agora. Se você já pagou, fala com a gente pelo WhatsApp.';
+  try {
+    const qs = new URLSearchParams({ pedido: pedidoId, slug, transactionNsu });
+    const resp = await fetch(`/api/loja-verificar-pagamento?${qs.toString()}`);
+    const dados = await resp.json();
+    if (resp.ok && dados.ok) {
+      await setDoc(doc(db, 'loja_pedidos', pedidoId), {
+        status: 'pago',
+        pagamento: { provedor: 'infinitepay', status: 'aprovado', slug, transactionNsu }
+      }, { merge: true });
+      banner.style.background = 'var(--green-dim)';
+      banner.style.color = 'var(--green)';
+      banner.textContent = '✔ Pagamento confirmado! Muito obrigada — seu pedido já está com a gente ✦';
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
     }
-  } else if (pagamento === 'pendente') {
-    banner.textContent = '⏳ Seu pagamento está pendente de confirmação — avisamos assim que for aprovado.';
-  } else if (pagamento === 'falhou') {
-    banner.textContent = '✗ O pagamento não foi concluído. Você pode tentar de novo quando quiser, seu pedido continua salvo.';
-  }
+  } catch (e) { console.warn('conferir pagamento:', e); }
 
-  // limpa os parâmetros da URL pra não reprocessar se a pessoa recarregar a página
-  window.history.replaceState({}, '', window.location.pathname);
+  if (tentativa < 3) {
+    setTimeout(() => ljConferirRetornoPagamento(tentativa + 1), 2500);
+  } else {
+    banner.style.background = 'var(--gold-dim)';
+    banner.style.color = 'var(--gold)';
+    banner.textContent = '⚠️ Ainda não consegui confirmar o pagamento. Se você já pagou, fala com a gente pelo WhatsApp — seu pedido continua salvo.';
+    window.history.replaceState({}, '', window.location.pathname);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
