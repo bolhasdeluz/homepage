@@ -2927,16 +2927,6 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <label class="form-label">Previsão de pagamento do saldo restante</label>
           <input type="date" class="form-input" id="ct-data-saldo">
         </div>
-
-        <label class="form-label">Quando?</label>
-        <div class="ct-toggle">
-          <button type="button" class="ct-toggle-btn ct-toggle-btn-ativo" id="ct-quando-agora" onclick="ctEscolherQuando('agora')">Agora</button>
-          <button type="button" class="ct-toggle-btn" id="ct-quando-depois" onclick="ctEscolherQuando('depois')">Depois</button>
-        </div>
-        <div id="ct-depois-wrap" style="display:none">
-          <label class="form-label">Previsão de pagamento</label>
-          <input type="date" class="form-input" id="ct-data-pagamento">
-        </div>
         <p id="ct-pagamento-dica" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin:-6px 0 14px"></p>
 
         <label class="form-label">Telefone (opcional)</label>
@@ -8087,7 +8077,6 @@ let ctProduto = null;
 let ctQuantidades = {}; // chave "cor::tamanho" -> quantidade
 let ctCorAtiva = null;
 let ctValorEscolhido = 'total';
-let ctQuando = 'agora';
 let ctSinalEditadoManualmente = false;
 
 function ctUsuarioAtual() {
@@ -8124,19 +8113,14 @@ async function ctLoad() {
   ctQuantidades = {};
   ctCorAtiva = ctProduto.cores[0].nome;
   ctValorEscolhido = 'total';
-  ctQuando = 'agora';
   ctSinalEditadoManualmente = false;
   document.getElementById('ct-sucesso').style.display = 'none';
   document.getElementById('ct-form-pagamento').style.display = '';
   document.getElementById('ct-valor-total').classList.add('ct-toggle-btn-ativo');
   document.getElementById('ct-valor-sinal').classList.remove('ct-toggle-btn-ativo');
   document.getElementById('ct-sinal-wrap').style.display = 'none';
-  document.getElementById('ct-quando-agora').classList.add('ct-toggle-btn-ativo');
-  document.getElementById('ct-quando-depois').classList.remove('ct-toggle-btn-ativo');
-  document.getElementById('ct-depois-wrap').style.display = 'none';
   document.getElementById('ct-sinal-valor').value = '';
   document.getElementById('ct-data-saldo').value = '';
-  document.getElementById('ct-data-pagamento').value = '';
   document.getElementById('ct-telefone').value = '';
   document.getElementById('ct-erro').style.display = 'none';
   ctAtualizarDica();
@@ -8272,29 +8256,12 @@ function ctEscolherValor(valor) {
 }
 window.ctEscolherValor = ctEscolherValor;
 
-function ctEscolherQuando(quando) {
-  ctQuando = quando;
-  document.getElementById('ct-quando-agora').classList.toggle('ct-toggle-btn-ativo', quando === 'agora');
-  document.getElementById('ct-quando-depois').classList.toggle('ct-toggle-btn-ativo', quando === 'depois');
-  document.getElementById('ct-depois-wrap').style.display = quando === 'depois' ? '' : 'none';
-  if (quando === 'depois') {
-    const hoje = new Date().toISOString().slice(0, 10);
-    const dataPagamento = document.getElementById('ct-data-pagamento');
-    dataPagamento.min = hoje;
-    if (!dataPagamento.value) dataPagamento.value = hoje;
-  }
-  ctAtualizarDica();
-}
-window.ctEscolherQuando = ctEscolherQuando;
-
+// o sinal (ou o valor total) é SEMPRE pago agora — só o saldo restante,
+// quando a pessoa escolhe pagar só o sinal, é que fica combinado pra uma
+// data futura (campo "ct-data-saldo" acima)
 function ctAtualizarDica() {
   const rotulo = ctValorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
-  const dica = document.getElementById('ct-pagamento-dica');
-  if (ctQuando === 'agora') {
-    dica.textContent = `Seu pedido já fica confirmado. Na próxima tela você paga ${rotulo} via Pix (ou cartão), com segurança, pelo InfinitePay ✦`;
-  } else {
-    dica.textContent = `Seu pedido já fica confirmado — só o pagamento de ${rotulo} que fica combinado pra data escolhida acima ✦`;
-  }
+  document.getElementById('ct-pagamento-dica').textContent = `Na próxima tela você paga ${rotulo} via Pix (ou cartão), com segurança, pelo InfinitePay ✦`;
 }
 
 function ctCopiarPix() {
@@ -8313,16 +8280,12 @@ async function ctConfirmar() {
   const telefone = document.getElementById('ct-telefone').value.trim();
   const body = {
     acao: 'criar-pedido', itens, nome: usuario.nome, email: usuario.email, telefone,
-    valorEscolhido: ctValorEscolhido, quando: ctQuando,
+    valorEscolhido: ctValorEscolhido,
   };
   if (ctValorEscolhido === 'sinal') {
     body.valorSinal = parseFloat(document.getElementById('ct-sinal-valor').value) || 0;
     body.dataPagamentoSaldo = document.getElementById('ct-data-saldo').value;
     if (!body.dataPagamentoSaldo) { erroEl.textContent = 'Escolha a previsão de pagamento do saldo restante.'; erroEl.style.display = 'block'; return; }
-  }
-  if (ctQuando === 'depois') {
-    body.dataPagamentoPrevista = document.getElementById('ct-data-pagamento').value;
-    if (!body.dataPagamentoPrevista) { erroEl.textContent = 'Escolha a data em que você vai pagar.'; erroEl.style.display = 'block'; return; }
   }
 
   const btn = document.getElementById('ct-btn-confirmar');
@@ -8343,15 +8306,13 @@ async function ctConfirmar() {
       return;
     }
 
+    // não deu pra criar o link automático — cai no fluxo manual: avisa a
+    // chave Pix e a admin confere na mão
     document.getElementById('ct-form-pagamento').style.display = 'none';
     document.getElementById('ct-sucesso').style.display = 'block';
     const rotulo = data.valorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
     let texto = `${itens.map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(', ')}. `;
-    if (data._quando === 'depois') {
-      texto += `Combinado: pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) pra ${ctFormatarDataBR(data._dataPagamentoPrevista)}.`;
-    } else {
-      texto += `Pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) conferido manualmente — chave Pix: ${CAMISETA_PIX_CHAVE}.`;
-    }
+    texto += `Pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) conferido manualmente — chave Pix: ${CAMISETA_PIX_CHAVE}.`;
     if (data._dataPagamentoSaldo) {
       texto += ` Saldo restante previsto pra ${ctFormatarDataBR(data._dataPagamentoSaldo)}.`;
     }
@@ -21754,9 +21715,7 @@ function ctAdminRenderPedidos(pedidos) {
     const rotuloValor = ped.valorEscolhido === 'sinal' ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
-      statusTxt = (ped.quando === 'depois' && ped.dataPagamentoPrevista)
-        ? `📅 Pagamento do ${rotuloValor} combinado pra ${ctAdminFormatarDataBR(ped.dataPagamentoPrevista)}`
-        : `⏳ Aguardando pagamento do ${rotuloValor}`;
+      statusTxt = `⏳ Aguardando pagamento do ${rotuloValor}`;
       statusCor = '#8c5a00';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
     } else if (!ped.entregue) {
