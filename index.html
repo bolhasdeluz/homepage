@@ -23089,13 +23089,21 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   if (user) {
+    // se tinha uma página esperando o login (ex: abriu Textos, Necessidades
+    // da Casa ou a Camiseta sem estar logada), volta pra ela em vez de ficar
+    // na Início — lido já aqui (antes do carregarPerfil) porque o modal de
+    // boas-vindas do primeiro login (ver carregarPerfil) não pode aparecer
+    // por cima de quem só está entrando de passagem pra comprar a camiseta;
+    // nesse caso ele fica pra uma próxima vez que ela entrar "normal" (sem
+    // vir de um link direto), quando for mexer no perfil dela mesma
+    const paginaPendente = sessionStorage.getItem('paginaAposLogin');
     // perfil marcado como inativo (desligada da casa) não é deslogada — ela
     // continua entrando normalmente, só que com o mesmo acesso de uma
     // visitante (perde Textos, Quadro das Filhas etc.), sem precisar mexer
     // no grupo/cargo salvo no perfil dela (ver grupoEfetivoDoPerfil, que é
     // quem de fato aplica isso em todo lugar que decide visibilidade por
     // grupo) — assim os relatórios continuam contando pelo cargo real dela
-    await carregarPerfil(user.email);
+    await carregarPerfil(user.email, { suprimirBoasVindas: paginaPendente === 'camiseta' });
     const avatar = document.getElementById('user-avatar');
     if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
     document.getElementById('drawer-user-section').style.display = 'block';
@@ -23103,9 +23111,6 @@ onAuthStateChanged(auth, async (user) => {
     atualizarWidgetHistoria(true);
     window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
-    // se tinha uma página esperando o login (ex: abriu Textos ou Necessidades
-    // da Casa sem estar logada), volta pra ela em vez de ficar na Início
-    const paginaPendente = sessionStorage.getItem('paginaAposLogin');
     if (paginaPendente) {
       sessionStorage.removeItem('paginaAposLogin');
       ajustarTopoFixo();
@@ -23408,15 +23413,20 @@ window.logoutGoogle = async function() {
 };
 
 // ── CARREGAR PERFIL ──
-async function carregarPerfil(email) {
+async function carregarPerfil(email, opts) {
+  const suprimirBoasVindas = !!(opts && opts.suprimirBoasVindas);
   try {
     const params = new URLSearchParams({ email });
     if (currentUser?.displayName) params.set('nome', currentUser.displayName);
     if (currentUser?.photoURL) params.set('foto', currentUser.photoURL);
     const res = await fetch(`/api/perfil?${params}`);
     perfilData = await res.json();
-    // primeiro login — mostrar modal de boas-vindas
-    if (perfilData.primeiroLogin && !perfilData.boasVindas?.comoConheceu) {
+    // primeiro login — mostrar modal de boas-vindas (a não ser que quem
+    // chamou tenha pedido pra segurar, ex: ela entrou direto pra comprar a
+    // camiseta — nesse caso o modal fica pendente pra próxima vez que
+    // carregarPerfil rodar sem essa flag, já que primeiroLogin continua true
+    // até ela de fato preencher ou pular o formulário)
+    if (perfilData.primeiroLogin && !perfilData.boasVindas?.comoConheceu && !suprimirBoasVindas) {
       setTimeout(() => {
         document.getElementById('modal-boasvindas').style.display = 'flex';
       }, 800);
