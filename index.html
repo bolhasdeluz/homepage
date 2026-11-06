@@ -21140,14 +21140,24 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rfc-chart-entsai"></canvas></div></div>`;
   }
 
-  // coroações por ano — mesma população do card "Tempo médio até a Coroação"
-  // (comCoroacao), só que agrupada por ano pra virar barra; clique na barra
-  // abre o mesmo overlay de detalhe, filtrado pro ano
-  const porAnoCoroacao = {};
-  comCoroacao.forEach(p => { const a = p.historia.coroacao.slice(0,4); porAnoCoroacao[a] = (porAnoCoroacao[a]||0)+1; });
-  const anosCoroacao = Object.keys(porAnoCoroacao).sort();
+  // tempo médio até a coroação, por ano — mesma população do card "Tempo
+  // médio até a Coroação" (comCoroacao), agrupada pelo ano em que a coroação
+  // aconteceu, pra mostrar se esse tempo está aumentando/diminuindo com o
+  // tempo (não é só uma contagem de quantas coroações teve em cada ano);
+  // clique no ponto abre o mesmo overlay de detalhe, filtrado pro ano
+  const diasCoroacaoPorAno = {};
+  comCoroacao.forEach(p => {
+    const ano = p.historia.coroacao.slice(0,4);
+    const dias = (new Date(p.historia.coroacao) - new Date(p.historia.data_entrada)) / 86400000;
+    (diasCoroacaoPorAno[ano] = diasCoroacaoPorAno[ano] || []).push(dias);
+  });
+  const anosCoroacao = Object.keys(diasCoroacaoPorAno).sort();
+  const mediaDiasCoroacaoPorAno = anosCoroacao.map(a => {
+    const lista = diasCoroacaoPorAno[a];
+    return lista.reduce((s,d) => s+d, 0) / lista.length;
+  });
   if (anosCoroacao.length) {
-    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">👑 Coroações por ano</div><div style="height:220px"><canvas id="rfc-chart-coroacao"></canvas></div></div>`;
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">👑 Tempo médio até a Coroação, por ano</div><div style="height:220px"><canvas id="rfc-chart-coroacao"></canvas></div></div>`;
   }
 
   // crescimento da casa — total acumulado de filhas (cada entrada soma 1,
@@ -21298,10 +21308,15 @@ function rfRender() {
     const ctx = document.getElementById('rfc-chart-coroacao');
     if (ctx) {
       rfCharts.coroacao = new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
           labels: anosCoroacao,
-          datasets: [{ label: 'Coroações', data: anosCoroacao.map(a => porAnoCoroacao[a]||0), backgroundColor: RF_MARCO_COR.coroacao, borderRadius: 4 }]
+          datasets: [{
+            label: 'Tempo médio até a Coroação',
+            data: mediaDiasCoroacaoPorAno.map(d => d / 30.44), // eixo em meses, mais legível que dias
+            borderColor: RF_MARCO_COR.coroacao, backgroundColor: 'rgba(74,111,165,.12)',
+            fill: true, tension: .25, pointRadius: 4, pointHoverRadius: 6, pointBackgroundColor: RF_MARCO_COR.coroacao,
+          }]
         },
         options: {
           responsive: true, maintainAspectRatio: false,
@@ -21310,8 +21325,17 @@ function rfRender() {
             if (!elements.length) return;
             window.rfAbrirDetalheAno('coroacao', anosCoroacao[elements[0].index]);
           },
-          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
-          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' },
+              callbacks: { label: (item) => rfFmtDuracaoDias(mediaDiasCoroacaoPorAno[item.dataIndex]) }
+            }
+          },
+          scales: {
+            x: { ticks: { font: { size: 10, family: 'DM Sans' } } },
+            y: { ticks: { font: { size: 10, family: 'DM Sans' }, callback: (v) => v + 'm' }, beginAtZero: true, title: { display: true, text: 'meses', font: { size: 10, family: 'DM Sans' } } }
+          }
         }
       });
     }
