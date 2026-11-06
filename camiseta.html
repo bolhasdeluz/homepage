@@ -76,6 +76,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .ct-erro{font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:10px;display:none}
 
+.ct-prazo-toggle{display:flex;gap:8px;margin-bottom:10px}
+.ct-prazo-btn{flex:1;background:#fff;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:8px;padding:10px;font-family:'Cinzel',serif;font-size:.7rem;letter-spacing:.05em;font-weight:700}
+.ct-prazo-btn-ativo{background:var(--rosa);color:#fff}
+
 .ct-sucesso{display:none;background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:22px 20px;text-align:center;margin-bottom:24px}
 .ct-sucesso-titulo{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--green);margin-bottom:10px}
 .ct-sucesso p{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic}
@@ -138,13 +142,25 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     <!-- PASSO 2: cadastro -->
     <div class="ct-form-box" id="ct-passo-2" style="display:none">
       <p class="modal-sub" id="ct-passo-2-resumo" style="font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);margin-bottom:14px"></p>
-      <p style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem;margin-bottom:14px">Na próxima tela você paga via Pix (ou cartão), com segurança, pelo InfinitePay ✦</p>
       <label class="form-label">Seu nome</label>
       <input type="text" class="form-input" id="ct-nome" placeholder="Nome completo">
       <label class="form-label">Telefone</label>
       <input type="tel" class="form-input" id="ct-telefone" placeholder="(51) 99999-9999">
       <label class="form-label">E-mail (pra confirmação)</label>
       <input type="email" class="form-input" id="ct-email" placeholder="seuemail@exemplo.com">
+
+      <label class="form-label">Quando você vai pagar?</label>
+      <div class="ct-prazo-toggle">
+        <button type="button" class="ct-prazo-btn ct-prazo-btn-ativo" id="ct-prazo-agora" onclick="ctEscolherPrazo('agora')">Agora</button>
+        <button type="button" class="ct-prazo-btn" id="ct-prazo-depois" onclick="ctEscolherPrazo('depois')">Depois</button>
+      </div>
+      <p id="ct-prazo-agora-texto" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem;margin-bottom:14px">Na próxima tela você paga via Pix (ou cartão), com segurança, pelo InfinitePay ✦</p>
+      <div id="ct-prazo-depois-wrap" style="display:none">
+        <label class="form-label">Até quando você vai pagar?</label>
+        <input type="date" class="form-input" id="ct-data-pagamento">
+        <p style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem;margin-bottom:14px">Seu pedido já fica confirmado — só o pagamento que fica combinado pra essa data ✦</p>
+      </div>
+
       <p class="ct-erro" id="ct-erro-2"></p>
       <button class="btn-rosa" id="ct-btn-confirmar" onclick="ctConfirmar()">Confirmar pedido</button>
       <button class="btn-rosa" style="background:none;color:var(--text-dim);margin-top:10px" onclick="ctVoltarEscolha()">← Mudar tamanhos/quantidades</button>
@@ -206,6 +222,13 @@ function ctRenderPagina() {
 
 function ctRenderMedidas() {
   const wrap = document.getElementById('ct-medidas-wrap');
+  // imagem da tabela (se a admin cadastrou uma) substitui a tabela de texto —
+  // a imagem costuma trazer mais informação (diagrama de como medir, etc.)
+  if (ctProduto.imagemTabelaMedidas) {
+    document.getElementById('ct-medidas-tabela').innerHTML = `<img src="${ctProduto.imagemTabelaMedidas}" alt="Tabela de medidas" style="width:100%;border-radius:8px">`;
+    wrap.style.display = '';
+    return;
+  }
   const tabela = (ctProduto.tabelaMedidas || []).filter(linha => Array.isArray(linha) && linha.some(c => String(c || '').trim()));
   if (tabela.length < 2) { wrap.style.display = 'none'; return; }
   const [cabecalho, ...linhas] = tabela;
@@ -251,6 +274,21 @@ function ctAtualizarTotal() {
   totalEl.innerHTML = `<span>${qtdTotal} peça(s)</span><b>${ctFormatarPreco(qtdTotal * ctProduto.precoPorUnidade)}</b>`;
 }
 
+let ctPrazo = 'agora';
+
+function ctEscolherPrazo(prazo) {
+  ctPrazo = prazo;
+  document.getElementById('ct-prazo-agora').classList.toggle('ct-prazo-btn-ativo', prazo === 'agora');
+  document.getElementById('ct-prazo-depois').classList.toggle('ct-prazo-btn-ativo', prazo === 'depois');
+  document.getElementById('ct-prazo-agora-texto').style.display = prazo === 'agora' ? '' : 'none';
+  document.getElementById('ct-prazo-depois-wrap').style.display = prazo === 'depois' ? '' : 'none';
+}
+
+function ctFormatarDataBR(iso) {
+  const [ano, mes, dia] = String(iso || '').split('-');
+  return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
+}
+
 function ctIrPraPagamento() {
   const itens = ctItensSelecionados();
   const erroEl = document.getElementById('ct-erro-1');
@@ -260,6 +298,11 @@ function ctIrPraPagamento() {
   const qtdTotal = itens.reduce((s, i) => s + i.quantidade, 0);
   document.getElementById('ct-passo-2-resumo').textContent = `${resumo} — ${ctFormatarPreco(qtdTotal * ctProduto.precoPorUnidade)}.`;
   document.getElementById('ct-erro-2').style.display = 'none';
+  const dataInput = document.getElementById('ct-data-pagamento');
+  const hoje = new Date().toISOString().slice(0, 10);
+  dataInput.min = hoje;
+  if (!dataInput.value) dataInput.value = hoje;
+  ctEscolherPrazo('agora');
   document.getElementById('ct-passo-escolha').style.display = 'none';
   document.getElementById('ct-passo-2').style.display = '';
 }
@@ -288,6 +331,12 @@ async function ctConfirmar() {
   if (!nome) { erroEl.textContent = 'Digite seu nome.'; erroEl.style.display = 'block'; return; }
   if (!email) { erroEl.textContent = 'Digite seu e-mail.'; erroEl.style.display = 'block'; return; }
 
+  const pagarDepois = ctPrazo === 'depois';
+  const dataPagamentoPrevista = document.getElementById('ct-data-pagamento').value;
+  if (pagarDepois && !dataPagamentoPrevista) {
+    erroEl.textContent = 'Escolha a data em que você vai pagar.'; erroEl.style.display = 'block'; return;
+  }
+
   const btn = document.getElementById('ct-btn-confirmar');
   const textoOriginal = btn.textContent;
   btn.textContent = 'Registrando...'; btn.disabled = true;
@@ -295,7 +344,7 @@ async function ctConfirmar() {
     const res = await fetch(CAMISETA_API, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao: 'criar-pedido', itens, nome, telefone, email }),
+      body: JSON.stringify({ acao: 'criar-pedido', itens, nome, telefone, email, pagarDepois, dataPagamentoPrevista: pagarDepois ? dataPagamentoPrevista : undefined }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -310,11 +359,17 @@ async function ctConfirmar() {
       return;
     }
 
-    // não deu pra criar o link automático — cai no fluxo manual: mostra a
-    // chave Pix pra copiar e a admin confere na mão
     document.getElementById('ct-passo-2').style.display = 'none';
     document.getElementById('ct-sucesso').style.display = 'block';
-    document.getElementById('ct-sucesso-texto').textContent = `${itens.map(i => i.quantidade + ' ' + i.tamanho).join(', ')} em nome de ${nome}. Mandamos um e-mail pra ${email} com a chave Pix — a administração confere o pagamento manualmente.`;
+    if (data._pagarDepois) {
+      // pedido confirmado, pagamento combinado pra uma data futura — nenhum
+      // link de pagamento foi criado agora
+      document.getElementById('ct-sucesso-texto').textContent = `${itens.map(i => i.quantidade + ' ' + i.tamanho).join(', ')} em nome de ${nome}. Seu pedido já está confirmado — o pagamento fica combinado pra ${ctFormatarDataBR(data._dataPagamentoPrevista)}. Mandamos um e-mail pra ${email} com os detalhes.`;
+    } else {
+      // não deu pra criar o link automático — cai no fluxo manual: mostra a
+      // chave Pix pra copiar e a admin confere na mão
+      document.getElementById('ct-sucesso-texto').textContent = `${itens.map(i => i.quantidade + ' ' + i.tamanho).join(', ')} em nome de ${nome}. Mandamos um e-mail pra ${email} com a chave Pix — a administração confere o pagamento manualmente.`;
+    }
     document.getElementById('ct-sucesso-pix-box').style.display = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (e) {

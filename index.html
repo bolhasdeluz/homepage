@@ -21279,6 +21279,11 @@ window.ctAdminCarregar = ctAdminCarregar;
 
 function ctAdminFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
 
+function ctAdminFormatarDataBR(iso) {
+  const [ano, mes, dia] = String(iso || '').split('-');
+  return (dia && mes && ano) ? `${dia}/${mes}/${ano}` : '';
+}
+
 function ctAdminTabelaMedidasParaTexto(tabela) {
   return (tabela || []).map(linha => (linha || []).join(' | ')).join('\n');
 }
@@ -21303,7 +21308,9 @@ function ctAdminRender() {
       <input type="number" step="0.01" class="form-input" id="ct-admin-preco" value="${p ? p.precoPorUnidade || '' : ''}" placeholder="60.00">
       <label class="form-label">Tamanhos disponíveis (separados por vírgula)</label>
       <input type="text" class="form-input" id="ct-admin-tamanhos" value="${p ? ctAdminEscAttr((p.tamanhos || []).join(', ')) : 'PP, P, M, G, GG, XG'}" placeholder="PP, P, M, G, GG, XG">
-      <label class="form-label">Tabela de medidas — uma linha por tamanho, colunas separadas por "|". A primeira linha é o cabeçalho.</label>
+      <label class="form-label">URL da imagem da tabela de medidas (se preencher, ela substitui a tabela de texto abaixo)</label>
+      <input type="text" class="form-input" id="ct-admin-imagem-medidas" value="${p ? ctAdminEscAttr(p.imagemTabelaMedidas || '') : ''}" placeholder="https://...">
+      <label class="form-label">Tabela de medidas (texto) — uma linha por tamanho, colunas separadas por "|". A primeira linha é o cabeçalho. Só usada se não tiver imagem acima.</label>
       <textarea class="form-input" id="ct-admin-medidas" rows="7" style="font-family:monospace;font-size:.82rem" placeholder="Tamanho | Largura (cm) | Comprimento (cm)
 P | 48 | 68
 M | 50 | 70
@@ -21338,7 +21345,10 @@ function ctAdminRenderPedidos(pedidos) {
     const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(', ');
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
-      statusTxt = '⏳ Aguardando pagamento'; statusCor = '#8c5a00';
+      statusTxt = (ped.pagarDepois && ped.dataPagamentoPrevista)
+        ? `📅 Pagamento combinado pra ${ctAdminFormatarDataBR(ped.dataPagamentoPrevista)}`
+        : '⏳ Aguardando pagamento';
+      statusCor = '#8c5a00';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
     } else if (!ped.entregue) {
       statusTxt = '💰 Pago — aguardando entrega'; statusCor = 'var(--green)';
@@ -21396,10 +21406,11 @@ async function ctAdminSalvar() {
   if (!titulo) { erroEl.textContent = 'O título é obrigatório.'; erroEl.style.display = 'block'; return; }
   const descricao = document.getElementById('ct-admin-descricao').value.trim();
   const imagemProduto = document.getElementById('ct-admin-imagem').value.trim();
+  const imagemTabelaMedidas = document.getElementById('ct-admin-imagem-medidas').value.trim();
   const precoPorUnidade = parseFloat(document.getElementById('ct-admin-preco').value) || 0;
   const tamanhos = document.getElementById('ct-admin-tamanhos').value.split(',').map(t => t.trim()).filter(Boolean);
   const tabelaMedidas = ctAdminTextoParaTabelaMedidas(document.getElementById('ct-admin-medidas').value);
-  const body = { titulo, descricao, imagemProduto, precoPorUnidade, tamanhos, tabelaMedidas };
+  const body = { titulo, descricao, imagemProduto, imagemTabelaMedidas, precoPorUnidade, tamanhos, tabelaMedidas };
 
   try {
     const res = await fetch('/api/camiseta', {
