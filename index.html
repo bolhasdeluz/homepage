@@ -2929,7 +2929,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         </div>
         <p id="ct-pagamento-dica" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin:-6px 0 14px"></p>
 
-        <label class="form-label">Telefone (opcional)</label>
+        <label class="form-label">Celular (WhatsApp)</label>
         <input type="tel" class="form-input" id="ct-telefone" placeholder="(51) 99999-9999">
 
         <p class="ct-erro" id="ct-erro" style="font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:10px;display:none"></p>
@@ -8278,6 +8278,7 @@ async function ctConfirmar() {
   if (!usuario) { erroEl.textContent = 'Você precisa estar logada pra fazer o pedido.'; erroEl.style.display = 'block'; return; }
 
   const telefone = document.getElementById('ct-telefone').value.trim();
+  if (!telefone) { erroEl.textContent = 'Informe seu celular (WhatsApp).'; erroEl.style.display = 'block'; return; }
   const body = {
     acao: 'criar-pedido', itens, nome: usuario.nome, email: usuario.email, telefone,
     valorEscolhido: ctValorEscolhido,
