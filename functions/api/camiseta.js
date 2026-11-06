@@ -24,6 +24,9 @@ const PIX_CHAVE = 'bolhasdeluz@gmail.com';
 const INFINITEPAY_HANDLE = 'bolhasdeluz';
 const ADMIN_NOTIFY_EMAIL = 'bolhasdeluz@gmail.com';
 const PERCENTUAL_MINIMO_SINAL = 0.2;
+// prazo máximo pra pagar o saldo restante dessa campanha de camiseta —
+// depois dessa data a admin encerra as contas manualmente
+const DATA_LIMITE_SALDO = '2026-12-05';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
@@ -425,6 +428,9 @@ export async function onRequest(context) {
           }
           if (dataPagamentoSaldo < hojeISO()) {
             return json({ error: 'Essa data do saldo já passou — escolhe uma data a partir de hoje.' }, 400);
+          }
+          if (dataPagamentoSaldo > DATA_LIMITE_SALDO) {
+            return json({ error: `O prazo máximo pra pagar o saldo restante é ${fmtDataBR(DATA_LIMITE_SALDO)}.` }, 400);
           }
         }
 
