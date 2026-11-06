@@ -21140,6 +21140,16 @@ function rfRender() {
     html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">Entradas × Saídas por ano</div><div style="height:220px"><canvas id="rfc-chart-entsai"></canvas></div></div>`;
   }
 
+  // coroações por ano — mesma população do card "Tempo médio até a Coroação"
+  // (comCoroacao), só que agrupada por ano pra virar barra; clique na barra
+  // abre o mesmo overlay de detalhe, filtrado pro ano
+  const porAnoCoroacao = {};
+  comCoroacao.forEach(p => { const a = p.historia.coroacao.slice(0,4); porAnoCoroacao[a] = (porAnoCoroacao[a]||0)+1; });
+  const anosCoroacao = Object.keys(porAnoCoroacao).sort();
+  if (anosCoroacao.length) {
+    html += `<div class="rc-chart-card"><div class="rc-stat-label" style="margin-bottom:8px">👑 Coroações por ano</div><div style="height:220px"><canvas id="rfc-chart-coroacao"></canvas></div></div>`;
+  }
+
   // crescimento da casa — total acumulado de filhas (cada entrada soma 1,
   // cada saída subtrai 1), amostrado no fim de cada ano até hoje
   let eventosCrescimento = [];
@@ -21284,6 +21294,29 @@ function rfRender() {
     }
   }
 
+  if (anosCoroacao.length && typeof Chart !== 'undefined') {
+    const ctx = document.getElementById('rfc-chart-coroacao');
+    if (ctx) {
+      rfCharts.coroacao = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: anosCoroacao,
+          datasets: [{ label: 'Coroações', data: anosCoroacao.map(a => porAnoCoroacao[a]||0), backgroundColor: RF_MARCO_COR.coroacao, borderRadius: 4 }]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          onHover: (evt, elements) => { evt.native.target.style.cursor = elements.length ? 'pointer' : 'default'; },
+          onClick: (evt, elements) => {
+            if (!elements.length) return;
+            window.rfAbrirDetalheAno('coroacao', anosCoroacao[elements[0].index]);
+          },
+          plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+          scales: { x: { ticks: { font: { size: 10, family: 'DM Sans' } } }, y: { ticks: { font: { size: 10, family: 'DM Sans' }, stepSize: 1 }, beginAtZero: true } }
+        }
+      });
+    }
+  }
+
   if (crescimentoLabels.length && typeof Chart !== 'undefined') {
     const ctx = document.getElementById('rfc-chart-crescimento');
     if (ctx) {
@@ -21377,12 +21410,14 @@ function rfAbrirDetalhe(tipo) {
 function rfFecharDetalhe() {
   document.getElementById('rfc-detalhe-overlay').classList.remove('open');
 }
-// clique numa barra do gráfico "Entradas × Saídas por ano" — mesmo overlay de
-// detalhe dos cards, só que filtrado pro ano daquela barra específica
+// clique numa barra de gráfico por ano (Entradas × Saídas, Coroações) — mesmo
+// overlay de detalhe dos cards, só que filtrado pro ano daquela barra específica
+const RF_CAMPO_ANO = { entradas: 'data_entrada', saidas: 'data_saida', coroacao: 'coroacao' };
+const RF_ANO_LABEL = { entradas: 'Entradas', saidas: 'Saídas', coroacao: 'Coroações' };
 function rfAbrirDetalheAno(tipo, ano) {
-  const campo = tipo === 'entradas' ? 'data_entrada' : 'data_saida';
+  const campo = RF_CAMPO_ANO[tipo] || tipo;
   const lista = (rfDetalheCache[tipo] || []).filter(p => (p.historia?.[campo] || '').slice(0, 4) === String(ano));
-  document.getElementById('rfc-detalhe-titulo').textContent = `${tipo === 'entradas' ? 'Entradas' : 'Saídas'} em ${ano}`;
+  document.getElementById('rfc-detalhe-titulo').textContent = `${RF_ANO_LABEL[tipo] || tipo} em ${ano}`;
   document.getElementById('rfc-detalhe-sub').textContent = `${lista.length} perfil(is) — toque num nome pra editar`;
   const corpo = document.getElementById('rfc-detalhe-lista');
   corpo.innerHTML = lista.length
