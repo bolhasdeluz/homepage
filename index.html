@@ -4251,6 +4251,20 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- PAINEL ADMIN — LOJA DE CAMISETAS: cadastro do produto (título, preço,
+     tamanhos, tabela de medidas), QR code do link público (camiseta.html)
+     e lista de pedidos (aguardando pagamento / aguardando entrega / já
+     entregues) — ver /api/camiseta -->
+<div id="page-camiseta-admin" class="page">
+  <div class="section-wrap narrow">
+    <button class="back-btn" onclick="showPage('admin')">← Voltar ao Painel Admin</button>
+    <div class="eyebrow">Terreiro Bolhas de Luz</div>
+    <div class="section-title">🎽 Loja de Camisetas</div>
+    <p class="section-sub">Cadastre o produto, a tabela de medidas, e acompanhe os pedidos ✦</p>
+    <div id="ct-admin-conteudo"><div class="cp-carregando">Carregando...</div></div>
+  </div>
+</div>
+
 <!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
      organizados por categoria/palavra-chave/data, com linha do tempo como
      visualização principal. Visibilidade por grupo igual sessões/menu. -->
@@ -5214,6 +5228,11 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <span class="admin-menu-item-icon">🎟️</span>
         <span class="admin-menu-item-label">Exportar Dados da Rifa</span>
         <span class="admin-menu-item-desc">Nome, telefone e número de cada rifa vendido — todas as campanhas</span>
+      </button>
+      <button class="admin-menu-item" onclick="showPage('camiseta-admin')">
+        <span class="admin-menu-item-icon">🎽</span>
+        <span class="admin-menu-item-label">Loja de Camisetas</span>
+        <span class="admin-menu-item-desc">Produto, tabela de medidas, QR code e pedidos</span>
       </button>
     </div>
     <div id="admin-export-status" style="text-align:center;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:-6px 0 14px"></div>
@@ -7223,6 +7242,11 @@ function showPage(name) {
         if (el) el.innerHTML = '<div class="rc-vazio">⚠️ Bug a investigar: a função de carregar não existe. Avisa o Claude com um print disso.<br><button class="rc-toggle-btn" style="margin-top:10px" onclick="location.reload()">↺ Recarregar a página</button></div>';
       }, 500);
     }
+  }
+  if (name === 'camiseta-admin') {
+    // só admin — se não for, volta pro início em vez de deixar a página aberta
+    if (!souAdminAtivo(window._getCurrentUser && window._getCurrentUser())) { showPage('inicio'); return; }
+    window.ctAdminCarregar?.();
   }
   if (name === 'relatorio-visitas') {
     // só admin — se não for, volta pro início em vez de deixar a página aberta
@@ -21231,6 +21255,196 @@ function rvFecharDetalhe() {
   document.getElementById('rv-detalhe-overlay').classList.remove('open');
 }
 window.rvFecharDetalhe = rvFecharDetalhe;
+
+// ── PAINEL ADMIN — LOJA DE CAMISETAS ──
+// produto único "ativo" (igual rifa), com pedidos de carrinho (quantidade
+// por tamanho, sem reservar estoque) — ver /api/camiseta
+let ctAdminProduto = null;
+let ctAdminLeiturasQr = [];
+
+// calEsc não escapa aspas — seguro em textContent/innerHTML solto, mas não
+// dentro de um atributo value="..."
+function ctAdminEscAttr(s) { return calEsc(s).replace(/"/g, '&quot;'); }
+
+async function ctAdminCarregar() {
+  const el = document.getElementById('ct-admin-conteudo');
+  el.innerHTML = '<div class="cp-carregando">Carregando...</div>';
+  try {
+    const res = await fetch('/api/camiseta', { headers: RIFA_ADMIN_HEADERS });
+    ctAdminProduto = res.ok ? await res.json() : null;
+  } catch (e) { ctAdminProduto = null; }
+  ctAdminRender();
+}
+window.ctAdminCarregar = ctAdminCarregar;
+
+function ctAdminFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+function ctAdminTabelaMedidasParaTexto(tabela) {
+  return (tabela || []).map(linha => (linha || []).join(' | ')).join('\n');
+}
+
+function ctAdminTextoParaTabelaMedidas(texto) {
+  return String(texto || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|').map(c => c.trim()));
+}
+
+function ctAdminRender() {
+  const el = document.getElementById('ct-admin-conteudo');
+  const p = ctAdminProduto;
+  el.innerHTML = `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">${p ? '✎ Editar produto ativo' : '✨ Cadastrar produto'}</div>
+      <label class="form-label">Título</label>
+      <input type="text" class="form-input" id="ct-admin-titulo" value="${p ? ctAdminEscAttr(p.titulo || '') : ''}" placeholder="Camiseta Bolhas de Luz 2026">
+      <label class="form-label">Descrição</label>
+      <textarea class="form-input" id="ct-admin-descricao" rows="3" placeholder="100% algodão, estampa...">${p ? calEsc(p.descricao || '') : ''}</textarea>
+      <label class="form-label">URL da imagem</label>
+      <input type="text" class="form-input" id="ct-admin-imagem" value="${p ? ctAdminEscAttr(p.imagemProduto || '') : ''}" placeholder="https://...">
+      <label class="form-label">Preço por unidade (R$)</label>
+      <input type="number" step="0.01" class="form-input" id="ct-admin-preco" value="${p ? p.precoPorUnidade || '' : ''}" placeholder="60.00">
+      <label class="form-label">Tamanhos disponíveis (separados por vírgula)</label>
+      <input type="text" class="form-input" id="ct-admin-tamanhos" value="${p ? ctAdminEscAttr((p.tamanhos || []).join(', ')) : 'PP, P, M, G, GG, XG'}" placeholder="PP, P, M, G, GG, XG">
+      <label class="form-label">Tabela de medidas — uma linha por tamanho, colunas separadas por "|". A primeira linha é o cabeçalho.</label>
+      <textarea class="form-input" id="ct-admin-medidas" rows="7" style="font-family:monospace;font-size:.82rem" placeholder="Tamanho | Largura (cm) | Comprimento (cm)
+P | 48 | 68
+M | 50 | 70
+G | 52 | 72">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}</textarea>
+      <p id="ct-admin-erro" style="color:#b84040;font-size:.82rem;margin-bottom:10px;display:none"></p>
+      <button class="rm-btn-mes" style="width:100%" onclick="ctAdminSalvar()">💾 Salvar produto</button>
+      ${p ? `<button class="rm-btn-mes" style="width:100%;margin-top:8px;background:none;border:1px solid var(--rosa-border);color:var(--rosa)" onclick="ctAdminEncerrarECriarNovo()">✨ Encerrar este e cadastrar outro do zero</button>` : ''}
+    </div>
+
+    ${p ? `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px;text-align:center">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:2px;text-align:left">📷 QR code da venda</div>
+      <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-bottom:8px;text-align:left">Pra imprimir e colar onde quiser ✦</div>
+      <button class="rm-btn-mes" id="ct-admin-qr-contagem" onclick="ctAdminToggleLeiturasQr()" style="display:none;width:100%;margin-bottom:10px"></button>
+      <div id="ct-admin-qr-leituras" style="display:none;max-height:150px;overflow-y:auto;background:var(--rosa-dim);border-radius:9px;padding:10px 12px;margin-bottom:12px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim);line-height:1.7;text-align:left"></div>
+      <div id="ct-admin-qr-canvas" style="margin:0 auto"></div>
+      <span style="font-family:'DM Sans',sans-serif;font-size:.75rem;color:var(--text-dim);word-break:break-all;display:block;margin-top:8px">https://bolhasdeluz.ong.br/ir/camiseta</span>
+    </div>
+
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
+      <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">📋 Pedidos</div>
+      ${ctAdminRenderPedidos(p.pedidos || [])}
+    </div>` : ''}
+  `;
+  if (p) ctAdminMontarQr();
+}
+
+function ctAdminRenderPedidos(pedidos) {
+  if (!pedidos.length) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
+  const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  return ordenados.map(ped => {
+    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(', ');
+    let statusTxt, statusCor, acaoHtml;
+    if (ped.status !== 'pago') {
+      statusTxt = '⏳ Aguardando pagamento'; statusCor = '#8c5a00';
+      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
+    } else if (!ped.entregue) {
+      statusTxt = '💰 Pago — aguardando entrega'; statusCor = 'var(--green)';
+      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', true)">📦 Marcar como entregue</button>`;
+    } else {
+      statusTxt = '✅ Entregue'; statusCor = 'var(--text-dim)';
+      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', false)">↩️ Desfazer entrega</button>`;
+    }
+    return `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700;font-size:.88rem">${calEsc(ped.nome || '')}</div>
+            <div style="font-size:.78rem;color:var(--text-dim)">${calEsc(itensTxt)} — ${ctAdminFormatarPreco(ped.total)}</div>
+            <div style="font-size:.74rem;color:var(--text-dim)">${calEsc(ped.telefone || 'sem telefone')} · ${calEsc(ped.email || '')}</div>
+            <div style="font-size:.72rem;font-weight:700;color:${statusCor};margin-top:2px">${statusTxt}</div>
+          </div>
+          <div style="display:flex;align-items:center">${acaoHtml}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function ctAdminMontarQr() {
+  const canvasWrap = document.getElementById('ct-admin-qr-canvas');
+  if (canvasWrap && !canvasWrap.hasChildNodes()) {
+    new QRCode(canvasWrap, { text: 'https://bolhasdeluz.ong.br/ir/camiseta', width: 180, height: 180, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+  }
+  const btn = document.getElementById('ct-admin-qr-contagem');
+  if (!btn) return;
+  try {
+    const res = await fetch('/api/qr-contagem', { headers: RIFA_ADMIN_HEADERS });
+    if (res.ok) {
+      const porSlug = await res.json();
+      ctAdminLeiturasQr = porSlug.camiseta || [];
+      const n = ctAdminLeiturasQr.length;
+      btn.textContent = `👁️ QR code lido ${n} vez${n === 1 ? '' : 'es'} — ver quando ▾`;
+      btn.style.display = n ? 'block' : 'none';
+    }
+  } catch (e) { /* não trava o painel se essa parte falhar */ }
+}
+
+function ctAdminToggleLeiturasQr() {
+  const wrap = document.getElementById('ct-admin-qr-leituras');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = ctAdminLeiturasQr.map(ts => `<div>${rifaFormatarDataHoraQr(ts)}</div>`).join('') || '<div>Nenhuma leitura ainda ✦</div>';
+  wrap.style.display = 'block';
+}
+window.ctAdminToggleLeiturasQr = ctAdminToggleLeiturasQr;
+
+async function ctAdminSalvar() {
+  const erroEl = document.getElementById('ct-admin-erro');
+  erroEl.style.display = 'none';
+  const titulo = document.getElementById('ct-admin-titulo').value.trim();
+  if (!titulo) { erroEl.textContent = 'O título é obrigatório.'; erroEl.style.display = 'block'; return; }
+  const descricao = document.getElementById('ct-admin-descricao').value.trim();
+  const imagemProduto = document.getElementById('ct-admin-imagem').value.trim();
+  const precoPorUnidade = parseFloat(document.getElementById('ct-admin-preco').value) || 0;
+  const tamanhos = document.getElementById('ct-admin-tamanhos').value.split(',').map(t => t.trim()).filter(Boolean);
+  const tabelaMedidas = ctAdminTextoParaTabelaMedidas(document.getElementById('ct-admin-medidas').value);
+  const body = { titulo, descricao, imagemProduto, precoPorUnidade, tamanhos, tabelaMedidas };
+
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: ctAdminProduto ? 'PUT' : 'POST',
+      headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify(ctAdminProduto ? { acao: 'editar-produto', ...body } : body),
+    });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui salvar.'; erroEl.style.display = 'block'; return; }
+    ctAdminProduto = data;
+    ctAdminRender();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block';
+  }
+}
+window.ctAdminSalvar = ctAdminSalvar;
+
+function ctAdminEncerrarECriarNovo() {
+  if (!confirm('Isso encerra o produto ativo (ele continua no histórico) e deixa o formulário em branco pra cadastrar um novo. Continuar?')) return;
+  ctAdminProduto = null;
+  ctAdminRender();
+}
+window.ctAdminEncerrarECriarNovo = ctAdminEncerrarECriarNovo;
+
+async function ctAdminConfirmarPagamento(orderNsu) {
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'confirmar-pagamento', orderNsu }),
+    });
+    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
+  } catch (e) { /* tenta de novo depois, se precisar */ }
+}
+window.ctAdminConfirmarPagamento = ctAdminConfirmarPagamento;
+
+async function ctAdminMarcarEntregue(orderNsu, entregue) {
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'marcar-entregue', orderNsu, entregue }),
+    });
+    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
+  } catch (e) { /* tenta de novo depois, se precisar */ }
+}
+window.ctAdminMarcarEntregue = ctAdminMarcarEntregue;
 
 // ── DASHBOARD PESSOAL NA HOME ──
 const DASH_FRASES_CARGO = {

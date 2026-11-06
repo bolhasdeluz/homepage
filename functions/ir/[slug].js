@@ -13,6 +13,7 @@ const DESTINOS = {
   cosmes: '/cosmes',
   rifa: '/rifa-digital',
   'rifa-presencial': '/rifa-presencial.html',
+  camiseta: '/camiseta.html',
   site: '/',
   banner: '/proxima-sessao.html',
 };
