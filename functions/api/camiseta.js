@@ -276,6 +276,18 @@ function paraPublico(produto) {
   return resto;
 }
 
+// total encomendado x total já pago (somando sinal+saldo), pra barra de
+// progresso pública — agregado só, nunca os pedidos individuais
+function calcularProgresso(pedidos) {
+  let totalEncomendado = 0, totalPago = 0;
+  (pedidos || []).forEach(p => {
+    totalEncomendado += p.total || 0;
+    if (p.status === 'pago') totalPago += p.valorPedido || 0;
+    if (p.valorEscolhido === 'sinal' && p.statusSaldo === 'pago') totalPago += Math.max(0, (p.total || 0) - (p.valorPedido || 0));
+  });
+  return { totalEncomendado, totalPago };
+}
+
 function montarProdutoDoBody(body) {
   return {
     titulo: body.titulo || '',
@@ -314,7 +326,8 @@ export async function onRequest(context) {
         return json(produtos);
       }
       const ativa = await buscarAtiva(KV);
-      return json(isAdmin ? ativa : paraPublico(ativa));
+      if (!ativa) return json(isAdmin ? ativa : paraPublico(ativa));
+      return json(isAdmin ? ativa : { ...paraPublico(ativa), ...calcularProgresso(ativa.pedidos || []) });
     }
 
     // POST — criar novo produto (admin) — arquiva o ativo anterior, se houver
