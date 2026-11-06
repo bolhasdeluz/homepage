@@ -104,6 +104,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .lj-modal-topo h3{font-family:'Playfair Display',serif;font-size:1.2rem;color:#fff;font-weight:700}
 .lj-modal-fechar{position:absolute;top:14px;right:16px;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:50%;width:26px;height:26px;font-size:14px}
 .lj-modal-corpo{padding:20px}
+.lj-produto-modal-imagem-wrap{display:none;margin-bottom:14px;border-radius:12px;overflow:hidden;max-width:220px;margin-left:auto;margin-right:auto;box-shadow:0 4px 16px rgba(140,58,26,.15)}
+.lj-produto-modal-imagem-wrap img{width:100%;display:block}
 .lj-campo{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .lj-campo label{font-family:'Cinzel',serif;font-size:.6rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em}
 .lj-campo input[type=text],.lj-campo input[type=number],.lj-campo input[type=tel],.lj-campo input[type=date],.lj-campo select,.lj-campo textarea{border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--text);background:var(--rosa-dim);outline:none;transition:border-color .15s;width:100%}
@@ -232,6 +234,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <button class="lj-modal-fechar" onclick="ljFecharModal('lj-modal-produto-bg')">✕</button>
     </div>
     <div class="lj-modal-corpo">
+      <div class="lj-produto-modal-imagem-wrap" id="lj-produto-modal-imagem-wrap"><img id="lj-produto-modal-imagem" alt=""></div>
       <p id="lj-produto-modal-desc" style="font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text-dim);margin-bottom:14px"></p>
       <div id="lj-produto-modal-kit-itens" style="display:none;background:var(--rosa-dim);border-radius:10px;padding:10px 12px;font-size:.8rem;margin-bottom:14px;white-space:pre-wrap"></div>
       <div class="lj-opcoes-grupo" id="lj-produto-modal-cores-wrap" style="display:none">
@@ -445,7 +448,7 @@ document.getElementById('lj-btn-admin').addEventListener('click', () => {
 const LJ_EMOJI_CATEGORIA = {
   'velas': '🕯️', 'ervas': '🌿', 'guias': '📿', 'defumação': '🪔', 'defumacao': '🪔',
   'incensos': '🕯️', 'estatuetas': '🗿', 'imagens': '🗿', 'bebidas rituais': '🍯',
-  'kits': '🎁', 'roupas': '👗', 'ferramentas': '🔨', 'flores': '💐', 'perfumes': '🌸'
+  'kits': '🎁', 'roupas': '👗', 'camisetas': '👕', 'ferramentas': '🔨', 'flores': '💐', 'perfumes': '🌸'
 };
 function ljEmojiCategoria(categoria) {
   return LJ_EMOJI_CATEGORIA[(categoria || '').trim().toLowerCase()] || '📦';
@@ -640,14 +643,31 @@ window.ljAbrirProduto = function(id) {
 
   document.getElementById('lj-produto-modal-qtd').textContent = ljModalQtd;
   ljAtualizarPrecoModal();
+  ljAtualizarImagemModal();
   ljAbrirModal('lj-modal-produto-bg');
 };
+
+// foto grande no modal — mostra a foto da cor escolhida (ex: camiseta preta
+// vs colorida); se a cor não tiver foto própria, cai na foto geral do
+// produto; se não tiver nenhuma das duas, some (produtos sem foto, tipo
+// vela, continuam só com os círculos de cor)
+function ljAtualizarImagemModal() {
+  const p = ljProdutoModalAtual;
+  const wrap = document.getElementById('lj-produto-modal-imagem-wrap');
+  if (!p) { wrap.style.display = 'none'; return; }
+  const cor = (p.cores || []).find(c => c.nome === ljModalCorSelecionada);
+  const imagem = (cor && cor.imagem) || p.imagem || '';
+  if (!imagem) { wrap.style.display = 'none'; return; }
+  document.getElementById('lj-produto-modal-imagem').src = imagem;
+  wrap.style.display = 'block';
+}
 
 window.ljEscolherCor = function(nome) {
   ljModalCorSelecionada = nome;
   document.querySelectorAll('#lj-produto-modal-cores .lj-opcao-cor').forEach(el => {
     el.classList.toggle('selecionada', el.title === nome);
   });
+  ljAtualizarImagemModal();
 };
 
 window.ljEscolherTamanho = function(nome) {
@@ -919,14 +939,15 @@ window.ljAdminToggleKit = function() {
 
 function ljAdminRenderCoresLista() {
   document.getElementById('lj-adm-cores-lista').innerHTML = ljAdminCores.map((c, i) => `
-    <div class="lj-admin-lista-linha">
+    <div class="lj-admin-lista-linha" style="flex-wrap:wrap">
       <input type="color" value="${c.hex}" onchange="ljAdminAtualizarCor(${i}, 'hex', this.value)">
       <input type="text" placeholder="Nome da cor" value="${c.nome}" style="flex:1" onchange="ljAdminAtualizarCor(${i}, 'nome', this.value)">
       <button onclick="ljAdminRemoverCor(${i})">🗑</button>
+      <input type="text" placeholder="URL da foto dessa cor (opcional — aparece no modal ao escolher a cor)" value="${c.imagem || ''}" style="flex-basis:100%" onchange="ljAdminAtualizarCor(${i}, 'imagem', this.value)">
     </div>
   `).join('');
 }
-window.ljAdminAddCor = function() { ljAdminCores.push({ nome: '', hex: '#c4396b' }); ljAdminRenderCoresLista(); };
+window.ljAdminAddCor = function() { ljAdminCores.push({ nome: '', hex: '#c4396b', imagem: '' }); ljAdminRenderCoresLista(); };
 window.ljAdminAtualizarCor = function(i, campo, valor) { ljAdminCores[i][campo] = valor; };
 window.ljAdminRemoverCor = function(i) { ljAdminCores.splice(i,1); ljAdminRenderCoresLista(); };
 
