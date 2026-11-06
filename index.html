@@ -1360,6 +1360,14 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .ct-medidas table{width:100%;border-collapse:collapse;font-family:'DM Sans',sans-serif;font-size:.8rem}
 .ct-medidas th,.ct-medidas td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)}
 .ct-medidas th{color:var(--rosa);font-weight:700;text-transform:uppercase;font-size:.66rem;letter-spacing:.03em}
+.ct-aviso-envio{display:flex;gap:10px;align-items:flex-start;background:var(--amber-dim);border:1px solid var(--amber-border);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--amber);line-height:1.4}
+.ct-progresso{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:20px}
+.ct-progresso-topo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;font-family:'Cinzel',serif}
+.ct-progresso-titulo{font-size:.65rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)}
+.ct-progresso-pct{font-size:1rem;font-weight:700;color:var(--rosa)}
+.ct-progresso-bar{background:var(--rosa-dim);border-radius:20px;height:10px;overflow:hidden}
+.ct-progresso-fill{background:var(--rosa);height:100%;border-radius:20px;transition:width .3s}
+.ct-progresso-legenda{display:flex;justify-content:space-between;margin-top:6px;font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim)}
 
 /* ═══ PÁGINA EVENTOS SELECIONADOS ═══ */
 .ed-evento{background:var(--rosa-dim);border-radius:9px;padding:12px 14px;margin-bottom:8px;position:relative}
@@ -2889,6 +2897,23 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div id="ct-vazia" style="display:none;text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)"></div>
 
     <div id="ct-conteudo" style="display:none">
+      <div class="ct-aviso-envio">
+        <span>📦</span>
+        <span>Os pedidos serão enviados/entregues somente depois que <strong>todos os pagamentos</strong> (sinal + saldo) estiverem concluídos.</span>
+      </div>
+
+      <div id="ct-progresso-wrap" class="ct-progresso" style="display:none">
+        <div class="ct-progresso-topo">
+          <span class="ct-progresso-titulo">Arrecadado até agora</span>
+          <span class="ct-progresso-pct" id="ct-progresso-pct"></span>
+        </div>
+        <div class="ct-progresso-bar"><div class="ct-progresso-fill" id="ct-progresso-fill" style="width:0%"></div></div>
+        <div class="ct-progresso-legenda">
+          <span id="ct-progresso-pago"></span>
+          <span id="ct-progresso-total"></span>
+        </div>
+      </div>
+
       <div class="rf-premio-frame">
         <div class="rf-premio-titulo" id="ct-produto-titulo"></div>
         <div class="rf-premio-desc" id="ct-produto-desc"></div>
@@ -8137,6 +8162,21 @@ function ctRenderPagina() {
 
   ctRenderMedidas();
   ctRenderCores();
+  ctRenderProgresso();
+}
+
+function ctRenderProgresso() {
+  const p = ctProduto;
+  const wrap = document.getElementById('ct-progresso-wrap');
+  const totalEncomendado = Number(p.totalEncomendado) || 0;
+  if (!totalEncomendado) { wrap.style.display = 'none'; return; }
+  const totalPago = Math.min(Number(p.totalPago) || 0, totalEncomendado);
+  const pct = Math.round((totalPago / totalEncomendado) * 100);
+  document.getElementById('ct-progresso-pct').textContent = `${pct}%`;
+  document.getElementById('ct-progresso-fill').style.width = `${pct}%`;
+  document.getElementById('ct-progresso-pago').textContent = `Pago: ${ctFormatarPreco(totalPago)}`;
+  document.getElementById('ct-progresso-total').textContent = `Encomendado: ${ctFormatarPreco(totalEncomendado)}`;
+  wrap.style.display = '';
 }
 
 function ctRenderMedidas() {
