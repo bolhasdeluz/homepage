@@ -398,6 +398,7 @@ export async function onRequest(context) {
         const email = (body.email || '').trim().toLowerCase();
         if (!nome) return json({ error: 'Informe seu nome.' }, 400);
         if (!email) return json({ error: 'Informe seu e-mail.' }, 400);
+        if (!telefone) return json({ error: 'Informe seu celular (WhatsApp).' }, 400);
         if (!produto.precoPorUnidade) return json({ error: 'Esse produto não tem preço definido.' }, 400);
 
         const coresValidas = new Set((produto.cores || []).map(c => c.nome));
