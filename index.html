@@ -1341,10 +1341,10 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .rf-barra-selecao-botoes{display:flex;gap:8px}
 
 /* ═══ PÁGINA CAMISETA ═══ */
-.ct-cor-tabs{display:flex;gap:8px;margin-bottom:14px}
-.ct-cor-tab{flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px;text-align:center;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;color:var(--text)}
-.ct-cor-tab img{width:100%;max-width:120px;border-radius:8px;margin:0 auto 6px;display:block}
-.ct-cor-tab-ativa{border-color:var(--rosa);box-shadow:0 0 0 2px var(--rosa) inset}
+.ct-cor-bloco{background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.ct-cor-cabecalho{display:flex;align-items:center;gap:12px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.ct-cor-cabecalho-img{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0}
+.ct-cor-cabecalho-nome{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--text)}
 .ct-tamanho-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .ct-tamanho-row:last-child{border-bottom:none}
 .ct-tamanho-label{font-family:'Cinzel',serif;font-size:.85rem;font-weight:700;color:var(--text)}
@@ -2900,11 +2900,9 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div id="ct-medidas-tabela"></div>
       </div>
 
-      <div class="ct-cor-tabs" id="ct-cor-tabs"></div>
+      <p style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.85rem;margin-bottom:14px;text-align:center">Escolha a quantidade de cada tamanho — pode misturar as duas cores no mesmo pedido ✦</p>
 
-      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px">
-        <div id="ct-tamanhos-lista"></div>
-      </div>
+      <div id="ct-cores-lista"></div>
 
       <div class="ct-total-row" id="ct-total" style="display:none"></div>
 
@@ -8075,7 +8073,6 @@ const CAMISETA_API = '/api/camiseta';
 const CAMISETA_PIX_CHAVE = 'bolhasdeluz@gmail.com';
 let ctProduto = null;
 let ctQuantidades = {}; // chave "cor::tamanho" -> quantidade
-let ctCorAtiva = null;
 let ctValorEscolhido = 'total';
 let ctSinalEditadoManualmente = false;
 
@@ -8111,7 +8108,6 @@ async function ctLoad() {
   }
 
   ctQuantidades = {};
-  ctCorAtiva = ctProduto.cores[0].nome;
   ctValorEscolhido = 'total';
   ctSinalEditadoManualmente = false;
   document.getElementById('ct-sucesso').style.display = 'none';
@@ -8140,8 +8136,7 @@ function ctRenderPagina() {
   document.getElementById('ct-usuario-atual').textContent = usuario ? `Pedido em nome de ${usuario.nome} (${usuario.email})` : '';
 
   ctRenderMedidas();
-  ctRenderCorTabs();
-  ctRenderTamanhos();
+  ctRenderCores();
 }
 
 function ctRenderMedidas() {
@@ -8161,35 +8156,31 @@ function ctRenderMedidas() {
   wrap.style.display = '';
 }
 
-function ctRenderCorTabs() {
-  const wrap = document.getElementById('ct-cor-tabs');
-  wrap.innerHTML = ctProduto.cores.map(c => `
-    <div class="ct-cor-tab ${c.nome === ctCorAtiva ? 'ct-cor-tab-ativa' : ''}" onclick="ctEscolherCor('${c.nome.replace(/'/g, "\\'")}')">
-      ${c.imagem ? `<img src="${c.imagem}" alt="${c.nome}">` : ''}
-      <span>${c.nome}</span>
-    </div>
-  `).join('');
-}
-
-function ctEscolherCor(nome) {
-  ctCorAtiva = nome;
-  ctRenderCorTabs();
-  ctRenderTamanhos();
-}
-window.ctEscolherCor = ctEscolherCor;
-
-function ctRenderTamanhos() {
-  const wrap = document.getElementById('ct-tamanhos-lista');
-  wrap.innerHTML = ctProduto.tamanhos.map(t => {
-    const chave = ctChave(ctCorAtiva, t);
+// lista as duas (ou mais) cores empilhadas, cada uma com seus próprios
+// tamanhos — nada de aba exclusiva: a pessoa pode somar quantidade em mais
+// de uma cor no mesmo pedido (ctQuantidades já é guardado por "cor::tamanho")
+function ctRenderCores() {
+  const wrap = document.getElementById('ct-cores-lista');
+  wrap.innerHTML = ctProduto.cores.map(c => {
+    const corEsc = c.nome.replace(/'/g, "\\'");
     return `
-    <div class="ct-tamanho-row">
-      <span class="ct-tamanho-label">${t}</span>
-      <div class="ct-qtd-row">
-        <button class="ct-qtd-btn" onclick="ctMudarQtd('${ctCorAtiva.replace(/'/g, "\\'")}','${t}',-1)">−</button>
-        <span class="ct-qtd-valor" id="ct-qtd-${chave}">${ctQuantidades[chave] || 0}</span>
-        <button class="ct-qtd-btn" onclick="ctMudarQtd('${ctCorAtiva.replace(/'/g, "\\'")}','${t}',1)">+</button>
+    <div class="ct-cor-bloco">
+      <div class="ct-cor-cabecalho">
+        ${c.imagem ? `<img class="ct-cor-cabecalho-img" src="${c.imagem}" alt="${c.nome}">` : ''}
+        <span class="ct-cor-cabecalho-nome">${c.nome}</span>
       </div>
+      ${ctProduto.tamanhos.map(t => {
+        const chave = ctChave(c.nome, t);
+        return `
+        <div class="ct-tamanho-row">
+          <span class="ct-tamanho-label">${t}</span>
+          <div class="ct-qtd-row">
+            <button class="ct-qtd-btn" onclick="ctMudarQtd('${corEsc}','${t}',-1)">−</button>
+            <span class="ct-qtd-valor" id="ct-qtd-${chave}">${ctQuantidades[chave] || 0}</span>
+            <button class="ct-qtd-btn" onclick="ctMudarQtd('${corEsc}','${t}',1)">+</button>
+          </div>
+        </div>`;
+      }).join('')}
     </div>`;
   }).join('');
   ctAtualizarTotal();
