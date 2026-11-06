@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido confirmado — Camiseta — Bolhas de Luz</title>
+<meta name="description" content="Confirmação do pagamento da camiseta do Terreiro Bolhas de Luz.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pedido confirmado — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:480px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--text);margin-bottom:28px;text-align:center}
+
+.cp-carregando{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rc-aviso{background:var(--green-dim);border:1px solid var(--green-border);border-radius:14px;padding:22px 20px;text-align:center;margin-bottom:22px}
+.rc-aviso-titulo{font-family:'Playfair Display',serif;font-size:1.25rem;color:var(--green);margin-bottom:10px}
+.rc-aviso p{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text-dim);font-style:italic;line-height:1.6}
+.rc-itens{font-family:'DM Sans',sans-serif;font-weight:700;font-size:1.05rem;color:var(--text);background:#fff;border-radius:8px;padding:12px;margin:14px 0}
+
+.rc-pendente{background:var(--amber-dim);border-color:var(--amber-border)}
+.rc-pendente .rc-aviso-titulo{color:var(--amber)}
+.rc-pendente button{margin-top:12px}
+
+.rc-erro{background:rgba(184,64,64,.06);border:1px solid rgba(184,64,64,.2);border-radius:14px;padding:18px 20px;text-align:center;margin-bottom:22px}
+.rc-erro p{font-family:'Crimson Pro',serif;font-size:.92rem;color:#8a4040}
+
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-outra{background:none;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:9px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-top:10px;width:100%;text-align:center;display:inline-block}
+.btn-outra:hover{background:var(--rosa-dim)}
+
+.rc-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
+.rc-saiba-mais a{color:var(--rosa);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎽 Confirmação do Pedido</div>
+
+  <div id="rc-carregando" class="cp-carregando">Confirmando seu pagamento...</div>
+
+  <div id="rc-pendente" class="rc-aviso rc-pendente" style="display:none">
+    <div class="rc-aviso-titulo">✦ Ainda conferindo ✦</div>
+    <p>Se você já pagou, só um instante — às vezes a confirmação demora alguns segundos. Se preferir, tenta de novo, ou deixa que a administração confirma assim que vir o pagamento.</p>
+    <button class="btn-rosa" onclick="rcVerificar(1)">Verificar de novo</button>
+    <p id="rc-pendente-debug" style="display:none;margin-top:12px;font-family:monospace;font-size:.68rem;color:var(--text-dim);word-break:break-all;text-align:left;background:rgba(0,0,0,.04);padding:8px;border-radius:6px"></p>
+  </div>
+
+  <div id="rc-erro" class="rc-erro" style="display:none">
+    <p>Não encontrei esse pedido. Se você acabou de pagar, fala com a administração pelo WhatsApp que ela confirma pra você.</p>
+  </div>
+
+  <div id="rc-conteudo" style="display:none">
+    <div class="rc-aviso">
+      <div class="rc-aviso-titulo">✦ Pagamento confirmado! ✦</div>
+      <p>Seu pedido já está valendo:</p>
+      <div class="rc-itens" id="rc-itens"></div>
+      <p id="rc-total"></p>
+    </div>
+
+    <a class="btn-outra" href="/camiseta.html">Fazer outro pedido</a>
+  </div>
+
+  <p class="rc-saiba-mais">✦ Quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
+</div>
+
+<script>
+const CAMISETA_API = '/api/camiseta';
+let rcUltimoDebug = '';
+
+function rcFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rcVerificar(tentativa) {
+  tentativa = tentativa || 1;
+  const params = new URLSearchParams(window.location.search);
+  const pedido = params.get('pedido');
+  const produtoId = params.get('produto');
+  const transactionNsu = params.get('transaction_nsu') || params.get('transactionNsu') || params.get('nsu') || params.get('transaction_id') || '';
+  const slugDaVolta = params.get('slug') || '';
+
+  document.getElementById('rc-pendente').style.display = 'none';
+  document.getElementById('rc-erro').style.display = 'none';
+  document.getElementById('rc-conteudo').style.display = 'none';
+  document.getElementById('rc-carregando').style.display = '';
+
+  if (!pedido || !produtoId) {
+    document.getElementById('rc-carregando').style.display = 'none';
+    document.getElementById('rc-erro').style.display = '';
+    return;
+  }
+
+  try {
+    const res = await fetch(CAMISETA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'verificar-pagamento', pedido, produtoId, transactionNsu, slug: slugDaVolta }),
+    });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      document.getElementById('rc-carregando').style.display = 'none';
+      document.getElementById('rc-conteudo').style.display = '';
+      document.getElementById('rc-itens').textContent = (data.itens || []).map(i => `${i.quantidade} ${i.tamanho}`).join(' · ');
+      document.getElementById('rc-total').textContent = `Total: ${rcFormatarPreco(data.total)}`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (!res.ok) {
+      document.getElementById('rc-carregando').style.display = 'none';
+      document.getElementById('rc-erro').style.display = '';
+      return;
+    }
+    if (data.debug) {
+      rcUltimoDebug = `URL: ${window.location.search || '(sem parâmetros)'}\nslug: ${data.slug || '(nenhum)'}\ntransactionNsu: ${data.transactionNsu || '(nenhum)'}\nresposta: ${data.debug}`;
+    }
+  } catch (e) { /* tenta de novo abaixo, ou cai na tela de pendente */ }
+
+  if (tentativa < 3) {
+    setTimeout(() => rcVerificar(tentativa + 1), 2500);
+  } else {
+    document.getElementById('rc-carregando').style.display = 'none';
+    document.getElementById('rc-pendente').style.display = '';
+    const debugEl = document.getElementById('rc-pendente-debug');
+    if (rcUltimoDebug) { debugEl.textContent = rcUltimoDebug; debugEl.style.display = ''; }
+    else { debugEl.style.display = 'none'; }
+  }
+}
+
+rcVerificar(1);
+</script>
+
+</body>
+</html>
