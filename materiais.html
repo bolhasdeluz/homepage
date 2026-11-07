@@ -50,6 +50,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .mt-vazio{text-align:center;padding:50px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem}
 
+.mt-estoque-card{background:#fff;border:1px solid var(--border);border-top:4px solid var(--amber);border-radius:14px;padding:18px 18px 10px;margin-bottom:22px;box-shadow:0 2px 10px rgba(140,58,26,.05)}
+.mt-estoque-titulo{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
+.mt-estoque-sub{font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:2px 0 14px}
+.mt-estoque-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 12px}
+.mt-estoque-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
+.mt-estoque-nome{font-size:.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-estoque-input{width:56px;flex-shrink:0;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;font-size:.82rem;text-align:center;color:var(--text);background:var(--amber-dim);outline:none}
+.mt-estoque-input:focus{border-color:var(--amber)}
+
 .mt-anos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
 .mt-anos::-webkit-scrollbar{display:none}
 .mt-ano-chip{flex-shrink:0;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:8px 18px;font-size:.85rem;font-weight:700;font-family:'Cinzel',serif;color:var(--text);white-space:nowrap;transition:all .15s}
@@ -99,6 +108,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="mt-conteudo" style="display:none">
+    <div class="mt-estoque-card">
+      <div class="mt-estoque-titulo">📋 Lista de Compras do Ano</div>
+      <div class="mt-estoque-sub">Quanto de cada material você precisa comprar pro ano selecionado abaixo — serve de lista de compras, separado do que foi usado em cada sessão</div>
+      <div class="mt-estoque-grid" id="mt-estoque-grid"></div>
+      <div class="mt-material-salvando" id="mt-estoque-status"></div>
+    </div>
+
     <div class="mt-anos" id="mt-anos"></div>
     <div id="mt-lista-sessoes"><div class="mt-vazio">Carregando sessões...</div></div>
   </div>
@@ -163,6 +179,7 @@ const MT_MATERIAIS = [
   'Vela', 'Vela Branca', 'Vela Colorida', 'Pipoca', 'Cachaça', 'Champanhe',
   'Canjica Branca', 'Canjica Amarela', 'Farinha de Milho', 'Farinha de Mandioca',
   'Charuto', 'Cigarro', 'Carvão', 'Guaraná', 'Cerveja Amarela', 'Cerveja Preta',
+  'Pólvora', 'Fósforo', 'Detergente', 'Qboa', 'Dendê', 'Mel', 'Algodão',
 ].slice().sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 const MT_MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -177,15 +194,19 @@ async function mtCarregar() {
     const res = await fetch('/api/sessoes');
     mtSessoes = res.ok ? await res.json() : [];
   } catch (e) { mtSessoes = []; }
+  // o ano atual sempre entra na lista de chips, mesmo sem sessão nenhuma
+  // cadastrada ainda — a Lista de Compras do Ano não depende de ter sessão
+  const anoAtual = String(new Date().getFullYear());
+  const anosComSessao = mtSessoes.filter(s => s.data).map(s => s.data.slice(0, 4));
+  const anos = [...new Set([...anosComSessao, anoAtual])].sort();
+  mtAnoAtivo = anos.includes(anoAtual) ? anoAtual : anos[anos.length - 1];
+  mtRenderAnos(anos);
   if (!mtSessoes.length) {
     wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão cadastrada no Calendário ainda.</div>';
-    document.getElementById('mt-anos').innerHTML = '';
-    return;
+  } else {
+    mtRenderLista();
   }
-  const anos = [...new Set(mtSessoes.filter(s => s.data).map(s => s.data.slice(0, 4)))].sort();
-  mtAnoAtivo = anos.includes(String(new Date().getFullYear())) ? String(new Date().getFullYear()) : anos[anos.length - 1];
-  mtRenderAnos(anos);
-  mtRenderLista();
+  mtCarregarEstoque(mtAnoAtivo);
 }
 
 function mtRenderAnos(anos) {
@@ -199,6 +220,55 @@ window.mtEscolherAno = function(ano) {
   mtAbertaId = null;
   document.querySelectorAll('.mt-ano-chip').forEach(el => el.classList.toggle('ativo', el.textContent.trim() === ano));
   mtRenderLista();
+  mtCarregarEstoque(ano);
+};
+
+// ══════════════════════════════════════════════════════════════
+// LISTA DE COMPRAS DO ANO — controle de estoque simples: quanto de cada
+// material a Anna quer comprar pro ano selecionado. Separado do material
+// marcado por sessão acima (ver mtToggleMaterial) — um registro por ano,
+// guardado em /api/estoque
+// ══════════════════════════════════════════════════════════════
+let mtEstoque = {}; // { "Vela": 12, ... }
+
+async function mtCarregarEstoque(ano) {
+  try {
+    const res = await fetch(`/api/estoque?ano=${encodeURIComponent(ano)}`);
+    const dados = res.ok ? await res.json() : {};
+    mtEstoque = (dados && dados.materiais) || {};
+  } catch (e) { mtEstoque = {}; }
+  mtRenderEstoque();
+}
+
+function mtRenderEstoque() {
+  document.getElementById('mt-estoque-grid').innerHTML = MT_MATERIAIS.map(m => {
+    const materialEsc = m.replace(/'/g, "\\'");
+    return `
+    <div class="mt-estoque-linha">
+      <span class="mt-estoque-nome" title="${mtEsc(m)}">${mtEsc(m)}</span>
+      <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${mtEstoque[m] || ''}" placeholder="0" onchange="mtSalvarQuantidade('${materialEsc}', this.value)">
+    </div>
+  `;
+  }).join('');
+}
+
+window.mtSalvarQuantidade = async function(material, valor) {
+  const qtd = parseInt(valor, 10) || 0;
+  if (qtd > 0) mtEstoque[material] = qtd; else delete mtEstoque[material];
+  const statusEl = document.getElementById('mt-estoque-status');
+  statusEl.textContent = '⏳ Salvando...';
+  try {
+    const res = await fetch('/api/estoque', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ ano: mtAnoAtivo, materiais: mtEstoque }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    statusEl.textContent = '✔ Salvo';
+    setTimeout(() => { statusEl.textContent = ''; }, 1500);
+  } catch (e) {
+    statusEl.textContent = '❌ Não consegui salvar agora — tenta de novo.';
+  }
 };
 
 function mtRenderLista() {
