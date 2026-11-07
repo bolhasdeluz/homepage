@@ -158,28 +158,46 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 // real; confirma o valor exato com o vendedor antes de fechar a compra.
 // null = não achei preço confiável pesquisando (ver aviso que mandei
 // junto com essa mudança)
+// alguns materiais têm opção de comprar avulso OU numa caixa/pack fechado
+// (sai mais em conta por unidade, mas é mais dinheiro de uma vez) — pra
+// esses, as duas opções ficam como itens separados (nome base vs "nome
+// (caixa c/ N)"), uma do lado da outra na lista (a ordenação alfabética já
+// deixa as duas juntas, já que "Nome (caixa..." começa igual a "Nome")
 const MT_MATERIAIS = [
   { nome: 'Vela', precoRef: 0.60, unidade: 'un' },
+  { nome: 'Vela (caixa c/ 100)', precoRef: 50.21, unidade: 'caixa' },
   { nome: 'Vela Branca', precoRef: 6.50, unidade: 'un (7 dias)' },
+  { nome: 'Vela Branca (caixa c/ 12)', precoRef: 75.00, unidade: 'caixa' },
   { nome: 'Vela Colorida', precoRef: 16.00, unidade: 'un (7 dias)' },
+  { nome: 'Vela Colorida (caixa c/ 12)', precoRef: 192.56, unidade: 'caixa' },
   { nome: 'Pipoca', precoRef: 25.00, unidade: 'kg' },
   { nome: 'Cachaça', precoRef: 15.00, unidade: 'garrafa 965ml' },
+  { nome: 'Cachaça (caixa c/ 12 garrafas)', precoRef: 180.00, unidade: 'caixa' },
   { nome: 'Champanhe', precoRef: 30.00, unidade: 'garrafa 750ml' },
+  { nome: 'Champanhe (caixa c/ 6 garrafas)', precoRef: 180.00, unidade: 'caixa' },
   { nome: 'Canjica Branca', precoRef: 15.00, unidade: 'kg' },
   { nome: 'Canjica Amarela', precoRef: 15.00, unidade: 'kg' },
   { nome: 'Farinha de Milho', precoRef: 8.00, unidade: 'kg' },
   { nome: 'Farinha de Mandioca', precoRef: 10.00, unidade: 'kg' },
   { nome: 'Charuto', precoRef: null, unidade: 'un' },
   { nome: 'Cigarro', precoRef: 7.50, unidade: 'maço' },
+  { nome: 'Cigarro (caixa c/ 10 maços)', precoRef: 75.00, unidade: 'caixa' },
   { nome: 'Carvão', precoRef: 0.45, unidade: 'disco' },
+  { nome: 'Carvão (caixa c/ 36 discos)', precoRef: 17.01, unidade: 'caixa' },
   { nome: 'Guaraná', precoRef: 9.00, unidade: 'garrafa 2L' },
+  { nome: 'Guaraná (caixa c/ 6 garrafas 2L)', precoRef: 69.90, unidade: 'caixa' },
+  { nome: 'Cerveja Amarela (lata avulsa)', precoRef: 4.50, unidade: 'lata' },
   { nome: 'Cerveja Amarela', precoRef: 50.00, unidade: 'pack 12 latas' },
+  { nome: 'Cerveja Preta (lata avulsa)', precoRef: 5.00, unidade: 'lata' },
   { nome: 'Cerveja Preta', precoRef: 55.00, unidade: 'pack 12 latas' },
   { nome: 'Pólvora', precoRef: null, unidade: 'un' },
   { nome: 'Fósforo', precoRef: 0.85, unidade: 'caixa' },
+  { nome: 'Fósforo (caixa c/ 10 caixinhas)', precoRef: 8.59, unidade: 'caixa' },
   { nome: 'Detergente', precoRef: 2.40, unidade: 'un 500ml' },
+  { nome: 'Detergente (caixa c/ 6)', precoRef: 14.19, unidade: 'caixa' },
   { nome: 'Qboa', precoRef: 11.00, unidade: 'pote 500g' },
   { nome: 'Dendê', precoRef: 19.00, unidade: 'garrafa 500ml' },
+  { nome: 'Dendê (caixa c/ 10 garrafas)', precoRef: 279.90, unidade: 'caixa' },
   { nome: 'Mel', precoRef: 50.00, unidade: 'kg' },
   { nome: 'Algodão', precoRef: 27.00, unidade: 'rolo 500g' },
 ].slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
