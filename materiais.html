@@ -61,11 +61,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-compras-linha b{font-family:'Cinzel',serif;color:var(--rosa);white-space:nowrap}
 .mt-compras-linha i{font-style:normal;color:var(--text-dim);font-size:.76rem}
 
-.mt-estoque-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 12px}
+.mt-estoque-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px 12px}
 .mt-estoque-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
 .mt-estoque-nome{font-size:.82rem;color:var(--text);display:flex;flex-direction:column;gap:1px;min-width:0;padding-right:8px}
 .mt-estoque-preco{font-size:.66rem;color:var(--text-dim);font-style:italic;font-family:'Crimson Pro',serif}
-.mt-estoque-input{width:56px;flex-shrink:0;border:1.5px solid var(--border);border-radius:8px;padding:5px 6px;font-size:.82rem;text-align:center;color:var(--text);background:var(--amber-dim);outline:none}
+.mt-estoque-stepper{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.mt-estoque-stepper-btn{width:28px;height:28px;flex-shrink:0;border-radius:50%;border:1.5px solid var(--rosa-border);background:#fff;color:var(--rosa);font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center;line-height:1}
+.mt-estoque-stepper-btn:hover{background:var(--rosa-dim)}
+.mt-estoque-input{width:42px;flex-shrink:0;border:1.5px solid var(--border);border-radius:8px;padding:5px 2px;font-size:.82rem;text-align:center;color:var(--text);background:var(--amber-dim);outline:none}
+.mt-estoque-input::-webkit-inner-spin-button,.mt-estoque-input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.mt-estoque-input{-moz-appearance:textfield}
 .mt-estoque-total{font-family:'Cinzel',serif;font-size:.78rem;font-weight:700;color:var(--amber);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
 .mt-estoque-input:focus{border-color:var(--amber)}
 
@@ -291,10 +296,24 @@ function mtRenderMaterialSessaoLinha(s, materiais, material) {
   return `
     <div class="mt-estoque-linha">
       <span class="mt-estoque-nome">${mtEsc(material.nome)}${mtPrecoHintHtml(material)}</span>
-      <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${materiais[material.nome] || ''}" placeholder="0" onchange="mtSalvarQuantidadeSessao('${s.id}','${materialEsc}', this.value)">
+      <div class="mt-estoque-stepper">
+        <button type="button" class="mt-estoque-stepper-btn" onclick="mtAjustarQtdSessao('${s.id}','${materialEsc}',-1)">−</button>
+        <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${materiais[material.nome] || ''}" placeholder="0" onchange="mtSalvarQuantidadeSessao('${s.id}','${materialEsc}', this.value)">
+        <button type="button" class="mt-estoque-stepper-btn" onclick="mtAjustarQtdSessao('${s.id}','${materialEsc}',1)">+</button>
+      </div>
     </div>
   `;
 }
+
+// botões de +/− das setas — leem a quantidade atual direto do estado (não
+// do input na tela) e reusam a mesma função de salvar do campo numérico,
+// pra não duplicar a lógica de gravar
+window.mtAjustarQtdSessao = function(id, nomeMaterial, delta) {
+  const sessao = mtSessoes.find(s => s.id === id);
+  if (!sessao) return;
+  const atual = mtMateriaisDe(sessao)[nomeMaterial] || 0;
+  mtSalvarQuantidadeSessao(id, nomeMaterial, Math.max(0, atual + delta));
+};
 
 // dica do preço de referência embaixo do nome — fica em branco (sem
 // inventar valor) pra Charuto e Pólvora, onde não achei preço confiável
@@ -389,12 +408,21 @@ function mtRenderEstoque() {
     return `
     <div class="mt-estoque-linha">
       <span class="mt-estoque-nome">${mtEsc(m.nome)}${mtPrecoHintHtml(m)}</span>
-      <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${mtEstoque[m.nome] || ''}" placeholder="0" onchange="mtSalvarQuantidade('${materialEsc}', this.value)">
+      <div class="mt-estoque-stepper">
+        <button type="button" class="mt-estoque-stepper-btn" onclick="mtAjustarQtdEstoque('${materialEsc}',-1)">−</button>
+        <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${mtEstoque[m.nome] || ''}" placeholder="0" onchange="mtSalvarQuantidade('${materialEsc}', this.value)">
+        <button type="button" class="mt-estoque-stepper-btn" onclick="mtAjustarQtdEstoque('${materialEsc}',1)">+</button>
+      </div>
     </div>
   `;
   }).join('');
   mtRenderTotalEstoque();
 }
+
+window.mtAjustarQtdEstoque = function(nomeMaterial, delta) {
+  const atual = mtEstoque[nomeMaterial] || 0;
+  mtSalvarQuantidade(nomeMaterial, Math.max(0, atual + delta));
+};
 
 // soma o custo estimado (quantidade × preço de referência) pra conferência
 // rápida — materiais sem preço de referência (Charuto, Pólvora) ficam de
