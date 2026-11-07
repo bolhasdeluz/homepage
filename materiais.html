@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Materiais das Sessões — Bolhas de Luz</title>
+<meta name="description" content="Controle de materiais usados em cada sessão do Terreiro Bolhas de Luz — só para a administração.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Materiais — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select{font-family:inherit}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.mt-header{background:linear-gradient(135deg,#c4396b 0%,#a52c58 55%,#8a1a40 100%);padding:18px 20px 22px;text-align:center;position:relative;box-shadow:0 4px 20px rgba(196,57,107,.25)}
+.mt-header-eyebrow{font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.mt-header-titulo{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);margin-top:2px}
+.mt-header-sub{font-family:'Crimson Pro',serif;font-size:.9rem;font-style:italic;color:rgba(255,255,255,.82);margin-top:4px}
+.mt-header-voltar{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.78rem;padding:6px 14px;font-family:'DM Sans',sans-serif}
+.mt-header-sair{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.72rem;padding:6px 12px;font-family:'DM Sans',sans-serif;display:none}
+
+.mt-wrap{max-width:700px;margin:0 auto;padding:26px 16px}
+
+.mt-bloqueado{background:#fff;border:1px solid var(--border);border-radius:16px;padding:34px 24px;text-align:center;box-shadow:0 4px 20px rgba(196,57,107,.08)}
+.mt-bloqueado p{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.95rem;margin-bottom:18px}
+.mt-btn{border:none;border-radius:10px;padding:12px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
+.mt-btn:hover{transform:translateY(-1px)}
+.mt-btn-primario{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;display:inline-flex;align-items:center;gap:10px}
+
+.mt-vazio{text-align:center;padding:50px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem}
+
+.mt-anos{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+.mt-anos::-webkit-scrollbar{display:none}
+.mt-ano-chip{flex-shrink:0;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:8px 18px;font-size:.85rem;font-weight:700;font-family:'Cinzel',serif;color:var(--text);white-space:nowrap;transition:all .15s}
+.mt-ano-chip.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
+
+.mt-sessao{background:#fff;border:1px solid var(--border);border-radius:14px;margin-bottom:12px;overflow:hidden;box-shadow:0 2px 10px rgba(140,58,26,.05)}
+.mt-sessao-topo{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer}
+.mt-sessao-data{flex-shrink:0;text-align:center;background:var(--rosa-dim);border-radius:10px;padding:6px 10px;min-width:46px}
+.mt-sessao-data .dia{font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700;color:var(--rosa);line-height:1.1}
+.mt-sessao-data .mes{font-family:'DM Sans',sans-serif;font-size:.6rem;text-transform:uppercase;color:var(--text-dim)}
+.mt-sessao-info{flex:1;min-width:0}
+.mt-sessao-nome{font-family:'Playfair Display',serif;font-weight:600;font-size:.96rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mt-sessao-meta{font-family:'DM Sans',sans-serif;font-size:.72rem;color:var(--text-dim);margin-top:2px}
+.mt-sessao-contagem{flex-shrink:0;font-family:'Cinzel',serif;font-size:.68rem;font-weight:700;color:var(--green);background:var(--green-dim);border:1px solid var(--green-border);border-radius:20px;padding:4px 10px;white-space:nowrap}
+.mt-sessao-contagem.vazia{color:var(--text-dim);background:var(--rosa-dim);border-color:var(--border)}
+.mt-sessao-seta{flex-shrink:0;color:var(--text-dim);transition:transform .2s;font-size:.8rem}
+.mt-sessao.aberta .mt-sessao-seta{transform:rotate(180deg)}
+
+.mt-materiais{display:none;padding:4px 16px 16px}
+.mt-sessao.aberta .mt-materiais{display:block}
+.mt-materiais-grid{display:flex;flex-wrap:wrap;gap:7px}
+.mt-material-btn{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:7px 14px;font-size:.78rem;color:var(--text);transition:all .15s;font-family:'DM Sans',sans-serif}
+.mt-material-btn.selecionado{background:var(--rosa);border-color:var(--rosa);color:#fff;font-weight:600}
+.mt-material-salvando{font-size:.68rem;color:var(--text-dim);margin-top:8px;font-style:italic;font-family:'Crimson Pro',serif}
+
+#mt-login-overlay{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:16px}
+#mt-login-overlay.aberto{display:flex}
+.mt-login-modal{background:#fff;border-radius:18px;padding:28px 24px;max-width:340px;text-align:center;box-shadow:0 12px 50px rgba(140,58,26,.22)}
+.mt-login-modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;margin-bottom:8px}
+.mt-login-modal p{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:18px;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="mt-header">
+  <a href="/index.html" class="mt-header-voltar">← Voltar ao site</a>
+  <button class="mt-header-sair" id="mt-btn-sair" onclick="mtSair()">Sair</button>
+  <div class="mt-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+  <div class="mt-header-titulo">📦 Materiais das Sessões</div>
+  <div class="mt-header-sub">o que foi usado em cada sessão do ano</div>
+</div>
+
+<div class="mt-wrap">
+  <div id="mt-bloqueado" class="mt-bloqueado">
+    <p>Essa página é só para a administração da casa.</p>
+    <button class="mt-btn mt-btn-primario" onclick="mtAbrirLogin()">Entrar com Google</button>
+  </div>
+
+  <div id="mt-conteudo" style="display:none">
+    <div class="mt-anos" id="mt-anos"></div>
+    <div id="mt-lista-sessoes"><div class="mt-vazio">Carregando sessões...</div></div>
+  </div>
+</div>
+
+<div id="mt-login-overlay" onclick="if(event.target===this) mtFecharLogin()">
+  <div class="mt-login-modal">
+    <h3>Área Interna</h3>
+    <p>Exclusiva para a administração da casa.</p>
+    <button class="mt-btn mt-btn-primario" style="width:100%;justify-content:center" onclick="mtLoginGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.7 13.4 17.9 9.5 24 9.5z"/><path fill="#4A90D9" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.8 28.5A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5L2.4 13.5A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.3-6.3z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.2-7.7 2.2-6.1 0-11.3-4-13.2-9.4l-7.8 6C6.8 42.5 14.7 48 24 48z"/></svg>
+      Entrar com Google
+    </button>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+// mesma lista de e-mails admin já usada na loja (Flora) e na tesouraria —
+// essa página também é de uso exclusivo da administração
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+
+window.mtAbrirLogin = function() { document.getElementById('mt-login-overlay').classList.add('aberto'); };
+window.mtFecharLogin = function() { document.getElementById('mt-login-overlay').classList.remove('aberto'); };
+window.mtLoginGoogle = function() { signInWithPopup(auth, provider).catch(e => console.warn('login:', e)); };
+window.mtSair = function() { signOut(auth); };
+
+onAuthStateChanged(auth, (user) => {
+  const ehAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
+  document.getElementById('mt-bloqueado').style.display = ehAdmin ? 'none' : 'block';
+  document.getElementById('mt-conteudo').style.display = ehAdmin ? 'block' : 'none';
+  document.getElementById('mt-btn-sair').style.display = ehAdmin ? 'inline-block' : 'none';
+  if (ehAdmin) {
+    document.getElementById('mt-login-overlay').classList.remove('aberto');
+    window._mtPronto?.();
+  }
+});
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════
+// CATÁLOGO DE MATERIAIS — pré-cadastrado direto no código (a Anna pode ir
+// pedindo pra adicionar mais itens aqui com o tempo, sem precisar de tela
+// de cadastro própria pra isso)
+// ══════════════════════════════════════════════════════════════
+const MT_MATERIAIS = [
+  'Vela', 'Vela Branca', 'Vela Colorida', 'Pipoca', 'Cachaça', 'Champanhe',
+  'Canjica Branca', 'Canjica Amarela', 'Farinha de Milho', 'Farinha de Mandioca',
+  'Charuto', 'Cigarro', 'Carvão', 'Guaraná', 'Cerveja Amarela', 'Cerveja Preta',
+].slice().sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+const MT_MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+
+let mtSessoes = [];
+let mtAnoAtivo = null;
+let mtAbertaId = null; // id da sessão com o checklist expandido (só uma por vez)
+
+async function mtCarregar() {
+  const wrap = document.getElementById('mt-lista-sessoes');
+  try {
+    const res = await fetch('/api/sessoes');
+    mtSessoes = res.ok ? await res.json() : [];
+  } catch (e) { mtSessoes = []; }
+  if (!mtSessoes.length) {
+    wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão cadastrada no Calendário ainda.</div>';
+    document.getElementById('mt-anos').innerHTML = '';
+    return;
+  }
+  const anos = [...new Set(mtSessoes.filter(s => s.data).map(s => s.data.slice(0, 4)))].sort();
+  mtAnoAtivo = anos.includes(String(new Date().getFullYear())) ? String(new Date().getFullYear()) : anos[anos.length - 1];
+  mtRenderAnos(anos);
+  mtRenderLista();
+}
+
+function mtRenderAnos(anos) {
+  document.getElementById('mt-anos').innerHTML = anos.map(ano => `
+    <button class="mt-ano-chip ${ano === mtAnoAtivo ? 'ativo' : ''}" onclick="mtEscolherAno('${ano}')">${ano}</button>
+  `).join('');
+}
+
+window.mtEscolherAno = function(ano) {
+  mtAnoAtivo = ano;
+  mtAbertaId = null;
+  document.querySelectorAll('.mt-ano-chip').forEach(el => el.classList.toggle('ativo', el.textContent.trim() === ano));
+  mtRenderLista();
+};
+
+function mtRenderLista() {
+  const wrap = document.getElementById('mt-lista-sessoes');
+  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).sort((a, b) => a.data.localeCompare(b.data));
+  if (!doAno.length) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão nesse ano.</div>'; return; }
+  wrap.innerHTML = doAno.map(s => mtRenderSessao(s)).join('');
+}
+
+function mtEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function mtRenderSessao(s) {
+  const [ano, mes, dia] = (s.data || '').split('-');
+  const qtd = (s.materiais || []).length;
+  const aberta = s.id === mtAbertaId;
+  return `
+    <div class="mt-sessao ${aberta ? 'aberta' : ''}" data-id="${s.id}">
+      <div class="mt-sessao-topo" onclick="mtToggleSessao('${s.id}')">
+        <div class="mt-sessao-data"><div class="dia">${dia || '—'}</div><div class="mes">${mes ? MT_MESES[parseInt(mes,10)-1] : ''}</div></div>
+        <div class="mt-sessao-info">
+          <div class="mt-sessao-nome">${mtEsc(s.nome) || 'Sessão'}</div>
+          <div class="mt-sessao-meta">${mtEsc(s.tipo) || '—'}${s.linha ? ' · ' + mtEsc(s.linha) : ''}</div>
+        </div>
+        <span class="mt-sessao-contagem ${qtd ? '' : 'vazia'}">${qtd ? qtd + ' ' + (qtd > 1 ? 'materiais' : 'material') : 'sem material'}</span>
+        <span class="mt-sessao-seta">▾</span>
+      </div>
+      <div class="mt-materiais">
+        <div class="mt-materiais-grid">${MT_MATERIAIS.map(m => mtRenderMaterialBtn(s, m)).join('')}</div>
+        <div class="mt-material-salvando" id="mt-status-${s.id}"></div>
+      </div>
+    </div>
+  `;
+}
+
+function mtRenderMaterialBtn(s, nomeMaterial) {
+  const selecionado = (s.materiais || []).includes(nomeMaterial);
+  const materialEsc = nomeMaterial.replace(/'/g, "\\'");
+  return `<button class="mt-material-btn ${selecionado ? 'selecionado' : ''}" onclick="mtToggleMaterial('${s.id}','${materialEsc}')">${mtEsc(nomeMaterial)}</button>`;
+}
+
+window.mtToggleSessao = function(id) {
+  mtAbertaId = mtAbertaId === id ? null : id;
+  mtRenderLista();
+};
+
+// marca/desmarca um material na sessão e salva na hora — não espera um
+// botão "Salvar" separado, pra ficar rápido de preencher logo depois da
+// sessão, com o celular na mão
+window.mtToggleMaterial = async function(id, nomeMaterial) {
+  const sessao = mtSessoes.find(s => s.id === id);
+  if (!sessao) return;
+  const materiais = new Set(sessao.materiais || []);
+  if (materiais.has(nomeMaterial)) materiais.delete(nomeMaterial); else materiais.add(nomeMaterial);
+  sessao.materiais = [...materiais];
+  mtRenderLista();
+
+  const statusEl = document.getElementById(`mt-status-${id}`);
+  if (statusEl) statusEl.textContent = '⏳ Salvando...';
+  try {
+    const res = await fetch('/api/sessoes', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ id, materiais: sessao.materiais }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const statusEl2 = document.getElementById(`mt-status-${id}`);
+    if (statusEl2) { statusEl2.textContent = '✔ Salvo'; setTimeout(() => { if (statusEl2) statusEl2.textContent = ''; }, 1500); }
+  } catch (e) {
+    const statusEl3 = document.getElementById(`mt-status-${id}`);
+    if (statusEl3) statusEl3.textContent = '❌ Não consegui salvar agora — tenta de novo.';
+  }
+};
+
+window._mtPronto = mtCarregar;
+fetch('/api/visita?pagina=materiais', { method: 'POST' }).catch(() => {});
+</script>
+</body>
+</html>
