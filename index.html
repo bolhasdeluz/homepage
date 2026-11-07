@@ -23162,6 +23162,15 @@ onAuthStateChanged(auth, async (user) => {
     // nesse caso ele fica pra uma próxima vez que ela entrar "normal" (sem
     // vir de um link direto), quando for mexer no perfil dela mesma
     const paginaPendente = sessionStorage.getItem('paginaAposLogin');
+    // mostra "logada" na hora (avatar + fecha a tela de login) usando só o
+    // que o Firebase Auth já trouxe pronto — sem esperar o fetch de
+    // /api/perfil abaixo, que é mais lento e às vezes demora bem mais do
+    // que deveria (rede ruim, aba que ficou em segundo plano etc.); assim a
+    // pessoa já vê que entrou, em vez de ficar olhando a tela de login por
+    // vários segundos achando que não logou
+    const avatar = document.getElementById('user-avatar');
+    if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
+    document.getElementById('login-overlay').classList.remove('open');
     // perfil marcado como inativo (desligada da casa) não é deslogada — ela
     // continua entrando normalmente, só que com o mesmo acesso de uma
     // visitante (perde Textos, Quadro das Filhas etc.), sem precisar mexer
@@ -23169,10 +23178,7 @@ onAuthStateChanged(auth, async (user) => {
     // quem de fato aplica isso em todo lugar que decide visibilidade por
     // grupo) — assim os relatórios continuam contando pelo cargo real dela
     await carregarPerfil(user.email, { suprimirBoasVindas: paginaPendente === 'camiseta' });
-    const avatar = document.getElementById('user-avatar');
-    if (avatar) { avatar.src = user.photoURL || ''; avatar.style.display = user.photoURL ? 'block' : 'none'; }
     document.getElementById('drawer-user-section').style.display = 'block';
-    document.getElementById('login-overlay').classList.remove('open');
     atualizarWidgetHistoria(true);
     window.cpIniciarListener?.();
     window.cpAtualizarCard?.();
@@ -23480,11 +23486,20 @@ window.logoutGoogle = async function() {
 // ── CARREGAR PERFIL ──
 async function carregarPerfil(email, opts) {
   const suprimirBoasVindas = !!(opts && opts.suprimirBoasVindas);
+  // limite de 8s pra não deixar o login inteiro travado esperando essa
+  // chamada numa rede ruim ou numa aba que ficou tempo em segundo plano —
+  // sem isso, uma chamada que nunca responde deixava o site "preso" bem
+  // mais de 30s (o avatar e a tela de login já foram liberados antes desta
+  // chamada, ver onAuthStateChanged; só os dados do perfil em si dependem
+  // dela — se der timeout, cai no catch abaixo com um perfil mínimo)
+  let timeoutId;
   try {
     const params = new URLSearchParams({ email });
     if (currentUser?.displayName) params.set('nome', currentUser.displayName);
     if (currentUser?.photoURL) params.set('foto', currentUser.photoURL);
-    const res = await fetch(`/api/perfil?${params}`);
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`/api/perfil?${params}`, { signal: controller.signal });
     perfilData = await res.json();
     // primeiro login — mostrar modal de boas-vindas (a não ser que quem
     // chamou tenha pedido pra segurar, ex: ela entrou direto pra comprar a
@@ -23509,6 +23524,8 @@ async function carregarPerfil(email, opts) {
     }
   } catch(e) {
     perfilData = { email, historia: {}, guias: {}, cruzamentos: {}, notas: '' };
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
   atualizarBoasVindas();
 }
