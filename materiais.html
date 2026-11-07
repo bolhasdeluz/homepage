@@ -60,6 +60,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-compras-linha{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.86rem}
 .mt-compras-linha b{font-family:'Cinzel',serif;color:var(--rosa);white-space:nowrap}
 .mt-compras-linha i{font-style:normal;color:var(--text-dim);font-size:.76rem}
+.mt-compras-sugestao{background:var(--amber-dim);border:1px solid var(--amber-border);color:var(--amber);border-radius:8px;padding:6px 10px;font-size:.74rem;margin:-2px 0 8px;font-family:'Crimson Pro',serif;font-style:italic}
 
 .mt-estoque-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:8px 12px}
 .mt-estoque-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
@@ -162,45 +163,55 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 // (sai mais em conta por unidade, mas é mais dinheiro de uma vez) — pra
 // esses, as duas opções ficam como itens separados (nome base vs "nome
 // (caixa c/ N)"), uma do lado da outra na lista (a ordenação alfabética já
-// deixa as duas juntas, já que "Nome (caixa..." começa igual a "Nome")
+// deixa as duas juntas, já que "Nome (caixa..." começa igual a "Nome").
+// caixaDe: quantas unidades do item-base vêm dentro dessa caixa — é o que
+// a Lista de Compras usa pra sugerir "vale a pena comprar a caixa" quando
+// a soma das sessões já bate (ou passa) esse tanto E sai mais barato
+// (correção: "Cerveja Amarela/Preta" antes guardava o pack de 12 como se
+// fosse a unidade avulsa — agora a unidade é a lata, igual todo o resto)
 const MT_MATERIAIS = [
   { nome: 'Vela', precoRef: 0.60, unidade: 'un' },
-  { nome: 'Vela (caixa c/ 100)', precoRef: 50.21, unidade: 'caixa' },
+  { nome: 'Vela (caixa c/ 100)', precoRef: 50.21, unidade: 'caixa', caixaDe: 100 },
   { nome: 'Vela Branca', precoRef: 6.50, unidade: 'un (7 dias)' },
-  { nome: 'Vela Branca (caixa c/ 12)', precoRef: 75.00, unidade: 'caixa' },
+  { nome: 'Vela Branca (caixa c/ 12)', precoRef: 75.00, unidade: 'caixa', caixaDe: 12 },
   { nome: 'Vela Colorida', precoRef: 16.00, unidade: 'un (7 dias)' },
-  { nome: 'Vela Colorida (caixa c/ 12)', precoRef: 192.56, unidade: 'caixa' },
+  { nome: 'Vela Colorida (caixa c/ 12)', precoRef: 192.56, unidade: 'caixa', caixaDe: 12 },
   { nome: 'Pipoca', precoRef: 25.00, unidade: 'kg' },
   { nome: 'Cachaça', precoRef: 15.00, unidade: 'garrafa 965ml' },
-  { nome: 'Cachaça (caixa c/ 12 garrafas)', precoRef: 180.00, unidade: 'caixa' },
+  { nome: 'Cachaça (caixa c/ 12 garrafas)', precoRef: 180.00, unidade: 'caixa', caixaDe: 12 },
   { nome: 'Champanhe', precoRef: 30.00, unidade: 'garrafa 750ml' },
-  { nome: 'Champanhe (caixa c/ 6 garrafas)', precoRef: 180.00, unidade: 'caixa' },
+  { nome: 'Champanhe (caixa c/ 6 garrafas)', precoRef: 180.00, unidade: 'caixa', caixaDe: 6 },
   { nome: 'Canjica Branca', precoRef: 15.00, unidade: 'kg' },
   { nome: 'Canjica Amarela', precoRef: 15.00, unidade: 'kg' },
   { nome: 'Farinha de Milho', precoRef: 8.00, unidade: 'kg' },
   { nome: 'Farinha de Mandioca', precoRef: 10.00, unidade: 'kg' },
   { nome: 'Charuto', precoRef: null, unidade: 'un' },
   { nome: 'Cigarro', precoRef: 7.50, unidade: 'maço' },
-  { nome: 'Cigarro (caixa c/ 10 maços)', precoRef: 75.00, unidade: 'caixa' },
+  { nome: 'Cigarro (caixa c/ 10 maços)', precoRef: 75.00, unidade: 'caixa', caixaDe: 10 },
   { nome: 'Carvão', precoRef: 0.45, unidade: 'disco' },
-  { nome: 'Carvão (caixa c/ 36 discos)', precoRef: 17.01, unidade: 'caixa' },
+  { nome: 'Carvão (caixa c/ 36 discos)', precoRef: 17.01, unidade: 'caixa', caixaDe: 36 },
   { nome: 'Guaraná', precoRef: 9.00, unidade: 'garrafa 2L' },
-  { nome: 'Guaraná (caixa c/ 6 garrafas 2L)', precoRef: 69.90, unidade: 'caixa' },
-  { nome: 'Cerveja Amarela (lata avulsa)', precoRef: 4.50, unidade: 'lata' },
-  { nome: 'Cerveja Amarela', precoRef: 50.00, unidade: 'pack 12 latas' },
-  { nome: 'Cerveja Preta (lata avulsa)', precoRef: 5.00, unidade: 'lata' },
-  { nome: 'Cerveja Preta', precoRef: 55.00, unidade: 'pack 12 latas' },
+  { nome: 'Guaraná (caixa c/ 6 garrafas 2L)', precoRef: 69.90, unidade: 'caixa', caixaDe: 6 },
+  { nome: 'Cerveja Amarela', precoRef: 4.50, unidade: 'lata' },
+  { nome: 'Cerveja Amarela (caixa c/ 12 latas)', precoRef: 50.00, unidade: 'caixa', caixaDe: 12 },
+  { nome: 'Cerveja Preta', precoRef: 5.00, unidade: 'lata' },
+  { nome: 'Cerveja Preta (caixa c/ 12 latas)', precoRef: 55.00, unidade: 'caixa', caixaDe: 12 },
   { nome: 'Pólvora', precoRef: null, unidade: 'un' },
   { nome: 'Fósforo', precoRef: 0.85, unidade: 'caixa' },
-  { nome: 'Fósforo (caixa c/ 10 caixinhas)', precoRef: 8.59, unidade: 'caixa' },
+  { nome: 'Fósforo (caixa c/ 10 caixinhas)', precoRef: 8.59, unidade: 'caixa', caixaDe: 10 },
   { nome: 'Detergente', precoRef: 2.40, unidade: 'un 500ml' },
-  { nome: 'Detergente (caixa c/ 6)', precoRef: 14.19, unidade: 'caixa' },
+  { nome: 'Detergente (caixa c/ 6)', precoRef: 14.19, unidade: 'caixa', caixaDe: 6 },
   { nome: 'Qboa', precoRef: 11.00, unidade: 'pote 500g' },
   { nome: 'Dendê', precoRef: 19.00, unidade: 'garrafa 500ml' },
-  { nome: 'Dendê (caixa c/ 10 garrafas)', precoRef: 279.90, unidade: 'caixa' },
+  { nome: 'Dendê (caixa c/ 10 garrafas)', precoRef: 279.90, unidade: 'caixa', caixaDe: 10 },
   { nome: 'Mel', precoRef: 50.00, unidade: 'kg' },
   { nome: 'Algodão', precoRef: 27.00, unidade: 'rolo 500g' },
 ].slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+// acha a variante de caixa de um material-base, se existir
+function mtVarianteCaixaDe(nomeBase) {
+  return MT_MATERIAIS.find(m => m.caixaDe && m.nome.split(' (')[0] === nomeBase);
+}
 
 // marcar o que foi usado numa sessão é sempre por unidade avulsa — não faz
 // sentido gastar "meia caixa" numa sessão só; a opção de caixa/pack fica
@@ -402,11 +413,29 @@ window.mtAbrirPopupCompras = function() {
     ? nomes.map(n => {
         const info = mtMaterialInfo(n);
         const custo = info && info.precoRef != null ? mtFormatarPreco(info.precoRef * somado[n]) : '—';
-        return `<div class="mt-compras-linha"><span>${mtEsc(n)} <i>(${somado[n]} ${info ? info.unidade : ''})</i></span><b>${custo}</b></div>`;
+        return `<div class="mt-compras-linha"><span>${mtEsc(n)} <i>(${somado[n]} ${info ? info.unidade : ''})</i></span><b>${custo}</b></div>${mtSugestaoCaixaHtml(info, somado[n])}`;
       }).join('') + `<div class="mt-estoque-total">${mtFormatarCustoTexto(somado)}</div>`
     : '<div class="mt-vazio" style="padding:24px 0">Nenhum material marcado nas sessões desse ano ainda.</div>';
   document.getElementById('mt-popup-compras-overlay').classList.add('aberto');
 };
+
+// compara comprar a quantidade somada por unidade vs em caixas fechadas (o
+// resto sobrando continua por unidade) — só sugere quando sai mais barato
+// de verdade, nunca só porque a quantidade já bate o tamanho da caixa (ex:
+// a caixa de Dendê saiu mais cara por unidade na pesquisa, então nunca
+// sugere, mesmo passando de 10 garrafas)
+function mtSugestaoCaixaHtml(infoBase, qtd) {
+  if (!infoBase || infoBase.precoRef == null) return '';
+  const caixa = mtVarianteCaixaDe(infoBase.nome);
+  if (!caixa) return '';
+  const numCaixas = Math.floor(qtd / caixa.caixaDe);
+  if (numCaixas < 1) return '';
+  const custoPorUnidade = infoBase.precoRef * qtd;
+  const custoComCaixas = numCaixas * caixa.precoRef + (qtd % caixa.caixaDe) * infoBase.precoRef;
+  if (custoComCaixas >= custoPorUnidade) return '';
+  const economia = custoPorUnidade - custoComCaixas;
+  return `<div class="mt-compras-sugestao">💡 Vale a pena comprar ${numCaixas > 1 ? numCaixas + ' caixas' : '1 caixa'} de ${mtEsc(infoBase.nome)} (${mtFormatarPreco(caixa.precoRef)} cada) em vez de tudo avulso — economiza ${mtFormatarPreco(economia)}</div>`;
+}
 window.mtFecharPopupCompras = function() {
   document.getElementById('mt-popup-compras-overlay').classList.remove('aberto');
 };
