@@ -43,50 +43,33 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .lj-header-voltar{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.78rem;padding:6px 14px;font-family:'DM Sans',sans-serif}
 .lj-header-admin{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.72rem;padding:6px 12px;font-family:'DM Sans',sans-serif}
 
-/* ── LOJA (estante virtual) ── */
-.lj-loja{max-width:900px;margin:0 auto;padding:26px 16px;position:relative}
+/* ── LOJA (catálogo em grade, igual marketplace) ── */
+.lj-loja{max-width:1100px;margin:0 auto;padding:22px 16px;position:relative}
 .lj-vazio{text-align:center;padding:60px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1.05rem}
 
-/* folhinhas flutuando de fundo — dá um respiro orgânico, mesma ideia das
-   bolhas do resto do site, só que com a cara da Flora */
-.lj-folhas-fundo{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-.lj-folha{position:absolute;font-size:1.1rem;opacity:0;animation:ljFolhaCai linear infinite;filter:drop-shadow(0 2px 3px rgba(107,68,35,.15))}
-@keyframes ljFolhaCai{
-  0%{transform:translateY(-8vh) translateX(0) rotate(0deg);opacity:0}
-  8%{opacity:.5}
-  92%{opacity:.35}
-  100%{transform:translateY(108vh) translateX(var(--deriva,30px)) rotate(var(--giro,180deg));opacity:0}
-}
+.lj-busca-wrap{margin-bottom:12px}
+.lj-busca-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 16px;font-size:14px;color:var(--text);background:#fff;outline:none;transition:border-color .15s}
+.lj-busca-input:focus{border-color:var(--rosa)}
 
-.lj-prateleira-secao{margin-bottom:40px}
-.lj-prateleira-titulo{position:relative;display:inline-flex;align-items:center;gap:7px;font-family:'Cinzel',serif;font-size:.86rem;letter-spacing:.05em;text-transform:uppercase;color:#fff;font-weight:700;margin:0 0 -2px 14px;padding:7px 16px 9px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));border-radius:8px 8px 3px 3px;box-shadow:0 4px 10px rgba(196,57,107,.3);transform:rotate(-1.2deg);z-index:2}
-.lj-prateleira-titulo::after{content:'';position:absolute;left:50%;top:-6px;transform:translateX(-50%);width:2px;height:8px;background:rgba(140,58,26,.4);border-radius:1px}
-.lj-prateleira-titulo .ic{font-size:1.15rem}
+.lj-filtros-categoria{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:18px;scrollbar-width:none}
+.lj-filtros-categoria::-webkit-scrollbar{display:none}
+.lj-filtro-chip{flex-shrink:0;background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:8px 16px;font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;transition:all .15s}
+.lj-filtro-chip.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
 
-.lj-prateleira{position:relative;padding:24px 0 30px;background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.15) 70%);border-radius:4px 16px 16px 16px}
-.lj-prateleira-itens{display:flex;gap:20px;overflow-x:auto;overflow-y:visible;position:relative;z-index:1;padding:6px 20px 10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-.lj-prateleira-itens::-webkit-scrollbar{display:none}
-.lj-prateleira-tabua{position:absolute;left:4px;right:4px;bottom:12px;height:20px;border-radius:4px;
-  background:
-    repeating-linear-gradient(90deg,rgba(0,0,0,.06) 0 2px,transparent 2px 34px),
-    linear-gradient(180deg,var(--madeira-clara),var(--madeira) 45%,var(--madeira-escura));
-  box-shadow:0 7px 14px rgba(107,68,35,.4),inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.2)}
-.lj-prateleira-tabua::before{content:'';position:absolute;left:0;right:0;top:-3px;height:3px;background:rgba(255,255,255,.35);border-radius:2px 2px 0 0}
-/* sugestão sutil de que dá pra arrastar pro lado — só aparece se a
-   prateleira realmente for mais larga que a tela */
-.lj-prateleira::after{content:'';position:absolute;top:24px;bottom:30px;right:0;width:28px;background:linear-gradient(90deg,transparent,var(--creme) 85%);pointer-events:none;z-index:1;border-radius:0 16px 16px 0}
-
-.lj-produto-item{display:flex;flex-direction:column;align-items:center;gap:7px;cursor:pointer;transition:transform .2s;position:relative;z-index:2;flex-shrink:0;scroll-snap-align:start;transform:rotate(var(--tilt,0deg))}
-.lj-produto-item:hover{transform:rotate(0deg) translateY(-6px) scale(1.04)}
-.lj-produto-item:hover .lj-produto-sombra{opacity:.4;transform:scaleX(1.15)}
-.lj-produto-icone-wrap{width:76px;height:76px;position:relative}
-.lj-produto-icone-inner{width:100%;height:100%;background:radial-gradient(circle at 35% 30%,#fff,#fdf0f3 70%);border:1.5px solid var(--border);border-radius:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(140,58,26,.12);overflow:hidden}
-.lj-produto-icone-inner img{width:100%;height:100%;object-fit:cover}
-.lj-produto-icone{font-size:2.1rem}
-.lj-produto-sombra{width:52px;height:10px;margin-top:-4px;background:radial-gradient(ellipse,rgba(107,68,35,.32),transparent 75%);opacity:.28;transition:opacity .2s,transform .2s;border-radius:50%}
-.lj-produto-desconto-selo{position:absolute;top:-6px;right:-6px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;padding:2px 6px;border-radius:8px;box-shadow:0 2px 6px rgba(196,57,107,.4);transform:rotate(8deg)}
-.lj-produto-nome{font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;text-align:center;line-height:1.25;max-width:110px}
-.lj-produto-preco{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;color:var(--rosa)}
+.lj-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+@media(min-width:620px){.lj-grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.lj-grid{grid-template-columns:repeat(4,1fr)}}
+.lj-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;display:flex;flex-direction:column}
+.lj-card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(140,58,26,.14)}
+.lj-card-imagem-wrap{position:relative;aspect-ratio:1/1;background:radial-gradient(circle at 35% 30%,#fff,#fdf0f3 70%);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lj-card-imagem-wrap img{width:100%;height:100%;object-fit:cover}
+.lj-card-icone{font-size:2.6rem}
+.lj-card-selo{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;font-family:'Cinzel',serif;font-size:.58rem;font-weight:700;padding:3px 8px;border-radius:10px;box-shadow:0 2px 6px rgba(196,57,107,.4)}
+.lj-card-corpo{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.lj-card-categoria{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-dim)}
+.lj-card-nome{font-family:'DM Sans',sans-serif;font-size:.84rem;font-weight:600;line-height:1.3;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.lj-card-preco-linha{margin-top:auto;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;padding-top:4px}
+.lj-card-preco{font-family:'Cinzel',serif;font-size:.92rem;font-weight:700;color:var(--rosa)}
 .lj-produto-preco-de{font-size:.68rem;color:var(--text-dim);text-decoration:line-through;margin-right:4px}
 
 /* ── CARRINHO FLUTUANTE ── */
@@ -188,37 +171,28 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 @media(max-width:480px){
   .lj-header-titulo{font-size:1.6rem}
-  .lj-produto-icone-wrap{width:64px;height:64px}
-}
-@media(prefers-reduced-motion:reduce){
-  .lj-folha{animation:none;display:none}
 }
 </style>
 </head>
 <body>
-
-<div class="lj-folhas-fundo" aria-hidden="true">
-  <span class="lj-folha" style="left:8%;animation-duration:19s;animation-delay:0s;--deriva:26px;--giro:150deg">🍃</span>
-  <span class="lj-folha" style="left:22%;animation-duration:24s;animation-delay:3s;--deriva:-20px;--giro:210deg">🌿</span>
-  <span class="lj-folha" style="left:38%;animation-duration:16s;animation-delay:7s;--deriva:18px;--giro:120deg">🍃</span>
-  <span class="lj-folha" style="left:55%;animation-duration:27s;animation-delay:1s;--deriva:-30px;--giro:240deg">🌸</span>
-  <span class="lj-folha" style="left:70%;animation-duration:21s;animation-delay:5s;--deriva:24px;--giro:180deg">🍃</span>
-  <span class="lj-folha" style="left:85%;animation-duration:18s;animation-delay:9s;--deriva:-16px;--giro:100deg">🌿</span>
-</div>
 
 <div class="lj-header">
   <a href="/index.html" class="lj-header-voltar">← Voltar ao site</a>
   <button class="lj-header-admin" id="lj-btn-admin" style="display:none">⚙️ Admin</button>
   <div class="lj-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
   <div class="lj-header-titulo">🌿 Flora</div>
-  <div class="lj-header-sub">nossa lojinha — venha dar uma olhada nas prateleiras</div>
+  <div class="lj-header-sub">nossa lojinha — venha dar uma olhada ✦</div>
 </div>
 
-<!-- ═══ TELA DA LOJA (estante virtual) ═══ -->
+<!-- ═══ TELA DA LOJA (catálogo em grade) ═══ -->
 <div id="lj-tela-loja">
   <div class="lj-loja">
     <div id="lj-status-pagamento" style="display:none;background:var(--gold-dim);color:var(--gold);border-radius:12px;padding:14px 18px;margin-bottom:18px;font-weight:600;text-align:center;font-size:.88rem"></div>
-    <div id="lj-prateleiras"><div class="lj-vazio">Abrindo a loja...</div></div>
+    <div class="lj-busca-wrap">
+      <input type="search" id="lj-busca" class="lj-busca-input" placeholder="🔍 Buscar produto..." oninput="ljFiltrarBusca(this.value)">
+    </div>
+    <div class="lj-filtros-categoria" id="lj-filtros-categoria"></div>
+    <div id="lj-catalogo"><div class="lj-vazio">Abrindo a loja...</div></div>
   </div>
 </div>
 
@@ -492,7 +466,7 @@ window._ljFirebasePronto = true;
 window.dispatchEvent(new Event('lj-firebase-pronto'));
 </script>
 <script>
-// o resto da lógica (carrinho, prateleiras, admin) roda em cima do que foi
+// o resto da lógica (carrinho, catálogo, admin) roda em cima do que foi
 // exposto em window pelo módulo Firebase acima — script clássico, pra poder
 // usar onclick="" inline nos botões sem precisar expor cada função com
 // window.nome = ... uma por uma.
@@ -516,6 +490,8 @@ const ljEmojiCategoria = window.ljEmojiCategoria;
 let ljProdutos = [];
 let ljConfigFrete = { taxaEntregaFixa: 0, diasDisponiveis: [1,2,3,4,5,6], horariosDisponiveis: ['14:00','15:00','16:00'], observacao: '' };
 let ljCarrinho = [];
+let ljFiltroCategoria = 'todos';
+let ljTermoBusca = '';
 let ljProdutoModalAtual = null;
 let ljModalCorSelecionada = null;
 let ljModalTamanhoSelecionado = null;
@@ -542,57 +518,75 @@ async function ljCarregarConfigFrete() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ESTANTE VIRTUAL — prateleiras agrupadas por categoria
+// CATÁLOGO — grade de produtos com busca e filtro por categoria, igual o
+// que as pessoas já estão acostumadas em marketplace (antes era uma
+// "estante virtual" com prateleiras de madeira e scroll horizontal por
+// categoria — bonito, mas difícil de navegar/comparar preço)
 // ══════════════════════════════════════════════════════════════
-function ljRenderPrateleiras() {
-  const wrap = document.getElementById('lj-prateleiras');
+function ljRenderCatalogo() {
+  ljRenderFiltrosCategoria();
+  ljRenderGrid();
+}
+
+function ljRenderFiltrosCategoria() {
+  const wrap = document.getElementById('lj-filtros-categoria');
+  const categorias = [...new Set(ljProdutos.filter(p => p.ativo !== false).map(p => p.categoria || 'Outros'))];
+  if (!categorias.length) { wrap.innerHTML = ''; return; }
+  const chips = ['todos', ...categorias];
+  wrap.innerHTML = chips.map(c => {
+    const label = c === 'todos' ? 'Todos' : c;
+    const emoji = c === 'todos' ? '🧺' : ljEmojiCategoria(c);
+    return `<button class="lj-filtro-chip ${ljFiltroCategoria === c ? 'ativo' : ''}" onclick="ljFiltrarCategoria('${c.replace(/'/g,"\\'")}')">${emoji} ${label}</button>`;
+  }).join('');
+}
+
+function ljProdutosFiltrados() {
   const ativos = ljProdutos.filter(p => p.ativo !== false);
-  if (!ativos.length) { wrap.innerHTML = '<div class="lj-vazio">A loja ainda tá se organizando — volte em breve! 🌿</div>'; return; }
-
-  const porCategoria = {};
-  ativos.forEach(p => {
-    const cat = p.categoria || 'Outros';
-    if (!porCategoria[cat]) porCategoria[cat] = [];
-    porCategoria[cat].push(p);
-  });
-
-  wrap.innerHTML = Object.entries(porCategoria).map(([cat, produtos]) => `
-    <div class="lj-prateleira-secao">
-      <div class="lj-prateleira-titulo"><span class="ic">${ljEmojiCategoria(cat)}</span> ${cat}</div>
-      <div class="lj-prateleira">
-        <div class="lj-prateleira-tabua"></div>
-        <div class="lj-prateleira-itens">
-          ${produtos.map(p => ljRenderProdutoItem(p)).join('')}
-        </div>
-      </div>
-    </div>
-  `).join('');
+  const porCategoria = ljFiltroCategoria === 'todos' ? ativos : ativos.filter(p => (p.categoria || 'Outros') === ljFiltroCategoria);
+  const termo = ljTermoBusca.trim().toLowerCase();
+  if (!termo) return porCategoria;
+  return porCategoria.filter(p => (p.nome || '').toLowerCase().includes(termo) || (p.descricao || '').toLowerCase().includes(termo));
 }
 
-// pequena inclinação estável por produto (baseada no id, não muda a cada
-// re-render) — é o que faz a prateleira parecer arrumada à mão, não com
-// régua. Fica entre -4deg e 4deg.
-function ljTiltProduto(id) {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return ((hash % 800) / 100 - 4).toFixed(2);
+function ljRenderGrid() {
+  const wrap = document.getElementById('lj-catalogo');
+  if (!ljProdutos.filter(p => p.ativo !== false).length) {
+    wrap.innerHTML = '<div class="lj-vazio">A loja ainda tá se organizando — volte em breve! 🌿</div>';
+    return;
+  }
+  const lista = ljProdutosFiltrados();
+  if (!lista.length) { wrap.innerHTML = '<div class="lj-vazio">Nenhum produto encontrado ✦</div>'; return; }
+  wrap.innerHTML = `<div class="lj-grid">${lista.map(p => ljRenderProdutoCard(p)).join('')}</div>`;
 }
 
-function ljRenderProdutoItem(p) {
+window.ljFiltrarCategoria = function(cat) {
+  ljFiltroCategoria = cat;
+  ljRenderFiltrosCategoria();
+  ljRenderGrid();
+};
+
+window.ljFiltrarBusca = function(valor) {
+  ljTermoBusca = valor;
+  ljRenderGrid();
+};
+
+function ljRenderProdutoCard(p) {
   const primeiroTamanho = (p.tamanhos && p.tamanhos[0]) ? p.tamanhos[0].nome : null;
   const temDesconto = ljTemDesconto(p);
   const precoExibir = ljPrecoComDesconto(p, primeiroTamanho);
   const precoOriginal = ljPrecoBase(p, primeiroTamanho);
-  const iconeHtml = p.imagem ? `<img src="${p.imagem}" alt="">` : `<span class="lj-produto-icone">${ljEmojiCategoria(p.categoria)}</span>`;
+  const iconeHtml = p.imagem ? `<img src="${p.imagem}" alt="">` : `<span class="lj-card-icone">${ljEmojiCategoria(p.categoria)}</span>`;
   return `
-    <div class="lj-produto-item" style="--tilt:${ljTiltProduto(p.id)}deg" onclick="ljAbrirProduto('${p.id}')">
-      <div class="lj-produto-icone-wrap">
-        <div class="lj-produto-icone-inner">${iconeHtml}</div>
-        ${temDesconto ? '<span class="lj-produto-desconto-selo">OFERTA</span>' : ''}
+    <div class="lj-card" onclick="ljAbrirProduto('${p.id}')">
+      <div class="lj-card-imagem-wrap">
+        ${iconeHtml}
+        ${temDesconto ? '<span class="lj-card-selo">OFERTA</span>' : ''}
       </div>
-      <div class="lj-produto-sombra"></div>
-      <div class="lj-produto-nome">${p.nome}</div>
-      <div class="lj-produto-preco">${temDesconto ? `<span class="lj-produto-preco-de">${ljFormatarPreco(precoOriginal)}</span>` : ''}${ljFormatarPreco(precoExibir)}</div>
+      <div class="lj-card-corpo">
+        <div class="lj-card-categoria">${p.categoria || ''}</div>
+        <div class="lj-card-nome">${p.nome}</div>
+        <div class="lj-card-preco-linha">${temDesconto ? `<span class="lj-produto-preco-de">${ljFormatarPreco(precoOriginal)}</span>` : ''}<span class="lj-card-preco">${ljFormatarPreco(precoExibir)}</span></div>
+      </div>
     </div>
   `;
 }
@@ -1045,7 +1039,7 @@ window.ljAdminSalvarProduto = async function() {
       await addDoc(collection(db, 'loja_produtos'), dados);
     }
     await ljCarregarProdutos();
-    ljRenderPrateleiras();
+    ljRenderCatalogo();
     ljAdminRenderListaProdutos();
     ljAdminMontarCategoriasDatalist();
     ljAdminLimparForm();
@@ -1061,7 +1055,7 @@ window.ljAdminExcluirProduto = async function(id) {
   try {
     await deleteDoc(doc(db, 'loja_produtos', id));
     await ljCarregarProdutos();
-    ljRenderPrateleiras();
+    ljRenderCatalogo();
     ljAdminRenderListaProdutos();
   } catch (e) { console.warn('excluir produto:', e); alert('Não consegui excluir agora.'); }
 };
@@ -1256,7 +1250,7 @@ async function ljConferirRetornoPagamento(tentativa) {
 // ══════════════════════════════════════════════════════════════
 (async function ljInit() {
   await Promise.all([ljCarregarProdutos(), ljCarregarConfigFrete()]);
-  ljRenderPrateleiras();
+  ljRenderCatalogo();
   ljConferirRetornoPagamento();
 })();
 } // fim de ljIniciarApp
