@@ -202,6 +202,13 @@ const MT_MATERIAIS = [
   { nome: 'Algodão', precoRef: 27.00, unidade: 'rolo 500g' },
 ].slice().sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
+// marcar o que foi usado numa sessão é sempre por unidade avulsa — não faz
+// sentido gastar "meia caixa" numa sessão só; a opção de caixa/pack fica
+// reservada pra decisão de compra (Lista de Materiais do Ano), não pro
+// registro por sessão. Variantes de caixa/pack têm "(" no nome (ver
+// catálogo acima), o que já serve pra filtrar sem precisar marcar campo à parte
+const MT_MATERIAIS_POR_SESSAO = MT_MATERIAIS.filter(m => !m.nome.includes('('));
+
 function mtFormatarPreco(v) { return 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function mtMaterialInfo(nome) { return MT_MATERIAIS.find(m => m.nome === nome); }
 
@@ -301,7 +308,7 @@ function mtRenderSessao(s) {
         <span class="mt-sessao-seta">▾</span>
       </div>
       <div class="mt-materiais">
-        <div class="mt-estoque-grid">${MT_MATERIAIS.map(m => mtRenderMaterialSessaoLinha(s, materiais, m)).join('')}</div>
+        <div class="mt-estoque-grid">${MT_MATERIAIS_POR_SESSAO.map(m => mtRenderMaterialSessaoLinha(s, materiais, m)).join('')}</div>
         <div class="mt-estoque-total">${mtFormatarCustoTexto(materiais)}</div>
         <div class="mt-material-salvando" id="mt-status-${s.id}"></div>
       </div>
