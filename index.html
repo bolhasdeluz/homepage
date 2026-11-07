@@ -2948,7 +2948,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <label class="form-label">Valor do sinal (mínimo 20% do total)</label>
           <input type="number" step="0.01" class="form-input" id="ct-sinal-valor">
           <label class="form-label">Previsão de pagamento do saldo restante (até 05/12/2026)</label>
-          <input type="date" class="form-input" id="ct-data-saldo" max="2026-12-05">
+          <input type="date" class="form-input" id="ct-data-saldo" max="2026-12-05" onchange="ctValidarDataSaldo(this)">
         </div>
         <p id="ct-pagamento-dica" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin:-6px 0 14px"></p>
 
@@ -8286,6 +8286,25 @@ function ctEscolherValor(valor) {
   ctAtualizarDica();
 }
 window.ctEscolherValor = ctEscolherValor;
+
+// alguns navegadores (principalmente mobile) deixam digitar/selecionar uma
+// data fora do min/max do <input type="date"> mesmo com os atributos
+// certos — então confere de novo aqui, avisa e corrige pra pessoa não só
+// descobrir que a data não vale depois de tentar confirmar o pedido
+function ctValidarDataSaldo(el) {
+  const erroEl = document.getElementById('ct-erro');
+  if (!el.value) return;
+  if (el.max && el.value > el.max) {
+    el.value = el.max;
+    erroEl.textContent = `A previsão do saldo não pode passar de ${ctFormatarDataBR(el.max)} — ajustei pra essa data.`;
+    erroEl.style.display = 'block';
+  } else if (el.min && el.value < el.min) {
+    el.value = el.min;
+    erroEl.textContent = `Essa data já passou — ajustei pra ${ctFormatarDataBR(el.min)}.`;
+    erroEl.style.display = 'block';
+  }
+}
+window.ctValidarDataSaldo = ctValidarDataSaldo;
 
 // o sinal (ou o valor total) é SEMPRE pago agora — só o saldo restante,
 // quando a pessoa escolhe pagar só o sinal, é que fica combinado pra uma
