@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Materiais das Sessões — Bolhas de Luz</title>
-<meta name="description" content="Controle de materiais usados em cada sessão do Terreiro Bolhas de Luz — só para a administração.">
+<meta name="description" content="Controle de materiais usados em cada sessão do Terreiro Bolhas de Luz.">
 <link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,15 +38,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-header-titulo{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);margin-top:2px}
 .mt-header-sub{font-family:'Crimson Pro',serif;font-size:.9rem;font-style:italic;color:rgba(255,255,255,.82);margin-top:4px}
 .mt-header-voltar{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.78rem;padding:6px 14px;font-family:'DM Sans',sans-serif}
-.mt-header-sair{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.72rem;padding:6px 12px;font-family:'DM Sans',sans-serif;display:none}
 
 .mt-wrap{max-width:700px;margin:0 auto;padding:26px 16px}
-
-.mt-bloqueado{background:#fff;border:1px solid var(--border);border-radius:16px;padding:34px 24px;text-align:center;box-shadow:0 4px 20px rgba(196,57,107,.08)}
-.mt-bloqueado p{font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.95rem;margin-bottom:18px}
-.mt-btn{border:none;border-radius:10px;padding:12px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:transform .12s}
-.mt-btn:hover{transform:translateY(-1px)}
-.mt-btn-primario{background:linear-gradient(135deg,var(--rosa),var(--rosa-l));color:#fff;display:inline-flex;align-items:center;gap:10px}
 
 .mt-vazio{text-align:center;padding:50px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem}
 
@@ -97,31 +90,19 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-materiais{display:none;padding:4px 16px 16px}
 .mt-sessao.aberta .mt-materiais{display:block}
 .mt-material-salvando{font-size:.68rem;color:var(--text-dim);margin-top:8px;font-style:italic;font-family:'Crimson Pro',serif}
-
-#mt-login-overlay{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:16px}
-#mt-login-overlay.aberto{display:flex}
-.mt-login-modal{background:#fff;border-radius:18px;padding:28px 24px;max-width:340px;text-align:center;box-shadow:0 12px 50px rgba(140,58,26,.22)}
-.mt-login-modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;margin-bottom:8px}
-.mt-login-modal p{font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);margin-bottom:18px;font-style:italic}
 </style>
 </head>
 <body>
 
 <div class="mt-header">
   <a href="/index.html" class="mt-header-voltar">← Voltar ao site</a>
-  <button class="mt-header-sair" id="mt-btn-sair" onclick="mtSair()">Sair</button>
   <div class="mt-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
   <div class="mt-header-titulo">📦 Materiais das Sessões</div>
   <div class="mt-header-sub">o que foi usado em cada sessão do ano</div>
 </div>
 
 <div class="mt-wrap">
-  <div id="mt-bloqueado" class="mt-bloqueado">
-    <p>Essa página é só para a administração da casa.</p>
-    <button class="mt-btn mt-btn-primario" onclick="mtAbrirLogin()">Entrar com Google</button>
-  </div>
-
-  <div id="mt-conteudo" style="display:none">
+  <div id="mt-conteudo">
     <div class="mt-botoes-topo">
       <button class="mt-btn-popup" onclick="mtAbrirPopupCompras()">📋 Lista de Compras<span>baseada no que foi marcado nas sessões</span></button>
       <button class="mt-btn-popup" onclick="mtAbrirPopupAnual()">🧺 Lista de Materiais do Ano<span>independente das sessões — ex: detergente</span></button>
@@ -160,55 +141,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 </div>
 
-<div id="mt-login-overlay" onclick="if(event.target===this) mtFecharLogin()">
-  <div class="mt-login-modal">
-    <h3>Área Interna</h3>
-    <p>Exclusiva para a administração da casa.</p>
-    <button class="mt-btn mt-btn-primario" style="width:100%;justify-content:center" onclick="mtLoginGoogle()">
-      <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.7-6.7C35.8 2.5 30.2 0 24 0 14.7 0 6.8 5.5 3 13.5l7.8 6C12.7 13.4 17.9 9.5 24 9.5z"/><path fill="#4A90D9" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 6.9-10 6.9-17z"/><path fill="#FBBC05" d="M10.8 28.5A14.8 14.8 0 0 1 9.5 24c0-1.6.3-3.1.7-4.5L2.4 13.5A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.5 10.8l8.3-6.3z"/><path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.7 2.2-7.7 2.2-6.1 0-11.3-4-13.2-9.4l-7.8 6C6.8 42.5 14.7 48 24 48z"/></svg>
-      Entrar com Google
-    </button>
-  </div>
-</div>
-
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
-  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
-  projectId: "terreiro-bolhas-de-luz",
-  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
-  messagingSenderId: "179602931861",
-  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
-  measurementId: "G-6Z1WED2GB1"
-};
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-// mesma lista de e-mails admin já usada na loja (Flora) e na tesouraria —
-// essa página também é de uso exclusivo da administração
-const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
-
-window.mtAbrirLogin = function() { document.getElementById('mt-login-overlay').classList.add('aberto'); };
-window.mtFecharLogin = function() { document.getElementById('mt-login-overlay').classList.remove('aberto'); };
-window.mtLoginGoogle = function() { signInWithPopup(auth, provider).catch(e => console.warn('login:', e)); };
-window.mtSair = function() { signOut(auth); };
-
-onAuthStateChanged(auth, (user) => {
-  const ehAdmin = !!(user && ADMIN_EMAILS.includes(user.email));
-  document.getElementById('mt-bloqueado').style.display = ehAdmin ? 'none' : 'block';
-  document.getElementById('mt-conteudo').style.display = ehAdmin ? 'block' : 'none';
-  document.getElementById('mt-btn-sair').style.display = ehAdmin ? 'inline-block' : 'none';
-  if (ehAdmin) {
-    document.getElementById('mt-login-overlay').classList.remove('aberto');
-    window._mtPronto?.();
-  }
-});
-</script>
 <script>
 // ══════════════════════════════════════════════════════════════
 // CATÁLOGO DE MATERIAIS — pré-cadastrado direto no código (a Anna pode ir
@@ -500,7 +432,7 @@ window.mtSalvarQuantidade = async function(material, valor) {
   }
 };
 
-window._mtPronto = mtCarregar;
+mtCarregar();
 fetch('/api/visita?pagina=materiais', { method: 'POST' }).catch(() => {});
 </script>
 </body>
