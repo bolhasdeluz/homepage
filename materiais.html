@@ -50,9 +50,23 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .mt-vazio{text-align:center;padding:50px 20px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:1rem}
 
-.mt-estoque-card{background:#fff;border:1px solid var(--border);border-top:4px solid var(--amber);border-radius:14px;padding:18px 18px 10px;margin-bottom:22px;box-shadow:0 2px 10px rgba(140,58,26,.05)}
-.mt-estoque-titulo{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
-.mt-estoque-sub{font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:2px 0 14px}
+.mt-botoes-topo{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.mt-btn-popup{flex:1;min-width:150px;background:#fff;border:1.5px solid var(--border);border-top:3px solid var(--amber);border-radius:12px;padding:12px 14px;font-family:'Cinzel',serif;font-size:.78rem;font-weight:700;color:var(--text);text-align:left;display:flex;flex-direction:column;gap:3px;transition:transform .12s,box-shadow .12s}
+.mt-btn-popup:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(140,58,26,.12)}
+.mt-btn-popup span{font-family:'Crimson Pro',serif;font-size:.68rem;font-style:italic;font-weight:400;color:var(--text-dim)}
+
+.mt-popup-overlay{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:850;padding:16px}
+.mt-popup-overlay.aberto{display:flex}
+.mt-popup-modal{background:#fff;border-radius:18px;width:460px;max-width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 12px 50px rgba(140,58,26,.22)}
+.mt-popup-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 18px 0}
+.mt-popup-topo h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
+.mt-popup-fechar{flex-shrink:0;background:var(--rosa-dim);border:none;color:var(--rosa);border-radius:50%;width:26px;height:26px;font-size:13px}
+.mt-popup-sub{font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);padding:4px 18px 12px}
+.mt-popup-corpo{padding:0 18px 18px}
+
+.mt-compras-linha{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.86rem}
+.mt-compras-linha b{font-family:'Cinzel',serif;color:var(--rosa)}
+
 .mt-estoque-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 12px}
 .mt-estoque-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)}
 .mt-estoque-nome{font-size:.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -79,9 +93,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 .mt-materiais{display:none;padding:4px 16px 16px}
 .mt-sessao.aberta .mt-materiais{display:block}
-.mt-materiais-grid{display:flex;flex-wrap:wrap;gap:7px}
-.mt-material-btn{border:1.5px solid var(--border);background:#fff;border-radius:20px;padding:7px 14px;font-size:.78rem;color:var(--text);transition:all .15s;font-family:'DM Sans',sans-serif}
-.mt-material-btn.selecionado{background:var(--rosa);border-color:var(--rosa);color:#fff;font-weight:600}
 .mt-material-salvando{font-size:.68rem;color:var(--text-dim);margin-top:8px;font-style:italic;font-family:'Crimson Pro',serif}
 
 #mt-login-overlay{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:16px}
@@ -108,15 +119,40 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div id="mt-conteudo" style="display:none">
-    <div class="mt-estoque-card">
-      <div class="mt-estoque-titulo">📋 Lista de Compras do Ano</div>
-      <div class="mt-estoque-sub">Quanto de cada material você precisa comprar pro ano selecionado abaixo — serve de lista de compras, separado do que foi usado em cada sessão</div>
-      <div class="mt-estoque-grid" id="mt-estoque-grid"></div>
-      <div class="mt-material-salvando" id="mt-estoque-status"></div>
+    <div class="mt-botoes-topo">
+      <button class="mt-btn-popup" onclick="mtAbrirPopupCompras()">📋 Lista de Compras<span>baseada no que foi marcado nas sessões</span></button>
+      <button class="mt-btn-popup" onclick="mtAbrirPopupAnual()">🧺 Lista de Materiais do Ano<span>independente das sessões — ex: detergente</span></button>
     </div>
 
     <div class="mt-anos" id="mt-anos"></div>
     <div id="mt-lista-sessoes"><div class="mt-vazio">Carregando sessões...</div></div>
+  </div>
+</div>
+
+<!-- POPUP: lista de compras calculada a partir do que foi marcado em cada sessão do ano -->
+<div class="mt-popup-overlay" id="mt-popup-compras-overlay" onclick="if(event.target===this) mtFecharPopupCompras()">
+  <div class="mt-popup-modal">
+    <div class="mt-popup-topo">
+      <h3>📋 Lista de Compras — <span id="mt-popup-compras-ano"></span></h3>
+      <button class="mt-popup-fechar" onclick="mtFecharPopupCompras()">✕</button>
+    </div>
+    <div class="mt-popup-sub">Soma do que foi marcado nas sessões desse ano — pra conferir antes de ir às compras</div>
+    <div class="mt-popup-corpo" id="mt-popup-compras-lista"></div>
+  </div>
+</div>
+
+<!-- POPUP: lista de materiais do ano, independente de sessão (ex: detergente) -->
+<div class="mt-popup-overlay" id="mt-popup-anual-overlay" onclick="if(event.target===this) mtFecharPopupAnual()">
+  <div class="mt-popup-modal">
+    <div class="mt-popup-topo">
+      <h3>🧺 Materiais do Ano — <span id="mt-popup-anual-ano"></span></h3>
+      <button class="mt-popup-fechar" onclick="mtFecharPopupAnual()">✕</button>
+    </div>
+    <div class="mt-popup-sub">Coisas que a casa precisa comprar no ano, sem relação com uma sessão específica</div>
+    <div class="mt-popup-corpo">
+      <div class="mt-estoque-grid" id="mt-estoque-grid"></div>
+      <div class="mt-material-salvando" id="mt-estoque-status"></div>
+    </div>
   </div>
 </div>
 
@@ -223,11 +259,118 @@ window.mtEscolherAno = function(ano) {
   mtCarregarEstoque(ano);
 };
 
+// sessões antigas podem ter "materiais" como lista de nomes (formato
+// anterior, só liga/desliga) — trata como vazio em vez de quebrar, já que
+// não dá pra inferir quantidade de um formato que não guardava quantidade
+function mtMateriaisDe(s) {
+  return (s && s.materiais && !Array.isArray(s.materiais)) ? s.materiais : {};
+}
+
+function mtEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function mtRenderLista() {
+  const wrap = document.getElementById('mt-lista-sessoes');
+  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).sort((a, b) => a.data.localeCompare(b.data));
+  if (!doAno.length) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão nesse ano.</div>'; return; }
+  wrap.innerHTML = doAno.map(s => mtRenderSessao(s)).join('');
+}
+
+function mtRenderSessao(s) {
+  const [ano, mes, dia] = (s.data || '').split('-');
+  const materiais = mtMateriaisDe(s);
+  const qtd = Object.values(materiais).filter(q => q > 0).length;
+  const aberta = s.id === mtAbertaId;
+  return `
+    <div class="mt-sessao ${aberta ? 'aberta' : ''}" data-id="${s.id}">
+      <div class="mt-sessao-topo" onclick="mtToggleSessao('${s.id}')">
+        <div class="mt-sessao-data"><div class="dia">${dia || '—'}</div><div class="mes">${mes ? MT_MESES[parseInt(mes,10)-1] : ''}</div></div>
+        <div class="mt-sessao-info">
+          <div class="mt-sessao-nome">${mtEsc(s.nome) || 'Sessão'}</div>
+          <div class="mt-sessao-meta">${mtEsc(s.tipo) || '—'}${s.linha ? ' · ' + mtEsc(s.linha) : ''}</div>
+        </div>
+        <span class="mt-sessao-contagem ${qtd ? '' : 'vazia'}">${qtd ? qtd + ' ' + (qtd > 1 ? 'materiais' : 'material') : 'sem material'}</span>
+        <span class="mt-sessao-seta">▾</span>
+      </div>
+      <div class="mt-materiais">
+        <div class="mt-estoque-grid">${MT_MATERIAIS.map(m => mtRenderMaterialSessaoLinha(s, materiais, m)).join('')}</div>
+        <div class="mt-material-salvando" id="mt-status-${s.id}"></div>
+      </div>
+    </div>
+  `;
+}
+
+function mtRenderMaterialSessaoLinha(s, materiais, nomeMaterial) {
+  const materialEsc = nomeMaterial.replace(/'/g, "\\'");
+  return `
+    <div class="mt-estoque-linha">
+      <span class="mt-estoque-nome" title="${mtEsc(nomeMaterial)}">${mtEsc(nomeMaterial)}</span>
+      <input type="number" min="0" step="1" inputmode="numeric" class="mt-estoque-input" value="${materiais[nomeMaterial] || ''}" placeholder="0" onchange="mtSalvarQuantidadeSessao('${s.id}','${materialEsc}', this.value)">
+    </div>
+  `;
+}
+
+window.mtToggleSessao = function(id) {
+  mtAbertaId = mtAbertaId === id ? null : id;
+  mtRenderLista();
+};
+
+// muda a quantidade de um material numa sessão e salva na hora — não
+// espera um botão "Salvar" separado, pra ficar rápido de preencher logo
+// depois da sessão, com o celular na mão
+window.mtSalvarQuantidadeSessao = async function(id, nomeMaterial, valor) {
+  const sessao = mtSessoes.find(s => s.id === id);
+  if (!sessao) return;
+  const materiais = mtMateriaisDe(sessao);
+  const qtd = parseInt(valor, 10) || 0;
+  if (qtd > 0) materiais[nomeMaterial] = qtd; else delete materiais[nomeMaterial];
+  sessao.materiais = materiais;
+  mtRenderLista();
+
+  const statusEl = document.getElementById(`mt-status-${id}`);
+  if (statusEl) statusEl.textContent = '⏳ Salvando...';
+  try {
+    const res = await fetch('/api/sessoes', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ id, materiais }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const statusEl2 = document.getElementById(`mt-status-${id}`);
+    if (statusEl2) { statusEl2.textContent = '✔ Salvo'; setTimeout(() => { if (statusEl2) statusEl2.textContent = ''; }, 1500); }
+  } catch (e) {
+    const statusEl3 = document.getElementById(`mt-status-${id}`);
+    if (statusEl3) statusEl3.textContent = '❌ Não consegui salvar agora — tenta de novo.';
+  }
+};
+
 // ══════════════════════════════════════════════════════════════
-// LISTA DE COMPRAS DO ANO — controle de estoque simples: quanto de cada
-// material a Anna quer comprar pro ano selecionado. Separado do material
-// marcado por sessão acima (ver mtToggleMaterial) — um registro por ano,
-// guardado em /api/estoque
+// POPUP 1: LISTA DE COMPRAS — soma, só pra conferência (não editável
+// aqui), de todo material já marcado nas sessões do ano ativo
+// ══════════════════════════════════════════════════════════════
+window.mtAbrirPopupCompras = function() {
+  document.getElementById('mt-popup-compras-ano').textContent = mtAnoAtivo;
+  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo);
+  const somado = {};
+  doAno.forEach(s => {
+    Object.entries(mtMateriaisDe(s)).forEach(([nome, qtd]) => {
+      somado[nome] = (somado[nome] || 0) + (Number(qtd) || 0);
+    });
+  });
+  const nomes = Object.keys(somado).filter(n => somado[n] > 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const wrap = document.getElementById('mt-popup-compras-lista');
+  wrap.innerHTML = nomes.length
+    ? nomes.map(n => `<div class="mt-compras-linha"><span>${mtEsc(n)}</span><b>${somado[n]}</b></div>`).join('')
+    : '<div class="mt-vazio" style="padding:24px 0">Nenhum material marcado nas sessões desse ano ainda.</div>';
+  document.getElementById('mt-popup-compras-overlay').classList.add('aberto');
+};
+window.mtFecharPopupCompras = function() {
+  document.getElementById('mt-popup-compras-overlay').classList.remove('aberto');
+};
+
+// ══════════════════════════════════════════════════════════════
+// POPUP 2: MATERIAIS DO ANO — controle de estoque simples e editável,
+// independente de sessão (ex: detergente) — um registro por ano, guardado
+// em /api/estoque
 // ══════════════════════════════════════════════════════════════
 let mtEstoque = {}; // { "Vela": 12, ... }
 
@@ -252,6 +395,14 @@ function mtRenderEstoque() {
   }).join('');
 }
 
+window.mtAbrirPopupAnual = function() {
+  document.getElementById('mt-popup-anual-ano').textContent = mtAnoAtivo;
+  document.getElementById('mt-popup-anual-overlay').classList.add('aberto');
+};
+window.mtFecharPopupAnual = function() {
+  document.getElementById('mt-popup-anual-overlay').classList.remove('aberto');
+};
+
 window.mtSalvarQuantidade = async function(material, valor) {
   const qtd = parseInt(valor, 10) || 0;
   if (qtd > 0) mtEstoque[material] = qtd; else delete mtEstoque[material];
@@ -268,77 +419,6 @@ window.mtSalvarQuantidade = async function(material, valor) {
     setTimeout(() => { statusEl.textContent = ''; }, 1500);
   } catch (e) {
     statusEl.textContent = '❌ Não consegui salvar agora — tenta de novo.';
-  }
-};
-
-function mtRenderLista() {
-  const wrap = document.getElementById('mt-lista-sessoes');
-  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).sort((a, b) => a.data.localeCompare(b.data));
-  if (!doAno.length) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão nesse ano.</div>'; return; }
-  wrap.innerHTML = doAno.map(s => mtRenderSessao(s)).join('');
-}
-
-function mtEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function mtRenderSessao(s) {
-  const [ano, mes, dia] = (s.data || '').split('-');
-  const qtd = (s.materiais || []).length;
-  const aberta = s.id === mtAbertaId;
-  return `
-    <div class="mt-sessao ${aberta ? 'aberta' : ''}" data-id="${s.id}">
-      <div class="mt-sessao-topo" onclick="mtToggleSessao('${s.id}')">
-        <div class="mt-sessao-data"><div class="dia">${dia || '—'}</div><div class="mes">${mes ? MT_MESES[parseInt(mes,10)-1] : ''}</div></div>
-        <div class="mt-sessao-info">
-          <div class="mt-sessao-nome">${mtEsc(s.nome) || 'Sessão'}</div>
-          <div class="mt-sessao-meta">${mtEsc(s.tipo) || '—'}${s.linha ? ' · ' + mtEsc(s.linha) : ''}</div>
-        </div>
-        <span class="mt-sessao-contagem ${qtd ? '' : 'vazia'}">${qtd ? qtd + ' ' + (qtd > 1 ? 'materiais' : 'material') : 'sem material'}</span>
-        <span class="mt-sessao-seta">▾</span>
-      </div>
-      <div class="mt-materiais">
-        <div class="mt-materiais-grid">${MT_MATERIAIS.map(m => mtRenderMaterialBtn(s, m)).join('')}</div>
-        <div class="mt-material-salvando" id="mt-status-${s.id}"></div>
-      </div>
-    </div>
-  `;
-}
-
-function mtRenderMaterialBtn(s, nomeMaterial) {
-  const selecionado = (s.materiais || []).includes(nomeMaterial);
-  const materialEsc = nomeMaterial.replace(/'/g, "\\'");
-  return `<button class="mt-material-btn ${selecionado ? 'selecionado' : ''}" onclick="mtToggleMaterial('${s.id}','${materialEsc}')">${mtEsc(nomeMaterial)}</button>`;
-}
-
-window.mtToggleSessao = function(id) {
-  mtAbertaId = mtAbertaId === id ? null : id;
-  mtRenderLista();
-};
-
-// marca/desmarca um material na sessão e salva na hora — não espera um
-// botão "Salvar" separado, pra ficar rápido de preencher logo depois da
-// sessão, com o celular na mão
-window.mtToggleMaterial = async function(id, nomeMaterial) {
-  const sessao = mtSessoes.find(s => s.id === id);
-  if (!sessao) return;
-  const materiais = new Set(sessao.materiais || []);
-  if (materiais.has(nomeMaterial)) materiais.delete(nomeMaterial); else materiais.add(nomeMaterial);
-  sessao.materiais = [...materiais];
-  mtRenderLista();
-
-  const statusEl = document.getElementById(`mt-status-${id}`);
-  if (statusEl) statusEl.textContent = '⏳ Salvando...';
-  try {
-    const res = await fetch('/api/sessoes', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify({ id, materiais: sessao.materiais }),
-    });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const statusEl2 = document.getElementById(`mt-status-${id}`);
-    if (statusEl2) { statusEl2.textContent = '✔ Salvo'; setTimeout(() => { if (statusEl2) statusEl2.textContent = ''; }, 1500); }
-  } catch (e) {
-    const statusEl3 = document.getElementById(`mt-status-${id}`);
-    if (statusEl3) statusEl3.textContent = '❌ Não consegui salvar agora — tenta de novo.';
   }
 };
 
