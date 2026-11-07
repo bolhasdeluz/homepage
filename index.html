@@ -21775,13 +21775,37 @@ function ctAdminCalcularResumo(pedidos) {
   };
 }
 
-function ctAdminRenderResumo(pedidos) {
+// meta desta campanha (pedido falado pela Anna) — só fecha o pedido com a
+// fábrica quando bater essa quantidade de cada cor; conta TODA peça já
+// encomendada (pago ou não), igual a lista pra fábrica, porque é isso que
+// decide quando dá pra fechar a produção
+const CT_META_MINIMA_POR_COR = 10;
+function ctAdminCalcularPorCor(pedidos, cores) {
+  const porCor = {};
+  (cores || []).forEach(c => { porCor[c.nome] = 0; });
+  (pedidos || []).forEach(p => (p.itens || []).forEach(i => {
+    const cor = i.cor || '—';
+    porCor[cor] = (porCor[cor] || 0) + (i.quantidade || 0);
+  }));
+  return porCor;
+}
+
+function ctAdminRenderResumo(pedidos, cores) {
   const r = ctAdminCalcularResumo(pedidos);
   if (!r.totalPedidos) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
   const periodoTxt = r.primeira === r.ultima
     ? ctAdminFormatarDataHora(r.primeira)
     : `${ctAdminFormatarDataHora(r.primeira)} até ${ctAdminFormatarDataHora(r.ultima)}`;
   const linha = (label, valor) => `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:.85rem"><span style="color:var(--text-dim)">${label}</span><strong>${valor}</strong></div>`;
+  const porCor = ctAdminCalcularPorCor(pedidos, cores);
+  const linhasPorCor = Object.keys(porCor).map(nome => {
+    const qtd = porCor[nome];
+    const faltam = Math.max(0, CT_META_MINIMA_POR_COR - qtd);
+    const status = faltam === 0
+      ? `✅ fechou os ${CT_META_MINIMA_POR_COR}`
+      : `faltam ${faltam} pra fechar os ${CT_META_MINIMA_POR_COR}`;
+    return linha(calEsc(nome), `${qtd} peça(s) — ${status}`);
+  }).join('');
   return `
     ${linha('Pedidos', `${r.totalPedidos} (${r.pecasTotais} peça(s))`)}
     ${linha('Pagos · Aguardando pagamento', `${r.pagosCount} · ${r.aguardandoCount}`)}
@@ -21789,6 +21813,7 @@ function ctAdminRenderResumo(pedidos) {
     ${linha('Em aberto (aguardando pagamento)', ctAdminFormatarPreco(r.totalEmAberto))}
     ${r.saldosPendentesCount ? linha(`Saldo a receber (${r.saldosPendentesCount} pedido(s))`, ctAdminFormatarPreco(r.saldoAReceber)) : ''}
     ${linha('Período', periodoTxt)}
+    ${linhasPorCor ? `<div style="margin:8px 0 2px;padding-top:8px;border-top:1px solid var(--border);font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim)">Por cor (meta: ${CT_META_MINIMA_POR_COR} cada)</div>${linhasPorCor}` : ''}
   `;
 }
 
@@ -21891,7 +21916,7 @@ G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
 
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
       <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px">📊 Resumo de vendas</div>
-      ${ctAdminRenderResumo(p.pedidos || [])}
+      ${ctAdminRenderResumo(p.pedidos || [], p.cores || [])}
     </div>
 
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
