@@ -276,16 +276,19 @@ function paraPublico(produto) {
   return resto;
 }
 
-// total encomendado x total já pago (somando sinal+saldo), pra barra de
-// progresso pública — agregado só, nunca os pedidos individuais
-function calcularProgresso(pedidos) {
-  let totalEncomendado = 0, totalPago = 0;
-  (pedidos || []).forEach(p => {
-    totalEncomendado += p.total || 0;
-    if (p.status === 'pago') totalPago += p.valorPedido || 0;
-    if (p.valorEscolhido === 'sinal' && p.statusSaldo === 'pago') totalPago += Math.max(0, (p.total || 0) - (p.valorPedido || 0));
-  });
-  return { totalEncomendado, totalPago };
+// meta mínima de peças por cor desta campanha (é o lote que a Anna fecha
+// com a fábrica) — pra pessoa ver, na própria página de compra, quanto já
+// foi encomendado de cada cor (pago ou não, já conta pra fechar o lote) e
+// quanto falta; agregado só, nunca os pedidos individuais
+const CT_META_MINIMA_POR_COR = 10;
+function calcularPorCor(pedidos, cores) {
+  const porCor = {};
+  (cores || []).forEach(c => { porCor[c.nome] = 0; });
+  (pedidos || []).forEach(p => (p.itens || []).forEach(i => {
+    const cor = i.cor || '—';
+    porCor[cor] = (porCor[cor] || 0) + (i.quantidade || 0);
+  }));
+  return porCor;
 }
 
 function montarProdutoDoBody(body) {
@@ -327,7 +330,7 @@ export async function onRequest(context) {
       }
       const ativa = await buscarAtiva(KV);
       if (!ativa) return json(isAdmin ? ativa : paraPublico(ativa));
-      return json(isAdmin ? ativa : { ...paraPublico(ativa), ...calcularProgresso(ativa.pedidos || []) });
+      return json(isAdmin ? ativa : { ...paraPublico(ativa), porCor: calcularPorCor(ativa.pedidos || [], ativa.cores || []), metaPorCor: CT_META_MINIMA_POR_COR });
     }
 
     // POST — criar novo produto (admin) — arquiva o ativo anterior, se houver
