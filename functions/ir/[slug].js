@@ -13,6 +13,9 @@ const DESTINOS = {
   cosmes: '/cosmes',
   rifa: '/rifa-digital',
   'rifa-presencial': '/rifa-presencial.html',
+  // pra quem está vendendo rifa no local: escolhe quanto vendeu e mostra um
+  // QR Code na hora, pra outro celular escanear e pagar (ver rifa-qrcode.html)
+  'rifa-qrcode': '/rifa-qrcode.html',
   // a venda de camiseta mora dentro do site principal (pede login — ver
   // showPage('camiseta') no index.html), não é uma página solta como a rifa
   camiseta: '/#pagina=camiseta',

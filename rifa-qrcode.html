@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerar QR Code — Rifa — Bolhas de Luz</title>
+<meta name="description" content="Gere o QR Code de pagamento da rifa do Terreiro Bolhas de Luz na hora, pra venda presencial.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QR Code Rifa — Bolhas de Luz">
+<meta name="theme-color" content="#c4396b">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+img{max-width:100%;display:block}
+
+body::before{content:'';position:fixed;inset:0;z-index:-3;
+  background:
+    radial-gradient(ellipse at 50% 100%,rgba(196,57,107,.1) 0%,rgba(196,57,107,.04) 35%,transparent 65%),
+    radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
+    #fff5f7;}
+
+.section-wrap{max-width:460px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:28px;line-height:1.6;text-align:center}
+
+.cp-carregando, .rq-vazia{text-align:center;padding:40px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.rf-premio-frame{background:linear-gradient(180deg,#fff 0%,#fff9fa 100%);border:1px solid var(--border);border-radius:16px;padding:22px 20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(196,57,107,.08);text-align:center}
+.rf-premio-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--terra);margin-bottom:6px}
+.rf-premio-meta{font-family:'DM Sans',sans-serif;font-size:.8rem;color:var(--text-dim)}
+
+.rq-form-box{background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:26px 22px;margin-bottom:20px;box-shadow:0 8px 32px rgba(196,57,107,.1);text-align:center}
+.rq-qtd-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:18px}
+.rq-qtd-btn{width:44px;height:44px;border-radius:50%;border:1px solid var(--rosa-border);background:#fff;color:var(--rosa);font-size:1.4rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rq-qtd-btn:hover{background:var(--rosa-dim)}
+.rq-qtd-valor{font-family:'Playfair Display',serif;font-size:2.4rem;color:var(--text);min-width:64px;text-align:center}
+.rq-total{font-family:'Cinzel',serif;font-size:.95rem;font-weight:700;color:var(--rosa);margin-bottom:20px}
+.rq-total b{font-size:1.2rem}
+
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+.btn-outra{background:none;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:9px;padding:11px 18px;font-family:'DM Sans',sans-serif;font-size:.85rem;margin-top:10px;width:100%;text-align:center;display:inline-block}
+.btn-outra:hover{background:var(--rosa-dim)}
+
+.rq-erro{font-family:'DM Sans',sans-serif;font-size:.82rem;color:#b84040;margin-bottom:12px;display:none}
+
+.rq-qr-box{background:#fff;border:1px solid var(--border);border-top:4px solid var(--green);border-radius:16px;padding:26px 22px;margin-bottom:20px;box-shadow:0 8px 32px rgba(42,122,96,.1);text-align:center;display:none}
+.rq-qr-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--green);margin-bottom:4px}
+.rq-qr-sub{font-family:'Crimson Pro',serif;font-size:.9rem;color:var(--text-dim);font-style:italic;margin-bottom:18px;line-height:1.5}
+.rq-qr-canvas{display:flex;justify-content:center;margin-bottom:16px}
+.rq-qr-valor{font-family:'Cinzel',serif;font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:18px}
+
+.rq-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
+.rq-saiba-mais a{color:var(--rosa);text-decoration:underline}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz</div>
+  <div class="section-title">🎟️ Gerar QR Code da Rifa</div>
+  <p class="section-sub">Pra venda presencial — escolha quantos números vendeu e mostre o QR Code pra pessoa pagar ✦</p>
+
+  <div id="rq-carregando" class="cp-carregando">Carregando rifa...</div>
+
+  <div id="rq-vazia" class="rq-vazia" style="display:none"></div>
+
+  <div id="rq-conteudo" style="display:none">
+    <div class="rf-premio-frame">
+      <div class="rf-premio-titulo" id="rq-premio-titulo"></div>
+      <div class="rf-premio-meta" id="rq-premio-meta"></div>
+    </div>
+
+    <div class="rq-form-box" id="rq-form-box">
+      <div class="rq-qtd-row">
+        <button class="rq-qtd-btn" onclick="rqMudarQtd(-1)">−</button>
+        <div class="rq-qtd-valor" id="rq-qtd-valor">1</div>
+        <button class="rq-qtd-btn" onclick="rqMudarQtd(1)">+</button>
+      </div>
+      <div class="rq-total" id="rq-total"></div>
+      <p class="rq-erro" id="rq-erro"></p>
+      <button class="btn-rosa" id="rq-btn-gerar" onclick="rqGerarQr()">Gerar QR Code</button>
+    </div>
+
+    <div class="rq-qr-box" id="rq-qr-box">
+      <div class="rq-qr-titulo">✦ Pronto pra pagar ✦</div>
+      <p class="rq-qr-sub">Peça pra pessoa escanear esse QR Code com o celular dela — ela paga direto, via Pix ou cartão</p>
+      <div class="rq-qr-canvas" id="rq-qr-canvas"></div>
+      <div class="rq-qr-valor" id="rq-qr-valor"></div>
+      <button class="btn-outra" onclick="rqNovaVenda()">↺ Nova venda</button>
+    </div>
+  </div>
+
+  <p class="rq-saiba-mais">✦ Quer saber mais sobre a nossa terreira? <a href="/">visite o menu do nosso site</a> ✦</p>
+</div>
+
+<script>
+const RIFA_API = '/api/rifa';
+let rqRifa = null;
+let rqQtd = 1;
+
+function rqFormatarPreco(v) { return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ','); }
+
+async function rqCarregar() {
+  document.getElementById('rq-carregando').style.display = '';
+  document.getElementById('rq-vazia').style.display = 'none';
+  document.getElementById('rq-conteudo').style.display = 'none';
+  try {
+    const res = await fetch(RIFA_API);
+    rqRifa = res.ok ? await res.json() : null;
+  } catch (e) { rqRifa = null; }
+  document.getElementById('rq-carregando').style.display = 'none';
+
+  if (!rqRifa) {
+    document.getElementById('rq-vazia').style.display = '';
+    document.getElementById('rq-vazia').textContent = 'Não há nenhuma rifa ativa no momento ✦';
+    return;
+  }
+  if (!rqRifa.precoPorNumero) {
+    document.getElementById('rq-vazia').style.display = '';
+    document.getElementById('rq-vazia').textContent = 'Essa rifa ainda não tem preço definido — fale com a administração ✦';
+    return;
+  }
+
+  document.getElementById('rq-conteudo').style.display = '';
+  rqRenderPagina();
+}
+
+function rqRenderPagina() {
+  const r = rqRifa;
+  document.getElementById('rq-premio-titulo').textContent = r.titulo || '';
+  const metaPartes = [`Número: ${rqFormatarPreco(r.precoPorNumero)}`];
+  if (r.dataSorteio) metaPartes.push(`🗓️ ${r.dataSorteio}`);
+  document.getElementById('rq-premio-meta').textContent = metaPartes.join('  ·  ');
+  rqAtualizarTotal();
+}
+
+function rqMudarQtd(delta) {
+  rqQtd = Math.max(1, Math.min(50, rqQtd + delta));
+  document.getElementById('rq-qtd-valor').textContent = rqQtd;
+  rqAtualizarTotal();
+}
+
+function rqAtualizarTotal() {
+  document.getElementById('rq-total').innerHTML = `Total: <b>${rqFormatarPreco(rqQtd * (rqRifa.precoPorNumero || 0))}</b>`;
+}
+
+// gera o link de pagamento (mesma ação "criar-pagamento-presencial" já
+// usada pela rifa-presencial.html — ninguém reserva número aqui, só paga
+// por quantidade; a admin atribui o número depois, na mão) e, em vez de
+// redirecionar o próprio celular de quem está vendendo, mostra o QR Code
+// do link na tela pra OUTRO celular (o de quem está comprando) escanear
+async function rqGerarQr() {
+  const erroEl = document.getElementById('rq-erro');
+  erroEl.style.display = 'none';
+  const btn = document.getElementById('rq-btn-gerar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Gerando QR Code...'; btn.disabled = true;
+  try {
+    const res = await fetch(RIFA_API, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao: 'criar-pagamento-presencial', quantidade: rqQtd }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.checkoutUrl) {
+      erroEl.textContent = data.error || 'Não consegui gerar o pagamento agora.'; erroEl.style.display = 'block';
+      btn.textContent = textoOriginal; btn.disabled = false;
+      return;
+    }
+    document.getElementById('rq-form-box').style.display = 'none';
+    const canvasWrap = document.getElementById('rq-qr-canvas');
+    canvasWrap.innerHTML = '';
+    new QRCode(canvasWrap, { text: data.checkoutUrl, width: 220, height: 220, colorDark: '#2e1a0e', colorLight: '#ffffff' });
+    document.getElementById('rq-qr-valor').textContent = `${rqQtd} número(s) — ${rqFormatarPreco(rqQtd * (rqRifa.precoPorNumero || 0))}`;
+    document.getElementById('rq-qr-box').style.display = 'block';
+    window.scrollTo({ top: document.getElementById('rq-qr-box').offsetTop - 20, behavior: 'smooth' });
+  } catch (e) {
+    erroEl.textContent = 'Não consegui gerar o pagamento — tenta de novo.'; erroEl.style.display = 'block';
+  } finally {
+    btn.textContent = textoOriginal; btn.disabled = false;
+  }
+}
+
+// volta pro formulário, pronta pra gerar o QR Code da próxima venda
+function rqNovaVenda() {
+  document.getElementById('rq-qr-box').style.display = 'none';
+  document.getElementById('rq-form-box').style.display = '';
+  rqQtd = 1;
+  document.getElementById('rq-qtd-valor').textContent = rqQtd;
+  rqAtualizarTotal();
+  window.scrollTo({ top: document.getElementById('rq-form-box').offsetTop - 20, behavior: 'smooth' });
+}
+
+rqCarregar();
+
+// contador de acessos diários — só registra, sem bloquear nada se falhar
+fetch('/api/visita?pagina=rifa-qrcode', { method: 'POST' }).catch(() => {});
+</script>
+
+</body>
+</html>
