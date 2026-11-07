@@ -18,6 +18,7 @@ const DESTINOS = {
   camiseta: '/#pagina=camiseta',
   site: '/',
   banner: '/proxima-sessao.html',
+  materiais: '/materiais.html',
 };
 
 export async function onRequestGet(context) {
