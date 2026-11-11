@@ -23561,10 +23561,26 @@ window.loginGoogle = async function() {
       // nada de redirect (tira do site e no celular nem sempre volta logada) —
       // melhor orientar pro cadeado de senha, que funciona sem sair da página
       alert('O navegador bloqueou a janela de login do Google. Tenta de novo, ou usa o 🔑 no canto desse mesmo card pra entrar com a senha — sem precisar de popup.');
-    } else if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
-      alert('Erro: ' + e.code + ' — ' + e.message);
-      console.error('Erro login:', e.code, e.message);
+      return;
     }
+    if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+      // No Safari (e em navegadores embutidos de apps como Instagram/
+      // WhatsApp), é comum a pessoa escolher a conta normalmente e mesmo
+      // assim cair aqui: o bloqueio de cookies de terceiros (ITP) impede a
+      // comunicação entre a janela do popup e a página principal, e o
+      // Firebase interpreta isso como "a pessoa fechou o popup", mesmo não
+      // tendo sido isso. Antes isso ficava em silêncio total — a pessoa
+      // selecionava a conta, o popup fechava e nada mais acontecia, sem
+      // nenhum aviso. Agora espera um instante (às vezes o login completa
+      // um pouco depois, por trás dos panos) e só avisa se de fato não
+      // completou.
+      await new Promise(r => setTimeout(r, 1000));
+      if (auth.currentUser) return; // completou de verdade, só demorou um pouco
+      alert('O login não foi confirmado — isso costuma acontecer no Safari por causa do bloqueio de cookies de terceiros. Tenta de novo, ou usa o 🔑 no canto desse mesmo card pra entrar com a senha, sem precisar de popup.');
+      return;
+    }
+    alert('Erro: ' + e.code + ' — ' + e.message);
+    console.error('Erro login:', e.code, e.message);
   }
 };
 
