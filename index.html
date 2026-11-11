@@ -6419,8 +6419,12 @@ function cfgApagar() {
   fecharConfigItem();
 }
 
-// fallback enquanto Firebase carrega
-window.loginGoogle = function() { console.warn('Firebase ainda carregando...'); };
+// fallback enquanto o Firebase carrega — antes só dava um console.warn e não
+// acontecia mais nada visível, então quem clicasse em "Entrar com Google"
+// achava que o site tinha travado (ver o vigia logo depois do </body> que
+// tenta recarregar esse módulo sozinho e troca esse fallback por um aviso
+// claro se não conseguir)
+window.loginGoogle = function() { alert('O login ainda está carregando — espera alguns segundos e tenta de novo.'); };
 window._simUsuario = null;
 window._getCurrentUser = () => null;
 window._getPerfilData  = () => ({});
@@ -18870,7 +18874,7 @@ window.addEventListener('resize', () => {
 });
 </script>
 <!-- FIREBASE SDK -->
-<script type="module">
+<script type="module" id="firebase-module-script">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, getIdToken, signInWithCustomToken }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
@@ -18891,6 +18895,12 @@ const firebaseConfig = {
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
   const db   = getFirestore(app);
+
+  // marca pro vigia (logo depois do </body>) que os imports do Firebase
+  // deram certo e o módulo chegou a rodar — se isso nunca virar true, é
+  // porque a importação do SDK falhou (rede ruim/instável) e nada aqui
+  // dentro chegou a executar
+  window._firebaseModuloCarregado = true;
 
   // usado pro handoff de login automático pra outros sites do terreiro (ex:
   // Pontos Cantados) — só devolve token de quem está de fato logada via
@@ -24237,6 +24247,61 @@ window.mhAtualizarGuiaExtra = function(i, campo, valor) {
 };
 
 // ── SALVAR PERFIL ──
+</script>
+
+<script>
+// ── VIGIA DO LOGIN DO GOOGLE (Firebase) ──
+// O login mora no <script type="module"> acima, que importa o SDK do
+// Firebase direto do CDN (gstatic.com). Numa rede ruim/instável essa
+// importação pode falhar silenciosamente — o módulo nunca chega a rodar,
+// loginGoogle() fica preso no fallback de "ainda carregando" pra sempre, e
+// quem clicasse em "Entrar com Google" não via nada acontecer, achando que
+// o site tinha travado. Até agora só dava pra resolver recarregando a
+// página na mão, às vezes mais de uma vez.
+//
+// Esse vigia confere, de tempos em tempos, se o módulo confirmou que rodou
+// (window._firebaseModuloCarregado, marcado logo depois dos imports). Se
+// não confirmou, tenta de novo sozinho — clona o mesmo <script
+// type="module"> e reinsere ele na página, o que refaz os imports (os que
+// já tinham funcionado da primeira vez vêm do cache do navegador, só os
+// que falharam são buscados de novo). Se depois de algumas tentativas
+// ainda não der certo, troca o fallback do loginGoogle por um aviso claro
+// com recarregamento automático, em vez de deixar a pessoa adivinhando.
+(function() {
+  const ESPERAS_MS = [4000, 7000, 10000]; // backoff crescente entre as checagens
+  let indice = 0;
+
+  function tentarDeNovo() {
+    if (window._firebaseModuloCarregado) return; // deu certo, vigia acaba aqui
+
+    const original = document.getElementById('firebase-module-script');
+    if (original) {
+      const novo = document.createElement('script');
+      novo.type = 'module';
+      novo.id = 'firebase-module-script';
+      novo.textContent = original.textContent;
+      original.replaceWith(novo);
+    }
+
+    indice++;
+    if (indice < ESPERAS_MS.length) {
+      setTimeout(tentarDeNovo, ESPERAS_MS[indice]);
+    } else {
+      // já tentou o bastante — se ainda não deu certo na próxima checagem,
+      // desiste de tentar sozinho e avisa com um jeito claro de resolver
+      setTimeout(() => {
+        if (!window._firebaseModuloCarregado) {
+          window.loginGoogle = function() {
+            alert('Não conseguimos carregar o login — parece que a internet está instável agora. Toque em OK que a página recarrega sozinha pra tentar de novo.');
+            window.location.reload();
+          };
+        }
+      }, ESPERAS_MS[ESPERAS_MS.length - 1]);
+    }
+  }
+
+  setTimeout(tentarDeNovo, ESPERAS_MS[0]);
+})();
 </script>
 </body>
 </html>
