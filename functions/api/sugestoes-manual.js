@@ -5,8 +5,11 @@
 // de sugestões de todo mundo, mas sem saber quem escreveu cada uma: o
 // registro nunca guarda nome, e-mail ou qualquer outro dado de quem
 // enviou, só o texto e a data. GET e POST são públicos (sem login); só
-// apagar uma sugestão (moderação) exige o mesmo X-Admin-Password usado
-// nos outros endpoints administrativos do site.
+// apagar (moderação) exige o mesmo X-Admin-Password usado nos outros
+// endpoints administrativos do site.
+// Cada sugestão pode ganhar "complementos" — respostas penduradas nela
+// (mesmo molde: só texto e data, nunca autor), pra funcionar tipo um
+// fórum simples em vez de só uma lista solta de posts independentes.
 // Guardado como uma lista única em MENU_DATA (chave "sugestoes-manual:lista")
 // — volume esperado é baixo (dezenas/poucas centenas de sugestões).
 
@@ -44,14 +47,31 @@ export async function onRequest(context) {
       return json({ sugestoes: ordenada });
     }
 
-    // POST — pública, qualquer um pode enviar uma sugestão
+    // POST — pública, qualquer um pode enviar uma sugestão ou, se mandar
+    // sugestaoId, um complemento pendurado numa sugestão já existente
     if (method === 'POST') {
       const body = await request.json();
       const texto = String(body.texto || '').trim();
-      if (!texto) return json({ error: 'Escreve a sugestão antes de enviar.' }, 400);
+      if (!texto) return json({ error: 'Escreve o texto antes de enviar.' }, 400);
       if (texto.length > TEXTO_MAX) {
-        return json({ error: `Sugestão muito longa (máximo ${TEXTO_MAX} caracteres).` }, 400);
+        return json({ error: `Texto muito longo (máximo ${TEXTO_MAX} caracteres).` }, 400);
       }
+
+      const sugestaoId = body.sugestaoId ? String(body.sugestaoId) : null;
+      if (sugestaoId) {
+        const alvo = lista.find(s => s.id === sugestaoId);
+        if (!alvo) return json({ error: 'Sugestão não encontrada.' }, 404);
+        const novoComplemento = {
+          id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+          texto,
+          criadoEm: Date.now(),
+        };
+        if (!Array.isArray(alvo.complementos)) alvo.complementos = [];
+        alvo.complementos.push(novoComplemento);
+        await KV.put('sugestoes-manual:lista', JSON.stringify(lista));
+        return json({ ok: true, complemento: novoComplemento });
+      }
+
       const nova = {
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
         texto,
@@ -62,7 +82,9 @@ export async function onRequest(context) {
       return json({ ok: true, sugestao: nova });
     }
 
-    // DELETE — só a admin, pra moderação (ex: sugestão ofensiva ou spam)
+    // DELETE — só a admin, pra moderação (ex: post ofensivo ou spam). Manda
+    // complementoId pra apagar só um complemento; só id pra apagar a
+    // sugestão inteira (e os complementos dela junto).
     if (method === 'DELETE') {
       if (request.headers.get('X-Admin-Password') !== ADMIN_PASSWORD) {
         return json({ error: 'Não autorizado' }, 403);
@@ -70,6 +92,16 @@ export async function onRequest(context) {
       const body = await request.json();
       const id = String(body.id || '');
       if (!id) return json({ error: 'Informe o id da sugestão.' }, 400);
+
+      const complementoId = body.complementoId ? String(body.complementoId) : null;
+      if (complementoId) {
+        const alvo = lista.find(s => s.id === id);
+        if (!alvo) return json({ error: 'Sugestão não encontrada.' }, 404);
+        alvo.complementos = (alvo.complementos || []).filter(c => c.id !== complementoId);
+        await KV.put('sugestoes-manual:lista', JSON.stringify(lista));
+        return json({ ok: true });
+      }
+
       const restante = lista.filter(s => s.id !== id);
       await KV.put('sugestoes-manual:lista', JSON.stringify(restante));
       return json({ ok: true });

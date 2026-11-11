@@ -60,6 +60,23 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .sm-card-texto{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);line-height:1.6;white-space:pre-wrap;margin-bottom:8px}
 .sm-card-rodape{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sm-card-data{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
+.sm-card-complementar{background:none;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:20px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.04em;padding:5px 12px}
+.sm-card-complementar:hover{background:var(--rosa-dim)}
+
+.sm-complementos{margin-top:12px;padding-left:16px;border-left:2px solid var(--border)}
+.sm-complemento{margin-bottom:10px}
+.sm-complemento:last-child{margin-bottom:0}
+.sm-complemento-texto{font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);line-height:1.55;white-space:pre-wrap;margin-bottom:4px}
+.sm-complemento-data{font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--text-dim)}
+
+.sm-reply-box{display:none;margin-top:12px}
+.sm-reply-box.on{display:block}
+.sm-reply-textarea{width:100%;min-height:70px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);resize:vertical;margin-bottom:6px}
+.sm-reply-textarea:focus{outline:none;border-color:var(--rosa-border)}
+.sm-reply-acoes{display:flex;gap:8px}
+.sm-reply-enviar{background:var(--rosa);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.04em;font-weight:700}
+.sm-reply-cancelar{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:8px 14px;font-family:'Cinzel',serif;font-size:.62rem}
+.sm-reply-erro{font-family:'DM Sans',sans-serif;font-size:.76rem;color:#b84040;margin-top:6px;display:none}
 
 .sm-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .sm-saiba-mais a{color:var(--rosa);text-decoration:underline}
@@ -132,12 +149,67 @@ function smEsc(s) {
 }
 
 function smRenderCard(s) {
+  const complementos = s.complementos || [];
   return `<div class="sm-card">
     <div class="sm-card-texto">${smEsc(s.texto)}</div>
     <div class="sm-card-rodape">
       <span class="sm-card-data">${smFormatarData(s.criadoEm)}</span>
+      <button class="sm-card-complementar" onclick="smAbrirReply('${s.id}')">💬 Complementar</button>
+    </div>
+    ${complementos.length ? `<div class="sm-complementos">${complementos.map(smRenderComplemento).join('')}</div>` : ''}
+    <div class="sm-reply-box" id="sm-reply-${s.id}">
+      <textarea class="sm-reply-textarea" id="sm-reply-texto-${s.id}" maxlength="1000" placeholder="Escreve seu complemento..."></textarea>
+      <p class="sm-reply-erro" id="sm-reply-erro-${s.id}"></p>
+      <div class="sm-reply-acoes">
+        <button class="sm-reply-enviar" onclick="smEnviarReply('${s.id}')">Enviar</button>
+        <button class="sm-reply-cancelar" onclick="smFecharReply('${s.id}')">Cancelar</button>
+      </div>
     </div>
   </div>`;
+}
+
+function smRenderComplemento(c) {
+  return `<div class="sm-complemento">
+    <div class="sm-complemento-texto">${smEsc(c.texto)}</div>
+    <div class="sm-complemento-data">${smFormatarData(c.criadoEm)}</div>
+  </div>`;
+}
+
+function smAbrirReply(sugestaoId) {
+  document.querySelectorAll('.sm-reply-box.on').forEach(el => { if (el.id !== 'sm-reply-' + sugestaoId) el.classList.remove('on'); });
+  const box = document.getElementById('sm-reply-' + sugestaoId);
+  box.classList.add('on');
+  document.getElementById('sm-reply-texto-' + sugestaoId).focus();
+}
+
+function smFecharReply(sugestaoId) {
+  const box = document.getElementById('sm-reply-' + sugestaoId);
+  box.classList.remove('on');
+  document.getElementById('sm-reply-texto-' + sugestaoId).value = '';
+  document.getElementById('sm-reply-erro-' + sugestaoId).style.display = 'none';
+}
+
+async function smEnviarReply(sugestaoId) {
+  const textoEl = document.getElementById('sm-reply-texto-' + sugestaoId);
+  const erroEl = document.getElementById('sm-reply-erro-' + sugestaoId);
+  erroEl.style.display = 'none';
+  const texto = textoEl.value.trim();
+  if (!texto) { erroEl.textContent = 'Escreve alguma coisa antes de enviar.'; erroEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch(SM_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sugestaoId, texto }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      erroEl.textContent = data.error || 'Não consegui enviar — tenta de novo.'; erroEl.style.display = 'block';
+      return;
+    }
+    smCarregar();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui enviar — tenta de novo.'; erroEl.style.display = 'block';
+  }
 }
 
 async function smEnviar() {
