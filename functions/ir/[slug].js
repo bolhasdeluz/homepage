@@ -23,6 +23,7 @@ const DESTINOS = {
   banner: '/proxima-sessao.html',
   materiais: '/materiais.html',
   sugestoes: '/sugestoes-manual.html',
+  anotacoes: '/anotacoes-mae-de-santo.html',
 };
 
 export async function onRequestGet(context) {
