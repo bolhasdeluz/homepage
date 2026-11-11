@@ -335,6 +335,7 @@ footer{
 .admin-item-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.04em;color:var(--text);min-width:80px;flex:1}
 .admin-config-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:.85rem;padding:4px 9px;transition:all .2s;flex-shrink:0}
 .admin-config-btn:hover{border-color:var(--rosa);color:var(--rosa)}
+.admin-config-btn-ativo{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 @media(max-width:600px){
   .toggle-pill{font-size:.5rem;padding:3px 7px}
 }
@@ -5422,6 +5423,28 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </div>
     </div>
 
+    <!-- POPUP DE VISIBILIDADE DA SEÇÃO INTEIRA — oculta o "sub menu" todo
+    (todos os itens dentro dele) pra alguns grupos, independente da
+    visibilidade de cada item individual (as duas regras se somam: um item
+    só aparece se o item E a seção dele permitirem o grupo da pessoa) -->
+    <div class="admin-cfg-overlay" id="admin-secao-modal" onclick="if(event.target===this)fecharConfigSecao()">
+      <div class="admin-cfg-modal">
+        <div class="admin-cfg-modal-header">
+          <span id="cfgsec-titulo">Configurar seção</span>
+          <button class="admin-del" onclick="fecharConfigSecao()" title="Fechar">✕</button>
+        </div>
+        <div class="admin-cfg-modal-body">
+          <p style="font-family:'Crimson Pro',serif;font-size:.82rem;font-style:italic;color:var(--text-dim);margin-bottom:12px">Controla a seção inteira — some com todos os itens dela pra quem não estiver nos grupos marcados, mesmo que algum item em específico esteja liberado pro grupo.</p>
+          <div class="admin-cfg-rotulo">Visível para:</div>
+          <div class="admin-cfg-linha-pills" id="cfgsec-grupos"></div>
+          <div class="admin-cfg-linha-pills">
+            <button class="toggle-pill" id="cfgsec-btn-admin-only" onclick="cfgSecaoToggleAdminOnly()" title="Se ativado, só admin vê essa seção — ignora os grupos acima">🔒 Só admin</button>
+          </div>
+          <button class="btn-add" onclick="cfgSecaoLimparRestricao()" style="width:100%;margin-top:14px;background:var(--text-dim)">↺ Tirar toda restrição (visível pra todo mundo)</button>
+        </div>
+      </div>
+    </div>
+
     <!-- VISIBILIDADE: SUA HISTÓRIA -->
     <div id="admin-sub-historia" style="display:none">
       <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
@@ -5767,6 +5790,12 @@ function renderDrawer() {
     : '';
 
   const sectionsHtml = menuData.sections.map(sec => {
+    // a seção inteira pode estar oculta pra alguns grupos (independente da
+    // visibilidade de cada item dela) — ver abrirConfigSecao
+    if (grupoUsuario !== 'admin') {
+      if (sec.adminOnly) return '';
+      if (sec.grupos && !sec.grupos.includes(grupoUsuario)) return '';
+    }
     const visibleItems = sec.items.filter(i => {
       if (i.showMenu === false) return false;
       if (i.adminOnly && grupoUsuario !== 'admin') return false;
@@ -5958,6 +5987,13 @@ function renderCards() {
         if (!emSimulacao && isEmailAdmin(user.email)) grupoUsuario = 'admin';
       } else if (ehAdmin) {
         grupoUsuario = 'admin';
+      }
+
+      // a seção inteira pode estar oculta pra alguns grupos, independente da
+      // visibilidade de cada item dela — ver abrirConfigSecao
+      if (grupoUsuario !== 'admin') {
+        if (sec.adminOnly) return;
+        if (sec.grupos && !sec.grupos.includes(grupoUsuario)) return;
       }
 
       // verifica se o item é visível para o grupo
@@ -6248,6 +6284,7 @@ function renderAdminPanel() {
             title="Clique para editar o nome da seção">
         </div>
         <span class="admin-section-contagem">${sec.items.length}</span>
+        <button class="admin-config-btn ${(sec.grupos || sec.adminOnly) ? 'admin-config-btn-ativo' : ''}" onclick="abrirConfigSecao(${si})" title="Visibilidade por grupo da seção inteira">⚙</button>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
       ${colapsada ? '' : `
@@ -6437,6 +6474,61 @@ function cfgApagar() {
   renderAdminPanel(); renderDrawer(); renderCards();
   agendarSalvarMenu();
   fecharConfigItem();
+}
+
+// ── POPUP DE VISIBILIDADE DA SEÇÃO INTEIRA (mesma ideia do popup de item,
+// só que se aplicando a todos os itens da seção de uma vez) ──
+let _cfgSecaoSi = null;
+
+function abrirConfigSecao(si) {
+  _cfgSecaoSi = si;
+  cfgSecaoRefresh();
+  document.getElementById('admin-secao-modal').classList.add('on');
+}
+function fecharConfigSecao() {
+  document.getElementById('admin-secao-modal').classList.remove('on');
+  _cfgSecaoSi = null;
+}
+function cfgSecaoRefresh() {
+  if (_cfgSecaoSi === null) return;
+  const sec = menuData.sections[_cfgSecaoSi];
+  if (!sec) { fecharConfigSecao(); return; }
+  document.getElementById('cfgsec-titulo').textContent = sec.label;
+  document.getElementById('cfgsec-btn-admin-only').classList.toggle('on', !!sec.adminOnly);
+  // sem restrição (sec.grupos undefined) = todos os grupos marcados, visível
+  // pra todo mundo — é só o estado inicial mostrado, não é gravado até a
+  // pessoa mexer em algum grupo
+  const grupos = sec.grupos || Object.keys(CFG_GRUPOS_DEFS);
+  document.getElementById('cfgsec-grupos').innerHTML = Object.keys(CFG_GRUPOS_DEFS).map(g =>
+    `<button class="toggle-pill ${grupos.includes(g) ? 'on' : ''}" onclick="cfgSecaoToggleGrupo('${g}')">${CFG_GRUPOS_DEFS[g]}</button>`
+  ).join('');
+}
+function cfgSecaoToggleGrupo(g) {
+  const sec = menuData.sections[_cfgSecaoSi];
+  // primeira mexida: sai do "sem restrição" (undefined) e parte da lista
+  // completa de grupos, só então tirando o que foi clicado
+  if (!sec.grupos) sec.grupos = Object.keys(CFG_GRUPOS_DEFS);
+  const idx = sec.grupos.indexOf(g);
+  if (idx >= 0) sec.grupos.splice(idx, 1);
+  else sec.grupos.push(g);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+  cfgSecaoRefresh();
+}
+function cfgSecaoToggleAdminOnly() {
+  const sec = menuData.sections[_cfgSecaoSi];
+  sec.adminOnly = !sec.adminOnly;
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+  cfgSecaoRefresh();
+}
+function cfgSecaoLimparRestricao() {
+  const sec = menuData.sections[_cfgSecaoSi];
+  delete sec.grupos;
+  delete sec.adminOnly;
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+  cfgSecaoRefresh();
 }
 
 // fallback enquanto o Firebase carrega — antes só dava um console.warn e não
@@ -22930,6 +23022,8 @@ function dashvRenderApresentacao() {
   if (!el || !menuData) return;
   const itens = [];
   menuData.sections.forEach(sec => {
+    if (sec.adminOnly) return;
+    if (sec.grupos && !sec.grupos.includes('visitante')) return;
     sec.items.forEach(item => {
       if (!item.showCard) return;
       if (item.adminOnly) return;
