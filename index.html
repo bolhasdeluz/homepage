@@ -23558,9 +23558,8 @@ window.loginGoogle = async function() {
     await signInWithPopup(auth, provider);
   } catch(e) {
     if (e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment') {
-      // nada de redirect (tira do site e no celular nem sempre volta logada) —
-      // melhor orientar pro cadeado de senha, que funciona sem sair da página
-      alert('O navegador bloqueou a janela de login do Google. Tenta de novo, ou usa o 🔑 no canto desse mesmo card pra entrar com a senha — sem precisar de popup.');
+      // nada de redirect (tira do site e no celular nem sempre volta logada)
+      alert('O navegador bloqueou a janela de login do Google. Tenta de novo.');
       return;
     }
     if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
@@ -23576,7 +23575,7 @@ window.loginGoogle = async function() {
       // completou.
       await new Promise(r => setTimeout(r, 1000));
       if (auth.currentUser) return; // completou de verdade, só demorou um pouco
-      alert('O login não foi confirmado — isso costuma acontecer no Safari por causa do bloqueio de cookies de terceiros. Tenta de novo, ou usa o 🔑 no canto desse mesmo card pra entrar com a senha, sem precisar de popup.');
+      alert('O login não foi confirmado — isso costuma acontecer no Safari por causa do bloqueio de cookies de terceiros. Tenta de novo.');
       return;
     }
     alert('Erro: ' + e.code + ' — ' + e.message);
