@@ -326,6 +326,9 @@ footer{
 .admin-menu-item-label{font-family:'Cinzel',serif;font-size:.68rem;font-weight:600;letter-spacing:.05em;color:var(--terra)}
 .admin-menu-item-desc{font-family:'Crimson Pro',serif;font-size:.72rem;color:var(--text-dim);font-style:italic;line-height:1.3}
 .admin-section-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);background:rgba(196,90,30,.04)}
+.admin-collapse-btn{background:none;border:none;color:var(--terra);font-size:.85rem;padding:2px 4px;flex-shrink:0;transition:color .2s}
+.admin-collapse-btn:hover{color:var(--rosa)}
+.admin-section-contagem{font-family:'DM Sans',sans-serif;font-size:.68rem;color:var(--text-dim);background:rgba(196,90,30,.08);border-radius:10px;padding:2px 8px;flex-shrink:0}
 .admin-section-title{font-family:'Cinzel',serif;font-size:.72rem;font-weight:600;letter-spacing:.08em;color:var(--terra)}
 .admin-item-row{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
 .admin-item-row:last-child{border-bottom:none}
@@ -6212,16 +6215,30 @@ async function qrRemoverCriado(slug) {
 }
 window.qrRemoverCriado = qrRemoverCriado;
 
+// seções minimizadas no painel "Menu do Site" — guardado por id (não por
+// índice, que muda se alguém reordenar/apagar seção) e persiste entre
+// re-renders porque é um estado à parte do menuData (não é salvo no servidor,
+// só dura enquanto a página estiver aberta)
+let _secoesColapsadas = new Set();
+function toggleSecaoColapsada(id) {
+  if (_secoesColapsadas.has(id)) _secoesColapsadas.delete(id);
+  else _secoesColapsadas.add(id);
+  renderAdminPanel();
+}
+
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
   if (!container || !menuData) return;
-  container.innerHTML = menuData.sections.map((sec, si) => `
+  container.innerHTML = menuData.sections.map((sec, si) => {
+    const colapsada = _secoesColapsadas.has(sec.id);
+    return `
     <div class="admin-section-block">
       <div class="admin-section-header">
         <div class="admin-move-btns" title="Mover a seção inteira">
           <button class="admin-move-btn" onclick="moveSection(${si},-1)" ${si===0?'disabled':''} title="Mover seção para cima">▲</button>
           <button class="admin-move-btn" onclick="moveSection(${si},1)" ${si===menuData.sections.length-1?'disabled':''} title="Mover seção para baixo">▼</button>
         </div>
+        <button class="admin-collapse-btn" onclick="toggleSecaoColapsada('${sec.id}')" title="${colapsada ? 'Expandir seção' : 'Minimizar seção'}">${colapsada ? '▸' : '▾'}</button>
         <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
           <input type="text" value="${sec.label}"
             style="font-family:'Cinzel',serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;color:var(--terra);background:transparent;border:none;border-bottom:1px dashed transparent;outline:none;flex:1;min-width:0;transition:border-color .16s;"
@@ -6230,8 +6247,10 @@ function renderAdminPanel() {
             onkeydown="if(event.key==='Enter')this.blur()"
             title="Clique para editar o nome da seção">
         </div>
+        <span class="admin-section-contagem">${sec.items.length}</span>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
+      ${colapsada ? '' : `
       <div id="sortable-${si}" data-section="${si}">
       ${sec.items.map((item, ii) => `
         <div class="admin-item-row" data-si="${si}" data-ii="${ii}" id="aitem-${si}-${ii}">
@@ -6261,8 +6280,9 @@ function renderAdminPanel() {
         <input type="text" id="url-${si}" placeholder="URL ou nome da página">
         <input type="text" id="desc-${si}" placeholder="Descrição curta (opcional)">
         <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
-      </div>
-    </div>`).join('');
+      </div>`}
+    </div>`;
+  }).join('');
 }
 
 // ── REORDENAR SEÇÕES (mesmo esquema de setinhas dos itens, mas movendo a
