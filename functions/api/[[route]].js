@@ -129,6 +129,37 @@ export async function onRequest({ request, env, params }) {
     return json(defaults);
   }
 
+  // ── contador de uso do Google Places, por mês ──────────────────────
+  // A gente não sabe de antemão qual é a cota gratuita exata (o preço/cota
+  // do Google muda com o tempo e depende do plano) — em vez de inventar um
+  // número, só conta cada tentativa e descobre o teto sozinho na primeira
+  // vez que o Google recusar por cota. Depois de descoberto, pausa a busca
+  // automática pro resto do mês (sem gastar chamada à toa) até o contador
+  // zerar no mês seguinte.
+  function chaveMesAtual() {
+    return 'places-busca:' + new Date().toISOString().slice(0, 7); // "2026-11"
+  }
+  async function getContadorBuscas(env) {
+    const raw = await env.LOJAS_KV.get(chaveMesAtual());
+    return raw ? JSON.parse(raw) : { contagem: 0, limiteDescoberto: null, descobertoEm: null };
+  }
+  async function salvarContadorBuscas(env, estado) {
+    await env.LOJAS_KV.put(chaveMesAtual(), JSON.stringify(estado));
+  }
+  function pareceErroDeCota(status, data) {
+    if (status === 429) return true;
+    const s = (data?.error?.status || '').toUpperCase();
+    const msg = (data?.error?.message || '').toLowerCase();
+    return s === 'RESOURCE_EXHAUSTED' || msg.includes('quota');
+  }
+
+  // ── GET /api/buscar-lugar-status ───────
+  // Só lê o contador do mês — pra mostrar no botão do cabeçalho, sem gastar
+  // nenhuma chamada ao Google.
+  if (path === '/buscar-lugar-status' && request.method === 'GET') {
+    return json(await getContadorBuscas(env));
+  }
+
   // ── POST /api/buscar-lugar ─────────────
   // Busca automática no Google Places (Text Search) a partir do nome +
   // endereço já digitados no formulário de indicar loja — pra achar a
@@ -145,6 +176,13 @@ export async function onRequest({ request, env, params }) {
     const nome = String(body.nome || '').trim();
     const endereco = String(body.endereco || '').trim();
     if (!nome && !endereco) return json({ error: 'Informe nome ou endereço.' }, 400);
+
+    const contador = await getContadorBuscas(env);
+    if (contador.limiteDescoberto !== null && contador.contagem >= contador.limiteDescoberto) {
+      // já sabemos o teto desse mês — nem tenta de novo, economiza a chamada
+      return json({ limitado: true, contagem: contador.contagem, limiteDescoberto: contador.limiteDescoberto, descobertoEm: contador.descobertoEm });
+    }
+
     const textQuery = [nome, endereco].filter(Boolean).join(', ');
     try {
       const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -170,11 +208,24 @@ export async function onRequest({ request, env, params }) {
         }),
       });
       const data = await res.json();
+
       if (!res.ok) {
+        if (pareceErroDeCota(res.status, data)) {
+          // primeira vez que o Google recusa por cota esse mês — é o teto
+          // que a gente estava tentando descobrir
+          contador.limiteDescoberto = contador.contagem;
+          contador.descobertoEm = Date.now();
+          await salvarContadorBuscas(env, contador);
+          return json({ limitado: true, contagem: contador.contagem, limiteDescoberto: contador.limiteDescoberto, descobertoEm: contador.descobertoEm });
+        }
         return json({ error: data.error?.message || 'Erro ao consultar o Google Places.' }, 502);
       }
+
+      contador.contagem += 1;
+      await salvarContadorBuscas(env, contador);
+
       const lugar = (data.places || [])[0];
-      if (!lugar) return json({ encontrado: false });
+      if (!lugar) return json({ encontrado: false, contagem: contador.contagem });
       return json({
         encontrado: true,
         nome: lugar.displayName?.text || '',
@@ -182,6 +233,7 @@ export async function onRequest({ request, env, params }) {
         lat: lugar.location?.latitude ?? null,
         lng: lugar.location?.longitude ?? null,
         mapsUrl: lugar.googleMapsUri || '',
+        contagem: contador.contagem,
       });
     } catch (e) {
       return json({ error: e.message }, 500);
