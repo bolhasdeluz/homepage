@@ -450,6 +450,7 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       <button class="mc" onclick="fechar('ov-menu-site')">×</button>
     </div>
     <div class="mb2">
+      <button class="bs" id="ms-btn-buscas" onclick="mostrarDetalheBuscas()" style="text-align:left;font-size:.83rem">🔎 Carregando uso da busca automática…</button>
       <div id="ms-login-status" style="display:flex;align-items:center;gap:10px;background:#fafafa;border:1.5px solid #eee;border-radius:12px;padding:10px 12px"></div>
       <button class="bp" onclick="voltarComHandoff()">🏠 Voltar pro site</button>
       <div id="ms-secoes" style="display:flex;flex-direction:column;gap:14px"></div>
@@ -871,7 +872,7 @@ async function submeterLoja() {
   // precisa ir atrás do link na mão (ver /api/buscar-lugar)
   let lat = parseFloat(document.getElementById('s-lat').value) || null;
   let lng = parseFloat(document.getElementById('s-lng').value) || null;
-  let nomeEncontrado = null, enderecoEncontrado = null;
+  let nomeEncontrado = null, enderecoEncontrado = null, buscaLimitada = false;
 
   if (!lat || !lng) {
     btn.textContent = 'Procurando no mapa…'; btn.disabled = true;
@@ -882,7 +883,9 @@ async function submeterLoja() {
         body: JSON.stringify({ nome: body.name, endereco: body.address }),
       });
       const dados = await resp.json();
-      if (dados.encontrado) {
+      if (dados.limitado) {
+        buscaLimitada = true;
+      } else if (dados.encontrado) {
         lat = dados.lat; lng = dados.lng;
         nomeEncontrado = dados.nome; enderecoEncontrado = dados.endereco;
         if (dados.mapsUrl && !body.maps) body.maps = dados.mapsUrl;
@@ -894,7 +897,7 @@ async function submeterLoja() {
   // antes de enviar de verdade, confirma com quem está indicando se achamos
   // o lugar certo (evita repetir o problema de loja aparecendo longe do
   // lugar real no mapa)
-  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng, nomeEncontrado, enderecoEncontrado);
+  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada);
   if (!confirmou) return;
   if (lat && lng) { body.lat = lat; body.lng = lng; }
 
@@ -917,7 +920,7 @@ async function submeterLoja() {
 // automático em abrirNoMapa), mas ainda deixa enviar assim mesmo.
 let _clResolvePromise = null;
 let _clMapaInstancia = null;
-function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, enderecoEncontrado) {
+function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada) {
   return new Promise(resolve => {
     _clResolvePromise = resolve;
     const temCoords = !!(lat && lng);
@@ -925,6 +928,8 @@ function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, endere
       document.getElementById('cl-texto').textContent = `Achamos "${nomeEncontrado}"${enderecoEncontrado ? ' — ' + enderecoEncontrado : ''}. É esse o lugar?`;
     } else if (temCoords) {
       document.getElementById('cl-texto').textContent = `Pelo link do Google Maps que você colou, a loja fica aqui. Confere se é o lugar certo:`;
+    } else if (buscaLimitada) {
+      document.getElementById('cl-texto').textContent = `A busca automática atingiu o limite grátis desse mês — volta a funcionar em breve. Por enquanto, quer colar o link do Google Maps da empresa, ou enviar assim mesmo com só o endereço (${address})?`;
     } else {
       document.getElementById('cl-texto').textContent = `Não conseguimos localizar esse endereço sozinhos — sem isso, a loja pode ficar imprecisa no mapa. Quer colar o link do Google Maps da empresa, ou enviar assim mesmo com só o endereço (${address})?`;
     }
@@ -1528,7 +1533,40 @@ let _menuSiteCarregado = false;
 function abrirMenuSite() {
   atualizarLoginStatusUI();
   if (!_menuSiteCarregado) carregarMenuSite();
+  carregarStatusBuscas();
   abrir('ov-menu-site');
+}
+
+// ── USO DA BUSCA AUTOMÁTICA (Google Places) ──
+// Mostra quantas buscas já foram feitas esse mês. Como a cota gratuita do
+// Google muda com o tempo, não sabemos o teto de antemão — o backend
+// descobre sozinho na primeira vez que o Google recusar por cota (ver
+// /api/buscar-lugar em functions/api/[[route]].js) e a partir daí mostra
+// esse teto aqui também.
+let _statusBuscas = null;
+async function carregarStatusBuscas() {
+  const btn = document.getElementById('ms-btn-buscas');
+  try {
+    const res = await fetch(API + '/buscar-lugar-status');
+    _statusBuscas = await res.json();
+  } catch (e) {
+    btn.textContent = '🔎 Não consegui carregar o uso da busca automática';
+    return;
+  }
+  if (_statusBuscas.limiteDescoberto !== null) {
+    btn.textContent = `🔎 ${_statusBuscas.contagem} buscas — limite grátis do mês atingido`;
+  } else {
+    btn.textContent = `🔎 ${_statusBuscas.contagem} buscas automáticas este mês`;
+  }
+}
+function mostrarDetalheBuscas() {
+  if (!_statusBuscas) return;
+  if (_statusBuscas.limiteDescoberto !== null) {
+    const data = _statusBuscas.descobertoEm ? new Date(_statusBuscas.descobertoEm).toLocaleDateString('pt-BR') : '';
+    alert(`Esse mês, o Google parou de aceitar busca automática gratuita depois de ${_statusBuscas.limiteDescoberto} buscas (descobrimos isso no dia ${data}).\n\nAté o limite liberar nos bastidores do Google (geralmente no começo do mês seguinte), quem for indicar uma loja precisa colar o link do Google Maps manualmente — o site já avisa isso na hora.`);
+  } else {
+    alert(`${_statusBuscas.contagem} buscas automáticas feitas esse mês até agora.\n\nAinda não sabemos qual é o limite gratuito exato — o site vai descobrir sozinho (e avisar aqui) na primeira vez que o Google recusar por cota.`);
+  }
 }
 
 function atualizarLoginStatusUI() {
