@@ -863,16 +863,41 @@ async function submeterLoja() {
   const body = { name:g('name'), category:g('category'), sells:g('sells'), address:g('address'), maps:g('maps'), emoji:g('emoji')||'🏪', addedBy:g('addedBy')||'Anônimo', phone:g('phone'), quals:getCheckedQuals('s-quals'), hours_week:g('hours_week'), hours_sat:g('hours_sat') };
   if (!body.name||!body.category||!body.address||!body.addedBy) { alert('Preencha nome, categoria, endereço e quem está indicando.'); return; }
 
-  // antes de enviar de verdade, confirma com quem está indicando se o link
-  // do Google Maps colado corresponde ao endereço certo (evita repetir o
-  // problema de loja aparecendo longe do lugar real no mapa)
-  const lat = parseFloat(document.getElementById('s-lat').value) || null;
-  const lng = parseFloat(document.getElementById('s-lng').value) || null;
-  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng);
+  const btn = document.getElementById('btn-sub');
+  const textoOriginalBtn = btn.textContent;
+
+  // já tem coordenada (colou um link do Maps)? usa ela. Senão, procura
+  // sozinho pelo nome + endereço que a pessoa já digitou — ninguém
+  // precisa ir atrás do link na mão (ver /api/buscar-lugar)
+  let lat = parseFloat(document.getElementById('s-lat').value) || null;
+  let lng = parseFloat(document.getElementById('s-lng').value) || null;
+  let nomeEncontrado = null, enderecoEncontrado = null;
+
+  if (!lat || !lng) {
+    btn.textContent = 'Procurando no mapa…'; btn.disabled = true;
+    try {
+      const resp = await fetch(API + '/buscar-lugar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: body.name, endereco: body.address }),
+      });
+      const dados = await resp.json();
+      if (dados.encontrado) {
+        lat = dados.lat; lng = dados.lng;
+        nomeEncontrado = dados.nome; enderecoEncontrado = dados.endereco;
+        if (dados.mapsUrl && !body.maps) body.maps = dados.mapsUrl;
+      }
+    } catch (e) {}
+    btn.textContent = textoOriginalBtn; btn.disabled = false;
+  }
+
+  // antes de enviar de verdade, confirma com quem está indicando se achamos
+  // o lugar certo (evita repetir o problema de loja aparecendo longe do
+  // lugar real no mapa)
+  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng, nomeEncontrado, enderecoEncontrado);
   if (!confirmou) return;
   if (lat && lng) { body.lat = lat; body.lng = lng; }
 
-  const btn = document.getElementById('btn-sub');
   btn.textContent = 'Enviando…'; btn.disabled = true;
   try {
     const nova = await apiFetch('/lojas', { method:'POST', body:JSON.stringify(body) });
@@ -886,21 +911,24 @@ async function submeterLoja() {
 }
 
 // ── CONFIRMAR LOCALIZAÇÃO antes de enviar a indicação pública ──
-// Mostra um popup com a prévia do pino no mapa quando o link do Google Maps
-// colado deu coordenadas; se não tiver link/coordenadas, avisa que sem isso
-// a loja pode cair no lugar errado do mapa (ver geocode automático em
-// abrirNoMapa), mas ainda deixa enviar assim mesmo, já que o link sempre
-// foi um campo opcional.
+// Mostra um popup com a prévia do pino no mapa quando a busca automática
+// (ou um link de Maps colado) deu coordenadas; se não achou nada, avisa
+// que sem isso a loja pode cair no lugar errado do mapa (ver geocode
+// automático em abrirNoMapa), mas ainda deixa enviar assim mesmo.
 let _clResolvePromise = null;
 let _clMapaInstancia = null;
-function confirmarLocalizacaoSubmissao(address, lat, lng) {
+function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, enderecoEncontrado) {
   return new Promise(resolve => {
     _clResolvePromise = resolve;
     const temCoords = !!(lat && lng);
-    document.getElementById('cl-texto').textContent = temCoords
-      ? `Pelo link do Google Maps que você colou, a loja fica aqui. Confere se é o lugar certo:`
-      : `Você não colou o link do Google Maps da empresa — sem ele, a localização da loja no mapa pode ficar imprecisa. Quer voltar e colar o link, ou enviar assim mesmo com só o endereço (${address})?`;
-    document.getElementById('cl-btn-voltar').textContent = temCoords ? '✎ Corrigir o link' : '✎ Voltar e colar o link';
+    if (temCoords && nomeEncontrado) {
+      document.getElementById('cl-texto').textContent = `Achamos "${nomeEncontrado}"${enderecoEncontrado ? ' — ' + enderecoEncontrado : ''}. É esse o lugar?`;
+    } else if (temCoords) {
+      document.getElementById('cl-texto').textContent = `Pelo link do Google Maps que você colou, a loja fica aqui. Confere se é o lugar certo:`;
+    } else {
+      document.getElementById('cl-texto').textContent = `Não conseguimos localizar esse endereço sozinhos — sem isso, a loja pode ficar imprecisa no mapa. Quer colar o link do Google Maps da empresa, ou enviar assim mesmo com só o endereço (${address})?`;
+    }
+    document.getElementById('cl-btn-voltar').textContent = temCoords ? '✎ Não é esse — corrigir' : '✎ Colar o link do Maps';
     document.getElementById('cl-btn-confirmar').textContent = temCoords ? '✓ Confirmar e enviar' : 'Enviar assim mesmo';
     const mapaEl = document.getElementById('cl-mapa');
     if (temCoords) {

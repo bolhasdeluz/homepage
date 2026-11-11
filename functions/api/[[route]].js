@@ -129,6 +129,65 @@ export async function onRequest({ request, env, params }) {
     return json(defaults);
   }
 
+  // ── POST /api/buscar-lugar ─────────────
+  // Busca automática no Google Places (Text Search) a partir do nome +
+  // endereço já digitados no formulário de indicar loja — pra achar a
+  // localização exata sem precisar que a pessoa vá no Google Maps, copie
+  // o link e cole de volta aqui. Precisa da env var GOOGLE_PLACES_API_KEY
+  // (chave do Google Cloud com a "Places API (New)" ativada e faturamento
+  // configurado — tem cota gratuita mensal, mas exige cartão cadastrado).
+  if (path === '/buscar-lugar' && request.method === 'POST') {
+    const apiKey = env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      return json({ error: 'Busca automática não configurada ainda (falta a chave do Google Places nas variáveis de ambiente).' }, 500);
+    }
+    const body = await request.json();
+    const nome = String(body.nome || '').trim();
+    const endereco = String(body.endereco || '').trim();
+    if (!nome && !endereco) return json({ error: 'Informe nome ou endereço.' }, 400);
+    const textQuery = [nome, endereco].filter(Boolean).join(', ');
+    try {
+      const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.googleMapsUri',
+        },
+        body: JSON.stringify({
+          textQuery,
+          languageCode: 'pt-BR',
+          regionCode: 'BR',
+          // só prioriza resultados perto da terreira (Porto Alegre) — não
+          // restringe a busca, então um endereço de verdade fora dali
+          // ainda é encontrado
+          locationBias: {
+            circle: {
+              center: { latitude: -30.022979992882995, longitude: -51.13118660674672 },
+              radius: 30000,
+            },
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return json({ error: data.error?.message || 'Erro ao consultar o Google Places.' }, 502);
+      }
+      const lugar = (data.places || [])[0];
+      if (!lugar) return json({ encontrado: false });
+      return json({
+        encontrado: true,
+        nome: lugar.displayName?.text || '',
+        endereco: lugar.formattedAddress || '',
+        lat: lugar.location?.latitude ?? null,
+        lng: lugar.location?.longitude ?? null,
+        mapsUrl: lugar.googleMapsUri || '',
+      });
+    } catch (e) {
+      return json({ error: e.message }, 500);
+    }
+  }
+
   // ── GET /api/resolve-url?u=... ────────
   // Resolve short Google Maps URLs (share.google, goo.gl, maps.app.goo.gl)
   // server-side to extract the final URL with coords and address
