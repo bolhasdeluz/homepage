@@ -6414,10 +6414,15 @@ function abrirConfigItem(si, ii) {
   _cfgSi = si; _cfgIi = ii;
   cfgRefresh();
   document.getElementById('admin-item-modal').classList.add('on');
+  // sem isso, no celular o gesto de rolar dentro do popup rolava a página
+  // de baixo em vez do conteúdo do popup (mesmo padrão já usado nos outros
+  // overlays do site, ver abrirFicha/fecharFicha)
+  document.body.style.overflow = 'hidden';
 }
 function fecharConfigItem() {
   document.getElementById('admin-item-modal').classList.remove('on');
   _cfgSi = null; _cfgIi = null;
+  document.body.style.overflow = '';
 }
 function cfgRefresh() {
   if (_cfgSi === null) return;
@@ -6484,10 +6489,12 @@ function abrirConfigSecao(si) {
   _cfgSecaoSi = si;
   cfgSecaoRefresh();
   document.getElementById('admin-secao-modal').classList.add('on');
+  document.body.style.overflow = 'hidden';
 }
 function fecharConfigSecao() {
   document.getElementById('admin-secao-modal').classList.remove('on');
   _cfgSecaoSi = null;
+  document.body.style.overflow = '';
 }
 function cfgSecaoRefresh() {
   if (_cfgSecaoSi === null) return;
