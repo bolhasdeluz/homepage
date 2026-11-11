@@ -414,6 +414,7 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
     </div>
     <div class="mb2">
       <p id="cl-texto" style="font-size:.88rem;color:var(--muted,#666);margin-bottom:10px;line-height:1.5"></p>
+      <p id="cl-outros" style="font-size:.82rem;color:var(--accent);background:var(--light);border-radius:8px;padding:8px 10px;margin-bottom:10px;display:none"></p>
       <div id="cl-mapa" style="width:100%;height:200px;border-radius:10px;margin-bottom:14px;display:none"></div>
       <div class="ma">
         <button class="bs" id="cl-btn-voltar" onclick="fecharConfirmaLocal(false)"></button>
@@ -873,6 +874,10 @@ async function submeterLoja() {
   let lat = parseFloat(document.getElementById('s-lat').value) || null;
   let lng = parseFloat(document.getElementById('s-lng').value) || null;
   let nomeEncontrado = null, enderecoEncontrado = null, buscaLimitada = false;
+  // só telefone/horário que a pessoa deixou em branco — fica guardado aqui
+  // e só é aplicado de fato (no formulário e no envio) se ela confirmar que
+  // achamos o lugar certo, pra não vincular dado de um lugar errado
+  let outrosEncontrados = {};
 
   if (!lat || !lng) {
     btn.textContent = 'Procurando no mapa…'; btn.disabled = true;
@@ -888,7 +893,10 @@ async function submeterLoja() {
       } else if (dados.encontrado) {
         lat = dados.lat; lng = dados.lng;
         nomeEncontrado = dados.nome; enderecoEncontrado = dados.endereco;
-        if (dados.mapsUrl && !body.maps) body.maps = dados.mapsUrl;
+        if (dados.mapsUrl && !body.maps) outrosEncontrados.maps = dados.mapsUrl;
+        if (dados.telefone && !body.phone) outrosEncontrados.phone = dados.telefone;
+        if (dados.horarioSegSex && !body.hours_week) outrosEncontrados.hours_week = dados.horarioSegSex;
+        if (dados.horarioSabado && !body.hours_sat) outrosEncontrados.hours_sat = dados.horarioSabado;
       }
     } catch (e) {}
     btn.textContent = textoOriginalBtn; btn.disabled = false;
@@ -896,10 +904,18 @@ async function submeterLoja() {
 
   // antes de enviar de verdade, confirma com quem está indicando se achamos
   // o lugar certo (evita repetir o problema de loja aparecendo longe do
-  // lugar real no mapa)
-  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada);
+  // lugar real no mapa) — e, se achamos telefone/horário também, avisa que
+  // vamos preencher isso junto
+  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada, outrosEncontrados);
   if (!confirmou) return;
   if (lat && lng) { body.lat = lat; body.lng = lng; }
+  // só agora aplica de fato — depois que a pessoa confirmou que o lugar
+  // encontrado está certo
+  Object.entries(outrosEncontrados).forEach(([campo, valor]) => {
+    body[campo] = valor;
+    const el = document.getElementById('s-' + campo);
+    if (el) el.value = valor;
+  });
 
   btn.textContent = 'Enviando…'; btn.disabled = true;
   try {
@@ -920,7 +936,7 @@ async function submeterLoja() {
 // automático em abrirNoMapa), mas ainda deixa enviar assim mesmo.
 let _clResolvePromise = null;
 let _clMapaInstancia = null;
-function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada) {
+function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, enderecoEncontrado, buscaLimitada, outrosEncontrados) {
   return new Promise(resolve => {
     _clResolvePromise = resolve;
     const temCoords = !!(lat && lng);
@@ -933,6 +949,17 @@ function confirmarLocalizacaoSubmissao(address, lat, lng, nomeEncontrado, endere
     } else {
       document.getElementById('cl-texto').textContent = `Não conseguimos localizar esse endereço sozinhos — sem isso, a loja pode ficar imprecisa no mapa. Quer colar o link do Google Maps da empresa, ou enviar assim mesmo com só o endereço (${address})?`;
     }
+
+    const outrosEl = document.getElementById('cl-outros');
+    const rotulos = { phone: 'telefone', hours_week: 'horário seg-sex', hours_sat: 'horário sábado' };
+    const itens = Object.entries(outrosEncontrados || {}).filter(([campo]) => campo !== 'maps').map(([campo, valor]) => `${rotulos[campo] || campo}: ${valor}`);
+    if (temCoords && itens.length) {
+      outrosEl.textContent = `📋 Também achamos ${itens.join(' · ')} — vamos preencher isso no formulário também (confere se bateu certo).`;
+      outrosEl.style.display = 'block';
+    } else {
+      outrosEl.style.display = 'none';
+    }
+
     document.getElementById('cl-btn-voltar').textContent = temCoords ? '✎ Não é esse — corrigir' : '✎ Colar o link do Maps';
     document.getElementById('cl-btn-confirmar').textContent = temCoords ? '✓ Confirmar e enviar' : 'Enviar assim mesmo';
     const mapaEl = document.getElementById('cl-mapa');
