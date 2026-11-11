@@ -63,6 +63,15 @@ button{cursor:pointer;font-family:inherit}
 .sg-card-data{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
 .sg-card-apagar{background:none;border:none;color:var(--text-dim);font-size:.85rem;opacity:.6;transition:opacity .2s}
 .sg-card-apagar:hover{opacity:1;color:#b84040}
+
+.sg-complementos{margin-top:10px;padding-left:14px;border-left:2px solid var(--border)}
+.sg-complemento{margin-bottom:8px}
+.sg-complemento:last-child{margin-bottom:0}
+.sg-complemento-texto{font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text);line-height:1.5;white-space:pre-wrap;margin-bottom:4px}
+.sg-complemento-rodape{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sg-complemento-data{font-family:'DM Sans',sans-serif;font-size:.65rem;color:var(--text-dim)}
+.sg-complemento-apagar{background:none;border:none;color:var(--text-dim);font-size:.78rem;opacity:.6;transition:opacity .2s}
+.sg-complemento-apagar:hover{opacity:1;color:#b84040}
 </style>
 </head>
 <body>
@@ -242,22 +251,46 @@ async function sgCarregar() {
 }
 
 function sgRenderCard(s) {
+  const complementos = s.complementos || [];
   return `<div class="sg-card">
     <div class="sg-card-texto">${sgEsc(s.texto)}</div>
     <div class="sg-card-rodape">
       <span class="sg-card-data">${sgFormatarData(s.criadoEm)}</span>
       <button class="sg-card-apagar" title="Apagar" onclick="sgApagar('${s.id}')">🗑 Apagar</button>
     </div>
+    ${complementos.length ? `<div class="sg-complementos">${complementos.map(c => sgRenderComplemento(s.id, c)).join('')}</div>` : ''}
+  </div>`;
+}
+
+function sgRenderComplemento(sugestaoId, c) {
+  return `<div class="sg-complemento">
+    <div class="sg-complemento-texto">${sgEsc(c.texto)}</div>
+    <div class="sg-complemento-rodape">
+      <span class="sg-complemento-data">${sgFormatarData(c.criadoEm)}</span>
+      <button class="sg-complemento-apagar" title="Apagar complemento" onclick="sgApagarComplemento('${sugestaoId}','${c.id}')">🗑</button>
+    </div>
   </div>`;
 }
 
 async function sgApagar(id) {
-  if (!confirm('Apagar essa sugestão?')) return;
+  if (!confirm('Apagar essa sugestão? (os complementos dela também somem)')) return;
   try {
     const res = await fetch(SG_API, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
       body: JSON.stringify({ id }),
+    });
+    if (res.ok) sgCarregar();
+  } catch (e) {}
+}
+
+async function sgApagarComplemento(sugestaoId, complementoId) {
+  if (!confirm('Apagar esse complemento?')) return;
+  try {
+    const res = await fetch(SG_API, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ id: sugestaoId, complementoId }),
     });
     if (res.ok) sgCarregar();
   } catch (e) {}
