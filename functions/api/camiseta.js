@@ -5,7 +5,7 @@
 // escolhe quantidade por tamanho E por cor (pode levar, por ex., 2 M preta e
 // 1 G colorida no mesmo pedido) — sem controle de limite de unidades.
 //
-// Pagamento: a pessoa escolhe QUANTO (sinal, mínimo 20% do total, editável
+// Pagamento: a pessoa escolhe QUANTO (sinal, mínimo 50% do total, editável
 // pra mais — ou o valor total) e QUANDO (agora, via InfinitePay, ou depois,
 // só combinando uma data). Se escolher pagar só o sinal, também informa uma
 // previsão de pagamento do saldo restante — esse saldo é sempre confirmado
@@ -23,7 +23,7 @@ const PIX_CHAVE = 'bolhasdeluz@gmail.com';
 // mesma conta/handle já usado pela rifa — ver nota equivalente em rifa.js
 const INFINITEPAY_HANDLE = 'bolhasdeluz';
 const ADMIN_NOTIFY_EMAIL = 'bolhasdeluz@gmail.com';
-const PERCENTUAL_MINIMO_SINAL = 0.2;
+const PERCENTUAL_MINIMO_SINAL = 0.5;
 // prazo máximo pra pagar o saldo restante dessa campanha de camiseta —
 // depois dessa data a admin encerra as contas manualmente
 const DATA_LIMITE_SALDO = '2026-12-05';
@@ -405,7 +405,7 @@ export async function onRequest(context) {
       // CRIAR PEDIDO — pública, chamada pela página de compra (dentro do
       // site, pessoa logada). Carrinho com quantidade por cor+tamanho, sem
       // reservar nada (não tem estoque aqui). A pessoa escolhe QUANTO vai
-      // pagar agora (sinal, mínimo 20% do total, ou o valor total) e QUANDO
+      // pagar agora (sinal, mínimo 50% do total, ou o valor total) e QUANDO
       // (agora, cria link de pagamento; depois, só combina uma data). Se for
       // só o sinal, também guarda a previsão de pagamento do saldo.
       if (acao === 'criar-pedido') {
@@ -428,7 +428,7 @@ export async function onRequest(context) {
         const quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
         const total = quantidadeTotal * Number(produto.precoPorUnidade || 0);
 
-        // QUANTO — sinal (mínimo 20%, editável pra mais) ou o total
+        // QUANTO — sinal (mínimo 50%, editável pra mais) ou o total
         const valorEscolhido = body.valorEscolhido === 'sinal' ? 'sinal' : 'total';
         let valorPedido = total;
         let dataPagamentoSaldo = null;
@@ -436,7 +436,7 @@ export async function onRequest(context) {
           valorPedido = Math.round((Number(body.valorSinal) || 0) * 100) / 100;
           const minimo = Math.round(total * PERCENTUAL_MINIMO_SINAL * 100) / 100;
           if (valorPedido < minimo - 0.01) {
-            return json({ error: `O sinal mínimo é de ${fmtPrecoEmail(minimo)} (20% do total).` }, 400);
+            return json({ error: `O sinal mínimo é de ${fmtPrecoEmail(minimo)} (50% do total).` }, 400);
           }
           if (valorPedido > total) valorPedido = total;
           dataPagamentoSaldo = String(body.dataPagamentoSaldo || '');

@@ -2885,7 +2885,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 <!-- PÁGINA CAMISETA — só pra quem está logada (perfil da casa); a pessoa
      escolhe cor+tamanho+quantidade (pode misturar as duas cores no mesmo
      pedido), vê a tabela de medidas, e escolhe quanto vai pagar agora
-     (sinal, mínimo 20%, ou o valor total) e quando (agora, via InfinitePay,
+     (sinal, mínimo 50%, ou o valor total) e quando (agora, via InfinitePay,
      ou combina uma data) — ver /api/camiseta -->
 <div id="page-camiseta" class="page">
   <div class="section-wrap">
@@ -2943,7 +2943,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
           <button type="button" class="ct-toggle-btn" id="ct-valor-sinal" onclick="ctEscolherValor('sinal')">Só o sinal</button>
         </div>
         <div id="ct-sinal-wrap" style="display:none">
-          <label class="form-label">Valor do sinal (mínimo 20% do total)</label>
+          <label class="form-label">Valor do sinal (mínimo 50% do total)</label>
           <input type="number" step="0.01" class="form-input" id="ct-sinal-valor">
           <label class="form-label">Previsão de pagamento do saldo restante (até 05/12/2026)</label>
           <input type="date" class="form-input" id="ct-data-saldo" max="2026-12-05" onchange="ctValidarDataSaldo(this)">
@@ -8283,7 +8283,7 @@ function ctAtualizarTotal() {
 function ctAtualizarSinalMinimo() {
   if (ctValorEscolhido !== 'sinal') return;
   const total = ctTotalPedido();
-  const minimo = Math.round(total * 0.2 * 100) / 100;
+  const minimo = Math.round(total * 0.5 * 100) / 100;
   const input = document.getElementById('ct-sinal-valor');
   input.min = minimo.toFixed(2);
   if (!ctSinalEditadoManualmente || !input.value || parseFloat(input.value) < minimo) {
