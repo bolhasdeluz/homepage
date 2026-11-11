@@ -60,19 +60,12 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .sm-card-texto{font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);line-height:1.6;white-space:pre-wrap;margin-bottom:8px}
 .sm-card-rodape{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sm-card-data{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
-.sm-card-apagar{background:none;border:none;color:var(--text-dim);font-size:.9rem;opacity:.45;transition:opacity .2s}
-.sm-card-apagar:hover{opacity:1;color:#b84040}
 
 .sm-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .sm-saiba-mais a{color:var(--rosa);text-decoration:underline}
 
 .sm-link-anotacoes{display:block;text-align:center;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px 18px;margin-bottom:28px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;color:var(--rosa);text-transform:uppercase}
 .sm-link-anotacoes:hover{background:var(--rosa-dim)}
-
-.sm-edit-toggle{display:block;margin:0 auto 18px;background:none;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:20px;padding:7px 16px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em}
-.sm-edit-toggle:hover{background:var(--rosa-dim)}
-.sm-card-apagar{display:none}
-.sm-card-apagar.on{display:inline-block}
 </style>
 </head>
 <body>
@@ -96,7 +89,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   </div>
 
   <div class="sm-lista-titulo">💬 O que já foi sugerido</div>
-  <button class="sm-edit-toggle" id="sm-btn-admin" onclick="smEntrarModoAdmin()">✎ Entrar como administração</button>
   <div id="sm-carregando" class="sm-carregando">Carregando sugestões...</div>
   <div id="sm-vazio" class="sm-vazio" style="display:none">Ninguém sugeriu nada ainda — seja a primeira pessoa ✦</div>
   <div id="sm-lista"></div>
@@ -106,24 +98,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 <script>
 const SM_API = '/api/sugestoes-manual';
-let smModoAdmin = false;
-
-function smEntrarModoAdmin() {
-  if (smModoAdmin) {
-    smModoAdmin = false;
-    document.getElementById('sm-btn-admin').textContent = '✎ Entrar como administração';
-    smCarregar();
-    return;
-  }
-  const senha = prompt('Senha de administração:');
-  if (senha !== 'admin') {
-    if (senha !== null) alert('Senha incorreta.');
-    return;
-  }
-  smModoAdmin = true;
-  document.getElementById('sm-btn-admin').textContent = '✕ Sair do modo administração';
-  smCarregar();
-}
 
 function smFormatarData(ts) {
   const d = new Date(ts);
@@ -162,7 +136,6 @@ function smRenderCard(s) {
     <div class="sm-card-texto">${smEsc(s.texto)}</div>
     <div class="sm-card-rodape">
       <span class="sm-card-data">${smFormatarData(s.criadoEm)}</span>
-      <button class="sm-card-apagar ${smModoAdmin ? 'on' : ''}" title="Apagar (admin)" onclick="smApagar('${s.id}')">🗑</button>
     </div>
   </div>`;
 }
@@ -198,18 +171,6 @@ async function smEnviar() {
     erroEl.textContent = 'Não consegui enviar — tenta de novo.'; erroEl.style.display = 'block';
   }
   btn.textContent = textoOriginal; btn.disabled = false;
-}
-
-async function smApagar(id) {
-  if (!confirm('Apagar essa sugestão? (ação só pra administração)')) return;
-  try {
-    const res = await fetch(SM_API, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify({ id }),
-    });
-    if (res.ok) smCarregar();
-  } catch (e) {}
 }
 
 smCarregar();
