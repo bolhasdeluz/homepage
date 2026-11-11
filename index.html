@@ -330,14 +330,22 @@ footer{
 .admin-item-row{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
 .admin-item-row:last-child{border-bottom:none}
 .admin-item-label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.04em;color:var(--text);min-width:80px;flex:1}
-.admin-item-url{font-family:'Crimson Pro',serif;font-size:.75rem;color:var(--text-dim);font-style:italic;width:100%;order:10;padding-left:20px;margin-top:-4px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.admin-item-actions{display:flex;gap:4px;flex-wrap:wrap;width:100%;order:11;padding-left:20px}
+.admin-config-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:.85rem;padding:4px 9px;transition:all .2s;flex-shrink:0}
+.admin-config-btn:hover{border-color:var(--rosa);color:var(--rosa)}
 @media(max-width:600px){
-  .admin-item-url{font-size:.7rem}
   .toggle-pill{font-size:.5rem;padding:3px 7px}
 }
 .toggle-pill{display:flex;align-items:center;gap:5px;font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.06em;padding:4px 10px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);transition:all .2s;white-space:nowrap}
 .admin-move-section{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;padding:4px 8px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--text-dim);max-width:150px}
+.admin-cfg-overlay{display:none;position:fixed;inset:0;background:rgba(46,26,14,.45);z-index:200;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+.admin-cfg-overlay.on{display:flex}
+.admin-cfg-modal{background:var(--surface,#fff);border-radius:14px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,.25);overflow:hidden}
+.admin-cfg-modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(196,90,30,.06);border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:.78rem;font-weight:600;color:var(--terra)}
+.admin-cfg-modal-body{padding:16px 18px}
+.admin-cfg-modal-body input,.admin-cfg-modal-body select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+.admin-cfg-modal-body input:focus,.admin-cfg-modal-body select:focus{border-color:var(--rosa)}
+.admin-cfg-rotulo{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin:12px 0 6px}
+.admin-cfg-linha-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
 .toggle-pill.on{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
 .toggle-pill.on-green{background:var(--green-dim);border-color:var(--green-border);color:var(--green)}
 .admin-del{background:none;border:none;color:rgba(184,64,64,.35);font-size:1rem;padding:2px 6px;transition:color .2s}
@@ -386,11 +394,6 @@ footer{
 .btn-add:hover{background:var(--rosa-l)}
 .btn-save-menu{width:100%;background:var(--terra);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:.1em;font-weight:700;padding:13px;margin-top:8px;transition:all .2s}
 .btn-save-menu:hover{background:#a04020}
-.admin-edit-btn{background:none;border:none;color:rgba(196,90,30,.45);font-size:.9rem;padding:2px 6px;transition:color .2s;cursor:pointer}
-.admin-edit-btn:hover{color:var(--terra)}
-.admin-edit-form{padding:12px 16px;background:rgba(196,57,107,.04);border-bottom:1px solid var(--border)}
-.admin-edit-form input,.admin-edit-form select{font-family:'Crimson Pro',serif;font-size:15px;color:var(--text);background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:6px;padding:8px 10px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
-.admin-edit-form input:focus,.admin-edit-form select:focus{border-color:var(--rosa)}
 .hidden{display:none!important}
 /* ── MINHA HISTÓRIA ── */
 .mh-layout-2col{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
@@ -5369,6 +5372,53 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div style="font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:4px">Toda alteração já é salva automaticamente ✦</div>
     </div>
 
+    <!-- POPUP DE CONFIGURAÇÃO DE UM ITEM DO MENU — junta visibilidade, edição,
+    mover de seção e apagar, que antes ficavam todos abertos ao mesmo tempo em
+    cada item da lista (deixava a lista gigante e difícil de organizar) -->
+    <div class="admin-cfg-overlay" id="admin-item-modal" onclick="if(event.target===this)fecharConfigItem()">
+      <div class="admin-cfg-modal">
+        <div class="admin-cfg-modal-header">
+          <span id="cfg-titulo">Configurar item</span>
+          <button class="admin-del" onclick="fecharConfigItem()" title="Fechar">✕</button>
+        </div>
+        <div class="admin-cfg-modal-body">
+          <div class="admin-row-inputs">
+            <input type="text" id="cfg-label" placeholder="Nome">
+            <select id="cfg-type">
+              <option value="external">Link externo</option>
+              <option value="internal">Página interna</option>
+              <option value="members">Área de membros</option>
+            </select>
+          </div>
+          <input type="text" id="cfg-url" placeholder="URL ou slug">
+          <input type="text" id="cfg-desc" placeholder="Descrição curta">
+          <input type="text" id="cfg-tagLabel" placeholder="Texto da pílula (ex: público, interno, admin) — deixe vazio para padrão">
+          <button class="btn-add" onclick="cfgSalvarEdicao()" style="width:100%;margin-bottom:14px">✓ Salvar edição</button>
+
+          <div class="admin-cfg-rotulo">Aparece em:</div>
+          <div class="admin-cfg-linha-pills">
+            <button class="toggle-pill" id="cfg-btn-menu" onclick="cfgToggleMenu()">Menu</button>
+            <button class="toggle-pill" id="cfg-btn-card" onclick="cfgToggleCard()">Card</button>
+          </div>
+
+          <div class="admin-cfg-rotulo">Visível para:</div>
+          <div class="admin-cfg-linha-pills" id="cfg-grupos"></div>
+          <div class="admin-cfg-linha-pills">
+            <button class="toggle-pill" id="cfg-btn-admin-only" onclick="cfgToggleAdminOnly()" title="Se ativado, só admin vê esse card — ignora os grupos acima">🔒 Só admin</button>
+          </div>
+
+          <div id="cfg-mover-secao-wrap">
+            <div class="admin-cfg-rotulo">Mover pra outra seção:</div>
+            <select class="admin-move-section" id="cfg-mover-secao" style="width:100%;max-width:none;margin-bottom:14px" onchange="cfgMoverSecao(this.value)">
+              <option value="">↪ Mover p/ seção…</option>
+            </select>
+          </div>
+
+          <button class="admin-del" style="font-size:.7rem;border:1px solid rgba(184,64,64,.25);border-radius:8px;padding:8px 14px;width:100%" onclick="cfgApagar()">✕ Apagar este item</button>
+        </div>
+      </div>
+    </div>
+
     <!-- VISIBILIDADE: SUA HISTÓRIA -->
     <div id="admin-sub-historia" style="display:none">
       <button class="back-btn" onclick="adminVoltarMenu()">← Voltar ao painel</button>
@@ -6195,48 +6245,7 @@ function renderAdminPanel() {
             onkeydown="if(event.key==='Enter'){moveItemToPosition(${si},${ii},this.value);this.blur()}"
             onblur="moveItemToPosition(${si},${ii},this.value)">
           <span class="admin-item-label">${item.label}</span>
-          <span class="admin-item-url">${item.url||item.page||''}</span>
-          <div class="admin-item-actions">
-            <button class="toggle-pill ${item.showMenu!==false?'on':''}" onclick="toggleItemMenu(${si},${ii})">Menu</button>
-            <button class="toggle-pill ${item.showCard!==false?'on-green':''}" onclick="toggleItemCard(${si},${ii})">Card</button>
-            <button class="admin-edit-btn" onclick="toggleEditRow(${si},${ii})">✎</button>
-            <button class="admin-del" onclick="deleteItem(${si},${ii})">✕</button>
-            ${menuData.sections.length > 1 ? `
-            <select class="admin-move-section" title="Mover para outra seção" onchange="if(this.value!=='')moverItemParaSecao(${si},${ii},parseInt(this.value))">
-              <option value="">↪ Mover p/ seção…</option>
-              ${menuData.sections.map((s2, si2) => si2===si ? '' : `<option value="${si2}">${s2.label}</option>`).join('')}
-            </select>` : ''}
-          </div>
-          <!-- visibilidade por grupo -->
-          <div style="padding:6px 16px 8px 16px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;border-bottom:1px solid rgba(196,90,30,.06)">
-            <span style="font-family:'Cinzel',serif;font-size:.54rem;letter-spacing:.08em;color:var(--text-dim);white-space:nowrap">Visível para:</span>
-            ${['publico','visitante','filhas','tamboreiro','amigos','assistencia','familia'].map(g => {
-              const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
-              const ativo = grupos.includes(g);
-              const emoji = {publico:'🌍',visitante:'👤',filhas:'🌸',tamboreiro:'🥁',amigos:'🤝',assistencia:'🤲',familia:'👪'}[g];
-              const label = {publico:'Público',visitante:'Visitante',filhas:'Filhas',tamboreiro:'Tamboreiro',amigos:'Amigos',assistencia:'Assistência',familia:'Família'}[g];
-              return `<button class="toggle-pill ${ativo?'on':''}" style="font-size:.54rem;padding:3px 8px" onclick="toggleGrupoCard(${si},${ii},'${g}')">${emoji} ${label}</button>`;
-            }).join('')}
-            <span style="width:1px;height:14px;background:rgba(196,90,30,.15);margin:0 2px"></span>
-            <button class="toggle-pill ${item.adminOnly?'on':''}" style="font-size:.54rem;padding:3px 8px;${item.adminOnly?'background:#888;border-color:#888':''}" onclick="toggleAdminOnly(${si},${ii})" title="Se ativado, só admin vê esse card — ignora os grupos acima">🔒 Só admin</button>
-          </div>
-        </div>
-        <div class="admin-edit-form hidden" id="edit-${si}-${ii}">
-          <div class="admin-row-inputs">
-            <input type="text" id="edit-label-${si}-${ii}" value="${item.label}" placeholder="Nome">
-            <select id="edit-type-${si}-${ii}">
-              <option value="external" ${item.type==='external'?'selected':''}>Link externo</option>
-              <option value="internal" ${item.type==='internal'?'selected':''}>Página interna</option>
-              <option value="members" ${item.type==='members'?'selected':''}>Área de membros</option>
-            </select>
-          </div>
-          <input type="text" id="edit-url-${si}-${ii}" value="${item.url||item.page||''}" placeholder="URL ou slug">
-          <input type="text" id="edit-desc-${si}-${ii}" value="${item.desc||''}" placeholder="Descrição curta">
-          <input type="text" id="edit-tagLabel-${si}-${ii}" value="${item.tagLabel||''}" placeholder="Texto da pílula (ex: público, interno, admin) — deixe vazio para padrão">
-          <div style="display:flex;gap:8px">
-            <button class="btn-add" onclick="saveEditItem(${si},${ii})">✓ Salvar</button>
-            <button class="btn-add" style="background:var(--text-dim)" onclick="toggleEditRow(${si},${ii})">Cancelar</button>
-          </div>
+          <button class="admin-config-btn" onclick="abrirConfigItem(${si},${ii})" title="Configurar (visibilidade, edição, mover de seção, apagar)">⚙</button>
         </div>`).join('')}
       </div>
       <div class="admin-add-form">
@@ -6339,23 +6348,75 @@ function toggleAdminOnly(si, ii) {
   agendarSalvarMenu();
 }
 
-function toggleEditRow(si, ii) {
-  const form = document.getElementById(`edit-${si}-${ii}`);
-  form.classList.toggle('hidden');
+// ── POPUP DE CONFIGURAÇÃO DE ITEM (visibilidade, edição, mover de seção,
+// apagar — tudo que antes ficava sempre aberto embaixo de cada item) ──
+let _cfgSi = null, _cfgIi = null;
+const CFG_GRUPOS_DEFS = { publico: '🌍 Público', visitante: '👤 Visitante', filhas: '🌸 Filhas', tamboreiro: '🥁 Tamboreiro', amigos: '🤝 Amigos', assistencia: '🤲 Assistência', familia: '👪 Família' };
+
+function abrirConfigItem(si, ii) {
+  _cfgSi = si; _cfgIi = ii;
+  cfgRefresh();
+  document.getElementById('admin-item-modal').classList.add('on');
 }
-function saveEditItem(si, ii) {
-  const item = menuData.sections[si].items[ii];
-  item.label = document.getElementById(`edit-label-${si}-${ii}`).value.trim() || item.label;
-  item.type  = document.getElementById(`edit-type-${si}-${ii}`).value;
-  item.desc  = document.getElementById(`edit-desc-${si}-${ii}`).value.trim();
-  const tagLabel = document.getElementById(`edit-tagLabel-${si}-${ii}`)?.value.trim();
+function fecharConfigItem() {
+  document.getElementById('admin-item-modal').classList.remove('on');
+  _cfgSi = null; _cfgIi = null;
+}
+function cfgRefresh() {
+  if (_cfgSi === null) return;
+  const item = menuData.sections[_cfgSi]?.items[_cfgIi];
+  if (!item) { fecharConfigItem(); return; }
+  document.getElementById('cfg-titulo').textContent = item.label;
+  document.getElementById('cfg-label').value = item.label;
+  document.getElementById('cfg-type').value = item.type;
+  document.getElementById('cfg-url').value = item.url || item.page || '';
+  document.getElementById('cfg-desc').value = item.desc || '';
+  document.getElementById('cfg-tagLabel').value = item.tagLabel || '';
+  document.getElementById('cfg-btn-menu').classList.toggle('on', item.showMenu !== false);
+  document.getElementById('cfg-btn-card').classList.toggle('on-green', item.showCard !== false);
+  document.getElementById('cfg-btn-admin-only').classList.toggle('on', !!item.adminOnly);
+  const grupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
+  document.getElementById('cfg-grupos').innerHTML = Object.keys(CFG_GRUPOS_DEFS).map(g =>
+    `<button class="toggle-pill ${grupos.includes(g) ? 'on' : ''}" onclick="cfgToggleGrupo('${g}')">${CFG_GRUPOS_DEFS[g]}</button>`
+  ).join('');
+  const selMover = document.getElementById('cfg-mover-secao');
+  const temOutraSecao = menuData.sections.length > 1;
+  document.getElementById('cfg-mover-secao-wrap').style.display = temOutraSecao ? '' : 'none';
+  if (temOutraSecao) {
+    selMover.innerHTML = '<option value="">↪ Mover p/ seção…</option>' +
+      menuData.sections.map((s2, si2) => si2 === _cfgSi ? '' : `<option value="${si2}">${s2.label}</option>`).join('');
+  }
+}
+function cfgToggleMenu() { toggleItemMenu(_cfgSi, _cfgIi); cfgRefresh(); }
+function cfgToggleCard() { toggleItemCard(_cfgSi, _cfgIi); cfgRefresh(); }
+function cfgToggleAdminOnly() { toggleAdminOnly(_cfgSi, _cfgIi); cfgRefresh(); }
+function cfgToggleGrupo(g) { toggleGrupoCard(_cfgSi, _cfgIi, g); cfgRefresh(); }
+function cfgMoverSecao(valor) {
+  if (valor === '') return;
+  moverItemParaSecao(_cfgSi, _cfgIi, parseInt(valor, 10));
+  fecharConfigItem();
+}
+function cfgSalvarEdicao() {
+  const item = menuData.sections[_cfgSi].items[_cfgIi];
+  item.label = document.getElementById('cfg-label').value.trim() || item.label;
+  item.type  = document.getElementById('cfg-type').value;
+  item.desc  = document.getElementById('cfg-desc').value.trim();
+  const tagLabel = document.getElementById('cfg-tagLabel').value.trim();
   if (tagLabel) item.tagLabel = tagLabel;
   else delete item.tagLabel;
-  const urlVal = document.getElementById(`edit-url-${si}-${ii}`).value.trim();
+  const urlVal = document.getElementById('cfg-url').value.trim();
   if (item.type === 'internal') { item.page = urlVal; delete item.url; }
   else { item.url = urlVal; delete item.page; }
   renderAdminPanel(); renderDrawer(); renderCards();
   agendarSalvarMenu();
+  cfgRefresh();
+}
+function cfgApagar() {
+  if (!confirm('Remover este item do menu?')) return;
+  menuData.sections[_cfgSi].items.splice(_cfgIi, 1);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
+  fecharConfigItem();
 }
 
 // fallback enquanto Firebase carrega
