@@ -190,7 +190,7 @@ export async function onRequest({ request, env, params }) {
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': apiKey,
-          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.googleMapsUri',
+          'X-Goog-FieldMask': 'places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.nationalPhoneNumber,places.regularOpeningHours.weekdayDescriptions',
         },
         body: JSON.stringify({
           textQuery,
@@ -226,6 +226,13 @@ export async function onRequest({ request, env, params }) {
 
       const lugar = (data.places || [])[0];
       if (!lugar) return json({ encontrado: false, contagem: contador.contagem });
+      // "horário seg a sex" e "horário sábado" só dá pra aproximar — o
+      // formulário tem só esses dois campos de texto, não um por dia da
+      // semana, então usamos o texto de segunda (índice 0) e sábado
+      // (índice 5) como representativos e avisamos no popup que é uma
+      // aproximação, pra quem está cadastrando conferir antes de enviar.
+      const diasSemana = lugar.regularOpeningHours?.weekdayDescriptions || [];
+      const horaDoDia = (texto) => texto ? texto.replace(/^[^:]+:\s*/, '') : '';
       return json({
         encontrado: true,
         nome: lugar.displayName?.text || '',
@@ -233,6 +240,9 @@ export async function onRequest({ request, env, params }) {
         lat: lugar.location?.latitude ?? null,
         lng: lugar.location?.longitude ?? null,
         mapsUrl: lugar.googleMapsUri || '',
+        telefone: lugar.nationalPhoneNumber || '',
+        horarioSegSex: horaDoDia(diasSemana[0]),
+        horarioSabado: horaDoDia(diasSemana[5]),
         contagem: contador.contagem,
       });
     } catch (e) {
