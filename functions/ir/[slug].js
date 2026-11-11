@@ -22,6 +22,7 @@ const DESTINOS = {
   site: '/',
   banner: '/proxima-sessao.html',
   materiais: '/materiais.html',
+  sugestoes: '/sugestoes-manual.html',
 };
 
 export async function onRequestGet(context) {
