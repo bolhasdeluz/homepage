@@ -38,37 +38,12 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:22px;line-height:1.6;text-align:center}
 
-.am-edit-toggle{display:block;margin:0 auto 24px;background:none;border:1px solid var(--rosa-border);color:var(--rosa);border-radius:20px;padding:7px 16px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em}
-.am-edit-toggle:hover{background:var(--rosa-dim)}
-
-.am-form-box{display:none;background:#fff;border:1px solid var(--border);border-top:4px solid var(--rosa);border-radius:16px;padding:22px;margin-bottom:28px;box-shadow:0 8px 32px rgba(196,57,107,.1)}
-.am-form-box.on{display:block}
-.am-form-titulo{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa);margin-bottom:12px}
-.am-input,.am-textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);margin-bottom:10px}
-.am-input:focus,.am-textarea:focus{outline:none;border-color:var(--rosa-border)}
-.am-textarea{min-height:130px;resize:vertical;font-family:'Crimson Pro',serif;line-height:1.5}
-
-.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
-.btn-rosa:hover{opacity:.92}
-.btn-rosa:disabled{opacity:.6;cursor:default}
-.btn-linha{display:flex;gap:8px}
-.btn-cancelar{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;flex-shrink:0}
-
-.am-msg{font-family:'DM Sans',sans-serif;font-size:.82rem;margin-bottom:10px;display:none}
-.am-msg.erro{color:#b84040}
-.am-msg.sucesso{color:#2a7a60}
-
 .am-vazio,.am-carregando{text-align:center;padding:30px 20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
 
 .am-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px}
 .am-card-titulo{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;color:var(--terra);margin-bottom:8px}
 .am-card-texto{font-family:'Crimson Pro',serif;font-size:.98rem;color:var(--text);line-height:1.65;white-space:pre-wrap;margin-bottom:10px}
-.am-card-rodape{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .am-card-data{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
-.am-card-acoes{display:none;gap:10px}
-.am-card-acoes.on{display:flex}
-.am-card-acao{background:none;border:none;color:var(--text-dim);font-size:.85rem;opacity:.5;transition:opacity .2s}
-.am-card-acao:hover{opacity:1;color:var(--rosa)}
 
 .am-saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:24px}
 .am-saiba-mais a{color:var(--rosa);text-decoration:underline}
@@ -82,21 +57,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
   <div class="section-title">📖 Anotações da Mãe de Santo</div>
   <p class="section-sub">Orientações e reflexões escritas pela Mãe de Santo, organizadas em tópicos ✦</p>
 
-  <button class="am-edit-toggle" id="am-btn-admin" onclick="amEntrarModoAdmin()">✎ Entrar como administração</button>
-
-  <div class="am-form-box" id="am-form-box">
-    <div class="am-form-titulo" id="am-form-titulo-label">✨ Novo tópico</div>
-    <input type="hidden" id="am-editando-id">
-    <input type="text" class="am-input" id="am-titulo" maxlength="120" placeholder="Título do tópico">
-    <textarea class="am-textarea" id="am-texto" maxlength="4000" placeholder="Escreva aqui..."></textarea>
-    <p class="am-msg erro" id="am-erro"></p>
-    <p class="am-msg sucesso" id="am-sucesso"></p>
-    <div class="btn-linha">
-      <button class="btn-rosa" id="am-btn-salvar" onclick="amSalvar()">Salvar tópico</button>
-      <button class="btn-cancelar" onclick="amCancelarEdicao()">Cancelar</button>
-    </div>
-  </div>
-
   <div id="am-carregando" class="am-carregando">Carregando anotações...</div>
   <div id="am-vazio" class="am-vazio" style="display:none">Ainda não tem nenhum tópico escrito aqui ✦</div>
   <div id="am-lista"></div>
@@ -106,8 +66,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
 <script>
 const AM_API = '/api/anotacoes-mae-de-santo';
-let amModoAdmin = false;
-let amTopicos = [];
 
 function amFormatarData(ts) {
   const d = new Date(ts);
@@ -118,124 +76,31 @@ function amEsc(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
-function amEntrarModoAdmin() {
-  if (amModoAdmin) {
-    amModoAdmin = false;
-    document.getElementById('am-btn-admin').textContent = '✎ Entrar como administração';
-    document.getElementById('am-form-box').classList.remove('on');
-    amRenderLista();
-    return;
-  }
-  const senha = prompt('Senha de administração:');
-  if (senha !== 'admin') {
-    if (senha !== null) alert('Senha incorreta.');
-    return;
-  }
-  amModoAdmin = true;
-  document.getElementById('am-btn-admin').textContent = '✕ Sair do modo administração';
-  document.getElementById('am-form-box').classList.add('on');
-  amRenderLista();
-}
-
-function amCancelarEdicao() {
-  document.getElementById('am-editando-id').value = '';
-  document.getElementById('am-titulo').value = '';
-  document.getElementById('am-texto').value = '';
-  document.getElementById('am-form-titulo-label').textContent = '✨ Novo tópico';
-  document.getElementById('am-erro').style.display = 'none';
-  document.getElementById('am-sucesso').style.display = 'none';
-}
-
 async function amCarregar() {
   document.getElementById('am-carregando').style.display = '';
   document.getElementById('am-vazio').style.display = 'none';
   document.getElementById('am-lista').innerHTML = '';
+  let topicos = [];
   try {
     const res = await fetch(AM_API);
     const data = res.ok ? await res.json() : null;
-    amTopicos = (data && data.topicos) || [];
-  } catch (e) { amTopicos = []; }
+    topicos = (data && data.topicos) || [];
+  } catch (e) { topicos = []; }
   document.getElementById('am-carregando').style.display = 'none';
-  amRenderLista();
-}
 
-function amRenderLista() {
-  if (!amTopicos.length) {
+  if (!topicos.length) {
     document.getElementById('am-vazio').style.display = '';
-    document.getElementById('am-lista').innerHTML = '';
     return;
   }
-  document.getElementById('am-vazio').style.display = 'none';
-  document.getElementById('am-lista').innerHTML = amTopicos.map(amRenderCard).join('');
+  document.getElementById('am-lista').innerHTML = topicos.map(amRenderCard).join('');
 }
 
 function amRenderCard(t) {
   return `<div class="am-card">
     <div class="am-card-titulo">${amEsc(t.titulo)}</div>
     <div class="am-card-texto">${amEsc(t.texto)}</div>
-    <div class="am-card-rodape">
-      <span class="am-card-data">${amFormatarData(t.atualizadoEm || t.criadoEm)}</span>
-      <div class="am-card-acoes ${amModoAdmin ? 'on' : ''}">
-        <button class="am-card-acao" title="Editar" onclick="amEditar('${t.id}')">✎</button>
-        <button class="am-card-acao" title="Apagar" onclick="amApagar('${t.id}')">🗑</button>
-      </div>
-    </div>
+    <span class="am-card-data">${amFormatarData(t.atualizadoEm || t.criadoEm)}</span>
   </div>`;
-}
-
-function amEditar(id) {
-  const t = amTopicos.find(x => x.id === id);
-  if (!t) return;
-  document.getElementById('am-editando-id').value = t.id;
-  document.getElementById('am-titulo').value = t.titulo;
-  document.getElementById('am-texto').value = t.texto;
-  document.getElementById('am-form-titulo-label').textContent = '✎ Editando tópico';
-  document.getElementById('am-form-box').scrollIntoView({ behavior: 'smooth' });
-}
-
-async function amSalvar() {
-  const erroEl = document.getElementById('am-erro');
-  const sucessoEl = document.getElementById('am-sucesso');
-  erroEl.style.display = 'none';
-  sucessoEl.style.display = 'none';
-  const id = document.getElementById('am-editando-id').value;
-  const titulo = document.getElementById('am-titulo').value.trim();
-  const texto = document.getElementById('am-texto').value.trim();
-  if (!titulo || !texto) { erroEl.textContent = 'Preenche o título e o texto.'; erroEl.style.display = 'block'; return; }
-
-  const btn = document.getElementById('am-btn-salvar');
-  const textoOriginal = btn.textContent;
-  btn.textContent = 'Salvando...'; btn.disabled = true;
-  try {
-    const res = await fetch(AM_API, {
-      method: id ? 'PUT' : 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify(id ? { id, titulo, texto } : { titulo, texto }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      erroEl.textContent = data.error || 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block';
-    } else {
-      sucessoEl.textContent = '✔ Tópico salvo ✦'; sucessoEl.style.display = 'block';
-      amCancelarEdicao();
-      amCarregar();
-    }
-  } catch (e) {
-    erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block';
-  }
-  btn.textContent = textoOriginal; btn.disabled = false;
-}
-
-async function amApagar(id) {
-  if (!confirm('Apagar esse tópico?')) return;
-  try {
-    const res = await fetch(AM_API, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify({ id }),
-    });
-    if (res.ok) amCarregar();
-  } catch (e) {}
 }
 
 amCarregar();
