@@ -377,7 +377,10 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       </div>
       <div class="f">
         <label>Link do Google Maps</label>
-        <input type="url" id="s-maps" placeholder="https://share.google/… ou maps.google.com/…" oninput="extrairDoMaps(this.value,'s')" />
+        <div style="display:flex;gap:8px">
+          <input type="url" id="s-maps" placeholder="https://share.google/… ou maps.google.com/…" oninput="extrairDoMaps(this.value,'s')" style="flex:1" />
+          <button type="button" class="bs" onclick="colarDaAreaDeTransferencia('s')" title="Colar da área de transferência" style="white-space:nowrap;flex-shrink:0">📋 Colar</button>
+        </div>
         <span class="fh">Cole o link da empresa no Google Maps — além de virar o botão "Ver no mapa", ajuda a loja aparecer no lugar certo do mapa</span>
         <input type="hidden" id="s-lat" />
         <input type="hidden" id="s-lng" />
@@ -474,7 +477,10 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       <div class="f"><label>O que vende</label><textarea id="e-sells"></textarea></div>
       <div class="f">
         <label>Link do Google Maps</label>
-        <input type="url" id="e-maps" oninput="extrairDoMaps(this.value,'e')" />
+        <div style="display:flex;gap:8px">
+          <input type="url" id="e-maps" oninput="extrairDoMaps(this.value,'e')" style="flex:1" />
+          <button type="button" class="bs" onclick="colarDaAreaDeTransferencia('e')" title="Colar da área de transferência" style="white-space:nowrap;flex-shrink:0">📋 Colar</button>
+        </div>
         <span class="fh">Cole o link — endereço e coordenadas extraídos automaticamente</span>
       </div>
       <div class="f"><label>Endereço</label><input type="text" id="e-address" /></div>
@@ -1090,6 +1096,40 @@ const SHORT_URL_PATTERNS = [
 
 function ehUrlCurta(url) {
   return SHORT_URL_PATTERNS.some(p => p.test(url));
+}
+
+function pareceLinkDoMaps(url) {
+  if (!url) return false;
+  return ehUrlCurta(url) || /google\.[a-z.]+\/maps|maps\.google\./i.test(url);
+}
+
+// Lê o que está copiado na área de transferência do celular/computador e,
+// se parecer um link do Google Maps, confirma com quem está preenchendo
+// antes de usar — evita ter que digitar/colar manualmente no campo toda
+// vez que já se tem o link copiado (ex: saiu do app do Google Maps depois
+// de tocar em "Compartilhar").
+async function colarDaAreaDeTransferencia(pfx) {
+  if (!navigator.clipboard || !navigator.clipboard.readText) {
+    alert('Esse navegador não deixa ler a área de transferência automaticamente — cola o link manualmente no campo.');
+    return;
+  }
+  let texto;
+  try {
+    texto = (await navigator.clipboard.readText()).trim();
+  } catch (e) {
+    alert('Não consegui ler a área de transferência (pode ter faltado permissão) — cola o link manualmente no campo.');
+    return;
+  }
+  if (!texto) { alert('A área de transferência está vazia.'); return; }
+
+  const resumo = texto.length > 90 ? texto.slice(0, 90) + '…' : texto;
+  if (pareceLinkDoMaps(texto)) {
+    if (!confirm(`Encontramos esse link copiado:\n\n${resumo}\n\nÉ o link da loja no Google Maps?`)) return;
+  } else {
+    if (!confirm(`O que está copiado não parece um link do Google Maps:\n\n${resumo}\n\nUsar assim mesmo?`)) return;
+  }
+  document.getElementById(pfx + '-maps').value = texto;
+  extrairDoMaps(texto, pfx);
 }
 
 async function extrairDoMaps(url, pfx) {
