@@ -6168,6 +6168,10 @@ function renderAdminPanel() {
   container.innerHTML = menuData.sections.map((sec, si) => `
     <div class="admin-section-block">
       <div class="admin-section-header">
+        <div class="admin-move-btns" title="Mover a seção inteira">
+          <button class="admin-move-btn" onclick="moveSection(${si},-1)" ${si===0?'disabled':''} title="Mover seção para cima">▲</button>
+          <button class="admin-move-btn" onclick="moveSection(${si},1)" ${si===menuData.sections.length-1?'disabled':''} title="Mover seção para baixo">▼</button>
+        </div>
         <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
           <input type="text" value="${sec.label}"
             style="font-family:'Cinzel',serif;font-size:.7rem;font-weight:600;letter-spacing:.06em;color:var(--terra);background:transparent;border:none;border-bottom:1px dashed transparent;outline:none;flex:1;min-width:0;transition:border-color .16s;"
@@ -6250,6 +6254,17 @@ function renderAdminPanel() {
         <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
       </div>
     </div>`).join('');
+}
+
+// ── REORDENAR SEÇÕES (mesmo esquema de setinhas dos itens, mas movendo a
+// seção inteira — define a ordem dos "sub menus" que aparecem no site) ──
+function moveSection(si, dir) {
+  const novoIndex = si + dir;
+  if (novoIndex < 0 || novoIndex >= menuData.sections.length) return;
+  const [moved] = menuData.sections.splice(si, 1);
+  menuData.sections.splice(novoIndex, 0, moved);
+  renderAdminPanel(); renderDrawer(); renderCards();
+  agendarSalvarMenu();
 }
 
 // ── REORDENAR ITENS (setinhas — arrastar não funcionava bem no celular) ──
