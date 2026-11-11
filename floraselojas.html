@@ -374,8 +374,10 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       </div>
       <div class="f">
         <label>Link do Google Maps</label>
-        <input type="url" id="s-maps" placeholder="https://share.google/… ou maps.google.com/…" />
-        <span class="fh">Cole qualquer link do Google Maps — será usado no botão "Ver no mapa"</span>
+        <input type="url" id="s-maps" placeholder="https://share.google/… ou maps.google.com/…" oninput="extrairDoMaps(this.value,'s')" />
+        <span class="fh">Cole o link da empresa no Google Maps — além de virar o botão "Ver no mapa", ajuda a loja aparecer no lugar certo do mapa</span>
+        <input type="hidden" id="s-lat" />
+        <input type="hidden" id="s-lng" />
       </div>
       <div class="f">
         <label>O que vende</label>
@@ -392,6 +394,24 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       <div class="ma">
         <button class="bs" onclick="fechar('ov-sub')">Cancelar</button>
         <button class="bp" id="btn-sub" onclick="submeterLoja()">Enviar indicação 🌸</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: CONFIRMAR LOCALIZAÇÃO (antes de enviar a indicação) ════ -->
+<div class="ov" id="ov-confirma-local">
+  <div class="mo" style="max-width:380px">
+    <div class="mh">
+      <h2>📍 Confirma a localização?</h2>
+      <button class="mc" onclick="fecharConfirmaLocal(false)">×</button>
+    </div>
+    <div class="mb2">
+      <p id="cl-texto" style="font-size:.88rem;color:var(--muted,#666);margin-bottom:10px;line-height:1.5"></p>
+      <div id="cl-mapa" style="width:100%;height:200px;border-radius:10px;margin-bottom:14px;display:none"></div>
+      <div class="ma">
+        <button class="bs" id="cl-btn-voltar" onclick="fecharConfirmaLocal(false)"></button>
+        <button class="bp" id="cl-btn-confirmar" onclick="fecharConfirmaLocal(true)"></button>
       </div>
     </div>
   </div>
@@ -806,7 +826,7 @@ function getCheckedQuals(containerId) {
 // ══ SUBMISSÃO PÚBLICA ══
 function abrirSubmissao() {
   preencherSelectCats('s-category');
-  ['name','addedBy','sells','address','maps','phone','hours_week','hours_sat'].forEach(f => document.getElementById('s-'+f).value='');
+  ['name','addedBy','sells','address','maps','phone','hours_week','hours_sat','lat','lng'].forEach(f => document.getElementById('s-'+f).value='');
   // auto-fill emoji from first category
   const firstCat = cats[0];
   if (firstCat) document.getElementById('s-emoji').value = firstCat.emoji;
@@ -818,6 +838,16 @@ async function submeterLoja() {
   const g = id => document.getElementById('s-'+id).value.trim();
   const body = { name:g('name'), category:g('category'), sells:g('sells'), address:g('address'), maps:g('maps'), emoji:g('emoji')||'🏪', addedBy:g('addedBy')||'Anônimo', phone:g('phone'), quals:getCheckedQuals('s-quals'), hours_week:g('hours_week'), hours_sat:g('hours_sat') };
   if (!body.name||!body.category||!body.address||!body.addedBy) { alert('Preencha nome, categoria, endereço e quem está indicando.'); return; }
+
+  // antes de enviar de verdade, confirma com quem está indicando se o link
+  // do Google Maps colado corresponde ao endereço certo (evita repetir o
+  // problema de loja aparecendo longe do lugar real no mapa)
+  const lat = parseFloat(document.getElementById('s-lat').value) || null;
+  const lng = parseFloat(document.getElementById('s-lng').value) || null;
+  const confirmou = await confirmarLocalizacaoSubmissao(body.address, lat, lng);
+  if (!confirmou) return;
+  if (lat && lng) { body.lat = lat; body.lng = lng; }
+
   const btn = document.getElementById('btn-sub');
   btn.textContent = 'Enviando…'; btn.disabled = true;
   try {
@@ -829,6 +859,45 @@ async function submeterLoja() {
     toast('🌸 Loja adicionada com sucesso! Obrigada pela indicação.');
   } catch { toast('❌ Erro ao enviar. Tente novamente.'); }
   btn.textContent = 'Enviar indicação 🌸'; btn.disabled = false;
+}
+
+// ── CONFIRMAR LOCALIZAÇÃO antes de enviar a indicação pública ──
+// Mostra um popup com a prévia do pino no mapa quando o link do Google Maps
+// colado deu coordenadas; se não tiver link/coordenadas, avisa que sem isso
+// a loja pode cair no lugar errado do mapa (ver geocode automático em
+// abrirNoMapa), mas ainda deixa enviar assim mesmo, já que o link sempre
+// foi um campo opcional.
+let _clResolvePromise = null;
+let _clMapaInstancia = null;
+function confirmarLocalizacaoSubmissao(address, lat, lng) {
+  return new Promise(resolve => {
+    _clResolvePromise = resolve;
+    const temCoords = !!(lat && lng);
+    document.getElementById('cl-texto').textContent = temCoords
+      ? `Pelo link do Google Maps que você colou, a loja fica aqui. Confere se é o lugar certo:`
+      : `Você não colou o link do Google Maps da empresa — sem ele, a localização da loja no mapa pode ficar imprecisa. Quer voltar e colar o link, ou enviar assim mesmo com só o endereço (${address})?`;
+    document.getElementById('cl-btn-voltar').textContent = temCoords ? '✎ Corrigir o link' : '✎ Voltar e colar o link';
+    document.getElementById('cl-btn-confirmar').textContent = temCoords ? '✓ Confirmar e enviar' : 'Enviar assim mesmo';
+    const mapaEl = document.getElementById('cl-mapa');
+    if (temCoords) {
+      mapaEl.style.display = 'block';
+      abrir('ov-confirma-local');
+      setTimeout(() => {
+        if (_clMapaInstancia) { _clMapaInstancia.remove(); _clMapaInstancia = null; }
+        _clMapaInstancia = L.map('cl-mapa', { zoomControl: false, attributionControl: false }).setView([lat, lng], 16);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(_clMapaInstancia);
+        L.marker([lat, lng]).addTo(_clMapaInstancia);
+      }, 60);
+    } else {
+      mapaEl.style.display = 'none';
+      abrir('ov-confirma-local');
+    }
+  });
+}
+function fecharConfirmaLocal(confirmou) {
+  fechar('ov-confirma-local');
+  if (_clMapaInstancia) { _clMapaInstancia.remove(); _clMapaInstancia = null; }
+  if (_clResolvePromise) { _clResolvePromise(confirmou); _clResolvePromise = null; }
 }
 
 // ══ EDITAR LOJA (admin) ══
