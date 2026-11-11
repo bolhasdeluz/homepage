@@ -583,6 +583,25 @@ const TERREIRO = {
   lng: -51.13118660674672,
 };
 
+// Todas as lojas do guia são perto do terreiro, em Porto Alegre — sem essa
+// informação, o geocode (Nominatim/OpenStreetMap) às vezes não acha o
+// número exato da casa e cai em qualquer ponto de uma rua de nome parecido
+// em outra cidade/estado (foi o que aconteceu com "Av Protasio Alves 6125"
+// sem cidade no texto — caiu longe do endereço real). Isso aqui só reforça
+// o contexto da busca, não garante acerto perfeito do número da casa.
+function enderecoParaGeocode(addr) {
+  return /porto alegre/i.test(addr) ? addr : `${addr}, Porto Alegre, RS, Brasil`;
+}
+// viewbox bem largo cobrindo a grande Porto Alegre, só pra favorecer
+// resultados próximos quando o endereço for ambíguo — sem "bounded=1", um
+// endereço de verdade fora dessa área ainda é encontrado, só não é
+// priorizado por engano
+const GEOCODE_VIEWBOX = '-51.35,-29.90,-50.95,-30.27';
+function urlGeocode(addr) {
+  const query = enderecoParaGeocode(addr);
+  return `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&viewbox=${GEOCODE_VIEWBOX}&q=${encodeURIComponent(query)}`;
+}
+
 const SELOS = {
   'indicacao': '✨ Indicação da Mãe de Santo',
   'aprova':    '🕯️ Mãe de Santo Aprova',
@@ -1044,7 +1063,7 @@ async function geocodificar(pfx) {
   const st = document.getElementById('gs-'+pfx);
   st.className='gs load'; st.textContent='🔍 Buscando coordenadas…';
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}`, { headers:{'Accept-Language':'pt-BR'} });
+    const res = await fetch(urlGeocode(addr), { headers:{'Accept-Language':'pt-BR'} });
     const data = await res.json();
     if (!data.length) throw new Error();
     document.getElementById(pfx+'-lat').value = parseFloat(data[0].lat).toFixed(6);
@@ -1156,7 +1175,7 @@ async function abrirNoMapa(id) {
   if (!l.address) { toast('Esta loja não tem endereço cadastrado.'); return; }
   toast('📍 Localizando no mapa…');
   try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(l.address)}`, { headers:{'Accept-Language':'pt-BR'} });
+    const res = await fetch(urlGeocode(l.address), { headers:{'Accept-Language':'pt-BR'} });
     const data = await res.json();
     if (!data.length) { toast('❌ Endereço não encontrado. Admin pode adicionar as coordenadas.'); return; }
     l.lat = parseFloat(data[0].lat);
