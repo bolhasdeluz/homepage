@@ -32,8 +32,8 @@ button{cursor:pointer;font-family:inherit}
 .bloco-titulo{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa)}
 .bloco-corpo{padding:20px}
 
-.am-input,.am-textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);margin-bottom:10px}
-.am-input:focus,.am-textarea:focus{outline:none;border-color:var(--rosa-border)}
+.am-textarea{width:100%;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);margin-bottom:10px}
+.am-textarea:focus{outline:none;border-color:var(--rosa-border)}
 .am-textarea{min-height:110px;resize:vertical;font-family:'Crimson Pro',serif;line-height:1.5}
 
 .btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
@@ -49,7 +49,6 @@ button{cursor:pointer;font-family:inherit}
 .vazio,.carregando{text-align:center;padding:20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
 
 .am-card{background:var(--creme);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px}
-.am-card-titulo{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600;color:var(--terra);margin-bottom:8px}
 .am-card-texto{font-family:'Crimson Pro',serif;font-size:.95rem;color:var(--text);line-height:1.6;white-space:pre-wrap;margin-bottom:10px}
 .am-card-rodape{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .am-card-data{font-family:'DM Sans',sans-serif;font-size:.7rem;color:var(--text-dim)}
@@ -86,7 +85,6 @@ button{cursor:pointer;font-family:inherit}
     <div class="bloco-header"><span class="bloco-titulo">✨ Anotações da Mãe de Santo</span></div>
     <div class="bloco-corpo">
       <input type="hidden" id="am-editando-id">
-      <input type="text" class="am-input" id="am-titulo" maxlength="120" placeholder="Título do tópico">
       <textarea class="am-textarea" id="am-texto" maxlength="4000" placeholder="Escreva aqui..."></textarea>
       <p class="am-msg erro" id="am-erro"></p>
       <p class="am-msg sucesso" id="am-sucesso"></p>
@@ -146,7 +144,6 @@ async function amCarregar() {
 
 function amRenderCard(t) {
   return `<div class="am-card">
-    <div class="am-card-titulo">${amEsc(t.titulo)}</div>
     <div class="am-card-texto">${amEsc(t.texto)}</div>
     <div class="am-card-rodape">
       <span class="am-card-data">${amFormatarData(t.atualizadoEm || t.criadoEm)}</span>
@@ -160,7 +157,6 @@ function amRenderCard(t) {
 
 function amCancelarEdicao() {
   document.getElementById('am-editando-id').value = '';
-  document.getElementById('am-titulo').value = '';
   document.getElementById('am-texto').value = '';
   document.getElementById('am-btn-salvar').textContent = 'Salvar tópico';
   document.getElementById('am-btn-cancelar').style.display = 'none';
@@ -172,11 +168,10 @@ function amEditar(id) {
   const t = amTopicos.find(x => x.id === id);
   if (!t) return;
   document.getElementById('am-editando-id').value = t.id;
-  document.getElementById('am-titulo').value = t.titulo;
   document.getElementById('am-texto').value = t.texto;
   document.getElementById('am-btn-salvar').textContent = 'Salvar edição';
   document.getElementById('am-btn-cancelar').style.display = '';
-  document.getElementById('am-titulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('am-texto').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function amSalvar() {
@@ -185,9 +180,8 @@ async function amSalvar() {
   erroEl.style.display = 'none';
   sucessoEl.style.display = 'none';
   const id = document.getElementById('am-editando-id').value;
-  const titulo = document.getElementById('am-titulo').value.trim();
   const texto = document.getElementById('am-texto').value.trim();
-  if (!titulo || !texto) { erroEl.textContent = 'Preenche o título e o texto.'; erroEl.style.display = 'block'; return; }
+  if (!texto) { erroEl.textContent = 'Escreve o texto do tópico.'; erroEl.style.display = 'block'; return; }
 
   const btn = document.getElementById('am-btn-salvar');
   const textoOriginal = btn.textContent;
@@ -196,7 +190,7 @@ async function amSalvar() {
     const res = await fetch(AM_API, {
       method: id ? 'PUT' : 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
-      body: JSON.stringify(id ? { id, titulo, texto } : { titulo, texto }),
+      body: JSON.stringify(id ? { id, texto } : { texto }),
     });
     const data = await res.json();
     if (!res.ok) {
