@@ -5897,8 +5897,9 @@ function renderDrawerItem(item, ctx) {
   if (item.url && item.url.includes('blogbolhas.pages.dev')) {
     return drawerTile(item, `onclick="showPage('blog');closeDrawer()"`);
   }
-  // Pontos Cantados e Completa o Ponto — puxam login automático de quem já está logada aqui
-  if (item.id === 'pontos' || item.id === 'completaponto') {
+  // Pontos Cantados, Completa o Ponto e Guia de Lojas — puxam login automático
+  // de quem já está logada aqui, mesmo sendo sites hospedados à parte
+  if (item.id === 'pontos' || item.id === 'completaponto' || item.id === 'lojas') {
     return drawerTile(item, `onclick="abrirComHandoff('${item.url}','_blank');closeDrawer()"`);
   }
   // link externo
@@ -6039,7 +6040,7 @@ function renderCards() {
       }
       else if (item.url && item.url.includes('blogbolhas.pages.dev'))
         onclick = `onclick="showPage('blog');return false"`;
-      else if (item.id === 'pontos' || item.id === 'completaponto')
+      else if (item.id === 'pontos' || item.id === 'completaponto' || item.id === 'lojas')
         onclick = `onclick="abrirComHandoff('${item.url}','_blank');return false"`;
       else onclick = `onclick="window.open('${item.url}','_blank')"`;
       html += widgetTile(item, onclick);
@@ -18881,9 +18882,9 @@ async function tvAbrirEscolhaVisita() {
 // mesmo se o admin trocar a URL da Guia de Lojas depois
 function tvIrParaLojas() {
   const item = menuData?.sections?.flatMap(s => s.items).find(i => i.id === 'lojas');
-  if (item?.url) { window.open(item.url, '_blank'); return; }
+  if (item?.url) { abrirComHandoff(item.url, '_blank'); return; }
   if (item?.page) { showPage(item.page); return; }
-  window.open('https://floraselojas.pages.dev', '_blank');
+  abrirComHandoff('https://floraselojas.pages.dev', '_blank');
 }
 
 // texto de status da planta especial de VERDADE (a da própria pessoa, não a de

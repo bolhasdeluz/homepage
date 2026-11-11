@@ -252,6 +252,9 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       <p id="subtitle">Referências e endereços da comunidade</p>
     </div>
     <div class="hr">
+      <button class="hbtn" onclick="abrirMenuSite()" title="Menu do site">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+      </button>
       <div class="sw">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="search" placeholder="Buscar…" />
@@ -432,6 +435,21 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
         <span id="pin-error">Senha incorreta.</span>
       </div>
       <div class="ma"><button class="bp" onclick="verificarSenha()">Entrar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: MENU DO SITE (login + navegação pro resto do terreiro) ════ -->
+<div class="ov" id="ov-menu-site">
+  <div class="mo" style="max-width:400px">
+    <div class="mh">
+      <h2>Bolhas de Luz</h2>
+      <button class="mc" onclick="fechar('ov-menu-site')">×</button>
+    </div>
+    <div class="mb2">
+      <div id="ms-login-status" style="display:flex;align-items:center;gap:10px;background:#fafafa;border:1.5px solid #eee;border-radius:12px;padding:10px 12px"></div>
+      <button class="bp" onclick="voltarComHandoff()">🏠 Voltar pro site</button>
+      <div id="ms-secoes" style="display:flex;flex-direction:column;gap:14px"></div>
     </div>
   </div>
 </div>
@@ -1427,9 +1445,134 @@ function render() {
   });
 }
 
+// ══ MENU DO SITE (login + navegação pro resto do terreiro) ══
+// Esse guia é hospedado à parte (origem diferente de bolhasdeluz.ong.br),
+// então não tem acesso direto à sessão/menu do site principal — o login
+// chega via handoff (ver capturarHandoffToken no <script type="module">
+// logo abaixo) e o menu é buscado ao vivo da API do site principal
+// (CORS já libera "*" em /api/menu), sem precisar duplicar a lógica de
+// visibilidade por grupo de lá — mostra só os itens com link direto
+// (externos/membros); os internos (que dependem do roteamento interno
+// do site principal) viram simplesmente "voltar pro site".
+const SITE_PRINCIPAL = 'https://bolhasdeluz.ong.br';
+let _menuSiteCarregado = false;
+
+function abrirMenuSite() {
+  atualizarLoginStatusUI();
+  if (!_menuSiteCarregado) carregarMenuSite();
+  abrir('ov-menu-site');
+}
+
+function atualizarLoginStatusUI() {
+  const el = document.getElementById('ms-login-status');
+  const user = window._usuarioLogado;
+  if (user) {
+    el.innerHTML = `
+      ${user.photoURL ? `<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%">` : '<div style="width:36px;height:36px;border-radius:50%;background:var(--light);display:flex;align-items:center;justify-content:center">👤</div>'}
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.displayName || user.email || 'Logada'}</div>
+        <div style="font-size:.72rem;color:var(--muted)">Login puxado do site principal</div>
+      </div>`;
+  } else {
+    el.innerHTML = `<div style="font-size:.83rem;color:var(--muted)">Você não está logada — volta pro site principal pra entrar com Google.</div>`;
+  }
+}
+
+async function carregarMenuSite() {
+  const el = document.getElementById('ms-secoes');
+  el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">Carregando menu…</p>';
+  try {
+    const res = await fetch(SITE_PRINCIPAL + '/api/menu');
+    const data = await res.json();
+    const secoes = (data && data.sections) || [];
+    el.innerHTML = secoes.map(sec => {
+      const itensComLink = sec.items.filter(i => i.showMenu !== false && !i.adminOnly && i.url);
+      if (!itensComLink.length) return '';
+      return `<div>
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${sec.label}</div>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          ${itensComLink.map(i => `<a href="${i.url}" target="_blank" rel="noopener" style="padding:8px 4px;color:var(--text);font-size:.86rem;border-bottom:1px solid #f5e0e5;text-decoration:none">${i.label}</a>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+    _menuSiteCarregado = true;
+  } catch (e) {
+    el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">Não consegui carregar o menu agora.</p>';
+  }
+}
+
+async function voltarComHandoff() {
+  try {
+    const idToken = window._getFreshIdToken && await window._getFreshIdToken();
+    if (!idToken) { window.location.href = SITE_PRINCIPAL; return; }
+    const res = await fetch(SITE_PRINCIPAL + '/api/mint-handoff-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) throw new Error('mint-handoff-token respondeu ' + res.status);
+    const { customToken } = await res.json();
+    if (!customToken) throw new Error('resposta OK mas sem customToken');
+    window.location.href = SITE_PRINCIPAL + '/#ct=' + encodeURIComponent(customToken) + '&pagina=inicio';
+  } catch (e) {
+    console.error('Handoff de volta pro site falhou:', e);
+    window.location.href = SITE_PRINCIPAL;
+  }
+}
+
 // ══ INIT ══
 carregarTudo();
 document.getElementById('search').addEventListener('input',()=>{ render(); if(currentView==='map') renderMapMarkers(); });
+</script>
+
+<!-- FIREBASE — só pra receber o handoff de login vindo do site principal,
+não cria nenhuma tela de login própria aqui -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInWithCustomToken, signOut, getIdToken }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window._getFreshIdToken = async () => {
+  if (!auth.currentUser) return null;
+  try { return await getIdToken(auth.currentUser); } catch { return null; }
+};
+
+// registrado ANTES de qualquer sign-in, pra garantir que o handoff logo
+// abaixo (ou qualquer outro login) sempre dispare esse callback
+onAuthStateChanged(auth, (user) => {
+  window._usuarioLogado = user;
+  if (document.getElementById('ov-menu-site').classList.contains('open')) {
+    window.atualizarLoginStatusUI && window.atualizarLoginStatusUI();
+  }
+});
+
+// captura o #ct=<token> que o site principal anexa ao abrir esse guia
+// (ver abrirComHandoff em index.html) e loga automaticamente
+(function capturarHandoffToken() {
+  try {
+    const hash = window.location.hash || '';
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const token = params.get('ct');
+    if (token) {
+      params.delete('ct');
+      const resto = params.toString();
+      history.replaceState(null, '', window.location.pathname + window.location.search + (resto ? '#' + resto : ''));
+      signInWithCustomToken(auth, token).catch(e => console.error('Handoff de login (Guia de Lojas) falhou:', e));
+    }
+  } catch (e) {}
+})();
 </script>
 </body>
 </html>
