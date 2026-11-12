@@ -32,7 +32,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
 .hbtn:hover{background:rgba(255,255,255,.25)}
 .hbtn.add-loja{background:rgba(255,255,255,.25);border-color:rgba(255,255,255,.5);font-weight:600}
 .hbtn.add-loja:hover{background:rgba(255,255,255,.38)}
-.badge-admin{background:rgba(255,255,255,.22);border-radius:20px;color:#fff;font-size:.68rem;padding:2px 6px}
 
 /* ── CONTROLS BAR ── */
 .cb{background:#fff;border-bottom:1px solid #f5e0e5;padding:0 12px;position:sticky;top:56px;z-index:400;box-shadow:0 2px 8px rgba(180,60,90,.06)}
@@ -186,13 +185,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
 .bs:hover{background:#eee}
 .bd{background:#fff0f0;border:none;border-radius:10px;color:#e05555;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.87rem;padding:11px 13px;transition:background .18s}
 .bd:hover{background:#ffd8d8}
-
-/* pin auth */
-.pw{display:flex;flex-direction:column;align-items:center;gap:16px;padding:6px 0}
-.pw p{color:var(--muted);font-size:.87rem;text-align:center}
-#pin-input{background:#fafafa;border:2px solid #eee;border-radius:12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:1.1rem;letter-spacing:.2em;outline:none;padding:11px 14px;text-align:center;width:100%;transition:border-color .18s}
-#pin-input:focus{border-color:var(--accent)}
-#pin-error{color:#e05555;font-size:.79rem;display:none}
 
 .cat-del{background:none;border:none;color:#e0a0a0;cursor:pointer;font-size:1rem;line-height:1;padding:0 4px;transition:color .18s}
 .cat-del:hover{color:#e05555}
@@ -357,13 +349,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span class="btn-label-full">Indicar loja</span>
       </button>
-      <button class="hbtn" id="btn-admin">
-        <!-- desktop: person icon + text; mobile: pencil icon only -->
-        <svg class="icon-desktop" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a5 5 0 1 0 0 10A5 5 0 0 0 12 2z"/><path d="M2 21a10 10 0 0 1 20 0"/></svg>
-        <svg class="icon-mobile" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="display:none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        <span class="btn-label-full">Admin</span>
-        <span class="badge-admin" id="admin-badge" style="display:none">✓</span>
-      </button>
     </div>
   </div>
 </header>
@@ -514,25 +499,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
         <button class="bs" id="cl-btn-voltar" onclick="fecharConfirmaLocal(false)"></button>
         <button class="bp" id="cl-btn-confirmar" onclick="fecharConfirmaLocal(true)"></button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════ MODAL: SENHA ADMIN ════ -->
-<div class="ov" id="ov-senha">
-  <div class="mo" style="max-width:330px">
-    <div class="mh">
-      <h2>Área Admin</h2>
-      <button class="mc" onclick="fechar('ov-senha')">×</button>
-    </div>
-    <div class="mb2">
-      <div class="pw">
-        <svg width="36" height="36" fill="none" stroke="var(--accent)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <p>Digite a senha de administrador</p>
-        <input type="password" id="pin-input" placeholder="••••••" autocomplete="current-password" />
-        <span id="pin-error">Senha incorreta.</span>
-      </div>
-      <div class="ma"><button class="bp" onclick="verificarSenha()">Entrar</button></div>
     </div>
   </div>
 </div>
@@ -750,7 +716,8 @@ function toast(msg, dur=3000) {
 
 // ══ API ══
 async function apiFetch(path, opts={}) {
-  const headers = { 'Content-Type': 'application/json', ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {}) };
+  const user = window._usuarioLogado;
+  const headers = { 'Content-Type': 'application/json', ...(user ? { 'X-User-Email': user.email } : {}) };
   const res = await fetch(API + path, { ...opts, headers: { ...headers, ...opts.headers } });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
@@ -778,33 +745,19 @@ async function carregarTudo() {
 }
 
 // ══ AUTH ══
-document.getElementById('btn-admin').addEventListener('click', () => {
-  if (adminToken) { sairAdmin(); return; }
-  abrir('ov-senha');
-  setTimeout(() => document.getElementById('pin-input').focus(), 100);
-});
-document.getElementById('pin-input').addEventListener('keydown', e => { if (e.key==='Enter') verificarSenha(); });
-
-async function verificarSenha() {
-  const v = document.getElementById('pin-input').value;
-  // Testa a senha fazendo uma chamada admin
-  try {
-    adminToken = v;
-    await apiFetch('/categorias', { method: 'PUT', body: JSON.stringify(cats) });
-    fechar('ov-senha');
-    document.getElementById('pin-input').value = '';
-    document.getElementById('pin-error').style.display = 'none';
-    ativarAdmin();
-  } catch {
-    adminToken = null;
-    document.getElementById('pin-error').style.display = 'block';
-    document.getElementById('pin-input').select();
-  }
+// não existe mais senha de administrador aqui — quem está logada com um
+// e-mail de admin (mesma lista do site principal, ver ADMIN_EMAILS_FLORAS)
+// já entra automaticamente no modo edição; ver atualizarModoAdminFloras(),
+// chamada de dentro de atualizarBoasVindasFloras() a cada mudança de login
+function atualizarModoAdminFloras() {
+  const user = window._usuarioLogado;
+  const souAdmin = !!(user && isEmailAdminFloras(user.email));
+  if (souAdmin && !adminToken) { adminToken = true; ativarAdmin(); }
+  else if (!souAdmin && adminToken) { sairAdmin(); }
 }
 
 async function ativarAdmin() {
   document.body.classList.add('admin-mode');
-  document.getElementById('admin-badge').style.display = '';
   document.getElementById('admin-bar').style.display = 'flex';
   document.getElementById('subtitle').textContent = '✏️ Modo edição ativo';
   try {
@@ -899,7 +852,6 @@ async function resetCats() {
 async function sairAdmin() {
   adminToken = null;
   document.body.classList.remove('admin-mode');
-  document.getElementById('admin-badge').style.display = 'none';
   document.getElementById('admin-bar').style.display = 'none';
   document.getElementById('subtitle').textContent = 'Referências e endereços da comunidade';
   try { lojas = await apiFetch('/lojas'); buildFilters(); render(); if(currentView==='map') renderMapMarkers(); } catch {}
@@ -1683,6 +1635,7 @@ async function atualizarBoasVindasFloras() {
     _perfilAtualFloras = null;
     ajustarTopoFixoFloras();
     atualizarVisibilidadeMenuHintFloras();
+    atualizarModoAdminFloras();
     return;
   }
 
@@ -1710,6 +1663,7 @@ async function atualizarBoasVindasFloras() {
   banner.style.display = 'block';
   ajustarTopoFixoFloras();
   atualizarVisibilidadeMenuHintFloras();
+  atualizarModoAdminFloras();
 }
 window.atualizarBoasVindasFloras = atualizarBoasVindasFloras;
 
