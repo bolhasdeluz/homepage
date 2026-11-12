@@ -114,6 +114,16 @@ button{cursor:pointer;font-family:inherit}
           <input type="text" class="bib-input" id="bib-com-quem" placeholder="Deixe em branco se está com o dono(a)">
         </div>
       </div>
+      <div class="form-grid">
+        <div class="campo">
+          <label class="form-label">Estado do autor</label>
+          <input type="text" class="bib-input" id="bib-estado-autor" placeholder="Ex: Rio de Janeiro">
+        </div>
+        <div class="campo">
+          <label class="form-label">Sinopse (bem curta)</label>
+          <input type="text" class="bib-input" id="bib-sinopse" placeholder="Qual a abordagem — kardecista, esotérica, cultura banto...">
+        </div>
+      </div>
       <p class="msg erro" id="bib-erro"></p>
       <p class="msg sucesso" id="bib-sucesso"></p>
       <div class="btn-linha">
@@ -187,11 +197,12 @@ function bibRenderCard(l) {
     : `<span class="lv-status emprestado">📤 Emprestado — está com ${bibEsc(comQuem)}</span>`;
   return `<div class="lv-card">
     <div class="lv-titulo">${bibEsc(l.titulo)}</div>
-    <div class="lv-autor-ano">${[bibEsc(l.autor), bibEsc(l.ano)].filter(Boolean).join(' · ')}</div>
+    <div class="lv-autor-ano">${[bibEsc(l.autor), bibEsc(l.ano), l.estadoAutor ? bibEsc(l.estadoAutor) : ''].filter(Boolean).join(' · ')}</div>
     <div class="lv-meta">
       ${l.vertente ? `<span class="lv-tag">${bibEsc(l.vertente)}</span>` : ''}
       ${l.dono ? `<span class="lv-dono">Dono(a): ${bibEsc(l.dono)}</span>` : ''}
     </div>
+    ${l.sinopse ? `<p style="font-family:'Crimson Pro',serif;font-size:.84rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">${bibEsc(l.sinopse)}</p>` : ''}
     ${statusHtml}
     <div class="lv-acoes">
       ${naEstante
@@ -231,6 +242,8 @@ function bibEditar(id) {
   document.getElementById('bib-vertente').value = l.vertente || '';
   document.getElementById('bib-dono').value = l.dono || '';
   document.getElementById('bib-com-quem').value = l.comQuemEsta || '';
+  document.getElementById('bib-estado-autor').value = l.estadoAutor || '';
+  document.getElementById('bib-sinopse').value = l.sinopse || '';
   document.getElementById('bib-form-titulo').textContent = '✎ Editando livro';
   document.getElementById('bib-btn-salvar').textContent = 'Salvar alterações';
   document.getElementById('bib-btn-cancelar').style.display = '';
@@ -245,6 +258,8 @@ function bibCancelarEdicao() {
   document.getElementById('bib-vertente').value = '';
   document.getElementById('bib-dono').value = '';
   document.getElementById('bib-com-quem').value = '';
+  document.getElementById('bib-estado-autor').value = '';
+  document.getElementById('bib-sinopse').value = '';
   document.getElementById('bib-form-titulo').textContent = '✨ Adicionar livro';
   document.getElementById('bib-btn-salvar').textContent = 'Adicionar livro';
   document.getElementById('bib-btn-cancelar').style.display = 'none';
@@ -274,6 +289,8 @@ async function bibSalvar() {
     vertente: document.getElementById('bib-vertente').value.trim(),
     dono: document.getElementById('bib-dono').value.trim(),
     comQuemEsta: document.getElementById('bib-com-quem').value.trim(),
+    estadoAutor: document.getElementById('bib-estado-autor').value.trim(),
+    sinopse: document.getElementById('bib-sinopse').value.trim(),
   };
   const editandoId = document.getElementById('bib-editando-id').value;
 
