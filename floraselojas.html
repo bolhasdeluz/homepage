@@ -240,9 +240,106 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
   .icon-mobile{display:block!important}
   .icon-desktop{display:none!important}
 }
+
+/* ═══ TOPO PADRÃO DO SITE — boas-vindas + Ferramentas, igual ao site
+   principal (ver index.html #boas-vindas/#menu-hint/#drawer) ═══ */
+#boas-vindas{display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(255,245,247,.96);border-bottom:1px solid rgba(0,0,0,.08);backdrop-filter:blur(8px);padding:5px 16px;box-shadow:var(--shadow)}
+#boas-vindas-inner{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;max-width:700px;margin:0 auto}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-weight:700;font-size:.72rem;letter-spacing:.03em;color:var(--text)}
+#bv-cargo{font-size:.78rem;color:var(--muted);font-style:italic}
+#bv-sep,#bv-sep2{color:rgba(0,0,0,.2);font-size:.65rem}
+#bv-tempo{font-size:.78rem;color:var(--accent);font-style:italic}
+#user-logout-btn{font-size:.58rem;letter-spacing:.04em;color:var(--muted);background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:16px;padding:4px 10px;cursor:pointer;margin-left:8px}
+#user-logout-btn:hover{color:var(--accent);border-color:var(--accent)}
+#bv-entrar{padding:5px 15px;font-size:.6rem;letter-spacing:.04em;background:var(--accent);color:#fff;border:none;border-radius:16px;cursor:pointer}
+
+#menu-hint{position:fixed;top:0;left:0;right:0;z-index:495;display:none;align-items:center;justify-content:center;padding:10px 20px 11px;background:rgba(255,245,247,.96);border-bottom:1px solid rgba(0,0,0,.06);box-shadow:0 1px 8px rgba(0,0,0,.04);backdrop-filter:blur(8px);transition:top .25s ease}
+#menu-hint-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;opacity:.85;transition:opacity .2s;padding:3px 4px}
+#menu-hint-btn:hover{opacity:1}
+#menu-hint-label{font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dark)}
+#hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
+
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.4);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{position:fixed;left:0;right:0;bottom:0;z-index:610;max-height:78vh;background:var(--bg);border-top:1px solid rgba(0,0,0,.08);border-radius:18px 18px 0 0;box-shadow:0 -8px 32px rgba(0,0,0,.14);transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+#drawer.open{transform:translateY(0)}
+.drawer-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px;cursor:pointer;flex-shrink:0}
+.drawer-handle-pill{width:32px;height:3px;border-radius:3px;background:rgba(0,0,0,.15)}
+.drawer-header{padding:6px 20px 14px;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-logo{font-weight:700;color:var(--dark);letter-spacing:.06em;font-size:.82rem}
+.drawer-close{background:none;border:none;font-size:1.4rem;color:var(--muted);line-height:1;padding:2px 6px}
+.drawer-close:hover{color:var(--accent)}
+.drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.drawer-section{padding:10px 16px 2px}
+.drawer-submenu-toggle{display:flex;align-items:center;gap:6px;padding:4px 4px 8px;font-size:.56rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.35);background:none;border:none;width:100%;text-align:left;cursor:default}
+.drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(0,0,0,.18)}
+.drawer-dot.mem{background:var(--accent)}
+.drawer-submenu{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 0 10px}
+@media(min-width:420px){.drawer-submenu{grid-template-columns:repeat(4,1fr)}}
+.drawer-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 6px 8px;background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;cursor:pointer;transition:all .18s;text-align:center;min-height:58px}
+.drawer-card:hover{border-color:var(--accent);box-shadow:var(--shadow)}
+.drawer-card-icon{font-size:1.2rem;line-height:1}
+.drawer-card-name{font-size:.6rem;font-weight:700;color:var(--text);line-height:1.15}
+.drawer-card.admin-card{flex-direction:row;text-align:left;justify-content:flex-start;min-height:0;border-top:2px solid var(--accent);background:var(--light);padding:12px 14px;gap:8px}
+.drawer-card-desc{font-size:.72rem;color:var(--muted);font-style:italic;line-height:1.25}
+.drawer-link{display:block;width:100%;text-align:left;padding:11px 4px;border:none;background:none;border-bottom:1px solid rgba(0,0,0,.06);font-size:.8rem;color:var(--text);cursor:pointer}
+.drawer-link:hover{color:var(--accent)}
+.drawer-footer{padding:14px 20px;border-top:1px solid rgba(0,0,0,.08);font-size:.78rem;color:var(--muted);font-style:italic;text-align:center;flex-shrink:0}
 </style>
 </head>
 <body>
+
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <div id="bv-logged" style="display:none;align-items:center;gap:7px;flex-wrap:wrap">
+      <span id="bv-emoji"></span>
+      <span id="bv-nome"></span>
+      <span id="bv-sep">·</span>
+      <span id="bv-cargo"></span>
+      <span id="bv-sep2">·</span>
+      <span id="bv-tempo"></span>
+      <button id="user-logout-btn" onclick="fazerLogoutFloras()">Sair</button>
+    </div>
+    <div id="bv-guest" style="display:none;align-items:center;gap:9px">
+      <span style="font-size:.78rem;color:var(--muted);font-style:italic">✦ Área das Filhas</span>
+      <button id="bv-entrar" onclick="window.location.href=SITE_PRINCIPAL">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="menu-hint">
+  <button id="menu-hint-btn" onclick="toggleDrawer()">
+    <span id="menu-hint-label">Ferramentas</span>
+    <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--dark)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()"><div class="drawer-handle-pill"></div></div>
+  <div class="drawer-header">
+    <span class="drawer-logo">Bolhas de Luz</span>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div style="padding:2px 16px 10px">
+    <input type="text" id="drawer-busca" placeholder="🔍 Buscar uma ferramenta…" oninput="drawerFiltrar(this.value)" style="width:100%;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:20px;padding:9px 16px;font-size:.85rem;color:var(--text);outline:none">
+  </div>
+  <div class="drawer-body-scroll"><div id="drawer-body"></div></div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
+<script>
+// mostra a barra "✦ Área das Filhas" assim que a página carrega, sem
+// esperar o Firebase responder — evita a barra inteira ficar escondida
+// até o módulo carregar (mesma técnica de index.html)
+(function() {
+  try {
+    document.getElementById('bv-guest').style.display = 'flex';
+    document.getElementById('boas-vindas').style.display = 'block';
+  } catch (e) {}
+})();
+</script>
 
 <!-- HEADER -->
 <header>
@@ -252,9 +349,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
       <p id="subtitle">Referências e endereços da comunidade</p>
     </div>
     <div class="hr">
-      <button class="hbtn" onclick="abrirMenuSite()" title="Menu do site">
-        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-      </button>
       <div class="sw">
         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="search" placeholder="Buscar…" />
@@ -443,21 +537,6 @@ header p{color:rgba(255,255,255,.6);font-size:.7rem;margin-top:1px}
   </div>
 </div>
 
-<!-- ════ MODAL: MENU DO SITE (login + navegação pro resto do terreiro) ════ -->
-<div class="ov" id="ov-menu-site">
-  <div class="mo" style="max-width:400px">
-    <div class="mh">
-      <h2>Bolhas de Luz</h2>
-      <button class="mc" onclick="fechar('ov-menu-site')">×</button>
-    </div>
-    <div class="mb2">
-      <button class="bs" id="ms-btn-buscas" onclick="mostrarDetalheBuscas()" style="text-align:left;font-size:.83rem">🔎 Carregando uso da busca automática…</button>
-      <div id="ms-login-status" style="display:flex;align-items:center;gap:10px;background:#fafafa;border:1.5px solid #eee;border-radius:12px;padding:10px 12px"></div>
-      <button class="bp" onclick="voltarComHandoff()">🏠 Voltar pro site</button>
-      <div id="ms-secoes" style="display:flex;flex-direction:column;gap:14px"></div>
-    </div>
-  </div>
-</div>
 
 <!-- ════ MODAL: EDITAR LOJA (admin) ════ -->
 <div class="ov" id="ov-edit">
@@ -1555,13 +1634,278 @@ function render() {
 // (externos/membros); os internos (que dependem do roteamento interno
 // do site principal) viram simplesmente "voltar pro site".
 const SITE_PRINCIPAL = 'https://bolhasdeluz.ong.br';
-let _menuSiteCarregado = false;
 
-function abrirMenuSite() {
-  atualizarLoginStatusUI();
-  if (!_menuSiteCarregado) carregarMenuSite();
+// ── E-MAILS COM ACESSO ADMIN (mesma lista do site principal, ver
+// ADMIN_EMAILS em index.html) — só pra mostrar/esconder o card "Painel
+// Admin" no menu; a permissão de verdade é sempre checada no backend ──
+const ADMIN_EMAILS_FLORAS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+function isEmailAdminFloras(email) { return !!email && ADMIN_EMAILS_FLORAS.includes(email); }
+
+// perfil inativo conta como "visitante" pra visibilidade do menu — mesma
+// regra de grupoEfetivoDoPerfil em index.html
+function grupoEfetivoDoPerfilFloras(p) {
+  if (p && p.ativo === false) return 'visitante';
+  return (p && p.grupo) || 'visitante';
+}
+
+function calcTempoFloras(dataStr) {
+  if (!dataStr) return null;
+  const inicio = new Date(dataStr + 'T12:00:00');
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - inicio.getFullYear();
+  let meses = hoje.getMonth() - inicio.getMonth();
+  let dias = hoje.getDate() - inicio.getDate();
+  if (dias < 0) { meses--; dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); }
+  if (meses < 0) { anos--; meses += 12; }
+  const p = [];
+  if (anos > 0) p.push(anos + (anos === 1 ? ' ano' : ' anos'));
+  if (meses > 0) p.push(meses + (meses === 1 ? ' mês' : ' meses'));
+  if (dias > 0) p.push(dias + (dias === 1 ? ' dia' : ' dias'));
+  if (!p.length) return 'Recém chegada';
+  return p.length === 1 ? p[0] : p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1];
+}
+
+let _perfilAtualFloras = null;
+
+// preenche a barra de boas-vindas no topo (nome, cargo, tempo de casa) —
+// busca o perfil pelo e-mail no site principal (CORS já libera "*" em
+// /api/perfil, ver functions/api/perfil.js)
+async function atualizarBoasVindasFloras() {
+  const banner = document.getElementById('boas-vindas');
+  const logged = document.getElementById('bv-logged');
+  const guest = document.getElementById('bv-guest');
+  const user = window._usuarioLogado;
+
+  if (!user) {
+    logged.style.display = 'none';
+    guest.style.display = 'flex';
+    banner.style.display = 'block';
+    _perfilAtualFloras = null;
+    ajustarTopoFixoFloras();
+    atualizarVisibilidadeMenuHintFloras();
+    return;
+  }
+
+  try {
+    const res = await fetch(SITE_PRINCIPAL + '/api/perfil?email=' + encodeURIComponent(user.email));
+    _perfilAtualFloras = await res.json();
+  } catch (e) { _perfilAtualFloras = {}; }
+
+  const perfil = _perfilAtualFloras || {};
+  const nomeCompleto = perfil.nome || user.displayName || '';
+  const cargo = perfil.cargo || '';
+  const emoji = perfil.emoji || '✦';
+  const tempo = calcTempoFloras(perfil.historia && perfil.historia.data_entrada);
+  const tempoTexto = tempo ? tempo + ' de casa' : '';
+
+  document.getElementById('bv-emoji').textContent = emoji;
+  document.getElementById('bv-nome').textContent = nomeCompleto.split(' ')[0];
+  document.getElementById('bv-cargo').textContent = cargo;
+  document.getElementById('bv-tempo').textContent = tempoTexto;
+  document.getElementById('bv-sep').style.display = cargo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempoTexto ? '' : 'none';
+
+  guest.style.display = 'none';
+  logged.style.display = 'flex';
+  banner.style.display = 'block';
+  ajustarTopoFixoFloras();
+  atualizarVisibilidadeMenuHintFloras();
+}
+window.atualizarBoasVindasFloras = atualizarBoasVindasFloras;
+
+async function fazerLogoutFloras() {
+  try { await window._signOutFloras?.(); } catch (e) {}
+  window._usuarioLogado = null;
+  atualizarBoasVindasFloras();
+}
+window.fazerLogoutFloras = fazerLogoutFloras;
+
+// Ferramentas só aparece logada — mesmo critério do site principal
+function atualizarVisibilidadeMenuHintFloras() {
+  const hint = document.getElementById('menu-hint');
+  const logada = !!window._usuarioLogado;
+  hint.style.display = logada ? 'flex' : 'none';
+  if (!logada) closeDrawer();
+}
+
+// mede a altura real da barra de boas-vindas e empurra o conteúdo da
+// página (incluindo o <header> próprio desse guia) pra baixo dela + do
+// Ferramentas — mesma técnica de ajustarTopoFixo em index.html
+function ajustarTopoFixoFloras() {
+  atualizarVisibilidadeMenuHintFloras();
+  requestAnimationFrame(() => {
+    const banner = document.getElementById('boas-vindas');
+    const hint = document.getElementById('menu-hint');
+    if (!banner || !hint) return;
+    const visivel = banner.style.display !== 'none' && getComputedStyle(banner).display !== 'none';
+    const alturaBanner = visivel ? banner.offsetHeight : 0;
+    hint.style.top = alturaBanner + 'px';
+    const alturaHint = hint.offsetHeight;
+    document.body.style.paddingTop = (alturaBanner + alturaHint) + 'px';
+  });
+}
+window.addEventListener('resize', ajustarTopoFixoFloras);
+
+function toggleDrawer() {
+  const d = document.getElementById('drawer'), o = document.getElementById('drawer-overlay'), t = document.getElementById('menu-hint-btn');
+  const open = d.classList.contains('open');
+  if (!open) renderDrawerFloras();
+  if (!open) { const busca = document.getElementById('drawer-busca'); if (busca) { busca.value = ''; drawerFiltrar(''); } }
+  d.classList.toggle('open'); o.classList.toggle('open'); t.classList.toggle('open');
+  document.body.style.overflow = open ? '' : 'hidden';
+}
+window.toggleDrawer = toggleDrawer;
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('menu-hint-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.closeDrawer = closeDrawer;
+
+function drawerFiltrar(texto) {
+  const termo = (texto || '').trim().toLowerCase();
+  document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
+    let algumVisivel = false;
+    sec.querySelectorAll('.drawer-card, .drawer-link').forEach(card => {
+      const nomeEl = card.querySelector('.drawer-card-name');
+      const nome = (nomeEl ? nomeEl.textContent : card.textContent).toLowerCase();
+      const match = !termo || nome.includes(termo);
+      card.style.display = match ? '' : 'none';
+      if (match) algumVisivel = true;
+    });
+    sec.style.display = (termo && !algumVisivel) ? 'none' : '';
+  });
+}
+window.drawerFiltrar = drawerFiltrar;
+
+function drawerIconeLabelFloras(item) {
+  const label = item.label || '';
+  const m = label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})️?\s*(.*)$/u);
+  if (m && m[2]) return { icone: m[1], texto: m[2] };
+  return { icone: '✦', texto: label };
+}
+function drawerTileFloras(item, onclickAttr, descFallback) {
+  const { icone, texto } = drawerIconeLabelFloras(item);
+  const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
+  return `<button class="drawer-card" ${onclickAttr} title="${desc}">
+    <span class="drawer-card-icon">${icone}</span>
+    <span class="drawer-card-name">${texto}</span>
+  </button>`;
+}
+
+// navega pro site principal levando o login junto (se tiver uma sessão
+// ativa aqui) — mesma ideia de voltarComHandoff, mas pra qualquer página
+// interna do site, não só a Início
+async function irParaSiteComHandoff(pagina) {
+  const destino = SITE_PRINCIPAL + '/#pagina=' + encodeURIComponent(pagina || 'inicio');
+  try {
+    const idToken = window._getFreshIdToken && await window._getFreshIdToken();
+    if (!idToken) { window.location.href = destino; return; }
+    const res = await fetch(SITE_PRINCIPAL + '/api/mint-handoff-token', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) throw new Error('mint-handoff-token respondeu ' + res.status);
+    const { customToken } = await res.json();
+    if (!customToken) throw new Error('resposta OK mas sem customToken');
+    window.location.href = SITE_PRINCIPAL + '/#ct=' + encodeURIComponent(customToken) + '&pagina=' + encodeURIComponent(pagina || 'inicio');
+  } catch (e) {
+    console.error('Handoff falhou, indo sem login:', e);
+    window.location.href = destino;
+  }
+}
+window.irParaSiteComHandoff = irParaSiteComHandoff;
+
+// mesma ideia, mas pra um link externo qualquer (outro site do terreiro) —
+// mesmo mecanismo que abrirComHandoff em index.html
+async function abrirComHandoffFloras(url, target) {
+  const janela = target === '_self' ? null : window.open('', target);
+  const irPara = (destino) => { if (janela) { try { janela.location.href = destino; return; } catch (e) {} } window.open(destino, target); };
+  try {
+    const idToken = window._getFreshIdToken && await window._getFreshIdToken();
+    if (!idToken) { irPara(url); return; }
+    const res = await fetch(SITE_PRINCIPAL + '/api/mint-handoff-token', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idToken }),
+    });
+    if (!res.ok) throw new Error('mint-handoff-token respondeu ' + res.status);
+    const { customToken } = await res.json();
+    if (!customToken) throw new Error('resposta OK mas sem customToken');
+    const destino = new URL(url);
+    destino.hash = 'ct=' + encodeURIComponent(customToken);
+    irPara(destino.toString());
+  } catch (e) {
+    console.error('Handoff automático falhou, abrindo link normal:', e);
+    irPara(url);
+  }
+}
+
+function renderDrawerItemFloras(item) {
+  if (item.id === 'lojas') return ''; // já estamos aqui
+  if (item.id === 'historia') return drawerTileFloras(item, `onclick="irParaSiteComHandoff('historia');closeDrawer()"`, 'A fundação do Bolhas de Luz');
+  if (item.id === 'sessoes' || item.id === 'calendario') return drawerTileFloras(item, `onclick="irParaSiteComHandoff('calendario');closeDrawer()"`);
+  if (item.id === 'apoie') return drawerTileFloras(item, `onclick="irParaSiteComHandoff('apoie');closeDrawer()"`, 'Como nos ajudar');
+  if (item.id === 'filhas') return drawerTileFloras(item, `onclick="irParaSiteComHandoff('guias');closeDrawer()"`, 'Conheça as filhas da casa');
+  if (item.type === 'internal') return drawerTileFloras(item, `onclick="irParaSiteComHandoff('${item.page}');closeDrawer()"`);
+  if (item.type === 'members') return drawerTileFloras(item, `onclick="abrirComHandoffFloras('${item.url}','_blank');closeDrawer()"`);
+  if (item.url && item.url.includes('blogbolhas.pages.dev')) return drawerTileFloras(item, `onclick="irParaSiteComHandoff('blog');closeDrawer()"`);
+  if (item.id === 'pontos' || item.id === 'completaponto') return drawerTileFloras(item, `onclick="abrirComHandoffFloras('${item.url}','_blank');closeDrawer()"`);
+  return drawerTileFloras(item, `onclick="window.open('${item.url}','_blank');closeDrawer()"`);
+}
+
+let _menuDataFloras = null;
+async function renderDrawerFloras() {
+  const body = document.getElementById('drawer-body');
+  if (!_menuDataFloras) {
+    body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-style:italic;color:var(--muted);font-size:.85rem">Carregando menu…</div>';
+    try {
+      const r = await fetch(SITE_PRINCIPAL + '/api/menu');
+      _menuDataFloras = await r.json();
+    } catch (e) {
+      body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-style:italic;color:var(--muted);font-size:.85rem">Não consegui carregar o menu agora.</div>';
+      return;
+    }
+  }
+
+  const user = window._usuarioLogado;
+  const logada = !!user;
+  const perfil = _perfilAtualFloras || {};
+  const ehAdmin = logada && isEmailAdminFloras(user.email);
+  const grupoUsuario = !logada ? 'publico' : (ehAdmin ? 'admin' : grupoEfetivoDoPerfilFloras(perfil));
+
+  const statusBuscasHtml = `<div class="drawer-section" style="padding-bottom:0">
+    <button class="drawer-link" id="ms-btn-buscas" onclick="mostrarDetalheBuscas()">🔎 Carregando uso da busca automática…</button>
+  </div>`;
+
+  const adminCardHtml = ehAdmin ? `<div class="drawer-section" style="padding-bottom:0">
+    <button class="drawer-card admin-card" style="width:100%" onclick="irParaSiteComHandoff('admin');closeDrawer()">
+      <span class="drawer-card-icon">⚙</span>
+      <div><span class="drawer-card-name" style="display:block">Painel Admin</span><span class="drawer-card-desc">Gerencie menu, perfis e sessões</span></div>
+    </button>
+  </div>` : '';
+
+  const sectionsHtml = (_menuDataFloras.sections || []).map(sec => {
+    if (grupoUsuario !== 'admin') {
+      if (sec.adminOnly) return '';
+      if (sec.grupos && !sec.grupos.includes(grupoUsuario)) return '';
+    }
+    const visibleItems = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      if (i.id === 'lojas') return false;
+      if (i.adminOnly && grupoUsuario !== 'admin') return false;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
+      return grupos.includes(grupoUsuario);
+    });
+    if (!visibleItems.length) return '';
+    return `<div class="drawer-section">
+      <button class="drawer-submenu-toggle"><span class="drawer-dot${sec.id === 'corrente' ? ' mem' : ''}"></span>${sec.label}</button>
+      <div class="drawer-submenu">${visibleItems.map(renderDrawerItemFloras).join('')}</div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = statusBuscasHtml + adminCardHtml + sectionsHtml;
   carregarStatusBuscas();
-  abrir('ov-menu-site');
 }
 
 // ── USO DA BUSCA AUTOMÁTICA (Google Places) ──
@@ -1596,65 +1940,9 @@ function mostrarDetalheBuscas() {
   }
 }
 
-function atualizarLoginStatusUI() {
-  const el = document.getElementById('ms-login-status');
-  const user = window._usuarioLogado;
-  if (user) {
-    el.innerHTML = `
-      ${user.photoURL ? `<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%">` : '<div style="width:36px;height:36px;border-radius:50%;background:var(--light);display:flex;align-items:center;justify-content:center">👤</div>'}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:.85rem;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${user.displayName || user.email || 'Logada'}</div>
-        <div style="font-size:.72rem;color:var(--muted)">Login puxado do site principal</div>
-      </div>`;
-  } else {
-    el.innerHTML = `<div style="font-size:.83rem;color:var(--muted)">Você não está logada — volta pro site principal pra entrar com Google.</div>`;
-  }
-}
-
-async function carregarMenuSite() {
-  const el = document.getElementById('ms-secoes');
-  el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">Carregando menu…</p>';
-  try {
-    const res = await fetch(SITE_PRINCIPAL + '/api/menu');
-    const data = await res.json();
-    const secoes = (data && data.sections) || [];
-    el.innerHTML = secoes.map(sec => {
-      const itensComLink = sec.items.filter(i => i.showMenu !== false && !i.adminOnly && i.url);
-      if (!itensComLink.length) return '';
-      return `<div>
-        <div style="font-size:.68rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${sec.label}</div>
-        <div style="display:flex;flex-direction:column;gap:2px">
-          ${itensComLink.map(i => `<a href="${i.url}" target="_blank" rel="noopener" style="padding:8px 4px;color:var(--text);font-size:.86rem;border-bottom:1px solid #f5e0e5;text-decoration:none">${i.label}</a>`).join('')}
-        </div>
-      </div>`;
-    }).join('');
-    _menuSiteCarregado = true;
-  } catch (e) {
-    el.innerHTML = '<p style="font-size:.83rem;color:var(--muted)">Não consegui carregar o menu agora.</p>';
-  }
-}
-
-async function voltarComHandoff() {
-  try {
-    const idToken = window._getFreshIdToken && await window._getFreshIdToken();
-    if (!idToken) { window.location.href = SITE_PRINCIPAL; return; }
-    const res = await fetch(SITE_PRINCIPAL + '/api/mint-handoff-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
-    });
-    if (!res.ok) throw new Error('mint-handoff-token respondeu ' + res.status);
-    const { customToken } = await res.json();
-    if (!customToken) throw new Error('resposta OK mas sem customToken');
-    window.location.href = SITE_PRINCIPAL + '/#ct=' + encodeURIComponent(customToken) + '&pagina=inicio';
-  } catch (e) {
-    console.error('Handoff de volta pro site falhou:', e);
-    window.location.href = SITE_PRINCIPAL;
-  }
-}
-
 // ══ INIT ══
 carregarTudo();
+ajustarTopoFixoFloras();
 document.getElementById('search').addEventListener('input',()=>{ render(); if(currentView==='map') renderMapMarkers(); });
 </script>
 
@@ -1681,14 +1969,13 @@ window._getFreshIdToken = async () => {
   if (!auth.currentUser) return null;
   try { return await getIdToken(auth.currentUser); } catch { return null; }
 };
+window._signOutFloras = () => signOut(auth);
 
 // registrado ANTES de qualquer sign-in, pra garantir que o handoff logo
 // abaixo (ou qualquer outro login) sempre dispare esse callback
 onAuthStateChanged(auth, (user) => {
   window._usuarioLogado = user;
-  if (document.getElementById('ov-menu-site').classList.contains('open')) {
-    window.atualizarLoginStatusUI && window.atualizarLoginStatusUI();
-  }
+  window.atualizarBoasVindasFloras && window.atualizarBoasVindasFloras();
 });
 
 // captura o #ct=<token> que o site principal anexa ao abrir esse guia
