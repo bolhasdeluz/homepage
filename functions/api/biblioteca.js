@@ -43,6 +43,8 @@ function normalizarCamposLivro(body, existente) {
     autor: body.autor !== undefined ? String(body.autor).trim() : (base.autor || ''),
     ano: body.ano !== undefined ? String(body.ano).trim() : (base.ano || ''),
     vertente: body.vertente !== undefined ? String(body.vertente).trim() : (base.vertente || ''),
+    sinopse: body.sinopse !== undefined ? String(body.sinopse).trim() : (base.sinopse || ''),
+    estadoAutor: body.estadoAutor !== undefined ? String(body.estadoAutor).trim() : (base.estadoAutor || ''),
   };
 }
 
