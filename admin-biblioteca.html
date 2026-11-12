@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Biblioteca Digital — Bolhas de Luz</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --terra:#8c3a1a;
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --verde:#2a7a60;--verde-dim:rgba(42,122,96,.1);
+  --ambar:#8c6400;--ambar-dim:rgba(196,160,0,.1);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+
+.section-wrap{max-width:680px;margin:0 auto;padding:40px 24px 100px}
+.back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
+.back-btn:hover{color:var(--rosa)}
+.eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
+.section-title{font-family:'Playfair Display',serif;font-size:1.7rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
+.section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1rem;color:var(--text-dim);font-style:italic;margin-bottom:30px;line-height:1.6;text-align:center}
+
+.bloco{background:#fff;border:1px solid var(--border);border-radius:16px;margin-bottom:28px;overflow:hidden}
+.bloco-header{background:var(--rosa-dim);padding:14px 20px;border-bottom:1px solid var(--border)}
+.bloco-titulo{font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa)}
+.bloco-corpo{padding:20px}
+
+.form-label{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:6px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}}
+.bib-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:.88rem;color:var(--text);margin-bottom:0}
+.bib-input:focus{outline:none;border-color:var(--rosa-border)}
+.campo{margin-bottom:12px}
+
+.btn-rosa{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;letter-spacing:.06em;font-weight:700;display:inline-block;width:100%;text-align:center}
+.btn-rosa:hover{opacity:.92}
+.btn-rosa:disabled{opacity:.6;cursor:default}
+.btn-cancelar{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:13px;font-family:'Cinzel',serif;font-size:.78rem;flex-shrink:0}
+.btn-linha{display:flex;gap:8px}
+
+.msg{font-family:'DM Sans',sans-serif;font-size:.82rem;margin-bottom:10px;display:none}
+.msg.erro{color:#b84040}
+.msg.sucesso{color:#2a7a60}
+
+.vazio,.carregando{text-align:center;padding:20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)}
+
+.busca-input{width:100%;background:#fff;border:1px solid var(--border);border-radius:40px;padding:11px 16px;font-family:'Crimson Pro',serif;font-size:.92rem;color:var(--text);outline:none;margin-bottom:16px}
+.busca-input:focus{border-color:var(--rosa)}
+
+.lv-card{background:var(--creme);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.lv-titulo{font-family:'Playfair Display',serif;font-size:1.02rem;font-weight:600;color:var(--text);margin-bottom:2px}
+.lv-autor-ano{font-family:'Crimson Pro',serif;font-size:.86rem;color:var(--text-dim);font-style:italic;margin-bottom:8px}
+.lv-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.lv-tag{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:3px 10px;border-radius:20px;background:var(--rosa-dim);border:1px solid var(--rosa-border);color:var(--rosa)}
+.lv-dono{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
+.lv-status{font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:500;border-radius:8px;padding:5px 9px;display:inline-block;margin-bottom:10px}
+.lv-status.na-estante{background:var(--verde-dim);color:var(--verde)}
+.lv-status.emprestado{background:var(--ambar-dim);color:var(--ambar)}
+.lv-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.lv-acao{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:6px 11px;font-size:.74rem;transition:.2s}
+.lv-acao:hover{border-color:var(--rosa);color:var(--rosa)}
+.lv-acao.apagar:hover{border-color:#b84040;color:#b84040}
+</style>
+</head>
+<body>
+
+<div class="section-wrap">
+  <a class="back-btn" href="/">← Voltar pro site</a>
+  <div class="eyebrow">Terreiro Bolhas de Luz — Painel Interno</div>
+  <div class="section-title">📚 Biblioteca Digital</div>
+  <p class="section-sub">Cadastre os livros da casa e controle quem está com cada um ✦</p>
+
+  <div class="bloco">
+    <div class="bloco-header"><span class="bloco-titulo" id="bib-form-titulo">✨ Adicionar livro</span></div>
+    <div class="bloco-corpo">
+      <input type="hidden" id="bib-editando-id">
+      <div class="form-grid">
+        <div class="campo">
+          <label class="form-label">Título *</label>
+          <input type="text" class="bib-input" id="bib-titulo" placeholder="Nome do livro">
+        </div>
+        <div class="campo">
+          <label class="form-label">Autor</label>
+          <input type="text" class="bib-input" id="bib-autor" placeholder="Nome do autor">
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="campo">
+          <label class="form-label">Ano</label>
+          <input type="text" class="bib-input" id="bib-ano" placeholder="Ex: 1998">
+        </div>
+        <div class="campo">
+          <label class="form-label">Vertente</label>
+          <input type="text" class="bib-input" id="bib-vertente" placeholder="Ex: Umbanda, Quimbanda..." list="bib-vertentes-datalist">
+          <datalist id="bib-vertentes-datalist"></datalist>
+        </div>
+      </div>
+      <div class="form-grid">
+        <div class="campo">
+          <label class="form-label">Dono(a) do livro</label>
+          <input type="text" class="bib-input" id="bib-dono" placeholder="De quem é o livro">
+        </div>
+        <div class="campo">
+          <label class="form-label">Com quem está agora</label>
+          <input type="text" class="bib-input" id="bib-com-quem" placeholder="Deixe em branco se está com o dono(a)">
+        </div>
+      </div>
+      <p class="msg erro" id="bib-erro"></p>
+      <p class="msg sucesso" id="bib-sucesso"></p>
+      <div class="btn-linha">
+        <button class="btn-rosa" id="bib-btn-salvar" onclick="bibSalvar()">Adicionar livro</button>
+        <button class="btn-cancelar" id="bib-btn-cancelar" onclick="bibCancelarEdicao()" style="display:none">Cancelar edição</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bloco">
+    <div class="bloco-header"><span class="bloco-titulo">📖 Catálogo</span></div>
+    <div class="bloco-corpo">
+      <input type="text" class="busca-input" id="bib-busca" placeholder="Buscar por título, autor ou dono…" oninput="bibFiltrar()">
+      <div id="bib-carregando" class="carregando">Carregando catálogo...</div>
+      <div id="bib-vazio" class="vazio" style="display:none">Nenhum livro cadastrado ainda ✦</div>
+      <div id="bib-lista"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const BIB_API = '/api/biblioteca';
+const BIB_ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+let bibLivros = [];
+
+function bibEsc(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+async function bibCarregar() {
+  document.getElementById('bib-carregando').style.display = '';
+  document.getElementById('bib-vazio').style.display = 'none';
+  document.getElementById('bib-lista').innerHTML = '';
+  try {
+    const res = await fetch(BIB_API);
+    const data = res.ok ? await res.json() : null;
+    bibLivros = (data && data.livros) || [];
+  } catch (e) { bibLivros = []; }
+  document.getElementById('bib-carregando').style.display = 'none';
+
+  const vertentes = [...new Set(bibLivros.map(l => l.vertente).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  document.getElementById('bib-vertentes-datalist').innerHTML = vertentes.map(v => `<option value="${bibEsc(v)}">`).join('');
+
+  if (!bibLivros.length) {
+    document.getElementById('bib-vazio').style.display = '';
+    return;
+  }
+  bibRenderLista(bibLivros);
+}
+
+function bibFiltrar() {
+  const termo = document.getElementById('bib-busca').value.trim().toLowerCase();
+  if (!termo) { bibRenderLista(bibLivros); return; }
+  bibRenderLista(bibLivros.filter(l => [l.titulo, l.autor, l.dono].join(' ').toLowerCase().includes(termo)));
+}
+
+function bibRenderLista(livros) {
+  const lista = document.getElementById('bib-lista');
+  if (!livros.length) {
+    lista.innerHTML = '<div class="vazio">Nenhum livro encontrado ✦</div>';
+    return;
+  }
+  lista.innerHTML = livros.map(bibRenderCard).join('');
+}
+
+function bibRenderCard(l) {
+  const comQuem = (l.comQuemEsta || '').trim();
+  const naEstante = !comQuem || comQuem === l.dono;
+  const statusHtml = naEstante
+    ? `<span class="lv-status na-estante">📍 Na estante${l.dono ? ' — com ' + bibEsc(l.dono) : ''}</span>`
+    : `<span class="lv-status emprestado">📤 Emprestado — está com ${bibEsc(comQuem)}</span>`;
+  return `<div class="lv-card">
+    <div class="lv-titulo">${bibEsc(l.titulo)}</div>
+    <div class="lv-autor-ano">${[bibEsc(l.autor), bibEsc(l.ano)].filter(Boolean).join(' · ')}</div>
+    <div class="lv-meta">
+      ${l.vertente ? `<span class="lv-tag">${bibEsc(l.vertente)}</span>` : ''}
+      ${l.dono ? `<span class="lv-dono">Dono(a): ${bibEsc(l.dono)}</span>` : ''}
+    </div>
+    ${statusHtml}
+    <div class="lv-acoes">
+      ${naEstante
+        ? `<button class="lv-acao" onclick="bibEmprestar('${l.id}')">📤 Emprestar</button>`
+        : `<button class="lv-acao" onclick="bibDevolver('${l.id}')">📍 Marcar devolvido</button>`}
+      <button class="lv-acao" onclick="bibEditar('${l.id}')">✎ Editar</button>
+      <button class="lv-acao apagar" onclick="bibApagar('${l.id}')">🗑 Apagar</button>
+    </div>
+  </div>`;
+}
+
+async function bibEmprestar(id) {
+  const nome = prompt('Com quem esse livro vai ficar?');
+  if (nome === null) return;
+  const nomeLimpo = nome.trim();
+  if (!nomeLimpo) { alert('Informe o nome de quem vai ficar com o livro.'); return; }
+  try {
+    await fetch(BIB_API, { method: 'PUT', headers: BIB_ADMIN_HEADERS, body: JSON.stringify({ id, comQuemEsta: nomeLimpo }) });
+    bibCarregar();
+  } catch (e) { alert('Não consegui salvar — tenta de novo.'); }
+}
+
+async function bibDevolver(id) {
+  try {
+    await fetch(BIB_API, { method: 'PUT', headers: BIB_ADMIN_HEADERS, body: JSON.stringify({ id, comQuemEsta: '' }) });
+    bibCarregar();
+  } catch (e) { alert('Não consegui salvar — tenta de novo.'); }
+}
+
+function bibEditar(id) {
+  const l = bibLivros.find(x => x.id === id);
+  if (!l) return;
+  document.getElementById('bib-editando-id').value = l.id;
+  document.getElementById('bib-titulo').value = l.titulo || '';
+  document.getElementById('bib-autor').value = l.autor || '';
+  document.getElementById('bib-ano').value = l.ano || '';
+  document.getElementById('bib-vertente').value = l.vertente || '';
+  document.getElementById('bib-dono').value = l.dono || '';
+  document.getElementById('bib-com-quem').value = l.comQuemEsta || '';
+  document.getElementById('bib-form-titulo').textContent = '✎ Editando livro';
+  document.getElementById('bib-btn-salvar').textContent = 'Salvar alterações';
+  document.getElementById('bib-btn-cancelar').style.display = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function bibCancelarEdicao() {
+  document.getElementById('bib-editando-id').value = '';
+  document.getElementById('bib-titulo').value = '';
+  document.getElementById('bib-autor').value = '';
+  document.getElementById('bib-ano').value = '';
+  document.getElementById('bib-vertente').value = '';
+  document.getElementById('bib-dono').value = '';
+  document.getElementById('bib-com-quem').value = '';
+  document.getElementById('bib-form-titulo').textContent = '✨ Adicionar livro';
+  document.getElementById('bib-btn-salvar').textContent = 'Adicionar livro';
+  document.getElementById('bib-btn-cancelar').style.display = 'none';
+}
+
+async function bibApagar(id) {
+  if (!confirm('Apagar esse livro do catálogo? Essa ação não pode ser desfeita.')) return;
+  try {
+    await fetch(BIB_API, { method: 'DELETE', headers: BIB_ADMIN_HEADERS, body: JSON.stringify({ id }) });
+    bibCarregar();
+  } catch (e) { alert('Não consegui apagar — tenta de novo.'); }
+}
+
+async function bibSalvar() {
+  const erroEl = document.getElementById('bib-erro');
+  const sucessoEl = document.getElementById('bib-sucesso');
+  erroEl.style.display = 'none';
+  sucessoEl.style.display = 'none';
+
+  const titulo = document.getElementById('bib-titulo').value.trim();
+  if (!titulo) { erroEl.textContent = 'Informe o título do livro.'; erroEl.style.display = 'block'; return; }
+
+  const body = {
+    titulo,
+    autor: document.getElementById('bib-autor').value.trim(),
+    ano: document.getElementById('bib-ano').value.trim(),
+    vertente: document.getElementById('bib-vertente').value.trim(),
+    dono: document.getElementById('bib-dono').value.trim(),
+    comQuemEsta: document.getElementById('bib-com-quem').value.trim(),
+  };
+  const editandoId = document.getElementById('bib-editando-id').value;
+
+  const btn = document.getElementById('bib-btn-salvar');
+  const textoOriginal = btn.textContent;
+  btn.textContent = 'Salvando...'; btn.disabled = true;
+  try {
+    if (editandoId) {
+      await fetch(BIB_API, { method: 'PUT', headers: BIB_ADMIN_HEADERS, body: JSON.stringify({ id: editandoId, ...body }) });
+      sucessoEl.textContent = '✦ Livro atualizado!';
+    } else {
+      await fetch(BIB_API, { method: 'POST', headers: BIB_ADMIN_HEADERS, body: JSON.stringify(body) });
+      sucessoEl.textContent = '✦ Livro adicionado!';
+    }
+    sucessoEl.style.display = 'block';
+    bibCancelarEdicao();
+    bibCarregar();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block';
+  }
+  btn.textContent = textoOriginal; btn.disabled = false;
+}
+
+bibCarregar();
+</script>
+
+</body>
+</html>
