@@ -33,12 +33,75 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     radial-gradient(ellipse at 15% 90%,rgba(196,57,107,.07) 0%,transparent 50%),
     #fff5f7;}
 
+/* ═══ TOPO PADRÃO DO SITE — boas-vindas + Ferramentas (mesmo origin que
+   index.html, então o login já vem restaurado sozinho, sem handoff) ═══ */
+#boas-vindas{display:none;position:fixed;top:0;left:0;right:0;z-index:500;background:rgba(253,246,238,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);padding:5px 16px;box-shadow:0 1px 8px rgba(196,90,30,.06)}
+#boas-vindas-inner{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;max-width:700px;margin:0 auto}
+#bv-emoji{font-size:.85rem}
+#bv-nome{font-family:'Cinzel',serif;font-size:.65rem;font-weight:700;letter-spacing:.05em;color:var(--text)}
+#bv-cargo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic}
+#bv-sep,#bv-sep2{color:rgba(196,90,30,.3);font-size:.65rem}
+#bv-tempo{font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic}
+#user-logout-btn{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.07em;color:var(--text-dim);background:rgba(253,246,238,.9);border:1px solid var(--border);border-radius:16px;padding:4px 10px;cursor:pointer;margin-left:8px}
+#user-logout-btn:hover{color:var(--rosa);border-color:rgba(196,57,107,.3)}
+#bv-entrar{padding:5px 15px;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;background:var(--rosa);color:#fff;border:none;border-radius:16px;cursor:pointer}
+
+#menu-hint{position:fixed;top:0;left:0;right:0;z-index:495;display:none;align-items:center;justify-content:center;padding:10px 20px 11px;background:rgba(253,246,238,.96);border-bottom:1px solid rgba(196,90,30,.14);box-shadow:0 1px 8px rgba(196,90,30,.06);backdrop-filter:blur(8px);transition:top .25s ease}
+#menu-hint-btn{background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:9px;opacity:.85;transition:opacity .2s;padding:3px 4px}
+#menu-hint-btn:hover{opacity:1}
+#menu-hint-label{font-family:'Cinzel',serif;font-size:.66rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--terra)}
+#hint-arrow-svg{transition:transform .28s cubic-bezier(.4,0,.2,1)}
+#menu-hint-btn.open #hint-arrow-svg{transform:rotate(180deg)}
+
+#drawer-overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(46,26,14,.4);backdrop-filter:blur(2px)}
+#drawer-overlay.open{display:block}
+#drawer{position:fixed;left:0;right:0;bottom:0;z-index:610;max-height:78vh;background:var(--creme);border-top:1px solid var(--border);border-radius:18px 18px 0 0;box-shadow:0 -8px 32px rgba(46,26,14,.14);transform:translateY(100%);transition:transform .34s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+#drawer.open{transform:translateY(0)}
+.drawer-handle{display:flex;align-items:center;justify-content:center;padding:10px 0 4px;cursor:pointer;flex-shrink:0}
+.drawer-handle-pill{width:32px;height:3px;border-radius:3px;background:rgba(196,90,30,.18)}
+.drawer-header{padding:6px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-logo{font-family:'Cinzel',serif;font-size:.82rem;font-weight:700;color:var(--terra);letter-spacing:.1em}
+.drawer-close{background:none;border:none;font-size:1.4rem;color:var(--text-dim);line-height:1;padding:2px 6px}
+.drawer-close:hover{color:var(--rosa)}
+.drawer-body-scroll{overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.drawer-section{padding:10px 16px 2px}
+.drawer-submenu-toggle{display:flex;align-items:center;gap:6px;padding:4px 4px 8px;font-family:'Cinzel',serif;font-size:.56rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(196,90,30,.5);background:none;border:none;width:100%;text-align:left;cursor:default}
+.drawer-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;background:rgba(196,90,30,.22)}
+.drawer-dot.mem{background:rgba(196,57,107,.28)}
+.drawer-submenu{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 0 10px}
+@media(min-width:420px){.drawer-submenu{grid-template-columns:repeat(4,1fr)}}
+.drawer-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 6px 8px;background:#fff;border:1px solid rgba(196,90,30,.1);border-radius:12px;cursor:pointer;transition:all .18s;text-align:center;min-height:58px}
+.drawer-card:hover{border-color:rgba(196,57,107,.28);box-shadow:0 4px 14px rgba(196,57,107,.12)}
+.drawer-card-icon{font-size:1.2rem;line-height:1}
+.drawer-card-name{font-family:'Cinzel',serif;font-size:.6rem;font-weight:700;color:var(--text);line-height:1.15}
+.drawer-card.admin-card{flex-direction:row;text-align:left;justify-content:flex-start;min-height:0;border-top:2px solid var(--rosa);background:linear-gradient(135deg,rgba(196,57,107,.1),rgba(196,90,30,.07));padding:12px 14px;gap:8px}
+.drawer-card-desc{font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;color:var(--text-dim);font-style:italic;line-height:1.3}
+.drawer-footer{padding:14px 20px;border-top:1px solid var(--border);font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);font-style:italic;text-align:center;flex-shrink:0}
+
 .section-wrap{max-width:640px;margin:0 auto;padding:40px 24px 80px}
 .back-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.08em;color:var(--text-dim);background:none;border:none;text-decoration:none;margin-bottom:22px;transition:color .2s}
 .back-btn:hover{color:var(--rosa)}
 .eyebrow{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--rosa);margin-bottom:10px;text-align:center}
 .section-title{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:600;color:var(--text);margin-bottom:6px;text-align:center}
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:22px;line-height:1.6;text-align:center}
+
+.btn-add-wrap{text-align:center;margin-bottom:18px}
+.btn-add{display:inline-block;background:var(--rosa);color:#fff;border:none;border-radius:20px;padding:10px 20px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;font-weight:700}
+.btn-add:hover{opacity:.92}
+
+.form-add{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:22px;display:none}
+.form-add.open{display:block}
+.form-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);display:block;margin-bottom:5px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media(max-width:460px){.form-grid{grid-template-columns:1fr}}
+.bib-input{width:100%;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text)}
+.bib-input:focus{outline:none;border-color:var(--rosa-border)}
+.form-btn-linha{display:flex;gap:8px;margin-top:4px}
+.btn-rosa-sm{background:var(--rosa);color:#fff;border:none;border-radius:10px;padding:11px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.05em;font-weight:700;flex:1;text-align:center}
+.btn-rosa-sm:hover{opacity:.92}
+.btn-cancelar-sm{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:11px 14px;font-family:'Cinzel',serif;font-size:.68rem}
+.msg{font-family:'DM Sans',sans-serif;font-size:.8rem;margin-bottom:8px;display:none}
+.msg.erro{color:#b84040}
 
 .busca-wrap{position:relative;margin-bottom:14px}
 .busca-input{width:100%;background:#fff;border:1px solid var(--border);border-radius:40px;padding:12px 18px;font-family:'Crimson Pro',serif;font-size:1rem;color:var(--text);outline:none;transition:border-color .2s;box-shadow:0 2px 12px rgba(196,57,107,.06)}
@@ -57,9 +120,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .lv-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
 .lv-tag{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:3px 10px;border-radius:20px;background:var(--rosa-dim);border:1px solid var(--rosa-border);color:var(--rosa)}
 .lv-dono{font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text-dim)}
-.lv-status{font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;border-radius:8px;padding:6px 10px;display:inline-block}
+.lv-status{font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:500;border-radius:8px;padding:6px 10px;display:inline-block;margin-bottom:10px}
 .lv-status.na-estante{background:var(--verde-dim);color:var(--verde)}
 .lv-status.emprestado{background:var(--ambar-dim);color:var(--ambar)}
+.lv-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.lv-acao{background:none;border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:6px 11px;font-size:.74rem;transition:.2s}
+.lv-acao:hover{border-color:var(--rosa);color:var(--rosa)}
+.lv-acao.apagar:hover{border-color:#b84040;color:#b84040}
 
 .saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:30px}
 .saiba-mais a{color:var(--rosa);text-decoration:underline}
@@ -67,11 +134,82 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 </head>
 <body>
 
+<div id="boas-vindas">
+  <div id="boas-vindas-inner">
+    <div id="bv-logged" style="display:none;align-items:center;gap:7px;flex-wrap:wrap">
+      <span id="bv-emoji"></span>
+      <span id="bv-nome"></span>
+      <span id="bv-sep">·</span>
+      <span id="bv-cargo"></span>
+      <span id="bv-sep2">·</span>
+      <span id="bv-tempo"></span>
+      <button id="user-logout-btn" onclick="logoutBiblioteca()">Sair</button>
+    </div>
+    <div id="bv-guest" style="display:none;align-items:center;gap:9px">
+      <span style="font-family:'Crimson Pro',Georgia,serif;font-size:.78rem;color:var(--text-dim);font-style:italic">✦ Área das Filhas</span>
+      <button id="bv-entrar" onclick="loginBiblioteca()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="menu-hint">
+  <button id="menu-hint-btn" onclick="toggleDrawer()">
+    <span id="menu-hint-label">Ferramentas</span>
+    <svg width="16" height="10" viewBox="0 0 20 12" fill="none" id="hint-arrow-svg"><path d="M1 1l9 9 9-9" stroke="var(--terra)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  </button>
+</div>
+
+<div id="drawer-overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="drawer-handle" onclick="closeDrawer()"><div class="drawer-handle-pill"></div></div>
+  <div class="drawer-header">
+    <span class="drawer-logo">Bolhas de Luz</span>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div style="padding:2px 16px 10px">
+    <input type="text" id="drawer-busca" placeholder="🔍 Buscar uma ferramenta…" oninput="drawerFiltrar(this.value)" style="width:100%;background:#fff;border:1px solid var(--border);border-radius:20px;padding:9px 16px;font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text);outline:none">
+  </div>
+  <div class="drawer-body-scroll"><div id="drawer-body"></div></div>
+  <div class="drawer-footer">Terreiro Bolhas de Luz · Porto Alegre, RS</div>
+</div>
+<script>
+// mostra a barra "✦ Área das Filhas" assim que a página carrega, sem
+// esperar o Firebase responder (mesma técnica de index.html)
+(function() {
+  try {
+    document.getElementById('bv-guest').style.display = 'flex';
+    document.getElementById('boas-vindas').style.display = 'block';
+  } catch (e) {}
+})();
+</script>
+
 <div class="section-wrap">
   <a class="back-btn" href="/">← Voltar pro site</a>
   <div class="eyebrow">Terreiro Bolhas de Luz</div>
   <div class="section-title">📚 Biblioteca Digital</div>
   <p class="section-sub">Os livros da nossa casa — de que vertente, quem é o dono, e com quem está agora ✦</p>
+
+  <div class="btn-add-wrap" id="lv-btn-add-wrap" style="display:none">
+    <button class="btn-add" onclick="lvAbrirFormAdd()">+ Adicionar um livro meu</button>
+  </div>
+
+  <div class="form-add" id="lv-form-add">
+    <input type="hidden" id="lv-editando-id">
+    <p id="lv-form-titulo" style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--rosa);margin-bottom:12px">✨ Adicionar livro</p>
+    <div class="form-grid">
+      <div><label class="form-label">Título *</label><input type="text" class="bib-input" id="lv-titulo" placeholder="Nome do livro"></div>
+      <div><label class="form-label">Autor</label><input type="text" class="bib-input" id="lv-autor" placeholder="Nome do autor"></div>
+    </div>
+    <div class="form-grid">
+      <div><label class="form-label">Ano</label><input type="text" class="bib-input" id="lv-ano" placeholder="Ex: 1998"></div>
+      <div><label class="form-label">Vertente</label><input type="text" class="bib-input" id="lv-vertente" placeholder="Ex: Umbanda, Quimbanda..." list="lv-vertentes-datalist"><datalist id="lv-vertentes-datalist"></datalist></div>
+    </div>
+    <p class="msg erro" id="lv-form-erro"></p>
+    <div class="form-btn-linha">
+      <button class="btn-rosa-sm" onclick="lvSalvarForm()">Adicionar livro</button>
+      <button class="btn-cancelar-sm" onclick="lvFecharForm()">Cancelar</button>
+    </div>
+  </div>
 
   <div class="busca-wrap">
     <input type="text" class="busca-input" id="lv-busca" placeholder="Buscar por título, autor ou dono…" oninput="lvFiltrar()">
@@ -89,9 +227,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 const LV_API = '/api/biblioteca';
 let lvLivros = [];
 let lvVertenteAtiva = null;
+// window.lvUsuarioLogado/window.lvPerfilAtual (não variáveis soltas): o
+// script do Firebase roda num <script type="module">, que tem escopo
+// próprio e NÃO compartilha variáveis com este <script> clássico — só dá
+// pra trocar informação entre os dois pendurando em window
+window.lvUsuarioLogado = null;
+window.lvPerfilAtual = null;
 
 function lvEsc(s) {
   return String(s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function lvAuthHeaders() {
+  return window.lvUsuarioLogado ? { 'X-User-Email': window.lvUsuarioLogado.email } : {};
 }
 
 async function lvCarregar() {
@@ -105,12 +252,15 @@ async function lvCarregar() {
   } catch (e) { lvLivros = []; }
   document.getElementById('lv-carregando').style.display = 'none';
 
+  const vertentes = [...new Set(lvLivros.map(l => l.vertente).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  document.getElementById('lv-vertentes-datalist').innerHTML = vertentes.map(v => `<option value="${lvEsc(v)}">`).join('');
+
   if (!lvLivros.length) {
     document.getElementById('lv-vazio').style.display = '';
     return;
   }
   lvRenderChips();
-  lvRenderLista(lvLivros);
+  lvFiltrar();
 }
 
 function lvRenderChips() {
@@ -152,6 +302,21 @@ function lvRenderCard(l) {
   const statusHtml = naEstante
     ? `<span class="lv-status na-estante">📍 Na estante${l.dono ? ' — com ' + lvEsc(l.dono) : ''}</span>`
     : `<span class="lv-status emprestado">📤 Emprestado — está com ${lvEsc(comQuem)}</span>`;
+
+  const meuEmail = window.lvUsuarioLogado && window.lvUsuarioLogado.email;
+  const souDona = meuEmail && l.donoEmail === meuEmail;
+  const comigo = meuEmail && l.comQuemEstaEmail === meuEmail;
+
+  const acoes = [];
+  if (meuEmail) {
+    if (naEstante && !souDona) acoes.push(`<button class="lv-acao" onclick="lvPegarEmprestado('${l.id}')">📤 Pegar emprestado</button>`);
+    if (!naEstante && (comigo || souDona)) acoes.push(`<button class="lv-acao" onclick="lvDevolver('${l.id}')">📍 Marcar devolvido</button>`);
+    if (souDona) {
+      acoes.push(`<button class="lv-acao" onclick="lvEditar('${l.id}')">✎ Editar</button>`);
+      acoes.push(`<button class="lv-acao apagar" onclick="lvApagar('${l.id}')">🗑 Apagar</button>`);
+    }
+  }
+
   return `<div class="lv-card">
     <div class="lv-titulo">${lvEsc(l.titulo)}</div>
     <div class="lv-autor-ano">${[lvEsc(l.autor), lvEsc(l.ano)].filter(Boolean).join(' · ')}</div>
@@ -160,13 +325,330 @@ function lvRenderCard(l) {
       ${l.dono ? `<span class="lv-dono">Dono(a): ${lvEsc(l.dono)}</span>` : ''}
     </div>
     ${statusHtml}
+    ${acoes.length ? `<div class="lv-acoes">${acoes.join('')}</div>` : ''}
   </div>`;
+}
+
+async function lvPegarEmprestado(id) {
+  try {
+    const res = await fetch(LV_API, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify({ id, comQuemEsta: 'eu' }) });
+    if (!res.ok) { alert('Não consegui registrar — tenta de novo.'); return; }
+    lvCarregar();
+  } catch (e) { alert('Não consegui registrar — tenta de novo.'); }
+}
+window.lvPegarEmprestado = lvPegarEmprestado;
+
+async function lvDevolver(id) {
+  try {
+    const res = await fetch(LV_API, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify({ id, comQuemEsta: '' }) });
+    if (!res.ok) { alert('Não consegui registrar — tenta de novo.'); return; }
+    lvCarregar();
+  } catch (e) { alert('Não consegui registrar — tenta de novo.'); }
+}
+window.lvDevolver = lvDevolver;
+
+function lvAbrirFormAdd() {
+  document.getElementById('lv-editando-id').value = '';
+  document.getElementById('lv-titulo').value = '';
+  document.getElementById('lv-autor').value = '';
+  document.getElementById('lv-ano').value = '';
+  document.getElementById('lv-vertente').value = '';
+  document.getElementById('lv-form-titulo').textContent = '✨ Adicionar livro';
+  document.getElementById('lv-form-add').classList.add('open');
+  document.getElementById('lv-form-add').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+window.lvAbrirFormAdd = lvAbrirFormAdd;
+
+function lvEditar(id) {
+  const l = lvLivros.find(x => x.id === id);
+  if (!l) return;
+  document.getElementById('lv-editando-id').value = l.id;
+  document.getElementById('lv-titulo').value = l.titulo || '';
+  document.getElementById('lv-autor').value = l.autor || '';
+  document.getElementById('lv-ano').value = l.ano || '';
+  document.getElementById('lv-vertente').value = l.vertente || '';
+  document.getElementById('lv-form-titulo').textContent = '✎ Editando livro';
+  document.getElementById('lv-form-add').classList.add('open');
+  document.getElementById('lv-form-add').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+window.lvEditar = lvEditar;
+
+function lvFecharForm() {
+  document.getElementById('lv-form-add').classList.remove('open');
+  document.getElementById('lv-form-erro').style.display = 'none';
+}
+window.lvFecharForm = lvFecharForm;
+
+async function lvSalvarForm() {
+  const erroEl = document.getElementById('lv-form-erro');
+  erroEl.style.display = 'none';
+  const titulo = document.getElementById('lv-titulo').value.trim();
+  if (!titulo) { erroEl.textContent = 'Informe o título do livro.'; erroEl.style.display = 'block'; return; }
+  const body = {
+    titulo,
+    autor: document.getElementById('lv-autor').value.trim(),
+    ano: document.getElementById('lv-ano').value.trim(),
+    vertente: document.getElementById('lv-vertente').value.trim(),
+  };
+  const editandoId = document.getElementById('lv-editando-id').value;
+  try {
+    const res = editandoId
+      ? await fetch(LV_API, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify({ id: editandoId, ...body }) })
+      : await fetch(LV_API, { method: 'POST', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify(body) });
+    if (!res.ok) { erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block'; return; }
+    lvFecharForm();
+    lvCarregar();
+  } catch (e) { erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block'; }
+}
+window.lvSalvarForm = lvSalvarForm;
+
+async function lvApagar(id) {
+  if (!confirm('Apagar esse livro do catálogo? Essa ação não pode ser desfeita.')) return;
+  try {
+    const res = await fetch(LV_API, { method: 'DELETE', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify({ id }) });
+    if (!res.ok) { alert('Não consegui apagar — tenta de novo.'); return; }
+    lvCarregar();
+  } catch (e) { alert('Não consegui apagar — tenta de novo.'); }
+}
+window.lvApagar = lvApagar;
+
+// ── CABEÇALHO: boas-vindas + Ferramentas + gaveta (mesmo padrão do site,
+// mesma origem — sem precisar de handoff por token) ──
+function calcTempoBiblioteca(dataStr) {
+  if (!dataStr) return null;
+  const inicio = new Date(dataStr + 'T12:00:00');
+  const hoje = new Date();
+  let anos = hoje.getFullYear() - inicio.getFullYear();
+  let meses = hoje.getMonth() - inicio.getMonth();
+  let dias = hoje.getDate() - inicio.getDate();
+  if (dias < 0) { meses--; dias += new Date(hoje.getFullYear(), hoje.getMonth(), 0).getDate(); }
+  if (meses < 0) { anos--; meses += 12; }
+  const p = [];
+  if (anos > 0) p.push(anos + (anos === 1 ? ' ano' : ' anos'));
+  if (meses > 0) p.push(meses + (meses === 1 ? ' mês' : ' meses'));
+  if (dias > 0) p.push(dias + (dias === 1 ? ' dia' : ' dias'));
+  if (!p.length) return 'Recém chegada';
+  return p.length === 1 ? p[0] : p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1];
+}
+
+const ADMIN_EMAILS_BIBLIOTECA = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
+function isEmailAdminBiblioteca(email) { return !!email && ADMIN_EMAILS_BIBLIOTECA.includes(email); }
+function grupoEfetivoDoPerfilBiblioteca(p) {
+  if (p && p.ativo === false) return 'visitante';
+  return (p && p.grupo) || 'visitante';
+}
+
+async function atualizarBoasVindasBiblioteca() {
+  const banner = document.getElementById('boas-vindas');
+  const logged = document.getElementById('bv-logged');
+  const guest = document.getElementById('bv-guest');
+  const user = window.lvUsuarioLogado;
+
+  if (!user) {
+    logged.style.display = 'none';
+    guest.style.display = 'flex';
+    banner.style.display = 'block';
+    window.lvPerfilAtual = null;
+    document.getElementById('lv-btn-add-wrap').style.display = 'none';
+    ajustarTopoFixoBiblioteca();
+    atualizarVisibilidadeMenuHintBiblioteca();
+    if (lvLivros.length) lvFiltrar(); // reaplica os cards sem os botões de ação
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/perfil?email=' + encodeURIComponent(user.email));
+    window.lvPerfilAtual = await res.json();
+  } catch (e) { window.lvPerfilAtual = {}; }
+
+  const perfil = window.lvPerfilAtual || {};
+  const nomeCompleto = perfil.nome || user.displayName || '';
+  const cargo = perfil.cargo || '';
+  const emoji = perfil.emoji || '✦';
+  const tempo = calcTempoBiblioteca(perfil.historia && perfil.historia.data_entrada);
+  const tempoTexto = tempo ? tempo + ' de casa' : '';
+
+  document.getElementById('bv-emoji').textContent = emoji;
+  document.getElementById('bv-nome').textContent = nomeCompleto.split(' ')[0];
+  document.getElementById('bv-cargo').textContent = cargo;
+  document.getElementById('bv-tempo').textContent = tempoTexto;
+  document.getElementById('bv-sep').style.display = cargo ? '' : 'none';
+  document.getElementById('bv-sep2').style.display = tempoTexto ? '' : 'none';
+
+  guest.style.display = 'none';
+  logged.style.display = 'flex';
+  banner.style.display = 'block';
+  document.getElementById('lv-btn-add-wrap').style.display = 'block';
+  ajustarTopoFixoBiblioteca();
+  atualizarVisibilidadeMenuHintBiblioteca();
+  lvFiltrar();
+}
+
+function atualizarVisibilidadeMenuHintBiblioteca() {
+  const hint = document.getElementById('menu-hint');
+  const logada = !!window.lvUsuarioLogado;
+  hint.style.display = logada ? 'flex' : 'none';
+  if (!logada) closeDrawer();
+}
+
+function ajustarTopoFixoBiblioteca() {
+  atualizarVisibilidadeMenuHintBiblioteca();
+  requestAnimationFrame(() => {
+    const banner = document.getElementById('boas-vindas');
+    const hint = document.getElementById('menu-hint');
+    if (!banner || !hint) return;
+    const visivel = banner.style.display !== 'none' && getComputedStyle(banner).display !== 'none';
+    const alturaBanner = visivel ? banner.offsetHeight : 0;
+    hint.style.top = alturaBanner + 'px';
+    const alturaHint = hint.offsetHeight;
+    document.body.style.paddingTop = (alturaBanner + alturaHint) + 'px';
+  });
+}
+window.addEventListener('resize', ajustarTopoFixoBiblioteca);
+
+function toggleDrawer() {
+  const d = document.getElementById('drawer'), o = document.getElementById('drawer-overlay'), t = document.getElementById('menu-hint-btn');
+  const open = d.classList.contains('open');
+  if (!open) renderDrawerBiblioteca();
+  if (!open) { const busca = document.getElementById('drawer-busca'); if (busca) { busca.value = ''; drawerFiltrar(''); } }
+  d.classList.toggle('open'); o.classList.toggle('open'); t.classList.toggle('open');
+  document.body.style.overflow = open ? '' : 'hidden';
+}
+window.toggleDrawer = toggleDrawer;
+
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.getElementById('menu-hint-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+window.closeDrawer = closeDrawer;
+
+function drawerFiltrar(texto) {
+  const termo = (texto || '').trim().toLowerCase();
+  document.querySelectorAll('#drawer-body .drawer-section').forEach(sec => {
+    let algumVisivel = false;
+    sec.querySelectorAll('.drawer-card').forEach(card => {
+      const nomeEl = card.querySelector('.drawer-card-name');
+      const nome = (nomeEl ? nomeEl.textContent : card.textContent).toLowerCase();
+      const match = !termo || nome.includes(termo);
+      card.style.display = match ? '' : 'none';
+      if (match) algumVisivel = true;
+    });
+    sec.style.display = (termo && !algumVisivel) ? 'none' : '';
+  });
+}
+window.drawerFiltrar = drawerFiltrar;
+
+function drawerIconeLabelBiblioteca(item) {
+  const label = item.label || '';
+  const m = label.match(/^(\p{Emoji_Presentation}|\p{Extended_Pictographic})\uFE0F?\s*(.*)$/u);
+  if (m && m[2]) return { icone: m[1], texto: m[2] };
+  return { icone: '✦', texto: label };
+}
+function drawerTileBiblioteca(item, href, descFallback) {
+  const { icone, texto } = drawerIconeLabelBiblioteca(item);
+  const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
+  const alvo = href.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
+  return `<a class="drawer-card" href="${href}"${alvo} title="${desc}">
+    <span class="drawer-card-icon">${icone}</span>
+    <span class="drawer-card-name">${texto}</span>
+  </a>`;
+}
+function renderDrawerItemBiblioteca(item) {
+  if (item.id === 'historia') return drawerTileBiblioteca(item, '/#pagina=historia', 'A fundação do Bolhas de Luz');
+  if (item.id === 'sessoes' || item.id === 'calendario') return drawerTileBiblioteca(item, '/#pagina=calendario');
+  if (item.id === 'apoie') return drawerTileBiblioteca(item, '/#pagina=apoie', 'Como nos ajudar');
+  if (item.id === 'filhas') return drawerTileBiblioteca(item, '/#pagina=guias', 'Conheça as filhas da casa');
+  if (item.type === 'internal') return drawerTileBiblioteca(item, '/#pagina=' + item.page);
+  return drawerTileBiblioteca(item, item.url);
+}
+
+let _menuDataBiblioteca = null;
+async function renderDrawerBiblioteca() {
+  const body = document.getElementById('drawer-body');
+  if (!_menuDataBiblioteca) {
+    body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Carregando menu...</div>';
+    try {
+      const r = await fetch('/api/menu');
+      _menuDataBiblioteca = await r.json();
+    } catch (e) {
+      body.innerHTML = '<div style="padding:24px 20px;text-align:center;font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Não consegui carregar o menu agora.</div>';
+      return;
+    }
+  }
+
+  const user = window.lvUsuarioLogado;
+  const logada = !!user;
+  const perfil = window.lvPerfilAtual || {};
+  const ehAdmin = logada && isEmailAdminBiblioteca(user.email);
+  const grupoUsuario = !logada ? 'publico' : (ehAdmin ? 'admin' : grupoEfetivoDoPerfilBiblioteca(perfil));
+
+  const adminCardHtml = ehAdmin ? `<div class="drawer-section" style="padding-bottom:0">
+    <a class="drawer-card admin-card" style="width:100%" href="/#pagina=admin">
+      <span class="drawer-card-icon">⚙</span>
+      <div><span class="drawer-card-name" style="display:block">Painel Admin</span><span class="drawer-card-desc">Gerencie menu, perfis e sessões</span></div>
+    </a>
+  </div>` : '';
+
+  const sectionsHtml = (_menuDataBiblioteca.sections || []).map(sec => {
+    if (grupoUsuario !== 'admin') {
+      if (sec.adminOnly) return '';
+      if (sec.grupos && !sec.grupos.includes(grupoUsuario)) return '';
+    }
+    const visibleItems = sec.items.filter(i => {
+      if (i.showMenu === false) return false;
+      if (i.adminOnly && grupoUsuario !== 'admin') return false;
+      if (grupoUsuario === 'admin') return true;
+      const grupos = i.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
+      return grupos.includes(grupoUsuario);
+    });
+    if (!visibleItems.length) return '';
+    return `<div class="drawer-section">
+      <button class="drawer-submenu-toggle"><span class="drawer-dot${sec.id === 'corrente' ? ' mem' : ''}"></span>${sec.label}</button>
+      <div class="drawer-submenu">${visibleItems.map(renderDrawerItemBiblioteca).join('')}</div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = adminCardHtml + sectionsHtml;
 }
 
 lvCarregar();
 
 // contador de acessos diários — só registra, sem bloquear nada se falhar
 fetch('/api/visita?pagina=biblioteca', { method: 'POST' }).catch(() => {});
+</script>
+
+<!-- FIREBASE — mesma origem do site principal, então basta iniciar e o
+login existente (se a pessoa já entrou por lá) já vem restaurado sozinho -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
+  authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz",
+  storageBucket: "terreiro-bolhas-de-luz.firebasestorage.app",
+  messagingSenderId: "179602931861",
+  appId: "1:179602931861:web:5cf336e9077334cee05b9c",
+  measurementId: "G-6Z1WED2GB1"
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+
+window.loginBiblioteca = async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch (e) { console.error('Login falhou:', e); alert('Não consegui entrar — tenta de novo.'); }
+};
+window.logoutBiblioteca = async () => { await signOut(auth); };
+
+onAuthStateChanged(auth, (user) => {
+  window.lvUsuarioLogado = user;
+  window.atualizarBoasVindasBiblioteca && window.atualizarBoasVindasBiblioteca();
+});
 </script>
 
 </body>
