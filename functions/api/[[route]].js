@@ -7,8 +7,14 @@
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-User-Email',
 };
+
+// mesma lista de e-mails com acesso admin do site principal (ver
+// ADMIN_EMAILS em index.html) — login de verdade substitui a senha
+// antiga: quem está logada com um desses e-mails já é admin aqui, sem
+// precisar digitar nada à parte
+const ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -19,7 +25,9 @@ function json(data, status = 200) {
 
 function isAdmin(request, env) {
   const auth = request.headers.get('Authorization') || '';
-  return auth === `Bearer ${env.ADMIN_PASS}`;
+  if (auth === `Bearer ${env.ADMIN_PASS}`) return true;
+  const email = (request.headers.get('X-User-Email') || '').toLowerCase();
+  return !!email && ADMIN_EMAILS.includes(email);
 }
 
 async function getLojas(env) {
