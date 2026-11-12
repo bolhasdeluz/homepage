@@ -19,7 +19,6 @@
   --creme:#fff5f7;
   --border:rgba(196,90,30,.13);
   --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
-  --feito:#2a7a60;--feito-dim:rgba(42,122,96,.1);
 }
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh;overflow-x:hidden}
@@ -40,41 +39,38 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .section-sub{font-family:'Crimson Pro',Georgia,serif;font-size:1.05rem;color:var(--text-dim);font-style:italic;margin-bottom:22px;line-height:1.6;text-align:center}
 
 /* progresso */
-.progresso-wrap{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:30px;padding:8px 16px;margin-bottom:30px}
+.progresso-wrap{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:30px;padding:8px 16px;margin-bottom:18px}
 .progresso-barra{flex:1;height:6px;border-radius:4px;background:var(--rosa-dim);overflow:hidden}
 .progresso-fill{height:100%;background:linear-gradient(90deg,var(--rosa),var(--terra));border-radius:4px;transition:width .4s ease;width:0%}
 .progresso-txt{font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.06em;color:var(--text-dim);white-space:nowrap}
 
-/* trilha */
-.trilha{position:relative}
-.trilha svg{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
-.trilha-path-fundo{fill:none;stroke:var(--rosa-border);stroke-width:3;stroke-dasharray:2 10;stroke-linecap:round}
-.trilha-path-feito{fill:none;stroke:var(--rosa);stroke-width:3;stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+/* paradinhas — fileira de bolinhas que também serve pra pular direto */
+.dots-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px;scrollbar-width:none}
+.dots-row::-webkit-scrollbar{display:none}
+.dot{flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#fff;border:2px solid var(--rosa-border);display:flex;align-items:center;justify-content:center;font-size:1rem;transition:.2s;opacity:.5}
+.dot:hover{opacity:.9}
+.dot.lida{background:var(--rosa-dim);opacity:.8}
+.dot.atual{opacity:1;border-color:var(--rosa);transform:scale(1.18);box-shadow:0 2px 10px rgba(196,57,107,.3)}
 
-.parada{position:absolute;transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;width:120px}
-.parada-bolha{width:58px;height:58px;border-radius:50%;background:#fff;border:2.5px solid var(--rosa-border);display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 3px 10px rgba(180,60,90,.12);transition:.2s;position:relative}
-.parada-bolha:hover{transform:scale(1.08);border-color:var(--rosa)}
-.parada.lida .parada-bolha{background:linear-gradient(135deg,var(--rosa),var(--terra));border-color:var(--rosa);box-shadow:0 3px 14px rgba(196,57,107,.35)}
-.parada.lida .parada-bolha .check{position:absolute;bottom:-3px;right:-3px;background:var(--feito);color:#fff;border-radius:50%;width:19px;height:19px;font-size:.6rem;display:flex;align-items:center;justify-content:center;border:2px solid var(--creme)}
-.parada-titulo{font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:500;color:var(--text);text-align:center;line-height:1.25}
-.parada.inicio .parada-bolha,.parada.fim .parada-bolha{width:66px;height:66px;font-size:1.7rem}
+/* o card em si */
+.card-wrap{position:relative;touch-action:pan-y}
+.card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px 24px 26px;min-height:300px;display:flex;flex-direction:column;animation:cardIn .25s ease}
+@keyframes cardIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+.card-icon{font-size:2.6rem;text-align:center;margin-bottom:14px}
+.card-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);text-align:center;margin-bottom:16px}
+.card-texto{font-family:'Crimson Pro',serif;font-size:1rem;line-height:1.75;color:var(--text);flex:1}
+.card-links{display:flex;flex-direction:column;gap:10px;margin-top:18px}
+.card-link{display:block;background:var(--rosa-dim);border:1px solid var(--rosa-border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;color:var(--rosa);text-align:center;transition:.2s}
+.card-link:hover{background:var(--rosa);color:#fff}
 
-/* modal da parada */
-.ov{position:fixed;inset:0;background:rgba(46,26,14,.45);display:flex;align-items:flex-end;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
-.ov.open{opacity:1;pointer-events:auto}
-.ov-card{background:#fff;border-radius:22px 22px 0 0;max-width:480px;width:100%;max-height:85vh;overflow-y:auto;padding:28px 24px 32px;transform:translateY(20px);transition:transform .25s}
-.ov.open .ov-card{transform:translateY(0)}
-@media(min-width:560px){.ov{align-items:center}.ov-card{border-radius:20px;max-height:80vh}}
-.ov-icon{font-size:2.2rem;text-align:center;margin-bottom:8px}
-.ov-titulo{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:600;color:var(--text);text-align:center;margin-bottom:14px}
-.ov-texto{font-family:'Crimson Pro',serif;font-size:1rem;line-height:1.72;color:var(--text)}
-.ov-links{display:flex;flex-direction:column;gap:10px;margin-top:16px}
-.ov-link{display:block;background:var(--rosa-dim);border:1px solid var(--rosa-border);border-radius:10px;padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:500;color:var(--rosa);text-align:center;transition:.2s}
-.ov-link:hover{background:var(--rosa);color:#fff}
-.ov-fechar{display:block;width:100%;margin-top:22px;background:none;border:1px solid var(--border);border-radius:10px;padding:12px;font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim)}
-.ov-fechar:hover{border-color:var(--rosa);color:var(--rosa)}
+.nav-row{display:flex;gap:10px;margin-top:16px}
+.nav-btn{flex:1;padding:14px;border-radius:12px;font-family:'Cinzel',serif;font-size:.64rem;letter-spacing:.07em;text-transform:uppercase;border:1px solid var(--border);background:#fff;color:var(--text-dim);transition:.2s}
+.nav-btn:hover:not(:disabled){border-color:var(--rosa);color:var(--rosa)}
+.nav-btn:disabled{opacity:.3;cursor:default}
+.nav-btn.principal{background:var(--rosa);color:#fff;border-color:var(--rosa)}
+.nav-btn.principal:hover{background:var(--terra);border-color:var(--terra);color:#fff}
 
-.saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:40px}
+.saiba-mais{font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text-dim);text-align:center;margin-top:30px}
 .saiba-mais a{color:var(--rosa);text-decoration:underline}
 </style>
 </head>
@@ -88,27 +84,31 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 
   <div class="progresso-wrap">
     <div class="progresso-barra"><div class="progresso-fill" id="pg-fill"></div></div>
-    <span class="progresso-txt" id="pg-txt">0 de 10 lidas</span>
+    <span class="progresso-txt" id="pg-txt">0 de 12 lidas</span>
   </div>
 
-  <div class="trilha" id="trilha"></div>
+  <div class="dots-row" id="dots-row"></div>
+
+  <div class="card-wrap" id="card-wrap">
+    <div class="card" id="card">
+      <div class="card-icon" id="card-icon"></div>
+      <div class="card-titulo" id="card-titulo"></div>
+      <div class="card-texto" id="card-texto"></div>
+      <div class="card-links" id="card-links" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="btn-anterior" onclick="anterior()">← Anterior</button>
+    <button class="nav-btn principal" id="btn-proxima" onclick="proxima()">Próxima →</button>
+  </div>
 
   <p class="saiba-mais">✦ Quer saber mais sobre a nossa casa? <a href="/">visite o menu do nosso site</a> ✦</p>
 </div>
 
-<div class="ov" id="ov-parada" onclick="if(event.target===this)fecharParada()">
-  <div class="ov-card">
-    <div class="ov-icon" id="ov-icon"></div>
-    <div class="ov-titulo" id="ov-titulo"></div>
-    <div class="ov-texto" id="ov-texto"></div>
-    <div class="ov-links" id="ov-links" style="display:none"></div>
-    <button class="ov-fechar" onclick="fecharParada()">Fechar</button>
-  </div>
-</div>
-
 <script>
 const PARADAS = [
-  { id:'intro', tipo:'inicio', icon:'🌸', titulo:'Seja bem-vinda(o)', texto:'Você está começando (ou já começou) uma caminhada — e toda caminhada tem um primeiro passo. Essa trilha reúne o que é bom saber logo que a gente chega na casa: não precisa decorar nada agora, é só ler com calma, no seu tempo. E pode voltar aqui sempre que quiser.' },
+  { id:'intro', icon:'🌸', titulo:'Seja bem-vinda(o)', texto:'Você está começando (ou já começou) uma caminhada — e toda caminhada tem um primeiro passo. Essa trilha reúne o que é bom saber logo que a gente chega na casa: não precisa decorar nada agora, é só ler com calma, no seu tempo. E pode voltar aqui sempre que quiser.' },
   { id:'hierarquia', icon:'🌳', titulo:'Esse é o seu momento', texto:'Todo filho de fé passa por etapas — não existe atalho, e não existe comparação. Se você está chegando agora, esse é o seu momento de criar raízes: observar, aprender, perguntar. Conta com as mais velhas da casa — Vanessa, Thali, Jaque e Márcia — pra te ajudar a entender esse caminho; elas estão aqui exatamente pra isso. O melhor momento sempre vai ser o agora.' },
   { id:'sessao', icon:'🕯️', titulo:'Chegando numa sessão', texto:'Troque de roupa assim que chegar, e já comece a baixar o ritmo — a concentração começa na chegada. Se a sessão já tiver começado: se defuma, passa uma alfazema, vai no cantinho pedir licença, e entra pelos cantos sem atravessar a corrente. No começo, a roupa é jaleco e calça brancos (ou saia branca com calça por baixo) — sem pressa pra comprar mais nada. E o celular fica fora de uso dentro da corrente: sem feed, sem WhatsApp, sem vibrar no bolso.' },
   { id:'conduta', icon:'🤍', titulo:'Respeito é a base', texto:'Aqui dentro, o mínimo de educação é inegociável — com todo mundo, sempre, mesmo com quem você tem menos proximidade. Não se repassa o que foi dito numa consulta, não se interpreta o que o guia falou pra alguém, e não se anda dizendo que fulana "tá com energia pesada" — isso machuca, e não cabe a gente julgar. Fofoca, deboche e comentário por trás não têm espaço na nossa casa.' },
@@ -120,7 +120,7 @@ const PARADAS = [
   { id:'calendario', icon:'📅', titulo:'De olho no calendário', texto:'Dá uma olhada no calendário anual da casa pra saber quando são as próximas sessões, obrigações e eventos — assim você já se programa com antecedência pros próximos meses, sem surpresa de última hora.',
     links: [ { label:'📅 Ver calendário', href:'calendario.html' } ] },
   { id:'oxe', icon:'⚙️', titulo:'Um outro olhar, quando precisa', texto:'O Conselho do Oxé é formado por quem já tem tempo de casa e a confiança da mãe de santo. Ele existe pra garantir mais um olhar — imparcial e justo — em situações que pedem mais do que uma opinião só. A palavra final é sempre da liderança espiritual, mas ouvir várias vozes antes de decidir faz parte de como a gente se conduz aqui.' },
-  { id:'fim', tipo:'fim', icon:'🗺️', titulo:'Quer se aprofundar?', texto:'Essa trilha é só o comecinho. O Estatuto Interno completo tem todos os detalhes, as Anotações da Mãe de Santo trazem reflexões e orientações, e a Palavra do Dia te ensina os termos da Umbanda, um de cada vez. Volte aqui sempre que precisar — a trilha não desaparece.',
+  { id:'fim', icon:'🗺️', titulo:'Quer se aprofundar?', texto:'Essa trilha é só o comecinho. O Estatuto Interno completo tem todos os detalhes, as Anotações da Mãe de Santo trazem reflexões e orientações, e a Palavra do Dia te ensina os termos da Umbanda, um de cada vez. Volte aqui sempre que precisar — a trilha não desaparece.',
     links: [
       { label:'📜 Estatuto Interno completo', href:'regimentointerno.html' },
       { label:'📖 Anotações da Mãe de Santo', href:'anotacoes-mae-de-santo.html' },
@@ -128,104 +128,88 @@ const PARADAS = [
     ] },
 ];
 
-const BASE_W = 320;
-const STEP_Y = 150;
-const START_Y = 70;
-const LEFT_X = 78, CENTER_X = 160, RIGHT_X = 242;
-
-function xDaParada(i) {
-  if (i === 0 || i === PARADAS.length - 1) return CENTER_X;
-  return (i % 2 === 1) ? RIGHT_X : LEFT_X;
-}
-function yDaParada(i) { return START_Y + i * STEP_Y; }
-
 let visitados = {};
 try { visitados = JSON.parse(localStorage.getItem('bdl_trilha_boasvindas_lidas') || '{}'); } catch (e) {}
+let atual = 0;
+try { atual = parseInt(localStorage.getItem('bdl_trilha_boasvindas_pos') || '0', 10) || 0; } catch (e) {}
+if (atual < 0 || atual >= PARADAS.length) atual = 0;
 
-function salvarVisitados() {
-  try { localStorage.setItem('bdl_trilha_boasvindas_lidas', JSON.stringify(visitados)); } catch (e) {}
+function salvar() {
+  try {
+    localStorage.setItem('bdl_trilha_boasvindas_lidas', JSON.stringify(visitados));
+    localStorage.setItem('bdl_trilha_boasvindas_pos', String(atual));
+  } catch (e) {}
 }
 
-function montarPath() {
-  let d = '';
-  PARADAS.forEach((p, i) => {
-    const x = xDaParada(i), y = yDaParada(i);
-    if (i === 0) { d += `M ${x},${y}`; return; }
-    const xPrev = xDaParada(i - 1), yPrev = yDaParada(i - 1);
-    const yMid = (yPrev + y) / 2;
-    d += ` C ${xPrev},${yMid} ${x},${yMid} ${x},${y}`;
-  });
-  return d;
+function irPara(i) {
+  if (i < 0 || i >= PARADAS.length) return;
+  atual = i;
+  render();
 }
+window.irPara = irPara;
+function anterior() { irPara(atual - 1); }
+window.anterior = anterior;
+function proxima() { irPara(atual + 1); }
+window.proxima = proxima;
 
 function render() {
-  const totalH = START_Y + (PARADAS.length - 1) * STEP_Y + 70;
-  const trilha = document.getElementById('trilha');
-  trilha.style.height = totalH + 'px';
+  const p = PARADAS[atual];
+  visitados[p.id] = true;
+  salvar();
 
-  const d = montarPath();
-  const qtdLidas = PARADAS.filter(p => visitados[p.id]).length;
-
-  trilha.innerHTML = `
-    <svg viewBox="0 0 ${BASE_W} ${totalH}" preserveAspectRatio="none">
-      <path class="trilha-path-fundo" d="${d}"></path>
-      <path class="trilha-path-feito" id="path-feito" d="${d}"></path>
-    </svg>
-  ` + PARADAS.map((p, i) => {
-    const x = xDaParada(i), y = yDaParada(i);
-    const lida = !!visitados[p.id];
-    return `<div class="parada ${p.tipo || ''} ${lida ? 'lida' : ''}" style="left:${(x / BASE_W * 100)}%;top:${y}px" onclick="abrirParada('${p.id}')">
-      <div class="parada-bolha">${p.icon}${lida ? '<span class="check">✓</span>' : ''}</div>
-      <div class="parada-titulo">${p.titulo}</div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('pg-txt').textContent = `${qtdLidas} de ${PARADAS.length} lidas`;
-  document.getElementById('pg-fill').style.width = (qtdLidas / PARADAS.length * 100) + '%';
-
-  // desenha só o trecho do caminho já percorrido (da primeira até a última
-  // parada lida em sequência, pra não "pular" trechos não lidos no meio)
-  requestAnimationFrame(() => {
-    const pathFeito = document.getElementById('path-feito');
-    const total = pathFeito.getTotalLength();
-    let seguidas = 0;
-    for (let i = 0; i < PARADAS.length; i++) {
-      if (visitados[PARADAS[i].id]) seguidas = i + 1; else break;
-    }
-    const fracao = seguidas / (PARADAS.length - 1 || 1);
-    pathFeito.style.strokeDasharray = total;
-    pathFeito.style.strokeDashoffset = total - total * Math.min(1, fracao);
-  });
-}
-
-function abrirParada(id) {
-  const p = PARADAS.find(x => x.id === id);
-  if (!p) return;
-  document.getElementById('ov-icon').textContent = p.icon;
-  document.getElementById('ov-titulo').textContent = p.titulo;
-  document.getElementById('ov-texto').textContent = p.texto;
-  const linksEl = document.getElementById('ov-links');
+  document.getElementById('card-icon').textContent = p.icon;
+  document.getElementById('card-titulo').textContent = p.titulo;
+  document.getElementById('card-texto').textContent = p.texto;
+  const linksEl = document.getElementById('card-links');
   if (p.links && p.links.length) {
     linksEl.style.display = 'flex';
-    linksEl.innerHTML = p.links.map(l => `<a class="ov-link" href="${l.href}">${l.label}</a>`).join('');
+    linksEl.innerHTML = p.links.map(l => `<a class="card-link" href="${l.href}">${l.label}</a>`).join('');
   } else {
     linksEl.style.display = 'none';
     linksEl.innerHTML = '';
   }
-  document.getElementById('ov-parada').classList.add('open');
+  // reanima o card a cada troca, pra dar a sensação de "passar a página"
+  const card = document.getElementById('card');
+  card.style.animation = 'none';
+  void card.offsetWidth;
+  card.style.animation = '';
 
-  if (!visitados[id]) {
-    visitados[id] = true;
-    salvarVisitados();
-    render();
+  document.getElementById('btn-anterior').disabled = atual === 0;
+  document.getElementById('btn-proxima').disabled = atual === PARADAS.length - 1;
+
+  const qtdLidas = Object.keys(visitados).length;
+  document.getElementById('pg-txt').textContent = `${qtdLidas} de ${PARADAS.length} lidas`;
+  document.getElementById('pg-fill').style.width = (qtdLidas / PARADAS.length * 100) + '%';
+
+  document.getElementById('dots-row').innerHTML = PARADAS.map((pp, i) => {
+    const lida = !!visitados[pp.id];
+    return `<button class="dot ${i === atual ? 'atual' : ''} ${lida ? 'lida' : ''}" onclick="irPara(${i})" title="${pp.titulo}">${pp.icon}</button>`;
+  }).join('');
+  const dotAtual = document.querySelector('.dot.atual');
+  if (dotAtual) dotAtual.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+}
+
+// arrasta/desliza o card pros lados pra passar de parada, como num carrossel
+let touchX = null, touchY = null;
+const cardWrap = document.getElementById('card-wrap');
+cardWrap.addEventListener('touchstart', e => {
+  touchX = e.touches[0].clientX;
+  touchY = e.touches[0].clientY;
+}, { passive: true });
+cardWrap.addEventListener('touchend', e => {
+  if (touchX === null) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+    if (dx < 0) proxima(); else anterior();
   }
-}
-window.abrirParada = abrirParada;
+  touchX = null; touchY = null;
+});
 
-function fecharParada() {
-  document.getElementById('ov-parada').classList.remove('open');
-}
-window.fecharParada = fecharParada;
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight') proxima();
+  if (e.key === 'ArrowLeft') anterior();
+});
 
 render();
 
