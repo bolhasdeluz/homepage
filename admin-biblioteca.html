@@ -120,9 +120,13 @@ button{cursor:pointer;font-family:inherit}
           <input type="text" class="bib-input" id="bib-estado-autor" placeholder="Ex: Rio de Janeiro">
         </div>
         <div class="campo">
-          <label class="form-label">Sinopse (bem curta)</label>
-          <input type="text" class="bib-input" id="bib-sinopse" placeholder="Qual a abordagem — kardecista, esotérica, cultura banto...">
+          <label class="form-label">Editora</label>
+          <input type="text" class="bib-input" id="bib-editora" placeholder="Ex: Editora Eco">
         </div>
+      </div>
+      <div class="campo">
+        <label class="form-label">Sinopse (bem curta)</label>
+        <input type="text" class="bib-input" id="bib-sinopse" placeholder="Qual a abordagem — kardecista, esotérica, cultura banto...">
       </div>
       <p class="msg erro" id="bib-erro"></p>
       <p class="msg sucesso" id="bib-sucesso"></p>
@@ -201,6 +205,7 @@ function bibRenderCard(l) {
     <div class="lv-meta">
       ${l.vertente ? `<span class="lv-tag">${bibEsc(l.vertente)}</span>` : ''}
       ${l.dono ? `<span class="lv-dono">Dono(a): ${bibEsc(l.dono)}</span>` : ''}
+      ${l.editora ? `<span class="lv-dono">Editora: ${bibEsc(l.editora)}</span>` : ''}
     </div>
     ${l.sinopse ? `<p style="font-family:'Crimson Pro',serif;font-size:.84rem;color:var(--text-dim);font-style:italic;margin-bottom:8px">${bibEsc(l.sinopse)}</p>` : ''}
     ${statusHtml}
@@ -243,6 +248,7 @@ function bibEditar(id) {
   document.getElementById('bib-dono').value = l.dono || '';
   document.getElementById('bib-com-quem').value = l.comQuemEsta || '';
   document.getElementById('bib-estado-autor').value = l.estadoAutor || '';
+  document.getElementById('bib-editora').value = l.editora || '';
   document.getElementById('bib-sinopse').value = l.sinopse || '';
   document.getElementById('bib-form-titulo').textContent = '✎ Editando livro';
   document.getElementById('bib-btn-salvar').textContent = 'Salvar alterações';
@@ -259,6 +265,7 @@ function bibCancelarEdicao() {
   document.getElementById('bib-dono').value = '';
   document.getElementById('bib-com-quem').value = '';
   document.getElementById('bib-estado-autor').value = '';
+  document.getElementById('bib-editora').value = '';
   document.getElementById('bib-sinopse').value = '';
   document.getElementById('bib-form-titulo').textContent = '✨ Adicionar livro';
   document.getElementById('bib-btn-salvar').textContent = 'Adicionar livro';
@@ -290,6 +297,7 @@ async function bibSalvar() {
     dono: document.getElementById('bib-dono').value.trim(),
     comQuemEsta: document.getElementById('bib-com-quem').value.trim(),
     estadoAutor: document.getElementById('bib-estado-autor').value.trim(),
+    editora: document.getElementById('bib-editora').value.trim(),
     sinopse: document.getElementById('bib-sinopse').value.trim(),
   };
   const editandoId = document.getElementById('bib-editando-id').value;
