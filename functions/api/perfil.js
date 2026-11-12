@@ -1,7 +1,7 @@
 const ADMIN_PASSWORD = 'admin';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Password, X-User-Email',
   'Content-Type': 'application/json',
 };
@@ -490,6 +490,31 @@ export async function onRequest(context) {
     }
 
     return new Response(JSON.stringify(resultado), { status: 200, headers: CORS });
+  }
+
+  // DELETE — apaga um perfil de vez (ex: lixo de dados antigo, conta de
+  // teste, duplicata). Não dá pra desfazer. Tira do índice também, pra não
+  // sobrar referência a uma chave que não existe mais. O histórico
+  // (historico:<email>) fica órfão, mas é inofensivo — só é lido pelo
+  // e-mail, nunca listado sozinho.
+  if (request.method === 'DELETE') {
+    if (!isAdmin) return new Response(JSON.stringify({ error: 'Não autorizado' }), { status: 401, headers: CORS });
+
+    let body;
+    try { body = await request.json(); }
+    catch (e) { return new Response(JSON.stringify({ error: 'JSON inválido' }), { status: 400, headers: CORS }); }
+
+    const targetEmail = (body.email || '').toLowerCase();
+    if (!targetEmail) return new Response(JSON.stringify({ error: 'E-mail obrigatório' }), { status: 400, headers: CORS });
+
+    await env.MENU_DATA.delete('perfil:' + targetEmail);
+    const indice = await perfilIndiceObter(env.MENU_DATA);
+    const novoIndice = indice.filter(e => e !== targetEmail);
+    if (novoIndice.length !== indice.length) {
+      await env.MENU_DATA.put(PERFIL_INDICE_KEY, JSON.stringify(novoIndice));
+    }
+
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: CORS });
   }
 
   return new Response('Method not allowed', { status: 405, headers: CORS });
