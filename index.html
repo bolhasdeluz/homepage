@@ -2831,7 +2831,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
 
     <!-- grid -->
-    <div id="guias-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
+    <div id="guias-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px"></div>
   </div>
 
   <!-- painel lateral -->
@@ -13382,24 +13382,17 @@ function guiasRenderGrid(lista) {
   });
 
   grid.innerHTML = ordenada.map((p,i) => {
-    const guias = [p.guias?.caboclo, p.guias?.exu, p.guias?.pomba_gira, p.guias?.preto_velho, p.guias?.cigana, p.guias?.cosme].filter(Boolean);
-    const tempo = window.calcTempo?.(p.historia?.data_entrada);
     const avatarHtml = p.foto
-      ? `<img src="${p.foto}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border);display:block;margin-bottom:12px">`
-      : `<div style="width:52px;height:52px;border-radius:50%;background:var(--rosa-dim);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:12px">${p.emoji||'👤'}</div>`;
+      ? `<img src="${p.foto}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border);display:block;margin:0 auto 8px">`
+      : `<div style="width:40px;height:40px;border-radius:50%;background:var(--rosa-dim);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin:0 auto 8px">${p.emoji||'👤'}</div>`;
 
     return `<div onclick="guiasAbrirPainel('${p.email}')"
-      style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 18px 16px;cursor:pointer;transition:transform .2s,box-shadow .2s,border-color .2s;animation:fadeIn .3s ease ${i*0.04}s both"
-      onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 12px 32px rgba(196,57,107,.13)';this.style.borderColor='rgba(196,57,107,.3)'"
+      style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 8px 10px;text-align:center;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s;animation:fadeIn .3s ease ${Math.min(i*0.02,0.4)}s both"
+      onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 20px rgba(196,57,107,.12)';this.style.borderColor='rgba(196,57,107,.3)'"
       onmouseout="this.style.transform='';this.style.boxShadow='';this.style.borderColor=''">
       ${avatarHtml}
-      <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:2px">${p.nome||''}</div>
-      ${p.cargo ? `<div style="font-family:'Cinzel',serif;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px">${p.cargo}</div>` : ''}
-      ${tempo ? `<div style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--rosa);font-style:italic;margin-bottom:8px">${tempo} de casa</div>` : ''}
-      <div style="display:flex;flex-wrap:wrap;gap:4px">
-        ${guias.slice(0,3).map(g=>`<span style="font-size:.68rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim);border:1px solid var(--border)">${g}</span>`).join('')}
-        ${guias.length>3?`<span style="font-size:.68rem;padding:2px 8px;border-radius:20px;background:var(--rosa-dim);color:var(--text-dim)">+${guias.length-3}</span>`:''}
-      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:.8rem;font-weight:600;color:var(--text);line-height:1.2">${p.nome||''}</div>
+      ${p.cargo ? `<div style="font-family:'Cinzel',serif;font-size:.48rem;letter-spacing:.07em;text-transform:uppercase;color:var(--text-dim);margin-top:2px">${p.cargo}</div>` : ''}
     </div>`;
   }).join('');
 }
