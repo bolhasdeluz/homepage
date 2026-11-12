@@ -2948,12 +2948,19 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div class="ct-toggle">
           <button type="button" class="ct-toggle-btn ct-toggle-btn-ativo" id="ct-valor-total" onclick="ctEscolherValor('total')">Valor total</button>
           <button type="button" class="ct-toggle-btn" id="ct-valor-sinal" onclick="ctEscolherValor('sinal')">Só o sinal</button>
+          <button type="button" class="ct-toggle-btn" id="ct-valor-sinal-depois" onclick="ctEscolherValor('sinal-depois')">Vou dar o sinal depois</button>
         </div>
         <div id="ct-sinal-wrap" style="display:none">
           <label class="form-label">Valor do sinal (mínimo 50% do total)</label>
           <input type="number" step="0.01" class="form-input" id="ct-sinal-valor">
-          <label class="form-label">Previsão de pagamento do saldo restante (até 05/12/2026)</label>
-          <input type="date" class="form-input" id="ct-data-saldo" max="2026-12-05" onchange="ctValidarDataSaldo(this)">
+          <div id="ct-saldo-data-wrap">
+            <label class="form-label">Previsão de pagamento do saldo restante (até 05/12/2026)</label>
+            <input type="date" class="form-input" id="ct-data-saldo" max="2026-12-05" onchange="ctValidarDataSaldo(this)">
+          </div>
+          <div id="ct-sinal-futuro-wrap" style="display:none">
+            <label class="form-label">Vai dar o sinal nos próximos dias? Marque a data aqui</label>
+            <input type="date" class="form-input" id="ct-data-sinal" max="2026-12-05" onchange="ctValidarDataSaldo(this)">
+          </div>
         </div>
         <p id="ct-pagamento-dica" style="font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim);font-size:.82rem;margin:-6px 0 14px"></p>
 
@@ -8342,11 +8349,16 @@ async function ctLoad() {
   document.getElementById('ct-form-pagamento').style.display = '';
   document.getElementById('ct-valor-total').classList.add('ct-toggle-btn-ativo');
   document.getElementById('ct-valor-sinal').classList.remove('ct-toggle-btn-ativo');
+  document.getElementById('ct-valor-sinal-depois').classList.remove('ct-toggle-btn-ativo');
   document.getElementById('ct-sinal-wrap').style.display = 'none';
+  document.getElementById('ct-saldo-data-wrap').style.display = '';
+  document.getElementById('ct-sinal-futuro-wrap').style.display = 'none';
   document.getElementById('ct-sinal-valor').value = '';
   document.getElementById('ct-data-saldo').value = '';
+  document.getElementById('ct-data-sinal').value = '';
   document.getElementById('ct-telefone').value = '';
   document.getElementById('ct-erro').style.display = 'none';
+  document.getElementById('ct-btn-confirmar').textContent = 'Confirmar pedido';
   ctAtualizarDica();
 
   document.getElementById('ct-conteudo').style.display = '';
@@ -8486,7 +8498,7 @@ function ctAtualizarTotal() {
 }
 
 function ctAtualizarSinalMinimo() {
-  if (ctValorEscolhido !== 'sinal') return;
+  if (ctValorEscolhido !== 'sinal' && ctValorEscolhido !== 'sinal-depois') return;
   const total = ctTotalPedido();
   const minimo = Math.round(total * 0.5 * 100) / 100;
   const input = document.getElementById('ct-sinal-valor');
@@ -8500,15 +8512,19 @@ function ctEscolherValor(valor) {
   ctValorEscolhido = valor;
   document.getElementById('ct-valor-total').classList.toggle('ct-toggle-btn-ativo', valor === 'total');
   document.getElementById('ct-valor-sinal').classList.toggle('ct-toggle-btn-ativo', valor === 'sinal');
-  document.getElementById('ct-sinal-wrap').style.display = valor === 'sinal' ? '' : 'none';
-  if (valor === 'sinal') {
+  document.getElementById('ct-valor-sinal-depois').classList.toggle('ct-toggle-btn-ativo', valor === 'sinal-depois');
+  document.getElementById('ct-sinal-wrap').style.display = (valor === 'sinal' || valor === 'sinal-depois') ? '' : 'none';
+  document.getElementById('ct-saldo-data-wrap').style.display = valor === 'sinal' ? '' : 'none';
+  document.getElementById('ct-sinal-futuro-wrap').style.display = valor === 'sinal-depois' ? '' : 'none';
+  if (valor === 'sinal' || valor === 'sinal-depois') {
     ctSinalEditadoManualmente = false;
     ctAtualizarSinalMinimo();
     const hoje = new Date().toISOString().slice(0, 10);
-    const dataSaldo = document.getElementById('ct-data-saldo');
-    dataSaldo.min = hoje;
-    if (!dataSaldo.value) dataSaldo.value = hoje;
+    const dataEl = document.getElementById(valor === 'sinal' ? 'ct-data-saldo' : 'ct-data-sinal');
+    dataEl.min = hoje;
+    if (!dataEl.value) dataEl.value = hoje;
   }
+  document.getElementById('ct-btn-confirmar').textContent = valor === 'sinal-depois' ? 'OK' : 'Confirmar pedido';
   ctAtualizarDica();
 }
 window.ctEscolherValor = ctEscolherValor;
@@ -8536,8 +8552,13 @@ window.ctValidarDataSaldo = ctValidarDataSaldo;
 // quando a pessoa escolhe pagar só o sinal, é que fica combinado pra uma
 // data futura (campo "ct-data-saldo" acima)
 function ctAtualizarDica() {
+  const dicaEl = document.getElementById('ct-pagamento-dica');
+  if (ctValorEscolhido === 'sinal-depois') {
+    dicaEl.textContent = 'Você não paga nada agora — só confirma até quando pretende trazer o sinal ✦';
+    return;
+  }
   const rotulo = ctValorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
-  document.getElementById('ct-pagamento-dica').textContent = `Na próxima tela você paga ${rotulo} via Pix (ou cartão), com segurança, pelo InfinitePay ✦`;
+  dicaEl.textContent = `Na próxima tela você paga ${rotulo} via Pix (ou cartão), com segurança, pelo InfinitePay ✦`;
 }
 
 function ctCopiarPix() {
@@ -8564,6 +8585,11 @@ async function ctConfirmar() {
     body.dataPagamentoSaldo = document.getElementById('ct-data-saldo').value;
     if (!body.dataPagamentoSaldo) { erroEl.textContent = 'Escolha a previsão de pagamento do saldo restante.'; erroEl.style.display = 'block'; return; }
   }
+  if (ctValorEscolhido === 'sinal-depois') {
+    body.valorSinal = parseFloat(document.getElementById('ct-sinal-valor').value) || 0;
+    body.dataPagamentoSinal = document.getElementById('ct-data-sinal').value;
+    if (!body.dataPagamentoSinal) { erroEl.textContent = 'Marque a data em que vai dar o sinal.'; erroEl.style.display = 'block'; return; }
+  }
 
   const btn = document.getElementById('ct-btn-confirmar');
   const textoOriginal = btn.textContent;
@@ -8587,11 +8613,15 @@ async function ctConfirmar() {
     // chave Pix e a admin confere na mão
     document.getElementById('ct-form-pagamento').style.display = 'none';
     document.getElementById('ct-sucesso').style.display = 'block';
-    const rotulo = data.valorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
     let texto = `${itens.map(i => `${i.quantidade} ${i.tamanho} (${i.cor})`).join(', ')}. `;
-    texto += `Pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) conferido manualmente — chave Pix: ${CAMISETA_PIX_CHAVE}.`;
-    if (data._dataPagamentoSaldo) {
-      texto += ` Saldo restante previsto pra ${ctFormatarDataBR(data._dataPagamentoSaldo)}.`;
+    if (data.valorEscolhido === 'sinal-depois') {
+      texto += `Combinado: você vai trazer o sinal (${ctFormatarPreco(data.valorPedido)}) até ${ctFormatarDataBR(data._dataPagamentoSinal)} ✦`;
+    } else {
+      const rotulo = data.valorEscolhido === 'sinal' ? 'o sinal' : 'o valor total';
+      texto += `Pagamento de ${rotulo} (${ctFormatarPreco(data.valorPedido)}) conferido manualmente — chave Pix: ${CAMISETA_PIX_CHAVE}.`;
+      if (data._dataPagamentoSaldo) {
+        texto += ` Saldo restante previsto pra ${ctFormatarDataBR(data._dataPagamentoSaldo)}.`;
+      }
     }
     document.getElementById('ct-sucesso-texto').textContent = texto;
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -22171,10 +22201,13 @@ function ctAdminRenderPedidos(pedidos) {
   const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
   return ordenados.map(ped => {
     const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor || '—'})`).join(', ');
-    const rotuloValor = ped.valorEscolhido === 'sinal' ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
+    const ehSinal = ped.valorEscolhido === 'sinal' || ped.valorEscolhido === 'sinal-depois';
+    const rotuloValor = ehSinal ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
-      statusTxt = `⏳ Aguardando pagamento do ${rotuloValor}`;
+      statusTxt = ped.valorEscolhido === 'sinal-depois'
+        ? `⏳ Vai trazer o ${rotuloValor} até ${ctAdminFormatarDataBR(ped.dataPagamentoSinal)}`
+        : `⏳ Aguardando pagamento do ${rotuloValor}`;
       statusCor = '#8c5a00';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
     } else if (!ped.entregue) {
@@ -22187,7 +22220,7 @@ function ctAdminRenderPedidos(pedidos) {
     // saldo restante (só existe quando o pedido escolheu pagar sinal) — status
     // independente do valorPedido acima, confirmado na mão também
     let saldoHtml = '';
-    if (ped.valorEscolhido === 'sinal') {
+    if (ped.dataPagamentoSaldo) {
       if (ped.statusSaldo === 'pago') {
         saldoHtml = `<div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) pago</div>`;
       } else {

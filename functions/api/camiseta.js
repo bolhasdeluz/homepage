@@ -104,10 +104,15 @@ async function enviarEmailCamiseta(env, { paraEmail, assunto, html }) {
 }
 
 // texto do que está acontecendo com o pagamento agora, reaproveitado no
-// e-mail da pessoa e no aviso da admin — o sinal (ou o valor total) é
-// SEMPRE pago na hora (InfinitePay); só o saldo restante (quando a pessoa
-// escolheu pagar só o sinal) é que fica combinado pra uma data futura
-function notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, comLinkAutomatico }) {
+// e-mail da pessoa e no aviso da admin — o sinal (ou o valor total) é pago
+// na hora (InfinitePay), a menos que a pessoa escolha "vou dar o sinal
+// depois" (sinal-depois): nesse caso nada é pago agora, só se combina uma
+// data futura pra trazer o sinal. Quando é só o sinal pago agora, o saldo
+// restante é que fica combinado pra uma data futura.
+function notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal, comLinkAutomatico }) {
+  if (valorEscolhido === 'sinal-depois') {
+    return `Você não paga nada agora — combinou de trazer o sinal (${fmtPrecoEmail(valorPedido)}) até <b>${fmtDataBR(dataPagamentoSinal)}</b>.`;
+  }
   const rotuloValor = valorEscolhido === 'sinal' ? `o sinal (${fmtPrecoEmail(valorPedido)})` : `o valor total (${fmtPrecoEmail(valorPedido)})`;
   const partes = [];
   if (comLinkAutomatico) {
@@ -121,7 +126,8 @@ function notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, comLin
   return partes.join(' ');
 }
 
-async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, total, comLinkAutomatico, valorEscolhido, valorPedido, dataPagamentoSaldo }) {
+async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, total, comLinkAutomatico, valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal }) {
+  const mostrarPix = !comLinkAutomatico && valorEscolhido !== 'sinal-depois';
   const html = envelopeEmail({
     corTopo: '#c4396b',
     titulo: '🎽 Pedido registrado!',
@@ -130,8 +136,8 @@ async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, tota
       <div style="padding:14px;background:#fff;border-radius:8px;border:1px solid rgba(196,57,107,.15);color:#2a1a22;font-size:16px;font-weight:bold;text-align:center;margin-bottom:14px">${listaItens(itens)}</div>
       <p style="color:#2a1a22;font-size:14px;margin-bottom:14px">Total do pedido: <b>${fmtPrecoEmail(total)}</b></p>
       <div style="padding:14px;background:rgba(196,57,107,.06);border-radius:8px;margin-bottom:14px">
-        <p style="color:#2a1a22;font-size:14px">${notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, comLinkAutomatico })}</p>
-        ${!comLinkAutomatico ? `
+        <p style="color:#2a1a22;font-size:14px">${notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal, comLinkAutomatico })}</p>
+        ${mostrarPix ? `
         <p style="color:#8a6070;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px">Chave Pix (copia e cola)</p>
         <p style="color:#2a1a22;font-size:16px;font-weight:bold">${PIX_CHAVE}</p>` : ''}
       </div>
@@ -140,8 +146,8 @@ async function enviarEmailPedidoRegistrado(env, { paraEmail, titulo, itens, tota
   await enviarEmailCamiseta(env, { paraEmail, assunto: `🎽 Pedido registrado — ${titulo}`, html });
 }
 
-async function enviarEmailAvisoAdminPedido(env, { titulo, itens, total, nome, telefone, email, comLinkAutomatico, erroLinkAutomatico, valorEscolhido, valorPedido, dataPagamentoSaldo }) {
-  let notaRodape = notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, comLinkAutomatico }) + ' Confirma na mão (painel da Loja de Camisetas) quando a pessoa pagar ✦';
+async function enviarEmailAvisoAdminPedido(env, { titulo, itens, total, nome, telefone, email, comLinkAutomatico, erroLinkAutomatico, valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal }) {
+  let notaRodape = notaPagamento({ valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal, comLinkAutomatico }) + ' Confirma na mão (painel da Loja de Camisetas) quando a pessoa pagar ✦';
   if (erroLinkAutomatico) {
     notaRodape = `Não deu pra criar o link automático do InfinitePay dessa vez (${erroLinkAutomatico}) — confira o Pix e fala com a pessoa pelo WhatsApp quando confirmar ✦`;
   }
@@ -163,7 +169,7 @@ async function enviarEmailAvisoAdminPedido(env, { titulo, itens, total, nome, te
 }
 
 async function enviarEmailAvisoAdminPago(env, { titulo, itens, total, nome, telefone, email, valorEscolhido, valorPedido }) {
-  const rotulo = valorEscolhido === 'sinal' ? `o sinal (${fmtPrecoEmail(valorPedido)})` : `o valor total (${fmtPrecoEmail(valorPedido)})`;
+  const rotulo = (valorEscolhido === 'sinal' || valorEscolhido === 'sinal-depois') ? `o sinal (${fmtPrecoEmail(valorPedido)})` : `o valor total (${fmtPrecoEmail(valorPedido)})`;
   const html = envelopeEmail({
     corTopo: '#2a7a60',
     titulo: '💵 Pagamento de camiseta confirmado',
@@ -428,17 +434,22 @@ export async function onRequest(context) {
         const quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
         const total = quantidadeTotal * Number(produto.precoPorUnidade || 0);
 
-        // QUANTO — sinal (mínimo 50%, editável pra mais) ou o total
-        const valorEscolhido = body.valorEscolhido === 'sinal' ? 'sinal' : 'total';
+        // QUANTO — sinal (mínimo 50%, editável pra mais), sinal mais pra
+        // frente (sinal-depois: sem pagar nada agora, só combina a data em
+        // que vai trazer o sinal), ou o total
+        const valorEscolhido = ['sinal', 'sinal-depois'].includes(body.valorEscolhido) ? body.valorEscolhido : 'total';
         let valorPedido = total;
         let dataPagamentoSaldo = null;
-        if (valorEscolhido === 'sinal') {
+        let dataPagamentoSinal = null;
+        if (valorEscolhido === 'sinal' || valorEscolhido === 'sinal-depois') {
           valorPedido = Math.round((Number(body.valorSinal) || 0) * 100) / 100;
           const minimo = Math.round(total * PERCENTUAL_MINIMO_SINAL * 100) / 100;
           if (valorPedido < minimo - 0.01) {
             return json({ error: `O sinal mínimo é de ${fmtPrecoEmail(minimo)} (50% do total).` }, 400);
           }
           if (valorPedido > total) valorPedido = total;
+        }
+        if (valorEscolhido === 'sinal') {
           dataPagamentoSaldo = String(body.dataPagamentoSaldo || '');
           if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamentoSaldo)) {
             return json({ error: 'Escolha uma data válida pra previsão do saldo restante.' }, 400);
@@ -450,15 +461,27 @@ export async function onRequest(context) {
             return json({ error: `O prazo máximo pra pagar o saldo restante é ${fmtDataBR(DATA_LIMITE_SALDO)}.` }, 400);
           }
         }
+        if (valorEscolhido === 'sinal-depois') {
+          dataPagamentoSinal = String(body.dataPagamentoSinal || '');
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dataPagamentoSinal)) {
+            return json({ error: 'Marque uma data válida pra trazer o sinal.' }, 400);
+          }
+          if (dataPagamentoSinal < hojeISO()) {
+            return json({ error: 'Essa data já passou — escolhe uma data a partir de hoje.' }, 400);
+          }
+          if (dataPagamentoSinal > DATA_LIMITE_SALDO) {
+            return json({ error: `O prazo máximo pra trazer o sinal é ${fmtDataBR(DATA_LIMITE_SALDO)}.` }, 400);
+          }
+        }
 
-        // o sinal (ou o valor total) é SEMPRE pago agora — só o saldo
-        // restante, quando a pessoa escolhe pagar só o sinal, é que fica
-        // combinado pra uma data futura (ver dataPagamentoSaldo acima)
+        // o sinal (ou o valor total) é pago agora, a menos que a pessoa
+        // escolha "vou dar o sinal depois" (sinal-depois) — nesse caso não
+        // tenta criar link de pagamento nenhum, só registra o combinado
         const orderNsu = gerarOrderNsu();
         const origin = new URL(request.url).origin;
         const redirectUrl = `${origin}/camiseta-confirmacao.html?pedido=${encodeURIComponent(orderNsu)}&produto=${encodeURIComponent(produto.id)}`;
-        const descricaoValor = valorEscolhido === 'sinal' ? 'sinal' : 'valor total';
-        const linkPagamento = await criarLinkInfinitePay({
+        const descricaoValor = (valorEscolhido === 'sinal' || valorEscolhido === 'sinal-depois') ? 'sinal' : 'valor total';
+        const linkPagamento = valorEscolhido === 'sinal-depois' ? { url: null, slug: null } : await criarLinkInfinitePay({
           orderNsu,
           descricao: `${produto.titulo} — ${descricaoValor} — ${listaItens(itens)}`,
           precoCentavos: Math.round(valorPedido * 100),
@@ -472,6 +495,7 @@ export async function onRequest(context) {
           status: 'aguardando', criadoEm: Date.now(),
           checkoutSlug: (linkPagamento && linkPagamento.slug) || null,
           ...(valorEscolhido === 'sinal' ? { dataPagamentoSaldo, statusSaldo: 'aguardando' } : {}),
+          ...(valorEscolhido === 'sinal-depois' ? { dataPagamentoSinal } : {}),
         };
         if (!Array.isArray(produto.pedidos)) produto.pedidos = [];
         produto.pedidos.push(pedido);
@@ -479,17 +503,17 @@ export async function onRequest(context) {
 
         context.waitUntil(enviarEmailPedidoRegistrado(env, {
           paraEmail: email, titulo: produto.titulo, itens, total, comLinkAutomatico: !!linkPagamento.url,
-          valorEscolhido, valorPedido, dataPagamentoSaldo,
+          valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal,
         }));
         context.waitUntil(enviarEmailAvisoAdminPedido(env, {
           titulo: produto.titulo, itens, total, nome, telefone, email,
           comLinkAutomatico: !!linkPagamento.url, erroLinkAutomatico: linkPagamento.erro,
-          valorEscolhido, valorPedido, dataPagamentoSaldo,
+          valorEscolhido, valorPedido, dataPagamentoSaldo, dataPagamentoSinal,
         }));
 
         return json({
           orderNsu, total, valorPedido, valorEscolhido,
-          _checkoutUrl: linkPagamento.url || null, _dataPagamentoSaldo: dataPagamentoSaldo,
+          _checkoutUrl: linkPagamento.url || null, _dataPagamentoSaldo: dataPagamentoSaldo, _dataPagamentoSinal: dataPagamentoSinal,
         });
       }
 
