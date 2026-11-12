@@ -25,6 +25,7 @@ const DESTINOS = {
   sugestoes: '/sugestoes-manual.html',
   anotacoes: '/anotacoes-mae-de-santo.html',
   'boas-vindas': '/boas-vindas.html',
+  biblioteca: '/biblioteca.html',
 };
 
 export async function onRequestGet(context) {
