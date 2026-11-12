@@ -21178,17 +21178,33 @@ function lgRenderLista(perfis, sessoesTodas) {
     grupo.itens.push(it);
   });
 
+  // dentro de cada mês, agrupa de novo por dia exato — um dia com vários
+  // eventos (ex: uma sessão com vários cruzamentos no mesmo dia) mostra a
+  // data uma vez só, com a lista de eventos daquele dia embaixo, em vez de
+  // repetir o número do dia pra cada evento
+  function agruparPorDia(itensDoMes) {
+    const diasGrupos = [];
+    itensDoMes.forEach(it => {
+      let diaGrupo = diasGrupos[diasGrupos.length - 1];
+      if (!diaGrupo || diaGrupo.data !== it.data) { diaGrupo = { data: it.data, itens: [] }; diasGrupos.push(diaGrupo); }
+      diaGrupo.itens.push(it);
+    });
+    return diasGrupos;
+  }
+
   let html = '';
   grupos.forEach(({ key, itens: itensDoMes }) => {
     const [y, m] = key.split('-');
     html += `<div style="font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--rosa);padding:20px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px">${LG_MESES[parseInt(m) - 1]} ${y}</div>`;
-    itensDoMes.forEach(it => {
-      const dd = it.data.split('-')[2];
+    agruparPorDia(itensDoMes).forEach(({ data, itens: eventosDoDia }) => {
+      const dd = data.split('-')[2];
       html += `<div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:14px">
         <div style="flex-shrink:0;width:30px;text-align:center;font-family:'Cinzel',serif;font-size:1.05rem;font-weight:700;color:var(--rosa)">${dd}</div>
-        <div style="flex:1;border-left:2px solid ${it.cor};padding-left:12px">
-          <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text)">${calEsc(it.titulo)}</div>
-          <div style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">${calEsc(it.quem)}</div>
+        <div style="flex:1">
+          ${eventosDoDia.map((it, i) => `<div style="border-left:2px solid ${it.cor};padding-left:12px;${i < eventosDoDia.length - 1 ? 'margin-bottom:8px' : ''}">
+            <div style="font-family:'Playfair Display',serif;font-size:.95rem;font-weight:600;color:var(--text)">${calEsc(it.titulo)}</div>
+            <div style="font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic">${calEsc(it.quem)}</div>
+          </div>`).join('')}
         </div>
       </div>`;
     });
