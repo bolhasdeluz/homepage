@@ -22850,7 +22850,12 @@ async function renderDashTerreiro() {
 }
 
 function terreiroRenderStats(perfis) {
-  const ativas = perfis.filter(p => p.nome && p.ativo !== false);
+  // "Filhas da Casa" é só quem tem mesmo um cargo na corrente — visitante,
+  // assistência e família ficam de fora da contagem (mesmo critério já usado
+  // na árvore genealógica, ver GRUPOS_FORA_DA_ARVORE), senão qualquer pessoa
+  // que só logou uma vez no site (perfil "Visitante" criado automaticamente)
+  // infla o número
+  const ativas = perfis.filter(p => p.nome && p.ativo !== false && !GRUPOS_FORA_DA_ARVORE.includes(p.grupo));
   let cortes = 0, cruzamentos = 0, guias = 0;
   perfis.forEach(p => {
     extrairEventosPessoa(p).forEach(e => {
