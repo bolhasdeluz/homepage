@@ -45,6 +45,7 @@ function normalizarCamposLivro(body, existente) {
     vertente: body.vertente !== undefined ? String(body.vertente).trim() : (base.vertente || ''),
     sinopse: body.sinopse !== undefined ? String(body.sinopse).trim() : (base.sinopse || ''),
     estadoAutor: body.estadoAutor !== undefined ? String(body.estadoAutor).trim() : (base.estadoAutor || ''),
+    editora: body.editora !== undefined ? String(body.editora).trim() : (base.editora || ''),
   };
 }
 

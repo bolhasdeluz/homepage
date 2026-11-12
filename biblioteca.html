@@ -204,7 +204,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
       <div><label class="form-label">Ano</label><input type="text" class="bib-input" id="lv-ano" placeholder="Ex: 1998"></div>
       <div><label class="form-label">Vertente</label><input type="text" class="bib-input" id="lv-vertente" placeholder="Ex: Umbanda, Quimbanda..." list="lv-vertentes-datalist"><datalist id="lv-vertentes-datalist"></datalist></div>
     </div>
-    <div style="margin-bottom:10px"><label class="form-label">Estado do autor</label><input type="text" class="bib-input" id="lv-estado-autor" placeholder="Ex: Rio de Janeiro"></div>
+    <div class="form-grid">
+      <div><label class="form-label">Estado do autor</label><input type="text" class="bib-input" id="lv-estado-autor" placeholder="Ex: Rio de Janeiro"></div>
+      <div><label class="form-label">Editora</label><input type="text" class="bib-input" id="lv-editora" placeholder="Ex: Editora Eco"></div>
+    </div>
     <div style="margin-bottom:10px"><label class="form-label">Sinopse (bem curta)</label><textarea class="bib-input" id="lv-sinopse" rows="2" placeholder="Qual a abordagem — kardecista, esotérica, cultura banto..."></textarea></div>
     <p class="msg erro" id="lv-form-erro"></p>
     <div class="form-btn-linha">
@@ -325,6 +328,7 @@ function lvRenderCard(l) {
     <div class="lv-meta">
       ${l.vertente ? `<span class="lv-tag">${lvEsc(l.vertente)}</span>` : ''}
       ${l.dono ? `<span class="lv-dono">Dono(a): ${lvEsc(l.dono)}</span>` : ''}
+      ${l.editora ? `<span class="lv-dono">Editora: ${lvEsc(l.editora)}</span>` : ''}
     </div>
     ${l.sinopse ? `<p style="font-family:'Crimson Pro',serif;font-size:.85rem;color:var(--text-dim);font-style:italic;margin-bottom:8px;line-height:1.4">${lvEsc(l.sinopse)}</p>` : ''}
     ${statusHtml}
@@ -357,6 +361,7 @@ function lvAbrirFormAdd() {
   document.getElementById('lv-ano').value = '';
   document.getElementById('lv-vertente').value = '';
   document.getElementById('lv-estado-autor').value = '';
+  document.getElementById('lv-editora').value = '';
   document.getElementById('lv-sinopse').value = '';
   document.getElementById('lv-form-titulo').textContent = '✨ Adicionar livro';
   document.getElementById('lv-form-add').classList.add('open');
@@ -373,6 +378,7 @@ function lvEditar(id) {
   document.getElementById('lv-ano').value = l.ano || '';
   document.getElementById('lv-vertente').value = l.vertente || '';
   document.getElementById('lv-estado-autor').value = l.estadoAutor || '';
+  document.getElementById('lv-editora').value = l.editora || '';
   document.getElementById('lv-sinopse').value = l.sinopse || '';
   document.getElementById('lv-form-titulo').textContent = '✎ Editando livro';
   document.getElementById('lv-form-add').classList.add('open');
@@ -397,6 +403,7 @@ async function lvSalvarForm() {
     ano: document.getElementById('lv-ano').value.trim(),
     vertente: document.getElementById('lv-vertente').value.trim(),
     estadoAutor: document.getElementById('lv-estado-autor').value.trim(),
+    editora: document.getElementById('lv-editora').value.trim(),
     sinopse: document.getElementById('lv-sinopse').value.trim(),
   };
   const editandoId = document.getElementById('lv-editando-id').value;
