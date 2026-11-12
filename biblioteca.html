@@ -336,10 +336,29 @@ function lvRenderCard(l) {
   </div>`;
 }
 
+function lvPrimeiroNome(nome) { return String(nome || '').trim().split(' ')[0]; }
+
+// abre o WhatsApp do dono com uma mensagem já pronta avisando do pedido —
+// número vem de l.donoTelefone (telefone cadastrado no perfil dela/dele, ou
+// digitado direto no admin pra quem não tem conta no site); sem DDI assume
+// Brasil (+55) e com DDD já incluso, que é como as filhas costumam digitar
+function lvAbrirWhatsAppPedido(l) {
+  const digitos = String(l.donoTelefone || '').replace(/\D/g, '');
+  if (!digitos) return;
+  const numero = digitos.length <= 11 ? '55' + digitos : digitos;
+  const meuNome = lvPrimeiroNome((window.lvPerfilAtual && window.lvPerfilAtual.nome) || (window.lvUsuarioLogado && window.lvUsuarioLogado.displayName));
+  const nomeDono = lvPrimeiroNome(l.dono);
+  const mensagem = `Oi${nomeDono ? ', ' + nomeDono : ''}! Aqui é ${meuNome || 'uma pessoa da casa'} 🙂 Marquei na Biblioteca Digital que vou pegar emprestado o seu livro "${l.titulo}" — ele tá com você, disponível pra eu buscar?`;
+  window.open(`https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`, '_blank');
+}
+
 async function lvPegarEmprestado(id) {
   try {
     const res = await fetch(LV_API, { method: 'PUT', headers: { 'Content-Type': 'application/json', ...lvAuthHeaders() }, body: JSON.stringify({ id, comQuemEsta: 'eu' }) });
     if (!res.ok) { alert('Não consegui registrar — tenta de novo.'); return; }
+    const l = lvLivros.find(x => x.id === id);
+    if (l && l.donoTelefone) lvAbrirWhatsAppPedido(l);
+    else alert('Marcado! O(a) dono(a) ainda não tem celular cadastrado — combina com ela(e) direto como buscar.');
     lvCarregar();
   } catch (e) { alert('Não consegui registrar — tenta de novo.'); }
 }

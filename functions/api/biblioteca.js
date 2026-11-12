@@ -81,14 +81,20 @@ export async function onRequest(context) {
       const titulo = String(body.titulo || '').trim();
       if (!titulo) return json({ error: 'O título é obrigatório.' }, 400);
 
-      let dono = '', donoEmail = '';
+      let dono = '', donoEmail = '', donoTelefone = '';
       if (isAdmin) {
         dono = String(body.dono || '').trim();
         donoEmail = String(body.donoEmail || '').trim().toLowerCase();
+        if (donoEmail) {
+          const perfilDono = await obterPerfil(KV, donoEmail);
+          donoTelefone = (perfilDono && perfilDono.telefone) || '';
+        }
+        if (body.donoTelefone) donoTelefone = String(body.donoTelefone).trim();
       } else {
         const perfil = await obterPerfil(KV, userEmail);
         dono = (perfil && perfil.nome) || userEmail;
         donoEmail = userEmail;
+        donoTelefone = (perfil && perfil.telefone) || '';
       }
 
       const novo = {
@@ -96,6 +102,7 @@ export async function onRequest(context) {
         titulo,
         dono,
         donoEmail,
+        donoTelefone,
         comQuemEsta: '',
         comQuemEstaEmail: '',
         id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
@@ -119,7 +126,12 @@ export async function onRequest(context) {
       if (isAdmin) {
         const atualizado = { ...alvo, ...normalizarCamposLivro(body, alvo) };
         if (body.dono !== undefined) atualizado.dono = String(body.dono).trim();
-        if (body.donoEmail !== undefined) atualizado.donoEmail = String(body.donoEmail).trim().toLowerCase();
+        if (body.donoEmail !== undefined) {
+          atualizado.donoEmail = String(body.donoEmail).trim().toLowerCase();
+          const perfilDono = atualizado.donoEmail ? await obterPerfil(KV, atualizado.donoEmail) : null;
+          atualizado.donoTelefone = (perfilDono && perfilDono.telefone) || '';
+        }
+        if (body.donoTelefone !== undefined) atualizado.donoTelefone = String(body.donoTelefone).trim();
         if (body.comQuemEsta !== undefined) atualizado.comQuemEsta = String(body.comQuemEsta).trim();
         if (body.comQuemEstaEmail !== undefined) atualizado.comQuemEstaEmail = String(body.comQuemEstaEmail).trim().toLowerCase();
         atualizado.atualizadoEm = Date.now();

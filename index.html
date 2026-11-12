@@ -5014,6 +5014,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       </div>
       <div><label class="form-label">Emoji</label><input type="text" class="form-input" id="cp-emoji" placeholder="ex: 🌸 🦋 🕯️"></div>
       <div><label class="form-label">🎂 Data de Aniversário</label><input type="date" class="form-input" id="cp-data_nascimento"></div>
+      <div><label class="form-label">📱 Telefone celular</label><input type="tel" class="form-input" id="cp-telefone" placeholder="(51) 99999-9999"></div>
     </div>
 
     <div style="font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--rosa);margin:16px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)">História</div>
@@ -5068,6 +5069,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <button type="button" id="cp-btn-desativacao" class="rc-toggle-btn" onclick="cpEnviarEmailDesativacao()">📧 Avisar que o acesso foi desativado</button>
         <span id="cp-desativacao-status" style="font-family:'Crimson Pro',serif;font-size:.78rem;color:var(--text-dim);margin-left:8px"></span>
       </div>
+    </div>
+    <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
+        <input type="checkbox" id="cp-pronome_masculino" style="accent-color:var(--rosa);width:16px;height:16px">
+        Pronome masculino (ele/dele) — opções mais completas de pronome vêm depois
+      </label>
     </div>
     <div style="margin-bottom:10px;background:rgba(196,57,107,.04);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:center;gap:8px;font-family:'Crimson Pro',serif;font-size:14px;color:var(--text);cursor:pointer;text-transform:none;letter-spacing:0">
@@ -7116,7 +7123,7 @@ function popularSelectMadrinha(selectId, valorAtual) {
 function abrirCriarPerfil(emailParaEditar) {
   const listaPronta = carregarListaNomesCasa();
   // limpar campos
-  ['email','nome','cargo','data_nascimento'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
+  ['email','nome','cargo','data_nascimento','telefone'].forEach(f => { const el = document.getElementById('cp-'+f); if(el) el.value = ''; });
   Object.values(cpCampos).flat().forEach(k => { const el = document.getElementById('cp-'+k); if(el) el.value = ''; });
   document.getElementById('cp-status').textContent = '';
   document.getElementById('cp-email').disabled = false;
@@ -7124,6 +7131,7 @@ function abrirCriarPerfil(emailParaEditar) {
   if (document.getElementById('cp-ativo')) document.getElementById('cp-ativo').checked = true;
   cpAtualizarVisibilidadeSaida();
   if (document.getElementById('cp-isento')) document.getElementById('cp-isento').checked = false;
+  if (document.getElementById('cp-pronome_masculino')) document.getElementById('cp-pronome_masculino').checked = false;
   if (document.getElementById('cp-boasvindas')) document.getElementById('cp-boasvindas').checked = !emailParaEditar;
   if (document.getElementById('cp-calendario')) document.getElementById('cp-calendario').checked = !emailParaEditar;
   if (document.getElementById('cp-drive')) document.getElementById('cp-drive').checked = !emailParaEditar;
@@ -7160,6 +7168,8 @@ function preencherFormPerfil(p) {
   if (p.grupo) { const sel = document.getElementById('cp-grupo'); if (sel) sel.value = p.grupo; }
   if (p.emoji) document.getElementById('cp-emoji').value = p.emoji;
   if (p.dataNascimento) document.getElementById('cp-data_nascimento').value = p.dataNascimento;
+  if (p.telefone) document.getElementById('cp-telefone').value = p.telefone;
+  if (document.getElementById('cp-pronome_masculino')) document.getElementById('cp-pronome_masculino').checked = !!p.pronomeMasculino;
   Object.entries(cpCampos).forEach(([grupo, keys]) => {
     const dados = p[grupo] || {};
     keys.forEach(k => { const el = document.getElementById('cp-'+k); if (el && dados[k]) el.value = dados[k]; });
@@ -7192,6 +7202,8 @@ async function salvarPerfilAdmin() {
     grupo: document.getElementById('cp-grupo').value || 'visitante',
     emoji: document.getElementById('cp-emoji').value.trim(),
     dataNascimento: document.getElementById('cp-data_nascimento').value || '',
+    telefone: document.getElementById('cp-telefone').value.trim(),
+    pronomeMasculino: document.getElementById('cp-pronome_masculino')?.checked || false,
     historia: { ...(base.historia || {}) },
     guias: { ...(base.guias || {}) },
     cruzamentos: { ...(base.cruzamentos || {}) },
