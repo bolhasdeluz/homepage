@@ -663,12 +663,14 @@ footer{
 .cal-filhas-only{display:none}
 
 .admin-filhas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:8px}
-.admin-filha-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px)}
+.admin-filha-card{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 12px;text-align:center;cursor:pointer;transition:transform .2s,box-shadow .2s;backdrop-filter:blur(4px)}
 .admin-filha-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(180,60,90,.12)}
 .admin-filha-foto{width:50px;height:50px;border-radius:50%;border:2px solid rgba(196,57,107,.2);background:var(--rosa-dim);margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:var(--rosa);overflow:hidden}
 .admin-filha-foto img{width:100%;height:100%;object-fit:cover;border-radius:50%}
 .admin-filha-nome{font-family:'Cinzel',serif;font-size:.62rem;font-weight:600;letter-spacing:.04em;color:var(--text);margin-bottom:3px;line-height:1.3}
 .admin-filha-guia{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic}
+.admin-filha-del{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:50%;background:#fff;border:1px solid var(--border);color:#a33;font-size:.7rem;line-height:1;display:flex;align-items:center;justify-content:center;opacity:.5;transition:.2s}
+.admin-filha-del:hover{opacity:1;border-color:#a33;background:rgba(170,51,51,.08)}
 
 /* PERFIL DA TERREIRA — totais da casa somando todas as fichas */
 .dash-terreiro-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
@@ -6860,12 +6862,30 @@ async function carregarFilhasAdmin() {
     const ordenados = [...perfis].sort((a,b) => (a.ativo===false?1:0) - (b.ativo===false?1:0));
     grid.innerHTML = ordenados.map(p => `
       <div class="admin-filha-card" style="${p.ativo===false?'opacity:.5':''}" onclick="abrirFicha('${p.email}')">
+        <button type="button" class="admin-filha-del" title="Apagar perfil" onclick="event.stopPropagation();apagarPerfilAdmin('${p.email}')">🗑</button>
         <div class="admin-filha-foto">${p.foto?`<img src="${p.foto}" alt="">`:'👤'}</div>
         <div class="admin-filha-nome">${p.nome||p.email.split('@')[0]}${p.ativo===false?' <span style="font-size:.6rem;color:#a33;font-weight:400">(inativa)</span>':''}</div>
         <div class="admin-filha-guia">${p.guias?.caboclo||p.historia?.guia_chefe||''}</div>
       </div>`).join('');
   } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
 }
+
+// apaga um perfil de vez — pensado pra limpar lixo de dados antigo (contas
+// de teste, duplicatas, registros corrompidos), não pra uso corriqueiro.
+// Não dá pra desfazer, por isso o confirm bem explícito.
+async function apagarPerfilAdmin(email) {
+  if (!confirm(`Apagar o perfil de "${email}" pra sempre? Essa ação não pode ser desfeita.`)) return;
+  try {
+    const res = await fetch('/api/perfil', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) { alert('Não consegui apagar — tenta de novo.'); return; }
+    carregarFilhasAdmin();
+  } catch (e) { alert('Não consegui apagar — tenta de novo.'); }
+}
+window.apagarPerfilAdmin = apagarPerfilAdmin;
 
 // marcos padrão da linha do tempo — declarado aqui para estar disponível em abrirFicha e renderTimeline
 const MH_MARCOS_DEF = [
