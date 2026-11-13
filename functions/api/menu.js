@@ -11,7 +11,7 @@ const DEFAULT_MENU = JSON.stringify({
     { id: 'publico', label: 'Público', items: [
       { id: 'inicio',   label: 'Início',           type: 'internal', page: 'inicio',   showCard: true, showMenu: true },
       { id: 'historia', label: 'Nossa História',    type: 'internal', page: 'historia', showCard: true, showMenu: true, desc: 'A fundação do Bolhas de Luz' },
-      { id: 'sessoes',  label: 'Sessões & Eventos', type: 'external', url: 'https://calendario-drf.pages.dev', showCard: true, showMenu: true, desc: 'Sessões e eventos da casa' },
+      { id: 'sessoes',  label: 'Sessões & Eventos', type: 'internal', page: 'calendario', showCard: true, showMenu: true, desc: 'Sessões e eventos da casa' },
       { id: 'blog',     label: '📖 Blog do Terreiro', type: 'internal', page: 'blog',     showCard: true, showMenu: true },
       { id: 'apoie',    label: 'Apoie o Terreiro',  type: 'internal', page: 'apoie',    showCard: true, showMenu: true, desc: 'Como nos ajudar' },
       { id: 'pontos',   label: 'Pontos Cantados',   type: 'external', url: 'https://pontoscantados.pages.dev', showCard: true, showMenu: true, desc: 'Catálogo com player de áudio e letras' },
