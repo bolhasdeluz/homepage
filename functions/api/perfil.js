@@ -153,8 +153,8 @@ async function enviarEmailDesativacao(env, { email, nome, motivo }) {
       <h2 style="font-family:Georgia,serif;color:#c4396b;margin-bottom:16px">✦ Seu acesso foi desativado</h2>
       <p style="color:#2a1a22;font-size:15px;line-height:1.5">
         Olá${nome ? ', ' + nome : ''}!<br><br>
-        Seu acesso de filha da casa ao site do Terreiro Bolhas de Luz foi desativado — isso não apaga
-        seu histórico nem seus dados, só tira o acesso às áreas internas (Textos, Quadro das Filhas...).
+        Seu acesso de corrente da casa ao site do Terreiro Bolhas de Luz foi desativado — isso não apaga
+        seu histórico nem seus dados, só tira o acesso às áreas internas (Textos, Quadro da Corrente...).
         Se você entrar de novo, o site vai te tratar como visitante.${motivo ? `<br><br>Motivo: ${motivo}` : ''}
         <br><br>Se achar que isso é um engano, é só falar com a Mãe da Casa.
       </p>

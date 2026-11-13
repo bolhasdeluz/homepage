@@ -31,8 +31,8 @@ const DEFAULT_MENU = JSON.stringify({
     { id: 'corrente', label: 'Corrente', items: [
       { id: 'tesouraria', label: 'Tesouraria',        type: 'members', url: '/tesouraria', showCard: true, showMenu: true, desc: 'Finanças e obrigações da casa' },
       { id: 'relatorio-anual', label: '📈 Relatório Anual', type: 'members', url: '/relatorio-anual.html', showCard: true, showMenu: true, desc: 'Relatório financeiro anual interativo, com gráficos e detalhes' },
-      { id: 'filhas',     label: 'Filhas da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true, desc: 'Perfis e guias espirituais' },
-      { id: 'quadro-filhas', label: '📋 Quadro das Filhas', type: 'internal', page: 'quadro-filhas', showCard: true, showMenu: true, adminOnly: true, desc: 'Nome, cargo e tempo de casa de cada uma — só admin' },
+      { id: 'filhas',     label: 'Corrente da Casa',    type: 'members', url: '/filhas',     showCard: true, showMenu: true, desc: 'Perfis e guias espirituais' },
+      { id: 'quadro-filhas', label: '📋 Quadro da Corrente', type: 'internal', page: 'quadro-filhas', showCard: true, showMenu: true, adminOnly: true, desc: 'Nome, cargo e tempo de casa de cada uma — só admin' },
       { id: 'planilha-geral', label: '🗂️ Planilha Geral', type: 'internal', page: 'planilha-geral', showCard: true, showMenu: true, adminOnly: true, desc: 'Visão em planilha de todos os campos das fichas — só admin' },
       { id: 'materiais', label: '📦 Materiais das Sessões', type: 'external', url: '/materiais.html', showCard: true, showMenu: true, adminOnly: true, desc: 'Material por sessão e lista de compras do ano — só admin' },
       { id: 'regimento',  label: 'Regimento Interno', type: 'members', url: 'https://regimentointerno.bolhasdeluz.workers.dev/', showCard: true, showMenu: true, desc: 'Normas e condutas da casa' },
