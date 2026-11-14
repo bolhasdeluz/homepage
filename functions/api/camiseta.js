@@ -568,10 +568,11 @@ export async function onRequest(context) {
         return json(produto);
       }
 
-      // EDITAR PEDIDO — corrige nome/telefone/email e os itens (cor/tamanho/
-      // quantidade) de um pedido já feito (ex: cliente errou o tamanho).
-      // Status de pagamento e entrega continuam só pelas ações acima —
-      // aqui não mexe em status, entregue, valorEscolhido nem nas datas.
+      // EDITAR PEDIDO — corrige nome/telefone/email, os itens (cor/tamanho/
+      // quantidade) e a data prevista (saldo ou sinal, conforme o caso) de
+      // um pedido já feito (ex: cliente errou o tamanho, ou pediu pra mudar
+      // a data combinada). Status de pagamento, entrega e valorEscolhido
+      // continuam só pelas ações acima — essa ação não mexe neles.
       if (acao === 'editar-pedido') {
         const orderNsu = String(body.orderNsu || '');
         const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
@@ -591,6 +592,20 @@ export async function onRequest(context) {
           .map(i => ({ cor: String(i.cor || ''), tamanho: String(i.tamanho || ''), quantidade: parseInt(i.quantidade, 10) || 0 }))
           .filter(i => i.quantidade > 0 && tamanhosValidos.has(i.tamanho) && coresValidas.has(i.cor));
         if (!itens.length) return json({ error: 'Escolha ao menos uma cor, tamanho e quantidade válidos.' }, 400);
+
+        // data prevista — só valida o formato (ao contrário da criação do
+        // pedido, aqui é a admin corrigindo algo que já existe, então não
+        // exige que a data seja futura nem dentro do prazo da campanha
+        if (pedido.valorEscolhido === 'sinal' && body.dataPagamentoSaldo !== undefined) {
+          const d = String(body.dataPagamentoSaldo || '');
+          if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return json({ error: 'Data da previsão do saldo inválida.' }, 400);
+          pedido.dataPagamentoSaldo = d;
+        }
+        if (pedido.valorEscolhido === 'sinal-depois' && body.dataPagamentoSinal !== undefined) {
+          const d = String(body.dataPagamentoSinal || '');
+          if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) return json({ error: 'Data da previsão do sinal inválida.' }, 400);
+          pedido.dataPagamentoSinal = d;
+        }
 
         const quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
         const total = quantidadeTotal * Number(produto.precoPorUnidade || 0);

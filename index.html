@@ -4400,6 +4400,7 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <div class="modal-title" style="font-size:1.1rem">✎ Editar pedido</div>
     <div class="modal-sub">Ajuste os dados — o status de pagamento e entrega continuam pelos botões da lista</div>
     <input type="hidden" id="ctep-order-nsu">
+    <input type="hidden" id="ctep-valor-escolhido">
     <label class="form-label">Nome</label>
     <input type="text" class="form-input" id="ctep-nome">
     <label class="form-label">Telefone (WhatsApp)</label>
@@ -4409,6 +4410,10 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     <label class="form-label">Itens</label>
     <div id="ctep-itens" style="margin-bottom:10px"></div>
     <button type="button" class="rm-btn-mes" style="margin-bottom:16px" onclick="ctAdminAdicionarItemEdicao()">+ Adicionar item</button>
+    <div id="ctep-data-prevista-wrap" style="display:none">
+      <label class="form-label" id="ctep-data-prevista-label">Data prevista</label>
+      <input type="date" class="form-input" id="ctep-data-prevista">
+    </div>
     <p class="msg erro" id="ctep-erro" style="display:none;color:#b84040;font-size:.82rem;margin-bottom:10px"></p>
     <button class="rm-btn-mes" style="width:100%;text-align:center" onclick="ctAdminSalvarEdicaoPedido()">Salvar alterações</button>
   </div>
@@ -22323,12 +22328,33 @@ function ctAdminAbrirEdicaoPedido(orderNsu) {
   const pedido = (ctAdminProduto.pedidos || []).find(p => p.orderNsu === orderNsu);
   if (!pedido) return;
   document.getElementById('ctep-order-nsu').value = orderNsu;
+  document.getElementById('ctep-valor-escolhido').value = pedido.valorEscolhido || '';
   document.getElementById('ctep-nome').value = pedido.nome || '';
   document.getElementById('ctep-telefone').value = pedido.telefone || '';
   document.getElementById('ctep-email').value = pedido.email || '';
   ctAdminEditandoItens = (pedido.itens || []).map(i => ({ ...i }));
   document.getElementById('ctep-erro').style.display = 'none';
   ctAdminRenderItensEdicao();
+
+  // data prevista: só existe pedido com saldo (pagou o sinal, previsão do
+  // restante) ou com sinal pra depois (ainda não pagou nada, previsão de
+  // quando vai trazer o sinal) — pedido pago no total não tem nada previsto
+  const wrapData = document.getElementById('ctep-data-prevista-wrap');
+  const labelData = document.getElementById('ctep-data-prevista-label');
+  const inputData = document.getElementById('ctep-data-prevista');
+  if (pedido.valorEscolhido === 'sinal') {
+    wrapData.style.display = 'block';
+    labelData.textContent = 'Previsão de pagamento do saldo restante';
+    inputData.value = pedido.dataPagamentoSaldo || '';
+  } else if (pedido.valorEscolhido === 'sinal-depois') {
+    wrapData.style.display = 'block';
+    labelData.textContent = 'Previsão de pagamento do sinal';
+    inputData.value = pedido.dataPagamentoSinal || '';
+  } else {
+    wrapData.style.display = 'none';
+    inputData.value = '';
+  }
+
   document.getElementById('ct-editar-pedido-overlay').classList.add('open');
 }
 window.ctAdminAbrirEdicaoPedido = ctAdminAbrirEdicaoPedido;
@@ -22388,15 +22414,20 @@ async function ctAdminSalvarEdicaoPedido() {
   const erroEl = document.getElementById('ctep-erro');
   erroEl.style.display = 'none';
   const orderNsu = document.getElementById('ctep-order-nsu').value;
+  const valorEscolhido = document.getElementById('ctep-valor-escolhido').value;
   const nome = document.getElementById('ctep-nome').value.trim();
   const telefone = document.getElementById('ctep-telefone').value.trim();
   const email = document.getElementById('ctep-email').value.trim();
   if (!nome) { erroEl.textContent = 'Informe o nome.'; erroEl.style.display = 'block'; return; }
   if (!ctAdminEditandoItens.length) { erroEl.textContent = 'O pedido precisa ter ao menos um item.'; erroEl.style.display = 'block'; return; }
+  const dataPrevista = document.getElementById('ctep-data-prevista').value || '';
+  const corpo = { acao: 'editar-pedido', orderNsu, nome, telefone, email, itens: ctAdminEditandoItens };
+  if (valorEscolhido === 'sinal') corpo.dataPagamentoSaldo = dataPrevista;
+  else if (valorEscolhido === 'sinal-depois') corpo.dataPagamentoSinal = dataPrevista;
   try {
     const res = await fetch('/api/camiseta', {
       method: 'PUT', headers: RIFA_ADMIN_HEADERS,
-      body: JSON.stringify({ acao: 'editar-pedido', orderNsu, nome, telefone, email, itens: ctAdminEditandoItens }),
+      body: JSON.stringify(corpo),
     });
     const data = await res.json();
     if (!res.ok) { erroEl.textContent = data.error || 'Não consegui salvar.'; erroEl.style.display = 'block'; return; }
