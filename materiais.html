@@ -93,9 +93,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-sessao-seta{flex-shrink:0;color:var(--text-dim);transition:transform .2s;font-size:.8rem}
 .mt-sessao.aberta .mt-sessao-seta{transform:rotate(180deg)}
 
+.mt-acoes-lista{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.mt-filtros{display:flex;gap:6px;flex-wrap:wrap}
+.mt-filtro-chip{background:#fff;border:1.5px solid var(--border);border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;color:var(--text-dim);white-space:nowrap;transition:all .15s}
+.mt-filtro-chip.ativo{background:var(--green);border-color:var(--green);color:#fff}
+.mt-btn-abrir-todas{flex-shrink:0;background:var(--rosa-dim);border:1.5px solid var(--rosa-border);color:var(--rosa);border-radius:20px;padding:6px 14px;font-size:.78rem;font-weight:700;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.mt-btn-abrir-todas:disabled{opacity:.5;cursor:default}
+
 .mt-materiais{display:none;padding:4px 16px 16px}
 .mt-sessao.aberta .mt-materiais{display:block}
 .mt-material-salvando{font-size:.68rem;color:var(--text-dim);margin-top:8px;font-style:italic;font-family:'Crimson Pro',serif}
+.mt-btn-copiar{display:block;width:100%;background:var(--amber-dim);border:1px solid var(--amber-border);color:var(--amber);border-radius:10px;padding:8px 12px;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:10px;text-align:center}
+.mt-btn-copiar:hover{background:rgba(139,90,0,.14)}
 </style>
 </head>
 <body>
@@ -115,6 +124,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
     </div>
 
     <div class="mt-anos" id="mt-anos"></div>
+    <div class="mt-acoes-lista">
+      <div class="mt-filtros" id="mt-filtros"></div>
+      <button class="mt-btn-abrir-todas" id="mt-btn-abrir-todas" onclick="mtToggleAbrirTodas()">⊕ Abrir todas</button>
+    </div>
     <div id="mt-lista-sessoes"><div class="mt-vazio">Carregando sessões...</div></div>
   </div>
 </div>
@@ -249,7 +262,9 @@ const MT_MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','n
 
 let mtSessoes = [];
 let mtAnoAtivo = null;
-let mtAbertaId = null; // id da sessão com o checklist expandido (só uma por vez)
+let mtAbertasIds = new Set(); // ids das sessões com o checklist expandido — pode ter várias ao mesmo tempo
+let mtFiltro = 'todas'; // 'todas' | 'com' | 'sem' — filtra pelas que já têm material marcado ou não
+const MT_FILTROS = [['todas', 'Todas'], ['sem', 'Sem material'], ['com', 'Com material']];
 
 async function mtCarregar() {
   const wrap = document.getElementById('mt-lista-sessoes');
@@ -280,7 +295,7 @@ function mtRenderAnos(anos) {
 
 window.mtEscolherAno = function(ano) {
   mtAnoAtivo = ano;
-  mtAbertaId = null;
+  mtAbertasIds.clear();
   document.querySelectorAll('.mt-ano-chip').forEach(el => el.classList.toggle('ativo', el.textContent.trim() === ano));
   mtRenderLista();
   mtCarregarEstoque(ano);
@@ -295,18 +310,106 @@ function mtMateriaisDe(s) {
 
 function mtEsc(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+function mtQtdMarcados(s) {
+  return Object.values(mtMateriaisDe(s)).filter(q => q > 0).length;
+}
+
+// sessões do ano ativo, já aplicando o filtro "com/sem material" — usado
+// tanto pra renderizar a lista quanto pro botão de abrir/fechar todas, que
+// só mexe nas sessões que estão visíveis no momento
+function mtSessoesFiltradas() {
+  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).sort((a, b) => a.data.localeCompare(b.data));
+  if (mtFiltro === 'com') return doAno.filter(s => mtQtdMarcados(s) > 0);
+  if (mtFiltro === 'sem') return doAno.filter(s => mtQtdMarcados(s) === 0);
+  return doAno;
+}
+
+function mtRenderFiltros() {
+  const el = document.getElementById('mt-filtros');
+  if (!el) return;
+  el.innerHTML = MT_FILTROS.map(([valor, rotulo]) => `
+    <button class="mt-filtro-chip ${mtFiltro === valor ? 'ativo' : ''}" onclick="mtEscolherFiltro('${valor}')">${rotulo}</button>
+  `).join('');
+}
+window.mtEscolherFiltro = function(valor) {
+  mtFiltro = valor;
+  mtRenderLista();
+};
+
+function mtAtualizarBotaoAbrirTodas(doAno) {
+  const btn = document.getElementById('mt-btn-abrir-todas');
+  if (!btn) return;
+  const todasAbertas = doAno.length > 0 && doAno.every(s => mtAbertasIds.has(s.id));
+  btn.textContent = todasAbertas ? '⊖ Fechar todas' : '⊕ Abrir todas';
+  btn.disabled = doAno.length === 0;
+}
+window.mtToggleAbrirTodas = function() {
+  const doAno = mtSessoesFiltradas();
+  const todasAbertas = doAno.length > 0 && doAno.every(s => mtAbertasIds.has(s.id));
+  doAno.forEach(s => todasAbertas ? mtAbertasIds.delete(s.id) : mtAbertasIds.add(s.id));
+  mtRenderLista();
+};
+
 function mtRenderLista() {
   const wrap = document.getElementById('mt-lista-sessoes');
-  const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).sort((a, b) => a.data.localeCompare(b.data));
-  if (!doAno.length) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão nesse ano.</div>'; return; }
+  mtRenderFiltros();
+  const totalDoAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo).length;
+  const doAno = mtSessoesFiltradas();
+  mtAtualizarBotaoAbrirTodas(doAno);
+  if (!totalDoAno) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão nesse ano.</div>'; return; }
+  if (!doAno.length) { wrap.innerHTML = '<div class="mt-vazio">Nenhuma sessão com esse filtro.</div>'; return; }
   wrap.innerHTML = doAno.map(s => mtRenderSessao(s)).join('');
 }
+
+// sessão mais recente, de qualquer ano, do mesmo tipo e anterior por data,
+// que já tenha algum material marcado — base do botão "copiar da sessão
+// anterior", pra não precisar digitar tudo de novo quando o tipo se repete
+function mtSessaoAnteriorMesmoTipo(s) {
+  if (!s.tipo || !s.data) return null;
+  return mtSessoes
+    .filter(o => o.id !== s.id && o.tipo === s.tipo && o.data && o.data < s.data && mtQtdMarcados(o) > 0)
+    .sort((a, b) => b.data.localeCompare(a.data))[0] || null;
+}
+
+function mtBotaoCopiarHtml(s) {
+  const anterior = mtSessaoAnteriorMesmoTipo(s);
+  if (!anterior) return '';
+  const [anoA, mesA, diaA] = anterior.data.split('-');
+  return `<button type="button" class="mt-btn-copiar" onclick="mtCopiarSessaoAnterior('${s.id}')">📋 Copiar materiais da sessão de ${diaA}/${mesA}/${anoA.slice(2)} (${mtEsc(anterior.tipo)})</button>`;
+}
+
+window.mtCopiarSessaoAnterior = async function(id) {
+  const sessao = mtSessoes.find(s => s.id === id);
+  if (!sessao) return;
+  const anterior = mtSessaoAnteriorMesmoTipo(sessao);
+  if (!anterior) return;
+  if (mtQtdMarcados(sessao) > 0 && !confirm('Essa sessão já tem material marcado. Substituir pelo da sessão anterior?')) return;
+  const materiais = { ...mtMateriaisDe(anterior) };
+  sessao.materiais = materiais;
+  mtRenderLista();
+
+  const statusEl = document.getElementById(`mt-status-${id}`);
+  if (statusEl) statusEl.textContent = '⏳ Salvando...';
+  try {
+    const res = await fetch('/api/sessoes', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' },
+      body: JSON.stringify({ id, materiais }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const statusEl2 = document.getElementById(`mt-status-${id}`);
+    if (statusEl2) { statusEl2.textContent = '✔ Salvo'; setTimeout(() => { if (statusEl2) statusEl2.textContent = ''; }, 1500); }
+  } catch (e) {
+    const statusEl3 = document.getElementById(`mt-status-${id}`);
+    if (statusEl3) statusEl3.textContent = '❌ Não consegui salvar agora — tenta de novo.';
+  }
+};
 
 function mtRenderSessao(s) {
   const [ano, mes, dia] = (s.data || '').split('-');
   const materiais = mtMateriaisDe(s);
-  const qtd = Object.values(materiais).filter(q => q > 0).length;
-  const aberta = s.id === mtAbertaId;
+  const qtd = mtQtdMarcados(s);
+  const aberta = mtAbertasIds.has(s.id);
   return `
     <div class="mt-sessao ${aberta ? 'aberta' : ''}" data-id="${s.id}">
       <div class="mt-sessao-topo" onclick="mtToggleSessao('${s.id}')">
@@ -319,6 +422,7 @@ function mtRenderSessao(s) {
         <span class="mt-sessao-seta">▾</span>
       </div>
       <div class="mt-materiais">
+        ${mtBotaoCopiarHtml(s)}
         <div class="mt-estoque-grid">${MT_MATERIAIS_POR_SESSAO.map(m => mtRenderMaterialSessaoLinha(s, materiais, m)).join('')}</div>
         <div class="mt-estoque-total">${mtFormatarCustoTexto(materiais)}</div>
         <div class="mt-material-salvando" id="mt-status-${s.id}"></div>
@@ -361,7 +465,7 @@ function mtPrecoHintHtml(material) {
 }
 
 window.mtToggleSessao = function(id) {
-  mtAbertaId = mtAbertaId === id ? null : id;
+  if (mtAbertasIds.has(id)) mtAbertasIds.delete(id); else mtAbertasIds.add(id);
   mtRenderLista();
 };
 
