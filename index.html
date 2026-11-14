@@ -4391,6 +4391,29 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- EDITAR PEDIDO (camiseta) — corrige nome/telefone/email e os itens
+     (cor/tamanho/quantidade) de um pedido já feito; status de pagamento e
+     entrega continuam só pelos botões de ação da lista -->
+<div id="ct-editar-pedido-overlay" class="overlay" onclick="if(event.target===this)ctAdminFecharEdicaoPedido()">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="ctAdminFecharEdicaoPedido()">×</button>
+    <div class="modal-title" style="font-size:1.1rem">✎ Editar pedido</div>
+    <div class="modal-sub">Ajuste os dados — o status de pagamento e entrega continuam pelos botões da lista</div>
+    <input type="hidden" id="ctep-order-nsu">
+    <label class="form-label">Nome</label>
+    <input type="text" class="form-input" id="ctep-nome">
+    <label class="form-label">Telefone (WhatsApp)</label>
+    <input type="text" class="form-input" id="ctep-telefone">
+    <label class="form-label">E-mail</label>
+    <input type="email" class="form-input" id="ctep-email">
+    <label class="form-label">Itens</label>
+    <div id="ctep-itens" style="margin-bottom:10px"></div>
+    <button type="button" class="rm-btn-mes" style="margin-bottom:16px" onclick="ctAdminAdicionarItemEdicao()">+ Adicionar item</button>
+    <p class="msg erro" id="ctep-erro" style="display:none;color:#b84040;font-size:.82rem;margin-bottom:10px"></p>
+    <button class="rm-btn-mes" style="width:100%;text-align:center" onclick="ctAdminSalvarEdicaoPedido()">Salvar alterações</button>
+  </div>
+</div>
+
 <!-- PÁGINA TEXTOS — doutrina, instruções, lembretes e normas da casa,
      organizados por categoria/palavra-chave/data, com linha do tempo como
      visualização principal. Visibilidade por grupo igual sessões/menu. -->
@@ -22283,12 +22306,108 @@ function ctAdminRenderPedidos(pedidos) {
           </div>
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             ${acaoHtml}
+            <button class="rm-btn-mes" style="padding:7px 10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminAbrirEdicaoPedido('${ped.orderNsu}')" title="Editar pedido">✎</button>
             <button class="rm-btn-mes" style="padding:7px 10px;background:none;border:1px solid var(--border);color:#b84040" onclick="ctAdminRemoverPedido('${ped.orderNsu}')" title="Remover pedido">🗑️</button>
           </div>
         </div>
       </div>`;
   }).join('');
 }
+
+// ── EDITAR PEDIDO — corrige nome/telefone/email e os itens (cor/tamanho/
+// quantidade) de um pedido já feito. Status de pagamento e entrega
+// continuam só pelos botões de ação da lista (ver ações acima) ──
+let ctAdminEditandoItens = [];
+
+function ctAdminAbrirEdicaoPedido(orderNsu) {
+  const pedido = (ctAdminProduto.pedidos || []).find(p => p.orderNsu === orderNsu);
+  if (!pedido) return;
+  document.getElementById('ctep-order-nsu').value = orderNsu;
+  document.getElementById('ctep-nome').value = pedido.nome || '';
+  document.getElementById('ctep-telefone').value = pedido.telefone || '';
+  document.getElementById('ctep-email').value = pedido.email || '';
+  ctAdminEditandoItens = (pedido.itens || []).map(i => ({ ...i }));
+  document.getElementById('ctep-erro').style.display = 'none';
+  ctAdminRenderItensEdicao();
+  document.getElementById('ct-editar-pedido-overlay').classList.add('open');
+}
+window.ctAdminAbrirEdicaoPedido = ctAdminAbrirEdicaoPedido;
+
+function ctAdminFecharEdicaoPedido() {
+  document.getElementById('ct-editar-pedido-overlay').classList.remove('open');
+}
+window.ctAdminFecharEdicaoPedido = ctAdminFecharEdicaoPedido;
+
+// os onchange abaixo chamam ctAdminAtualizarItemEdicao (exposta em window) em
+// vez de mexer direto em "ctAdminEditandoItens[idx].campo=valor" dentro do
+// atributo — esse <script> é type="module", e um atributo onchange inline
+// roda no escopo global/clássico, que não enxerga variáveis module-scoped
+// como ctAdminEditandoItens (mesma pegadinha de escopo do Firebase já vista
+// noutras páginas, só que aqui dentro de um atributo HTML em vez de um
+// <script> separado) — só chamar uma função já pendurada em window funciona
+function ctAdminRenderItensEdicao() {
+  const wrap = document.getElementById('ctep-itens');
+  const cores = (ctAdminProduto.cores || []).map(c => c.nome);
+  const tamanhos = ctAdminProduto.tamanhos || [];
+  wrap.innerHTML = ctAdminEditandoItens.map((item, idx) => `
+    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+      <select class="form-input" style="margin-bottom:0" onchange="ctAdminAtualizarItemEdicao(${idx},'cor',this.value)">
+        ${cores.map(c => `<option value="${ctAdminEscAttr(c)}"${c === item.cor ? ' selected' : ''}>${calEsc(c)}</option>`).join('')}
+      </select>
+      <select class="form-input" style="margin-bottom:0;max-width:90px" onchange="ctAdminAtualizarItemEdicao(${idx},'tamanho',this.value)">
+        ${tamanhos.map(t => `<option value="${ctAdminEscAttr(t)}"${t === item.tamanho ? ' selected' : ''}>${calEsc(t)}</option>`).join('')}
+      </select>
+      <input type="number" min="1" class="form-input" style="margin-bottom:0;max-width:64px" value="${item.quantidade}" onchange="ctAdminAtualizarItemEdicao(${idx},'quantidade',this.value)">
+      <button type="button" class="modal-close" style="position:static;width:32px;height:32px;flex-shrink:0" onclick="ctAdminRemoverItemEdicao(${idx})" title="Remover item">×</button>
+    </div>
+  `).join('') || '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum item — adicione pelo menos um</p>';
+}
+
+function ctAdminAtualizarItemEdicao(idx, campo, valor) {
+  if (!ctAdminEditandoItens[idx]) return;
+  ctAdminEditandoItens[idx][campo] = campo === 'quantidade' ? (parseInt(valor, 10) || 1) : valor;
+}
+window.ctAdminAtualizarItemEdicao = ctAdminAtualizarItemEdicao;
+
+function ctAdminAdicionarItemEdicao() {
+  const cores = (ctAdminProduto.cores || []).map(c => c.nome);
+  const tamanhos = ctAdminProduto.tamanhos || [];
+  if (!cores.length || !tamanhos.length) return;
+  ctAdminEditandoItens.push({ cor: cores[0], tamanho: tamanhos[0], quantidade: 1 });
+  ctAdminRenderItensEdicao();
+}
+window.ctAdminAdicionarItemEdicao = ctAdminAdicionarItemEdicao;
+
+function ctAdminRemoverItemEdicao(idx) {
+  ctAdminEditandoItens.splice(idx, 1);
+  ctAdminRenderItensEdicao();
+}
+window.ctAdminRemoverItemEdicao = ctAdminRemoverItemEdicao;
+
+async function ctAdminSalvarEdicaoPedido() {
+  const erroEl = document.getElementById('ctep-erro');
+  erroEl.style.display = 'none';
+  const orderNsu = document.getElementById('ctep-order-nsu').value;
+  const nome = document.getElementById('ctep-nome').value.trim();
+  const telefone = document.getElementById('ctep-telefone').value.trim();
+  const email = document.getElementById('ctep-email').value.trim();
+  if (!nome) { erroEl.textContent = 'Informe o nome.'; erroEl.style.display = 'block'; return; }
+  if (!ctAdminEditandoItens.length) { erroEl.textContent = 'O pedido precisa ter ao menos um item.'; erroEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'editar-pedido', orderNsu, nome, telefone, email, itens: ctAdminEditandoItens }),
+    });
+    const data = await res.json();
+    if (!res.ok) { erroEl.textContent = data.error || 'Não consegui salvar.'; erroEl.style.display = 'block'; return; }
+    ctAdminProduto = data;
+    ctAdminFecharEdicaoPedido();
+    ctAdminRender();
+  } catch (e) {
+    erroEl.textContent = 'Não consegui salvar — tenta de novo.'; erroEl.style.display = 'block';
+  }
+}
+window.ctAdminSalvarEdicaoPedido = ctAdminSalvarEdicaoPedido;
 
 async function ctAdminMontarQr() {
   const canvasWrap = document.getElementById('ct-admin-qr-canvas');
