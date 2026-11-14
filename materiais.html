@@ -57,6 +57,8 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mt-popup-sub{font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);padding:4px 18px 12px}
 .mt-popup-corpo{padding:0 18px 18px}
 
+.mt-compras-secao{font-family:'Cinzel',serif;font-size:.74rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--rosa);margin:14px 0 6px}
+.mt-compras-secao:first-child{margin-top:0}
 .mt-compras-linha{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.86rem}
 .mt-compras-linha b{font-family:'Cinzel',serif;color:var(--rosa);white-space:nowrap}
 .mt-compras-linha i{font-style:normal;color:var(--text-dim);font-size:.76rem}
@@ -515,28 +517,50 @@ window.mtSalvarQuantidadeSessao = async function(id, nomeMaterial, valor) {
 
 // ══════════════════════════════════════════════════════════════
 // POPUP 1: LISTA DE COMPRAS — soma, só pra conferência (não editável
-// aqui), de todo material já marcado nas sessões do ano ativo
+// aqui), de tudo que precisa comprar no ano ativo: o material de sessão
+// (somado do que foi marcado em cada sessão) e o material anual (o que
+// está marcado em Materiais do Ano), em duas seções separadas — pra dar
+// pra ir às compras olhando uma lista só
 // ══════════════════════════════════════════════════════════════
 window.mtAbrirPopupCompras = function() {
   document.getElementById('mt-popup-compras-ano').textContent = mtAnoAtivo;
   const doAno = mtSessoes.filter(s => (s.data || '').slice(0, 4) === mtAnoAtivo);
-  const somado = {};
+  const somadoSessoes = {};
   doAno.forEach(s => {
     Object.entries(mtMateriaisDe(s)).forEach(([nome, qtd]) => {
-      somado[nome] = (somado[nome] || 0) + (Number(qtd) || 0);
+      somadoSessoes[nome] = (somadoSessoes[nome] || 0) + (Number(qtd) || 0);
     });
   });
-  const nomes = Object.keys(somado).filter(n => somado[n] > 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const nomesSessoes = Object.keys(somadoSessoes).filter(n => somadoSessoes[n] > 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const nomesAnuais = Object.keys(mtEstoque).filter(n => mtEstoque[n] > 0).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+  const secaoSessoes = mtSecaoComprasHtml('📿 Por sessão', nomesSessoes, somadoSessoes, true);
+  const secaoAnuais = mtSecaoComprasHtml('🧺 Anual', nomesAnuais, mtEstoque, false);
+
   const wrap = document.getElementById('mt-popup-compras-lista');
-  wrap.innerHTML = nomes.length
-    ? nomes.map(n => {
-        const info = mtMaterialInfo(n);
-        const custo = info && info.precoRef != null ? mtFormatarPreco(info.precoRef * somado[n]) : '—';
-        return `<div class="mt-compras-linha"><span>${mtEsc(n)} <i>(${somado[n]} ${info ? info.unidade : ''})</i></span><b>${custo}</b></div>${mtSugestaoCaixaHtml(info, somado[n])}`;
-      }).join('') + `<div class="mt-estoque-total">${mtFormatarCustoTexto(somado)}</div>`
-    : '<div class="mt-vazio" style="padding:24px 0">Nenhum material marcado nas sessões desse ano ainda.</div>';
+  wrap.innerHTML = (secaoSessoes + secaoAnuais)
+    || '<div class="mt-vazio" style="padding:24px 0">Nenhum material marcado nesse ano ainda.</div>';
   document.getElementById('mt-popup-compras-overlay').classList.add('aberto');
 };
+
+// renderiza uma seção da Lista de Compras (nome + quantidade + custo de
+// cada item, mais o subtotal da seção) — comSugestaoCaixa só faz sentido
+// pra seção de sessão, onde a quantidade vem somada por unidade avulsa; na
+// seção anual cada variante (unidade ou caixa) já é escolhida direto por
+// quem preenche Materiais do Ano, não tem o que sugerir
+function mtSecaoComprasHtml(titulo, nomes, quantidades, comSugestaoCaixa) {
+  if (!nomes.length) return '';
+  const linhas = nomes.map(n => {
+    const info = mtMaterialInfo(n);
+    const qtd = quantidades[n];
+    const custo = info && info.precoRef != null ? mtFormatarPreco(info.precoRef * qtd) : '—';
+    const sugestao = comSugestaoCaixa ? mtSugestaoCaixaHtml(info, qtd) : '';
+    return `<div class="mt-compras-linha"><span>${mtEsc(n)} <i>(${qtd} ${info ? info.unidade : ''})</i></span><b>${custo}</b></div>${sugestao}`;
+  }).join('');
+  const subtotal = {};
+  nomes.forEach(n => { subtotal[n] = quantidades[n]; });
+  return `<div class="mt-compras-secao">${mtEsc(titulo)}</div>${linhas}<div class="mt-estoque-total">${mtFormatarCustoTexto(subtotal)}</div>`;
+}
 
 // compara comprar a quantidade somada por unidade vs em caixas fechadas (o
 // resto sobrando continua por unidade) — só sugere quando sai mais barato
