@@ -568,6 +568,45 @@ export async function onRequest(context) {
         return json(produto);
       }
 
+      // EDITAR PEDIDO — corrige nome/telefone/email e os itens (cor/tamanho/
+      // quantidade) de um pedido já feito (ex: cliente errou o tamanho).
+      // Status de pagamento e entrega continuam só pelas ações acima —
+      // aqui não mexe em status, entregue, valorEscolhido nem nas datas.
+      if (acao === 'editar-pedido') {
+        const orderNsu = String(body.orderNsu || '');
+        const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
+        if (!pedido) return json({ error: 'Pedido não encontrado.' }, 404);
+
+        const nome = (body.nome || '').trim();
+        const telefone = (body.telefone || '').trim();
+        const email = (body.email || '').trim().toLowerCase();
+        if (!nome) return json({ error: 'Informe o nome.' }, 400);
+        if (!email) return json({ error: 'Informe o e-mail.' }, 400);
+        if (!telefone) return json({ error: 'Informe o telefone.' }, 400);
+
+        const coresValidas = new Set((produto.cores || []).map(c => c.nome));
+        const tamanhosValidos = new Set(produto.tamanhos || []);
+        const itensBrutos = Array.isArray(body.itens) ? body.itens : [];
+        const itens = itensBrutos
+          .map(i => ({ cor: String(i.cor || ''), tamanho: String(i.tamanho || ''), quantidade: parseInt(i.quantidade, 10) || 0 }))
+          .filter(i => i.quantidade > 0 && tamanhosValidos.has(i.tamanho) && coresValidas.has(i.cor));
+        if (!itens.length) return json({ error: 'Escolha ao menos uma cor, tamanho e quantidade válidos.' }, 400);
+
+        const quantidadeTotal = itens.reduce((soma, i) => soma + i.quantidade, 0);
+        const total = quantidadeTotal * Number(produto.precoPorUnidade || 0);
+
+        pedido.nome = nome;
+        pedido.telefone = telefone;
+        pedido.email = email;
+        pedido.itens = itens;
+        pedido.total = total;
+        // o valor já cobrado (sinal ou total) não pode passar do novo total,
+        // se a edição reduziu a quantidade de peças
+        if (pedido.valorPedido > total) pedido.valorPedido = total;
+        await KV.put(produto.id, JSON.stringify(produto));
+        return json(produto);
+      }
+
       // REMOVER PEDIDO — apaga de vez um pedido (ex: teste da própria admin,
       // ou um registro errado) — não dá pra desfazer
       if (acao === 'remover-pedido') {
