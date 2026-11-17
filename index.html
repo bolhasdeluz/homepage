@@ -3528,14 +3528,14 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
         <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
       </div>
       <div class="or-row">
-        <div class="or-campo"><label><span id="or-emoji-chegada">🧑‍🦱</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
+        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
         <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
       </div>
       <div class="or-row">
         <div class="or-campo" style="flex:1 1 100%">
           <label>Assistência</label>
           <div class="or-radio-group">
-            <div class="or-radio-pill ativo" id="or-radio-aberta" data-val="aberta">🧑‍🤝‍🧑 Sessão aberta à assistência</div>
+            <div class="or-radio-pill ativo" id="or-radio-aberta" data-val="aberta">👫 Sessão aberta à assistência</div>
             <div class="or-radio-pill" id="or-radio-sem" data-val="sem">Sessão sem atendimentos</div>
             <div class="or-radio-pill" id="or-radio-fechada" data-val="fechada">Sessão fechada</div>
           </div>
@@ -20488,14 +20488,14 @@ const auth = getAuth(app);
     let orProximaSessao = null;
 
     // Emojis corretos por tipo de sessão — baseado no padrão real das mensagens que a Anna manda.
-    // 🧑‍🦱 (chegada) é sempre fixo. O emoji do "início dos trabalhos" muda conforme a entidade.
+    // 👳 (chegada) é sempre fixo. O emoji do "início dos trabalhos" muda conforme a entidade.
     const OR_TIPOS = {
-      quimbanda:      { titulo: 'Sessão de Quimbanda',       tituloEmoji: '💃', inicioEmoji: '🍾' },
-      pretosvelhos:   { titulo: 'Sessão de Pretos Velhos',   tituloEmoji: '🧓🏾', inicioEmoji: '☕' },
+      quimbanda:      { titulo: 'Sessão de Quimbanda',       tituloEmoji: '🐔', inicioEmoji: '🥃' },
+      pretosvelhos:   { titulo: 'Sessão de Pretos Velhos',   tituloEmoji: '👴🏿', inicioEmoji: '☕' },
       ciganos:        { titulo: 'Sessão de Ciganos',         tituloEmoji: '💃', inicioEmoji: '🏹' },
-      caboclos:       { titulo: 'Sessão de Caboclos',        tituloEmoji: '💃', inicioEmoji: '🍷' },
+      caboclos:       { titulo: 'Sessão de Caboclos',        tituloEmoji: '💃', inicioEmoji: '🏹' },
       cosmes:         { titulo: 'Sessão de Cosmes e Caboclos', tituloEmoji: '💃', inicioEmoji: '🦜' },
-      desenvolvimento:{ titulo: 'Sessão de Desenvolvimento', tituloEmoji: '🌿', inicioEmoji: '🦜' },
+      desenvolvimento:{ titulo: 'Sessão de Desenvolvimento', tituloEmoji: '🌿', inicioEmoji: '🍾' },
       cruzamento:     { titulo: 'Cruzamento',                tituloEmoji: '🌿', inicioEmoji: '🦜' },
       obrigacao:      { titulo: 'Obrigação',                 tituloEmoji: '🧎‍♀️', inicioEmoji: '🍾' },
       outro:          { titulo: '',                          tituloEmoji: '✦', inicioEmoji: '🍾' }
@@ -20507,7 +20507,7 @@ const auth = getAuth(app);
       itens: [
         { emoji: '🏠', texto: 'Resguardo', ativo: true },
         { emoji: '🌿', texto: 'Banho de ervas', ativo: true },
-        { emoji: '🥁', texto: 'Teremos tambor', ativo: false }
+        { emoji: '🪘', texto: 'Teremos tambor', ativo: false }
       ],
       mensalidadeMin: 60,
       mensalidadeMax: 90,
@@ -20587,7 +20587,7 @@ const auth = getAuth(app);
 
     // ── ITENS EXTRAS (transientes, só desta sessão) ──
     // ── SELETOR DE EMOJI (popover) ──
-    const OR_PALETA_EMOJI = ['🌿','🥻','🍅','🫓','🍬','🍎','🎩','📝','🕯️','🧹','🦟','🍷','🚌','🥁','💙','📧','🌐','🐷','🏠','🔪','🔥','🎪','🧎‍♀️','✦'];
+    const OR_PALETA_EMOJI = ['🌿','🏡','🥼','👒','🥮','🍭','🍎','📝','🕯️','🧹','🦟','🍷','🚗','🚎','🪴','🌼','🪘','👳','👫','🐔','🩵','📧','🌐','🏠','🔪','✦'];
     function orAbrirEmojiPicker(botaoEl, onEscolher) {
       document.querySelectorAll('.or-emoji-picker').forEach(p => p.remove());
       const pop = document.createElement('div');
@@ -20648,7 +20648,7 @@ const auth = getAuth(app);
     });
     function orAplicarTipo(tipoKey) {
       const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
-      document.getElementById('or-emoji-chegada').textContent = '🧑‍🦱';
+      document.getElementById('or-emoji-chegada').textContent = '👳';
       document.getElementById('or-emoji-inicio').textContent = cfg.inicioEmoji;
       const tituloEl = document.getElementById('or-inp-titulo');
       // só substitui o título se estiver vazio ou ainda for uma sugestão automática anterior —
@@ -20722,10 +20722,10 @@ const auth = getAuth(app);
       const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
 
       let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
-      txt += `🧑‍🦱 Chegada da Corrente: ${chegada}\n`;
+      txt += `👳 Chegada da Corrente: ${chegada}\n`;
       txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
       const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
-      txt += `🧑‍🤝‍🧑 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
+      txt += `👫 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
 
       const itensAtivos = orTemplate.itens.filter(it => it.ativo && it.texto.trim());
       const extrasValidos = orItensExtras.filter(it => it.texto.trim());
@@ -20738,7 +20738,7 @@ const auth = getAuth(app);
       if (obs) txt += `\n${obs}\n`;
 
       if (incluirMens) {
-        txt += `\n💙 Lembrete de mensalidade R$ ${orTemplate.mensalidadeMin} a R$ ${orTemplate.mensalidadeMax}\n`;
+        txt += `\n🩵 Lembrete de mensalidade R$ ${orTemplate.mensalidadeMin} a R$ ${orTemplate.mensalidadeMax}\n`;
         if (orTemplate.email) txt += `📧 ${orTemplate.email}\n`;
         if (orTemplate.link) txt += `🌐 ${orTemplate.link}\n`;
       }
