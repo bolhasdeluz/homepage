@@ -1436,8 +1436,12 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .or-radio-pill{flex:1 1 140px;text-align:center;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--rosa-dim);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:var(--text-dim);transition:all .15s}
 .or-radio-pill.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
 
-.or-categoria-titulo{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin:16px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.or-categoria-titulo{display:flex;align-items:center;gap:6px;font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin:16px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
 .or-categoria-titulo:first-child{margin-top:0}
+.or-categoria-seta{display:inline-block;transition:transform .15s;font-size:.7rem}
+.or-categoria-titulo.aberta .or-categoria-seta{transform:rotate(90deg)}
+.or-categoria-contagem{font-weight:400;opacity:.7;text-transform:none;letter-spacing:0}
+.or-categoria-badge{margin-left:auto;background:var(--rosa);color:#fff;border-radius:10px;padding:2px 8px;font-size:.6rem;font-family:'DM Sans',sans-serif;text-transform:none;letter-spacing:0;font-weight:700}
 .or-item-linha{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--border)}
 .or-item-linha:last-child{border-bottom:none}
 .or-item-check{width:19px;height:19px;accent-color:var(--rosa);flex-shrink:0;cursor:pointer}
@@ -20684,6 +20688,11 @@ const auth = getAuth(app);
       try { await setDoc(doc(db, 'config', 'orientacoes_template'), orTemplate); } catch(e) { alert('Erro ao salvar padrões.'); }
     }
 
+    // categorias abertas no momento — só 'universal' começa aberta (são os
+    // 5 itens que valem pra toda sessão); as outras ficam fechadas, mas
+    // sempre presentes na lista, só precisa clicar no cabeçalho pra abrir
+    let orCategoriasAbertas = new Set(['universal']);
+
     function orRenderItensFixos() {
       const wrap = document.getElementById('or-itens-fixos');
       if (!orTemplate.itens.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum item fixo cadastrado ainda.</div>'; return; }
@@ -20699,21 +20708,40 @@ const auth = getAuth(app);
       const categoriasPresentes = OR_CATEGORIA_ORDEM.filter(c => porCategoria[c]);
       Object.keys(porCategoria).forEach(c => { if (!categoriasPresentes.includes(c)) categoriasPresentes.push(c); });
 
-      wrap.innerHTML = categoriasPresentes.map(cat => `
-        <div class="or-categoria-titulo">${OR_CATEGORIA_LABEL[cat] || cat}</div>
-        ${porCategoria[cat].map(i => {
-          const it = orTemplate.itens[i];
-          return `
-          <div class="or-item-linha">
-            <input type="checkbox" class="or-item-check" data-i="${i}" ${it.ativo ? 'checked' : ''}>
-            <span class="or-item-emoji">${it.emoji}</span>
-            <span class="or-item-texto">${it.texto}</span>
-          </div>`;
-        }).join('')}
-      `).join('');
+      wrap.innerHTML = categoriasPresentes.map(cat => {
+        const indices = porCategoria[cat];
+        const aberta = orCategoriasAbertas.has(cat);
+        const qtdAtivos = indices.filter(i => orTemplate.itens[i].ativo).length;
+        const badge = qtdAtivos ? `<span class="or-categoria-badge">${qtdAtivos} ligado${qtdAtivos > 1 ? 's' : ''}</span>` : '';
+        return `
+        <div class="or-categoria-titulo ${aberta ? 'aberta' : ''}" data-cat="${cat}">
+          <span class="or-categoria-seta">▸</span> ${OR_CATEGORIA_LABEL[cat] || cat} <span class="or-categoria-contagem">(${indices.length})</span> ${badge}
+        </div>
+        <div class="or-categoria-itens" style="display:${aberta ? 'block' : 'none'}">
+          ${indices.map(i => {
+            const it = orTemplate.itens[i];
+            return `
+            <div class="or-item-linha">
+              <input type="checkbox" class="or-item-check" data-i="${i}" ${it.ativo ? 'checked' : ''}>
+              <span class="or-item-emoji">${it.emoji}</span>
+              <span class="or-item-texto">${it.texto}</span>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
 
+      wrap.querySelectorAll('.or-categoria-titulo').forEach(el => {
+        el.addEventListener('click', () => {
+          const cat = el.dataset.cat;
+          if (orCategoriasAbertas.has(cat)) orCategoriasAbertas.delete(cat); else orCategoriasAbertas.add(cat);
+          orRenderItensFixos();
+        });
+      });
       wrap.querySelectorAll('.or-item-check').forEach(cb => {
-        cb.addEventListener('change', e => { orTemplate.itens[parseInt(e.target.dataset.i)].ativo = e.target.checked; });
+        cb.addEventListener('change', e => {
+          orTemplate.itens[parseInt(e.target.dataset.i)].ativo = e.target.checked;
+          orRenderItensFixos();
+        });
       });
     }
 
