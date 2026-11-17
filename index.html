@@ -1436,6 +1436,8 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .or-radio-pill{flex:1 1 140px;text-align:center;padding:9px 12px;border-radius:9px;border:1.5px solid var(--border);background:var(--rosa-dim);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;color:var(--text-dim);transition:all .15s}
 .or-radio-pill.ativo{background:var(--rosa);border-color:var(--rosa);color:#fff}
 
+.or-categoria-titulo{font-family:'Cinzel',serif;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);font-weight:700;margin:16px 0 4px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.or-categoria-titulo:first-child{margin-top:0}
 .or-item-linha{display:flex;align-items:center;gap:9px;padding:8px 4px;border-bottom:1px solid var(--border)}
 .or-item-linha:last-child{border-bottom:none}
 .or-item-check{width:19px;height:19px;accent-color:var(--rosa);flex-shrink:0;cursor:pointer}
@@ -20514,59 +20516,82 @@ const auth = getAuth(app);
       'Desenvolvimento': 'desenvolvimento',
     };
 
+    // agrupamento da lista de "Itens fixos" — cada item do catálogo carrega
+    // uma categoria (ver comentário acima de OR_PADRAO.itens), exibida aqui
+    // com cabeçalho, nessa ordem
+    const OR_CATEGORIA_ORDEM = ['universal', 'geral', 'quimbanda', 'pretosvelhos', 'ciganos', 'caboclos', 'cosmes', 'desenvolvimento', 'cruzamento', 'obrigacao', 'externa'];
+    const OR_CATEGORIA_LABEL = {
+      universal: '✦ Toda sessão',
+      geral: '🔸 Geral — qualquer tipo de sessão',
+      quimbanda: '🐔 Quimbanda',
+      pretosvelhos: '👴🏿 Pretos Velhos',
+      ciganos: '💃 Ciganos',
+      caboclos: '🏹 Caboclos',
+      cosmes: '🍭 Cosmes',
+      desenvolvimento: '🌿 Desenvolvimento',
+      cruzamento: '🔀 Cruzamento',
+      obrigacao: '🧎 Obrigação',
+      externa: '🚐 Sessões externas',
+    };
+
     const OR_PADRAO = {
       horaChegada: '20:00',
       horaInicio: '21:00',
+      // categoria agrupa a exibição da lista (ver OR_CATEGORIA_LABEL/OR_CATEGORIA_ORDEM):
+      // 'universal' = sempre ativo em toda sessão; 'geral' = opcional, mas serve
+      // pra qualquer tipo; 'externa' = sessão fora do terreiro; os outros batem
+      // com as chaves de OR_TIPOS (quimbanda, caboclos, ciganos, cosmes,
+      // desenvolvimento, obrigacao, cruzamento, pretosvelhos)
       itens: [
-        { emoji: '🏠', texto: 'Resguardo', ativo: true },
-        { emoji: '🌿', texto: 'Banho de ervas', ativo: true },
-        { emoji: '🪘', texto: 'Teremos tambor', ativo: false },
-        { emoji: '🤫', texto: 'Silêncio e concentração: Ao chegar no terreiro, não é o momento de reencontros e brincadeiras. Coloque a roupa de sessão, e conforme os preparativos vão se finalizando, vão indo para o salão, sentando lá já se posicionando para o início dos trabalhos.', ativo: true },
-        { emoji: '🕯️', texto: 'Defumação, pólvora, frentes e axés: Momento de seriedade e concentrar a sua energia e intenções.', ativo: true },
-        { emoji: '🤐', texto: 'Se atente! Não puxe conversa com quem está concentrado e trabalhando.', ativo: true },
+        { emoji: '🏠', texto: 'Resguardo', ativo: true, categoria: 'universal' },
+        { emoji: '🌿', texto: 'Banho de ervas', ativo: true, categoria: 'universal' },
+        { emoji: '🤫', texto: 'Silêncio e concentração: Ao chegar no terreiro, não é o momento de reencontros e brincadeiras. Coloque a roupa de sessão, e conforme os preparativos vão se finalizando, vão indo para o salão, sentando lá já se posicionando para o início dos trabalhos.', ativo: true, categoria: 'universal' },
+        { emoji: '🕯️', texto: 'Defumação, pólvora, frentes e axés: Momento de seriedade e concentrar a sua energia e intenções.', ativo: true, categoria: 'universal' },
+        { emoji: '🤐', texto: 'Se atente! Não puxe conversa com quem está concentrado e trabalhando.', ativo: true, categoria: 'universal' },
         // itens que a Anna já mandou várias vezes mas não são de toda sessão —
         // ficam prontos aqui pra só ligar quando precisar, em vez de digitar
-        // de novo toda vez (mesma lógica do "Teremos tambor" acima)
-        { emoji: '🐮', texto: 'Pix da vaquinha: bolhasdeluz@gmail.com', ativo: false },
-        { emoji: '💲', texto: 'Valor: Qualquer valor é bem vindo', ativo: false },
-        { emoji: '👒', texto: 'Chapéus ficam no cabideiro.', ativo: false },
-        { emoji: '🥮', texto: 'Tragam comidinhas doces ou salgadas', ativo: false },
-        { emoji: '🍭', texto: 'Docinhos e frutinhas para as nossas crianças', ativo: false },
-        { emoji: '🍷', texto: 'Tragam as bebidas do guia de vocês', ativo: false },
-        { emoji: '🌼', texto: 'Flores', ativo: false },
-        { emoji: '🚗', texto: 'Quem puder disponibilizar para deslocamento do terreiro ida e volta me chama no privado pra alinharmos e estabelecer um valor de ajuda de gasolina.', ativo: false },
-        { emoji: '🪴', texto: 'Podem trazer outras imagens para firmar pro conga de vocês, os mais novos confirmem comigo sempre pra estarmos alinhados na doutrina da casa.', ativo: false },
-        { emoji: '💤', texto: 'Não é necessário dormir no terreiro, mas devem dormir com o pano de cabeça em casa.', ativo: false },
-        { emoji: '💨', texto: 'Incensos', ativo: false },
-        { emoji: '🌿', texto: 'Ervas do amaci', ativo: false },
-        { emoji: '🎶', texto: 'Me mandem no privado o ponto dos guias de cabeça de vocês que vou encaminhar ao tamboreiro.', ativo: false },
-        { emoji: '☕', texto: 'Café temos, mas eles também gostam muito de sucos, e alguns bebem vinho também.', ativo: false },
-        { emoji: '👚', texto: 'Camiseta: R$ 50', ativo: false },
-        { emoji: '🧦', texto: 'Tragam uma muda de roupa seca e quentinha - e toalha grande - para voltarem confortáveis.', ativo: false },
-        { emoji: '✍️', texto: 'Identifiquem bebidas e cigarros na mesa da cambonagem.', ativo: false },
-        { emoji: '👩‍🏫', texto: 'Momento de aula prática e teórica, para alinhar os funcionamentos da sessão e focar no desenvolvimento individual de cada um.', ativo: false },
-        { emoji: '📝', texto: 'Pode trazer caderninho', ativo: false },
-        { emoji: '🍯', texto: 'Todos trazem além do material individual: Mel.', ativo: false },
-        { emoji: '🚫', texto: 'Meninas que vão fazer a obrigação se atentem ao preceito de 3 dias! Período de se resguardar aos caboclos!', ativo: false },
-        { emoji: '🧽', texto: 'Quem não conseguir preparar banho em casa, pode preparar e tomar no terreiro assim que chegar. Quem vem direto do trabalho, toma o banho o mais perto possível do horário da sessão, antes de sair de casa (mesmo que seja na noite anterior) o importante é fazer.', ativo: false },
-        { emoji: '❓', texto: 'Não tenham medo ou vergonha de perguntar, na dúvida, me chamem!', ativo: false },
-        { emoji: '☔', texto: 'Em caso de chuva, tocaremos da casa da Mãe Jurema', ativo: false },
-        { emoji: '💡', texto: 'Tem iluminação no local mas por via das dúvidas tragam suas lanterninhas.', ativo: false },
-        { emoji: '🍻', texto: 'Bebidas dos cruzamentos.', ativo: false },
-        { emoji: '🏺', texto: 'As lidas das quartinhas de exu seguem normalmente em dias de Umbanda.', ativo: false },
-        { emoji: '🌽', texto: 'Nossos pretos e pretas adoraaam comida salgada', ativo: false },
-        { emoji: '🧐', texto: 'Quero ver todo mundo de bracinho torto, trazendo banquinho, bengala, chapéu, caixinha', ativo: false },
-        { emoji: '👁️', texto: 'Fiquem de olho no calendário fixado e nas datas de trazer material, assentamentos!', ativo: false },
-        { emoji: '💰', texto: 'Quem vai dar a parte mais pra frente por favor avisar, assim eu sei que tem mais pra vir e ajusto de acordo com as prioridades das datas.', ativo: false },
+        // de novo toda vez
+        { emoji: '🪘', texto: 'Teremos tambor', ativo: false, categoria: 'geral' },
+        { emoji: '🐮', texto: 'Pix da vaquinha: bolhasdeluz@gmail.com', ativo: false, categoria: 'geral' },
+        { emoji: '💲', texto: 'Valor: Qualquer valor é bem vindo', ativo: false, categoria: 'geral' },
+        { emoji: '👒', texto: 'Chapéus ficam no cabideiro.', ativo: false, categoria: 'geral' },
+        { emoji: '🚗', texto: 'Quem puder disponibilizar para deslocamento do terreiro ida e volta me chama no privado pra alinharmos e estabelecer um valor de ajuda de gasolina.', ativo: false, categoria: 'geral' },
+        { emoji: '💨', texto: 'Incensos', ativo: false, categoria: 'geral' },
+        { emoji: '🎶', texto: 'Me mandem no privado o ponto dos guias de cabeça de vocês que vou encaminhar ao tamboreiro.', ativo: false, categoria: 'geral' },
+        { emoji: '👚', texto: 'Camiseta: R$ 50', ativo: false, categoria: 'geral' },
+        { emoji: '🧽', texto: 'Quem não conseguir preparar banho em casa, pode preparar e tomar no terreiro assim que chegar. Quem vem direto do trabalho, toma o banho o mais perto possível do horário da sessão, antes de sair de casa (mesmo que seja na noite anterior) o importante é fazer.', ativo: false, categoria: 'geral' },
+        { emoji: '❓', texto: 'Não tenham medo ou vergonha de perguntar, na dúvida, me chamem!', ativo: false, categoria: 'geral' },
+        { emoji: '👁️', texto: 'Fiquem de olho no calendário fixado e nas datas de trazer material, assentamentos!', ativo: false, categoria: 'geral' },
+        { emoji: '💰', texto: 'Quem vai dar a parte mais pra frente por favor avisar, assim eu sei que tem mais pra vir e ajusto de acordo com as prioridades das datas.', ativo: false, categoria: 'geral' },
+        { emoji: '✍️', texto: 'Identifiquem bebidas e cigarros na mesa da cambonagem.', ativo: false, categoria: 'quimbanda' },
+        { emoji: '🏺', texto: 'As lidas das quartinhas de exu seguem normalmente em dias de Umbanda.', ativo: false, categoria: 'quimbanda' },
+        { emoji: '🍷', texto: 'Tragam as bebidas do guia de vocês', ativo: false, categoria: 'caboclos' },
+        { emoji: '🌼', texto: 'Flores', ativo: false, categoria: 'ciganos' },
+        { emoji: '🍭', texto: 'Docinhos e frutinhas para as nossas crianças', ativo: false, categoria: 'cosmes' },
+        { emoji: '🪴', texto: 'Podem trazer outras imagens para firmar pro conga de vocês, os mais novos confirmem comigo sempre pra estarmos alinhados na doutrina da casa.', ativo: false, categoria: 'desenvolvimento' },
+        { emoji: '🌿', texto: 'Ervas do amaci', ativo: false, categoria: 'desenvolvimento' },
+        { emoji: '👩‍🏫', texto: 'Momento de aula prática e teórica, para alinhar os funcionamentos da sessão e focar no desenvolvimento individual de cada um.', ativo: false, categoria: 'desenvolvimento' },
+        { emoji: '📝', texto: 'Pode trazer caderninho', ativo: false, categoria: 'desenvolvimento' },
+        { emoji: '🍯', texto: 'Todos trazem além do material individual: Mel.', ativo: false, categoria: 'obrigacao' },
+        { emoji: '🚫', texto: 'Meninas que vão fazer a obrigação se atentem ao preceito de 3 dias! Período de se resguardar aos caboclos!', ativo: false, categoria: 'obrigacao' },
+        { emoji: '💤', texto: 'Não é necessário dormir no terreiro, mas devem dormir com o pano de cabeça em casa.', ativo: false, categoria: 'obrigacao' },
+        { emoji: '🍻', texto: 'Bebidas dos cruzamentos.', ativo: false, categoria: 'cruzamento' },
+        { emoji: '🥮', texto: 'Tragam comidinhas doces ou salgadas', ativo: false, categoria: 'pretosvelhos' },
+        { emoji: '☕', texto: 'Café temos, mas eles também gostam muito de sucos, e alguns bebem vinho também.', ativo: false, categoria: 'pretosvelhos' },
+        { emoji: '🌽', texto: 'Nossos pretos e pretas adoraaam comida salgada', ativo: false, categoria: 'pretosvelhos' },
+        { emoji: '🧐', texto: 'Quero ver todo mundo de bracinho torto, trazendo banquinho, bengala, chapéu, caixinha', ativo: false, categoria: 'pretosvelhos' },
+        { emoji: '🧦', texto: 'Tragam uma muda de roupa seca e quentinha - e toalha grande - para voltarem confortáveis.', ativo: false, categoria: 'externa' },
+        { emoji: '☔', texto: 'Em caso de chuva, tocaremos da casa da Mãe Jurema', ativo: false, categoria: 'externa' },
+        { emoji: '💡', texto: 'Tem iluminação no local mas por via das dúvidas tragam suas lanterninhas.', ativo: false, categoria: 'externa' },
         // bloco de conduta/segurança que ela manda em sessões externas com
         // gente nova — quebrado em itens menores (era um texto corrido só)
-        { emoji: '👉', texto: 'Centralizem as dúvidas no grupo, assim como avisos de deslocamento, pedidos de ajuda, etc. Evitem conversas paralelas que podem esconder informações/dúvidas. Todos podem e devem se ajudar.', ativo: false },
-        { emoji: '👉', texto: 'No momento da ritualística não é o melhor momento para dúvidas teóricas mais complexas. Guardem para mandar no grupo depois, ou perguntar no privado. É o momento de aprender observando, hora da prática.', ativo: false },
-        { emoji: '👉', texto: 'Mantenham os olhos nos guias e pessoas que estão fazendo a ritualística, eles podem precisar de apoio rápido. Se não entendeu o que foi pedido, pergunte claramente; se o guia demonstra urgência, busque um mais velho.', ativo: false },
-        { emoji: '👉', texto: 'A saia está na vela durante o passe? Se abaixe e segure até o trabalho terminar. Médium desincorporando? Mantenha-se próximo sem encostar, atento pra dar apoio. Os guias não costumam chamar vocalmente primeiro, eles buscam com os olhos.', ativo: false },
-        { emoji: '👉', texto: 'Batam palma, saúdem, cantem — é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!', ativo: false },
-        { emoji: '👮', texto: 'Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento — oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.', ativo: false },
-        { emoji: '👮', texto: 'Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana — protejam os cavalos, sejam segurança das entidades em terra.', ativo: false }
+        { emoji: '👉', texto: 'Centralizem as dúvidas no grupo, assim como avisos de deslocamento, pedidos de ajuda, etc. Evitem conversas paralelas que podem esconder informações/dúvidas. Todos podem e devem se ajudar.', ativo: false, categoria: 'externa' },
+        { emoji: '👉', texto: 'No momento da ritualística não é o melhor momento para dúvidas teóricas mais complexas. Guardem para mandar no grupo depois, ou perguntar no privado. É o momento de aprender observando, hora da prática.', ativo: false, categoria: 'externa' },
+        { emoji: '👉', texto: 'Mantenham os olhos nos guias e pessoas que estão fazendo a ritualística, eles podem precisar de apoio rápido. Se não entendeu o que foi pedido, pergunte claramente; se o guia demonstra urgência, busque um mais velho.', ativo: false, categoria: 'externa' },
+        { emoji: '👉', texto: 'A saia está na vela durante o passe? Se abaixe e segure até o trabalho terminar. Médium desincorporando? Mantenha-se próximo sem encostar, atento pra dar apoio. Os guias não costumam chamar vocalmente primeiro, eles buscam com os olhos.', ativo: false, categoria: 'externa' },
+        { emoji: '👉', texto: 'Batam palma, saúdem, cantem — é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!', ativo: false, categoria: 'externa' },
+        { emoji: '👮', texto: 'Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento — oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.', ativo: false, categoria: 'externa' },
+        { emoji: '👮', texto: 'Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana — protejam os cavalos, sejam segurança das entidades em terra.', ativo: false, categoria: 'externa' }
       ],
       mensalidadeMin: 60,
       mensalidadeMax: 90,
@@ -20662,12 +20687,31 @@ const auth = getAuth(app);
     function orRenderItensFixos() {
       const wrap = document.getElementById('or-itens-fixos');
       if (!orTemplate.itens.length) { wrap.innerHTML = '<div class="rm-vazio-secao">Nenhum item fixo cadastrado ainda.</div>'; return; }
-      wrap.innerHTML = orTemplate.itens.map((it, i) => `
-        <div class="or-item-linha">
-          <input type="checkbox" class="or-item-check" data-i="${i}" ${it.ativo ? 'checked' : ''}>
-          <span class="or-item-emoji">${it.emoji}</span>
-          <span class="or-item-texto">${it.texto}</span>
-        </div>`).join('');
+
+      // agrupa mantendo o índice original de cada item (orTemplate.itens[i]) —
+      // é esse índice que o checkbox usa pra saber qual item ligar/desligar,
+      // então precisa sobreviver ao reagrupamento por categoria
+      const porCategoria = {};
+      orTemplate.itens.forEach((it, i) => {
+        const cat = it.categoria || 'geral';
+        (porCategoria[cat] = porCategoria[cat] || []).push(i);
+      });
+      const categoriasPresentes = OR_CATEGORIA_ORDEM.filter(c => porCategoria[c]);
+      Object.keys(porCategoria).forEach(c => { if (!categoriasPresentes.includes(c)) categoriasPresentes.push(c); });
+
+      wrap.innerHTML = categoriasPresentes.map(cat => `
+        <div class="or-categoria-titulo">${OR_CATEGORIA_LABEL[cat] || cat}</div>
+        ${porCategoria[cat].map(i => {
+          const it = orTemplate.itens[i];
+          return `
+          <div class="or-item-linha">
+            <input type="checkbox" class="or-item-check" data-i="${i}" ${it.ativo ? 'checked' : ''}>
+            <span class="or-item-emoji">${it.emoji}</span>
+            <span class="or-item-texto">${it.texto}</span>
+          </div>`;
+        }).join('')}
+      `).join('');
+
       wrap.querySelectorAll('.or-item-check').forEach(cb => {
         cb.addEventListener('change', e => { orTemplate.itens[parseInt(e.target.dataset.i)].ativo = e.target.checked; });
       });
