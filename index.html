@@ -1418,7 +1418,6 @@ body{padding-bottom:62px} /* espaço para o footer fixo na base */
 .or-proxima{background:linear-gradient(135deg,#fff,#fff8f4);border:1px solid var(--border);border-left:5px solid var(--rosa);border-radius:14px;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .or-proxima-icon{font-size:1.9rem;flex-shrink:0}
 .or-proxima-label{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--rosa);font-weight:700;margin-bottom:2px}
-.or-proxima-titulo{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
 .or-proxima-sub{font-family:'Crimson Pro',serif;font-size:.82rem;color:var(--text-dim);font-style:italic}
 
 .or-secao{background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;position:relative}
@@ -3499,10 +3498,12 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
 
     <div class="or-proxima" id="or-proxima">
       <div class="or-proxima-icon">📅</div>
-      <div>
-        <div class="or-proxima-label">Próxima sessão na agenda</div>
-        <div class="or-proxima-titulo" id="or-proxima-titulo">Carregando...</div>
-        <div class="or-proxima-sub" id="or-proxima-sub"></div>
+      <div style="flex:1 1 220px;min-width:0">
+        <div class="or-proxima-label">Sessão da agenda</div>
+        <select id="or-sel-sessao" style="width:100%;border:1px solid var(--border);border-radius:9px;padding:9px 10px;margin-top:3px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--rosa-dim);outline:none">
+          <option value="">Carregando...</option>
+        </select>
+        <div class="or-proxima-sub" id="or-proxima-sub" style="margin-top:4px">Escolhe qual sessão da agenda puxar o título e o horário — não precisa ser sempre a próxima</div>
       </div>
     </div>
 
@@ -20501,6 +20502,18 @@ const auth = getAuth(app);
       outro:          { titulo: '',                          tituloEmoji: '✦', inicioEmoji: '🍾' }
     };
 
+    // linha de trabalho cadastrada na sessão (ver /api/sessoes-linhas) → chave
+    // de tipo daqui — assim, ao escolher a sessão da agenda, já vem com o
+    // tipo (e o emoji certo) pré-selecionado, sem precisar trocar na mão
+    const OR_LINHA_PARA_TIPO = {
+      'Exu': 'quimbanda',
+      'Preto Velho': 'pretosvelhos',
+      'Cigano': 'ciganos',
+      'Caboclo': 'caboclos',
+      'Cosme': 'cosmes',
+      'Desenvolvimento': 'desenvolvimento',
+    };
+
     const OR_PADRAO = {
       horaChegada: '20:00',
       horaInicio: '21:00',
@@ -20528,29 +20541,63 @@ const auth = getAuth(app);
       return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
     }
 
-    // ── CARREGAR PRÓXIMA SESSÃO DA AGENDA ──
+    // ── CARREGAR AGENDA (todas as sessões futuras, não só a próxima) ──
+    let orSessoesFuturas = [];
     async function orCarregarProximaSessao() {
-      const titEl = document.getElementById('or-proxima-titulo');
+      const selEl = document.getElementById('or-sel-sessao');
       const subEl = document.getElementById('or-proxima-sub');
       try {
         const res = await fetch('/api/sessoes');
         const sessoes = await res.json();
         const hoje = new Date().toISOString().slice(0,10);
-        orProximaSessao = sessoes.filter(s => s.data >= hoje).sort((a,b) => a.data.localeCompare(b.data))[0];
-        if (orProximaSessao) {
-          titEl.textContent = orProximaSessao.nome;
-          subEl.textContent = orFmtDataISO(orProximaSessao.data) + (orProximaSessao.hora ? ' · ' + orProximaSessao.hora : '');
-          document.getElementById('or-inp-titulo').value = orProximaSessao.nome;
-          if (orProximaSessao.hora) document.getElementById('or-inp-inicio').value = orProximaSessao.hora;
+        orSessoesFuturas = sessoes.filter(s => s.data >= hoje).sort((a,b) => a.data.localeCompare(b.data));
+        selEl.innerHTML = '';
+        if (orSessoesFuturas.length) {
+          orSessoesFuturas.forEach((s, i) => {
+            const opt = document.createElement('option');
+            opt.value = String(i);
+            opt.textContent = `${s.nome || 'Sessão'} — ${orFmtDataISO(s.data)}${s.hora ? ' · ' + s.hora : ''}`;
+            selEl.appendChild(opt);
+          });
+          const optManual = document.createElement('option');
+          optManual.value = '';
+          optManual.textContent = '— Não puxar da agenda —';
+          selEl.appendChild(optManual);
+          selEl.value = '0';
+          orAplicarSessaoSelecionada(0);
+          subEl.textContent = 'Escolhe qual sessão da agenda puxar o título e o horário — não precisa ser sempre a próxima';
         } else {
-          titEl.textContent = 'Nenhuma sessão marcada';
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = 'Nenhuma sessão marcada';
+          selEl.appendChild(opt);
+          orProximaSessao = null;
           subEl.textContent = 'Cadastre uma no Calendário pra puxar aqui';
         }
       } catch(e) {
-        titEl.textContent = 'Não foi possível carregar';
+        selEl.innerHTML = '<option value="">Não foi possível carregar</option>';
         subEl.textContent = '';
       }
     }
+
+    // aplica título/horário/tipo da sessão escolhida no select — chamada ao
+    // carregar a agenda (já seleciona a mais próxima) e sempre que a admin
+    // trocar a escolha no dropdown
+    function orAplicarSessaoSelecionada(idx) {
+      const s = orSessoesFuturas[idx];
+      orProximaSessao = s || null;
+      if (!s) return;
+      const tipoKey = OR_LINHA_PARA_TIPO[s.linha];
+      if (tipoKey) {
+        document.getElementById('or-inp-tipo').value = tipoKey;
+        orAplicarTipo(tipoKey);
+      }
+      document.getElementById('or-inp-titulo').value = s.nome || '';
+      if (s.hora) document.getElementById('or-inp-inicio').value = s.hora;
+    }
+    document.getElementById('or-sel-sessao')?.addEventListener('change', e => {
+      if (e.target.value !== '') orAplicarSessaoSelecionada(parseInt(e.target.value, 10));
+    });
 
     // ── TEMPLATE PADRÃO (Firestore config/orientacoes_template) ──
     async function orCarregarTemplate() {
@@ -20803,7 +20850,7 @@ const auth = getAuth(app);
     window.orCarregarProximaSessao = orCarregarProximaSessao;
 
     // inicializa quando a página existir no DOM
-    if (document.getElementById('or-proxima-titulo')) {
+    if (document.getElementById('or-sel-sessao')) {
       orAplicarTipo(document.getElementById('or-inp-tipo')?.value || 'quimbanda');
       orCarregarProximaSessao();
       orCarregarTemplate();
