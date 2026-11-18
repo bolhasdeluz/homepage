@@ -304,6 +304,7 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   <button class="cal-toggle" id="btnPassadas" onclick="togglePassadas()">📜 Passadas</button>
   <input type="file" id="icsInput" accept=".ics" style="display:none" onchange="importarICS(this)">
   <button class="cal-btn-add filhas-only" onclick="document.getElementById('icsInput').click()">⬆ .ics</button>
+  <button class="cal-btn-add filhas-only" onclick="exportarSessoesCSV()">⬇ CSV</button>
   <button class="cal-btn-add filhas-only" onclick="openModal()">+ Nova</button>
 </div>
 
@@ -507,6 +508,13 @@ onAuthStateChanged(auth, async user => {
 </script>
 
 <script>
+// hoje/todayStr precisam vir antes de tudo nesse script — "mesAtual" logo
+// abaixo já usa "hoje" na primeira execução (não dentro de função, roda na
+// hora), então declarar isso lá embaixo (como estava antes) quebrava com
+// "Cannot access 'hoje' before initialization"
+const hoje=new Date(), todayStr=fmtDate(hoje);
+const API='/api/sessoes';
+
 // ── VISTA ────────────────────────────────────────────────────
 let vistaAtual = 'lista';
 let mesAtual = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -599,7 +607,6 @@ function clicarDia(dataStr) {
 
 
 let sessoes=[], filtroTipo='', buscaTexto='', mostrarPassadas=false, deletarId=null;
-const hoje=new Date(), todayStr=fmtDate(hoje);
 const MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 const DIAS=['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
 const TIPO_LABEL={Interna:'Sessão Interna',Atendimento:'Sessão com Atendimento',Visita:'Sessão de Visita',Familia:'Sessão da Família',Reuniao:'Reunião'};
@@ -807,6 +814,42 @@ window.gerarICS=(id)=>{
   if(/android/i.test(navigator.userAgent)){window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(s.nome)+'&dates='+dt+'/'+dte,'_blank');return;}
   const CRLF='\r\n';const ics=['BEGIN:VCALENDAR','VERSION:2.0','BEGIN:VEVENT','DTSTART;TZID=America/Sao_Paulo:'+dt,'DTEND;TZID=America/Sao_Paulo:'+dte,'SUMMARY:'+s.nome,'LOCATION:Terreiro Bolhas de Luz','UID:'+s.id+'@bolhasdeluz','END:VEVENT','END:VCALENDAR'].join(CRLF);
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download=s.nome.replace(/[^a-z0-9]/gi,'-')+'.ics';a.click();
+};
+
+// rótulo de cada valor de Marco — mesma lista de GCAL_MARCO_LABEL em
+// functions/api/sessoes.js (não dá pra importar de lá, então repete aqui)
+const MARCO_LABEL={'Corte':'Corte','Obrigacao':'Obrigação','Elebo':'Elebó','Cruz:Conga':'Cruzamento — Conga','Cruz:Mata':'Cruzamento — Mata','Cruz:Praia':'Cruzamento — Praia','Cruz:Rio':'Cruzamento — Rio','Cruz:Cachoeira':'Cruzamento — Cachoeira','Cruz:Pedreira':'Cruzamento — Pedreira','Firmeza:Cruzeiro':'Firmeza de Reinos — Cruzeiro','Firmeza:CalungaPequena':'Firmeza de Reinos — Calunga Pequena','Firmeza:CalungaMaior':'Firmeza de Reinos — Calunga Maior','Firmeza:Mato':'Firmeza de Reinos — Mato'};
+
+function csvEscape(v){const s=(v===null||v===undefined)?'':String(v);return/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}
+
+// exporta TODAS as sessões (passadas e futuras) já carregadas em `sessoes`
+// — não busca de novo na API, usa o mesmo array que já alimenta a lista e
+// o mês, que já vem sem filtro de data nenhum
+window.exportarSessoesCSV=function(){
+  if(!sessoes.length){alert('Nenhuma sessão pra exportar.');return;}
+  const colunas=[
+    ['Nome',s=>s.nome],
+    ['Data',s=>s.data],
+    ['Data alternativa',s=>s.dataAlternativa],
+    ['Hora',s=>s.hora],
+    ['Hora alternativa',s=>s.horaAlternativa],
+    ['Tipo',s=>TIPO_LABEL[s.tipo]||s.tipo],
+    ['Linha de trabalho',s=>s.linha],
+    ['Onde',s=>s.onde],
+    ['Endereço',s=>s.endereco],
+    ['Descrição',s=>s.descricao],
+    ['Responsável',s=>s.responsavel],
+    ['Tambor',s=>TAMBOR_LABEL[s.tambor]||s.tambor],
+    ['Marco',s=>s.marco==='Cruz:Outro'?(s.marcoOutroNome||'Cruzamento — Outro'):(MARCO_LABEL[s.marco]||s.marco)],
+    ['Link do Drive',s=>s.driveLink],
+  ];
+  const linhas=[colunas.map(c=>csvEscape(c[0])).join(',')];
+  [...sessoes].sort((a,b)=>a.data.localeCompare(b.data)).forEach(s=>linhas.push(colunas.map(c=>csvEscape(c[1](s))).join(',')));
+  const csv='﻿'+linhas.join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download=`calendario-bolhas-de-luz-${todayStr}.csv`;
+  a.click();
 };
 
 function fmtDate(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
