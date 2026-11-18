@@ -5537,8 +5537,9 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
       <div class="admin-section-block" style="margin-bottom:20px">
         <div class="admin-section-header">
           <span class="admin-section-title">Corrente da Casa</span>
-          <div style="display:flex;gap:6px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="abrirCriarPerfil()" style="background:var(--rosa);border:none;border-radius:8px;color:#fff;font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;font-weight:700;padding:8px 16px;cursor:pointer">+ Criar perfil</button>
+            <button onclick="exportarPerfisCSV()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">⬇ Exportar CSV</button>
             <button onclick="carregarFilhasAdmin()" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Cinzel',serif;font-size:.6rem;letter-spacing:.08em;padding:8px 16px;cursor:pointer">↺ Atualizar</button>
           </div>
         </div>
@@ -6911,6 +6912,84 @@ async function carregarFilhasAdmin() {
         <div class="admin-filha-guia">${p.guias?.caboclo||p.historia?.guia_chefe||''}</div>
       </div>`).join('');
   } catch(e) { grid.innerHTML = '<div class="admin-filhas-vazio">Erro ao carregar.</div>'; }
+}
+
+// escapa um valor pra CSV: só entra aspas quando o valor tem vírgula, aspas
+// ou quebra de linha — aspas internas viram "" (regra padrão do formato)
+function csvEscape(v) {
+  const s = (v === null || v === undefined) ? '' : String(v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+// exporta TODOS os perfis (ativos e inativos) com todos os campos — contato,
+// história na casa, guias de cabeça e cacicamento. ﻿ no início é o BOM
+// que faz o Excel abrir acento/cedilha certo em vez de virar caractere errado
+async function exportarPerfisCSV() {
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: {'X-Admin-Password':'admin'} });
+    const perfis = await res.json();
+    if (!perfis.length) { alert('Nenhum perfil pra exportar.'); return; }
+
+    const colunas = [
+      ['E-mail', p => p.email],
+      ['Nome', p => p.nome],
+      ['Telefone', p => p.telefone],
+      ['Data de nascimento', p => p.dataNascimento],
+      ['Pronome masculino', p => p.pronomeMasculino ? 'Sim' : 'Não'],
+      ['Grupo', p => p.grupo],
+      ['Cargo', p => p.cargo],
+      ['Ativo', p => p.ativo !== false ? 'Sim' : 'Não'],
+      ['Isento', p => p.isento ? 'Sim' : 'Não'],
+      ['Guias visíveis', p => p.visivelGuias ? 'Sim' : 'Não'],
+      ['Emoji', p => p.emoji],
+      ['Cacique — título', p => p.cacique?.terreiro_titulo],
+      ['Cacique — terreiro', p => p.cacique?.terreiro_nome],
+      ['Cacique — data', p => p.cacique?.terreiro_data],
+      ['Data de entrada', p => p.historia?.data_entrada],
+      ['Guia chefe', p => p.historia?.guia_chefe],
+      ['Apronte', p => p.historia?.apronte],
+      ['Apronte — galinhas', p => p.historia?.apronte_galinhas],
+      ['Apronte — galos', p => p.historia?.apronte_galos],
+      ['Coroação', p => p.historia?.coroacao],
+      ['Cacicamento', p => p.historia?.cacicamento],
+      ['Madrinha', p => p.historia?.madrinha],
+      ['Madrinha — data', p => p.historia?.madrinha_data],
+      ['Afilhada 1', p => p.historia?.afilhada_1],
+      ['Afilhada 1 — data', p => p.historia?.afilhada_1_data],
+      ['Afilhada 2', p => p.historia?.afilhada_2],
+      ['Afilhada 2 — data', p => p.historia?.afilhada_2_data],
+      ['Data de saída', p => p.historia?.data_saida],
+      ['Motivo da saída', p => p.historia?.motivo_saida],
+      ['Guia — Caboclo', p => p.guias?.caboclo],
+      ['Guia — Caboclo (data)', p => p.guias?.caboclo_data],
+      ['Guia — Exu', p => p.guias?.exu],
+      ['Guia — Exu (data)', p => p.guias?.exu_data],
+      ['Guia — Pomba Gira', p => p.guias?.pomba_gira],
+      ['Guia — Pomba Gira (data)', p => p.guias?.pomba_gira_data],
+      ['Guia — Preto Velho', p => p.guias?.preto_velho],
+      ['Guia — Preto Velho (data)', p => p.guias?.preto_velho_data],
+      ['Guia — Cigana', p => p.guias?.cigana],
+      ['Guia — Cigana (data)', p => p.guias?.cigana_data],
+      ['Guia — Cosme', p => p.guias?.cosme],
+      ['Guia — Cosme (data)', p => p.guias?.cosme_data],
+    ];
+
+    const linhas = [colunas.map(c => csvEscape(c[0])).join(',')];
+    perfis.forEach(p => linhas.push(colunas.map(c => csvEscape(c[1](p))).join(',')));
+
+    const csv = '﻿' + linhas.join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `perfis-corrente-da-casa-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    alert('Não consegui exportar os perfis — tenta de novo.');
+  }
 }
 
 // apaga um perfil de vez — pensado pra limpar lixo de dados antigo (contas
