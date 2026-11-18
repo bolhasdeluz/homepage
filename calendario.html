@@ -635,6 +635,18 @@ function sessaoPublica(s) {
   return s;
 }
 
+// nível de visibilidade de uma sessão, usado em renderLista() pra decidir se
+// mostra o botão de agenda (só sessões 'publico') e o cadeado de "só pra
+// corrente da casa" (sessões 'visita') pra quem não está logada — essa
+// função nunca tinha sido criada apesar de já ser chamada (ReferenceError
+// que travava a lista toda; ver sessaoVisivel/sessaoPublica acima, que já
+// tratam Visita como o único tipo "restrito, mas listado" pra quem não é da casa)
+function nivelSessao(s) {
+  if (s.tipo === 'Atendimento') return 'publico';
+  if (s.tipo === 'Visita') return 'visita';
+  return 'interno';
+}
+
 async function load(){
   try{const res=await fetch(API);sessoes=await res.json();renderLista();renderMes();}
   catch{document.getElementById('cal-main').innerHTML='<div class="empty">Erro ao carregar.</div>';}
