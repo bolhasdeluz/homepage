@@ -8,6 +8,7 @@
 <!-- ícone do site / app (quando adiciona à tela de início) -->
 <link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="manifest" href="/manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bolhas de Luz">
@@ -2804,6 +2805,79 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
     </div>
   </div>
 </div>
+
+<!-- Banner de instalar como app / ativar notificações — ver script logo abaixo -->
+<div id="pwa-banner" style="display:none;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;background:var(--rosa-dim);border-bottom:1px solid var(--border);padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text)">
+  <span id="pwa-banner-texto"></span>
+  <button id="pwa-banner-btn" style="background:var(--rosa);color:#fff;border:none;border-radius:16px;padding:6px 14px;font-size:.72rem;font-weight:600;cursor:pointer;white-space:nowrap"></button>
+  <button id="pwa-banner-fechar" title="Fechar" style="background:none;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0 4px;line-height:1">×</button>
+</div>
+<script>
+// ── APP INSTALÁVEL + NOTIFICAÇÕES ──
+// registra o service worker — necessário pro Android/Chrome oferecerem
+// "Instalar app"; no iPhone não tem efeito nenhum no botão de instalar
+// (Safari não suporta beforeinstallprompt), mas não atrapalha
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+(function initPwaBanner() {
+  const banner = document.getElementById('pwa-banner');
+  const textoEl = document.getElementById('pwa-banner-texto');
+  const btnEl = document.getElementById('pwa-banner-btn');
+  const fecharEl = document.getElementById('pwa-banner-fechar');
+  if (!banner) return;
+
+  const FECHADO_KEY = 'pwaBannerFechado';
+  let fechadoDeVez = false;
+  try { fechadoDeVez = localStorage.getItem(FECHADO_KEY) === '1'; } catch (e) {}
+  if (fechadoDeVez) return;
+
+  function mostrar(texto, textoBtn, aoClicar) {
+    textoEl.textContent = texto;
+    btnEl.textContent = textoBtn;
+    btnEl.onclick = aoClicar;
+    banner.style.display = 'flex';
+  }
+  function fecharDeVez() {
+    banner.style.display = 'none';
+    try { localStorage.setItem(FECHADO_KEY, '1'); } catch (e) {}
+  }
+  fecharEl.addEventListener('click', fecharDeVez);
+
+  // já instalado (modo app) ou aberto direto como app no Android?
+  const ehStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  const ehIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if (ehStandalone) {
+    // app já instalado — só falta pedir a permissão de notificação
+    if ('Notification' in window && Notification.permission === 'default') {
+      mostrar('🔔 Ativar notificações do Bolhas de Luz?', 'Ativar', () => {
+        Notification.requestPermission().then(() => { banner.style.display = 'none'; });
+      });
+    }
+    return;
+  }
+
+  if (ehIOS) {
+    // no iPhone não existe prompt automático de instalação — e sem
+    // instalar (modo app), o Safari nem deixa pedir permissão de
+    // notificação, então o primeiro passo tem que ser manual
+    mostrar('📲 Toque em Compartilhar → Adicionar à Tela de Início pra instalar o app', 'Entendi', fecharDeVez);
+    return;
+  }
+
+  // Android/Chrome: espera o navegador avisar que dá pra instalar
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    mostrar('📲 Instale o Bolhas de Luz como app no seu celular', 'Instalar', async () => {
+      e.prompt();
+      try { await e.userChoice; } catch (err) {}
+      banner.style.display = 'none';
+    });
+  });
+})();
+</script>
 <script>
 // Mostra a barra "✦ Área das Filhas · Entrar" assim que a página carrega,
 // sem esperar o Firebase responder — numa rede ruim/lenta, o carregamento
