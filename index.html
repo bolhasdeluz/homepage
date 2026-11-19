@@ -3211,6 +3211,10 @@ async function pwaInscreverPush() {
     <button class="modal-close" onclick="rifaFecharGraficoVendas()">×</button>
     <div class="modal-title" style="font-size:1.2rem">📈 Vendas ao longo do tempo</div>
     <p class="modal-sub" id="rf-grafico-sub">Números vendidos por dia ✦</p>
+    <div class="rc-toggle-wrap" id="rf-grafico-toggle" style="display:none">
+      <button class="rc-toggle-btn ativo" id="rf-grafico-btn-barras" onclick="rifaAlternarGraficoVendas('barras')">📊 Só os dias com venda</button>
+      <button class="rc-toggle-btn" id="rf-grafico-btn-linha" onclick="rifaAlternarGraficoVendas('linha')">📈 Linha, todos os dias</button>
+    </div>
     <div id="rf-grafico-vazio" style="display:none;text-align:center;padding:20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)">Ainda não há nenhuma venda registrada.</div>
     <div id="rf-grafico-wrap" style="position:relative;height:240px"><canvas id="rf-chart-vendas"></canvas></div>
   </div>
@@ -9111,42 +9115,95 @@ window.rifaFecharRanking = rifaFecharRanking;
 function rifaChaveDia(ts) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
 }
-function rifaCalcularVendasPorDia(r) {
+function rifaContarPagosPorDia(r) {
   const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago' && n.pagoEm);
   const porDia = {};
   pagos.forEach(n => { const chave = rifaChaveDia(n.pagoEm); porDia[chave] = (porDia[chave] || 0) + 1; });
+  return porDia;
+}
+// modo "barras": só os dias que tiveram venda (eixo categórico — bom pra
+// ver o ranking dos melhores dias, mas não representa a distância real
+// entre eles)
+function rifaCalcularVendasPorDia(r) {
+  const porDia = rifaContarPagosPorDia(r);
   const dias = Object.keys(porDia).sort();
   return {
     labels: dias.map(d => { const [, m, dd] = d.split('-'); return `${dd}/${m}`; }),
     valores: dias.map(d => porDia[d]),
   };
 }
+// modo "linha": todo santo dia entre a 1ª e a última venda, com 0 nos dias
+// sem venda nenhuma — só assim o eixo representa o tempo de verdade. Usa
+// meio-dia UTC em cada passo pra nunca escorregar de dia ao formatar de
+// volta no fuso de São Paulo (UTC-3)
+function rifaCalcularVendasPorDiaCompleto(r) {
+  const porDia = rifaContarPagosPorDia(r);
+  const dias = Object.keys(porDia).sort();
+  if (!dias.length) return { labels: [], valores: [] };
+  const [y0, m0, d0] = dias[0].split('-').map(Number);
+  const [y1, m1, d1] = dias[dias.length - 1].split('-').map(Number);
+  const inicio = Date.UTC(y0, m0 - 1, d0, 12, 0, 0);
+  const fim = Date.UTC(y1, m1 - 1, d1, 12, 0, 0);
+  const labels = [], valores = [];
+  for (let t = inicio; t <= fim; t += 86400000) {
+    const chave = rifaChaveDia(t);
+    const [, m, dd] = chave.split('-');
+    labels.push(`${dd}/${m}`);
+    valores.push(porDia[chave] || 0);
+  }
+  return { labels, valores };
+}
 
 let rfGraficoVendasChart = null;
-function rifaAbrirGraficoVendas() {
-  if (!rifaEhAdmin() || !rifaAtual) return;
-  document.getElementById('rf-grafico-overlay').classList.add('open');
-  const { labels, valores } = rifaCalcularVendasPorDia(rifaAtual);
+let rfGraficoVendasModo = 'barras';
+
+function rifaRenderizarGraficoVendas() {
+  if (!rifaAtual) return;
+  const { labels, valores } = rfGraficoVendasModo === 'linha' ? rifaCalcularVendasPorDiaCompleto(rifaAtual) : rifaCalcularVendasPorDia(rifaAtual);
   const vazio = !labels.length;
+  document.getElementById('rf-grafico-toggle').style.display = vazio ? 'none' : 'flex';
   document.getElementById('rf-grafico-vazio').style.display = vazio ? 'block' : 'none';
   document.getElementById('rf-grafico-wrap').style.display = vazio ? 'none' : 'block';
   document.getElementById('rf-grafico-sub').textContent = vazio ? '' : `Números vendidos por dia — ${valores.reduce((a, b) => a + b, 0)} no total ✦`;
   if (vazio) return;
   try { rfGraficoVendasChart?.destroy(); } catch (e) {}
   if (typeof Chart === 'undefined') return;
+  const linha = rfGraficoVendasModo === 'linha';
   const ctx = document.getElementById('rf-chart-vendas');
   rfGraficoVendasChart = new Chart(ctx, {
-    type: 'bar',
-    data: { labels, datasets: [{ label: 'Números vendidos', data: valores, backgroundColor: '#c4396b', borderRadius: 4 }] },
+    type: linha ? 'line' : 'bar',
+    data: {
+      labels,
+      datasets: [linha
+        ? { label: 'Números vendidos', data: valores, borderColor: '#c4396b', backgroundColor: 'rgba(196,57,107,.12)', fill: true, tension: .25, pointRadius: 2, pointBackgroundColor: '#c4396b' }
+        : { label: 'Números vendidos', data: valores, backgroundColor: '#c4396b', borderRadius: 4 }],
+    },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
       scales: {
-        x: { ticks: { font: { size: 10, family: 'DM Sans' } } },
-        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10, family: 'DM Sans' } } },
+        x: { ticks: { font: { size: 10, family: 'DM Sans' }, maxRotation: 0, autoSkip: true } },
+        y: { beginAtZero: true, ticks: { stepSize: Math.max(1, Math.ceil(Math.max(...valores) / 8)), font: { size: 10, family: 'DM Sans' } } },
       },
     },
   });
+}
+
+function rifaAlternarGraficoVendas(modo) {
+  rfGraficoVendasModo = modo;
+  document.getElementById('rf-grafico-btn-barras').classList.toggle('ativo', modo === 'barras');
+  document.getElementById('rf-grafico-btn-linha').classList.toggle('ativo', modo === 'linha');
+  rifaRenderizarGraficoVendas();
+}
+window.rifaAlternarGraficoVendas = rifaAlternarGraficoVendas;
+
+function rifaAbrirGraficoVendas() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-grafico-overlay').classList.add('open');
+  rfGraficoVendasModo = 'barras';
+  document.getElementById('rf-grafico-btn-barras').classList.add('ativo');
+  document.getElementById('rf-grafico-btn-linha').classList.remove('ativo');
+  rifaRenderizarGraficoVendas();
 }
 window.rifaAbrirGraficoVendas = rifaAbrirGraficoVendas;
 
