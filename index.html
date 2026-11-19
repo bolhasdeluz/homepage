@@ -3133,6 +3133,7 @@ async function pwaInscreverPush() {
       <button class="rf-admin-btn" id="rf-btn-revisao" style="display:none" onclick="rifaAbrirRevisao()">🔍 Revisar vínculos</button>
       <button class="rf-admin-btn" id="rf-btn-gastos" style="display:none" onclick="rifaAbrirGastos()">📒 Relatório de gastos</button>
       <button class="rf-admin-btn" id="rf-btn-ranking" style="display:none" onclick="rifaAbrirRankingVendedoras()">🏆 Quanto cada um vendeu</button>
+      <button class="rf-admin-btn" id="rf-btn-grafico" style="display:none" onclick="rifaAbrirGraficoVendas()">📈 Vendas ao longo do tempo</button>
       <button class="rf-admin-btn" id="rf-btn-vendas" style="display:none" onclick="rifaAbrirRevisarVendas()">📇 Revisar vendas</button>
       <button class="rf-admin-btn" id="rf-btn-mensagem-links" style="display:none" onclick="rifaAbrirMensagemLinks()">📋 Mensagem com os links</button>
       <button class="rf-admin-btn" id="rf-btn-exportar" style="display:none" onclick="rifaExportarVendidos()">📊 Exportar vendidos</button>
@@ -3202,6 +3203,16 @@ async function pwaInscreverPush() {
     <div class="modal-title" style="font-size:1.2rem">🏆 Ranking de vendas</div>
     <p class="modal-sub">Quantos números cada um já vendeu ✦</p>
     <div id="rf-ranking-lista"></div>
+  </div>
+</div>
+
+<div id="rf-grafico-overlay" class="overlay" onclick="if(event.target===this)rifaFecharGraficoVendas()">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="rifaFecharGraficoVendas()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">📈 Vendas ao longo do tempo</div>
+    <p class="modal-sub" id="rf-grafico-sub">Números vendidos por dia ✦</p>
+    <div id="rf-grafico-vazio" style="display:none;text-align:center;padding:20px;font-family:'Crimson Pro',serif;font-style:italic;color:var(--text-dim)">Ainda não há nenhuma venda registrada.</div>
+    <div id="rf-grafico-wrap" style="position:relative;height:240px"><canvas id="rf-chart-vendas"></canvas></div>
   </div>
 </div>
 
@@ -9094,6 +9105,54 @@ window.rifaAbrirRankingVendedoras = rifaAbrirRankingVendedoras;
 function rifaFecharRanking() { document.getElementById('rf-ranking-overlay').classList.remove('open'); }
 window.rifaFecharRanking = rifaFecharRanking;
 
+// agrupa os números pagos por dia (fuso de São Paulo, pra bater com o dia
+// que a admin reconhece) — usa pagoEm, gravado em functions/api/rifa.js
+// toda vez que um número vira 'pago'
+function rifaChaveDia(ts) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ts));
+}
+function rifaCalcularVendasPorDia(r) {
+  const pagos = Object.values(r.numeros || {}).filter(n => n.status === 'pago' && n.pagoEm);
+  const porDia = {};
+  pagos.forEach(n => { const chave = rifaChaveDia(n.pagoEm); porDia[chave] = (porDia[chave] || 0) + 1; });
+  const dias = Object.keys(porDia).sort();
+  return {
+    labels: dias.map(d => { const [, m, dd] = d.split('-'); return `${dd}/${m}`; }),
+    valores: dias.map(d => porDia[d]),
+  };
+}
+
+let rfGraficoVendasChart = null;
+function rifaAbrirGraficoVendas() {
+  if (!rifaEhAdmin() || !rifaAtual) return;
+  document.getElementById('rf-grafico-overlay').classList.add('open');
+  const { labels, valores } = rifaCalcularVendasPorDia(rifaAtual);
+  const vazio = !labels.length;
+  document.getElementById('rf-grafico-vazio').style.display = vazio ? 'block' : 'none';
+  document.getElementById('rf-grafico-wrap').style.display = vazio ? 'none' : 'block';
+  document.getElementById('rf-grafico-sub').textContent = vazio ? '' : `Números vendidos por dia — ${valores.reduce((a, b) => a + b, 0)} no total ✦`;
+  if (vazio) return;
+  try { rfGraficoVendasChart?.destroy(); } catch (e) {}
+  if (typeof Chart === 'undefined') return;
+  const ctx = document.getElementById('rf-chart-vendas');
+  rfGraficoVendasChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label: 'Números vendidos', data: valores, backgroundColor: '#c4396b', borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { titleFont: { family: 'DM Sans' }, bodyFont: { family: 'DM Sans' } } },
+      scales: {
+        x: { ticks: { font: { size: 10, family: 'DM Sans' } } },
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10, family: 'DM Sans' } } },
+      },
+    },
+  });
+}
+window.rifaAbrirGraficoVendas = rifaAbrirGraficoVendas;
+
+function rifaFecharGraficoVendas() { document.getElementById('rf-grafico-overlay').classList.remove('open'); }
+window.rifaFecharGraficoVendas = rifaFecharGraficoVendas;
+
 // QR code pro link público de venda digital — aponta pro link curto
 // /ir/rifa (não direto pra página) pra cada leitura passar por um
 // contador, igual já é feito pra cosmes.html
@@ -9290,6 +9349,7 @@ function rifaRenderPagina() {
   document.getElementById('rf-btn-revisao').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-gastos').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-ranking').style.display = admin ? '' : 'none';
+  document.getElementById('rf-btn-grafico').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-vendas').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-exportar').style.display = admin ? '' : 'none';
   document.getElementById('rf-btn-corrigir-origem').style.display = (admin && r.limiteDigital > 0) ? '' : 'none';
