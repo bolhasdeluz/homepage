@@ -3681,7 +3681,7 @@ async function pwaInscreverPush() {
         <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
       </div>
       <div class="or-row">
-        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
+        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente (concentração e recados)</label><input type="time" id="or-inp-chegada"></div>
         <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
       </div>
       <div class="or-row">
@@ -21002,6 +21002,16 @@ const auth = getAuth(app);
       return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
     }
 
+    // calcula um horário "HH:MM" menos N minutos — usado pra puxar
+    // automaticamente a chegada da corrente (concentração e recados) como
+    // 30 min antes do início, direto da agenda
+    function orHoraMenosMinutos(hora, minutos) {
+      const [h, m] = hora.split(':').map(Number);
+      let total = h * 60 + m - minutos;
+      total = ((total % 1440) + 1440) % 1440;
+      return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
+    }
+
     // ── CARREGAR AGENDA (todas as sessões futuras, não só a próxima) ──
     let orSessoesFuturas = [];
     async function orCarregarProximaSessao() {
@@ -21054,7 +21064,12 @@ const auth = getAuth(app);
         orAplicarTipo(tipoKey);
       }
       document.getElementById('or-inp-titulo').value = s.nome || '';
-      if (s.hora) document.getElementById('or-inp-inicio').value = s.hora;
+      if (s.hora) {
+        document.getElementById('or-inp-inicio').value = s.hora;
+        // chegada da corrente (momento de concentração e recados) — sempre
+        // 30 min antes do horário da sessão, direto da agenda
+        document.getElementById('or-inp-chegada').value = orHoraMenosMinutos(s.hora, 30);
+      }
     }
     document.getElementById('or-sel-sessao')?.addEventListener('change', e => {
       if (e.target.value !== '') orAplicarSessaoSelecionada(parseInt(e.target.value, 10));
@@ -21276,7 +21291,7 @@ const auth = getAuth(app);
       const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
 
       let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
-      txt += `👳 Chegada da Corrente: ${chegada}\n`;
+      txt += `👳 Chegada da Corrente: ${chegada} — momento de concentração e recados\n`;
       txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
       const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
       txt += `👫 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
