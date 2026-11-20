@@ -22860,7 +22860,8 @@ function ctAdminRenderPedidos(pedidos) {
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
     } else if (!ped.entregue) {
       statusTxt = `💰 ${rotuloValor[0].toUpperCase()}${rotuloValor.slice(1)} pago — aguardando entrega`; statusCor = 'var(--green)';
-      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', true)">📦 Marcar como entregue</button>`;
+      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', true)">📦 Marcar como entregue</button>
+        <button class="rm-btn-mes" style="padding:7px 10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminDesfazerPagamento('${ped.orderNsu}')" title="Confirmou errado? Volta pra aguardando">↩️ Desfazer pagamento</button>`;
     } else {
       statusTxt = '✅ Entregue'; statusCor = 'var(--text-dim)';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', false)">↩️ Desfazer entrega</button>`;
@@ -22870,7 +22871,9 @@ function ctAdminRenderPedidos(pedidos) {
     let saldoHtml = '';
     if (ped.dataPagamentoSaldo) {
       if (ped.statusSaldo === 'pago') {
-        saldoHtml = `<div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) pago</div>`;
+        saldoHtml = `
+          <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) pago</div>
+          <button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminDesfazerPagamentoSaldo('${ped.orderNsu}')" title="Confirmou errado? Volta pra aguardando">↩️ Desfazer pagamento do saldo</button>`;
       } else {
         saldoHtml = `
           <div style="font-size:.72rem;font-weight:700;color:#8c5a00;margin-top:2px">📅 Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) previsto pra ${ctAdminFormatarDataBR(ped.dataPagamentoSaldo)}</div>
@@ -23093,6 +23096,22 @@ async function ctAdminConfirmarPagamento(orderNsu) {
 }
 window.ctAdminConfirmarPagamento = ctAdminConfirmarPagamento;
 
+// desfaz uma confirmação de pagamento feita errado (ex: clicou no pedido
+// errado) — volta pra "aguardando"
+async function ctAdminDesfazerPagamento(orderNsu) {
+  if (!confirm('Desfazer a confirmação de pagamento desse pedido? Ele volta pra "aguardando".')) return;
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'desfazer-pagamento', orderNsu }),
+    });
+    const data = await res.json();
+    if (res.ok) { ctAdminProduto = data; ctAdminRender(); }
+    else alert(data.error || 'Erro ao desfazer.');
+  } catch (e) { alert('Erro ao desfazer.'); }
+}
+window.ctAdminDesfazerPagamento = ctAdminDesfazerPagamento;
+
 async function ctAdminConfirmarPagamentoSaldo(orderNsu) {
   try {
     const res = await fetch('/api/camiseta', {
@@ -23103,6 +23122,22 @@ async function ctAdminConfirmarPagamentoSaldo(orderNsu) {
   } catch (e) { /* tenta de novo depois, se precisar */ }
 }
 window.ctAdminConfirmarPagamentoSaldo = ctAdminConfirmarPagamentoSaldo;
+
+// mesma ideia, pro saldo — pra quando a admin confirmou o saldo achando
+// que a pessoa tinha pago tudo, mas só pagou o sinal
+async function ctAdminDesfazerPagamentoSaldo(orderNsu) {
+  if (!confirm('Desfazer a confirmação de pagamento do saldo? Ele volta pra "aguardando".')) return;
+  try {
+    const res = await fetch('/api/camiseta', {
+      method: 'PUT', headers: RIFA_ADMIN_HEADERS,
+      body: JSON.stringify({ acao: 'desfazer-pagamento-saldo', orderNsu }),
+    });
+    const data = await res.json();
+    if (res.ok) { ctAdminProduto = data; ctAdminRender(); }
+    else alert(data.error || 'Erro ao desfazer.');
+  } catch (e) { alert('Erro ao desfazer.'); }
+}
+window.ctAdminDesfazerPagamentoSaldo = ctAdminDesfazerPagamentoSaldo;
 
 async function ctAdminMarcarEntregue(orderNsu, entregue) {
   try {
