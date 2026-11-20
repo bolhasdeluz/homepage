@@ -544,6 +544,21 @@ export async function onRequest(context) {
         return json(produto);
       }
 
+      // DESFAZER CONFIRMAÇÃO DE PAGAMENTO — pra quando a admin confirma
+      // errado (ex: clicou no pedido errado) e precisa voltar pra
+      // "aguardando". Só desfaz se ainda não foi entregue, pra não deixar
+      // um pedido marcado como entregue sem nunca ter sido pago
+      if (acao === 'desfazer-pagamento') {
+        const orderNsu = String(body.orderNsu || '');
+        const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
+        if (!pedido) return json({ error: 'Pedido não encontrado.' }, 404);
+        if (pedido.entregue) return json({ error: 'Esse pedido já foi marcado como entregue — desfaça a entrega primeiro.' }, 400);
+        pedido.status = 'aguardando';
+        delete pedido.pagoEm;
+        await KV.put(produto.id, JSON.stringify(produto));
+        return json(produto);
+      }
+
       // CONFIRMAR PAGAMENTO DO SALDO — quando o pedido era só o sinal, esse
       // é o segundo pagamento (o restante), confirmado na mão também
       if (acao === 'confirmar-pagamento-saldo') {
@@ -553,6 +568,20 @@ export async function onRequest(context) {
         if (pedido.valorEscolhido !== 'sinal') return json({ error: 'Esse pedido não tem saldo pendente.' }, 400);
         pedido.statusSaldo = 'pago';
         pedido.pagoSaldoEm = Date.now();
+        await KV.put(produto.id, JSON.stringify(produto));
+        return json(produto);
+      }
+
+      // DESFAZER CONFIRMAÇÃO DE PAGAMENTO DO SALDO — mesma ideia, pro
+      // segundo pagamento (ex: confirmou achando que era o pedido certo,
+      // mas a pessoa só tinha pago o sinal)
+      if (acao === 'desfazer-pagamento-saldo') {
+        const orderNsu = String(body.orderNsu || '');
+        const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
+        if (!pedido) return json({ error: 'Pedido não encontrado.' }, 404);
+        if (pedido.valorEscolhido !== 'sinal') return json({ error: 'Esse pedido não tem saldo.' }, 400);
+        pedido.statusSaldo = 'aguardando';
+        delete pedido.pagoSaldoEm;
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
