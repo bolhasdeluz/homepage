@@ -22895,27 +22895,68 @@ G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
         <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa)">📋 Pedidos</div>
         <button class="rm-btn-mes" style="padding:7px 12px;font-size:10px" onclick="ctAdminToggleExportar()">📤 Exportar lista pra fábrica</button>
       </div>
+      <div class="rc-toggle-wrap" style="margin-bottom:14px">
+        <button class="rc-toggle-btn ${ctAdminModoPedidos === 'pessoa' ? 'ativo' : ''}" onclick="ctAdminAlternarModoPedidos('pessoa')">👤 Por pessoa</button>
+        <button class="rc-toggle-btn ${ctAdminModoPedidos === 'cor' ? 'ativo' : ''}" onclick="ctAdminAlternarModoPedidos('cor')">🎨 Por cor</button>
+      </div>
       <div id="ct-admin-exportar-wrap" style="display:none;margin-bottom:14px">
         <textarea id="ct-admin-exportar-texto" readonly rows="8" class="form-input" style="font-family:monospace;font-size:.78rem"></textarea>
         <button class="rm-btn-mes" style="width:100%" onclick="ctAdminCopiarExportar()">📋 Copiar</button>
       </div>
-      ${ctAdminRenderPedidos(p.pedidos || [])}
+      ${ctAdminModoPedidos === 'cor' ? ctAdminRenderPedidosPorCor(p.pedidos || [], p.cores || []) : ctAdminRenderPedidos(p.pedidos || [])}
     </div>` : ''}
   `;
   if (p) ctAdminMontarQr();
 }
 
+let ctAdminModoPedidos = 'pessoa';
+function ctAdminAlternarModoPedidos(modo) { ctAdminModoPedidos = modo; ctAdminRender(); }
+window.ctAdminAlternarModoPedidos = ctAdminAlternarModoPedidos;
+
 function ctAdminRenderPedidos(pedidos) {
   if (!pedidos.length) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
   const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
-  return ordenados.map(ped => {
-    const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor || '—'})`).join(', ');
+  return ordenados.map(ped => ctAdminRenderCardPedido(ped)).join('');
+}
+
+// mesma lista, mas separada por cor — cada cor mostra só os itens
+// daquela cor em cada pedido (um pedido com as duas cores aparece nas
+// duas seções, só com a parte correspondente)
+function ctAdminRenderPedidosPorCor(pedidos, cores) {
+  if (!pedidos.length) return '<p style="font-family:\'Crimson Pro\',serif;font-style:italic;color:var(--text-dim);font-size:.85rem">Nenhum pedido ainda ✦</p>';
+  const nomesCadastrados = (cores || []).map(c => c.nome);
+  // cor que aparece em algum pedido mas não está mais cadastrada no produto
+  // (ex: cor removida depois) também entra, só que no fim da lista
+  const nomesExtras = [...new Set(pedidos.flatMap(p => (p.itens || []).map(i => i.cor || '—')))].filter(n => !nomesCadastrados.includes(n));
+  const todasAsCores = [...nomesCadastrados, ...nomesExtras];
+  return todasAsCores.map((cor, idx) => {
+    const pedidosDaCor = pedidos.filter(p => (p.itens || []).some(i => (i.cor || '—') === cor));
+    if (!pedidosDaCor.length) return '';
+    const ordenados = pedidosDaCor.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+    const totalPecas = pedidosDaCor.reduce((s, p) => s + (p.itens || []).filter(i => (i.cor || '—') === cor).reduce((s2, i) => s2 + (i.quantidade || 0), 0), 0);
+    return `<div style="margin:${idx ? '18px' : '0'} 0 10px;padding-top:${idx ? '12px' : '0'};${idx ? 'border-top:2px solid var(--rosa-border);' : ''}font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--rosa)">${calEsc(cor)} — ${totalPecas} peça(s)</div>` +
+      ordenados.map(ped => {
+        const itensDaCor = (ped.itens || []).filter(i => (i.cor || '—') === cor);
+        const itensTxt = itensDaCor.map(i => `${i.quantidade} ${i.tamanho}`).join(', ');
+        const idSuffix = '-' + cor.replace(/[^a-zA-Z0-9]/g, '');
+        return ctAdminRenderCardPedido(ped, itensTxt, idSuffix);
+      }).join('');
+  }).join('');
+}
+
+function ctAdminRenderCardPedido(ped, itensTxtOverride, idSuffix) {
+    // idSuffix evita <input id> duplicado quando o mesmo pedido aparece mais
+    // de uma vez na tela (ex: na visão "por cor", um pedido com duas cores
+    // aparece em duas seções — sem o sufixo, document.getElementById achava
+    // sempre o primeiro, e confirmar na segunda seção lia o valor errado)
+    idSuffix = idSuffix || '';
+    const itensTxt = itensTxtOverride != null ? itensTxtOverride : (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor || '—'})`).join(', ');
     const ehSinal = ped.valorEscolhido === 'sinal' || ped.valorEscolhido === 'sinal-depois';
     const rotuloValor = ehSinal ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
       const faltaPrincipal = ped.valorPedido - (ped.valorPago || 0);
-      const inputIdPrincipal = `ct-valor-pago-${ped.orderNsu}`;
+      const inputIdPrincipal = `ct-valor-pago-${ped.orderNsu}${idSuffix}`;
       if (ped.status === 'parcial') {
         statusTxt = `🟡 ${ctAdminFormatarPreco(ped.valorPago)} de ${ctAdminFormatarPreco(ped.valorPedido)} pago (${ehSinal ? 'sinal' : 'valor total'}) — faltam ${ctAdminFormatarPreco(faltaPrincipal)}`;
       } else {
@@ -22945,7 +22986,7 @@ function ctAdminRenderPedidos(pedidos) {
     let saldoHtml = '';
     if (ped.dataPagamentoSaldo) {
       const alvoSaldo = ped.total - ped.valorPedido;
-      const inputIdSaldo = `ct-valor-pago-saldo-${ped.orderNsu}`;
+      const inputIdSaldo = `ct-valor-pago-saldo-${ped.orderNsu}${idSuffix}`;
       if (ped.statusSaldo === 'pago') {
         saldoHtml = `
           <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(alvoSaldo)}) pago</div>
@@ -22984,7 +23025,6 @@ function ctAdminRenderPedidos(pedidos) {
           </div>
         </div>
       </div>`;
-  }).join('');
 }
 
 // ── EDITAR PEDIDO — corrige nome/telefone/email e os itens (cor/tamanho/
