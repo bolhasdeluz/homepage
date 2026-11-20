@@ -22827,6 +22827,54 @@ function ctAdminCopiarExportar() {
 }
 window.ctAdminCopiarExportar = ctAdminCopiarExportar;
 
+// lista simplificada por pessoa, separada por cor — diferente da lista pra
+// fábrica (que só soma os totais): aqui cada linha é "Nome — qtd tamanho",
+// pra entrega/conferência peça a peça, não pra fechar pedido com a fábrica
+function ctAdminGerarListaPorPessoa() {
+  const p = ctAdminProduto;
+  const porCor = {};
+  (p.pedidos || []).forEach(ped => {
+    const porCorDoPedido = {};
+    (ped.itens || []).forEach(i => {
+      const cor = i.cor || '—';
+      if (!porCorDoPedido[cor]) porCorDoPedido[cor] = [];
+      porCorDoPedido[cor].push(`${i.quantidade} ${i.tamanho}`);
+    });
+    Object.keys(porCorDoPedido).forEach(cor => {
+      if (!porCor[cor]) porCor[cor] = [];
+      porCor[cor].push({ nome: ped.nome || 'Sem nome', itens: porCorDoPedido[cor].join(', ') });
+    });
+  });
+  const linhas = [`${p.titulo} — lista por pessoa (${new Date().toLocaleDateString('pt-BR')})`, ''];
+  let totalGeral = 0;
+  Object.keys(porCor).forEach(cor => {
+    linhas.push(cor.toUpperCase());
+    porCor[cor].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    porCor[cor].forEach(({ nome, itens }) => {
+      linhas.push(`${nome} — ${itens}`);
+      totalGeral += itens.split(', ').reduce((s, it) => s + (parseInt(it, 10) || 0), 0);
+    });
+    linhas.push('');
+  });
+  linhas.push(`Total: ${totalGeral} peça(s)`);
+  return linhas.join('\n');
+}
+
+function ctAdminTogglePessoaExportar() {
+  const wrap = document.getElementById('ct-admin-exportar-pessoa-wrap');
+  if (wrap.style.display === 'block') { wrap.style.display = 'none'; return; }
+  document.getElementById('ct-admin-exportar-pessoa-texto').value = ctAdminGerarListaPorPessoa();
+  wrap.style.display = 'block';
+}
+window.ctAdminTogglePessoaExportar = ctAdminTogglePessoaExportar;
+
+function ctAdminCopiarPessoaExportar() {
+  const texto = document.getElementById('ct-admin-exportar-pessoa-texto');
+  texto.select();
+  navigator.clipboard?.writeText(texto.value).catch(() => {});
+}
+window.ctAdminCopiarPessoaExportar = ctAdminCopiarPessoaExportar;
+
 function ctAdminTabelaMedidasParaTexto(tabela) {
   return (tabela || []).map(linha => (linha || []).join(' | ')).join('\n');
 }
@@ -22893,7 +22941,10 @@ G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
     <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
         <div style="font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.08em;text-transform:uppercase;color:var(--rosa)">📋 Pedidos</div>
-        <button class="rm-btn-mes" style="padding:7px 12px;font-size:10px" onclick="ctAdminToggleExportar()">📤 Exportar lista pra fábrica</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="rm-btn-mes" style="padding:7px 12px;font-size:10px" onclick="ctAdminToggleExportar()">📤 Exportar lista pra fábrica</button>
+          <button class="rm-btn-mes" style="padding:7px 12px;font-size:10px" onclick="ctAdminTogglePessoaExportar()">📤 Exportar lista com nomes</button>
+        </div>
       </div>
       <div class="rc-toggle-wrap" style="margin-bottom:14px">
         <button class="rc-toggle-btn ${ctAdminModoPedidos === 'pessoa' ? 'ativo' : ''}" onclick="ctAdminAlternarModoPedidos('pessoa')">👤 Por pessoa</button>
@@ -22902,6 +22953,10 @@ G | 79 | 57">${p ? calEsc(ctAdminTabelaMedidasParaTexto(p.tabelaMedidas)) : ''}<
       <div id="ct-admin-exportar-wrap" style="display:none;margin-bottom:14px">
         <textarea id="ct-admin-exportar-texto" readonly rows="8" class="form-input" style="font-family:monospace;font-size:.78rem"></textarea>
         <button class="rm-btn-mes" style="width:100%" onclick="ctAdminCopiarExportar()">📋 Copiar</button>
+      </div>
+      <div id="ct-admin-exportar-pessoa-wrap" style="display:none;margin-bottom:14px">
+        <textarea id="ct-admin-exportar-pessoa-texto" readonly rows="8" class="form-input" style="font-family:monospace;font-size:.78rem"></textarea>
+        <button class="rm-btn-mes" style="width:100%" onclick="ctAdminCopiarPessoaExportar()">📋 Copiar</button>
       </div>
       ${ctAdminModoPedidos === 'cor' ? ctAdminRenderPedidosPorCor(p.pedidos || [], p.cores || []) : ctAdminRenderPedidos(p.pedidos || [])}
     </div>` : ''}
