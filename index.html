@@ -20938,6 +20938,7 @@ const auth = getAuth(app);
       itens: [
         { emoji: '🏠', texto: 'Resguardo', ativo: true, categoria: 'universal' },
         { emoji: '🌿', texto: 'Banho de ervas', ativo: true, categoria: 'universal' },
+        { emoji: '👳', texto: 'De acordo com a agenda, a chegada é 30 minutos antes do horário da sessão — momento de concentração e recados.', ativo: true, categoria: 'universal' },
         { emoji: '🤫', texto: 'Silêncio e concentração: Ao chegar no terreiro, não é o momento de reencontros e brincadeiras. Coloque a roupa de sessão, e conforme os preparativos vão se finalizando, vão indo para o salão, sentando lá já se posicionando para o início dos trabalhos.', ativo: true, categoria: 'universal' },
         { emoji: '🕯️', texto: 'Defumação, pólvora, frentes e axés: Momento de seriedade e concentrar a sua energia e intenções.', ativo: true, categoria: 'universal' },
         { emoji: '🤐', texto: 'Se atente! Não puxe conversa com quem está concentrado e trabalhando.', ativo: true, categoria: 'universal' },
@@ -21082,7 +21083,15 @@ const auth = getAuth(app);
         const d = snap.docs.find(x => x.id === 'orientacoes_template');
         orTemplate = d ? d.data() : JSON.parse(JSON.stringify(OR_PADRAO));
       } catch(e) { orTemplate = JSON.parse(JSON.stringify(OR_PADRAO)); }
-      if (!orTemplate.itens) orTemplate.itens = JSON.parse(JSON.stringify(OR_PADRAO.itens));
+      if (!orTemplate.itens) {
+        orTemplate.itens = JSON.parse(JSON.stringify(OR_PADRAO.itens));
+      } else {
+        // itens novos adicionados no catálogo (pelo código) depois que a
+        // admin já tinha um template salvo no Firestore — sem isso, um
+        // item novo nunca apareceria pra quem já salvou um template antes
+        const textosExistentes = new Set(orTemplate.itens.map(it => it.texto));
+        OR_PADRAO.itens.forEach(it => { if (!textosExistentes.has(it.texto)) orTemplate.itens.push(JSON.parse(JSON.stringify(it))); });
+      }
       document.getElementById('or-inp-chegada').value = orTemplate.horaChegada || OR_PADRAO.horaChegada;
       document.getElementById('or-inp-inicio').value = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio || OR_PADRAO.horaInicio;
       orRenderItensFixos();
@@ -21291,7 +21300,7 @@ const auth = getAuth(app);
       const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
 
       let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
-      txt += `👳 Chegada da Corrente: ${chegada} — momento de concentração e recados\n`;
+      txt += `👳 Chegada da Corrente: ${chegada}\n`;
       txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
       const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
       txt += `👫 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
