@@ -336,7 +336,13 @@ export async function onRequest(context) {
       }
       const ativa = await buscarAtiva(KV);
       if (!ativa) return json(isAdmin ? ativa : paraPublico(ativa));
-      return json(isAdmin ? ativa : { ...paraPublico(ativa), porCor: calcularPorCor(ativa.pedidos || [], ativa.cores || []), metaPorCor: CT_META_MINIMA_POR_COR });
+      if (isAdmin) return json(ativa);
+      // pública, mas se vier ?meuEmail=, inclui só os pedidos daquele e-mail
+      // (meusPedidos) — assim a pessoa logada vê o próprio pedido (quantos,
+      // quais itens, status do pagamento) sem expor pedido de mais ninguém
+      const meuEmail = (url.searchParams.get('meuEmail') || '').trim().toLowerCase();
+      const meusPedidos = meuEmail ? (ativa.pedidos || []).filter(p => (p.email || '').toLowerCase() === meuEmail) : [];
+      return json({ ...paraPublico(ativa), porCor: calcularPorCor(ativa.pedidos || [], ativa.cores || []), metaPorCor: CT_META_MINIMA_POR_COR, meusPedidos });
     }
 
     // POST — criar novo produto (admin) — arquiva o ativo anterior, se houver

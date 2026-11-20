@@ -3049,6 +3049,8 @@ async function pwaInscreverPush() {
         <span>O pagamento do <strong>sinal</strong> dá início à fabricação da sua camiseta. O <strong>envio/entrega</strong> só é liberado depois que o pagamento de <strong>todos</strong> for quitado (sinal + saldo).</span>
       </div>
 
+      <div id="ct-meus-pedidos-wrap" class="ct-progresso" style="display:none"></div>
+
       <div id="ct-progresso-wrap" class="ct-progresso" style="display:none">
         <div class="ct-progresso-titulo" style="margin-bottom:10px">Encomendado até agora, por cor</div>
         <div id="ct-progresso-cores"></div>
@@ -8681,7 +8683,9 @@ async function ctLoad() {
   document.getElementById('ct-vazia').style.display = 'none';
   document.getElementById('ct-conteudo').style.display = 'none';
   try {
-    const res = await fetch(CAMISETA_API);
+    const usuario = ctUsuarioAtual();
+    const url = usuario ? `${CAMISETA_API}?meuEmail=${encodeURIComponent(usuario.email)}` : CAMISETA_API;
+    const res = await fetch(url);
     ctProduto = res.ok ? await res.json() : null;
   } catch (e) { ctProduto = null; }
   document.getElementById('ct-carregando').style.display = 'none';
@@ -8733,6 +8737,49 @@ function ctRenderPagina() {
   ctRenderMedidas();
   ctRenderCores();
   ctRenderProgresso();
+  ctRenderMeusPedidos();
+}
+
+// mostra pra quem já tem pedido(s) nessa campanha o que ela pediu (quais
+// itens, quantos) e como está o pagamento — sem isso, só a admin conseguia
+// ver essa informação, no painel; vem em ctProduto.meusPedidos, já
+// filtrado pelo back-end pelo e-mail de quem está logada (ver
+// functions/api/camiseta.js)
+function ctRenderMeusPedidos() {
+  const wrap = document.getElementById('ct-meus-pedidos-wrap');
+  const pedidos = ctProduto.meusPedidos || [];
+  if (!pedidos.length) { wrap.style.display = 'none'; return; }
+  const ordenados = pedidos.slice().sort((a, b) => (b.criadoEm || 0) - (a.criadoEm || 0));
+  wrap.innerHTML = `<div class="ct-progresso-titulo" style="margin-bottom:10px">🎽 ${pedidos.length > 1 ? 'Seus pedidos nessa campanha' : 'Seu pedido nessa campanha'}</div>` +
+    ordenados.map(ped => {
+      const itensTxt = (ped.itens || []).map(i => `${i.quantidade} ${i.tamanho} (${i.cor || '—'})`).join(', ');
+      const ehSinal = ped.valorEscolhido === 'sinal' || ped.valorEscolhido === 'sinal-depois';
+      const rotuloValor = ehSinal ? `sinal de ${ctFormatarPreco(ped.valorPedido)}` : `valor total de ${ctFormatarPreco(ped.valorPedido)}`;
+      let statusTxt, statusCor;
+      if (ped.status !== 'pago') {
+        statusTxt = ped.valorEscolhido === 'sinal-depois'
+          ? `⏳ Combinado trazer o ${rotuloValor} até ${ctFormatarDataBR(ped.dataPagamentoSinal)}`
+          : `⏳ Aguardando pagamento do ${rotuloValor}`;
+        statusCor = '#8c5a00';
+      } else if (!ped.entregue) {
+        statusTxt = `💰 ${rotuloValor[0].toUpperCase()}${rotuloValor.slice(1)} pago — aguardando entrega`;
+        statusCor = 'var(--green)';
+      } else {
+        statusTxt = '✅ Entregue'; statusCor = 'var(--text-dim)';
+      }
+      let saldoTxt = '';
+      if (ped.dataPagamentoSaldo) {
+        saldoTxt = ped.statusSaldo === 'pago'
+          ? `<div style="font-size:.78rem;font-weight:700;color:var(--green);margin-top:3px">✅ Saldo restante (${ctFormatarPreco(ped.total - ped.valorPedido)}) pago</div>`
+          : `<div style="font-size:.78rem;font-weight:700;color:#8c5a00;margin-top:3px">📅 Saldo restante (${ctFormatarPreco(ped.total - ped.valorPedido)}) previsto pra ${ctFormatarDataBR(ped.dataPagamentoSaldo)}</div>`;
+      }
+      return `<div style="padding:10px 0;border-top:1px solid var(--border)">
+        <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(itensTxt)} — pedido ${ctFormatarPreco(ped.total)}</div>
+        <div style="font-size:.78rem;font-weight:700;color:${statusCor};margin-top:3px">${statusTxt}</div>
+        ${saldoTxt}
+      </div>`;
+    }).join('');
+  wrap.style.display = '';
 }
 
 // meta mínima de peças por cor desta campanha — mesma meta usada no backend
