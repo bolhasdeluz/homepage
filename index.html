@@ -8756,7 +8756,11 @@ function ctRenderMeusPedidos() {
       const ehSinal = ped.valorEscolhido === 'sinal' || ped.valorEscolhido === 'sinal-depois';
       const rotuloValor = ehSinal ? `sinal de ${ctFormatarPreco(ped.valorPedido)}` : `valor total de ${ctFormatarPreco(ped.valorPedido)}`;
       let statusTxt, statusCor;
-      if (ped.status !== 'pago') {
+      if (ped.status === 'parcial') {
+        const falta = ped.valorPedido - (ped.valorPago || 0);
+        statusTxt = `🟡 ${ctFormatarPreco(ped.valorPago)} de ${ctFormatarPreco(ped.valorPedido)} pago (${ehSinal ? 'sinal' : 'valor total'}) — faltam ${ctFormatarPreco(falta)}`;
+        statusCor = '#8c5a00';
+      } else if (ped.status !== 'pago') {
         statusTxt = ped.valorEscolhido === 'sinal-depois'
           ? `⏳ Combinado trazer o ${rotuloValor} até ${ctFormatarDataBR(ped.dataPagamentoSinal)}`
           : `⏳ Aguardando pagamento do ${rotuloValor}`;
@@ -8769,9 +8773,15 @@ function ctRenderMeusPedidos() {
       }
       let saldoTxt = '';
       if (ped.dataPagamentoSaldo) {
-        saldoTxt = ped.statusSaldo === 'pago'
-          ? `<div style="font-size:.78rem;font-weight:700;color:var(--green);margin-top:3px">✅ Saldo restante (${ctFormatarPreco(ped.total - ped.valorPedido)}) pago</div>`
-          : `<div style="font-size:.78rem;font-weight:700;color:#8c5a00;margin-top:3px">📅 Saldo restante (${ctFormatarPreco(ped.total - ped.valorPedido)}) previsto pra ${ctFormatarDataBR(ped.dataPagamentoSaldo)}</div>`;
+        const alvoSaldo = ped.total - ped.valorPedido;
+        if (ped.statusSaldo === 'pago') {
+          saldoTxt = `<div style="font-size:.78rem;font-weight:700;color:var(--green);margin-top:3px">✅ Saldo restante (${ctFormatarPreco(alvoSaldo)}) pago</div>`;
+        } else if (ped.statusSaldo === 'parcial') {
+          const faltaSaldo = alvoSaldo - (ped.valorPagoSaldo || 0);
+          saldoTxt = `<div style="font-size:.78rem;font-weight:700;color:#8c5a00;margin-top:3px">🟡 ${ctFormatarPreco(ped.valorPagoSaldo)} de ${ctFormatarPreco(alvoSaldo)} do saldo pago — faltam ${ctFormatarPreco(faltaSaldo)}</div>`;
+        } else {
+          saldoTxt = `<div style="font-size:.78rem;font-weight:700;color:#8c5a00;margin-top:3px">📅 Saldo restante (${ctFormatarPreco(alvoSaldo)}) previsto pra ${ctFormatarDataBR(ped.dataPagamentoSaldo)}</div>`;
+        }
       }
       return `<div style="padding:10px 0;border-top:1px solid var(--border)">
         <div style="font-family:'Crimson Pro',serif;font-size:.88rem;color:var(--text)">${calEsc(itensTxt)} — pedido ${ctFormatarPreco(ped.total)}</div>
@@ -22718,15 +22728,19 @@ function ctAdminFormatarDataHora(ts) {
 function ctAdminCalcularResumo(pedidos) {
   const lista = pedidos || [];
   const pagos = lista.filter(p => p.status === 'pago');
-  const aguardando = lista.filter(p => p.status !== 'pago');
-  const totalArrecadado = pagos.reduce((s, p) => s + (p.valorPedido || 0), 0);
-  const totalEmAberto = aguardando.reduce((s, p) => s + (p.valorPedido || 0), 0);
+  const parciais = lista.filter(p => p.status === 'parcial');
+  const aguardando = lista.filter(p => p.status !== 'pago' && p.status !== 'parcial');
+  // "arrecadado"/"em aberto" contam o valor de verdade já recebido dos
+  // pedidos parciais, não o valor cheio esperado — senão um pagamento
+  // parcial some do "em aberto" sem aparecer como arrecadado em lugar nenhum
+  const totalArrecadado = pagos.reduce((s, p) => s + (p.valorPedido || 0), 0) + parciais.reduce((s, p) => s + (p.valorPago || 0), 0);
+  const totalEmAberto = aguardando.reduce((s, p) => s + (p.valorPedido || 0), 0) + parciais.reduce((s, p) => s + Math.max(0, (p.valorPedido || 0) - (p.valorPago || 0)), 0);
   const saldosPendentes = lista.filter(p => p.valorEscolhido === 'sinal' && p.statusSaldo !== 'pago');
-  const saldoAReceber = saldosPendentes.reduce((s, p) => s + Math.max(0, (p.total || 0) - (p.valorPedido || 0)), 0);
+  const saldoAReceber = saldosPendentes.reduce((s, p) => s + Math.max(0, (p.total || 0) - (p.valorPedido || 0) - (p.statusSaldo === 'parcial' ? (p.valorPagoSaldo || 0) : 0)), 0);
   const pecasTotais = lista.reduce((s, p) => s + (p.itens || []).reduce((s2, i) => s2 + (i.quantidade || 0), 0), 0);
   const datas = lista.map(p => p.criadoEm).filter(Boolean).sort((a, b) => a - b);
   return {
-    totalPedidos: lista.length, pagosCount: pagos.length, aguardandoCount: aguardando.length,
+    totalPedidos: lista.length, pagosCount: pagos.length, aguardandoCount: aguardando.length, parciaisCount: parciais.length,
     totalArrecadado, totalEmAberto, saldoAReceber, saldosPendentesCount: saldosPendentes.length,
     pecasTotais, primeira: datas[0], ultima: datas[datas.length - 1],
   };
@@ -22765,7 +22779,7 @@ function ctAdminRenderResumo(pedidos, cores) {
   }).join('');
   return `
     ${linha('Pedidos', `${r.totalPedidos} (${r.pecasTotais} peça(s))`)}
-    ${linha('Pagos · Aguardando pagamento', `${r.pagosCount} · ${r.aguardandoCount}`)}
+    ${linha('Pagos · Parcial · Aguardando', `${r.pagosCount} · ${r.parciaisCount} · ${r.aguardandoCount}`)}
     ${linha('Arrecadado', ctAdminFormatarPreco(r.totalArrecadado))}
     ${linha('Em aberto (aguardando pagamento)', ctAdminFormatarPreco(r.totalEmAberto))}
     ${r.saldosPendentesCount ? linha(`Saldo a receber (${r.saldosPendentesCount} pedido(s))`, ctAdminFormatarPreco(r.saldoAReceber)) : ''}
@@ -22900,11 +22914,24 @@ function ctAdminRenderPedidos(pedidos) {
     const rotuloValor = ehSinal ? `sinal de ${ctAdminFormatarPreco(ped.valorPedido)}` : `valor total de ${ctAdminFormatarPreco(ped.valorPedido)}`;
     let statusTxt, statusCor, acaoHtml;
     if (ped.status !== 'pago') {
-      statusTxt = ped.valorEscolhido === 'sinal-depois'
-        ? `⏳ Vai trazer o ${rotuloValor} até ${ctAdminFormatarDataBR(ped.dataPagamentoSinal)}`
-        : `⏳ Aguardando pagamento do ${rotuloValor}`;
+      const faltaPrincipal = ped.valorPedido - (ped.valorPago || 0);
+      const inputIdPrincipal = `ct-valor-pago-${ped.orderNsu}`;
+      if (ped.status === 'parcial') {
+        statusTxt = `🟡 ${ctAdminFormatarPreco(ped.valorPago)} de ${ctAdminFormatarPreco(ped.valorPedido)} pago (${ehSinal ? 'sinal' : 'valor total'}) — faltam ${ctAdminFormatarPreco(faltaPrincipal)}`;
+      } else {
+        statusTxt = ped.valorEscolhido === 'sinal-depois'
+          ? `⏳ Vai trazer o ${rotuloValor} até ${ctAdminFormatarDataBR(ped.dataPagamentoSinal)}`
+          : `⏳ Aguardando pagamento do ${rotuloValor}`;
+      }
       statusCor = '#8c5a00';
-      acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamento('${ped.orderNsu}')">✓ Confirmar pagamento (manual)</button>`;
+      acaoHtml = `
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="number" step="0.01" min="0.01" id="${inputIdPrincipal}" value="${faltaPrincipal.toFixed(2)}" style="width:76px;padding:7px 8px;border:1px solid var(--border);border-radius:8px;font-size:.78rem">
+          <button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminConfirmarPagamentoValor('${ped.orderNsu}', '${inputIdPrincipal}')">✓ Confirmar valor pago</button>
+        </div>`;
+      if (ped.status === 'parcial') {
+        acaoHtml += `<button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminDesfazerPagamento('${ped.orderNsu}')" title="Zera o valor pago, volta pra aguardando">↩️ Zerar valor pago</button>`;
+      }
     } else if (!ped.entregue) {
       statusTxt = `💰 ${rotuloValor[0].toUpperCase()}${rotuloValor.slice(1)} pago — aguardando entrega`; statusCor = 'var(--green)';
       acaoHtml = `<button class="rm-btn-mes" style="padding:7px 12px" onclick="ctAdminMarcarEntregue('${ped.orderNsu}', true)">📦 Marcar como entregue</button>
@@ -22917,14 +22944,27 @@ function ctAdminRenderPedidos(pedidos) {
     // independente do valorPedido acima, confirmado na mão também
     let saldoHtml = '';
     if (ped.dataPagamentoSaldo) {
+      const alvoSaldo = ped.total - ped.valorPedido;
+      const inputIdSaldo = `ct-valor-pago-saldo-${ped.orderNsu}`;
       if (ped.statusSaldo === 'pago') {
         saldoHtml = `
-          <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) pago</div>
+          <div style="font-size:.72rem;font-weight:700;color:var(--green);margin-top:2px">✅ Saldo restante (${ctAdminFormatarPreco(alvoSaldo)}) pago</div>
           <button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminDesfazerPagamentoSaldo('${ped.orderNsu}')" title="Confirmou errado? Volta pra aguardando">↩️ Desfazer pagamento do saldo</button>`;
       } else {
-        saldoHtml = `
-          <div style="font-size:.72rem;font-weight:700;color:#8c5a00;margin-top:2px">📅 Saldo restante (${ctAdminFormatarPreco(ped.total - ped.valorPedido)}) previsto pra ${ctAdminFormatarDataBR(ped.dataPagamentoSaldo)}</div>
-          <button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px" onclick="ctAdminConfirmarPagamentoSaldo('${ped.orderNsu}')">✓ Confirmar pagamento do saldo</button>`;
+        const faltaSaldo = alvoSaldo - (ped.valorPagoSaldo || 0);
+        if (ped.statusSaldo === 'parcial') {
+          saldoHtml = `<div style="font-size:.72rem;font-weight:700;color:#8c5a00;margin-top:2px">🟡 ${ctAdminFormatarPreco(ped.valorPagoSaldo)} de ${ctAdminFormatarPreco(alvoSaldo)} do saldo pago — faltam ${ctAdminFormatarPreco(faltaSaldo)}</div>`;
+        } else {
+          saldoHtml = `<div style="font-size:.72rem;font-weight:700;color:#8c5a00;margin-top:2px">📅 Saldo restante (${ctAdminFormatarPreco(alvoSaldo)}) previsto pra ${ctAdminFormatarDataBR(ped.dataPagamentoSaldo)}</div>`;
+        }
+        saldoHtml += `
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">
+            <input type="number" step="0.01" min="0.01" id="${inputIdSaldo}" value="${faltaSaldo.toFixed(2)}" style="width:76px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;font-size:.76rem">
+            <button class="rm-btn-mes" style="padding:6px 10px;font-size:10px" onclick="ctAdminConfirmarPagamentoSaldoValor('${ped.orderNsu}', '${inputIdSaldo}')">✓ Confirmar valor pago do saldo</button>
+          </div>`;
+        if (ped.statusSaldo === 'parcial') {
+          saldoHtml += `<button class="rm-btn-mes" style="padding:6px 10px;margin-top:4px;font-size:10px;background:none;border:1px solid var(--border);color:var(--text-dim)" onclick="ctAdminDesfazerPagamentoSaldo('${ped.orderNsu}')" title="Zera o valor pago, volta pra aguardando">↩️ Zerar valor pago do saldo</button>`;
+        }
       }
     }
     return `
@@ -23132,16 +23172,24 @@ function ctAdminEncerrarECriarNovo() {
 }
 window.ctAdminEncerrarECriarNovo = ctAdminEncerrarECriarNovo;
 
-async function ctAdminConfirmarPagamento(orderNsu) {
+// confirma o valor de verdade recebido — lê o <input> do próprio card (o
+// valor já vem pré-preenchido com o que falta pagar, então um clique sem
+// mexer no número confirma o valor cheio; a admin só edita quando foi
+// pagamento parcial)
+async function ctAdminConfirmarPagamentoValor(orderNsu, inputId) {
+  const valor = parseFloat(document.getElementById(inputId).value);
+  if (!(valor > 0)) { alert('Informe um valor válido.'); return; }
   try {
     const res = await fetch('/api/camiseta', {
       method: 'PUT', headers: RIFA_ADMIN_HEADERS,
-      body: JSON.stringify({ acao: 'confirmar-pagamento', orderNsu }),
+      body: JSON.stringify({ acao: 'confirmar-pagamento-valor', orderNsu, valor }),
     });
-    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
-  } catch (e) { /* tenta de novo depois, se precisar */ }
+    const data = await res.json();
+    if (res.ok) { ctAdminProduto = data; ctAdminRender(); }
+    else alert(data.error || 'Erro ao confirmar.');
+  } catch (e) { alert('Erro ao confirmar.'); }
 }
-window.ctAdminConfirmarPagamento = ctAdminConfirmarPagamento;
+window.ctAdminConfirmarPagamentoValor = ctAdminConfirmarPagamentoValor;
 
 // desfaz uma confirmação de pagamento feita errado (ex: clicou no pedido
 // errado) — volta pra "aguardando"
@@ -23159,16 +23207,21 @@ async function ctAdminDesfazerPagamento(orderNsu) {
 }
 window.ctAdminDesfazerPagamento = ctAdminDesfazerPagamento;
 
-async function ctAdminConfirmarPagamentoSaldo(orderNsu) {
+// mesma ideia, pro saldo (valor parcial também aceito)
+async function ctAdminConfirmarPagamentoSaldoValor(orderNsu, inputId) {
+  const valor = parseFloat(document.getElementById(inputId).value);
+  if (!(valor > 0)) { alert('Informe um valor válido.'); return; }
   try {
     const res = await fetch('/api/camiseta', {
       method: 'PUT', headers: RIFA_ADMIN_HEADERS,
-      body: JSON.stringify({ acao: 'confirmar-pagamento-saldo', orderNsu }),
+      body: JSON.stringify({ acao: 'confirmar-pagamento-saldo-valor', orderNsu, valor }),
     });
-    if (res.ok) { ctAdminProduto = await res.json(); ctAdminRender(); }
-  } catch (e) { /* tenta de novo depois, se precisar */ }
+    const data = await res.json();
+    if (res.ok) { ctAdminProduto = data; ctAdminRender(); }
+    else alert(data.error || 'Erro ao confirmar.');
+  } catch (e) { alert('Erro ao confirmar.'); }
 }
-window.ctAdminConfirmarPagamentoSaldo = ctAdminConfirmarPagamentoSaldo;
+window.ctAdminConfirmarPagamentoSaldoValor = ctAdminConfirmarPagamentoSaldoValor;
 
 // mesma ideia, pro saldo — pra quando a admin confirmou o saldo achando
 // que a pessoa tinha pago tudo, mas só pagou o sinal
