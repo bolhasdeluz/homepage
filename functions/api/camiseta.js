@@ -536,24 +536,36 @@ export async function onRequest(context) {
         return json(produto);
       }
 
-      // CONFIRMAR PAGAMENTO manualmente — fallback pra quando a pessoa pagou
+      // CONFIRMAR VALOR PAGO manualmente — fallback pra quando a pessoa pagou
       // pelo Pix direto (sem o link automático), ou quando o pagamento foi
-      // combinado "pra depois" — a admin confere na mão. Confirma o valor
-      // que o pedido tinha marcado como pendente (sinal ou total).
-      if (acao === 'confirmar-pagamento') {
+      // combinado "pra depois" — a admin confere na mão, informando o valor
+      // de verdade que recebeu (pode ser menor que o esperado — pagamento
+      // parcial, ex: deu só uma parte do sinal). "valorPago" é sempre o
+      // total já recebido até agora (não soma, substitui), pra admin poder
+      // corrigir um valor digitado errado só mandando o valor certo de novo.
+      if (acao === 'confirmar-pagamento-valor') {
         const orderNsu = String(body.orderNsu || '');
         const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
         if (!pedido) return json({ error: 'Pedido não encontrado.' }, 404);
-        pedido.status = 'pago';
-        pedido.pagoEm = Date.now();
+        const valor = Number(body.valor);
+        if (!(valor > 0)) return json({ error: 'Informe um valor válido.' }, 400);
+        pedido.valorPago = valor;
+        if (valor >= pedido.valorPedido) {
+          pedido.status = 'pago';
+          pedido.pagoEm = Date.now();
+        } else {
+          pedido.status = 'parcial';
+          delete pedido.pagoEm;
+        }
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
 
       // DESFAZER CONFIRMAÇÃO DE PAGAMENTO — pra quando a admin confirma
-      // errado (ex: clicou no pedido errado) e precisa voltar pra
-      // "aguardando". Só desfaz se ainda não foi entregue, pra não deixar
-      // um pedido marcado como entregue sem nunca ter sido pago
+      // errado (ex: clicou no pedido errado, ou digitou o valor errado) e
+      // precisa voltar pra "aguardando" do zero. Só desfaz se ainda não foi
+      // entregue, pra não deixar um pedido marcado como entregue sem nunca
+      // ter sido pago
       if (acao === 'desfazer-pagamento') {
         const orderNsu = String(body.orderNsu || '');
         const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
@@ -561,26 +573,36 @@ export async function onRequest(context) {
         if (pedido.entregue) return json({ error: 'Esse pedido já foi marcado como entregue — desfaça a entrega primeiro.' }, 400);
         pedido.status = 'aguardando';
         delete pedido.pagoEm;
+        delete pedido.valorPago;
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
 
-      // CONFIRMAR PAGAMENTO DO SALDO — quando o pedido era só o sinal, esse
-      // é o segundo pagamento (o restante), confirmado na mão também
-      if (acao === 'confirmar-pagamento-saldo') {
+      // CONFIRMAR VALOR PAGO DO SALDO — quando o pedido era só o sinal, esse
+      // é o segundo pagamento (o restante), também aceita parcial
+      if (acao === 'confirmar-pagamento-saldo-valor') {
         const orderNsu = String(body.orderNsu || '');
         const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
         if (!pedido) return json({ error: 'Pedido não encontrado.' }, 404);
         if (pedido.valorEscolhido !== 'sinal') return json({ error: 'Esse pedido não tem saldo pendente.' }, 400);
-        pedido.statusSaldo = 'pago';
-        pedido.pagoSaldoEm = Date.now();
+        const valor = Number(body.valor);
+        if (!(valor > 0)) return json({ error: 'Informe um valor válido.' }, 400);
+        const alvo = pedido.total - pedido.valorPedido;
+        pedido.valorPagoSaldo = valor;
+        if (valor >= alvo) {
+          pedido.statusSaldo = 'pago';
+          pedido.pagoSaldoEm = Date.now();
+        } else {
+          pedido.statusSaldo = 'parcial';
+          delete pedido.pagoSaldoEm;
+        }
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
 
       // DESFAZER CONFIRMAÇÃO DE PAGAMENTO DO SALDO — mesma ideia, pro
       // segundo pagamento (ex: confirmou achando que era o pedido certo,
-      // mas a pessoa só tinha pago o sinal)
+      // mas a pessoa só tinha pago uma parte do sinal)
       if (acao === 'desfazer-pagamento-saldo') {
         const orderNsu = String(body.orderNsu || '');
         const pedido = (produto.pedidos || []).find(p => p.orderNsu === orderNsu);
@@ -588,6 +610,7 @@ export async function onRequest(context) {
         if (pedido.valorEscolhido !== 'sinal') return json({ error: 'Esse pedido não tem saldo.' }, 400);
         pedido.statusSaldo = 'aguardando';
         delete pedido.pagoSaldoEm;
+        delete pedido.valorPagoSaldo;
         await KV.put(produto.id, JSON.stringify(produto));
         return json(produto);
       }
