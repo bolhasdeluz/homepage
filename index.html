@@ -2806,6 +2806,22 @@ Não jogamos pra ver a vida de terceiros: cada jogada é sobre a própria caminh
   </div>
 </div>
 
+<!-- Banner (só admin): pessoas que logaram pela 1ª vez e ainda não tiveram
+     o grupo de acesso revisado — ver script logo abaixo do banner do PWA -->
+<div id="admin-novos-banner" style="display:none;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;background:var(--amber-dim);border-bottom:1px solid var(--amber-border);padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--amber)">
+  <span id="admin-novos-texto"></span>
+  <button id="admin-novos-btn" onclick="adminNovosAbrirRevisao()" style="background:var(--rosa);color:#fff;border:none;border-radius:16px;padding:6px 14px;font-size:.72rem;font-weight:600;cursor:pointer;white-space:nowrap">Revisar agora</button>
+</div>
+
+<div id="admin-novos-overlay" class="overlay" onclick="if(event.target===this)adminNovosFecharRevisao()">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="adminNovosFecharRevisao()">×</button>
+    <div class="modal-title" style="font-size:1.2rem">🆕 Pessoas novas no site</div>
+    <p class="modal-sub">Logaram pela primeira vez — confira o grupo de acesso de cada uma ✦</p>
+    <div id="admin-novos-lista"></div>
+  </div>
+</div>
+
 <!-- Banner de instalar como app / ativar notificações — ver script logo abaixo -->
 <div id="pwa-banner" style="display:none;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;background:var(--rosa-dim);border-bottom:1px solid var(--border);padding:9px 16px;font-family:'DM Sans',sans-serif;font-size:.78rem;color:var(--text)">
   <span id="pwa-banner-texto"></span>
@@ -14397,6 +14413,91 @@ async function pgSalvarPerfil(p) {
     if (st3) { st3.textContent = ' ⚠ erro de conexão'; st3.className = 'pg-status erro'; }
   }
 }
+
+// ── BANNER "PESSOAS NOVAS" (só admin) ──
+// cada perfil novo nasce com revisadoAdmin:false (ver functions/api/perfil.js)
+// — assim que a admin confirma o grupo de acesso (ou só confirma que
+// "visitante" mesmo está certo), marca revisadoAdmin:true e some da lista.
+// Perfis antigos (de antes dessa funcionalidade existir) nunca tiveram esse
+// campo, então ficam de fora — não é retroativo, só pega login novo daqui pra frente.
+let adminNovosLista = [];
+
+async function adminNovosVerificar() {
+  if (!souAdminAtivo(window.currentUser)) return;
+  const banner = document.getElementById('admin-novos-banner');
+  if (!banner) return;
+  try {
+    const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
+    if (!res.ok) return;
+    const todos = await res.json();
+    adminNovosLista = todos.filter(p => p.revisadoAdmin === false);
+    if (adminNovosLista.length) {
+      const n = adminNovosLista.length;
+      document.getElementById('admin-novos-texto').textContent = `🆕 ${n} pessoa${n === 1 ? '' : 's'} nova${n === 1 ? '' : 's'} logou no site — revisar grupo de acesso`;
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch (e) {}
+}
+// espera o login (Google ou senha de admin) resolver antes de checar —
+// window.currentUser só fica definido depois que o módulo do Firebase
+// confirma o estado de autenticação
+(function adminNovosEsperar(tentativas) {
+  if (souAdminAtivo(window.currentUser)) { adminNovosVerificar(); return; }
+  if (tentativas <= 0) return;
+  setTimeout(() => adminNovosEsperar(tentativas - 1), 500);
+})(20);
+
+function adminNovosAbrirRevisao() {
+  const wrap = document.getElementById('admin-novos-lista');
+  if (!adminNovosLista.length) {
+    document.getElementById('admin-novos-overlay').classList.remove('open');
+    return;
+  }
+  wrap.innerHTML = adminNovosLista.map((p, i) => {
+    const fotoHtml = p.foto
+      ? `<img src="${p.foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:36px;height:36px;border-radius:50%;background:var(--rosa-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0">👤</div>`;
+    const dataLogin = p.primeiroLogin
+      ? new Date(p.primeiroLogin).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const opcoesHtml = PG_GRUPO_ACESSO_OPCOES.map(([val, label]) => `<option value="${val}" ${p.grupo === val ? 'selected' : ''}>${label}</option>`).join('');
+    return `
+      <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+        ${fotoHtml}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:.85rem">${calEsc(p.nome || p.email)}</div>
+          <div style="font-size:.74rem;color:var(--text-dim)">${calEsc(p.email)} · logou em ${dataLogin}</div>
+          <select class="form-input" style="margin-top:4px;padding:6px 8px;font-size:.78rem" id="admin-novo-grupo-${i}">${opcoesHtml}</select>
+        </div>
+        <button class="rm-btn-mes" style="padding:7px 10px;font-size:10px;flex-shrink:0" onclick="adminNovosMarcarRevisado(${i})">✓ Revisado</button>
+      </div>`;
+  }).join('');
+  document.getElementById('admin-novos-overlay').classList.add('open');
+}
+window.adminNovosAbrirRevisao = adminNovosAbrirRevisao;
+
+function adminNovosFecharRevisao() { document.getElementById('admin-novos-overlay').classList.remove('open'); }
+window.adminNovosFecharRevisao = adminNovosFecharRevisao;
+
+async function adminNovosMarcarRevisado(i) {
+  const p = adminNovosLista[i];
+  if (!p) return;
+  const sel = document.getElementById('admin-novo-grupo-' + i);
+  const grupoEscolhido = sel ? sel.value : p.grupo;
+  try {
+    await fetch('/api/perfil', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin', 'X-User-Email': p.email },
+      body: JSON.stringify({ ...p, grupo: grupoEscolhido, revisadoAdmin: true, solicitacao: 'Revisão de grupo de acesso (login novo)' }),
+    });
+  } catch (e) {}
+  adminNovosLista.splice(i, 1);
+  adminNovosAbrirRevisao();
+  adminNovosVerificar();
+}
+window.adminNovosMarcarRevisado = adminNovosMarcarRevisado;
 
 // ── filtro de colunas ──
 function pgAbrirColunas() {
