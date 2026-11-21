@@ -336,6 +336,7 @@ export async function onRequest(context) {
       const novo = {
         email, nome, foto, cargo: 'Visitante', emoji: '👤',
         grupo: 'visitante',
+        revisadoAdmin: false, // pro banner "pessoas novas" do admin — some de lá assim que a admin confirmar o grupo de acesso
         boasVindas: { comoConheceu: '', tempoFrequenta: '' },
         historia: {}, guias: {}, cruzamentos: {}, notas: '',
         criadoEm: Date.now(), primeiroLogin: Date.now()
