@@ -338,6 +338,12 @@ footer{
 .admin-config-btn{background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-size:.85rem;padding:4px 9px;transition:all .2s;flex-shrink:0}
 .admin-config-btn:hover{border-color:var(--rosa);color:var(--rosa)}
 .admin-config-btn-ativo{background:var(--rosa-dim);border-color:rgba(196,57,107,.3);color:var(--rosa)}
+.admin-vis-resumo{display:flex;align-items:center;gap:1px;flex-shrink:0}
+.admin-vis-icone{font-size:.8rem;transition:opacity .15s}
+.admin-vis-icone.inativo{opacity:.15;filter:grayscale(1)}
+.admin-vis-badge{font-family:'Cinzel',serif;font-size:.56rem;letter-spacing:.04em;padding:3px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.admin-vis-todos{background:var(--rosa-dim);color:var(--rosa)}
+.admin-vis-adminonly{background:rgba(184,64,64,.1);color:#b84040}
 @media(max-width:600px){
   .toggle-pill{font-size:.5rem;padding:3px 7px}
 }
@@ -6547,6 +6553,36 @@ function toggleSecaoColapsada(id) {
   renderAdminPanel();
 }
 
+function renderVisResumoSecao(sec) {
+  if (sec.adminOnly) {
+    return `<span class="admin-vis-badge admin-vis-adminonly" title="Seção só aparece pra administradores">🔒 só admin</span>`;
+  }
+  if (!sec.grupos) {
+    return `<span class="admin-vis-badge admin-vis-todos" title="Sem restrição própria — cada item decide a sua">🌍 sem restrição</span>`;
+  }
+  const todos = Object.keys(CFG_GRUPOS_DEFS);
+  return `<span class="admin-vis-resumo" title="Só vê: ${sec.grupos.map(g => CFG_GRUPOS_DEFS[g]).join(', ')}">` +
+    todos.map(g => `<span class="admin-vis-icone ${sec.grupos.includes(g) ? 'ativo' : 'inativo'}">${CFG_GRUPOS_DEFS[g].split(' ')[0]}</span>`).join('') +
+    `</span>`;
+}
+function renderVisResumoItem(sec, item) {
+  if (sec.adminOnly || item.adminOnly) {
+    return `<span class="admin-vis-badge admin-vis-adminonly" title="Só aparece pra administradores">🔒 só admin</span>`;
+  }
+  const todos = Object.keys(CFG_GRUPOS_DEFS);
+  const itemGrupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
+  const secGrupos = sec.grupos || todos;
+  const efetivo = itemGrupos.filter(g => secGrupos.includes(g));
+  if (efetivo.length === todos.length) {
+    return `<span class="admin-vis-badge admin-vis-todos" title="Visível pra todo mundo">🌍 todo mundo</span>`;
+  }
+  if (!efetivo.length) {
+    return `<span class="admin-vis-badge admin-vis-adminonly" title="Nenhum grupo vê isso no momento">🚫 ninguém vê</span>`;
+  }
+  return `<span class="admin-vis-resumo" title="Só vê: ${efetivo.map(g => CFG_GRUPOS_DEFS[g]).join(', ')}">` +
+    todos.map(g => `<span class="admin-vis-icone ${efetivo.includes(g) ? 'ativo' : 'inativo'}">${CFG_GRUPOS_DEFS[g].split(' ')[0]}</span>`).join('') +
+    `</span>`;
+}
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
   if (!container || !menuData) return;
@@ -6569,6 +6605,7 @@ function renderAdminPanel() {
             title="Clique para editar o nome da seção">
         </div>
         <span class="admin-section-contagem">${sec.items.length}</span>
+        ${renderVisResumoSecao(sec)}
         <button class="admin-config-btn ${(sec.grupos || sec.adminOnly) ? 'admin-config-btn-ativo' : ''}" onclick="abrirConfigSecao(${si})" title="Visibilidade por grupo da seção inteira">⚙</button>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
@@ -6586,6 +6623,7 @@ function renderAdminPanel() {
             onkeydown="if(event.key==='Enter'){moveItemToPosition(${si},${ii},this.value);this.blur()}"
             onblur="moveItemToPosition(${si},${ii},this.value)">
           <span class="admin-item-label">${item.label}</span>
+          ${renderVisResumoItem(sec, item)}
           <button class="admin-config-btn" onclick="abrirConfigItem(${si},${ii})" title="Configurar (visibilidade, edição, mover de seção, apagar)">⚙</button>
         </div>`).join('')}
       </div>
