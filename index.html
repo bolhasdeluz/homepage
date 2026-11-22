@@ -21157,8 +21157,8 @@ const auth = getAuth(app);
       // com as chaves de OR_TIPOS (quimbanda, caboclos, ciganos, cosmes,
       // desenvolvimento, obrigacao, cruzamento, pretosvelhos)
       itens: [
-        { emoji: '🙏', texto: 'A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs, e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.', ativo: true, categoria: 'universal' },
-        { emoji: '🏠', texto: 'Resguardo', ativo: true, categoria: 'universal' },
+        { emoji: '🙏', texto: 'A primeira coisa a fazer ao chegar é cumprimentar a tronqueira. Depois troque de roupa, coloque a sua roupa de terreiro, para então entrar no salão e cumprimentar o congá e os seus irmãos. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.', ativo: true, categoria: 'universal' },
+        { emoji: '🏠', texto: 'Resguardo: na véspera e no dia da sessão, cuide do corpo e da energia, sem álcool, sem relação sexual, sem comida pesada ou desconhecida, e com uma boa noite de sono. Não é regra por regra, é pelo seu bem-estar e o de quem divide a corrente com você.', ativo: true, categoria: 'universal' },
         { emoji: '🌿', texto: 'Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar: durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.', ativo: true, categoria: 'universal' },
         { emoji: '👳', texto: '30 minutos antes da sessão começar, se direcionem para o salão e comecem a se concentrar. É o momento de concentração e recados.', ativo: true, categoria: 'universal' },
         { emoji: '🤫', texto: 'Silêncio e concentração: Ao chegar no terreiro, não é o momento de reencontros e brincadeiras. Coloque a roupa de sessão, e conforme os preparativos vão se finalizando, vão indo para o salão, sentando lá já se posicionando para o início dos trabalhos.', ativo: true, categoria: 'universal' },
@@ -21217,10 +21217,17 @@ const auth = getAuth(app);
 
     // reescritas de texto aplicadas a quem já tinha um template salvo no
     // Firestore antes dessas mudanças (tirar travessão, trocar a mensagem da
-    // chegada por uma sem horário fixo) — ver orCarregarTemplate()
+    // chegada por uma sem horário fixo, explicar o resguardo, reordenar o
+    // cumprimento ao chegar) — ver orCarregarTemplate(). Em sequência: um
+    // item que já passou por uma migração anterior encadeia pra próxima no
+    // mesmo carregamento, sem precisar abrir e salvar duas vezes.
     const OR_MIGRACOES_TEXTO = [
       ['A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs — e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.',
        'A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs, e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.'],
+      ['A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs, e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.',
+       'A primeira coisa a fazer ao chegar é cumprimentar a tronqueira. Depois troque de roupa, coloque a sua roupa de terreiro, para então entrar no salão e cumprimentar o congá e os seus irmãos. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.'],
+      ['Resguardo',
+       'Resguardo: na véspera e no dia da sessão, cuide do corpo e da energia, sem álcool, sem relação sexual, sem comida pesada ou desconhecida, e com uma boa noite de sono. Não é regra por regra, é pelo seu bem-estar e o de quem divide a corrente com você.'],
       ['Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar — durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.',
        'Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar: durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.'],
       ['De acordo com a agenda, a chegada é 30 minutos antes do horário da sessão — momento de concentração e recados.',
