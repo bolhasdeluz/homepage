@@ -3710,8 +3710,7 @@ async function pwaInscreverPush() {
         <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
       </div>
       <div class="or-row">
-        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente (concentração e recados)</label><input type="time" id="or-inp-chegada"></div>
-        <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
+        <div class="or-campo" style="flex:1 1 100%"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
       </div>
       <div class="or-row">
         <div class="or-campo" style="flex:1 1 100%">
@@ -21151,7 +21150,6 @@ const auth = getAuth(app);
     };
 
     const OR_PADRAO = {
-      horaChegada: '20:00',
       horaInicio: '21:00',
       // categoria agrupa a exibição da lista (ver OR_CATEGORIA_LABEL/OR_CATEGORIA_ORDEM):
       // 'universal' = sempre ativo em toda sessão; 'geral' = opcional, mas serve
@@ -21159,10 +21157,10 @@ const auth = getAuth(app);
       // com as chaves de OR_TIPOS (quimbanda, caboclos, ciganos, cosmes,
       // desenvolvimento, obrigacao, cruzamento, pretosvelhos)
       itens: [
-        { emoji: '🙏', texto: 'A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs — e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.', ativo: true, categoria: 'universal' },
+        { emoji: '🙏', texto: 'A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs, e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.', ativo: true, categoria: 'universal' },
         { emoji: '🏠', texto: 'Resguardo', ativo: true, categoria: 'universal' },
-        { emoji: '🌿', texto: 'Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar — durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.', ativo: true, categoria: 'universal' },
-        { emoji: '👳', texto: 'De acordo com a agenda, a chegada é 30 minutos antes do horário da sessão — momento de concentração e recados.', ativo: true, categoria: 'universal' },
+        { emoji: '🌿', texto: 'Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar: durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.', ativo: true, categoria: 'universal' },
+        { emoji: '👳', texto: '30 minutos antes da sessão começar, se direcionem para o salão e comecem a se concentrar. É o momento de concentração e recados.', ativo: true, categoria: 'universal' },
         { emoji: '🤫', texto: 'Silêncio e concentração: Ao chegar no terreiro, não é o momento de reencontros e brincadeiras. Coloque a roupa de sessão, e conforme os preparativos vão se finalizando, vão indo para o salão, sentando lá já se posicionando para o início dos trabalhos.', ativo: true, categoria: 'universal' },
         { emoji: '🕯️', texto: 'Defumação, pólvora, frentes e axés: Momento de seriedade e concentrar a sua energia e intenções.', ativo: true, categoria: 'universal' },
         { emoji: '🤐', texto: 'Se atente! Não puxe conversa com quem está concentrado e trabalhando.', ativo: true, categoria: 'universal' },
@@ -21198,7 +21196,7 @@ const auth = getAuth(app);
         { emoji: '☕', texto: 'Café temos, mas eles também gostam muito de sucos, e alguns bebem vinho também.', ativo: false, categoria: 'pretosvelhos' },
         { emoji: '🌽', texto: 'Nossos pretos e pretas adoraaam comida salgada', ativo: false, categoria: 'pretosvelhos' },
         { emoji: '🧐', texto: 'Quero ver todo mundo de bracinho torto, trazendo banquinho, bengala, chapéu, caixinha', ativo: false, categoria: 'pretosvelhos' },
-        { emoji: '🧦', texto: 'Tragam uma muda de roupa seca e quentinha - e toalha grande - para voltarem confortáveis.', ativo: false, categoria: 'externa' },
+        { emoji: '🧦', texto: 'Tragam uma muda de roupa seca e quentinha, e toalha grande, para voltarem confortáveis.', ativo: false, categoria: 'externa' },
         { emoji: '☔', texto: 'Em caso de chuva, tocaremos da casa da Mãe Jurema', ativo: false, categoria: 'externa' },
         { emoji: '💡', texto: 'Tem iluminação no local mas por via das dúvidas tragam suas lanterninhas.', ativo: false, categoria: 'externa' },
         // bloco de conduta/segurança que ela manda em sessões externas com
@@ -21207,15 +21205,35 @@ const auth = getAuth(app);
         { emoji: '👉', texto: 'No momento da ritualística não é o melhor momento para dúvidas teóricas mais complexas. Guardem para mandar no grupo depois, ou perguntar no privado. É o momento de aprender observando, hora da prática.', ativo: false, categoria: 'externa' },
         { emoji: '👉', texto: 'Mantenham os olhos nos guias e pessoas que estão fazendo a ritualística, eles podem precisar de apoio rápido. Se não entendeu o que foi pedido, pergunte claramente; se o guia demonstra urgência, busque um mais velho.', ativo: false, categoria: 'externa' },
         { emoji: '👉', texto: 'A saia está na vela durante o passe? Se abaixe e segure até o trabalho terminar. Médium desincorporando? Mantenha-se próximo sem encostar, atento pra dar apoio. Os guias não costumam chamar vocalmente primeiro, eles buscam com os olhos.', ativo: false, categoria: 'externa' },
-        { emoji: '👉', texto: 'Batam palma, saúdem, cantem — é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!', ativo: false, categoria: 'externa' },
-        { emoji: '👮', texto: 'Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento — oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.', ativo: false, categoria: 'externa' },
-        { emoji: '👮', texto: 'Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana — protejam os cavalos, sejam segurança das entidades em terra.', ativo: false, categoria: 'externa' }
+        { emoji: '👉', texto: 'Batam palma, saúdem, cantem: é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!', ativo: false, categoria: 'externa' },
+        { emoji: '👮', texto: 'Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento: oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.', ativo: false, categoria: 'externa' },
+        { emoji: '👮', texto: 'Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana: protejam os cavalos, sejam segurança das entidades em terra.', ativo: false, categoria: 'externa' }
       ],
       mensalidadeMin: 60,
       mensalidadeMax: 90,
       email: 'bolhasdeluz@gmail.com',
       link: 'https://loja.infinitepay.io/bolhasdeluz'
     };
+
+    // reescritas de texto aplicadas a quem já tinha um template salvo no
+    // Firestore antes dessas mudanças (tirar travessão, trocar a mensagem da
+    // chegada por uma sem horário fixo) — ver orCarregarTemplate()
+    const OR_MIGRACOES_TEXTO = [
+      ['A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs — e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.',
+       'A primeira coisa a se fazer ao chegar: cumprimentar os pontos de força, a Mãe de Santo, os padrinhos (quem tem) e as irmãs, e só depois ir trocar de roupa. Organizar o salão ou fazer frente é sempre depois de trocada, nunca antes.'],
+      ['Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar — durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.',
+       'Banho de ervas: momento de conversar com os seus guias, fazer suas perguntas, pedir respostas durante os trabalhos. Momento de se conectar: durante a sessão, deixe a mente livre, e o que eles quiserem responder, eles vão responder.'],
+      ['De acordo com a agenda, a chegada é 30 minutos antes do horário da sessão — momento de concentração e recados.',
+       '30 minutos antes da sessão começar, se direcionem para o salão e comecem a se concentrar. É o momento de concentração e recados.'],
+      ['Tragam uma muda de roupa seca e quentinha - e toalha grande - para voltarem confortáveis.',
+       'Tragam uma muda de roupa seca e quentinha, e toalha grande, para voltarem confortáveis.'],
+      ['Batam palma, saúdem, cantem — é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!',
+       'Batam palma, saúdem, cantem: é uma religião de energia, música, corpos, calor. Respeitem o silêncio de quem está mais introspectivo, e comuniquem com educação quando não quiserem conversar. Respeito mútuo, comunicação é a chave de tudo!'],
+      ['Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento — oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.',
+       'Segurança em sessões externas: quando transeuntes se aproximam, os guias lidam com o primeiro contato. Se nenhum guia der atenção é porque não é o momento: oriente a aguardar, e peça licença a um guia em terra quando for a hora certa. Se a pessoa se mostrar alterada, os médiuns devem intervir protegendo a espiritualidade e quem está em transe.'],
+      ['Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana — protejam os cavalos, sejam segurança das entidades em terra.',
+       'Se os guias já orientaram a se retirar e a pessoa insistir, chame a polícia se necessário (os guias costumam chamá-la de "os Oguns"). Na rua é mais difícil controlar de forma humana: protejam os cavalos, sejam segurança das entidades em terra.']
+    ];
 
     function orNomeAtual() { return currentUser ? (currentUser.displayName || currentUser.email) : 'Anônimo'; }
     function orFmtDataISO(dataStr) {
@@ -21225,16 +21243,6 @@ const auth = getAuth(app);
       const DIAS = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
       const MESES3 = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       return `${DIAS[dataObj.getDay()]}, ${parseInt(d)} de ${MESES3[parseInt(m)-1]}`;
-    }
-
-    // calcula um horário "HH:MM" menos N minutos — usado pra puxar
-    // automaticamente a chegada da corrente (concentração e recados) como
-    // 30 min antes do início, direto da agenda
-    function orHoraMenosMinutos(hora, minutos) {
-      const [h, m] = hora.split(':').map(Number);
-      let total = h * 60 + m - minutos;
-      total = ((total % 1440) + 1440) % 1440;
-      return String(Math.floor(total / 60)).padStart(2, '0') + ':' + String(total % 60).padStart(2, '0');
     }
 
     // ── CARREGAR AGENDA (todas as sessões futuras, não só a próxima) ──
@@ -21291,9 +21299,6 @@ const auth = getAuth(app);
       document.getElementById('or-inp-titulo').value = s.nome || '';
       if (s.hora) {
         document.getElementById('or-inp-inicio').value = s.hora;
-        // chegada da corrente (momento de concentração e recados) — sempre
-        // 30 min antes do horário da sessão, direto da agenda
-        document.getElementById('or-inp-chegada').value = orHoraMenosMinutos(s.hora, 30);
       }
     }
     document.getElementById('or-sel-sessao')?.addEventListener('change', e => {
@@ -21310,13 +21315,20 @@ const auth = getAuth(app);
       if (!orTemplate.itens) {
         orTemplate.itens = JSON.parse(JSON.stringify(OR_PADRAO.itens));
       } else {
+        // reescritas de texto de itens já existentes (tirar travessão, trocar
+        // a mensagem da chegada por uma sem horário fixo etc.) — atualiza o
+        // texto no lugar, preservando o "ativo" que a admin já tinha marcado,
+        // em vez de deixar a versão antiga parada e duplicar com a nova
+        OR_MIGRACOES_TEXTO.forEach(([antigo, novo]) => {
+          const item = orTemplate.itens.find(it => it.texto === antigo);
+          if (item) item.texto = novo;
+        });
         // itens novos adicionados no catálogo (pelo código) depois que a
         // admin já tinha um template salvo no Firestore — sem isso, um
         // item novo nunca apareceria pra quem já salvou um template antes
         const textosExistentes = new Set(orTemplate.itens.map(it => it.texto));
         OR_PADRAO.itens.forEach(it => { if (!textosExistentes.has(it.texto)) orTemplate.itens.push(JSON.parse(JSON.stringify(it))); });
       }
-      document.getElementById('or-inp-chegada').value = orTemplate.horaChegada || OR_PADRAO.horaChegada;
       document.getElementById('or-inp-inicio').value = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio || OR_PADRAO.horaInicio;
       orRenderItensFixos();
       orRenderMensPreview();
@@ -21450,7 +21462,6 @@ const auth = getAuth(app);
     });
     function orAplicarTipo(tipoKey) {
       const cfg = OR_TIPOS[tipoKey] || OR_TIPOS.outro;
-      document.getElementById('or-emoji-chegada').textContent = '👳';
       document.getElementById('or-emoji-inicio').textContent = cfg.inicioEmoji;
       const tituloEl = document.getElementById('or-inp-titulo');
       // só substitui o título se estiver vazio ou ainda for uma sugestão automática anterior —
@@ -21515,7 +21526,6 @@ const auth = getAuth(app);
     // ── GERAR MENSAGEM ──
     function orGerarTexto() {
       const titulo = document.getElementById('or-inp-titulo').value.trim() || 'Sessão';
-      const chegada = document.getElementById('or-inp-chegada').value || orTemplate.horaChegada;
       const inicio = document.getElementById('or-inp-inicio').value || orTemplate.horaInicio;
       const obs = document.getElementById('or-inp-obs').value.trim();
       const incluirMens = document.getElementById('or-check-mensalidade').checked;
@@ -21524,7 +21534,6 @@ const auth = getAuth(app);
       const emojiInicio = document.getElementById('or-emoji-inicio')?.textContent || cfg.inicioEmoji;
 
       let txt = `${cfg.tituloEmoji} ${titulo}\n\n`;
-      txt += `👳 Chegada da Corrente: ${chegada}\n`;
       txt += `${emojiInicio} Início dos Trabalhos: ${inicio}\n\n`;
       const ASSISTENCIA_TEXTO = { aberta: 'Sessão aberta à assistência', sem: 'Sessão sem atendimentos', fechada: 'Sessão fechada' };
       txt += `👫 ${ASSISTENCIA_TEXTO[orAssistencia] || ASSISTENCIA_TEXTO.aberta}\n`;
