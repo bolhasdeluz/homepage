@@ -91,13 +91,20 @@ a{text-decoration:none;color:inherit}
 // visíveis pro grupo 'filhas' mas que NÃO aparecem pro 'publico' — ou seja,
 // só desbloqueiam de verdade depois do login. Itens marcados "só admin"
 // (adminOnly, ou dentro de uma seção adminOnly) nunca entram aqui.
+// "🌍 Público" funciona como coringa no topo da hierarquia de grupos — mesma
+// regra usada no Menu do Site (index.html, função grupoVisivel): se o item
+// (ou a seção) está marcado pra público, vale pra todo mundo, inclusive quem
+// é da corrente
+function tourGrupoVisivel(grupos, grupo) {
+  return grupos.includes('publico') || grupos.includes(grupo);
+}
 function tourItemVisivel(sec, item, grupo) {
   if (item.showCard === false) return false;
   if (item.adminOnly) return false;
   if (sec.adminOnly) return false;
-  if (sec.grupos && !sec.grupos.includes(grupo)) return false;
+  if (sec.grupos && !tourGrupoVisivel(sec.grupos, grupo)) return false;
   const grupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
-  return grupos.includes(grupo);
+  return tourGrupoVisivel(grupos, grupo);
 }
 
 // mesma resolução de destino que renderCards() faz por onclick, adaptada
