@@ -31,8 +31,11 @@ export async function onRequestOptions() {
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  const tokenRecebido = request.headers.get('asaas-access-token') || '';
-  const tokenEsperado = env.ASAAS_WEBHOOK_TOKEN || '';
+  // .trim() — cópia/cola (principalmente pelo celular) às vezes gruda um
+  // espaço ou quebra de linha invisível no valor, derrubando a comparação
+  // mesmo com o token "certo"
+  const tokenRecebido = (request.headers.get('asaas-access-token') || '').trim();
+  const tokenEsperado = (env.ASAAS_WEBHOOK_TOKEN || '').trim();
   const autenticado = !!tokenEsperado && tokenRecebido === tokenEsperado;
 
   const textoBruto = await request.text();
@@ -42,6 +45,14 @@ export async function onRequestPost(context) {
   const entrada = {
     recebidoEm: new Date().toISOString(),
     autenticado,
+    // diagnóstico temporário pra achar a diferença entre os dois tokens sem
+    // expor nenhum dos dois por completo no log — remover depois de resolvido
+    debugToken: {
+      recebidoLen: tokenRecebido.length,
+      esperadoLen: tokenEsperado.length,
+      recebidoPrefixo: tokenRecebido.slice(0, 8),
+      esperadoPrefixo: tokenEsperado.slice(0, 8),
+    },
     // só os headers relevantes pra depurar — não precisa do resto
     headers: {
       'asaas-access-token-presente': !!tokenRecebido,
