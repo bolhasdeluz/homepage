@@ -63,6 +63,27 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
 .mp-item-obs{font-family:'Crimson Pro',serif;font-size:.8rem;color:var(--text-dim);font-style:italic;margin-top:2px}
 .mp-item-valor{font-family:'Crimson Pro',serif;font-size:1.05rem;font-weight:700;color:var(--green);white-space:nowrap}
 
+.mp-card-gastos-box{cursor:pointer;transition:background .15s}
+.mp-card-gastos-box:hover{background:rgba(255,255,255,.18)}
+.mp-card-gastos-dica{font-family:'DM Sans',sans-serif;font-size:.56rem;color:rgba(255,255,255,.4);margin-top:1px}
+
+.mp-popup-overlay{position:fixed;inset:0;background:rgba(40,10,20,.5);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:900;padding:16px}
+.mp-popup-overlay.aberto{display:flex}
+.mp-popup-modal{background:#fff;border-radius:18px;width:460px;max-width:100%;max-height:82vh;overflow-y:auto;box-shadow:0 12px 50px rgba(140,58,26,.22)}
+.mp-popup-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:18px 18px 4px}
+.mp-popup-topo h3{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:600;color:var(--text)}
+.mp-popup-sub{font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim)}
+.mp-popup-fechar{flex-shrink:0;background:var(--rosa-dim);border:none;color:var(--rosa);border-radius:50%;width:26px;height:26px;font-size:13px}
+.mp-popup-corpo{padding:10px 18px 20px}
+.mp-gasto-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(196,90,30,.08)}
+.mp-gasto-item:last-child{border-bottom:none}
+.mp-gasto-conta{font-family:'Cinzel',serif;font-size:.72rem;color:var(--text)}
+.mp-gasto-data{font-family:'Crimson Pro',serif;font-size:.72rem;font-style:italic;color:var(--text-dim);margin-top:1px}
+.mp-gasto-obs{font-family:'Crimson Pro',serif;font-size:.75rem;color:var(--text-dim);font-style:italic;margin-top:2px}
+.mp-gasto-valor{font-family:'Crimson Pro',serif;font-size:.9rem;font-weight:700;color:#a5362a;white-space:nowrap}
+.mp-popup-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:12px;border-top:2px solid var(--border);font-family:'Cinzel',serif;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim)}
+.mp-popup-total span:last-child{font-family:'Crimson Pro',serif;font-size:1rem;font-weight:700;color:#a5362a;text-transform:none;letter-spacing:0}
+
 .mp-mes-resumo{background:#fff;border:1px solid var(--border);border-radius:12px;padding:11px 16px;margin-bottom:7px;box-shadow:0 2px 10px rgba(196,57,107,.05)}
 .mp-mes-resumo-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .mp-mes-resumo-nome{font-family:'Playfair Display',serif;font-size:.9rem;font-weight:600;color:var(--text)}
@@ -130,12 +151,29 @@ body::before{content:'';position:fixed;inset:0;z-index:-3;
         <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">↑ Entradas</div>
         <div id="mp-card-entradas" style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>
       </div>
-      <div style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;">
+      <div class="mp-card-gastos-box" style="flex:1;background:rgba(255,255,255,.1);border-radius:7px;padding:7px 10px;" onclick="mpAbrirDetalheGastos()">
         <div style="font-family:'DM Sans',sans-serif;font-size:.62rem;color:rgba(255,255,255,.55);">↓ Gastos</div>
         <div id="mp-card-gastos" style="font-family:'Crimson Pro',serif;font-size:.95rem;font-weight:600;color:#fff;">R$ 0,00</div>
+        <div class="mp-card-gastos-dica">toque pra ver o detalhamento</div>
       </div>
     </div>
     <div id="mp-card-faltam" style="margin-top:7px;font-family:'DM Sans',sans-serif;font-size:.67rem;color:rgba(255,255,255,.45);"></div>
+  </div>
+
+  <div class="mp-popup-overlay" id="mp-gastos-overlay" onclick="if(event.target===this)mpFecharDetalheGastos()">
+    <div class="mp-popup-modal">
+      <div class="mp-popup-topo">
+        <div>
+          <h3>🧾 Gastos do mês</h3>
+          <div class="mp-popup-sub" id="mp-gastos-popup-mes"></div>
+        </div>
+        <button class="mp-popup-fechar" onclick="mpFecharDetalheGastos()">✕</button>
+      </div>
+      <div class="mp-popup-corpo">
+        <div id="mp-gastos-lista"></div>
+        <div class="mp-popup-total"><span>Total</span><span id="mp-gastos-total"></span></div>
+      </div>
+    </div>
   </div>
 
   <div id="mp-meses-anteriores-wrap" style="display:none;margin-bottom:22px">
@@ -315,6 +353,11 @@ window.toggleMesesAnteriores = function() {
 // ── CARD COLETIVO DO MÊS — mesmo cálculo do card "Pagantes/Coberto" da
 // Tesouraria, mas sem expor os nomes de quem ainda não pagou (só a
 // quantidade), já que aqui quem vê é qualquer pessoa logada, não só a admin
+// cache dos gastos do mês atual, pro popup de detalhamento (mpAbrirDetalheGastos)
+// não precisar buscar os lançamentos de novo
+let MP_GASTOS_MES_ATUAL = [];
+let MP_LABEL_MES_ATUAL = '';
+
 async function carregarCardMensalidade() {
   try {
     const res = await fetch('/api/dados?chave=lancamentos');
@@ -323,8 +366,10 @@ async function carregarCardMensalidade() {
     const mes = today().slice(0, 7);
 
     const d = calcularStatsMes(lista, mes);
+    MP_GASTOS_MES_ATUAL = lancamentosDoMes(lista, mes).filter(l => l.tipo === 'gasto');
 
     const [ano, mesNum] = mes.split('-');
+    MP_LABEL_MES_ATUAL = MESES_NOMES[parseInt(mesNum, 10) - 1] + ' de ' + ano;
     document.getElementById('mp-card-mes-label').textContent = MESES_NOMES[parseInt(mesNum, 10) - 1] + ' ' + ano;
     document.getElementById('mp-card-pct-pag').textContent = d.pctPag + '%';
     document.getElementById('mp-card-pag-sub').textContent = d.nPag + '/' + d.nTot + ' membros';
@@ -351,6 +396,43 @@ async function carregarCardMensalidade() {
     console.warn('card mensalidade:', e);
   }
 }
+
+function mpFmtDataCurta(data) {
+  if (!data) return '';
+  const [, m, d] = data.split('-');
+  return d && m ? `${d}/${m}` : '';
+}
+
+// detalhamento dos gastos do mês atual — abre a partir da caixa "Gastos" do
+// card coletivo; usa o que já foi buscado em carregarCardMensalidade(), sem
+// precisar buscar os lançamentos de novo. Precisam estar em window porque o
+// onclick inline do HTML não enxerga o escopo deste <script type="module">.
+window.mpAbrirDetalheGastos = function mpAbrirDetalheGastos() {
+  document.getElementById('mp-gastos-popup-mes').textContent = MP_LABEL_MES_ATUAL;
+  const listaEl = document.getElementById('mp-gastos-lista');
+  if (!MP_GASTOS_MES_ATUAL.length) {
+    listaEl.innerHTML = '<div class="mp-vazio" style="padding:20px 0">Nenhum gasto registrado nesse mês ainda.</div>';
+  } else {
+    const ordenados = [...MP_GASTOS_MES_ATUAL].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    listaEl.innerHTML = ordenados.map(l => `
+      <div class="mp-gasto-item">
+        <div>
+          <div class="mp-gasto-conta">${l.conta || 'Gasto'}</div>
+          ${l.data ? `<div class="mp-gasto-data">${mpFmtDataCurta(l.data)}</div>` : ''}
+          ${l.obs ? `<div class="mp-gasto-obs">${l.obs}</div>` : ''}
+        </div>
+        <div class="mp-gasto-valor">${fmt(l.valor)}</div>
+      </div>`).join('');
+  }
+  const total = MP_GASTOS_MES_ATUAL.reduce((a, l) => a + (parseFloat(l.valor) || 0), 0);
+  document.getElementById('mp-gastos-total').textContent = fmt(total);
+  document.getElementById('mp-gastos-overlay').classList.add('aberto');
+  document.body.style.overflow = 'hidden';
+};
+window.mpFecharDetalheGastos = function mpFecharDetalheGastos() {
+  document.getElementById('mp-gastos-overlay').classList.remove('aberto');
+  document.body.style.overflow = '';
+};
 
 // e-mails com acesso de admin — mesma lista usada na Tesouraria (blIsEmailAdmin)
 const BL_ADMIN_EMAILS = ['bolhasdeluz@gmail.com', 'annagomes.bdl@gmail.com'];
