@@ -14495,7 +14495,10 @@ async function adminNovosVerificar() {
     const res = await fetch('/api/perfil?todos=1', { headers: { 'X-Admin-Password': 'admin' } });
     if (!res.ok) return;
     const todos = await res.json();
-    adminNovosLista = todos.filter(p => p.revisadoAdmin === false);
+    // exige um "@" de verdade no e-mail — já apareceu lixo de dados antigo
+    // (ex: perfil salvo com email literalmente "publico") que não tem como
+    // identificar quem é, então nem vale a pena mostrar pra revisar
+    adminNovosLista = todos.filter(p => p.revisadoAdmin === false && /@/.test(p.email || ''));
     if (adminNovosLista.length) {
       const n = adminNovosLista.length;
       document.getElementById('admin-novos-texto').textContent = `🆕 ${n} pessoa${n === 1 ? '' : 's'} nova${n === 1 ? '' : 's'} logou no site — revisar grupo de acesso`;
