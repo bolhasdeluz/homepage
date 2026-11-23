@@ -621,13 +621,17 @@ async function carregarExtratoContaBolhasDeLuz() {
     document.getElementById('mp-conteudo').style.display = 'block';
 
     // todo mês que já tem algum lançamento, de MES_MINIMO_HISTORICO até o
-    // atual — mesmo critério usado em renderMesesAnteriores()
+    // atual (nunca depois) — contas fixas futuras já vêm pré-cadastradas
+    // como "pendente" com data de vencimento, então sem esse limite um mês
+    // que ainda nem chegou aparecia como "coberto" no valor cheio do gasto
+    // (porque ainda não tem nenhuma entrada registrada pra ele)
+    const mesAtual = today().slice(0, 7);
     const refs = new Set();
     lista.forEach(l => {
       const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0, 7) : '');
-      if (ref && ref >= MES_MINIMO_HISTORICO) refs.add(ref);
+      if (ref && ref >= MES_MINIMO_HISTORICO && ref <= mesAtual) refs.add(ref);
     });
-    refs.add(today().slice(0, 7));
+    refs.add(mesAtual);
     const meses = [...refs].sort().reverse();
 
     const itens = meses
