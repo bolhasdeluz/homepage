@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mensalidade Automática (PIX) — Bolhas de Luz</title>
+<meta name="description" content="Painel novo de mensalidade automática via PIX (Asaas), dedicado ao CNPJ futuro — separado da Tesouraria de hoje.">
+<link rel="icon" type="image/png" href="assets/icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --rosa:#c4396b;--rosa-l:#e8688a;--rosa-dim:rgba(196,57,107,.08);--rosa-border:rgba(196,57,107,.25);
+  --creme:#fff5f7;
+  --border:rgba(196,90,30,.13);
+  --text:#2e1a0e;--text-dim:rgba(46,26,14,.48);
+  --green:#2a7a60;--green-dim:rgba(42,122,96,.08);--green-border:rgba(42,122,96,.22);
+  --amber:#8c5a00;--amber-dim:rgba(139,90,0,.08);--amber-border:rgba(139,90,0,.22);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--creme);color:var(--text);min-height:100vh}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input{font-family:inherit}
+
+.pc-header{background:linear-gradient(135deg,#c4396b 0%,#a52c58 55%,#8a1a40 100%);padding:18px 20px 22px;text-align:center;position:relative;box-shadow:0 4px 20px rgba(196,57,107,.25)}
+.pc-header-eyebrow{font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.pc-header-titulo{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.15);margin-top:2px}
+.pc-header-sub{font-family:'Crimson Pro',serif;font-size:.86rem;font-style:italic;color:rgba(255,255,255,.82);margin-top:4px}
+.pc-header-voltar{position:absolute;top:16px;left:16px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:20px;color:#fff;font-size:.78rem;padding:6px 14px;font-family:'DM Sans',sans-serif}
+
+.pc-wrap{max-width:700px;margin:0 auto;padding:26px 16px 60px}
+
+.pc-aviso{background:var(--rosa-dim);border:1px solid var(--rosa-border);border-radius:12px;padding:12px 16px;font-family:'Crimson Pro',serif;font-size:.85rem;font-style:italic;color:var(--text);margin-bottom:22px}
+
+.pc-secao{background:#fff;border:1px solid var(--border);border-radius:16px;margin-bottom:22px;overflow:hidden}
+.pc-secao-header{background:var(--rosa-dim);padding:14px 18px;border-bottom:1px solid var(--border)}
+.pc-secao-titulo{font-family:'Cinzel',serif;font-size:.8rem;font-weight:700;letter-spacing:.03em;color:var(--rosa)}
+.pc-secao-sub{font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin-top:2px}
+.pc-secao-corpo{padding:16px 18px}
+
+.pc-form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.pc-form-row input{flex:1;min-width:140px;border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13px;background:var(--creme)}
+.pc-btn{background:var(--rosa);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-family:'Cinzel',serif;font-size:.7rem;font-weight:700;letter-spacing:.03em;white-space:nowrap}
+.pc-btn:hover{background:var(--rosa-l)}
+.pc-btn-salvar{background:var(--green);margin-top:4px}
+
+.pc-membro-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(196,90,30,.06)}
+.pc-membro-row:last-child{border-bottom:none}
+.pc-membro-nome{font-family:'Cinzel',serif;font-size:.7rem;color:var(--text);min-width:90px;flex-shrink:0}
+.pc-membro-row input[type=text]{flex:1;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--creme)}
+.pc-membro-del{background:none;border:none;color:var(--text-dim);font-size:.9rem;padding:4px 8px;flex-shrink:0}
+.pc-membro-del:hover{color:var(--rosa)}
+
+.pc-pag-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid rgba(196,90,30,.06);flex-wrap:wrap}
+.pc-pag-row:last-child{border-bottom:none}
+.pc-pag-nome{font-family:'Cinzel',serif;font-size:.75rem;color:var(--text);flex:1;min-width:140px}
+.pc-pag-valor{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.85rem;color:var(--green)}
+.pc-pag-data{font-family:'Crimson Pro',serif;font-size:.74rem;font-style:italic;color:var(--text-dim)}
+.pc-pag-badge{font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.04em;padding:3px 9px;border-radius:10px;white-space:nowrap}
+.pc-pag-badge.ok{background:var(--green-dim);color:var(--green)}
+.pc-pag-badge.alerta{background:var(--amber-dim);color:var(--amber);border:1px solid var(--amber-border)}
+
+.pc-vazio{text-align:center;padding:30px 16px;color:var(--text-dim);font-family:'Crimson Pro',serif;font-style:italic;font-size:.92rem}
+</style>
+</head>
+<body>
+
+<div class="pc-header">
+  <a href="/index.html" class="pc-header-voltar">← Voltar ao site</a>
+  <div class="pc-header-eyebrow">✦ Terreiro Bolhas de Luz ✦</div>
+  <div class="pc-header-titulo">💳 Mensalidade Automática (PIX)</div>
+  <div class="pc-header-sub">painel novo, dedicado ao futuro CNPJ</div>
+</div>
+
+<div class="pc-wrap">
+  <div class="pc-aviso">Esse painel é separado da Tesouraria de hoje — nada aqui mexe nos lançamentos ou cadastros que já existem. É o espaço de testes/preparação pra quando a mensalidade passar a ser automatizada de verdade via PIX (Asaas).</div>
+
+  <div class="pc-secao">
+    <div class="pc-secao-header">
+      <div class="pc-secao-titulo">📇 Cadastro de CPF por pessoa</div>
+      <div class="pc-secao-sub">pra bater automaticamente com o nome/CPF que o Asaas devolve quando alguém paga</div>
+    </div>
+    <div class="pc-secao-corpo">
+      <div id="pc-membros-lista"></div>
+      <div class="pc-form-row" style="margin-top:12px">
+        <input type="text" id="pc-novo-nome" placeholder="Nome (ex: Jaque)">
+        <input type="text" id="pc-novo-cpf" placeholder="CPF (só números ou com pontuação)">
+        <button class="pc-btn" onclick="pcAdicionarMembro()">+ Adicionar</button>
+      </div>
+      <button class="pc-btn pc-btn-salvar" onclick="pcSalvarMembros()">💾 Salvar cadastro</button>
+    </div>
+  </div>
+
+  <div class="pc-secao">
+    <div class="pc-secao-header">
+      <div class="pc-secao-titulo">📥 Pagamentos detectados automaticamente</div>
+      <div class="pc-secao-sub">toda vez que um PIX cai na conta Asaas, aparece aqui sozinho</div>
+    </div>
+    <div class="pc-secao-corpo" id="pc-pagamentos-lista"><div class="pc-vazio">Carregando...</div></div>
+  </div>
+</div>
+
+<script>
+const ADMIN_HEADERS = { 'Content-Type': 'application/json', 'X-Admin-Password': 'admin' };
+let pcMembros = [];
+
+function pcEsc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function pcFmtCpf(cpf) {
+  const d = String(cpf || '').replace(/\D/g, '');
+  if (d.length !== 11) return cpf || '';
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9,11)}`;
+}
+
+async function pcCarregarMembros() {
+  const res = await fetch('/api/pixcnpj?recurso=membros', { headers: ADMIN_HEADERS });
+  pcMembros = res.ok ? await res.json() : [];
+  pcRenderMembros();
+}
+
+function pcRenderMembros() {
+  const el = document.getElementById('pc-membros-lista');
+  if (!pcMembros.length) { el.innerHTML = '<div class="pc-vazio">Nenhum CPF cadastrado ainda.</div>'; return; }
+  el.innerHTML = pcMembros.map((m, i) => `
+    <div class="pc-membro-row">
+      <span class="pc-membro-nome">${pcEsc(m.nome)}</span>
+      <input type="text" value="${pcEsc(pcFmtCpf(m.cpf))}" onchange="pcEditarCpf(${i}, this.value)">
+      <button class="pc-membro-del" onclick="pcRemoverMembro(${i})" title="Remover">✕</button>
+    </div>`).join('');
+}
+
+function pcEditarCpf(i, valor) { pcMembros[i].cpf = valor.replace(/\D/g, ''); }
+function pcRemoverMembro(i) { pcMembros.splice(i, 1); pcRenderMembros(); }
+
+function pcAdicionarMembro() {
+  const nomeEl = document.getElementById('pc-novo-nome');
+  const cpfEl = document.getElementById('pc-novo-cpf');
+  const nome = nomeEl.value.trim();
+  const cpf = cpfEl.value.replace(/\D/g, '');
+  if (!nome) { alert('Digite o nome.'); return; }
+  if (cpf.length !== 11) { alert('CPF precisa ter 11 números.'); return; }
+  pcMembros.push({ nome, cpf, ativo: true });
+  nomeEl.value = ''; cpfEl.value = '';
+  pcRenderMembros();
+}
+
+async function pcSalvarMembros() {
+  const res = await fetch('/api/pixcnpj?recurso=membros', {
+    method: 'POST', headers: ADMIN_HEADERS, body: JSON.stringify(pcMembros),
+  });
+  if (res.ok) alert('Cadastro salvo!');
+  else alert('Erro ao salvar — tenta de novo.');
+}
+
+async function pcCarregarPagamentos() {
+  const el = document.getElementById('pc-pagamentos-lista');
+  const res = await fetch('/api/pixcnpj?recurso=pagamentos', { headers: ADMIN_HEADERS });
+  const pagamentos = res.ok ? await res.json() : [];
+  if (!pagamentos.length) { el.innerHTML = '<div class="pc-vazio">Nenhum pagamento detectado ainda.</div>'; return; }
+  el.innerHTML = pagamentos.map(p => {
+    const nome = p.membro || p.nomeAsaas || 'desconhecido';
+    const badge = p.identificado
+      ? '<span class="pc-pag-badge ok">✓ identificado</span>'
+      : `<span class="pc-pag-badge alerta" title="CPF ${pcEsc(pcFmtCpf(p.cpf))} não cadastrado">⚠ CPF não cadastrado</span>`;
+    return `
+    <div class="pc-pag-row">
+      <span class="pc-pag-nome">${pcEsc(nome)}</span>
+      <span class="pc-pag-data">${pcEsc(p.data || '')}</span>
+      <span class="pc-pag-valor">R$ ${Number(p.valor || 0).toFixed(2)}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+}
+
+pcCarregarMembros();
+pcCarregarPagamentos();
+</script>
+</body>
+</html>
