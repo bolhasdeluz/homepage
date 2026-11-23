@@ -35,7 +35,7 @@ export async function onRequestGet(context) {
   }
   try {
     const resp = await fetch(`https://api.asaas.com/v3/customers/${encodeURIComponent(id)}`, {
-      headers: { access_token: env.ASAAS_API_KEY },
+      headers: { access_token: env.ASAAS_API_KEY, 'User-Agent': 'BolhasDeLuz/1.0' },
     });
     const texto = await resp.text();
     return new Response(texto, { status: resp.status, headers: CORS });
