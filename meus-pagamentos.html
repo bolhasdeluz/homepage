@@ -506,16 +506,76 @@ async function carregarExtratoPorEmail(email) {
 }
 
 // ── ADMIN: "ver como" qualquer pessoa, sem depender do vínculo de e-mail ──
+// "Conta Bolhas de Luz" é um perfil que não existe de verdade na Tesouraria
+// — não é um membro, não tem lançamento nenhum no nome dela. É só uma forma
+// de ver, mês a mês, quanto a casa precisou cobrir (o mesmo valor que já
+// aparece como "coberto pela mãe de santo" no card do mês), listado como um
+// extrato próprio. Cálculo na hora, em cima dos lançamentos que já existem —
+// não grava nada novo, não muda nenhuma conta da Tesouraria.
+const CONTA_BOLHAS_DE_LUZ = '💰 Conta Bolhas de Luz';
+
 function montarSeletorAdmin() {
   const sel = document.getElementById('mp-admin-select');
   sel.innerHTML = '<option value="">— Escolher pessoa —</option>'
+    + `<option value="${CONTA_BOLHAS_DE_LUZ}">${CONTA_BOLHAS_DE_LUZ}</option>`
     + MEMBROS_TODOS.map(m => `<option value="${m}">${m}</option>`).join('');
   sel.onchange = () => {
     document.getElementById('mp-sem-vinculo').style.display = 'none';
     document.getElementById('mp-conteudo').style.display = 'none';
-    if (sel.value) carregarExtratoPorNome(sel.value);
+    if (sel.value === CONTA_BOLHAS_DE_LUZ) carregarExtratoContaBolhasDeLuz();
+    else if (sel.value) carregarExtratoPorNome(sel.value);
   };
   document.getElementById('mp-admin-picker').style.display = 'block';
+}
+
+async function carregarExtratoContaBolhasDeLuz() {
+  document.getElementById('mp-card-obrigacao').style.display = 'none';
+  document.getElementById('mp-carregando').style.display = 'block';
+  try {
+    const res = await fetch('/api/dados?chave=lancamentos');
+    const dados = await res.json();
+    const lista = Array.isArray(dados) ? dados : [];
+    document.getElementById('mp-carregando').style.display = 'none';
+    document.getElementById('mp-conteudo').style.display = 'block';
+
+    // todo mês que já tem algum lançamento, de MES_MINIMO_HISTORICO até o
+    // atual — mesmo critério usado em renderMesesAnteriores()
+    const refs = new Set();
+    lista.forEach(l => {
+      const ref = (l.tipo === 'entrada' && l.competencia) ? l.competencia : (l.data ? l.data.slice(0, 7) : '');
+      if (ref && ref >= MES_MINIMO_HISTORICO) refs.add(ref);
+    });
+    refs.add(today().slice(0, 7));
+    const meses = [...refs].sort().reverse();
+
+    const itens = meses
+      .map(ref => ({ ref, d: calcularStatsMes(lista, ref) }))
+      .filter(({ d }) => d.saldo < 0)
+      .map(({ ref, d }) => ({ competencia: ref, valor: Math.abs(d.saldo), obs: 'Cobertura do mês (entradas não cobriram os gastos)' }));
+
+    const listaEl = document.getElementById('mp-lista');
+    const vazioEl = document.getElementById('mp-vazio');
+    if (!itens.length) {
+      vazioEl.style.display = 'block';
+      vazioEl.textContent = 'Nenhum mês precisou de cobertura ainda.';
+      listaEl.innerHTML = '';
+      return;
+    }
+    vazioEl.style.display = 'none';
+    listaEl.innerHTML = itens.map(l => `
+      <div class="mp-item">
+        <div>
+          <div class="mp-item-mes">${fmtCompetencia(l.competencia)}</div>
+          <div class="mp-item-obs">${l.obs}</div>
+        </div>
+        <div class="mp-item-valor">${fmt(l.valor)}</div>
+      </div>`).join('');
+  } catch (e) {
+    console.error('carregar extrato conta bolhas de luz:', e);
+    document.getElementById('mp-carregando').style.display = 'none';
+    document.getElementById('mp-sem-vinculo').innerHTML = 'Não consegui carregar esse extrato agora. Tenta de novo em instantes ✦';
+    document.getElementById('mp-sem-vinculo').style.display = 'block';
+  }
 }
 
 onAuthStateChanged(auth, async (user) => {
