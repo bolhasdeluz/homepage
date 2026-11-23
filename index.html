@@ -3710,7 +3710,7 @@ async function pwaInscreverPush() {
         <div class="or-campo" style="flex:1 1 100%"><label>Título / tipo de sessão</label><input type="text" id="or-inp-titulo" placeholder="Ex: Sessão de Quimbanda"></div>
       </div>
       <div class="or-row">
-        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente (concentração e recados)</label><input type="time" id="or-inp-chegada"></div>
+        <div class="or-campo"><label><span id="or-emoji-chegada">👳</span> Chegada da Corrente</label><input type="time" id="or-inp-chegada"></div>
         <div class="or-campo"><label><span id="or-emoji-inicio">🍾</span> Início dos Trabalhos</label><input type="time" id="or-inp-inicio"></div>
       </div>
       <div class="or-row">
@@ -21151,7 +21151,7 @@ const auth = getAuth(app);
     };
 
     const OR_PADRAO = {
-      horaChegada: '20:00',
+      horaChegada: '19:30',
       horaInicio: '21:00',
       // categoria agrupa a exibição da lista (ver OR_CATEGORIA_LABEL/OR_CATEGORIA_ORDEM):
       // 'universal' = sempre ativo em toda sessão; 'geral' = opcional, mas serve
@@ -21255,8 +21255,10 @@ const auth = getAuth(app);
     }
 
     // calcula um horário "HH:MM" menos N minutos — usado pra puxar
-    // automaticamente a chegada da corrente (concentração e recados) como
-    // 30 min antes do início, direto da agenda
+    // automaticamente a chegada da corrente como 1h30 antes do início,
+    // direto da agenda (não confundir com o momento de concentração e
+    // recados, que é 30 min antes e vive só como aviso fixo de texto,
+    // sem horário cravado — ver OR_PADRAO.itens)
     function orHoraMenosMinutos(hora, minutos) {
       const [h, m] = hora.split(':').map(Number);
       let total = h * 60 + m - minutos;
@@ -21318,9 +21320,9 @@ const auth = getAuth(app);
       document.getElementById('or-inp-titulo').value = s.nome || '';
       if (s.hora) {
         document.getElementById('or-inp-inicio').value = s.hora;
-        // chegada da corrente (momento de concentração e recados) — sempre
-        // 30 min antes do horário da sessão, direto da agenda
-        document.getElementById('or-inp-chegada').value = orHoraMenosMinutos(s.hora, 30);
+        // chegada da corrente — sempre 1h30 antes do horário da sessão,
+        // direto da agenda
+        document.getElementById('or-inp-chegada').value = orHoraMenosMinutos(s.hora, 90);
       }
     }
     document.getElementById('or-sel-sessao')?.addEventListener('change', e => {
