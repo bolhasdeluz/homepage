@@ -24,6 +24,12 @@ function json(dados, status = 200) {
   return new Response(JSON.stringify(dados), { status, headers: { 'Content-Type': 'application/json' } });
 }
 
+// o Worker free plan tem um teto de operações de KV por invocação (bem menor
+// que o de escritas por dia) — por isso a contagem também é paginada em
+// lotes, como a cópia: cada chamada processa só um pedaço e devolve o cursor
+// pra continuar, em vez de tentar ler todos os perfis de uma vez só.
+const LOTE_CONTAGEM = 150;
+
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get('contar') !== '1') {
@@ -32,26 +38,28 @@ export async function onRequestGet({ request, env }) {
   const origem = env.MENU_DATA;
   if (!origem) return json({ erro: 'binding MENU_DATA ausente' }, 500);
 
-  const porGrupo = {};
-  let total = 0;
-  let cursor;
-  do {
-    const lista = await origem.list({ prefix: 'perfil:', cursor });
-    for (const { name } of lista.keys) {
-      if (name === 'perfil:_index') continue;
-      const raw = await origem.get(name);
-      if (!raw) continue;
-      try {
-        const p = JSON.parse(raw);
-        const g = grupoEfetivo(p);
-        porGrupo[g] = (porGrupo[g] || 0) + 1;
-        total++;
-      } catch {}
-    }
-    cursor = lista.list_complete ? null : lista.cursor;
-  } while (cursor);
+  const cursorIn = url.searchParams.get('cursor') || undefined;
+  const lista = await origem.list({ prefix: 'perfil:', cursor: cursorIn, limit: LOTE_CONTAGEM });
+  const porGrupoLote = {};
+  let verificados = 0;
+  for (const { name } of lista.keys) {
+    if (name === 'perfil:_index') continue;
+    const raw = await origem.get(name);
+    if (!raw) continue;
+    try {
+      const p = JSON.parse(raw);
+      const g = grupoEfetivo(p);
+      porGrupoLote[g] = (porGrupoLote[g] || 0) + 1;
+      verificados++;
+    } catch {}
+  }
 
-  return json({ total, porGrupo });
+  return json({
+    verificados,
+    porGrupoLote,
+    terminou: lista.list_complete,
+    proximoCursor: lista.list_complete ? null : lista.cursor,
+  });
 }
 
 export async function onRequestPost({ request, env }) {
