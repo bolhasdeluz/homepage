@@ -484,6 +484,31 @@ footer{
 .dash-progresso-bar{background:rgba(255,255,255,.18);border-radius:20px;height:7px;overflow:hidden}
 .dash-progresso-fill{background:linear-gradient(90deg,#fff,rgba(255,255,255,.75));height:100%;border-radius:20px;transition:width .6s ease}
 
+/* ── reforma: NAVEGAÇÃO DO PERFIL — botões fixos, lista com setas e banners
+   condicionais, no lugar do antigo menu/drawer (#menu-hint) pra quem já logou.
+   body.pf-nav-ativa esconde o #menu-hint de verdade em atualizarVisibilidadeMenuHint() ── */
+#pf-nav-wrap{margin-bottom:18px}
+.pf-banners{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.pf-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff5f7,#ffe3ea);border:1.5px solid var(--rosa-border);border-radius:14px;padding:12px 16px;text-decoration:none;transition:transform .15s;box-shadow:0 2px 12px rgba(196,57,107,.1)}
+.pf-banner:hover{transform:translateY(-1px)}
+.pf-banner-icon{font-size:1.4rem;flex-shrink:0}
+.pf-banner-txt{flex:1;line-height:1.35}
+.pf-banner-titulo{display:block;font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.04em;color:var(--rosa);font-weight:700}
+.pf-banner-sub{display:block;font-family:'Crimson Pro',serif;font-size:.84rem;font-style:italic;color:var(--text-dim)}
+.pf-banner-seta{font-size:1rem;color:var(--rosa);flex-shrink:0}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pf-btn{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-decoration:none;transition:all .15s;box-shadow:0 2px 10px rgba(196,57,107,.06)}
+.pf-btn:hover{border-color:var(--rosa-border);transform:translateY(-1px)}
+.pf-btn-icon{width:38px;height:38px;border-radius:10px;background:var(--rosa-dim);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.pf-btn-label{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.86rem;color:var(--text);line-height:1.2}
+.pf-lista{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.pf-lista-item{display:flex;align-items:center;gap:10px;padding:13px 16px;text-decoration:none;border-bottom:1px solid rgba(196,90,30,.08);transition:background .15s}
+.pf-lista-item:last-child{border-bottom:none}
+.pf-lista-item:hover{background:var(--rosa-dim)}
+.pf-lista-icon{font-size:1.05rem;flex-shrink:0;width:22px;text-align:center}
+.pf-lista-label{flex:1;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text);font-weight:500}
+.pf-lista-seta{color:var(--rosa);font-size:.9rem;flex-shrink:0}
+
 /* ── dashboard simplificado de VISITANTE — próxima sessão em destaque (dentro
    do dash-card rosa) + cartões grandes de "primeiros passos", sem nada de
    cruzamentos/cortes/aves/pergunta do dia/manutenção (isso é da ficha de
@@ -2280,6 +2305,10 @@ input.pg-cel-input[type=number]{min-width:60px}
       </div>
     </div>
 
+    <!-- NAVEGAÇÃO DO PERFIL (reforma) — botões fixos, lista e banners condicionais;
+         preenchido por renderPerfilNav(), chamado no fim de renderDashPessoal() -->
+    <div id="pf-nav-wrap"></div>
+
     <!-- PERGUNTA DO DIA — mesma pergunta pra todo mundo, uma vez por dia -->
     <div id="qd-card">
       <div class="qd-eyebrow">🌟 Pergunta do Dia</div>
@@ -2358,6 +2387,10 @@ input.pg-cel-input[type=number]{min-width:60px}
         <div class="dashv-sessao-cta">Clique pra ver mais →</div>
       </div>
     </div>
+
+    <!-- NAVEGAÇÃO DO PERFIL (reforma) — mesmo preenchido por renderPerfilNav() -->
+    <div id="pf-nav-wrap-visitante"></div>
+
     <div class="dashv-cards">
       <a href="#" class="dashv-card" onclick="dashvAbrirPreparoSessao();return false">
         <span class="dashv-card-icon">🌙</span>
@@ -5516,82 +5549,58 @@ async function pwaInscreverPush() {
     </div>
 
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
-    <div id="admin-menu-principal" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px">
-      <button class="admin-menu-item" onclick="abrirAdicionarPessoa()">
-        <span class="admin-menu-item-icon">➕</span>
-        <span class="admin-menu-item-label">Adicionar Pessoa</span>
-        <span class="admin-menu-item-desc">Cadastro rápido — só e-mail e grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
-        <span class="admin-menu-item-icon">📋</span>
-        <span class="admin-menu-item-label">Menu do Site</span>
-        <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('relatorios')">
-        <span class="admin-menu-item-icon">📊</span>
-        <span class="admin-menu-item-label">Relatórios</span>
-        <span class="admin-menu-item-desc">Calendário, financeiro e resumo mensal, tudo num só lugar</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
-        <span class="admin-menu-item-icon">📜</span>
-        <span class="admin-menu-item-label">Sua História</span>
-        <span class="admin-menu-item-desc">Quem pode ver o card</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')">
-        <span class="admin-menu-item-icon">📢</span>
-        <span class="admin-menu-item-label">Avisos / Comunicados</span>
-        <span class="admin-menu-item-desc">Escreva avisos pra cada grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('qr')">
-        <span class="admin-menu-item-icon">📷</span>
-        <span class="admin-menu-item-label">QR Code e Acessos</span>
-        <span class="admin-menu-item-desc">Acessos ao site e QR codes</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')">
-        <span class="admin-menu-item-icon">🌸</span>
-        <span class="admin-menu-item-label">Corrente da Casa</span>
-        <span class="admin-menu-item-desc">Perfis e fichas</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('linha-geral')">
-        <span class="admin-menu-item-icon">🕰️</span>
-        <span class="admin-menu-item-label">Linha do Tempo Geral</span>
-        <span class="admin-menu-item-desc">Uma volta no passado — todas as filhas e o calendário</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('planilha-geral')">
-        <span class="admin-menu-item-icon">🗂️</span>
-        <span class="admin-menu-item-label">Planilha Geral</span>
-        <span class="admin-menu-item-desc">Visão em planilha de todos os campos das fichas</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminExportarDadosPerfis()">
-        <span class="admin-menu-item-icon">📦</span>
-        <span class="admin-menu-item-label">Exportar Dados dos Perfis</span>
-        <span class="admin-menu-item-desc">Nomes, datas, pagamentos e fotos — tudo num .zip</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminExportarDadosRifa()">
-        <span class="admin-menu-item-icon">🎟️</span>
-        <span class="admin-menu-item-label">Exportar Dados da Rifa</span>
-        <span class="admin-menu-item-desc">Nome, telefone e número de cada rifa vendido — todas as campanhas</span>
-      </button>
-      <button class="admin-menu-item" onclick="window.open('/admin-manual.html','_blank')">
-        <span class="admin-menu-item-icon">📖</span>
-        <span class="admin-menu-item-label">Manual de Boas-Vindas</span>
-        <span class="admin-menu-item-desc">Escreva anotações em tópicos e modere as sugestões recebidas</span>
-      </button>
-      <button class="admin-menu-item" onclick="window.open('/funcionalidades.html','_blank')">
-        <span class="admin-menu-item-icon">📋</span>
-        <span class="admin-menu-item-label">Funcionalidades do Site</span>
-        <span class="admin-menu-item-desc">Inventário completo de tudo que o site oferece hoje</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('camiseta-admin')">
-        <span class="admin-menu-item-icon">🎽</span>
-        <span class="admin-menu-item-label">Loja de Camisetas</span>
-        <span class="admin-menu-item-desc">Produto, tabela de medidas, QR code e pedidos</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('notificacoes')">
-        <span class="admin-menu-item-icon">🔔</span>
-        <span class="admin-menu-item-label">Notificações</span>
-        <span class="admin-menu-item-desc">Mandar notificação push pra quem ativou no app</span>
-      </button>
+    <div id="admin-menu-principal" style="margin-bottom:20px">
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">👥 Pessoas</span>
+          <span class="admin-section-contagem">5</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▾</button>
+        </div>
+        <div>
+          <button class="admin-menu-item" onclick="abrirAdicionarPessoa()"><span class="admin-menu-item-icon">➕</span><span class="admin-menu-item-label">Adicionar Pessoa</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')"><span class="admin-menu-item-icon">🌸</span><span class="admin-menu-item-label">Corrente da Casa</span></button>
+          <button class="admin-menu-item" onclick="showPage('linha-geral')"><span class="admin-menu-item-icon">🕰️</span><span class="admin-menu-item-label">Linha do Tempo Geral</span></button>
+          <button class="admin-menu-item" onclick="showPage('planilha-geral')"><span class="admin-menu-item-icon">🗂️</span><span class="admin-menu-item-label">Planilha Geral</span></button>
+          <button class="admin-menu-item" onclick="adminExportarDadosPerfis()"><span class="admin-menu-item-icon">📦</span><span class="admin-menu-item-label">Exportar Dados dos Perfis</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">🛍️ Vendas</span>
+          <span class="admin-section-contagem">2</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="showPage('camiseta-admin')"><span class="admin-menu-item-icon">🎽</span><span class="admin-menu-item-label">Loja de Camisetas</span></button>
+          <button class="admin-menu-item" onclick="adminExportarDadosRifa()"><span class="admin-menu-item-icon">🎟️</span><span class="admin-menu-item-label">Exportar Dados da Rifa</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">📊 Relatórios & Financeiro</span>
+          <span class="admin-section-contagem">1</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="adminAbrirSecao('relatorios')"><span class="admin-menu-item-icon">📊</span><span class="admin-menu-item-label">Relatórios</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">⚙️ Menu, Comunicação & Acessos</span>
+          <span class="admin-section-contagem">7</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="adminAbrirSecao('menu')"><span class="admin-menu-item-icon">📋</span><span class="admin-menu-item-label">Menu do Site</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')"><span class="admin-menu-item-icon">📢</span><span class="admin-menu-item-label">Avisos / Comunicados</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('qr')"><span class="admin-menu-item-icon">📷</span><span class="admin-menu-item-label">QR Code e Acessos</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('historia')"><span class="admin-menu-item-icon">📜</span><span class="admin-menu-item-label">Sua História</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('notificacoes')"><span class="admin-menu-item-icon">🔔</span><span class="admin-menu-item-label">Notificações</span></button>
+          <button class="admin-menu-item" onclick="window.open('/admin-manual.html','_blank')"><span class="admin-menu-item-icon">📖</span><span class="admin-menu-item-label">Manual de Boas-Vindas</span></button>
+          <button class="admin-menu-item" onclick="window.open('/funcionalidades.html','_blank')"><span class="admin-menu-item-icon">📋</span><span class="admin-menu-item-label">Funcionalidades do Site</span></button>
+        </div>
+      </div>
     </div>
     <div id="admin-export-status" style="text-align:center;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:-6px 0 14px"></div>
 
@@ -5642,12 +5651,8 @@ async function pwaInscreverPush() {
             <button class="toggle-pill" id="cfg-btn-card" onclick="cfgToggleCard()">Card</button>
           </div>
 
-          <div class="admin-cfg-rotulo">Visível para:</div>
-          <div class="admin-cfg-linha-pills" id="cfg-grupos"></div>
-          <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin:2px 0 6px">🌍 Público é o nível mais aberto — se marcar só ele, vale pra todo mundo, inclusive a corrente. Marcar só um grupo específico (ex: Filhas) restringe só a ele.</div>
-          <div class="admin-cfg-linha-pills">
-            <button class="toggle-pill" id="cfg-btn-admin-only" onclick="cfgToggleAdminOnly()" title="Se ativado, só admin vê esse card — ignora os grupos acima">🔒 Só admin</button>
-          </div>
+          <div class="admin-cfg-rotulo">Visível a partir de:</div>
+          <select id="cfg-nivel" class="admin-move-section" style="width:100%;max-width:none;margin-bottom:10px" onchange="cfgSetNivel(this.value)"></select>
 
           <div id="cfg-mover-secao-wrap">
             <div class="admin-cfg-rotulo">Mover pra outra seção:</div>
@@ -5672,14 +5677,9 @@ async function pwaInscreverPush() {
           <button class="admin-del" onclick="fecharConfigSecao()" title="Fechar">✕</button>
         </div>
         <div class="admin-cfg-modal-body">
-          <p style="font-family:'Crimson Pro',serif;font-size:.82rem;font-style:italic;color:var(--text-dim);margin-bottom:12px">Controla a seção inteira — some com todos os itens dela pra quem não estiver nos grupos marcados, mesmo que algum item em específico esteja liberado pro grupo.</p>
-          <div class="admin-cfg-rotulo">Visível para:</div>
-          <div class="admin-cfg-linha-pills" id="cfgsec-grupos"></div>
-          <div style="font-family:'Crimson Pro',serif;font-size:.78rem;font-style:italic;color:var(--text-dim);margin:2px 0 6px">🌍 Público é o nível mais aberto — se marcar só ele, vale pra todo mundo, inclusive a corrente. Marcar só um grupo específico (ex: Filhas) restringe só a ele.</div>
-          <div class="admin-cfg-linha-pills">
-            <button class="toggle-pill" id="cfgsec-btn-admin-only" onclick="cfgSecaoToggleAdminOnly()" title="Se ativado, só admin vê essa seção — ignora os grupos acima">🔒 Só admin</button>
-          </div>
-          <button class="btn-add" onclick="cfgSecaoLimparRestricao()" style="width:100%;margin-top:14px;background:var(--text-dim)">↺ Tirar toda restrição (visível pra todo mundo)</button>
+          <p style="font-family:'Crimson Pro',serif;font-size:.82rem;font-style:italic;color:var(--text-dim);margin-bottom:12px">Controla a seção inteira — vale pra todos os itens dela (um item só aparece se a seção E o item permitirem).</p>
+          <div class="admin-cfg-rotulo">Visível a partir de:</div>
+          <select id="cfgsec-nivel" class="admin-move-section" style="width:100%;max-width:none" onchange="cfgSecaoSetNivel(this.value)"></select>
         </div>
       </div>
     </div>
@@ -5988,17 +5988,64 @@ function isEmailAdmin(email) { return !!email && ADMIN_EMAILS.includes(email); }
 // pra isso: NUNCA mexe no p.grupo/p.cargo de verdade, que continuam salvos
 // como estavam, pra relatórios (Filhas da Casa etc.) continuarem contando
 // certinho pelo cargo/histórico real da pessoa, não pelo acesso dela hoje
+// tamboreiro/amigos/família deixaram de existir como grupos próprios (reforma
+// pedida pela Anna) — qualquer perfil antigo com um desses três vira
+// "assistencia" na hora, sem precisar converter a ficha de cada pessoa
+const GRUPOS_LEGADO_PARA_ASSISTENCIA = new Set(['tamboreiro', 'amigos', 'familia']);
 function grupoEfetivoDoPerfil(p) {
   if (p && p.ativo === false) return 'visitante';
-  return p?.grupo || 'visitante';
+  const g = p?.grupo || 'visitante';
+  return GRUPOS_LEGADO_PARA_ASSISTENCIA.has(g) ? 'assistencia' : g;
 }
 window.grupoEfetivoDoPerfil = grupoEfetivoDoPerfil; // usado também pelo script do dashboard pessoal, que não compartilha escopo com este
 
-// hierarquia de visibilidade: "🌍 Público" é o nível mais aberto — se um item
-// (ou a seção) está marcado pra público, TODO MUNDO vê, inclusive quem é da
-// corrente (filhas, tamboreiro, amigos, assistência, família). Os outros
-// grupos continuam restritivos entre si (marcar só "filhas" não libera pra
-// tamboreiro, por exemplo) — só "público" funciona como coringa no topo.
+// ── HIERARQUIA DE NÍVEIS (reforma) ──────────────────────────────────────
+// do mais restrito pro mais aberto: Admin > Filhas da Casa > Visitante >
+// Assistência > Público. Cada item/seção guarda UM nível mínimo (nivelMinimo)
+// em vez de uma lista de grupos — quem está mais pra cima da lista vê tudo
+// que tá marcado pra baixo dele, nunca o contrário. "admin" substitui o antigo
+// campo adminOnly (é só o topo dessa mesma régua, não uma coisa à parte).
+const NIVEL_RANK = { admin: 4, filhas: 3, visitante: 2, assistencia: 1, publico: 0 };
+const NIVEL_LABELS = { admin: '🔒 Admin', filhas: '🌸 Filhas da Casa', visitante: '👤 Visitante', assistencia: '🤲 Assistência', publico: '🌍 Público' };
+const NIVEL_ORDEM = ['admin', 'filhas', 'visitante', 'assistencia', 'publico']; // mais restrito → mais aberto
+function nivelVisivel(nivelMinimo, grupoUsuario) {
+  const rankItem = NIVEL_RANK[nivelMinimo || 'publico'] ?? 0;
+  const rankUsuario = NIVEL_RANK[grupoUsuario] ?? 0;
+  return rankUsuario >= rankItem;
+}
+window.nivelVisivel = nivelVisivel;
+window.NIVEL_RANK = NIVEL_RANK; window.NIVEL_LABELS = NIVEL_LABELS; window.NIVEL_ORDEM = NIVEL_ORDEM;
+
+// liga/desliga a navegação nova do perfil (ver renderPerfilNav) e já força o
+// #menu-hint (gavetão de Ferramentas antigo) a reavaliar se deve sumir —
+// sem isso ele podia ficar "preso" visível (setado por atualizarVisibilidadeMenuHint
+// ANTES da classe ser aplicada, numa chamada anterior no fluxo de login)
+function pfSetNavAtiva(ativa) {
+  document.body.classList.toggle('pf-nav-ativa', ativa);
+  window.atualizarVisibilidadeMenuHint?.();
+}
+window.pfSetNavAtiva = pfSetNavAtiva;
+
+// calcula o nivelMinimo de um item/seção que ainda só tem os campos antigos
+// (grupos[] + adminOnly) — usado na migração automática e como fallback pra
+// quem ainda não foi migrado explicitamente
+function nivelMinimoDeItemLegado(obj) {
+  if (obj.nivelMinimo) return obj.nivelMinimo;
+  if (obj.adminOnly) return 'admin';
+  const grupos = (obj.grupos || []).map(g => GRUPOS_LEGADO_PARA_ASSISTENCIA.has(g) ? 'assistencia' : g);
+  if (!grupos.length) return 'publico'; // sem grupos definidos = sempre foi aberto a todo mundo
+  if (grupos.includes('publico')) return 'publico';
+  // pega o grupo presente com o rank mais BAIXO (mais aberto) — é o nível
+  // mínimo que já deixava esse item visível antes da reforma
+  let melhor = 'filhas';
+  grupos.forEach(g => { if ((NIVEL_RANK[g] ?? 0) < NIVEL_RANK[melhor]) melhor = g; });
+  return NIVEL_RANK[melhor] !== undefined ? melhor : 'publico';
+}
+window.nivelMinimoDeItemLegado = nivelMinimoDeItemLegado;
+
+// hierarquia de visibilidade (modelo antigo, grupos[] independentes) — mantida
+// só pra compatibilidade de quem ainda chama assim; a fonte de verdade agora é
+// nivelVisivel()/nivelMinimo. "🌍 Público" funciona como coringa no topo.
 function grupoVisivel(grupos, grupoUsuario) {
   if (!grupos) return true;
   return grupos.includes('publico') || grupos.includes(grupoUsuario);
@@ -6069,16 +6116,10 @@ function renderDrawer() {
   const sectionsHtml = menuData.sections.map(sec => {
     // a seção inteira pode estar oculta pra alguns grupos (independente da
     // visibilidade de cada item dela) — ver abrirConfigSecao
-    if (grupoUsuario !== 'admin') {
-      if (sec.adminOnly) return '';
-      if (sec.grupos && !grupoVisivel(sec.grupos, grupoUsuario)) return '';
-    }
+    if (!nivelVisivel(nivelMinimoDeItemLegado(sec), grupoUsuario)) return '';
     const visibleItems = sec.items.filter(i => {
       if (i.showMenu === false) return false;
-      if (i.adminOnly && grupoUsuario !== 'admin') return false;
-      if (grupoUsuario === 'admin') return true;
-      const grupos = i.grupos || ['publico','visitante','filhas','tamboreiro'];
-      return grupoVisivel(grupos, grupoUsuario);
+      return nivelVisivel(nivelMinimoDeItemLegado(i), grupoUsuario);
     });
     if (!visibleItems.length) return '';
     const si = menuData.sections.indexOf(sec);
@@ -6119,11 +6160,12 @@ function drawerTile(item, onclickAttr, descFallback, dotClass) {
   const { icone, texto } = drawerIconeLabel(item);
   const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
   const dot = dotClass ? `<span class="drawer-card-dot-corner ${dotClass}"></span>` : '';
-  return `<button class="drawer-card${item.adminOnly ? ' drawer-card-admin-only' : ''}" ${onclickAttr} title="${desc}">
+  const soAdmin = nivelMinimoDeItemLegado(item) === 'admin';
+  return `<button class="drawer-card${soAdmin ? ' drawer-card-admin-only' : ''}" ${onclickAttr} title="${desc}">
     ${dot}
     <span class="drawer-card-icon">${icone}</span>
     <span class="drawer-card-name">${texto}</span>
-    ${item.adminOnly ? '<span class="drawer-card-admin-tag">só admin</span>' : ''}
+    ${soAdmin ? '<span class="drawer-card-admin-tag">só admin</span>' : ''}
   </button>`;
 }
 
@@ -6225,14 +6267,131 @@ async function abrirComHandoff(url, target) {
   }
 }
 
+// ── NAVEGAÇÃO DO PERFIL (reforma) — botões fixos, lista com setas e banners
+// condicionais, no lugar do antigo menu/drawer pra quem já logou. Reaproveita
+// o mesmo menuData e grupoVisivel() que o Menu do Site (admin) já configura —
+// ajustar quem vê cada item continua sendo feito por lá, sem sistema novo.
+const PF_IDS_BOTOES_FIXOS = new Set(['inicio', 'historia', 'calendario', 'sessoes', 'tesouraria']);
+const PF_IDS_BANNER = new Set(['camiseta', 'rifa']);
+
+function pfOnclickParaItem(item) {
+  if (item.id === 'apoie') return `showPage('apoie')`;
+  if (item.id === 'filhas') return `showPage('guias')`;
+  if (item.type === 'internal') return `showPage('${item.page}')`;
+  if (item.type === 'members') {
+    const u = window._getCurrentUser && window._getCurrentUser();
+    return u ? `window.open('${item.url}','_self')` : `openLogin()`;
+  }
+  if (item.url && item.url.includes('blogbolhas.pages.dev')) return `showPage('blog')`;
+  if (item.id === 'pontos' || item.id === 'completaponto' || item.id === 'lojas') return `abrirComHandoff('${item.url}','_blank')`;
+  if (item.url) return `window.open('${item.url}','_blank')`;
+  return '';
+}
+
+function pfBotoesFixos(grupoUsuario, ehAdmin) {
+  if (grupoUsuario === 'visitante') {
+    return [
+      { icone: '🏠', label: 'Início', onclick: 'pfIrParaInicio()' },
+      { icone: '📅', label: 'Calendário', onclick: "showPage('calendario')" },
+    ];
+  }
+  const botoes = [
+    { icone: '🏠', label: 'Início', onclick: 'pfIrParaInicio()' },
+    { icone: '🌸', label: 'Meu Perfil', onclick: 'showSuaHistoria()' },
+    { icone: '📅', label: 'Calendário', onclick: "showPage('calendario')" },
+    ehAdmin
+      ? { icone: '💰', label: 'Financeiro', onclick: "window.open('/tesouraria.html','_self')" }
+      : { icone: '💰', label: 'Meus Pagamentos', onclick: "window.open('/meus-pagamentos.html','_self')" },
+  ];
+  if (ehAdmin) botoes.push({ icone: '⚙️', label: 'Painel Admin', onclick: "showPage('admin')" });
+  return botoes;
+}
+
+function pfListaSecundaria(grupoUsuario, ehAdmin) {
+  if (!menuData) return [];
+  const itens = [];
+  menuData.sections.forEach(sec => {
+    if (!nivelVisivel(nivelMinimoDeItemLegado(sec), grupoUsuario)) return;
+    sec.items.forEach(item => {
+      if (item.showMenu === false) return;
+      if (PF_IDS_BOTOES_FIXOS.has(item.id) || PF_IDS_BANNER.has(item.id)) return;
+      if (!nivelVisivel(nivelMinimoDeItemLegado(item), grupoUsuario)) return;
+      itens.push(item);
+    });
+  });
+  return itens;
+}
+
+// busca se tem camiseta/rifa ativa agora — só então aparece o banner; chamadas
+// públicas (sem senha), igual ao resto do site já consulta esses endpoints
+async function pfBuscarBanners() {
+  const banners = [];
+  try {
+    const [camiseta, rifa] = await Promise.all([
+      fetch('/api/camiseta').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/rifa').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    if (camiseta && camiseta.titulo) {
+      banners.push({ icone: '🎽', titulo: 'Camiseta à venda', sub: camiseta.titulo + ' — toque pra ver', onclick: "showPage('camiseta')" });
+    }
+    if (rifa && rifa.titulo) {
+      banners.push({ icone: '🎟️', titulo: 'Rifa ativa agora!', sub: rifa.titulo + ' — toque pra ver', onclick: "showPage('rifa')" });
+    }
+  } catch {}
+  return banners;
+}
+
+async function renderPerfilNav(containerId, grupoUsuario, ehAdmin) {
+  const alvo = document.getElementById(containerId);
+  if (!alvo) return;
+
+  const botoes = pfBotoesFixos(grupoUsuario, ehAdmin);
+  const itens = pfListaSecundaria(grupoUsuario, ehAdmin);
+
+  const gridHtml = `<div class="pf-grid">${botoes.map(b => `
+    <a href="#" class="pf-btn" onclick="${b.onclick};return false">
+      <span class="pf-btn-icon">${b.icone}</span>
+      <span class="pf-btn-label">${b.label}</span>
+    </a>`).join('')}</div>`;
+
+  const listaHtml = itens.length ? `<div class="pf-lista">${itens.map(item => {
+    const { icone, texto } = drawerIconeLabel(item);
+    return `<a href="#" class="pf-lista-item" onclick="${pfOnclickParaItem(item)};return false">
+      <span class="pf-lista-icon">${icone}</span>
+      <span class="pf-lista-label">${texto}</span>
+      <span class="pf-lista-seta">→</span>
+    </a>`;
+  }).join('')}</div>` : '';
+
+  // banners pintam por cima do que já tiver, chegando um pouco depois (são 2
+  // chamadas de rede) — não trava a renderização do resto, que é instantânea
+  alvo.innerHTML = gridHtml + listaHtml;
+  const banners = await pfBuscarBanners();
+  if (!banners.length) return;
+  const bannersHtml = `<div class="pf-banners">${banners.map(b => `
+    <a href="#" class="pf-banner" onclick="${b.onclick};return false">
+      <span class="pf-banner-icon">${b.icone}</span>
+      <span class="pf-banner-txt"><span class="pf-banner-titulo">${b.titulo}</span><span class="pf-banner-sub">${b.sub}</span></span>
+      <span class="pf-banner-seta">→</span>
+    </a>`).join('')}</div>`;
+  alvo.insertAdjacentHTML('afterbegin', bannersHtml);
+}
+
+function pfIrParaInicio() {
+  showPage('inicio');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.pfIrParaInicio = pfIrParaInicio;
+
 // ── RENDERIZAR CARDS ──
 function widgetTile(item, onclickAttr, descFallback) {
   const { icone, texto } = drawerIconeLabel(item);
   const desc = (item.desc || descFallback || '').replace(/"/g, '&quot;');
-  return `<a class="widget${item.adminOnly ? ' widget-admin-only' : ''}" href="#" ${onclickAttr} title="${desc}">
+  const soAdmin = nivelMinimoDeItemLegado(item) === 'admin';
+  return `<a class="widget${soAdmin ? ' widget-admin-only' : ''}" href="#" ${onclickAttr} title="${desc}">
     <div class="widget-icon">${icone}</div>
     <div class="widget-name">${texto}</div>
-    ${item.adminOnly ? '<span class="widget-admin-tag">só admin</span>' : ''}
+    ${soAdmin ? '<span class="widget-admin-tag">só admin</span>' : ''}
   </a>`;
 }
 
@@ -6269,20 +6428,10 @@ function renderCards() {
 
       // a seção inteira pode estar oculta pra alguns grupos, independente da
       // visibilidade de cada item dela — ver abrirConfigSecao
-      if (grupoUsuario !== 'admin') {
-        if (sec.adminOnly) return;
-        if (sec.grupos && !grupoVisivel(sec.grupos, grupoUsuario)) return;
-      }
+      if (!nivelVisivel(nivelMinimoDeItemLegado(sec), grupoUsuario)) return;
 
       // verifica se o item é visível para o grupo
-      const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
-      if (grupoUsuario === 'admin') {
-        // admin vê tudo
-      } else if (!grupoVisivel(grupos, grupoUsuario)) {
-        return;
-      }
-      // item marcado como "só admin" — ninguém mais vê, nem quem está nos grupos acima
-      if (item.adminOnly && grupoUsuario !== 'admin') return;
+      if (!nivelVisivel(nivelMinimoDeItemLegado(item), grupoUsuario)) return;
 
       // widget especial: historia (pública) — "Minha História" removida daqui,
       // já que agora abre pelo botão "✎ Editar minha ficha" direto na Início
@@ -6325,6 +6474,17 @@ function renderCards() {
   });
   grid.innerHTML = html;
 }
+
+// ── CATEGORIAS DO PAINEL ADMIN (reforma) — acordeão simples: abre/fecha o
+// grupo de botões logo abaixo do cabeçalho clicado ──
+function adminToggleCategoria(headerEl) {
+  const corpo = headerEl.nextElementSibling;
+  const btn = headerEl.querySelector('.admin-collapse-btn');
+  const abrindo = corpo.style.display === 'none';
+  corpo.style.display = abrindo ? '' : 'none';
+  if (btn) btn.textContent = abrindo ? '▾' : '▸';
+}
+window.adminToggleCategoria = adminToggleCategoria;
 
 // ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
 // empilhado numa rolagem só ──
@@ -6567,43 +6727,17 @@ function toggleSecaoColapsada(id) {
 }
 
 function renderVisResumoSecao(sec) {
-  if (sec.adminOnly) {
-    return `<span class="admin-vis-badge admin-vis-adminonly" title="Seção só aparece pra administradores">🔒 só admin</span>`;
-  }
-  if (!sec.grupos) {
-    return `<span class="admin-vis-badge admin-vis-todos" title="Sem restrição própria — cada item decide a sua">🌍 sem restrição</span>`;
-  }
-  const todos = Object.keys(CFG_GRUPOS_DEFS);
-  // "🌍 Público" marcado funciona como coringa no topo da hierarquia — libera
-  // pra todo mundo (corrente inclusa), mesmo que os outros grupos não estejam marcados
-  if (sec.grupos.includes('publico')) {
-    return `<span class="admin-vis-badge admin-vis-todos" title="Público marcado — visível pra todo mundo, inclusive a corrente">🌍 todo mundo</span>`;
-  }
-  return `<span class="admin-vis-resumo" title="Só vê: ${sec.grupos.map(g => CFG_GRUPOS_DEFS[g]).join(', ')}">` +
-    todos.map(g => `<span class="admin-vis-icone ${sec.grupos.includes(g) ? 'ativo' : 'inativo'}">${CFG_GRUPOS_DEFS[g].split(' ')[0]}</span>`).join('') +
-    `</span>`;
+  const nivel = nivelMinimoDeItemLegado(sec);
+  const classe = nivel === 'publico' ? 'admin-vis-todos' : (nivel === 'admin' ? 'admin-vis-adminonly' : '');
+  return `<span class="admin-vis-badge ${classe}" title="Visível a partir de: ${NIVEL_LABELS[nivel]}">${NIVEL_LABELS[nivel]}</span>`;
 }
 function renderVisResumoItem(sec, item) {
-  if (sec.adminOnly || item.adminOnly) {
-    return `<span class="admin-vis-badge admin-vis-adminonly" title="Só aparece pra administradores">🔒 só admin</span>`;
-  }
-  const todos = Object.keys(CFG_GRUPOS_DEFS);
-  const itemGrupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
-  const secGrupos = sec.grupos || todos;
-  // "🌍 Público" é coringa no topo da hierarquia, tanto da seção quanto do
-  // item: se qualquer um dos dois tem público marcado, esse lado libera geral
-  const efetivoSecao = secGrupos.includes('publico') ? todos : secGrupos;
-  const efetivoItemBase = itemGrupos.includes('publico') ? todos : itemGrupos;
-  const efetivo = efetivoItemBase.filter(g => efetivoSecao.includes(g));
-  if (efetivo.length === todos.length) {
-    return `<span class="admin-vis-badge admin-vis-todos" title="Visível pra todo mundo">🌍 todo mundo</span>`;
-  }
-  if (!efetivo.length) {
-    return `<span class="admin-vis-badge admin-vis-adminonly" title="Nenhum grupo vê isso no momento">🚫 ninguém vê</span>`;
-  }
-  return `<span class="admin-vis-resumo" title="Só vê: ${efetivo.map(g => CFG_GRUPOS_DEFS[g]).join(', ')}">` +
-    todos.map(g => `<span class="admin-vis-icone ${efetivo.includes(g) ? 'ativo' : 'inativo'}">${CFG_GRUPOS_DEFS[g].split(' ')[0]}</span>`).join('') +
-    `</span>`;
+  // o nível efetivo é o mais restrito entre o da seção e o do item (os dois precisam liberar)
+  const nivelSec = nivelMinimoDeItemLegado(sec);
+  const nivelItem = nivelMinimoDeItemLegado(item);
+  const nivel = NIVEL_RANK[nivelSec] >= NIVEL_RANK[nivelItem] ? nivelSec : nivelItem;
+  const classe = nivel === 'publico' ? 'admin-vis-todos' : (nivel === 'admin' ? 'admin-vis-adminonly' : '');
+  return `<span class="admin-vis-badge ${classe}" title="Visível a partir de: ${NIVEL_LABELS[nivel]}">${NIVEL_LABELS[nivel]}</span>`;
 }
 function renderAdminPanel() {
   const container = document.getElementById('admin-sections-container');
@@ -6628,7 +6762,7 @@ function renderAdminPanel() {
         </div>
         <span class="admin-section-contagem">${sec.items.length}</span>
         ${renderVisResumoSecao(sec)}
-        <button class="admin-config-btn ${(sec.grupos || sec.adminOnly) ? 'admin-config-btn-ativo' : ''}" onclick="abrirConfigSecao(${si})" title="Visibilidade por grupo da seção inteira">⚙</button>
+        <button class="admin-config-btn ${nivelMinimoDeItemLegado(sec) !== 'publico' ? 'admin-config-btn-ativo' : ''}" onclick="abrirConfigSecao(${si})" title="Nível mínimo de visibilidade da seção inteira">⚙</button>
         <button class="admin-del" onclick="deleteSection(${si})" title="Remover seção">✕</button>
       </div>
       ${colapsada ? '' : `
@@ -6730,30 +6864,9 @@ function moveItemToPosition(si, ii, posDigitada) {
   agendarSalvarMenu();
 }
 
-// ── VISIBILIDADE POR ESTADO ──
-function toggleGrupoCard(si, ii, grupo) {
-  const item = menuData.sections[si].items[ii];
-  if (!item.grupos) item.grupos = ['publico','visitante','filhas','tamboreiro'];
-  const idx = item.grupos.indexOf(grupo);
-  if (idx >= 0) item.grupos.splice(idx, 1);
-  else item.grupos.push(grupo);
-  renderAdminPanel(); renderCards(); renderDrawer();
-  agendarSalvarMenu();
-}
-
-function toggleGrupo(si, ii, grupo) { toggleGrupoCard(si, ii, grupo); }
-
-function toggleAdminOnly(si, ii) {
-  const item = menuData.sections[si].items[ii];
-  item.adminOnly = !item.adminOnly;
-  renderAdminPanel(); renderCards(); renderDrawer();
-  agendarSalvarMenu();
-}
-
 // ── POPUP DE CONFIGURAÇÃO DE ITEM (visibilidade, edição, mover de seção,
 // apagar — tudo que antes ficava sempre aberto embaixo de cada item) ──
 let _cfgSi = null, _cfgIi = null;
-const CFG_GRUPOS_DEFS = { publico: '🌍 Público', visitante: '👤 Visitante', filhas: '🌸 Filhas', tamboreiro: '🥁 Tamboreiro', amigos: '🤝 Amigos', assistencia: '🤲 Assistência', familia: '👪 Família' };
 
 function abrirConfigItem(si, ii) {
   _cfgSi = si; _cfgIi = ii;
@@ -6781,10 +6894,9 @@ function cfgRefresh() {
   document.getElementById('cfg-tagLabel').value = item.tagLabel || '';
   document.getElementById('cfg-btn-menu').classList.toggle('on', item.showMenu !== false);
   document.getElementById('cfg-btn-card').classList.toggle('on-green', item.showCard !== false);
-  document.getElementById('cfg-btn-admin-only').classList.toggle('on', !!item.adminOnly);
-  const grupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
-  document.getElementById('cfg-grupos').innerHTML = Object.keys(CFG_GRUPOS_DEFS).map(g =>
-    `<button class="toggle-pill ${grupos.includes(g) ? 'on' : ''}" onclick="cfgToggleGrupo('${g}')">${CFG_GRUPOS_DEFS[g]}</button>`
+  const nivel = nivelMinimoDeItemLegado(item);
+  document.getElementById('cfg-nivel').innerHTML = NIVEL_ORDEM.map(n =>
+    `<option value="${n}" ${n === nivel ? 'selected' : ''}>${NIVEL_LABELS[n]}</option>`
   ).join('');
   const selMover = document.getElementById('cfg-mover-secao');
   const temOutraSecao = menuData.sections.length > 1;
@@ -6796,8 +6908,14 @@ function cfgRefresh() {
 }
 function cfgToggleMenu() { toggleItemMenu(_cfgSi, _cfgIi); cfgRefresh(); }
 function cfgToggleCard() { toggleItemCard(_cfgSi, _cfgIi); cfgRefresh(); }
-function cfgToggleAdminOnly() { toggleAdminOnly(_cfgSi, _cfgIi); cfgRefresh(); }
-function cfgToggleGrupo(g) { toggleGrupoCard(_cfgSi, _cfgIi, g); cfgRefresh(); }
+function cfgSetNivel(nivel) {
+  const item = menuData.sections[_cfgSi].items[_cfgIi];
+  item.nivelMinimo = nivel;
+  delete item.grupos; delete item.adminOnly;
+  renderAdminPanel(); renderCards(); renderDrawer();
+  agendarSalvarMenu();
+  cfgRefresh();
+}
 function cfgMoverSecao(valor) {
   if (valor === '') return;
   moverItemParaSecao(_cfgSi, _cfgIi, parseInt(valor, 10));
@@ -6846,38 +6964,15 @@ function cfgSecaoRefresh() {
   const sec = menuData.sections[_cfgSecaoSi];
   if (!sec) { fecharConfigSecao(); return; }
   document.getElementById('cfgsec-titulo').textContent = sec.label;
-  document.getElementById('cfgsec-btn-admin-only').classList.toggle('on', !!sec.adminOnly);
-  // sem restrição (sec.grupos undefined) = todos os grupos marcados, visível
-  // pra todo mundo — é só o estado inicial mostrado, não é gravado até a
-  // pessoa mexer em algum grupo
-  const grupos = sec.grupos || Object.keys(CFG_GRUPOS_DEFS);
-  document.getElementById('cfgsec-grupos').innerHTML = Object.keys(CFG_GRUPOS_DEFS).map(g =>
-    `<button class="toggle-pill ${grupos.includes(g) ? 'on' : ''}" onclick="cfgSecaoToggleGrupo('${g}')">${CFG_GRUPOS_DEFS[g]}</button>`
+  const nivel = nivelMinimoDeItemLegado(sec);
+  document.getElementById('cfgsec-nivel').innerHTML = NIVEL_ORDEM.map(n =>
+    `<option value="${n}" ${n === nivel ? 'selected' : ''}>${NIVEL_LABELS[n]}</option>`
   ).join('');
 }
-function cfgSecaoToggleGrupo(g) {
+function cfgSecaoSetNivel(nivel) {
   const sec = menuData.sections[_cfgSecaoSi];
-  // primeira mexida: sai do "sem restrição" (undefined) e parte da lista
-  // completa de grupos, só então tirando o que foi clicado
-  if (!sec.grupos) sec.grupos = Object.keys(CFG_GRUPOS_DEFS);
-  const idx = sec.grupos.indexOf(g);
-  if (idx >= 0) sec.grupos.splice(idx, 1);
-  else sec.grupos.push(g);
-  renderAdminPanel(); renderDrawer(); renderCards();
-  agendarSalvarMenu();
-  cfgSecaoRefresh();
-}
-function cfgSecaoToggleAdminOnly() {
-  const sec = menuData.sections[_cfgSecaoSi];
-  sec.adminOnly = !sec.adminOnly;
-  renderAdminPanel(); renderDrawer(); renderCards();
-  agendarSalvarMenu();
-  cfgSecaoRefresh();
-}
-function cfgSecaoLimparRestricao() {
-  const sec = menuData.sections[_cfgSecaoSi];
-  delete sec.grupos;
-  delete sec.adminOnly;
+  sec.nivelMinimo = nivel;
+  delete sec.grupos; delete sec.adminOnly;
   renderAdminPanel(); renderDrawer(); renderCards();
   agendarSalvarMenu();
   cfgSecaoRefresh();
@@ -23864,6 +23959,7 @@ function renderDashPessoal(p, user) {
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
     if (wrapTerreiro) wrapTerreiro.style.display = 'none';
+    window.pfSetNavAtiva?.(false);
     return;
   }
 
@@ -23873,6 +23969,7 @@ function renderDashPessoal(p, user) {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
+    window.pfSetNavAtiva?.(false);
     renderDashTerreiro();
     return;
   }
@@ -23885,6 +23982,7 @@ function renderDashPessoal(p, user) {
   if (grupoAtual === 'assistencia') {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
+    window.pfSetNavAtiva?.(false);
     renderDashAssistencia(p, user);
     return;
   }
@@ -23895,6 +23993,7 @@ function renderDashPessoal(p, user) {
   // só a próxima sessão em destaque e uns caminhos de "primeiros passos"
   if (grupoAtual === 'visitante') {
     wrap.style.display = 'none';
+    window.pfSetNavAtiva?.(true);
     renderDashVisitante(p, user);
     return;
   }
@@ -24040,6 +24139,9 @@ function renderDashPessoal(p, user) {
     dashBadgesCortesHtml(cortesCombinados);
   const pontosEl = document.getElementById('dash-pontos-riscados');
   if (pontosEl) pontosEl.innerHTML = dashPontosRiscadosHtml(p.pontosRiscados || []);
+
+  window.pfSetNavAtiva?.(true);
+  renderPerfilNav('pf-nav-wrap', ehAdminAtual ? 'admin' : grupoAtual, ehAdminAtual);
 
   wrap.style.display = 'block';
 }
@@ -24288,6 +24390,7 @@ function renderDashVisitante(p, user) {
   const nomeCompleto = p.nome || user.displayName || '';
   const primeiroNome = nomeCompleto.split(' ')[0] || 'Visitante';
   document.getElementById('dashv-nome').textContent = primeiroNome;
+  renderPerfilNav('pf-nav-wrap-visitante', 'visitante', false);
   wrap.style.display = 'block';
   // a próxima sessão já é carregada uma vez só (carregarProximaSessao, no
   // header) — só copia o que já foi calculado pra cá, igual sincronizarMiniCardsPerfil()
@@ -24304,14 +24407,11 @@ function dashvRenderApresentacao() {
   if (!el || !menuData) return;
   const itens = [];
   menuData.sections.forEach(sec => {
-    if (sec.adminOnly) return;
-    if (sec.grupos && !window.grupoVisivel(sec.grupos, 'visitante')) return;
+    if (!window.nivelVisivel(window.nivelMinimoDeItemLegado(sec), 'visitante')) return;
     sec.items.forEach(item => {
       if (!item.showCard) return;
-      if (item.adminOnly) return;
       if (item.type === 'members') return; // área restrita, não é "o que você vai encontrar"
-      const grupos = item.grupos || ['publico','visitante','filhas','tamboreiro'];
-      if (!window.grupoVisivel(grupos, 'visitante')) return;
+      if (!window.nivelVisivel(window.nivelMinimoDeItemLegado(item), 'visitante')) return;
       itens.push(item);
     });
   });
@@ -24805,7 +24905,10 @@ function atualizarVisibilidadeMenuHint() {
   const hint = document.getElementById('menu-hint');
   if (!hint) return;
   const logada = !!(window._getCurrentUser && window._getCurrentUser()) || adminSenhaAtiva || padraoSenhaAtiva;
-  hint.style.display = logada ? 'flex' : 'none';
+  // reforma: quem já tem a navegação nova no perfil (pf-nav-ativa) não precisa
+  // mais do gavetão de Ferramentas — ver renderDashPessoal/renderDashVisitante
+  const temNavNova = document.body.classList.contains('pf-nav-ativa');
+  hint.style.display = (logada && !temNavNova) ? 'flex' : 'none';
   if (!logada) closeDrawer(); // fecha a gaveta se por acaso já estava aberta e a pessoa deslogou
 }
 window.atualizarVisibilidadeMenuHint = atualizarVisibilidadeMenuHint;
