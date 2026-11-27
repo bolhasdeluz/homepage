@@ -484,6 +484,32 @@ footer{
 .dash-progresso-bar{background:rgba(255,255,255,.18);border-radius:20px;height:7px;overflow:hidden}
 .dash-progresso-fill{background:linear-gradient(90deg,#fff,rgba(255,255,255,.75));height:100%;border-radius:20px;transition:width .6s ease}
 
+/* ── reforma: NAVEGAÇÃO DO PERFIL — botões fixos, lista com setas e banners
+   condicionais, no lugar do antigo menu/drawer (#menu-hint) pra quem já logou.
+   body.pf-nav-ativa esconde o #menu-hint (ver toggle em renderDashPessoal/renderDashVisitante) ── */
+body.pf-nav-ativa #menu-hint{display:none}
+#pf-nav-wrap{margin-bottom:18px}
+.pf-banners{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.pf-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff5f7,#ffe3ea);border:1.5px solid var(--rosa-border);border-radius:14px;padding:12px 16px;text-decoration:none;transition:transform .15s;box-shadow:0 2px 12px rgba(196,57,107,.1)}
+.pf-banner:hover{transform:translateY(-1px)}
+.pf-banner-icon{font-size:1.4rem;flex-shrink:0}
+.pf-banner-txt{flex:1;line-height:1.35}
+.pf-banner-titulo{display:block;font-family:'Cinzel',serif;font-size:.66rem;letter-spacing:.04em;color:var(--rosa);font-weight:700}
+.pf-banner-sub{display:block;font-family:'Crimson Pro',serif;font-size:.84rem;font-style:italic;color:var(--text-dim)}
+.pf-banner-seta{font-size:1rem;color:var(--rosa);flex-shrink:0}
+.pf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.pf-btn{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:14px;text-decoration:none;transition:all .15s;box-shadow:0 2px 10px rgba(196,57,107,.06)}
+.pf-btn:hover{border-color:var(--rosa-border);transform:translateY(-1px)}
+.pf-btn-icon{width:38px;height:38px;border-radius:10px;background:var(--rosa-dim);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.pf-btn-label{font-family:'DM Sans',sans-serif;font-weight:600;font-size:.86rem;color:var(--text);line-height:1.2}
+.pf-lista{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.pf-lista-item{display:flex;align-items:center;gap:10px;padding:13px 16px;text-decoration:none;border-bottom:1px solid rgba(196,90,30,.08);transition:background .15s}
+.pf-lista-item:last-child{border-bottom:none}
+.pf-lista-item:hover{background:var(--rosa-dim)}
+.pf-lista-icon{font-size:1.05rem;flex-shrink:0;width:22px;text-align:center}
+.pf-lista-label{flex:1;font-family:'DM Sans',sans-serif;font-size:.86rem;color:var(--text);font-weight:500}
+.pf-lista-seta{color:var(--rosa);font-size:.9rem;flex-shrink:0}
+
 /* ── dashboard simplificado de VISITANTE — próxima sessão em destaque (dentro
    do dash-card rosa) + cartões grandes de "primeiros passos", sem nada de
    cruzamentos/cortes/aves/pergunta do dia/manutenção (isso é da ficha de
@@ -2280,6 +2306,10 @@ input.pg-cel-input[type=number]{min-width:60px}
       </div>
     </div>
 
+    <!-- NAVEGAÇÃO DO PERFIL (reforma) — botões fixos, lista e banners condicionais;
+         preenchido por renderPerfilNav(), chamado no fim de renderDashPessoal() -->
+    <div id="pf-nav-wrap"></div>
+
     <!-- PERGUNTA DO DIA — mesma pergunta pra todo mundo, uma vez por dia -->
     <div id="qd-card">
       <div class="qd-eyebrow">🌟 Pergunta do Dia</div>
@@ -2358,6 +2388,10 @@ input.pg-cel-input[type=number]{min-width:60px}
         <div class="dashv-sessao-cta">Clique pra ver mais →</div>
       </div>
     </div>
+
+    <!-- NAVEGAÇÃO DO PERFIL (reforma) — mesmo preenchido por renderPerfilNav() -->
+    <div id="pf-nav-wrap-visitante"></div>
+
     <div class="dashv-cards">
       <a href="#" class="dashv-card" onclick="dashvAbrirPreparoSessao();return false">
         <span class="dashv-card-icon">🌙</span>
@@ -6224,6 +6258,127 @@ async function abrirComHandoff(url, target) {
     irPara(url);
   }
 }
+
+// ── NAVEGAÇÃO DO PERFIL (reforma) — botões fixos, lista com setas e banners
+// condicionais, no lugar do antigo menu/drawer pra quem já logou. Reaproveita
+// o mesmo menuData e grupoVisivel() que o Menu do Site (admin) já configura —
+// ajustar quem vê cada item continua sendo feito por lá, sem sistema novo.
+const PF_IDS_BOTOES_FIXOS = new Set(['historia', 'calendario', 'sessoes']);
+const PF_IDS_BANNER = new Set(['camiseta', 'rifa']);
+
+function pfOnclickParaItem(item) {
+  if (item.id === 'apoie') return `showPage('apoie')`;
+  if (item.id === 'filhas') return `showPage('guias')`;
+  if (item.type === 'internal') return `showPage('${item.page}')`;
+  if (item.type === 'members') {
+    const u = window._getCurrentUser && window._getCurrentUser();
+    return u ? `window.open('${item.url}','_self')` : `openLogin()`;
+  }
+  if (item.url && item.url.includes('blogbolhas.pages.dev')) return `showPage('blog')`;
+  if (item.id === 'pontos' || item.id === 'completaponto' || item.id === 'lojas') return `abrirComHandoff('${item.url}','_blank')`;
+  if (item.url) return `window.open('${item.url}','_blank')`;
+  return '';
+}
+
+function pfBotoesFixos(grupoUsuario, ehAdmin) {
+  if (grupoUsuario === 'visitante') {
+    return [
+      { icone: '🏠', label: 'Início', onclick: 'pfIrParaInicio()' },
+      { icone: '📅', label: 'Calendário', onclick: "showPage('calendario')" },
+    ];
+  }
+  const botoes = [
+    { icone: '🏠', label: 'Início', onclick: 'pfIrParaInicio()' },
+    { icone: '🌸', label: 'Meu Perfil', onclick: 'showSuaHistoria()' },
+    { icone: '📅', label: 'Calendário', onclick: "showPage('calendario')" },
+    ehAdmin
+      ? { icone: '💰', label: 'Financeiro', onclick: "window.open('/tesouraria.html','_self')" }
+      : { icone: '💰', label: 'Meus Pagamentos', onclick: "window.open('/meus-pagamentos.html','_self')" },
+  ];
+  if (ehAdmin) botoes.push({ icone: '⚙️', label: 'Painel Admin', onclick: "showPage('admin')" });
+  return botoes;
+}
+
+function pfListaSecundaria(grupoUsuario, ehAdmin) {
+  if (!menuData) return [];
+  const itens = [];
+  menuData.sections.forEach(sec => {
+    if (sec.adminOnly && !ehAdmin) return;
+    if (grupoUsuario !== 'admin' && sec.grupos && !grupoVisivel(sec.grupos, grupoUsuario)) return;
+    sec.items.forEach(item => {
+      if (item.showMenu === false) return;
+      if (item.adminOnly && !ehAdmin) return;
+      if (PF_IDS_BOTOES_FIXOS.has(item.id) || PF_IDS_BANNER.has(item.id)) return;
+      if (grupoUsuario !== 'admin') {
+        const grupos = item.grupos || ['publico', 'visitante', 'filhas', 'tamboreiro'];
+        if (!grupoVisivel(grupos, grupoUsuario)) return;
+      }
+      itens.push(item);
+    });
+  });
+  return itens;
+}
+
+// busca se tem camiseta/rifa ativa agora — só então aparece o banner; chamadas
+// públicas (sem senha), igual ao resto do site já consulta esses endpoints
+async function pfBuscarBanners() {
+  const banners = [];
+  try {
+    const [camiseta, rifa] = await Promise.all([
+      fetch('/api/camiseta').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/rifa').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    if (camiseta && camiseta.titulo) {
+      banners.push({ icone: '🎽', titulo: 'Camiseta à venda', sub: camiseta.titulo + ' — toque pra ver', onclick: "showPage('camiseta')" });
+    }
+    if (rifa && rifa.titulo) {
+      banners.push({ icone: '🎟️', titulo: 'Rifa ativa agora!', sub: rifa.titulo + ' — toque pra ver', onclick: "showPage('rifa')" });
+    }
+  } catch {}
+  return banners;
+}
+
+async function renderPerfilNav(containerId, grupoUsuario, ehAdmin) {
+  const alvo = document.getElementById(containerId);
+  if (!alvo) return;
+
+  const botoes = pfBotoesFixos(grupoUsuario, ehAdmin);
+  const itens = pfListaSecundaria(grupoUsuario, ehAdmin);
+
+  const gridHtml = `<div class="pf-grid">${botoes.map(b => `
+    <a href="#" class="pf-btn" onclick="${b.onclick};return false">
+      <span class="pf-btn-icon">${b.icone}</span>
+      <span class="pf-btn-label">${b.label}</span>
+    </a>`).join('')}</div>`;
+
+  const listaHtml = itens.length ? `<div class="pf-lista">${itens.map(item => {
+    const { icone, texto } = drawerIconeLabel(item);
+    return `<a href="#" class="pf-lista-item" onclick="${pfOnclickParaItem(item)};return false">
+      <span class="pf-lista-icon">${icone}</span>
+      <span class="pf-lista-label">${texto}</span>
+      <span class="pf-lista-seta">→</span>
+    </a>`;
+  }).join('')}</div>` : '';
+
+  // banners pintam por cima do que já tiver, chegando um pouco depois (são 2
+  // chamadas de rede) — não trava a renderização do resto, que é instantânea
+  alvo.innerHTML = gridHtml + listaHtml;
+  const banners = await pfBuscarBanners();
+  if (!banners.length) return;
+  const bannersHtml = `<div class="pf-banners">${banners.map(b => `
+    <a href="#" class="pf-banner" onclick="${b.onclick};return false">
+      <span class="pf-banner-icon">${b.icone}</span>
+      <span class="pf-banner-txt"><span class="pf-banner-titulo">${b.titulo}</span><span class="pf-banner-sub">${b.sub}</span></span>
+      <span class="pf-banner-seta">→</span>
+    </a>`).join('')}</div>`;
+  alvo.insertAdjacentHTML('afterbegin', bannersHtml);
+}
+
+function pfIrParaInicio() {
+  showPage('inicio');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+window.pfIrParaInicio = pfIrParaInicio;
 
 // ── RENDERIZAR CARDS ──
 function widgetTile(item, onclickAttr, descFallback) {
@@ -23864,6 +24019,7 @@ function renderDashPessoal(p, user) {
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
     if (wrapTerreiro) wrapTerreiro.style.display = 'none';
+    document.body.classList.remove('pf-nav-ativa');
     return;
   }
 
@@ -23873,6 +24029,7 @@ function renderDashPessoal(p, user) {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
+    document.body.classList.remove('pf-nav-ativa');
     renderDashTerreiro();
     return;
   }
@@ -23885,6 +24042,7 @@ function renderDashPessoal(p, user) {
   if (grupoAtual === 'assistencia') {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
+    document.body.classList.remove('pf-nav-ativa');
     renderDashAssistencia(p, user);
     return;
   }
@@ -23895,6 +24053,7 @@ function renderDashPessoal(p, user) {
   // só a próxima sessão em destaque e uns caminhos de "primeiros passos"
   if (grupoAtual === 'visitante') {
     wrap.style.display = 'none';
+    document.body.classList.add('pf-nav-ativa');
     renderDashVisitante(p, user);
     return;
   }
@@ -24040,6 +24199,9 @@ function renderDashPessoal(p, user) {
     dashBadgesCortesHtml(cortesCombinados);
   const pontosEl = document.getElementById('dash-pontos-riscados');
   if (pontosEl) pontosEl.innerHTML = dashPontosRiscadosHtml(p.pontosRiscados || []);
+
+  document.body.classList.add('pf-nav-ativa');
+  renderPerfilNav('pf-nav-wrap', ehAdminAtual ? 'admin' : grupoAtual, ehAdminAtual);
 
   wrap.style.display = 'block';
 }
@@ -24288,6 +24450,7 @@ function renderDashVisitante(p, user) {
   const nomeCompleto = p.nome || user.displayName || '';
   const primeiroNome = nomeCompleto.split(' ')[0] || 'Visitante';
   document.getElementById('dashv-nome').textContent = primeiroNome;
+  renderPerfilNav('pf-nav-wrap-visitante', 'visitante', false);
   wrap.style.display = 'block';
   // a próxima sessão já é carregada uma vez só (carregarProximaSessao, no
   // header) — só copia o que já foi calculado pra cá, igual sincronizarMiniCardsPerfil()
