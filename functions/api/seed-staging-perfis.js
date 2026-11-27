@@ -28,7 +28,7 @@ function json(dados, status = 200) {
 // que o de escritas por dia) — por isso a contagem também é paginada em
 // lotes, como a cópia: cada chamada processa só um pedaço e devolve o cursor
 // pra continuar, em vez de tentar ler todos os perfis de uma vez só.
-const LOTE_CONTAGEM = 150;
+const LOTE_CONTAGEM = 20;
 
 export async function onRequestGet({ request, env }) {
   const url = new URL(request.url);
