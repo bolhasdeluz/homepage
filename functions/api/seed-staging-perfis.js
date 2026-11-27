@@ -38,28 +38,32 @@ export async function onRequestGet({ request, env }) {
   const origem = env.MENU_DATA;
   if (!origem) return json({ erro: 'binding MENU_DATA ausente' }, 500);
 
-  const cursorIn = url.searchParams.get('cursor') || undefined;
-  const lista = await origem.list({ prefix: 'perfil:', cursor: cursorIn, limit: LOTE_CONTAGEM });
-  const porGrupoLote = {};
-  let verificados = 0;
-  for (const { name } of lista.keys) {
-    if (name === 'perfil:_index') continue;
-    const raw = await origem.get(name);
-    if (!raw) continue;
-    try {
-      const p = JSON.parse(raw);
-      const g = grupoEfetivo(p);
-      porGrupoLote[g] = (porGrupoLote[g] || 0) + 1;
-      verificados++;
-    } catch {}
-  }
+  try {
+    const cursorIn = url.searchParams.get('cursor') || undefined;
+    const lista = await origem.list({ prefix: 'perfil:', cursor: cursorIn, limit: LOTE_CONTAGEM });
+    const porGrupoLote = {};
+    let verificados = 0;
+    for (const { name } of lista.keys) {
+      if (name === 'perfil:_index') continue;
+      const raw = await origem.get(name);
+      if (!raw) continue;
+      try {
+        const p = JSON.parse(raw);
+        const g = grupoEfetivo(p);
+        porGrupoLote[g] = (porGrupoLote[g] || 0) + 1;
+        verificados++;
+      } catch {}
+    }
 
-  return json({
-    verificados,
-    porGrupoLote,
-    terminou: lista.list_complete,
-    proximoCursor: lista.list_complete ? null : lista.cursor,
-  });
+    return json({
+      verificados,
+      porGrupoLote,
+      terminou: lista.list_complete,
+      proximoCursor: lista.list_complete ? null : lista.cursor,
+    });
+  } catch (e) {
+    return json({ erro: 'exceção: ' + e.message, stack: String(e.stack || '').slice(0, 800) }, 500);
+  }
 }
 
 export async function onRequestPost({ request, env }) {
@@ -77,27 +81,31 @@ export async function onRequestPost({ request, env }) {
   const destino = env.MENU_DATA_STAGING;
   if (!origem || !destino) return json({ erro: 'binding MENU_DATA ou MENU_DATA_STAGING ausente' }, 500);
 
-  const lista = await origem.list({ prefix: 'perfil:', cursor: cursorIn, limit: LOTE });
-  let copiados = 0, verificados = 0;
-  for (const { name } of lista.keys) {
-    if (name === 'perfil:_index') continue;
-    verificados++;
-    const raw = await origem.get(name);
-    if (!raw) continue;
-    try {
-      const p = JSON.parse(raw);
-      if (grupoEfetivo(p) === grupoAlvo) {
-        await destino.put(name, raw);
-        copiados++;
-      }
-    } catch {}
-  }
+  try {
+    const lista = await origem.list({ prefix: 'perfil:', cursor: cursorIn, limit: LOTE });
+    let copiados = 0, verificados = 0;
+    for (const { name } of lista.keys) {
+      if (name === 'perfil:_index') continue;
+      verificados++;
+      const raw = await origem.get(name);
+      if (!raw) continue;
+      try {
+        const p = JSON.parse(raw);
+        if (grupoEfetivo(p) === grupoAlvo) {
+          await destino.put(name, raw);
+          copiados++;
+        }
+      } catch {}
+    }
 
-  return json({
-    grupo: grupoAlvo,
-    verificados,
-    copiados,
-    terminou: lista.list_complete,
-    proximoCursor: lista.list_complete ? null : lista.cursor,
-  });
+    return json({
+      grupo: grupoAlvo,
+      verificados,
+      copiados,
+      terminou: lista.list_complete,
+      proximoCursor: lista.list_complete ? null : lista.cursor,
+    });
+  } catch (e) {
+    return json({ erro: 'exceção: ' + e.message, stack: String(e.stack || '').slice(0, 800) }, 500);
+  }
 }
