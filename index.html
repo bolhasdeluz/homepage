@@ -486,8 +486,7 @@ footer{
 
 /* ── reforma: NAVEGAÇÃO DO PERFIL — botões fixos, lista com setas e banners
    condicionais, no lugar do antigo menu/drawer (#menu-hint) pra quem já logou.
-   body.pf-nav-ativa esconde o #menu-hint (ver toggle em renderDashPessoal/renderDashVisitante) ── */
-body.pf-nav-ativa #menu-hint{display:none}
+   body.pf-nav-ativa esconde o #menu-hint de verdade em atualizarVisibilidadeMenuHint() ── */
 #pf-nav-wrap{margin-bottom:18px}
 .pf-banners{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .pf-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#fff5f7,#ffe3ea);border:1.5px solid var(--rosa-border);border-radius:14px;padding:12px 16px;text-decoration:none;transition:transform .15s;box-shadow:0 2px 12px rgba(196,57,107,.1)}
@@ -6041,6 +6040,16 @@ function nivelVisivel(nivelMinimo, grupoUsuario) {
 window.nivelVisivel = nivelVisivel;
 window.NIVEL_RANK = NIVEL_RANK; window.NIVEL_LABELS = NIVEL_LABELS; window.NIVEL_ORDEM = NIVEL_ORDEM;
 
+// liga/desliga a navegação nova do perfil (ver renderPerfilNav) e já força o
+// #menu-hint (gavetão de Ferramentas antigo) a reavaliar se deve sumir —
+// sem isso ele podia ficar "preso" visível (setado por atualizarVisibilidadeMenuHint
+// ANTES da classe ser aplicada, numa chamada anterior no fluxo de login)
+function pfSetNavAtiva(ativa) {
+  document.body.classList.toggle('pf-nav-ativa', ativa);
+  window.atualizarVisibilidadeMenuHint?.();
+}
+window.pfSetNavAtiva = pfSetNavAtiva;
+
 // calcula o nivelMinimo de um item/seção que ainda só tem os campos antigos
 // (grupos[] + adminOnly) — usado na migração automática e como fallback pra
 // quem ainda não foi migrado explicitamente
@@ -6286,7 +6295,7 @@ async function abrirComHandoff(url, target) {
 // condicionais, no lugar do antigo menu/drawer pra quem já logou. Reaproveita
 // o mesmo menuData e grupoVisivel() que o Menu do Site (admin) já configura —
 // ajustar quem vê cada item continua sendo feito por lá, sem sistema novo.
-const PF_IDS_BOTOES_FIXOS = new Set(['historia', 'calendario', 'sessoes']);
+const PF_IDS_BOTOES_FIXOS = new Set(['inicio', 'historia', 'calendario', 'sessoes', 'tesouraria']);
 const PF_IDS_BANNER = new Set(['camiseta', 'rifa']);
 
 function pfOnclickParaItem(item) {
@@ -23963,7 +23972,7 @@ function renderDashPessoal(p, user) {
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
     if (wrapTerreiro) wrapTerreiro.style.display = 'none';
-    document.body.classList.remove('pf-nav-ativa');
+    window.pfSetNavAtiva?.(false);
     return;
   }
 
@@ -23973,7 +23982,7 @@ function renderDashPessoal(p, user) {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
     if (wrapAssistencia) wrapAssistencia.style.display = 'none';
-    document.body.classList.remove('pf-nav-ativa');
+    window.pfSetNavAtiva?.(false);
     renderDashTerreiro();
     return;
   }
@@ -23986,7 +23995,7 @@ function renderDashPessoal(p, user) {
   if (grupoAtual === 'assistencia') {
     wrap.style.display = 'none';
     if (wrapVisitante) wrapVisitante.style.display = 'none';
-    document.body.classList.remove('pf-nav-ativa');
+    window.pfSetNavAtiva?.(false);
     renderDashAssistencia(p, user);
     return;
   }
@@ -23997,7 +24006,7 @@ function renderDashPessoal(p, user) {
   // só a próxima sessão em destaque e uns caminhos de "primeiros passos"
   if (grupoAtual === 'visitante') {
     wrap.style.display = 'none';
-    document.body.classList.add('pf-nav-ativa');
+    window.pfSetNavAtiva?.(true);
     renderDashVisitante(p, user);
     return;
   }
@@ -24144,7 +24153,7 @@ function renderDashPessoal(p, user) {
   const pontosEl = document.getElementById('dash-pontos-riscados');
   if (pontosEl) pontosEl.innerHTML = dashPontosRiscadosHtml(p.pontosRiscados || []);
 
-  document.body.classList.add('pf-nav-ativa');
+  window.pfSetNavAtiva?.(true);
   renderPerfilNav('pf-nav-wrap', ehAdminAtual ? 'admin' : grupoAtual, ehAdminAtual);
 
   wrap.style.display = 'block';
@@ -24909,7 +24918,10 @@ function atualizarVisibilidadeMenuHint() {
   const hint = document.getElementById('menu-hint');
   if (!hint) return;
   const logada = !!(window._getCurrentUser && window._getCurrentUser()) || adminSenhaAtiva || padraoSenhaAtiva;
-  hint.style.display = logada ? 'flex' : 'none';
+  // reforma: quem já tem a navegação nova no perfil (pf-nav-ativa) não precisa
+  // mais do gavetão de Ferramentas — ver renderDashPessoal/renderDashVisitante
+  const temNavNova = document.body.classList.contains('pf-nav-ativa');
+  hint.style.display = (logada && !temNavNova) ? 'flex' : 'none';
   if (!logada) closeDrawer(); // fecha a gaveta se por acaso já estava aberta e a pessoa deslogou
 }
 window.atualizarVisibilidadeMenuHint = atualizarVisibilidadeMenuHint;
