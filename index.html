@@ -5641,14 +5641,12 @@ async function pwaInscreverPush() {
             </select>
           </div>
           <input type="text" id="cfg-url" placeholder="URL ou slug">
-          <input type="text" id="cfg-desc" placeholder="Descrição curta">
-          <input type="text" id="cfg-tagLabel" placeholder="Texto da pílula (ex: público, interno, admin) — deixe vazio para padrão">
           <button class="btn-add" onclick="cfgSalvarEdicao()" style="width:100%;margin-bottom:14px">✓ Salvar edição</button>
 
           <div class="admin-cfg-rotulo">Aparece em:</div>
           <div class="admin-cfg-linha-pills">
-            <button class="toggle-pill" id="cfg-btn-menu" onclick="cfgToggleMenu()">Menu</button>
-            <button class="toggle-pill" id="cfg-btn-card" onclick="cfgToggleCard()">Card</button>
+            <button class="toggle-pill" id="cfg-btn-menu" onclick="cfgToggleMenu()" title="Aparece na lista com seta, pra quem já está logada">Lista</button>
+            <button class="toggle-pill" id="cfg-btn-card" onclick="cfgToggleCard()" title="Aparece nos cards da página pública, antes de logar">Card</button>
           </div>
 
           <div class="admin-cfg-rotulo">Visível a partir de:</div>
@@ -6794,7 +6792,6 @@ function renderAdminPanel() {
           </select>
         </div>
         <input type="text" id="url-${si}" placeholder="URL ou nome da página">
-        <input type="text" id="desc-${si}" placeholder="Descrição curta (opcional)">
         <button class="btn-add" onclick="addItem(${si})">+ Adicionar item</button>
       </div>`}
     </div>`;
@@ -6890,8 +6887,6 @@ function cfgRefresh() {
   document.getElementById('cfg-label').value = item.label;
   document.getElementById('cfg-type').value = item.type;
   document.getElementById('cfg-url').value = item.url || item.page || '';
-  document.getElementById('cfg-desc').value = item.desc || '';
-  document.getElementById('cfg-tagLabel').value = item.tagLabel || '';
   document.getElementById('cfg-btn-menu').classList.toggle('on', item.showMenu !== false);
   document.getElementById('cfg-btn-card').classList.toggle('on-green', item.showCard !== false);
   const nivel = nivelMinimoDeItemLegado(item);
@@ -6925,10 +6920,6 @@ function cfgSalvarEdicao() {
   const item = menuData.sections[_cfgSi].items[_cfgIi];
   item.label = document.getElementById('cfg-label').value.trim() || item.label;
   item.type  = document.getElementById('cfg-type').value;
-  item.desc  = document.getElementById('cfg-desc').value.trim();
-  const tagLabel = document.getElementById('cfg-tagLabel').value.trim();
-  if (tagLabel) item.tagLabel = tagLabel;
-  else delete item.tagLabel;
   const urlVal = document.getElementById('cfg-url').value.trim();
   if (item.type === 'internal') { item.page = urlVal; delete item.url; }
   else { item.url = urlVal; delete item.page; }
@@ -7900,10 +7891,9 @@ function addItem(si) {
   const label = document.getElementById(`label-${si}`).value.trim();
   const type  = document.getElementById(`type-${si}`).value;
   const url   = document.getElementById(`url-${si}`).value.trim();
-  const desc  = document.getElementById(`desc-${si}`).value.trim();
   if (!label) return alert('Digite o nome do item.');
   const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
-  const item = { id, label, type, showCard: true, showMenu: true, desc };
+  const item = { id, label, type, showCard: true, showMenu: true };
   if (type === 'internal' || type === 'blank') item.page = url || id;
   else item.url = url;
   menuData.sections[si].items.push(item);
