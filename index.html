@@ -5549,82 +5549,58 @@ async function pwaInscreverPush() {
     </div>
 
     <!-- MENU PRINCIPAL DO PAINEL — abre um bloco de cada vez, em vez de tudo empilhado -->
-    <div id="admin-menu-principal" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px">
-      <button class="admin-menu-item" onclick="abrirAdicionarPessoa()">
-        <span class="admin-menu-item-icon">➕</span>
-        <span class="admin-menu-item-label">Adicionar Pessoa</span>
-        <span class="admin-menu-item-desc">Cadastro rápido — só e-mail e grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('menu')">
-        <span class="admin-menu-item-icon">📋</span>
-        <span class="admin-menu-item-label">Menu do Site</span>
-        <span class="admin-menu-item-desc">Cards, links e visibilidade por grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('relatorios')">
-        <span class="admin-menu-item-icon">📊</span>
-        <span class="admin-menu-item-label">Relatórios</span>
-        <span class="admin-menu-item-desc">Calendário, financeiro e resumo mensal, tudo num só lugar</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('historia')">
-        <span class="admin-menu-item-icon">📜</span>
-        <span class="admin-menu-item-label">Sua História</span>
-        <span class="admin-menu-item-desc">Quem pode ver o card</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')">
-        <span class="admin-menu-item-icon">📢</span>
-        <span class="admin-menu-item-label">Avisos / Comunicados</span>
-        <span class="admin-menu-item-desc">Escreva avisos pra cada grupo</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('qr')">
-        <span class="admin-menu-item-icon">📷</span>
-        <span class="admin-menu-item-label">QR Code e Acessos</span>
-        <span class="admin-menu-item-desc">Acessos ao site e QR codes</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')">
-        <span class="admin-menu-item-icon">🌸</span>
-        <span class="admin-menu-item-label">Corrente da Casa</span>
-        <span class="admin-menu-item-desc">Perfis e fichas</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('linha-geral')">
-        <span class="admin-menu-item-icon">🕰️</span>
-        <span class="admin-menu-item-label">Linha do Tempo Geral</span>
-        <span class="admin-menu-item-desc">Uma volta no passado — todas as filhas e o calendário</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('planilha-geral')">
-        <span class="admin-menu-item-icon">🗂️</span>
-        <span class="admin-menu-item-label">Planilha Geral</span>
-        <span class="admin-menu-item-desc">Visão em planilha de todos os campos das fichas</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminExportarDadosPerfis()">
-        <span class="admin-menu-item-icon">📦</span>
-        <span class="admin-menu-item-label">Exportar Dados dos Perfis</span>
-        <span class="admin-menu-item-desc">Nomes, datas, pagamentos e fotos — tudo num .zip</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminExportarDadosRifa()">
-        <span class="admin-menu-item-icon">🎟️</span>
-        <span class="admin-menu-item-label">Exportar Dados da Rifa</span>
-        <span class="admin-menu-item-desc">Nome, telefone e número de cada rifa vendido — todas as campanhas</span>
-      </button>
-      <button class="admin-menu-item" onclick="window.open('/admin-manual.html','_blank')">
-        <span class="admin-menu-item-icon">📖</span>
-        <span class="admin-menu-item-label">Manual de Boas-Vindas</span>
-        <span class="admin-menu-item-desc">Escreva anotações em tópicos e modere as sugestões recebidas</span>
-      </button>
-      <button class="admin-menu-item" onclick="window.open('/funcionalidades.html','_blank')">
-        <span class="admin-menu-item-icon">📋</span>
-        <span class="admin-menu-item-label">Funcionalidades do Site</span>
-        <span class="admin-menu-item-desc">Inventário completo de tudo que o site oferece hoje</span>
-      </button>
-      <button class="admin-menu-item" onclick="showPage('camiseta-admin')">
-        <span class="admin-menu-item-icon">🎽</span>
-        <span class="admin-menu-item-label">Loja de Camisetas</span>
-        <span class="admin-menu-item-desc">Produto, tabela de medidas, QR code e pedidos</span>
-      </button>
-      <button class="admin-menu-item" onclick="adminAbrirSecao('notificacoes')">
-        <span class="admin-menu-item-icon">🔔</span>
-        <span class="admin-menu-item-label">Notificações</span>
-        <span class="admin-menu-item-desc">Mandar notificação push pra quem ativou no app</span>
-      </button>
+    <div id="admin-menu-principal" style="margin-bottom:20px">
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">👥 Pessoas</span>
+          <span class="admin-section-contagem">5</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▾</button>
+        </div>
+        <div>
+          <button class="admin-menu-item" onclick="abrirAdicionarPessoa()"><span class="admin-menu-item-icon">➕</span><span class="admin-menu-item-label">Adicionar Pessoa</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('filhas')"><span class="admin-menu-item-icon">🌸</span><span class="admin-menu-item-label">Corrente da Casa</span></button>
+          <button class="admin-menu-item" onclick="showPage('linha-geral')"><span class="admin-menu-item-icon">🕰️</span><span class="admin-menu-item-label">Linha do Tempo Geral</span></button>
+          <button class="admin-menu-item" onclick="showPage('planilha-geral')"><span class="admin-menu-item-icon">🗂️</span><span class="admin-menu-item-label">Planilha Geral</span></button>
+          <button class="admin-menu-item" onclick="adminExportarDadosPerfis()"><span class="admin-menu-item-icon">📦</span><span class="admin-menu-item-label">Exportar Dados dos Perfis</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">🛍️ Vendas</span>
+          <span class="admin-section-contagem">2</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="showPage('camiseta-admin')"><span class="admin-menu-item-icon">🎽</span><span class="admin-menu-item-label">Loja de Camisetas</span></button>
+          <button class="admin-menu-item" onclick="adminExportarDadosRifa()"><span class="admin-menu-item-icon">🎟️</span><span class="admin-menu-item-label">Exportar Dados da Rifa</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">📊 Relatórios & Financeiro</span>
+          <span class="admin-section-contagem">1</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="adminAbrirSecao('relatorios')"><span class="admin-menu-item-icon">📊</span><span class="admin-menu-item-label">Relatórios</span></button>
+        </div>
+      </div>
+      <div class="admin-section-block">
+        <div class="admin-section-header" style="cursor:pointer" onclick="adminToggleCategoria(this)">
+          <span class="admin-section-title">⚙️ Menu, Comunicação & Acessos</span>
+          <span class="admin-section-contagem">7</span>
+          <button class="admin-collapse-btn" onclick="event.stopPropagation();adminToggleCategoria(this.closest('.admin-section-header'))">▸</button>
+        </div>
+        <div style="display:none">
+          <button class="admin-menu-item" onclick="adminAbrirSecao('menu')"><span class="admin-menu-item-icon">📋</span><span class="admin-menu-item-label">Menu do Site</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('avisos')"><span class="admin-menu-item-icon">📢</span><span class="admin-menu-item-label">Avisos / Comunicados</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('qr')"><span class="admin-menu-item-icon">📷</span><span class="admin-menu-item-label">QR Code e Acessos</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('historia')"><span class="admin-menu-item-icon">📜</span><span class="admin-menu-item-label">Sua História</span></button>
+          <button class="admin-menu-item" onclick="adminAbrirSecao('notificacoes')"><span class="admin-menu-item-icon">🔔</span><span class="admin-menu-item-label">Notificações</span></button>
+          <button class="admin-menu-item" onclick="window.open('/admin-manual.html','_blank')"><span class="admin-menu-item-icon">📖</span><span class="admin-menu-item-label">Manual de Boas-Vindas</span></button>
+          <button class="admin-menu-item" onclick="window.open('/funcionalidades.html','_blank')"><span class="admin-menu-item-icon">📋</span><span class="admin-menu-item-label">Funcionalidades do Site</span></button>
+        </div>
+      </div>
     </div>
     <div id="admin-export-status" style="text-align:center;font-family:'Crimson Pro',serif;font-size:.8rem;font-style:italic;color:var(--text-dim);margin:-6px 0 14px"></div>
 
@@ -6498,6 +6474,17 @@ function renderCards() {
   });
   grid.innerHTML = html;
 }
+
+// ── CATEGORIAS DO PAINEL ADMIN (reforma) — acordeão simples: abre/fecha o
+// grupo de botões logo abaixo do cabeçalho clicado ──
+function adminToggleCategoria(headerEl) {
+  const corpo = headerEl.nextElementSibling;
+  const btn = headerEl.querySelector('.admin-collapse-btn');
+  const abrindo = corpo.style.display === 'none';
+  corpo.style.display = abrindo ? '' : 'none';
+  if (btn) btn.textContent = abrindo ? '▾' : '▸';
+}
+window.adminToggleCategoria = adminToggleCategoria;
 
 // ── NAVEGAÇÃO DO PAINEL ADMIN — abre um bloco de cada vez, em vez de tudo
 // empilhado numa rolagem só ──
