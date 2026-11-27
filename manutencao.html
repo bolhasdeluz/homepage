@@ -261,7 +261,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
-const firebaseConfig = {
+const FIREBASE_CONFIG_PROD = {
   apiKey: "AIzaSyDZ_vFMHZ7t7nyJWJPRfD280VZzagqY5Ws",
   authDomain: "terreiro-bolhas-de-luz.firebaseapp.com",
   projectId: "terreiro-bolhas-de-luz",
@@ -270,6 +270,17 @@ const firebaseConfig = {
   appId: "1:179602931861:web:5cf336e9077334cee05b9c",
   measurementId: "G-6Z1WED2GB1"
 };
+// ambiente de teste: usado automaticamente quando o site roda num domínio
+// de preview do Cloudflare Pages (*.pages.dev), nunca no domínio de produção
+const FIREBASE_CONFIG_STAGING = {
+  apiKey: "AIzaSyC4AXyBIhLYWQvOl83T1QP3hBa_UfFqll4",
+  authDomain: "terreiro-bolhas-de-luz-staging.firebaseapp.com",
+  projectId: "terreiro-bolhas-de-luz-staging",
+  storageBucket: "terreiro-bolhas-de-luz-staging.firebasestorage.app",
+  messagingSenderId: "637002081841",
+  appId: "1:637002081841:web:fc208a3273286d9d8c1710"
+};
+const firebaseConfig = location.hostname.endsWith('.pages.dev') ? FIREBASE_CONFIG_STAGING : FIREBASE_CONFIG_PROD;
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
